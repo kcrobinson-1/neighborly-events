@@ -1,5 +1,19 @@
 # Neighborhood Game Quiz — UX Philosophy and Experience
 
+## Document Role
+
+This doc describes how the product should feel and behave for users.
+
+It should answer questions like:
+
+- What should the experience feel like?
+- What should the user flow look like?
+- How should the interface be laid out on mobile?
+- How should sponsors appear in the experience?
+- What should the completion moment communicate?
+
+Implementation details such as backend structure, data ownership, and stack choice belong in `architecture.md` and `dev.md`.
+
 ## UX Philosophy
 
 The product should feel like a neighborhood game booth that happens to live on a phone, not a survey that happens to offer a prize.
@@ -264,15 +278,15 @@ This screen should look materially different from the quiz cards so nobody mista
 - Redemption must be obvious
 - Confusion equals failure
 
-## Technical UX Decisions
+## UX Hand-Off to Engineering
 
-These are implementation decisions that directly support the desired experience:
+The experience requirements that engineering must preserve are:
 
-- Use a SPA with a single initial content fetch.
-- Render one visible question card at a time.
-- Persist in-progress state locally so refreshes are survivable.
-- Keep transitions client-side and near-instant.
-- Preload completion-state assets and sponsor imagery early.
-- Avoid page-level reloads between questions.
+- the attendee flow should feel like one uninterrupted game sequence
+- only one question should be visible at a time
+- progress should always be visible
+- the interface should remain usable in bright outdoor conditions on small phones
+- refreshes and brief connectivity problems should not destroy confidence
+- the final completion state should feel official and easy for volunteers to verify
 
-If routing is needed, it should support resilience and restoration, not multi-page browsing. In other words: route state can exist under the hood, but the user experience should still feel like one uninterrupted game flow.
+The exact technical implementation of those requirements belongs in `architecture.md` and `dev.md`.

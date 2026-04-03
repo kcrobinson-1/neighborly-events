@@ -1,5 +1,15 @@
 # Neighborhood Game Quiz — Product Overview
 
+## Document Role
+
+This doc explains why the product should exist, who it serves, what success looks like, and what stays out of scope.
+
+Related docs:
+
+- `experience.md` covers the attendee, volunteer, and organizer experience
+- `architecture.md` covers system shape, data, and backend responsibilities
+- `dev.md` covers implementation choices, tooling, and milestone sequencing
+
 ## Purpose
 A mobile-first neighborhood game designed for local events (concerts, fairs, markets) that drives sponsor engagement and raffle participation through a short, interactive quiz experience. Organizers control all content and sponsorships, enabling lightweight fundraising without adding operational complexity.
 

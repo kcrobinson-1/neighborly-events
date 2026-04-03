@@ -28,10 +28,10 @@ Initial validation target:
 
 ## Documentation
 
-- [Product Overview](./docs/product.md)
-- [UX Philosophy and Experience](./docs/experience.md)
-- [Architecture Notes](./docs/architecture.md)
-- [Development Milestones](./docs/dev.md)
+- [Product Overview](./docs/product.md) explains the problem, users, value proposition, and success criteria.
+- [UX Philosophy and Experience](./docs/experience.md) describes how the attendee and volunteer experience should feel and flow.
+- [Architecture Notes](./docs/architecture.md) defines the system shape, data model, and frontend/backend responsibilities.
+- [Development Direction](./docs/dev.md) captures framework choices, technical defaults, open implementation questions, and milestones.
 
 ## Planned Experience
 

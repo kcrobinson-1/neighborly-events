@@ -4,6 +4,19 @@
 
 This document captures the main technical decisions that need to be made for the MVP, along with recommended defaults based on the current product and UX docs.
 
+## Document Role
+
+This doc is for implementation planning.
+
+It should answer:
+
+- which frameworks and tools we should use
+- which technical defaults we should lock in for MVP
+- which questions remain open before building
+- what order we should build the product in
+
+System shape and data ownership live in `architecture.md`. UX behavior and visual rules live in `experience.md`.
+
 The goal is not to choose the most sophisticated architecture. The goal is to choose the lightest implementation that still supports:
 
 - a fast mobile-first event experience
@@ -356,18 +369,6 @@ Use a lightweight but real testing strategy:
 - unit tests for completion and verification logic
 - end-to-end test for full quiz completion flow
 - manual testing on actual phones
-
-## Recommended MVP Architecture
-
-If we want a concrete default architecture right now, it should be:
-
-- React + TypeScript + Vite frontend
-- SPA flow with one question card visible at a time
-- question/event/sponsor content stored in a database
-- local browser state during the quiz
-- final completion submitted to a backend
-- backend returns the official completion token
-- volunteers trust the final backend-backed success screen
 
 ## Open Product-to-Engineering Questions
 

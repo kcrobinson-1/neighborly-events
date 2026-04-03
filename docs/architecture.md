@@ -4,6 +4,18 @@
 
 This document should answer the practical architecture questions needed to build and run the MVP.
 
+## Document Role
+
+This doc defines the system shape:
+
+- what components exist
+- what responsibilities each component owns
+- where data lives
+- how frontend and backend interact
+- what the core data model looks like
+
+Specific framework and tool choices belong in `dev.md`. Product goals belong in `product.md`. UX intent belongs in `experience.md`.
+
 For this product, the architecture doc should answer:
 
 1. What are the major system components?
@@ -25,7 +37,7 @@ This doc answers those questions with recommended MVP defaults.
 
 The recommended MVP architecture is:
 
-- a React + TypeScript + Vite SPA frontend
+- a SPA frontend
 - a minimal backend API
 - a simple hosted database
 - local browser state during quiz play
@@ -359,6 +371,8 @@ Why this is a good fit:
 - low ops overhead
 - quick deployment cycles
 - enough flexibility for MVP and first event validation
+
+Specific tool and framework recommendations live in `dev.md`.
 
 ## 12. What Is Out of Scope for MVP?
 
