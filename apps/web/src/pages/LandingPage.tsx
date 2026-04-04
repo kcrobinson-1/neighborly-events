@@ -1,4 +1,4 @@
-import { featuredGameSlug } from "../data/games";
+import { featuredGameSlug, games } from "../data/games";
 import { routes } from "../routes";
 
 type LandingPageProps = {
@@ -83,6 +83,29 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
             </p>
           </div>
         </div>
+      </section>
+
+      <section className="sample-games">
+        {games.map((game) => (
+          <article className="panel sample-game-card" key={game.slug}>
+            <div className="sample-game-copy">
+              <span className="chip">
+                {game.feedbackMode === "instant_feedback_required"
+                  ? "Required correct answers"
+                  : "Final score reveal"}
+              </span>
+              <h2>{game.name}</h2>
+              <p>{game.summary}</p>
+            </div>
+            <button
+              className="secondary-button"
+              onClick={() => onNavigate(routes.game(game.slug))}
+              type="button"
+            >
+              {game.slug === featuredGameSlug ? "Open featured sample" : "Open this sample"}
+            </button>
+          </article>
+        ))}
       </section>
     </section>
   );

@@ -134,6 +134,11 @@ Important architectural choice:
 
 The experience should feel uninterrupted even if routing exists internally. The user should not experience separate hard-loaded pages between questions.
 
+The frontend should also support configurable quiz feedback behavior at the game level, such as:
+
+- move straight through and reveal score at the end
+- require the correct answer before continuing
+
 ## 4. What Data Lives on the Client vs the Backend?
 
 ### Client-Side Data
@@ -235,6 +240,7 @@ The architecture doc should define the MVP entities clearly enough that implemen
 - id
 - slug or shareable identifier
 - name
+- feedbackMode
 - status
 - start/end or active window
 - theme color or theme configuration
@@ -261,8 +267,9 @@ The architecture doc should define the MVP entities clearly enough that implemen
 - prompt
 - type
 - displayOrder
-- correctAnswer nullable
+- correctAnswer
 - explanation nullable
+- sponsorFact nullable
 
 ### AnswerOption
 
@@ -293,7 +300,37 @@ The architecture doc should define the MVP entities clearly enough that implemen
 
 If we want the lightest MVP possible, `QuizSession` can be skipped at first and inferred from frontend or analytics events.
 
-## 8. How Should Performance and Resilience Work?
+## 8. How Should Quiz Feedback Modes Be Modeled?
+
+The system should support a game-level feedback mode instead of hardcoding one quiz behavior.
+
+Recommended MVP values:
+
+- `final_score_reveal`
+- `instant_feedback_required`
+
+Optional later:
+
+- `instant_feedback_non_blocking`
+
+Modeling requirement:
+
+- any game using scored or correctness-based feedback modes should require `correctAnswer` on every scored question
+- `correctAnswer` should only be optional for non-scored or informational quiz variants
+
+Why model this at the game level:
+
+- it keeps the attendee experience consistent within a single quiz
+- it avoids question-by-question rule confusion
+- it gives organizers a simple, understandable choice
+
+Behavioral implications:
+
+- `final_score_reveal` needs score calculation and end-of-quiz answer review support
+- `instant_feedback_required` needs correct-answer checking during the quiz plus an optional sponsor-fact interstitial
+- both modes can share the same question and answer data model as long as `correctAnswer` and `explanation` or `sponsorFact` are available when needed
+
+## 9. How Should Performance and Resilience Work?
 
 The product has outdoor, mobile, event-based constraints, so architecture should optimize for perceived speed and survivability.
 
@@ -318,7 +355,7 @@ The architecture should optimize for:
 - low data usage
 - minimal moving parts during the live event
 
-## 9. What Is the MVP Anti-Abuse Strategy?
+## 10. What Is the MVP Anti-Abuse Strategy?
 
 Strong anti-fraud is explicitly out of scope, but some minimum architecture is still needed.
 
@@ -335,7 +372,7 @@ Not recommended for MVP:
 - complex device fingerprinting
 - manual moderation flows
 
-## 10. What Admin Tooling Is Required?
+## 11. What Admin Tooling Is Required?
 
 At minimum, someone needs to manage content without breaking the live event.
 
@@ -345,6 +382,7 @@ Recommended MVP admin capabilities:
 - edit event details
 - create and reorder questions
 - attach sponsor metadata
+- choose a feedback mode
 - mark an event as published
 
 Admin tooling can begin as:
@@ -354,7 +392,7 @@ Admin tooling can begin as:
 
 But long-term, the architecture should assume a lightweight organizer-facing admin flow exists.
 
-## 11. How Should Deployment Be Structured?
+## 12. How Should Deployment Be Structured?
 
 Recommended deployment model:
 
@@ -374,7 +412,7 @@ Why this is a good fit:
 
 Specific tool and framework recommendations live in `dev.md`.
 
-## 12. What Is Out of Scope for MVP?
+## 13. What Is Out of Scope for MVP?
 
 The architecture should explicitly avoid overbuilding.
 

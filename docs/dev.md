@@ -250,6 +250,27 @@ Recommended answer for MVP:
 - completion matters more than scoring
 - correctness can still exist in the content model, but raffle qualification should probably be based on completion, not score
 
+Related decision:
+
+The quiz should support configurable feedback modes at the game level.
+
+Recommended MVP modes:
+
+- `final_score_reveal`
+- `instant_feedback_required`
+
+Recommended default:
+
+Use `final_score_reveal` for most event quizzes because it preserves flow and keeps completion time low.
+
+Use `instant_feedback_required` only when the organizer intentionally wants a more game-like, sponsor-education-heavy experience.
+
+Implementation note:
+
+- `final_score_reveal` requires score calculation and an end-of-quiz review state
+- `instant_feedback_required` requires per-question answer validation and a short follow-up state after correct answers
+- both modes require `correctAnswer` to exist in the underlying quiz data for every scored question
+
 ### 7. Verification Model
 
 Decision to make:

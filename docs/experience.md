@@ -216,6 +216,59 @@ The quiz should feel brisk and reassuring.
 - If answer confirmation is needed, keep it to a single visible CTA
 - Keep transitions quick and directional so users feel progress
 
+## Quiz Feedback Modes
+
+Different quizzes may need different answer-feedback behavior. The product should support this as a game-level configuration rather than assuming every quiz behaves the same way.
+
+Recommended modes:
+
+- `final_score_reveal`
+- `instant_feedback_required`
+- optional later: `instant_feedback_non_blocking`
+
+Important requirement:
+
+Any quiz using these modes needs a defined correct answer for each scored question.
+
+### Final Score Reveal
+
+In this mode, the attendee moves through the full quiz without interruption and sees the results at the end.
+
+Recommended end state:
+
+- final score
+- correct answers
+- the attendee's answers
+- optional sponsor facts or explanations
+
+This should be the default mode for most event quizzes because it is the fastest and lowest-friction.
+
+For this mode to work, each scored question must include a correct answer in the quiz configuration.
+
+### Instant Feedback Required
+
+In this mode, the attendee must answer correctly before moving on.
+
+Recommended sequence:
+
+1. attendee selects an answer
+2. if the answer is wrong, the interface prompts them to try again
+3. if the answer is correct, show a short confirmation such as "Correct"
+4. optionally show a sponsor fact or company detail
+5. continue to the next question
+
+This mode makes the quiz feel more game-like and gives sponsors a natural educational moment, but it adds friction and should be used intentionally.
+
+This mode depends on each question having a correct answer available at runtime.
+
+### Recommended UX Rules
+
+- Keep one feedback mode consistent for an entire quiz.
+- Do not mix required-correct and end-of-quiz scoring within the same MVP experience.
+- Keep sponsor facts short and immediately relevant.
+- If raffle entry is based on completion, make that clear even when score is shown.
+- Treat score as fun feedback unless the product intentionally changes its prize rules later.
+
 ### Progress
 
 Progress should always be visible and concrete, such as:
