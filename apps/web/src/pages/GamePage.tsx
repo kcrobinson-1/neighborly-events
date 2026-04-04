@@ -1,19 +1,21 @@
 import { useState } from "react";
-import { demoEvent } from "../data/demoEvent";
+import type { GameConfig } from "../data/games";
+import { featuredGameSlug } from "../data/games";
 import { routes } from "../routes";
 
 type Answers = Record<string, string>;
 
-type SampleGamePageProps = {
+type GamePageProps = {
+  game: GameConfig;
   onNavigate: (path: string) => void;
 };
 
-export function SampleGamePage({ onNavigate }: SampleGamePageProps) {
+export function GamePage({ game, onNavigate }: GamePageProps) {
   const [started, setStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
 
-  const questions = demoEvent.questions;
+  const questions = game.questions;
   const currentQuestion = questions[currentIndex];
   const isComplete = started && currentIndex >= questions.length;
   const progressValue = isComplete
@@ -21,7 +23,7 @@ export function SampleGamePage({ onNavigate }: SampleGamePageProps) {
     : ((currentIndex + 1) / questions.length) * 100;
 
   const answerCount = Object.keys(answers).length.toString().padStart(2, "0");
-  const completionCode = `MMP-${answerCount}${demoEvent.id.slice(-2).toUpperCase()}`;
+  const completionCode = `MMP-${answerCount}${game.id.slice(-2).toUpperCase()}`;
 
   const handleStart = () => {
     setStarted(true);
@@ -53,14 +55,16 @@ export function SampleGamePage({ onNavigate }: SampleGamePageProps) {
         >
           Back to product overview
         </button>
-        <span className="chip">Sample game</span>
+        <span className="chip">
+          {game.slug === featuredGameSlug ? "Sample game" : "Game"}
+        </span>
       </nav>
 
       <section className="app-card">
         <header className="topbar">
           <div>
-            <p className="eyebrow">{demoEvent.location} neighborhood event</p>
-            <h1>{demoEvent.name}</h1>
+            <p className="eyebrow">{game.location} neighborhood event</p>
+            <h1>{game.name}</h1>
           </div>
           {started && !isComplete ? (
             <div className="progress-copy" aria-live="polite">
@@ -69,11 +73,12 @@ export function SampleGamePage({ onNavigate }: SampleGamePageProps) {
           ) : null}
         </header>
 
-        {!started ? <GameIntroPanel onStart={handleStart} /> : null}
+        {!started ? <GameIntroPanel game={game} onStart={handleStart} /> : null}
 
         {started && !isComplete ? (
           <CurrentQuestionPanel
             currentIndex={currentIndex}
+            game={game}
             onAnswerSelect={handleAnswerSelect}
             progressValue={progressValue}
             question={currentQuestion}
@@ -82,7 +87,11 @@ export function SampleGamePage({ onNavigate }: SampleGamePageProps) {
         ) : null}
 
         {isComplete ? (
-          <GameCompletionPanel completionCode={completionCode} onReset={handleReset} />
+          <GameCompletionPanel
+            completionCode={completionCode}
+            game={game}
+            onReset={handleReset}
+          />
         ) : null}
       </section>
     </section>
@@ -90,15 +99,16 @@ export function SampleGamePage({ onNavigate }: SampleGamePageProps) {
 }
 
 type GameIntroPanelProps = {
+  game: GameConfig;
   onStart: () => void;
 };
 
-function GameIntroPanel({ onStart }: GameIntroPanelProps) {
+function GameIntroPanel({ game, onStart }: GameIntroPanelProps) {
   return (
     <section className="panel intro-panel">
-      <span className="chip">Under {demoEvent.estimatedMinutes} minutes</span>
-      <h2>Win a {demoEvent.raffleLabel}</h2>
-      <p>{demoEvent.intro}</p>
+      <span className="chip">Under {game.estimatedMinutes} minutes</span>
+      <h2>Win a {game.raffleLabel}</h2>
+      <p>{game.intro}</p>
       <ul className="intro-list">
         <li>No login</li>
         <li>One question at a time</li>
@@ -113,14 +123,16 @@ function GameIntroPanel({ onStart }: GameIntroPanelProps) {
 
 type CurrentQuestionPanelProps = {
   currentIndex: number;
+  game: GameConfig;
   onAnswerSelect: (questionId: string, optionId: string) => void;
   progressValue: number;
-  question: (typeof demoEvent.questions)[number];
+  question: GameConfig["questions"][number];
   questionCount: number;
 };
 
 function CurrentQuestionPanel({
   currentIndex,
+  game,
   onAnswerSelect,
   progressValue,
   question,
@@ -134,7 +146,7 @@ function CurrentQuestionPanel({
       <section className="panel question-panel">
         <p className="sponsor-label">Sponsored by {question.sponsor}</p>
         <h2>{question.prompt}</h2>
-        <div className="options" role="list" aria-label="Answer options">
+        <div className="options" role="list" aria-label={`${game.name} answer options`}>
           {question.options.map((option) => (
             <button
               key={option.id}
@@ -156,11 +168,13 @@ function CurrentQuestionPanel({
 
 type GameCompletionPanelProps = {
   completionCode: string;
+  game: GameConfig;
   onReset: () => void;
 };
 
 function GameCompletionPanel({
   completionCode,
+  game,
   onReset,
 }: GameCompletionPanelProps) {
   return (
@@ -168,7 +182,7 @@ function GameCompletionPanel({
       <span className="chip chip-success">Officially complete</span>
       <h2>Show this screen to the volunteer table</h2>
       <p>
-        You finished the neighborhood game and earned your {demoEvent.raffleLabel}.
+        You finished the neighborhood game and earned your {game.raffleLabel}.
       </p>
       <div className="token-block">
         <span className="token-label">Verification code</span>

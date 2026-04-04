@@ -1,3 +1,4 @@
+import { featuredGameSlug } from "../data/games";
 import { routes } from "../routes";
 
 type LandingPageProps = {
@@ -21,7 +22,7 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
         <div className="hero-actions">
           <button
             className="primary-button"
-            onClick={() => onNavigate(routes.sampleGame)}
+            onClick={() => onNavigate(routes.game(featuredGameSlug))}
             type="button"
           >
             Play the first sample

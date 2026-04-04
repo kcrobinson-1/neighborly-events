@@ -10,8 +10,9 @@ export type Question = {
   options: AnswerOption[];
 };
 
-export type EventContent = {
+export type GameConfig = {
   id: string;
+  slug: string;
   name: string;
   location: string;
   estimatedMinutes: number;
@@ -20,8 +21,11 @@ export type EventContent = {
   questions: Question[];
 };
 
-export const demoEvent: EventContent = {
+export const featuredGameSlug = "first-sample";
+
+const firstSampleGame: GameConfig = {
   id: "madrona-music-2026",
+  slug: featuredGameSlug,
   name: "Madrona Music in the Playfield",
   location: "Seattle",
   estimatedMinutes: 2,
@@ -90,3 +94,11 @@ export const demoEvent: EventContent = {
     },
   ],
 };
+
+export const gamesBySlug: Record<string, GameConfig> = {
+  [firstSampleGame.slug]: firstSampleGame,
+};
+
+export function getGameBySlug(slug: string) {
+  return gamesBySlug[slug];
+}

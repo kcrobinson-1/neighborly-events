@@ -1,3 +1,4 @@
+import { featuredGameSlug } from "../data/games";
 import { routes } from "../routes";
 
 type NotFoundPageProps = {
@@ -22,7 +23,7 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps) {
         </button>
         <button
           className="secondary-button"
-          onClick={() => onNavigate(routes.sampleGame)}
+          onClick={() => onNavigate(routes.game(featuredGameSlug))}
           type="button"
         >
           Open the sample game

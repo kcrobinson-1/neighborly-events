@@ -1,6 +1,7 @@
 export const routes = {
   home: "/",
-  sampleGame: "/game/first-sample",
+  gamePrefix: "/game",
+  game: (slug: string) => `/game/${slug}`,
 } as const;
 
 export function normalizePathname(pathname: string) {
@@ -9,4 +10,23 @@ export function normalizePathname(pathname: string) {
   }
 
   return pathname;
+}
+
+export function matchGamePath(pathname: string) {
+  const normalizedPath = normalizePathname(pathname);
+  const prefix = `${routes.gamePrefix}/`;
+
+  if (!normalizedPath.startsWith(prefix)) {
+    return null;
+  }
+
+  const slug = normalizedPath.slice(prefix.length);
+
+  if (!slug || slug.includes("/")) {
+    return null;
+  }
+
+  return {
+    slug,
+  };
 }

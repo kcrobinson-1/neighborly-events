@@ -1,18 +1,26 @@
 import { LandingPage } from "./pages/LandingPage";
+import { getGameBySlug } from "./data/games";
+import { GamePage } from "./pages/GamePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { SampleGamePage } from "./pages/SampleGamePage";
-import { routes } from "./routes";
+import { matchGamePath, routes } from "./routes";
 import { usePathnameNavigation } from "./usePathnameNavigation";
 
 function App() {
   const { pathname, navigate } = usePathnameNavigation();
+  const matchedGame = matchGamePath(pathname);
 
   let content;
 
   if (pathname === routes.home) {
     content = <LandingPage onNavigate={navigate} />;
-  } else if (pathname === routes.sampleGame) {
-    content = <SampleGamePage onNavigate={navigate} />;
+  } else if (matchedGame) {
+    const game = getGameBySlug(matchedGame.slug);
+
+    content = game ? (
+      <GamePage game={game} onNavigate={navigate} />
+    ) : (
+      <NotFoundPage onNavigate={navigate} />
+    );
   } else {
     content = <NotFoundPage onNavigate={navigate} />;
   }
