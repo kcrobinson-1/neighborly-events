@@ -6,6 +6,7 @@ import {
 
 export { answersMatch, normalizeOptionIds };
 
+/** Updates the pending selection according to the question's selection mode. */
 export function getNextSelection(
   currentSelection: string[],
   optionId: string,
@@ -20,18 +21,26 @@ export function getNextSelection(
     : [...currentSelection, optionId];
 }
 
+/** Returns the helper copy shown above a question's answer choices. */
 export function getSelectionLabel(question: Question) {
   return question.selectionMode === "multiple"
     ? "Select all that apply."
     : "Choose one answer.";
 }
 
+/** Resolves selected option ids back into display labels in the same order. */
 export function getOptionLabels(question: Question, optionIds: string[]) {
-  return question.options
-    .filter((option) => optionIds.includes(option.id))
-    .map((option) => option.label);
+  const optionsById = new Map(
+    question.options.map((option) => [option.id, option.label]),
+  );
+
+  return optionIds.flatMap((optionId) => {
+    const optionLabel = optionsById.get(optionId);
+    return optionLabel ? [optionLabel] : [];
+  });
 }
 
+/** Chooses the best explanation to show after a correct answer. */
 export function getQuestionFeedbackMessage(question: Question) {
   return (
     question.sponsorFact ??

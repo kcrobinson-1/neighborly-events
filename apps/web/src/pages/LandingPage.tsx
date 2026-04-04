@@ -1,10 +1,12 @@
 import { featuredGameSlug, games } from "../data/games";
 import { routes } from "../routes";
 
+/** Props for the landing page route. */
 type LandingPageProps = {
   onNavigate: (path: string) => void;
 };
 
+/** Marketing landing page that introduces the product and sample games. */
 export function LandingPage({ onNavigate }: LandingPageProps) {
   return (
     <section className="landing-layout">
@@ -69,14 +71,14 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
         </div>
         <div className="flow-grid">
           <div className="flow-step">
-            <strong>/</strong>
+            <strong>{routes.home}</strong>
             <p>
               Marketing landing page that explains the product and directs people into a
               live demo.
             </p>
           </div>
           <div className="flow-step">
-            <strong>/game/first-sample</strong>
+            <strong>{routes.game(featuredGameSlug)}</strong>
             <p>
               Playable sample game with the full attendee flow, from intro screen to
               verification state.

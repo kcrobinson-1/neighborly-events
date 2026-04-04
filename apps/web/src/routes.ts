@@ -1,17 +1,29 @@
+/** Application routes supported by the lightweight client-side router. */
+export type AppPath = "/" | `/game/${string}`;
+
+/** Central route definitions used by the pathname-based client router. */
 export const routes = {
-  home: "/",
+  home: "/" as AppPath,
   gamePrefix: "/game",
-  game: (slug: string) => `/game/${slug}`,
+  game: (slug: string): AppPath =>
+    `/game/${encodeURIComponent(slug)}`,
 } as const;
 
+/** Removes trailing slashes so route comparisons stay stable. */
 export function normalizePathname(pathname: string) {
-  if (pathname.length > 1 && pathname.endsWith("/")) {
-    return pathname.slice(0, -1);
+  const normalizedPathname = pathname || routes.home;
+
+  if (
+    normalizedPathname.length > 1 &&
+    normalizedPathname.endsWith("/")
+  ) {
+    return normalizedPathname.slice(0, -1);
   }
 
-  return pathname;
+  return normalizedPathname;
 }
 
+/** Parses a game route and returns the decoded slug when the path matches. */
 export function matchGamePath(pathname: string) {
   const normalizedPath = normalizePathname(pathname);
   const prefix = `${routes.gamePrefix}/`;
@@ -20,13 +32,23 @@ export function matchGamePath(pathname: string) {
     return null;
   }
 
-  const slug = normalizedPath.slice(prefix.length);
+  const encodedSlug = normalizedPath.slice(prefix.length);
 
-  if (!slug || slug.includes("/")) {
+  if (!encodedSlug || encodedSlug.includes("/")) {
     return null;
   }
 
-  return {
-    slug,
-  };
+  try {
+    const slug = decodeURIComponent(encodedSlug);
+
+    if (!slug || slug.includes("/")) {
+      return null;
+    }
+
+    return {
+      slug,
+    };
+  } catch {
+    return null;
+  }
 }

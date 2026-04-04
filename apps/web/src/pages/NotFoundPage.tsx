@@ -1,10 +1,12 @@
 import { featuredGameSlug } from "../data/games";
 import { routes } from "../routes";
 
+/** Props for the not-found fallback route. */
 type NotFoundPageProps = {
   onNavigate: (path: string) => void;
 };
 
+/** Fallback screen for unsupported routes in the sample app. */
 export function NotFoundPage({ onNavigate }: NotFoundPageProps) {
   return (
     <section className="not-found-layout panel">

@@ -1,14 +1,18 @@
+/** A single answer choice shown to the player for a question. */
 export type AnswerOption = {
   id: string;
   label: string;
 };
 
+/** Controls when the player sees correctness feedback during a quiz. */
 export type FeedbackMode =
   | "final_score_reveal"
   | "instant_feedback_required";
 
+/** Defines whether a question accepts one choice or many. */
 export type SelectionMode = "single" | "multiple";
 
+/** Shared quiz-question shape used by the web app and edge functions. */
 export type Question = {
   id: string;
   sponsor: string;
@@ -20,6 +24,7 @@ export type Question = {
   sponsorFact?: string;
 };
 
+/** Top-level configuration for a playable quiz experience. */
 export type GameConfig = {
   allowBackNavigation?: boolean;
   allowRetake?: boolean;
@@ -35,12 +40,15 @@ export type GameConfig = {
   questions: Question[];
 };
 
+/** Canonical answer payload keyed by question id. */
 export type SubmittedAnswers = Record<string, string[]>;
 
+/** Result returned when server-side or shared validation inspects an answer set. */
 export type AnswerValidationResult =
   | { ok: true }
   | { error: string; ok: false };
 
+/** Slug used by the landing page to highlight the primary sample flow. */
 export const featuredGameSlug = "first-sample";
 
 // The sample games live in a shared module so both the web app and the Supabase
@@ -48,6 +56,7 @@ export const featuredGameSlug = "first-sample";
 // validation, scoring, and answer review aligned until event content moves into
 // a real organizer-managed data model.
 
+/** Sample game that demonstrates a standard quiz with final score reveal. */
 const firstSampleGame: GameConfig = {
   id: "madrona-music-2026",
   slug: featuredGameSlug,
@@ -149,6 +158,7 @@ const firstSampleGame: GameConfig = {
   ],
 };
 
+/** Sample game that requires correct answers before progression. */
 const sponsorSpotlightGame: GameConfig = {
   id: "madrona-sponsor-spotlight-2026",
   slug: "sponsor-spotlight",
@@ -227,6 +237,7 @@ const sponsorSpotlightGame: GameConfig = {
   ],
 };
 
+/** Sample game that exercises multiple-selection behavior. */
 const communityChecklistGame: GameConfig = {
   id: "community-checklist-2026",
   slug: "community-checklist",
@@ -288,32 +299,118 @@ const communityChecklistGame: GameConfig = {
   ],
 };
 
+/** All sample games bundled with the prototype. */
 export const games: GameConfig[] = [
   firstSampleGame,
   sponsorSpotlightGame,
   communityChecklistGame,
 ];
 
-export const gamesById: Record<string, GameConfig> = Object.fromEntries(
-  games.map((game) => [game.id, game]),
-);
+/** Throws immediately when sample data reuses an identifier that must be unique. */
+function assertUnique(values: string[], label: string) {
+  const seen = new Set<string>();
 
-export const gamesBySlug: Record<string, GameConfig> = Object.fromEntries(
-  games.map((game) => [game.slug, game]),
-);
+  for (const value of values) {
+    if (seen.has(value)) {
+      throw new Error(`Duplicate ${label}: ${value}`);
+    }
 
+    seen.add(value);
+  }
+}
+
+/** Validates a game definition so broken sample data fails fast during startup. */
+function validateGame(game: GameConfig) {
+  if (game.questions.length === 0) {
+    throw new Error(`Game "${game.id}" must include at least one question.`);
+  }
+
+  assertUnique(
+    game.questions.map((question) => question.id),
+    `question id in game "${game.id}"`,
+  );
+
+  for (const question of game.questions) {
+    if (question.correctAnswerIds.length === 0) {
+      throw new Error(
+        `Question "${question.id}" in game "${game.id}" must include at least one correct answer.`,
+      );
+    }
+
+    if (
+      question.selectionMode === "single" &&
+      normalizeOptionIds(question.correctAnswerIds).length !== 1
+    ) {
+      throw new Error(
+        `Single-select question "${question.id}" in game "${game.id}" must have exactly one correct answer.`,
+      );
+    }
+
+    assertUnique(
+      question.options.map((option) => option.id),
+      `option id in question "${question.id}"`,
+    );
+
+    const optionIds = new Set(question.options.map((option) => option.id));
+
+    for (const correctAnswerId of question.correctAnswerIds) {
+      if (!optionIds.has(correctAnswerId)) {
+        throw new Error(
+          `Question "${question.id}" in game "${game.id}" references unknown correct answer "${correctAnswerId}".`,
+        );
+      }
+    }
+  }
+}
+
+/** Builds an object lookup for games by a chosen stable key. */
+function createGameLookup(key: keyof Pick<GameConfig, "id" | "slug">) {
+  const lookup: Record<string, GameConfig> = {};
+
+  for (const game of games) {
+    const lookupKey = game[key];
+
+    if (lookup[lookupKey]) {
+      throw new Error(`Duplicate game ${key}: ${lookupKey}`);
+    }
+
+    lookup[lookupKey] = game;
+  }
+
+  return lookup;
+}
+
+assertUnique(
+  games.map((game) => game.id),
+  "game id",
+);
+assertUnique(
+  games.map((game) => game.slug),
+  "game slug",
+);
+games.forEach(validateGame);
+
+/** Lookup table for resolving games by their server-facing id. */
+export const gamesById: Record<string, GameConfig> = createGameLookup("id");
+/** Lookup table for resolving games by their route slug. */
+export const gamesBySlug: Record<string, GameConfig> = createGameLookup("slug");
+
+/** Returns a game config by event id, if one exists. */
 export function getGameById(gameId: string) {
   return gamesById[gameId];
 }
 
+/** Returns a game config by route slug, if one exists. */
 export function getGameBySlug(slug: string) {
   return gamesBySlug[slug];
 }
 
+/** Normalizes selected option ids into a stable, deduplicated order. */
 export function normalizeOptionIds(optionIds: string[]) {
   return [...new Set(optionIds)].sort();
 }
 
+/** Compares two answer sets after canonical normalization. */
 export function answersMatch(
   selectedOptionIds: string[],
   correctAnswerIds: string[],
@@ -328,12 +425,14 @@ export function answersMatch(
   return selected.every((optionId, index) => optionId === correct[index]);
 }
 
+/** Computes a quiz score from the current answer payload. */
 export function scoreAnswers(game: GameConfig, answers: SubmittedAnswers) {
   return game.questions.reduce((total, question) => {
     return total + Number(answersMatch(answers[question.id] ?? [], question.correctAnswerIds));
   }, 0);
 }
 
+/** Produces a fully-populated, canonical answer payload for persistence. */
 export function normalizeSubmittedAnswers(
   game: GameConfig,
   answers: SubmittedAnswers,
@@ -348,6 +447,7 @@ export function normalizeSubmittedAnswers(
   ) as SubmittedAnswers;
 }
 
+/** Verifies that submitted answers match the configured question schema. */
 export function validateSubmittedAnswers(
   game: GameConfig,
   answers: SubmittedAnswers,

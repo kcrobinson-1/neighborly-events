@@ -18,6 +18,7 @@ type QuizPhase =
   | "submitting_completion"
   | "complete";
 
+/** Reducer state that drives the full quiz interaction flow. */
 type QuizState = {
   answers: Answers;
   completionError: string | null;
@@ -31,6 +32,7 @@ type QuizState = {
   startedAt: number | null;
 };
 
+/** Supported reducer events for quiz interaction and completion submission. */
 type QuizAction =
   | { type: "completeCompletionSubmit"; completion: QuizCompletionResult }
   | { type: "failCompletionSubmit"; message: string }
@@ -59,6 +61,7 @@ type QuizAction =
     }
   | { type: "beginCompletionSubmit"; completionRequestId: string };
 
+/** Restores the saved answer selection for a question when navigating backward. */
 function getStoredSelection(answers: Answers, questionId: string | null) {
   if (!questionId) {
     return [];
@@ -67,6 +70,12 @@ function getStoredSelection(answers: Answers, questionId: string | null) {
   return answers[questionId] ?? [];
 }
 
+/** Creates a completion request id only for the last question in a run. */
+function getCompletionRequestId(currentIndex: number, questionCount: number) {
+  return currentIndex === questionCount - 1 ? createRequestId() : null;
+}
+
+/** Builds a fresh reducer state for a new intro screen or active run. */
 function createQuizState(phase: QuizPhase = "intro", startedAt: number | null = null) {
   return {
     answers: {},
@@ -82,6 +91,7 @@ function createQuizState(phase: QuizPhase = "intro", startedAt: number | null = 
   } satisfies QuizState;
 }
 
+/** Moves the reducer into the backend submission phase after local quiz play ends. */
 function createCompletionSubmissionState(
   state: QuizState,
   completionRequestId: string,
@@ -102,6 +112,7 @@ function createCompletionSubmissionState(
   };
 }
 
+/** Central state machine for quiz progression, feedback, and completion. */
 function quizReducer(state: QuizState, action: QuizAction): QuizState {
   switch (action.type) {
     case "start":
@@ -261,6 +272,7 @@ function quizReducer(state: QuizState, action: QuizAction): QuizState {
   }
 }
 
+/** Manages the complete quiz session lifecycle for a single game instance. */
 export function useQuizSession(game: GameConfig) {
   const [state, dispatch] = useReducer(quizReducer, undefined, () => createQuizState());
   const handledSubmissionRequestId = useRef<string | null>(null);
@@ -332,7 +344,6 @@ export function useQuizSession(game: GameConfig) {
     };
   }, [
     game.id,
-    localScore,
     state.answers,
     state.completionRequestId,
     state.phase,
@@ -372,8 +383,10 @@ export function useQuizSession(game: GameConfig) {
     }
 
     const nextQuestion = questions[state.currentIndex + 1];
-    const completionRequestId =
-      state.currentIndex === questions.length - 1 ? createRequestId() : null;
+    const completionRequestId = getCompletionRequestId(
+      state.currentIndex,
+      questions.length,
+    );
 
     dispatch(
       game.feedbackMode === "final_score_reveal"
@@ -393,8 +406,10 @@ export function useQuizSession(game: GameConfig) {
 
   const continueFromCorrectFeedback = () => {
     const nextQuestion = questions[state.currentIndex + 1];
-    const completionRequestId =
-      state.currentIndex === questions.length - 1 ? createRequestId() : null;
+    const completionRequestId = getCompletionRequestId(
+      state.currentIndex,
+      questions.length,
+    );
 
     dispatch({
       type: "goForwardAfterFeedback",

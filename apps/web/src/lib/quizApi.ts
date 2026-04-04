@@ -4,27 +4,47 @@ import type {
   QuizCompletionResult,
   SubmitQuizCompletionInput,
 } from "../types/quiz";
+import { createOpaqueId } from "./session";
 
+/** Browser storage key for prototype entitlement records. */
 const localEntitlementStorageKey = "neighborly.local-entitlements.v1";
+/** Browser storage key for per-session attempt counters. */
 const localAttemptStorageKey = "neighborly.local-attempts.v1";
+/** Browser storage key for idempotent completion results. */
 const localCompletionStorageKey = "neighborly.local-completions.v1";
+/** Browser storage key for the local-only prototype session identifier. */
 const localPrototypeSessionStorageKey = "neighborly.local-session.v1";
 
+/** Stored raffle entitlement for a prototype browser session. */
 type LocalEntitlementRecord = {
   createdAt: string;
-  firstCompletionId: string;
   verificationCode: string;
 };
 
+/** Browser-side map of event/session keys to entitlement records. */
 type LocalEntitlementsStore = Record<string, LocalEntitlementRecord>;
+/** Browser-side attempt counter per event/session pair. */
 type LocalAttemptsStore = Record<string, number>;
+/** Browser-side cache of completion results keyed by request id. */
 type LocalCompletionsStore = Record<string, QuizCompletionResult>;
+/** Minimal error payload shape returned by the edge functions. */
+type QuizApiErrorPayload = {
+  error?: string;
+};
+/** Runtime Supabase configuration read from Vite environment variables. */
+type SupabaseConfig = {
+  enabled: boolean;
+  supabaseClientKey: string;
+  supabaseUrl: string;
+};
 
+/** Trims environment variables so empty-looking values are treated consistently. */
 function getEnvironmentValue(value: string | undefined) {
   return value?.trim() ?? "";
 }
 
-function getSupabaseConfig() {
+/** Returns the browser-side Supabase configuration needed for edge function calls. */
+function getSupabaseConfig(): SupabaseConfig {
   const supabaseUrl = getEnvironmentValue(import.meta.env.VITE_SUPABASE_URL);
   const supabasePublishableKey = getEnvironmentValue(
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY,
@@ -39,22 +59,30 @@ function getSupabaseConfig() {
   };
 }
 
+/** Enables the local-only fallback when developing without Supabase configured. */
 function isPrototypeFallbackEnabled() {
   return import.meta.env.DEV && !getSupabaseConfig().enabled;
 }
 
+/** Builds a stable storage key for a specific event/session pair. */
 function getStorageKey(eventId: string, prototypeSessionId: string) {
   return `${eventId}:${prototypeSessionId}`;
 }
 
-function createOpaqueId(prefix: string) {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return `${prefix}-${crypto.randomUUID()}`;
+/** Safely exposes localStorage for environments where it may be unavailable. */
+function getLocalStorage() {
+  if (typeof window === "undefined") {
+    return null;
   }
 
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
 }
 
+/** Creates the volunteer-facing verification code shown after completion. */
 function createVerificationCode() {
   const token = createOpaqueId("vf")
     .replace(/[^a-zA-Z0-9]/g, "")
@@ -64,12 +92,15 @@ function createVerificationCode() {
   return `MMP-${token}`;
 }
 
+/** Reads and parses JSON from localStorage with a typed fallback value. */
 function readStoredJson<T>(key: string, fallback: T) {
-  if (typeof window === "undefined") {
+  const storage = getLocalStorage();
+
+  if (!storage) {
     return fallback;
   }
 
-  const rawValue = window.localStorage.getItem(key);
+  const rawValue = storage.getItem(key);
 
   if (!rawValue) {
     return fallback;
@@ -82,36 +113,44 @@ function readStoredJson<T>(key: string, fallback: T) {
   }
 }
 
+/** Writes a JSON-serializable value to localStorage when available. */
 function writeStoredJson<T>(key: string, value: T) {
-  if (typeof window === "undefined") {
+  const storage = getLocalStorage();
+
+  if (!storage) {
     return;
   }
 
-  window.localStorage.setItem(key, JSON.stringify(value));
+  storage.setItem(key, JSON.stringify(value));
 }
 
+/** Returns the prototype session id, creating it on first use in the browser. */
 function getOrCreateLocalPrototypeSessionId() {
-  if (typeof window === "undefined") {
+  const storage = getLocalStorage();
+
+  if (!storage) {
     return createOpaqueId("prototype-session");
   }
 
-  const existingSessionId = window.localStorage.getItem(localPrototypeSessionStorageKey);
+  const existingSessionId = storage.getItem(localPrototypeSessionStorageKey);
 
   if (existingSessionId) {
     return existingSessionId;
   }
 
   const sessionId = createOpaqueId("prototype-session");
-  window.localStorage.setItem(localPrototypeSessionStorageKey, sessionId);
+  storage.setItem(localPrototypeSessionStorageKey, sessionId);
   return sessionId;
 }
 
+/** Returns the user-facing entitlement copy for a new or reused raffle entry. */
 function buildEntitlementMessage(status: QuizCompletionEntitlement["status"]) {
   return status === "new"
     ? "You earned your raffle entry."
     : "You already earned your raffle entry. This retake does not create another ticket.";
 }
 
+/** Simulates the backend completion flow when running locally without Supabase. */
 function buildLocalCompletionResult(
   input: SubmitQuizCompletionInput,
 ): QuizCompletionResult {
@@ -147,7 +186,6 @@ function buildLocalCompletionResult(
   if (!entitlement) {
     entitlement = {
       createdAt: new Date().toISOString(),
-      firstCompletionId: createOpaqueId("cmp"),
       verificationCode: createVerificationCode(),
     };
     entitlements[lookupKey] = entitlement;
@@ -168,7 +206,7 @@ function buildLocalCompletionResult(
     message: buildEntitlementMessage(entitlementStatus),
     raffleEligible: entitlementStatus === "new",
     score: scoreAnswers(game, input.answers),
-  };
+  } satisfies QuizCompletionResult;
 
   completions[completionLookupKey] = result;
   writeStoredJson(localCompletionStorageKey, completions);
@@ -176,16 +214,23 @@ function buildLocalCompletionResult(
   return result;
 }
 
+/** Extracts a useful error message from an edge-function response body. */
+async function readErrorMessage(response: Response, fallback: string) {
+  try {
+    const payload = (await response.json()) as QuizApiErrorPayload;
+    return payload.error ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Converts the completion response into a typed result or throws a helpful error. */
 async function handleCompletionResponse(response: Response) {
   if (!response.ok) {
-    let errorMessage = "We couldn't finalize your raffle entry right now.";
-
-    try {
-      const errorPayload = (await response.json()) as { error?: string };
-      errorMessage = errorPayload.error ?? errorMessage;
-    } catch {
-      // Fall back to the default message when the response body is not JSON.
-    }
+    const errorMessage = await readErrorMessage(
+      response,
+      "We couldn't finalize your raffle entry right now.",
+    );
 
     throw Object.assign(new Error(errorMessage), { status: response.status });
   }
@@ -193,6 +238,7 @@ async function handleCompletionResponse(response: Response) {
   return (await response.json()) as QuizCompletionResult;
 }
 
+/** Ensures the signed server session cookie exists before gameplay begins. */
 export async function ensureServerSession() {
   const { enabled, supabaseClientKey, supabaseUrl } = getSupabaseConfig();
 
@@ -219,10 +265,16 @@ export async function ensureServerSession() {
   });
 
   if (!response.ok) {
-    throw new Error("We couldn't prepare your quiz session right now.");
+    throw new Error(
+      await readErrorMessage(
+        response,
+        "We couldn't prepare your quiz session right now.",
+      ),
+    );
   }
 }
 
+/** Submits quiz completion to Supabase and retries once after a 401 response. */
 async function submitQuizCompletionToSupabase(
   input: SubmitQuizCompletionInput,
   retryOnUnauthorized = true,
@@ -250,6 +302,7 @@ async function submitQuizCompletionToSupabase(
   return handleCompletionResponse(response);
 }
 
+/** Finalizes quiz completion using Supabase or the local prototype fallback. */
 export async function submitQuizCompletion(input: SubmitQuizCompletionInput) {
   if (!getSupabaseConfig().enabled) {
     if (isPrototypeFallbackEnabled()) {

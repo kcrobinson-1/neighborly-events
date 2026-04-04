@@ -4,6 +4,7 @@ import {
   readVerifiedSessionId,
 } from "../_shared/session-cookie.ts";
 
+/** Creates a JSON response with the shared CORS policy and optional extra headers. */
 function jsonResponse(
   status: number,
   body: Record<string, unknown>,
@@ -20,6 +21,7 @@ function jsonResponse(
   });
 }
 
+/** Issues the signed browser session cookie used by completion requests. */
 Deno.serve(async (request) => {
   const origin = getAllowedOrigin(request);
 

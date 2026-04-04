@@ -8,6 +8,7 @@ import {
 import { createCorsHeaders, getAllowedOrigin } from "../_shared/cors.ts";
 import { readVerifiedSessionId } from "../_shared/session-cookie.ts";
 
+/** Shape returned by the completion RPC before it is mapped to the API response. */
 type CompletionRpcRow = {
   attempt_number: number;
   completion_id: string;
@@ -19,6 +20,7 @@ type CompletionRpcRow = {
   verification_code: string;
 };
 
+/** Request payload accepted by the completion endpoint. */
 type CompletionRequestBody = {
   answers: Record<string, string[]>;
   durationMs: number;
@@ -26,6 +28,7 @@ type CompletionRequestBody = {
   requestId: string;
 };
 
+/** Creates a JSON response with the shared CORS policy applied. */
 function jsonResponse(
   status: number,
   body: Record<string, unknown>,
@@ -40,6 +43,7 @@ function jsonResponse(
   });
 }
 
+/** Type guard for the answers object sent by the browser. */
 function isAnswersRecord(value: unknown): value is Record<string, string[]> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return false;
@@ -52,6 +56,7 @@ function isAnswersRecord(value: unknown): value is Record<string, string[]> {
   );
 }
 
+/** Validates and normalizes the completion request payload. */
 function validatePayload(payload: unknown): CompletionRequestBody | null {
   if (typeof payload !== "object" || payload === null) {
     return null;
@@ -59,10 +64,16 @@ function validatePayload(payload: unknown): CompletionRequestBody | null {
 
   const candidate = payload as Partial<CompletionRequestBody>;
 
+  const eventId =
+    typeof candidate.eventId === "string" ? candidate.eventId.trim() : "";
+  const requestId =
+    typeof candidate.requestId === "string" ? candidate.requestId.trim() : "";
+
   if (
     typeof candidate.durationMs !== "number" ||
-    typeof candidate.eventId !== "string" ||
-    typeof candidate.requestId !== "string" ||
+    !Number.isFinite(candidate.durationMs) ||
+    eventId.length === 0 ||
+    requestId.length === 0 ||
     !isAnswersRecord(candidate.answers)
   ) {
     return null;
@@ -71,11 +82,12 @@ function validatePayload(payload: unknown): CompletionRequestBody | null {
   return {
     answers: candidate.answers,
     durationMs: candidate.durationMs,
-    eventId: candidate.eventId,
-    requestId: candidate.requestId,
+    eventId,
+    requestId,
   };
 }
 
+/** Finalizes a quiz attempt and awards or reuses the raffle entitlement. */
 Deno.serve(async (request) => {
   const origin = getAllowedOrigin(request);
 

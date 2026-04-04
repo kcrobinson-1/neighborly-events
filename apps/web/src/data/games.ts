@@ -1,3 +1,4 @@
+/** Re-export shared quiz configuration so the app can import from a local module path. */
 export {
   featuredGameSlug,
   games,

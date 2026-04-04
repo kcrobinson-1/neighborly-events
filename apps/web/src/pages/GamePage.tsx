@@ -1,17 +1,23 @@
 import { type FormEvent, useState } from "react";
+import { answersMatch } from "../../../../shared/game-config";
 import type { GameConfig, Question } from "../data/games";
 import { featuredGameSlug } from "../data/games";
 import { useQuizSession } from "../game/useQuizSession";
+import {
+  getOptionLabels,
+  getSelectionLabel,
+} from "../game/quizUtils";
 import { ensureServerSession } from "../lib/quizApi";
-import { answersMatch, getOptionLabels, getSelectionLabel } from "../game/quizUtils";
 import { routes } from "../routes";
 import type { Answers, QuizCompletionResult } from "../types/quiz";
 
+/** Props for the top-level game route. */
 type GamePageProps = {
   game: GameConfig;
   onNavigate: (path: string) => void;
 };
 
+/** Orchestrates the full player-facing quiz flow for a single game. */
 export function GamePage({ game, onNavigate }: GamePageProps) {
   const [isStartingSession, setIsStartingSession] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -108,6 +114,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             {isShowingCorrectFeedback && feedbackMessage ? (
               <CorrectAnswerPanel
                 feedbackMessage={feedbackMessage}
+                isLastQuestion={currentIndex === questionCount - 1}
                 onContinue={continueFromCorrectFeedback}
                 question={currentQuestion}
               />
@@ -119,7 +126,6 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
                 currentIndex={currentIndex}
                 feedbackKind={feedbackKind}
                 feedbackMessage={feedbackMessage}
-                game={game}
                 onGoBack={goBack}
                 onOptionSelect={selectOption}
                 onSubmit={submit}
@@ -150,6 +156,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
   );
 }
 
+/** Props for the pre-quiz intro panel. */
 type GameIntroPanelProps = {
   game: GameConfig;
   isStartingSession: boolean;
@@ -157,6 +164,7 @@ type GameIntroPanelProps = {
   startError: string | null;
 };
 
+/** Intro panel shown before the player starts a quiz attempt. */
 function GameIntroPanel({
   game,
   isStartingSession,
@@ -198,13 +206,13 @@ function GameIntroPanel({
   );
 }
 
+/** Props for the active question card. */
 type CurrentQuestionPanelProps = {
   canGoBack: boolean;
   canSubmit: boolean;
   currentIndex: number;
   feedbackKind: "correct" | "incorrect" | null;
   feedbackMessage: string | null;
-  game: GameConfig;
   onGoBack: () => void;
   onOptionSelect: (optionId: string) => void;
   onSubmit: () => void;
@@ -213,13 +221,13 @@ type CurrentQuestionPanelProps = {
   questionCount: number;
 };
 
+/** Question card with answer selection and submit controls. */
 function CurrentQuestionPanel({
   canGoBack,
   canSubmit,
   currentIndex,
   feedbackKind,
   feedbackMessage,
-  game,
   onGoBack,
   onOptionSelect,
   onSubmit,
@@ -227,6 +235,7 @@ function CurrentQuestionPanel({
   question,
   questionCount,
 }: CurrentQuestionPanelProps) {
+  const selectionHintId = `${question.id}-selection-hint`;
   const submitLabel =
     question.selectionMode === "multiple" ? "Submit answers" : "Submit answer";
 
@@ -239,13 +248,15 @@ function CurrentQuestionPanel({
     <section className="panel question-panel">
       <p className="sponsor-label">Sponsored by {question.sponsor}</p>
       <h2>{question.prompt}</h2>
-      <p className="selection-hint">{getSelectionLabel(question)}</p>
+      <p className="selection-hint" id={selectionHintId}>
+        {getSelectionLabel(question)}
+      </p>
       <form className="question-form" onSubmit={handleSubmit}>
         <OptionField
-          gameName={game.name}
           onOptionSelect={onOptionSelect}
           pendingSelection={pendingSelection}
           question={question}
+          selectionHintId={selectionHintId}
         />
         {feedbackKind === "incorrect" && feedbackMessage ? (
           <div className="feedback-banner feedback-banner-error" role="status">
@@ -279,18 +290,20 @@ function CurrentQuestionPanel({
   );
 }
 
+/** Props for the answer choice fieldset. */
 type OptionFieldProps = {
-  gameName: string;
   onOptionSelect: (optionId: string) => void;
   pendingSelection: string[];
   question: Question;
+  selectionHintId: string;
 };
 
+/** Renders the answer input group for a single question. */
 function OptionField({
-  gameName,
   onOptionSelect,
   pendingSelection,
   question,
+  selectionHintId,
 }: OptionFieldProps) {
   const inputType =
     question.selectionMode === "multiple" ? "checkbox" : "radio";
@@ -298,7 +311,11 @@ function OptionField({
   return (
     <fieldset className="option-fieldset">
       <legend className="sr-only">{question.prompt}</legend>
-      <div className="options" aria-label={`${gameName} answer options`}>
+      <div
+        aria-describedby={selectionHintId}
+        aria-label={`${question.prompt} answer options`}
+        className="options"
+      >
         {question.options.map((option) => {
           const checked = pendingSelection.includes(option.id);
           const inputId = `${question.id}-${option.id}`;
@@ -326,14 +343,18 @@ function OptionField({
   );
 }
 
+/** Props for the instant-feedback success panel. */
 type CorrectAnswerPanelProps = {
   feedbackMessage: string;
+  isLastQuestion: boolean;
   onContinue: () => void;
   question: Question;
 };
 
+/** Success panel shown in the instant-feedback quiz mode. */
 function CorrectAnswerPanel({
   feedbackMessage,
+  isLastQuestion,
   onContinue,
   question,
 }: CorrectAnswerPanelProps) {
@@ -343,12 +364,13 @@ function CorrectAnswerPanel({
       <h2>{question.sponsor}</h2>
       <p>{feedbackMessage}</p>
       <button className="primary-button" onClick={onContinue} type="button">
-        Next question
+        {isLastQuestion ? "See results" : "Next question"}
       </button>
     </section>
   );
 }
 
+/** Props for the quiz completion screen. */
 type GameCompletionPanelProps = {
   answers: Answers;
   completion: QuizCompletionResult | null;
@@ -362,6 +384,7 @@ type GameCompletionPanelProps = {
   showRetake: boolean;
 };
 
+/** Completion screen that shows verification and optional answer review. */
 function GameCompletionPanel({
   answers,
   completion,
