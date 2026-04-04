@@ -9,6 +9,7 @@ Use it as a practical checklist for making changes that stay aligned with the cu
 This repository currently contains a prototype-to-MVP attendee quiz experience:
 
 - `apps/web` is the Vite + React frontend
+- `apps/web/src/styles.scss` is the SCSS entrypoint, backed by focused partials in `apps/web/src/styles/`
 - `shared/game-config.ts` is the shared quiz public entrypoint, backed by focused modules in `shared/game-config/`
 - `supabase/functions` contains the trusted backend edge functions
 - `supabase/migrations` contains the database schema and RPC logic
@@ -27,6 +28,7 @@ Use `docs/product.md` and `docs/experience.md` as product and UX targets, not as
 Respect the current split of responsibilities:
 
 - Put visual and interaction changes in `apps/web/src`
+- Keep shared styling tokens, mixins, and page/component styles in `apps/web/src/styles.scss` and `apps/web/src/styles/`
 - Put quiz definitions, catalog, validation, and scoring changes in `shared/game-config.ts` and `shared/game-config/`
 - Put trust, session, persistence, and entitlement logic in `supabase/functions` and `supabase/migrations`
 
@@ -89,6 +91,12 @@ npm run lint
 npm run build:web
 ```
 
+For frontend style changes, also make sure the SCSS entrypoint still builds through the normal frontend build:
+
+```bash
+npm run build:web
+```
+
 For Supabase edge function changes, run:
 
 ```bash
@@ -122,6 +130,12 @@ Expected setup and execution:
 - make sure Playwright and its browser dependency are available
 - if Chromium has not been installed yet, run `npx playwright install chromium`
 - run `npm run ui:review:capture`
+
+Backend nuance:
+
+- if `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` are not configured locally, run UI review against the Vite dev server, not a production preview build
+- the browser-only completion fallback is development-only, so a preview build without Supabase env vars can fail the quiz-start flow even when the UI is otherwise healthy
+- when you need a fixed host and port for Playwright, prefer `npm --workspace @neighborly/web run dev -- --host 127.0.0.1 --port 4173`
 
 The capture script supports future reuse:
 

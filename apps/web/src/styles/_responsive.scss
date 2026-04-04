@@ -1,0 +1,38 @@
+@use "./tokens" as *;
+
+@media (max-width: 860px) {
+  .landing-hero,
+  .feature-grid,
+  .flow-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .site-shell {
+    padding: 18px 14px 32px;
+  }
+
+  .topbar,
+  .sample-nav {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .topbar-compact {
+    gap: 10px;
+  }
+
+  .progress-copy {
+    padding-top: 0;
+  }
+
+  .panel {
+    padding: 18px;
+    border-radius: $radius-panel-mobile;
+  }
+
+  .sample-game-row {
+    padding: 16px;
+  }
+}

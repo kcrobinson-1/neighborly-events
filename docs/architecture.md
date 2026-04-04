@@ -73,8 +73,10 @@ The current frontend is intentionally shallow:
   Client-side types for completion payloads and results.
 - `apps/web/src/data/games.ts`
   Re-export layer for shared quiz definitions.
-- `apps/web/src/styles.css`
-  Global prototype styling.
+- `apps/web/src/styles.scss`
+  Frontend styling entrypoint.
+- `apps/web/src/styles/`
+  SCSS partials for tokens, mixins, layout, landing-page UI, quiz UI, and responsive rules.
 
 ### Shared Domain Structure
 

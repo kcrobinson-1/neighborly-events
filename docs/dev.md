@@ -16,6 +16,8 @@ The current implementation uses the following stack:
   Shared language layer across frontend code, shared domain logic, and Supabase edge functions.
 - `Vite`
   Local dev server and production build tool for the web app in `apps/web`.
+- `Sass`
+  Lightweight CSS preprocessor used to organize the frontend styles into shared tokens, mixins, and partials.
 - `ESLint`
   Repository-wide linting for the React app, shared TypeScript modules, Supabase functions, and the Playwright review script.
 - `Vercel`
@@ -33,6 +35,8 @@ The current repository layout is:
 
 - `apps/web`
   React frontend workspace.
+- `apps/web/src/styles.scss` and `apps/web/src/styles/`
+  SCSS entrypoint plus styling partials for tokens, layout, landing UI, quiz UI, and responsive rules.
 - `shared`
   Shared quiz types, content, scoring, and validation.
 - `supabase/functions`
@@ -114,6 +118,23 @@ How this repo uses Vite:
 - the top-level `npm run dev:web` and `npm run build:web` scripts delegate into the web workspace
 
 Vite is the tool you interact with while building the frontend locally. It is not the deployment host and it does not replace Supabase.
+
+### Sass
+
+Sass is the CSS authoring layer for the frontend.
+
+How this repo uses Sass:
+
+- `apps/web/src/main.tsx` imports `apps/web/src/styles.scss`
+- `apps/web/src/styles/_tokens.scss` defines shared design tokens and exported CSS custom properties
+- `apps/web/src/styles/_mixins.scss` holds a small set of reusable layout and surface helpers
+- the remaining partials separate base rules, shared layout, landing-page styles, quiz styles, and responsive behavior
+
+Why this repo uses Sass instead of plain CSS:
+
+- it keeps the frontend styling lightweight and Vite-native
+- it reduces duplication without introducing a CSS-in-JS runtime
+- it makes shared spacing, surface, and interaction patterns easier to maintain as the attendee UI grows
 
 ### Rendering Model
 
@@ -216,6 +237,11 @@ deno check --no-lock supabase/functions/complete-quiz/index.ts
 - `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 
 and deploy/link the Supabase project as described in the root README.
+
+UI-review note:
+
+- when Supabase env vars are not configured locally, run browser validation against the Vite dev server rather than `vite preview`
+- the no-backend prototype completion fallback is development-only
 
 ## Current Validation Commands
 
