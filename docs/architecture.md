@@ -265,9 +265,9 @@ The architecture doc should define the MVP entities clearly enough that implemen
 - eventId
 - sponsorId nullable
 - prompt
-- type
+- selectionMode
 - displayOrder
-- correctAnswer
+- correctAnswerIds
 - explanation nullable
 - sponsorFact nullable
 
@@ -328,7 +328,7 @@ Behavioral implications:
 
 - `final_score_reveal` needs score calculation and end-of-quiz answer review support
 - `instant_feedback_required` needs correct-answer checking during the quiz plus an optional sponsor-fact interstitial
-- both modes can share the same question and answer data model as long as `correctAnswer` and `explanation` or `sponsorFact` are available when needed
+- both modes can share the same question and answer data model as long as `selectionMode`, `correctAnswerIds`, and `explanation` or `sponsorFact` are available when needed
 
 ## 9. How Should Performance and Resilience Work?
 

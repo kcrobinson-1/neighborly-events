@@ -7,12 +7,15 @@ export type FeedbackMode =
   | "final_score_reveal"
   | "instant_feedback_required";
 
+export type SelectionMode = "single" | "multiple";
+
 export type Question = {
   id: string;
   sponsor: string;
   prompt: string;
   options: AnswerOption[];
-  correctAnswer: string;
+  selectionMode: SelectionMode;
+  correctAnswerIds: string[];
   explanation?: string;
   sponsorFact?: string;
 };
@@ -39,7 +42,8 @@ const firstSampleGame: GameConfig = {
   location: "Seattle",
   estimatedMinutes: 2,
   raffleLabel: "raffle ticket",
-  summary: "Move quickly through the quiz and see your score plus the correct answers at the end.",
+  summary:
+    "Move through the quiz with explicit submit on each question and see your score plus the correct answers at the end.",
   feedbackMode: "final_score_reveal",
   intro: "Answer 6 quick questions, support local sponsors, and earn a raffle ticket.",
   questions: [
@@ -47,8 +51,10 @@ const firstSampleGame: GameConfig = {
       id: "q1",
       sponsor: "Hi Spot Cafe",
       prompt: "Which local spot is sponsoring this neighborhood music series question?",
-      correctAnswer: "a",
-      sponsorFact: "Hi Spot Cafe has been a long-running Madrona neighborhood favorite for brunch and community meetups.",
+      selectionMode: "single",
+      correctAnswerIds: ["a"],
+      sponsorFact:
+        "Hi Spot Cafe has been a long-running Madrona neighborhood favorite for brunch and community meetups.",
       options: [
         { id: "a", label: "Hi Spot Cafe" },
         { id: "b", label: "Space Needle" },
@@ -59,8 +65,10 @@ const firstSampleGame: GameConfig = {
       id: "q2",
       sponsor: "Bottlehouse",
       prompt: "What kind of experience should this game feel like?",
-      correctAnswer: "b",
-      explanation: "The best version feels like a quick neighborhood game, not a long form.",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      explanation:
+        "The best version feels like a quick neighborhood game, not a long form.",
       options: [
         { id: "a", label: "A long signup form" },
         { id: "b", label: "A quick neighborhood game" },
@@ -71,8 +79,10 @@ const firstSampleGame: GameConfig = {
       id: "q3",
       sponsor: "Cafe Flora",
       prompt: "How many questions should the MVP generally ask attendees?",
-      correctAnswer: "b",
-      explanation: "Five to seven questions keeps the experience short while still giving sponsors meaningful visibility.",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      explanation:
+        "Five to seven questions keeps the experience short while still giving sponsors meaningful visibility.",
       options: [
         { id: "a", label: "1 or 2" },
         { id: "b", label: "5 to 7" },
@@ -83,8 +93,10 @@ const firstSampleGame: GameConfig = {
       id: "q4",
       sponsor: "Creature Consignment",
       prompt: "What matters most for raffle eligibility in the MVP?",
-      correctAnswer: "a",
-      explanation: "Completion matters more than score in the MVP so the flow stays simple and easy to redeem.",
+      selectionMode: "single",
+      correctAnswerIds: ["a"],
+      explanation:
+        "Completion matters more than score in the MVP so the flow stays simple and easy to redeem.",
       options: [
         { id: "a", label: "Finishing the quiz" },
         { id: "b", label: "Sharing on social media" },
@@ -95,8 +107,10 @@ const firstSampleGame: GameConfig = {
       id: "q5",
       sponsor: "Central Co-op",
       prompt: "How should questions appear in the experience?",
-      correctAnswer: "b",
-      explanation: "One visible card at a time keeps the flow readable, fast, and game-like on phones.",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      explanation:
+        "One visible card at a time keeps the flow readable, fast, and game-like on phones.",
       options: [
         { id: "a", label: "All visible on one long page" },
         { id: "b", label: "One card at a time" },
@@ -107,8 +121,10 @@ const firstSampleGame: GameConfig = {
       id: "q6",
       sponsor: "Glasswing",
       prompt: "What should the final screen make obvious?",
-      correctAnswer: "a",
-      sponsorFact: "A strong final verification moment helps volunteers trust the completion without digging through answers.",
+      selectionMode: "single",
+      correctAnswerIds: ["a"],
+      sponsorFact:
+        "A strong final verification moment helps volunteers trust the completion without digging through answers.",
       options: [
         { id: "a", label: "That the attendee is officially done" },
         { id: "b", label: "That there are hidden bonus levels" },
@@ -125,16 +141,21 @@ const sponsorSpotlightGame: GameConfig = {
   location: "Seattle",
   estimatedMinutes: 3,
   raffleLabel: "bonus raffle ticket",
-  summary: "You must answer correctly to move on, and each right answer reveals a sponsor fact before the next question.",
+  summary:
+    "You must submit the correct answer to move on, and each right answer reveals a sponsor fact before the next question.",
   feedbackMode: "instant_feedback_required",
-  intro: "Get each answer right to unlock quick sponsor facts and finish the challenge.",
+  intro:
+    "Choose an answer, submit it, and get it right to unlock quick sponsor facts and finish the challenge.",
   questions: [
     {
       id: "q1",
       sponsor: "Bottlehouse",
-      prompt: "Which answer best describes why sponsors appear inside the quiz experience?",
-      correctAnswer: "c",
-      sponsorFact: "Bottlehouse benefits more from active participation in a community moment than from a passive logo placement.",
+      prompt:
+        "Which answer best describes why sponsors appear inside the quiz experience?",
+      selectionMode: "single",
+      correctAnswerIds: ["c"],
+      sponsorFact:
+        "Bottlehouse benefits more from active participation in a community moment than from a passive logo placement.",
       options: [
         { id: "a", label: "To interrupt players with ads" },
         { id: "b", label: "To replace the raffle entirely" },
@@ -145,8 +166,10 @@ const sponsorSpotlightGame: GameConfig = {
       id: "q2",
       sponsor: "Central Co-op",
       prompt: "What keeps the quiz feeling playable outdoors on a phone?",
-      correctAnswer: "b",
-      sponsorFact: "Central Co-op's sponsor moment works better when the interface stays legible, large, and thumb-friendly.",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      sponsorFact:
+        "Central Co-op's sponsor moment works better when the interface stays legible, large, and thumb-friendly.",
       options: [
         { id: "a", label: "Long paragraphs and tiny controls" },
         { id: "b", label: "Large tap targets and one clear choice at a time" },
@@ -157,10 +180,15 @@ const sponsorSpotlightGame: GameConfig = {
       id: "q3",
       sponsor: "Cafe Flora",
       prompt: "What should happen after a correct answer in this quiz mode?",
-      correctAnswer: "a",
-      sponsorFact: "A short sponsor fact keeps the moment informative without derailing the pace of the quiz.",
+      selectionMode: "single",
+      correctAnswerIds: ["a"],
+      sponsorFact:
+        "A short sponsor fact keeps the moment informative without derailing the pace of the quiz.",
       options: [
-        { id: "a", label: "Show a quick confirmation and sponsor fact before continuing" },
+        {
+          id: "a",
+          label: "Show a quick confirmation and sponsor fact before continuing",
+        },
         { id: "b", label: "Jump straight to the homepage" },
         { id: "c", label: "Require an email address before moving on" },
       ],
@@ -169,8 +197,10 @@ const sponsorSpotlightGame: GameConfig = {
       id: "q4",
       sponsor: "Glasswing",
       prompt: "What should a wrong answer do in this mode?",
-      correctAnswer: "b",
-      explanation: "The player should try again because this mode is designed around getting the answer right before progressing.",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      explanation:
+        "The player should try again because this mode is designed around getting the answer right before progressing.",
       options: [
         { id: "a", label: "Move on anyway without feedback" },
         { id: "b", label: "Prompt the player to try again" },
@@ -180,7 +210,70 @@ const sponsorSpotlightGame: GameConfig = {
   ],
 };
 
-export const games: GameConfig[] = [firstSampleGame, sponsorSpotlightGame];
+const communityChecklistGame: GameConfig = {
+  id: "community-checklist-2026",
+  slug: "community-checklist",
+  name: "Community Checklist Quiz",
+  location: "Seattle",
+  estimatedMinutes: 3,
+  raffleLabel: "sample raffle ticket",
+  summary:
+    "Includes select-all-that-apply questions so we can validate multiple selection with an explicit submit button.",
+  feedbackMode: "final_score_reveal",
+  intro:
+    "Some questions ask you to select all that apply before submitting your answer.",
+  questions: [
+    {
+      id: "q1",
+      sponsor: "Madrona Farmers Market",
+      prompt: "Which behaviors support a strong neighborhood-event quiz experience?",
+      selectionMode: "multiple",
+      correctAnswerIds: ["a", "c", "d"],
+      explanation:
+        "The strongest experience is clear, mobile-friendly, and easy to finish in the flow of an event.",
+      options: [
+        { id: "a", label: "Large tap targets" },
+        { id: "b", label: "Tiny multi-column forms" },
+        { id: "c", label: "Visible progress" },
+        { id: "d", label: "Short completion time" },
+      ],
+    },
+    {
+      id: "q2",
+      sponsor: "Hi Spot Cafe",
+      prompt: "What should a single-answer question allow before submission?",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      explanation:
+        "The user should be able to switch their selected answer before they decide to submit.",
+      options: [
+        { id: "a", label: "Lock the first tap immediately" },
+        { id: "b", label: "Change the selected answer before pressing submit" },
+        { id: "c", label: "Force a page reload between choices" },
+      ],
+    },
+    {
+      id: "q3",
+      sponsor: "Central Co-op",
+      prompt: "Which answers fit a select-all-that-apply question model?",
+      selectionMode: "multiple",
+      correctAnswerIds: ["a", "b"],
+      sponsorFact:
+        "Select-all questions are useful when a sponsor wants a slightly richer educational moment without changing the overall site structure.",
+      options: [
+        { id: "a", label: "Allow multiple active selections" },
+        { id: "b", label: "Use one explicit submit button" },
+        { id: "c", label: "Advance instantly after every tap" },
+      ],
+    },
+  ],
+};
+
+export const games: GameConfig[] = [
+  firstSampleGame,
+  sponsorSpotlightGame,
+  communityChecklistGame,
+];
 
 export const gamesBySlug: Record<string, GameConfig> = Object.fromEntries(
   games.map((game) => [game.slug, game]),

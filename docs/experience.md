@@ -83,7 +83,7 @@ That means:
 
 - only one question visible at a time
 - clear progress indicator
-- transition forward on answer selection or explicit "Next"
+- transition forward after an explicit submit action
 - optional back action only if it does not add confusion
 - local state persistence so refreshes do not reset progress unnecessarily
 
@@ -212,8 +212,10 @@ The quiz should feel brisk and reassuring.
 
 - Show one question at a time
 - Favor tap-to-select interactions over typing
-- Advance immediately after selection if confidence is high
-- If answer confirmation is needed, keep it to a single visible CTA
+- Let the user change their selection before submitting
+- Use an explicit submit CTA for each question
+- For single-answer questions, allow only one selected answer at a time
+- For multiple-answer questions, allow multiple selected answers before submit
 - Keep transitions quick and directional so users feel progress
 
 ## Quiz Feedback Modes

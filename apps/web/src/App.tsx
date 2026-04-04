@@ -17,7 +17,7 @@ function App() {
     const game = getGameBySlug(matchedGame.slug);
 
     content = game ? (
-      <GamePage game={game} onNavigate={navigate} />
+      <GamePage game={game} key={game.id} onNavigate={navigate} />
     ) : (
       <NotFoundPage onNavigate={navigate} />
     );

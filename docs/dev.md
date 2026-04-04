@@ -269,7 +269,9 @@ Implementation note:
 
 - `final_score_reveal` requires score calculation and an end-of-quiz review state
 - `instant_feedback_required` requires per-question answer validation and a short follow-up state after correct answers
-- both modes require `correctAnswer` to exist in the underlying quiz data for every scored question
+- both modes require `correctAnswerIds` to exist in the underlying quiz data for every scored question
+- the frontend should maintain a provisional selection state and only commit an answer after the user presses submit
+- questions should also declare `selectionMode` so the UI knows whether to allow one selected answer or multiple selected answers before submit
 
 ### 7. Verification Model
 

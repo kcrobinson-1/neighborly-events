@@ -354,7 +354,38 @@ a {
   margin-top: 20px;
 }
 
+.question-form,
+.option-fieldset {
+  display: grid;
+  gap: 16px;
+}
+
+.option-fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-inline-size: 0;
+}
+
+.option-choice {
+  position: relative;
+  display: block;
+}
+
+.option-choice-selected .option-button {
+  background: rgba(47, 111, 143, 0.12);
+  border-color: rgba(47, 111, 143, 0.42);
+  box-shadow: inset 0 0 0 1px rgba(47, 111, 143, 0.12);
+}
+
+.option-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .option-button {
+  display: block;
   padding: 18px;
   text-align: left;
   background: #fffaf3;
@@ -363,9 +394,10 @@ a {
   min-height: 64px;
 }
 
-.option-button-error {
-  border-color: rgba(217, 107, 43, 0.5);
-  background: rgba(255, 241, 231, 0.92);
+.selection-hint {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .feedback-banner {
@@ -389,6 +421,17 @@ a {
 .feedback-banner-error {
   background: rgba(217, 107, 43, 0.12);
   border: 1px solid rgba(217, 107, 43, 0.24);
+}
+
+.submit-button {
+  margin-top: 2px;
+}
+
+.submit-button:disabled {
+  cursor: not-allowed;
+  transform: none;
+  background: rgba(31, 58, 50, 0.18);
+  box-shadow: none;
 }
 
 .results-block,
@@ -481,7 +524,7 @@ a {
   margin-top: 22px;
 }
 
-.option-button:focus-visible,
+.option-input:focus-visible + .option-button,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
 .text-link:focus-visible {

@@ -1,21 +1,14 @@
-import { useMemo, useState } from "react";
 import type { GameConfig, Question } from "../data/games";
 import { featuredGameSlug } from "../data/games";
+import { type FormEvent } from "react";
+import {
+  type Answers,
+  answersMatch,
+  getOptionLabels,
+  getSelectionLabel,
+} from "../game/quizUtils";
 import { routes } from "../routes";
-
-type Answers = Record<string, string>;
-
-type FeedbackState =
-  | {
-      kind: "incorrect";
-      message: string;
-      selectedOptionId: string;
-    }
-  | {
-      kind: "correct";
-      message: string;
-      selectedOptionId: string;
-    };
+import { useQuizSession } from "../game/useQuizSession";
 
 type GamePageProps = {
   game: GameConfig;
@@ -23,79 +16,29 @@ type GamePageProps = {
 };
 
 export function GamePage({ game, onNavigate }: GamePageProps) {
-  const [started, setStarted] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answers>({});
-  const [feedbackState, setFeedbackState] = useState<FeedbackState | null>(null);
+  const {
+    answers,
+    completionCode,
+    continueFromCorrectFeedback,
+    currentIndex,
+    currentQuestion,
+    feedbackKind,
+    feedbackMessage,
+    canSubmit,
+    isComplete,
+    isShowingCorrectFeedback,
+    isShowingQuestion,
+    isStarted,
+    pendingSelection,
+    progressValue,
+    reset,
+    score,
+    selectOption,
+    start,
+    submit,
+  } = useQuizSession(game);
 
-  const questions = game.questions;
-  const currentQuestion = questions[currentIndex];
-  const isComplete = started && currentIndex >= questions.length;
-  const progressValue = isComplete
-    ? 100
-    : ((currentIndex + 1) / questions.length) * 100;
-
-  const answerCount = Object.keys(answers).length.toString().padStart(2, "0");
-  const completionCode = `MMP-${answerCount}${game.id.slice(-2).toUpperCase()}`;
-
-  const score = useMemo(
-    () =>
-      questions.reduce((total, question) => {
-        return total + Number(answers[question.id] === question.correctAnswer);
-      }, 0),
-    [answers, questions],
-  );
-
-  const handleStart = () => {
-    setStarted(true);
-    setCurrentIndex(0);
-  };
-
-  const advanceToNextQuestion = () => {
-    setFeedbackState(null);
-    setCurrentIndex((index) => index + 1);
-  };
-
-  const handleAnswerSelect = (questionId: string, optionId: string) => {
-    if (game.feedbackMode === "final_score_reveal") {
-      setAnswers((current) => ({
-        ...current,
-        [questionId]: optionId,
-      }));
-      setCurrentIndex((index) => index + 1);
-      return;
-    }
-
-    if (optionId !== currentQuestion.correctAnswer) {
-      setFeedbackState({
-        kind: "incorrect",
-        selectedOptionId: optionId,
-        message: currentQuestion.explanation ?? "Not quite. Try again.",
-      });
-      return;
-    }
-
-    setAnswers((current) => ({
-      ...current,
-      [questionId]: optionId,
-    }));
-
-    setFeedbackState({
-      kind: "correct",
-      selectedOptionId: optionId,
-      message:
-        currentQuestion.sponsorFact ??
-        currentQuestion.explanation ??
-        `Correct. ${currentQuestion.sponsor} is part of the neighborhood event experience.`,
-    });
-  };
-
-  const handleReset = () => {
-    setStarted(false);
-    setCurrentIndex(0);
-    setAnswers({});
-    setFeedbackState(null);
-  };
+  const questionCount = game.questions.length;
 
   return (
     <section className="game-layout">
@@ -118,36 +61,41 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             <p className="eyebrow">{game.location} neighborhood event</p>
             <h1>{game.name}</h1>
           </div>
-          {started && !isComplete ? (
+          {isStarted && !isComplete ? (
             <div className="progress-copy" aria-live="polite">
-              Question {currentIndex + 1} of {questions.length}
+              Question {currentIndex + 1} of {questionCount}
             </div>
           ) : null}
         </header>
 
-        {!started ? <GameIntroPanel game={game} onStart={handleStart} /> : null}
+        {!isStarted ? <GameIntroPanel game={game} onStart={start} /> : null}
 
-        {started && !isComplete ? (
+        {isStarted && !isComplete && currentQuestion ? (
           <>
             <div className="progress-track" aria-hidden="true">
               <div className="progress-fill" style={{ width: `${progressValue}%` }} />
             </div>
-            {feedbackState?.kind === "correct" ? (
+            {isShowingCorrectFeedback && feedbackMessage ? (
               <CorrectAnswerPanel
-                feedbackMessage={feedbackState.message}
-                onContinue={advanceToNextQuestion}
+                feedbackMessage={feedbackMessage}
+                onContinue={continueFromCorrectFeedback}
                 question={currentQuestion}
               />
-            ) : (
+            ) : null}
+            {isShowingQuestion ? (
               <CurrentQuestionPanel
                 currentIndex={currentIndex}
-                feedbackState={feedbackState}
+                feedbackKind={feedbackKind}
+                feedbackMessage={feedbackMessage}
                 game={game}
-                onAnswerSelect={handleAnswerSelect}
+                canSubmit={canSubmit}
+                onOptionSelect={selectOption}
+                onSubmit={submit}
+                pendingSelection={pendingSelection}
                 question={currentQuestion}
-                questionCount={questions.length}
+                questionCount={questionCount}
               />
-            )}
+            ) : null}
           </>
         ) : null}
 
@@ -156,7 +104,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             answers={answers}
             completionCode={completionCode}
             game={game}
-            onReset={handleReset}
+            onReset={reset}
             score={score}
           />
         ) : null}
@@ -173,8 +121,8 @@ type GameIntroPanelProps = {
 function GameIntroPanel({ game, onStart }: GameIntroPanelProps) {
   const modeDescription =
     game.feedbackMode === "instant_feedback_required"
-      ? "Get each one right to unlock a sponsor fact before the next question."
-      : "Move quickly through the quiz and see your score at the end.";
+      ? "Pick an answer, submit it, and get it right to unlock a sponsor fact before the next question."
+      : "Pick your answer, submit it, and review your score at the end.";
 
   return (
     <section className="panel intro-panel">
@@ -194,54 +142,114 @@ function GameIntroPanel({ game, onStart }: GameIntroPanelProps) {
 }
 
 type CurrentQuestionPanelProps = {
+  canSubmit: boolean;
   currentIndex: number;
-  feedbackState: FeedbackState | null;
+  feedbackKind: "correct" | "incorrect" | null;
+  feedbackMessage: string | null;
   game: GameConfig;
-  onAnswerSelect: (questionId: string, optionId: string) => void;
+  onOptionSelect: (optionId: string) => void;
+  onSubmit: () => void;
+  pendingSelection: string[];
   question: GameConfig["questions"][number];
   questionCount: number;
 };
 
 function CurrentQuestionPanel({
+  canSubmit,
   currentIndex,
-  feedbackState,
+  feedbackKind,
+  feedbackMessage,
   game,
-  onAnswerSelect,
+  onOptionSelect,
+  onSubmit,
+  pendingSelection,
   question,
   questionCount,
 }: CurrentQuestionPanelProps) {
+  const submitLabel =
+    question.selectionMode === "multiple" ? "Submit answers" : "Submit answer";
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onSubmit();
+  };
+
   return (
     <section className="panel question-panel">
       <p className="sponsor-label">Sponsored by {question.sponsor}</p>
       <h2>{question.prompt}</h2>
-      <div className="options" role="list" aria-label={`${game.name} answer options`}>
+      <p className="selection-hint">{getSelectionLabel(question)}</p>
+      <form className="question-form" onSubmit={handleSubmit}>
+        <OptionField
+          gameName={game.name}
+          onOptionSelect={onOptionSelect}
+          pendingSelection={pendingSelection}
+          question={question}
+        />
+        {feedbackKind === "incorrect" && feedbackMessage ? (
+          <div className="feedback-banner feedback-banner-error" role="status">
+            <strong>Not quite.</strong>
+            <p>{feedbackMessage}</p>
+          </div>
+        ) : null}
+        <button
+          className="primary-button submit-button"
+          disabled={!canSubmit}
+          type="submit"
+        >
+          {submitLabel}
+        </button>
+        <p className="sr-only">
+          Question {currentIndex + 1} of {questionCount}
+        </p>
+      </form>
+    </section>
+  );
+}
+
+type OptionFieldProps = {
+  gameName: string;
+  onOptionSelect: (optionId: string) => void;
+  pendingSelection: string[];
+  question: Question;
+};
+
+function OptionField({
+  gameName,
+  onOptionSelect,
+  pendingSelection,
+  question,
+}: OptionFieldProps) {
+  const inputType =
+    question.selectionMode === "multiple" ? "checkbox" : "radio";
+
+  return (
+    <fieldset className="option-fieldset">
+      <legend className="sr-only">{question.prompt}</legend>
+      <div className="options" aria-label={`${gameName} answer options`}>
         {question.options.map((option) => {
-          const isIncorrectSelection =
-            feedbackState?.kind === "incorrect" &&
-            feedbackState.selectedOptionId === option.id;
+          const checked = pendingSelection.includes(option.id);
+          const inputId = `${question.id}-${option.id}`;
 
           return (
-            <button
+            <label
+              className={`option-choice${checked ? " option-choice-selected" : ""}`}
+              htmlFor={inputId}
               key={option.id}
-              className={`option-button${isIncorrectSelection ? " option-button-error" : ""}`}
-              onClick={() => onAnswerSelect(question.id, option.id)}
-              type="button"
             >
-              {option.label}
-            </button>
+              <input
+                checked={checked}
+                className="option-input"
+                id={inputId}
+                name={`question-${question.id}`}
+                onChange={() => onOptionSelect(option.id)}
+                type={inputType}
+              />
+              <span className="option-button">{option.label}</span>
+            </label>
           );
         })}
       </div>
-      {feedbackState?.kind === "incorrect" ? (
-        <div className="feedback-banner feedback-banner-error" role="status">
-          <strong>Not quite.</strong>
-          <p>{feedbackState.message}</p>
-        </div>
-      ) : null}
-      <p className="sr-only">
-        Question {currentIndex + 1} of {questionCount}
-      </p>
-    </section>
+    </fieldset>
   );
 }
 
@@ -301,14 +309,16 @@ function GameCompletionPanel({
           </div>
           <div className="answer-review-list">
             {game.questions.map((question) => {
-              const selectedAnswer = answers[question.id];
-              const selectedOption = question.options.find(
-                (option) => option.id === selectedAnswer,
+              const selectedAnswerIds = answers[question.id] ?? [];
+              const selectedLabels = getOptionLabels(question, selectedAnswerIds);
+              const correctLabels = getOptionLabels(
+                question,
+                question.correctAnswerIds,
               );
-              const correctOption = question.options.find(
-                (option) => option.id === question.correctAnswer,
+              const isCorrect = answersMatch(
+                selectedAnswerIds,
+                question.correctAnswerIds,
               );
-              const isCorrect = selectedAnswer === question.correctAnswer;
 
               return (
                 <article className="answer-review-card" key={question.id}>
@@ -316,12 +326,20 @@ function GameCompletionPanel({
                   <h3>{question.prompt}</h3>
                   <p>
                     <strong>Your answer:</strong>{" "}
-                    {selectedOption?.label ?? "No answer recorded"}
+                    {selectedLabels.length > 0
+                      ? selectedLabels.join(", ")
+                      : "No answer recorded"}
                   </p>
                   <p>
-                    <strong>Correct answer:</strong> {correctOption?.label}
+                    <strong>Correct answer:</strong> {correctLabels.join(", ")}
                   </p>
-                  <p className={isCorrect ? "review-status review-status-correct" : "review-status review-status-incorrect"}>
+                  <p
+                    className={
+                      isCorrect
+                        ? "review-status review-status-correct"
+                        : "review-status review-status-incorrect"
+                    }
+                  >
                     {isCorrect ? "Correct" : "Needs review"}
                   </p>
                   {question.sponsorFact ?? question.explanation ? (
