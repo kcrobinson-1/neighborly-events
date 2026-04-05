@@ -1,4 +1,5 @@
 const sessionCookieName = "neighborly_session";
+export const sessionHeaderName = "x-neighborly-session";
 const sessionCookieMaxAgeSeconds = 60 * 60 * 24 * 30;
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -100,6 +101,7 @@ export async function createSignedSessionCookie(secret: string) {
 
   return {
     sessionId,
+    sessionToken: token,
     setCookieHeader: [
       `${sessionCookieName}=${encodeURIComponent(token)}`,
       "HttpOnly",
@@ -111,10 +113,21 @@ export async function createSignedSessionCookie(secret: string) {
   };
 }
 
-/** Verifies the signed session cookie and returns the trusted session id. */
-export async function readVerifiedSessionId(request: Request, secret: string) {
+/** Reads the signed session token from the cookie first, then the fallback header. */
+function readSessionToken(request: Request) {
   const cookies = parseCookies(request.headers.get("cookie"));
-  const token = cookies[sessionCookieName];
+  const cookieToken = cookies[sessionCookieName];
+
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  return request.headers.get(sessionHeaderName)?.trim() ?? null;
+}
+
+/** Verifies the signed session token and returns the trusted session details. */
+export async function readVerifiedSession(request: Request, secret: string) {
+  const token = readSessionToken(request);
 
   if (!token) {
     return null;
@@ -135,5 +148,10 @@ export async function readVerifiedSessionId(request: Request, secret: string) {
 
   const expectedSignature = await signSessionId(sessionId, secret);
 
-  return constantTimeEqual(signature, expectedSignature) ? sessionId : null;
+  return constantTimeEqual(signature, expectedSignature)
+    ? {
+      sessionId,
+      sessionToken: token,
+    }
+    : null;
 }

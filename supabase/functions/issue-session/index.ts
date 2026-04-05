@@ -1,7 +1,7 @@
 import { createCorsHeaders, getAllowedOrigin } from "../_shared/cors.ts";
 import {
   createSignedSessionCookie,
-  readVerifiedSessionId,
+  readVerifiedSession,
 } from "../_shared/session-cookie.ts";
 
 /** Creates a JSON response with the shared CORS policy and optional extra headers. */
@@ -21,7 +21,7 @@ function jsonResponse(
   });
 }
 
-/** Issues the signed browser session cookie used by completion requests. */
+/** Issues the signed browser session credential used by completion requests. */
 Deno.serve(async (request) => {
   const origin = getAllowedOrigin(request);
 
@@ -52,26 +52,28 @@ Deno.serve(async (request) => {
     );
   }
 
-  const existingSessionId = await readVerifiedSessionId(request, signingSecret);
+  const existingSession = await readVerifiedSession(request, signingSecret);
 
-  if (existingSessionId) {
+  if (existingSession) {
     return jsonResponse(
       200,
       {
         issuedNewSession: false,
         sessionReady: true,
+        sessionToken: existingSession.sessionToken,
       },
       origin,
     );
   }
 
-  const { setCookieHeader } = await createSignedSessionCookie(signingSecret);
+  const { sessionToken, setCookieHeader } = await createSignedSessionCookie(signingSecret);
 
   return jsonResponse(
     200,
     {
       issuedNewSession: true,
       sessionReady: true,
+      sessionToken,
     },
     origin,
     {

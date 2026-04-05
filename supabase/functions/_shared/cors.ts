@@ -39,7 +39,7 @@ export function createCorsHeaders(origin: string | null) {
   return {
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type",
+      "authorization, x-client-info, apikey, content-type, x-neighborly-session",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     ...(origin ? { "Access-Control-Allow-Origin": origin } : {}),
   };

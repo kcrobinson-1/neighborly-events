@@ -103,13 +103,13 @@ This is the current source of truth for quiz correctness. The browser uses it to
 The Supabase side is intentionally small:
 
 - `supabase/functions/issue-session/index.ts`
-  Creates or reuses the signed browser session cookie.
+  Creates or reuses the signed browser session credential.
 - `supabase/functions/complete-quiz/index.ts`
-  Validates the completion payload, verifies the session cookie, computes the trusted score, and calls the database RPC.
+  Validates the completion payload, verifies the session credential, computes the trusted score, and calls the database RPC.
 - `supabase/functions/_shared/cors.ts`
   Shared CORS helpers.
 - `supabase/functions/_shared/session-cookie.ts`
-  Cookie signing and verification helpers.
+  Session signing and verification helpers shared by both the cookie and header-fallback path.
 - `supabase/migrations/20260403120000_complete_quiz_entitlements.sql`
   Database objects that store completion attempts and ensure only one raffle entitlement is granted per event/session pair.
 
@@ -127,13 +127,17 @@ That means:
 
 ### Browser-session trust for the no-login MVP
 
-The backend issues a signed HTTP-only cookie through `issue-session`.
+The backend issues a signed browser session through `issue-session`.
 
-That cookie is then used by `complete-quiz` to:
+That credential is then used by `complete-quiz` to:
 
 - associate completions with a backend-controlled browser session
 - avoid trusting a client-generated session identifier
 - allow repeat completions without minting repeat raffle entitlements
+
+The preferred transport is still a secure cookie, but the frontend also stores the signed session token fallback and sends it explicitly when browsers refuse cross-site cookie round-trips.
+
+That means the trust boundary is still backend-controlled, but it no longer depends on every browser accepting a third-party cookie round-trip between the Vercel-hosted SPA and the Supabase edge-function origin.
 
 This is intentionally lighter than full user identity, but it is stronger than a purely client-rendered completion screen.
 
@@ -163,10 +167,10 @@ The current system works like this:
 1. A user lands on the frontend hosted on Vercel.
 2. The React app loads and resolves the pathname locally.
 3. When the user starts a game, the browser calls the Supabase `issue-session` edge function.
-4. Supabase returns a signed HTTP-only cookie that represents the browser session.
+4. Supabase returns a signed browser session credential and attempts to set the secure session cookie.
 5. The player completes the quiz entirely in local browser state.
 6. At the end, the browser submits answers, duration, event id, and request id to `complete-quiz`.
-7. The backend verifies the signed cookie, validates answers against the shared `game-config` module, recomputes score, and executes the database RPC.
+7. The backend verifies the signed session credential, validates answers against the shared `game-config` module, recomputes score, and executes the database RPC.
 8. The RPC records the completion attempt, creates or reuses the raffle entitlement, and returns the official verification data.
 9. The frontend renders the completion screen using that trusted response.
 
@@ -177,7 +181,7 @@ This flow keeps question-to-question interaction fast while reserving the final 
 The current implementation uses two edge functions:
 
 - `issue-session`
-  Prepares the signed session cookie used as the trust boundary for the no-login MVP.
+  Prepares the signed browser session credential used as the trust boundary for the no-login MVP.
 - `complete-quiz`
   Owns final validation, scoring, dedupe, and verification-code return.
 
@@ -280,7 +284,7 @@ What is missing for live operation:
 
 Today, the trust boundary is:
 
-- signed HTTP-only cookie
+- signed browser session credential
 - one raffle entitlement per event/session pair
 
 What is not yet implemented:

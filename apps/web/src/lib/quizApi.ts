@@ -14,6 +14,8 @@ const localAttemptStorageKey = "neighborly.local-attempts.v1";
 const localCompletionStorageKey = "neighborly.local-completions.v1";
 /** Browser storage key for the local-only prototype session identifier. */
 const localPrototypeSessionStorageKey = "neighborly.local-session.v1";
+/** Browser storage key for the signed server session token fallback. */
+const serverSessionTokenStorageKey = "neighborly.server-session-token.v1";
 
 /** Stored raffle entitlement for a prototype browser session. */
 type LocalEntitlementRecord = {
@@ -30,6 +32,12 @@ type LocalCompletionsStore = Record<string, QuizCompletionResult>;
 /** Minimal error payload shape returned by the edge functions. */
 type QuizApiErrorPayload = {
   error?: string;
+};
+/** Response shape returned when the backend prepares the signed session. */
+type IssueSessionResponse = {
+  issuedNewSession: boolean;
+  sessionReady: boolean;
+  sessionToken?: string;
 };
 /** Runtime Supabase configuration read from Vite environment variables. */
 type SupabaseConfig = {
@@ -147,6 +155,33 @@ function writeStoredJson<T>(key: string, value: T) {
   storage.setItem(key, JSON.stringify(value));
 }
 
+/** Reads the signed backend session token fallback from browser storage. */
+function readStoredServerSessionToken() {
+  const storage = getLocalStorage();
+
+  if (!storage) {
+    return "";
+  }
+
+  return storage.getItem(serverSessionTokenStorageKey)?.trim() ?? "";
+}
+
+/** Stores or clears the signed backend session token fallback. */
+function writeStoredServerSessionToken(sessionToken: string | null) {
+  const storage = getLocalStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  if (sessionToken) {
+    storage.setItem(serverSessionTokenStorageKey, sessionToken);
+    return;
+  }
+
+  storage.removeItem(serverSessionTokenStorageKey);
+}
+
 /** Returns the prototype session id, creating it on first use in the browser. */
 function getOrCreateLocalPrototypeSessionId() {
   const storage = getLocalStorage();
@@ -261,6 +296,18 @@ async function handleCompletionResponse(response: Response) {
   return (await response.json()) as QuizCompletionResult;
 }
 
+/** Builds the shared fetch headers for backend session-aware requests. */
+function createServerSessionHeaders(supabaseClientKey: string) {
+  const sessionToken = readStoredServerSessionToken();
+
+  return {
+    "Content-Type": "application/json",
+    apikey: supabaseClientKey,
+    Authorization: `Bearer ${supabaseClientKey}`,
+    ...(sessionToken ? { "x-neighborly-session": sessionToken } : {}),
+  };
+}
+
 /** Ensures the signed server session cookie exists before gameplay begins. */
 export async function ensureServerSession() {
   const { enabled, supabaseClientKey, supabaseUrl } = getSupabaseConfig();
@@ -278,11 +325,7 @@ export async function ensureServerSession() {
   // of only surfacing a problem after the user finishes the quiz.
   const response = await fetch(`${supabaseUrl}/functions/v1/issue-session`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: supabaseClientKey,
-      Authorization: `Bearer ${supabaseClientKey}`,
-    },
+    headers: createServerSessionHeaders(supabaseClientKey),
     credentials: "include",
     body: JSON.stringify({}),
   });
@@ -295,6 +338,9 @@ export async function ensureServerSession() {
       ),
     );
   }
+
+  const payload = (await response.json()) as IssueSessionResponse;
+  writeStoredServerSessionToken(payload.sessionToken ?? null);
 }
 
 /** Submits quiz completion to Supabase and retries once after a 401 response. */
@@ -305,11 +351,7 @@ async function submitQuizCompletionToSupabase(
   const { supabaseClientKey, supabaseUrl } = getSupabaseConfig();
   const response = await fetch(`${supabaseUrl}/functions/v1/complete-quiz`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: supabaseClientKey,
-      Authorization: `Bearer ${supabaseClientKey}`,
-    },
+    headers: createServerSessionHeaders(supabaseClientKey),
     credentials: "include",
     body: JSON.stringify(input),
   });

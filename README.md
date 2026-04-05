@@ -73,7 +73,7 @@ This system uses three major platform pieces:
 
 - `Vite` is the frontend dev server and build tool for `apps/web`. It powers local development, TypeScript-aware builds, and the static files that get deployed.
 - `Vercel` hosts the built frontend as a static site. In this repo, [apps/web/vercel.json](./apps/web/vercel.json) rewrites `/game/*` paths back to `index.html` so the single-page app router can handle those routes in the browser.
-- `Supabase` provides the backend pieces for the current prototype slice: Postgres, SQL migrations, and edge functions. In this project it is responsible for issuing a signed browser session, validating quiz submissions, deduplicating entitlements, and returning the official verification state.
+- `Supabase` provides the backend pieces for the current prototype slice: Postgres, SQL migrations, and edge functions. In this project it is responsible for issuing a signed browser session credential, validating quiz submissions, deduplicating entitlements, and returning the official verification state.
 
 ## Documentation
 
@@ -178,7 +178,11 @@ npx supabase functions deploy issue-session
 npx supabase functions deploy complete-quiz
 ```
 
-The function configuration is stored in [supabase/config.toml](./supabase/config.toml), so both protected functions are deployed with JWT verification disabled for the current no-login MVP flow. Trust comes from the signed HTTP-only session cookie, not from Supabase auth.
+The function configuration is stored in [supabase/config.toml](./supabase/config.toml), so both protected functions are deployed with JWT verification disabled for the current no-login MVP flow. Trust comes from a server-signed session credential, not from Supabase auth. The backend still sets a secure cookie, and the frontend also stores the signed session token fallback so completion can survive browsers that refuse third-party cookie round-trips.
+
+Implementation note:
+
+- if a future migration hardens a Postgres function with `set search_path = public`, extension-backed helpers such as `gen_random_bytes(...)` must be schema-qualified as `extensions.gen_random_bytes(...)` in Supabase
 
 Then add these environment variables locally and in Vercel for the `apps/web` project:
 

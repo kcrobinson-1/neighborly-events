@@ -6,7 +6,7 @@ import {
   validateSubmittedAnswers,
 } from "../../../shared/game-config.ts";
 import { createCorsHeaders, getAllowedOrigin } from "../_shared/cors.ts";
-import { readVerifiedSessionId } from "../_shared/session-cookie.ts";
+import { readVerifiedSession } from "../_shared/session-cookie.ts";
 
 /** Shape returned by the completion RPC before it is mapped to the API response. */
 type CompletionRpcRow = {
@@ -126,9 +126,9 @@ Deno.serve(async (request) => {
     );
   }
 
-  const sessionId = await readVerifiedSessionId(request, signingSecret);
+  const session = await readVerifiedSession(request, signingSecret);
 
-  if (!sessionId) {
+  if (!session) {
     return jsonResponse(401, { error: "Session is missing or invalid." }, origin);
   }
 
@@ -158,7 +158,7 @@ Deno.serve(async (request) => {
 
   const { data, error } = await supabase
     .rpc("complete_quiz_and_award_entitlement", {
-      p_client_session_id: sessionId,
+      p_client_session_id: session.sessionId,
       p_duration_ms: Math.max(0, Math.round(payload.durationMs)),
       p_event_id: payload.eventId,
       p_request_id: payload.requestId,

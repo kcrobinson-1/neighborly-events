@@ -79,7 +79,7 @@ The attendee flow prepares a backend session before quiz start when Supabase is 
 Why:
 
 - it avoids discovering entitlement/session problems only at the very end
-- it ensures the browser has the signed session cookie before completion submission
+- it ensures the browser has the signed session credential before completion submission
 - the start screen is a better place for a recoverable setup error than the final verification moment
 
 ### Offline fallback stays explicit
@@ -191,7 +191,7 @@ In this repo it provides:
 The current frontend uses Supabase for two specific actions:
 
 1. `issue-session`
-   Creates a signed browser session cookie for the no-login flow.
+   Creates a signed browser session credential for the no-login flow.
 2. `complete-quiz`
    Validates the submitted answers, computes the trusted score, and awards or reuses the raffle entitlement.
 
@@ -199,7 +199,8 @@ Important implementation detail:
 
 - the current MVP does not use Supabase Auth
 - both edge functions run with `verify_jwt = false`
-- trust comes from the signed HTTP-only browser cookie rather than from a logged-in user identity
+- trust comes from a server-signed browser session credential rather than from a logged-in user identity
+- the backend still sets a secure cookie, but the frontend also stores the signed session token fallback for browsers that block cross-site cookie round-trips
 
 ## Suggested Developer Mental Model
 
@@ -240,6 +241,7 @@ Remote-Supabase note:
 - this repo currently assumes either a remote Supabase project or explicit offline fallback
 - no local Supabase emulation workflow is maintained in the repo right now
 - if you use remote Supabase from a local web app, make sure the project `ALLOWED_ORIGINS` secret includes the local origin you are using
+- the origin must match exactly, including protocol, host, and port; `http://127.0.0.1:4173` and `http://localhost:4173` are distinct origins
 - if you need frontend-only iteration without Supabase, explicitly set `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK=true`
 
 UI-review note:
@@ -274,6 +276,28 @@ npx supabase db push
 npx supabase functions deploy issue-session
 npx supabase functions deploy complete-quiz
 ```
+
+## Integration Troubleshooting
+
+### Session bootstrap succeeds but completion returns 401
+
+If `issue-session` returns `200` but `complete-quiz` returns `401 Session is missing or invalid`, the browser session credential is not round-tripping.
+
+Current expectation:
+
+- the backend sets the secure cookie when possible
+- the frontend also stores the signed session token fallback and sends it explicitly on later requests
+
+If this regresses, inspect both Edge Functions together rather than treating it as a frontend-only bug.
+
+### Completion returns 500 after backend verification succeeds
+
+If the user reaches the completion step but receives the generic backend failure message, inspect the Supabase Edge Function logs for the `details` field from `complete-quiz`.
+
+One concrete gotcha already hit in this repo:
+
+- if a `security definer` Postgres function sets `search_path = public`, extension functions such as `gen_random_bytes(...)` are no longer resolved implicitly in Supabase
+- use `extensions.gen_random_bytes(...)` explicitly inside hardened functions that rely on `pgcrypto`
 
 ## Remaining Implementation Roadmap
 
