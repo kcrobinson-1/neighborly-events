@@ -111,6 +111,34 @@ If you could not run a relevant check, say so explicitly and explain why.
 
 For pull requests into `main`, expect GitHub CI to run the same validation via `.github/workflows/ci.yml`.
 
+### Validation Honesty
+
+Do not overstate what was validated.
+
+- If you added a new test command, validation surface, or workflow step, prefer to run it locally before opening or updating a PR.
+- If a new validation step cannot be run locally, call out the exact blocker in the handoff and PR description.
+- Do not describe a branch as fully validated if any newly introduced check has not been exercised end to end.
+- If docs describe a test as covering the "real" backend or browser path, make sure the implementation actually does that. If the test runs in fallback or mocked mode, document that precisely.
+
+### PR Readiness
+
+Treat pull requests as reviewable engineering work, not speculative drafts with known unverified edges hidden inside them.
+
+- Before opening or updating a PR, make sure every new script or validation command added by the branch is runnable by a contributor following repo docs.
+- If a helper script depends on local tools such as Docker, Deno, Playwright, or the Supabase CLI, either make the script self-checking with clear failure messages or document the setup in the same change.
+- Prefer fixing local workflow blockers in the repo when reasonable instead of relying on CI to be the first real execution environment.
+- If a PR is intentionally still exploratory, keep it clearly framed as draft work and do not present it as merge-ready.
+
+### Regression Discipline
+
+When a change touches testing infrastructure, validation commands, CI, or local setup, review it for operational regressions in addition to product regressions.
+
+- make sure new validation commands do not silently depend on undeclared local state
+- make sure browser tests are deterministic about which backend path they exercise
+- make sure helper scripts are safe to rerun and fail with actionable guidance
+- make sure CI does not pay heavyweight setup costs earlier than necessary
+- make sure local validation steps do not mutate workspace state in ways that break later commands
+
 ## UI Review Runs
 
 If you validate the UI by running the app locally and taking screenshots:
@@ -219,12 +247,19 @@ For UI changes, confirm:
 - the flow still feels mobile-first and one-step-at-a-time
 - direct route loading still works
 - progress, answer selection, submission, and completion states still make sense
+- browser tests still use realistic interactions unless there is a documented reason not to
 
 For backend or trust-related changes, confirm:
 
 - client input is still validated defensively
 - shared quiz logic is still the source of truth where appropriate
 - completion verification and entitlement behavior remain coherent
+
+For testing and tooling changes, confirm:
+
+- the new or changed commands work locally with the documented setup
+- docs and PR descriptions accurately describe what the tests do and do not prove
+- new validation paths are included in the self-review, not delegated entirely to CI
 
 ## Change Boundaries
 
