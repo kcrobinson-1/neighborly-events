@@ -85,13 +85,59 @@ function hasPlaywrightChromium() {
   return result.status === 0 && /chromium-\d+/.test(result.stdout ?? "");
 }
 
-function isSupabaseStackRunning() {
+function parseSupabaseStatusOutput(output) {
+  const trimmedOutput = output?.trim() ?? "";
+
+  if (!trimmedOutput) {
+    return null;
+  }
+
+  const match = trimmedOutput.match(/\{[\s\S]*\}$/);
+
+  if (!match) {
+    throw new Error("Supabase status output did not include the expected JSON payload.");
+  }
+
+  return JSON.parse(match[0]);
+}
+
+function readSupabaseStatus() {
   const result = run("npx", ["supabase", "status", "-o", "json"], {
     capture: true,
     check: false,
   });
 
-  return result.status === 0;
+  if (result.status !== 0) {
+    return null;
+  }
+
+  return parseSupabaseStatusOutput(result.stdout);
+}
+
+function isSupabaseStackRunning() {
+  return readSupabaseStatus() !== null;
+}
+
+function startLocalSupabaseStack() {
+  try {
+    logStep("Starting local Supabase stack");
+    run("npx", ["supabase", "start"]);
+    return true;
+  } catch {
+    logStep("Cleaning up a partial local Supabase stack before retry");
+    run("npx", ["supabase", "stop"], { check: false });
+
+    logStep("Retrying local Supabase startup");
+    run("npx", ["supabase", "start"]);
+    return true;
+  }
+}
+
+function stopLocalSupabaseStack() {
+  logStep("Stopping local Supabase stack");
+  run("npx", ["supabase", "stop"], {
+    check: false,
+  });
 }
 
 module.exports = {
@@ -102,8 +148,12 @@ module.exports = {
   fs,
   hasPlaywrightChromium,
   isSupabaseStackRunning,
+  parseSupabaseStatusOutput,
+  readSupabaseStatus,
   logStep,
   repoRoot,
   run,
+  startLocalSupabaseStack,
+  stopLocalSupabaseStack,
   tmpRoot,
 };

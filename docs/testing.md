@@ -20,6 +20,7 @@ Today the repo validates with:
 - `npm run lint`
 - `npm test`
 - `npm run test:functions`
+- `npm run test:functions:integration`
 - `npm run test:e2e`
 - `npm run test:db`
 - `npm run build:web`
@@ -29,9 +30,9 @@ Today the repo validates with:
 
 That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite, and pgTAP coverage for the completion RPC.
 
-The helper and handler Deno coverage is now in place for the Edge Function trust boundary.
+The helper and handler Deno coverage is now in place for the Edge Function trust boundary, and the repo now has a real local Supabase integration test for the full session-plus-completion path.
 
-What is still missing is the final local integration layer: at least one local Supabase integration test that exercises the full `issue-session` plus `complete-quiz` path.
+What is still missing is the rollout layer: wiring the new trust-path checks into the standard local validation command, PR CI, and contributor workflow docs.
 
 ## Trust-Path Validation Strategy
 
@@ -57,8 +58,8 @@ The intended split is:
 - [x] Refactor `complete-quiz` so its request handler and payload normalization can be tested directly.
 - [x] Add Deno handler tests for `issue-session`.
 - [x] Add Deno handler tests for `complete-quiz`, including payload validation and trusted completion behavior.
-- [ ] Add a local Supabase integration test for `issue-session` plus `complete-quiz`.
-- [ ] Add a repo command for the local trust-path integration test.
+- [x] Add a local Supabase integration test for `issue-session` plus `complete-quiz`.
+- [x] Add a repo command for the local trust-path integration test.
 - [ ] Update local validation and CI to run the new trust-path checks.
 - [ ] Update contributor docs so the new commands and local prerequisites are clear.
 
@@ -88,6 +89,8 @@ The current setup includes a few deliberate choices that are worth documenting:
   that avoids `deno check` rewriting the Node workspace installation in ways that can break Playwright resolution
 - the Edge Function request handlers are now exported behind `create*Handler` factories
   that keeps the production `Deno.serve` entrypoints intact while letting Deno tests cover request behavior without spinning up a server
+- the trust-path integration script starts `supabase functions serve` itself and reuses the local stack when one already exists
+  this keeps the real function path test runnable from one repo command without assuming a manually managed Edge Function runtime
 
 ## Strategy Summary
 

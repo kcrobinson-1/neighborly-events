@@ -15,6 +15,7 @@
     "lint": "eslint apps shared supabase scripts tests",
     "test": "vitest run",
     "test:functions": "deno test --allow-env --no-lock tests/supabase/functions",
+    "test:functions:integration": "node scripts/testing/run-function-integration-tests.cjs",
     "test:db": "node scripts/testing/run-db-tests.cjs",
     "test:e2e:install": "npx playwright install chromium",
     "test:setup:local": "node scripts/testing/setup-local-testing.cjs",
