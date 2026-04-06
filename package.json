@@ -23,9 +23,10 @@
     "ui:review:capture": "node scripts/ui-review/capture-ui-review.cjs"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
-    "@testing-library/react": "^16.3.0",
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
+    "@supabase/supabase-js": "^2.101.1",
+    "@testing-library/react": "^16.3.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
