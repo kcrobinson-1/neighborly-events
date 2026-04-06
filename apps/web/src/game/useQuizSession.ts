@@ -4,6 +4,10 @@ import type { GameConfig } from "../data/games";
 import { submitQuizCompletion } from "../lib/quizApi";
 import { createRequestId } from "../lib/session";
 import {
+  getQuizSessionScore,
+  getQuizSessionViewState,
+} from "./quizSessionSelectors";
+import {
   createCompletionRequestId,
   createQuizState,
   quizReducer,
@@ -20,20 +24,21 @@ export function useQuizSession(game: GameConfig) {
   }, [game.id]);
 
   const questions = game.questions;
-  const currentQuestion = questions[state.currentIndex];
-  const isComplete = state.phase === "complete";
-  const isStarted = state.phase !== "intro";
-  const isShowingCorrectFeedback = state.phase === "correct_feedback";
-  const isShowingQuestion = state.phase === "question";
-  const isSubmittingCompletion = state.phase === "submitting_completion";
-  const allowBackNavigation = game.allowBackNavigation ?? true;
-  const allowRetake = game.allowRetake ?? true;
-  const canGoBack =
-    allowBackNavigation && state.phase === "question" && state.currentIndex > 0;
-  const canSubmit = state.pendingSelection.length > 0;
-
   const localScore = useMemo(() => scoreAnswers(game, state.answers), [game, state.answers]);
-  const score = state.latestCompletion?.score ?? localScore;
+  const score = getQuizSessionScore(state.latestCompletion, localScore);
+  const viewState = getQuizSessionViewState(game, state);
+  const {
+    allowRetake,
+    canGoBack,
+    canSubmit,
+    currentQuestion,
+    isComplete,
+    isShowingCorrectFeedback,
+    isShowingQuestion,
+    isStarted,
+    isSubmittingCompletion,
+    progressValue,
+  } = viewState;
 
   useEffect(() => {
     if (state.phase !== "submitting_completion" || !state.completionRequestId) {
@@ -86,13 +91,6 @@ export function useQuizSession(game: GameConfig) {
     state.phase,
     state.startedAt,
   ]);
-
-  const progressValue =
-    questions.length === 0
-      ? 100
-      : isComplete || isSubmittingCompletion
-        ? 100
-        : ((state.currentIndex + 1) / questions.length) * 100;
 
   const start = () => {
     dispatch({ type: "start", startedAt: Date.now() });
