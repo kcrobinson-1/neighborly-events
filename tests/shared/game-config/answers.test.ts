@@ -8,6 +8,8 @@ import {
 } from "../../../shared/game-config/answers.ts";
 import { createTestGame } from "./fixtures.ts";
 
+// These tests intentionally sit at the shared domain layer because the same
+// logic is trusted by both the browser and the Supabase completion path.
 describe("normalizeOptionIds", () => {
   it("deduplicates and sorts selected option ids", () => {
     expect(normalizeOptionIds(["c", "a", "c", "b"])).toEqual(["a", "b", "c"]);
@@ -48,6 +50,8 @@ describe("normalizeSubmittedAnswers", () => {
   it("returns a canonical answer object for every configured question", () => {
     const game = createTestGame();
 
+    // Unknown keys should be dropped here because persistence and scoring only
+    // care about the configured question set, not whatever the caller sends.
     expect(
       normalizeSubmittedAnswers(game, {
         q1: ["b"],

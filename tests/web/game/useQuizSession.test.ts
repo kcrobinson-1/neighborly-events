@@ -10,6 +10,8 @@ const { mockCreateRequestId, mockSubmitQuizCompletion } = vi.hoisted(() => {
   };
 });
 
+// The reducer and side-effect orchestration are the behavior under test here,
+// so we mock only the API boundary and request-id generator.
 vi.mock("../../../apps/web/src/lib/quizApi.ts", () => ({
   submitQuizCompletion: mockSubmitQuizCompletion,
 }));
@@ -36,6 +38,8 @@ function createCompletionResult(overrides: Partial<QuizCompletionResult> = {}): 
   };
 }
 
+// These fixtures are intentionally tiny so the tests can read like state-machine
+// examples instead of repeating the full sample catalog.
 function createFinalScoreGame(questionCount = 2): GameConfig {
   const questions = [
     {
@@ -121,6 +125,8 @@ describe("useQuizSession", () => {
   beforeEach(() => {
     mockCreateRequestId.mockReset();
     mockSubmitQuizCompletion.mockReset();
+    // A stable id makes the retry/idempotency assertions readable and matches
+    // the product requirement that the same completion attempt reuses its key.
     mockCreateRequestId.mockReturnValue("req-123");
   });
 
@@ -161,6 +167,8 @@ describe("useQuizSession", () => {
     expect(mockSubmitQuizCompletion).toHaveBeenCalledTimes(1);
 
     const submission = mockSubmitQuizCompletion.mock.calls[0]?.[0];
+    // The hook should submit canonical answer ordering because the backend and
+    // persistence layer treat the shared config as the source of truth.
     expect(submission).toMatchObject({
       answers: {
         q1: ["b"],
@@ -260,6 +268,8 @@ describe("useQuizSession", () => {
     });
 
     expect(mockSubmitQuizCompletion).toHaveBeenCalledTimes(2);
+    // This is one of the key trust-boundary behaviors from the testing strategy:
+    // a retry should preserve idempotency rather than mint a new completion id.
     expect(mockSubmitQuizCompletion.mock.calls[0]?.[0]).toMatchObject({
       requestId: "req-123",
     });

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { validateGames } from "../../../shared/game-config/game-validation.ts";
 import { createTestGame } from "./fixtures.ts";
 
+// The catalog validates sample data at module load time, so these tests focus
+// on the bad-definition cases that should fail fast before the app boots.
 describe("validateGames", () => {
   it("accepts a valid game collection", () => {
     expect(() => validateGames([createTestGame()])).not.toThrow();
