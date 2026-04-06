@@ -159,8 +159,9 @@ Operational setting ownership lives in [docs/operations.md](./docs/operations.md
 
 The main remaining gaps before the broader event-ready MVP are:
 
+- stronger backend trust-path validation, especially Edge Function tests and a local Supabase integration test for the full session-plus-completion flow
 - database-backed event and quiz content instead of shared hardcoded sample data
 - organizer/admin tooling for editing and publishing events
 - analytics and reporting for starts, completions, and completion time
-- direct event-entry production routes instead of sample/demo routing
+- production event publishing and lookup behind direct QR-ready event URLs, while leaving `/` free to stay a marketing or demo surface
 - stronger anti-abuse controls if live event usage shows browser-session dedupe is insufficient

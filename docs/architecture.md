@@ -248,6 +248,16 @@ This keeps deployment repo-driven without requiring hotfixes to start in product
 
 The repository has a working prototype slice, but it does not yet satisfy the full event-ready MVP described in `product.md` and `experience.md`. The major remaining gaps are:
 
+### Backend trust-path validation
+
+Today, the repo has strong first-wave validation for shared logic, the browser flow, and the completion RPC, but it does not yet exercise the full Edge Function path in tests.
+
+What is missing:
+
+- Deno tests for the shared Edge Function helpers and request handling seams
+- at least one local Supabase integration test that exercises `issue-session` plus `complete-quiz`
+- CI coverage for the highest-value browser smoke path once that local test surface is in place
+
 ### Database-backed event content
 
 Today, quiz content still lives in the shared `game-config` module.
@@ -278,15 +288,16 @@ What is missing:
 - timing summaries
 - organizer-visible event metrics
 
-### Live event routing model
+### Production event lookup and publish model
 
-Today, the web app includes a marketing/demo landing page plus sample routes.
+Today, the web app includes a marketing/demo landing page plus sample routes backed by shared sample data. Direct `/game/:slug` links already work for demos, and the home page can remain a marketing or preview surface.
 
 What is missing for live operation:
 
-- direct event-entry URLs for QR codes
-- event-specific loading instead of sample-game selection
-- a production path that opens straight into a live event flow
+- published event records backing the QR-targeted URLs
+- route resolution against live event records instead of the sample-game catalog
+- clean handling for draft, expired, or unknown event routes
+- a production path where QR codes open directly into a live event flow without relying on the demo overview
 
 ### Stronger anti-abuse, if needed
 
@@ -307,9 +318,10 @@ This is an explicit product tradeoff, not an accidental omission.
 
 The most sensible next architectural steps are:
 
-1. Add a staging or branch-based Supabase promotion path if local verification plus direct-to-production release stops feeling sufficient.
-2. Move event and quiz content into database-backed records while preserving one trusted scoring/validation path.
-3. Add organizer-facing content management and publish controls.
-4. Add lightweight analytics/reporting for live events.
-5. Replace sample/demo routing with event-specific QR entry flows.
-6. Revisit abuse controls after observing live event behavior.
+1. Add Deno tests for the Edge Function helpers and at least one local Supabase integration test that exercises the full session-plus-completion path.
+2. Add a staging or branch-based Supabase promotion path if local verification plus direct-to-production release stops feeling sufficient.
+3. Move event and quiz content into database-backed records while preserving one trusted scoring/validation path.
+4. Add organizer-facing content management and publish controls.
+5. Add lightweight analytics/reporting for live events.
+6. Replace sample-demo route resolution with published event lookup behind direct QR entry URLs, while allowing `/` to remain a marketing or demo surface.
+7. Revisit abuse controls after observing live event behavior.
