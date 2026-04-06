@@ -18,6 +18,7 @@ Current setup and release workflow still live in `dev.md`. System responsibiliti
 Today the repo validates with:
 
 - `npm run lint`
+- `npm test`
 - `npm run build:web`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
 - `deno check --no-lock supabase/functions/complete-quiz/index.ts`
@@ -319,8 +320,8 @@ Everything beyond that should earn its keep.
 
 ### Immediate
 
-- [ ] Add `Vitest` and create a root test script for shared and frontend tests.
-- [ ] Add shared-domain tests for `answers.ts`, `game-validation.ts`, and `catalog.ts`.
+- [x] Add `Vitest` and create a root test script for shared and frontend tests.
+- [x] Add shared-domain tests for `answers.ts`, `game-validation.ts`, and `catalog.ts`.
 - [ ] Add frontend tests for `useQuizSession`.
 - [ ] Add frontend tests for `quizApi` with mocked network responses and storage.
 - [ ] Add Playwright Test config instead of relying only on the screenshot script.

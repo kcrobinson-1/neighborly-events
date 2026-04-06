@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: Lint, Build, and Edge Checks
+    name: Lint, Tests, Build, and Edge Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -31,6 +31,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Run unit tests
+        run: npm test
 
       - name: Build web app
         run: npm run build:web
