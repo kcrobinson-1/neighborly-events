@@ -322,7 +322,7 @@ Everything beyond that should earn its keep.
 
 - [x] Add `Vitest` and create a root test script for shared and frontend tests.
 - [x] Add shared-domain tests for `answers.ts`, `game-validation.ts`, and `catalog.ts`.
-- [ ] Add frontend tests for `useQuizSession`.
+- [x] Add frontend tests for `useQuizSession`.
 - [ ] Add frontend tests for `quizApi` with mocked network responses and storage.
 - [ ] Add Playwright Test config instead of relying only on the screenshot script.
 - [ ] Add a small mobile smoke suite that covers featured flow, direct route load, and not-found states.
