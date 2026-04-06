@@ -30,6 +30,35 @@ That baseline is now a real first-wave strategy, not just static validation. The
 
 What is still missing is the next layer: Deno tests for Edge Function helpers and at least one local Supabase integration test that exercises the full `issue-session` plus `complete-quiz` path.
 
+## Trust-Path Validation Strategy
+
+The next trust-path validation layer should land in four steps:
+
+1. Add Deno unit coverage for the shared Edge Function trust helpers.
+2. Refactor the Edge Function entrypoints just enough to make request handling directly testable without depending on `Deno.serve` side effects.
+3. Add Deno handler tests for the important request and response behavior of `issue-session` and `complete-quiz`.
+4. Add one local Supabase integration test that runs the real local stack, serves the local Edge Functions, and exercises the full session bootstrap plus completion flow over HTTP.
+
+The intended split is:
+
+- helper and handler tests should stay fast and deterministic, using dependency injection instead of a real database
+- the local integration test should prove the full trust path with real Supabase services, real function wiring, and the shared quiz config
+- local contributor workflow and CI should expose this trust-path validation as a first-class command instead of leaving it implicit
+
+## Trust-Path Execution Checklist
+
+- [ ] Add a dedicated repo command for Deno-based Edge Function tests.
+- [ ] Add helper tests for `cors.ts`.
+- [ ] Add helper tests for `session-cookie.ts`.
+- [ ] Refactor `issue-session` so its request handler can be imported and tested directly.
+- [ ] Refactor `complete-quiz` so its request handler and payload normalization can be tested directly.
+- [ ] Add Deno handler tests for `issue-session`.
+- [ ] Add Deno handler tests for `complete-quiz`, including payload validation and trusted completion behavior.
+- [ ] Add a local Supabase integration test for `issue-session` plus `complete-quiz`.
+- [ ] Add a repo command for the local trust-path integration test.
+- [ ] Update local validation and CI to run the new trust-path checks.
+- [ ] Update contributor docs so the new commands and local prerequisites are clear.
+
 ## Implementation Notes
 
 The current setup includes a few deliberate choices that are worth documenting:
