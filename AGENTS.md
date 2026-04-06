@@ -81,6 +81,10 @@ Update inline comments and function/type documentation when:
 
 Do not add comments that merely restate the code.
 
+## Commit Message Expectations
+
+Use the Conventional Commits convention for commit messages in this repo.
+
 ## Validation Expectations
 
 Run the checks relevant to the area you changed.
