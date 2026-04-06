@@ -170,7 +170,8 @@ The current validation set is:
 ```bash
 npm run lint
 npm test
-npm run test:db
+npm run test:functions
+npm run test:supabase
 npm run build:web
 deno check --no-lock supabase/functions/issue-session/index.ts
 deno check --no-lock supabase/functions/complete-quiz/index.ts
@@ -199,6 +200,12 @@ That helper:
 Local tooling note:
 
 - `deno.json` uses manual `nodeModulesDir` mode so `deno check` does not rewrite the main Node workspace packages and break Playwright resolution
+
+Edge Function trust-path test notes:
+
+- `npm run test:functions` runs the fast Deno helper and handler tests for the Supabase Edge Functions
+- `npm run test:functions:integration` serves the local Edge Functions and exercises the real `issue-session` plus `complete-quiz` flow against the local Supabase stack
+- `npm run test:supabase` is the preferred local backend validation command because it runs the trust-path integration test and pgTAP database suite on one shared local stack
 
 Database test note:
 

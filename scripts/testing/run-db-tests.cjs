@@ -4,6 +4,8 @@ const {
   isSupabaseStackRunning,
   logStep,
   run,
+  startLocalSupabaseStack,
+  stopLocalSupabaseStack,
   tmpRoot,
 } = require("./utils.cjs");
 
@@ -31,21 +33,6 @@ function acquireLock() {
   }
 }
 
-function startLocalStackWithRetry() {
-  try {
-    logStep("Starting local Supabase stack");
-    run("npx", ["supabase", "start"]);
-    return true;
-  } catch {
-    logStep("Cleaning up a partial local Supabase stack before retry");
-    run("npx", ["supabase", "stop"], { check: false });
-
-    logStep("Retrying local Supabase startup");
-    run("npx", ["supabase", "start"]);
-    return true;
-  }
-}
-
 function main() {
   let startedLocalStack = false;
   const releaseLock = acquireLock();
@@ -59,17 +46,14 @@ function main() {
     if (isSupabaseStackRunning()) {
       logStep("Reusing existing local Supabase stack");
     } else {
-      startedLocalStack = startLocalStackWithRetry();
+      startedLocalStack = startLocalSupabaseStack();
     }
 
     logStep("Running pgTAP database tests");
     run("npx", ["supabase", "test", "db"]);
   } finally {
     if (startedLocalStack) {
-      logStep("Stopping local Supabase stack");
-      run("npx", ["supabase", "stop"], {
-        check: false,
-      });
+      stopLocalSupabaseStack();
     }
 
     releaseLock();

@@ -111,7 +111,8 @@ Validation commands:
 ```bash
 npm run lint
 npm test
-npm run test:db
+npm run test:functions
+npm run test:supabase
 npm run build:web
 deno check --no-lock supabase/functions/issue-session/index.ts
 deno check --no-lock supabase/functions/complete-quiz/index.ts
@@ -120,7 +121,7 @@ deno check --no-lock supabase/functions/complete-quiz/index.ts
 For local contributor setup:
 
 - run `npm run test:setup:local` once to check Docker/Deno and install Playwright Chromium
-- run `npm run validate:local` to execute the full local validation flow, including the database and browser suites
+- run `npm run validate:local` to execute the full local validation flow, including the browser suite plus the local Supabase integration and database checks
 
 For contributor setup details, local workflow notes, and troubleshooting, use [docs/dev.md](./docs/dev.md).
 
@@ -159,7 +160,6 @@ Operational setting ownership lives in [docs/operations.md](./docs/operations.md
 
 The main remaining gaps before the broader event-ready MVP are:
 
-- stronger backend trust-path validation, especially Edge Function tests and a local Supabase integration test for the full session-plus-completion flow
 - database-backed event and quiz content instead of shared hardcoded sample data
 - organizer/admin tooling for editing and publishing events
 - analytics and reporting for starts, completions, and completion time
