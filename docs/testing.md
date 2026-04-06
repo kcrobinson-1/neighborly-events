@@ -180,14 +180,20 @@ Test:
 
 - `useQuizSession`
   start, select, submit, back navigation, feedback transitions, completion submission phase, retry behavior, retake reset
+- `quizSessionState`
+  reducer transitions and non-React state-machine behavior
+- `quizSessionSelectors`
+  read-only derived state such as progress, phase booleans, and current-question selection
 - `quizUtils`
   selection behavior, selection labels, feedback copy helpers where logic exists
+- extracted quiz components
+  focused rendering and interaction checks where the extracted component boundary now carries meaningful UI logic
 - `quizApi`
   missing env handling, explicit offline fallback gating, stored session token handling, `401` retry path, idempotent request reuse on retry, local fallback persistence behavior
 - route-level rendering
   landing page, featured game route, missing route, missing game route
-- one or two integration tests around `GamePage`
-  enough to prove the main button/selection/progress/completion wiring works with mocked network responses
+- focused wiring tests around `GamePage`
+  enough to prove the intro, active-question, start-error, and completion flows are still wired correctly after quiz-module refactors
 
 Do not aim for:
 
@@ -272,6 +278,9 @@ Good mock use cases:
 - `GamePage` integration tests that need stable completion results
 
 Prefer mocking at the `fetch` boundary or using `msw` instead of mocking internal React hooks or shared quiz logic.
+One exception in this repo is route-shell wiring around `GamePage`, where mocking
+`useQuizSession` is acceptable because the hook itself has direct behavior
+coverage and the page test is intentionally verifying shell-to-module wiring.
 
 ## When To Use Real Supabase Behavior
 
@@ -403,6 +412,8 @@ The first useful wave should probably include:
 
 - shared answer normalization, validation, scoring, and catalog tests
 - `useQuizSession` happy path, instant-feedback mode, back navigation, retry, and retake tests
+- `quizSessionState`, `quizSessionSelectors`, and `quizUtils` tests for the pure quiz module seams
+- focused `GamePage` route-shell wiring tests plus extracted quiz component tests
 - `quizApi` session bootstrap, missing env, offline fallback, and `401` retry tests
 - RPC tests for idempotency, single entitlement, attempt numbering, and verification code reuse
 - Playwright mobile smoke for featured flow, spotlight wrong-answer path, and direct route loading
