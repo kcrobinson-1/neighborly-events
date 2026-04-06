@@ -105,8 +105,26 @@ async function stopFunctionsServe(serveProcess) {
   clearTimeout(forceKillTimer);
 }
 
+async function invokeJson(url, init) {
+  const response = await fetch(url, init);
+  const text = await response.text();
+  const body = text ? JSON.parse(text) : null;
+
+  return {
+    body,
+    response,
+  };
+}
+
 async function waitForServeReady(status, serveRuntime) {
   const deadline = Date.now() + serveReadyTimeoutMs;
+  const baseHeaders = {
+    Authorization: `Bearer ${status.PUBLISHABLE_KEY}`,
+    "Content-Type": "application/json",
+    apikey: status.PUBLISHABLE_KEY,
+    origin: allowedOrigin,
+  };
+  let lastFailureDetails = "";
 
   while (Date.now() < deadline) {
     if (serveRuntime.child.exitCode !== null) {
@@ -120,16 +138,23 @@ async function waitForServeReady(status, serveRuntime) {
     }
 
     try {
-      const response = await fetch(`${status.FUNCTIONS_URL}/issue-session`, {
-        method: "OPTIONS",
-        headers: {
-          origin: allowedOrigin,
-        },
+      const issueSession = await invokeJson(`${status.FUNCTIONS_URL}/issue-session`, {
+        body: "{}",
+        headers: baseHeaders,
+        method: "POST",
       });
 
-      if (response.ok) {
-        return;
+      if (
+        issueSession.response.status === 200 &&
+        issueSession.body?.sessionReady === true &&
+        typeof issueSession.body?.sessionToken === "string" &&
+        issueSession.body.sessionToken.length > 0
+      ) {
+        return issueSession;
       }
+
+      lastFailureDetails =
+        `status=${issueSession.response.status} body=${JSON.stringify(issueSession.body)}`;
     } catch {
       // Keep polling until the local gateway finishes reloading the function runtime.
     }
@@ -139,21 +164,11 @@ async function waitForServeReady(status, serveRuntime) {
 
   throw new Error(
     [
-      "Timed out waiting for `supabase functions serve` to become ready.",
+      "Timed out waiting for `supabase functions serve` to return a ready issue-session response.",
+      lastFailureDetails,
       serveRuntime.getOutput(),
     ].filter(Boolean).join("\n\n"),
   );
-}
-
-async function invokeJson(url, init) {
-  const response = await fetch(url, init);
-  const text = await response.text();
-  const body = text ? JSON.parse(text) : null;
-
-  return {
-    body,
-    response,
-  };
 }
 
 function assert(condition, message) {
@@ -204,9 +219,6 @@ async function main() {
     const serveRuntime = startFunctionsServe();
 
     try {
-      logStep("Waiting for local Edge Functions to become ready");
-      await waitForServeReady(status, serveRuntime);
-
       const baseHeaders = {
         Authorization: `Bearer ${status.PUBLISHABLE_KEY}`,
         "Content-Type": "application/json",
@@ -215,20 +227,9 @@ async function main() {
       };
       const requestId = `trust-path-${Date.now()}`;
 
+      logStep("Waiting for local Edge Functions to become ready");
       logStep("Issuing a backend session and capturing the signed cookie");
-      const issueSession = await invokeJson(`${status.FUNCTIONS_URL}/issue-session`, {
-        body: "{}",
-        headers: baseHeaders,
-        method: "POST",
-      });
-
-      assert(issueSession.response.status === 200, "Expected issue-session to return 200.");
-      assert(issueSession.body?.sessionReady === true, "Expected issue-session to mark the session as ready.");
-      assert(
-        typeof issueSession.body?.sessionToken === "string" &&
-          issueSession.body.sessionToken.length > 0,
-        "Expected issue-session to return a signed session token.",
-      );
+      const issueSession = await waitForServeReady(status, serveRuntime);
 
       const setCookieHeader = issueSession.response.headers.get("set-cookie");
 
