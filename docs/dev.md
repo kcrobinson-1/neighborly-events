@@ -102,7 +102,7 @@ Constraint:
 
 For regular contribution work, install:
 
-- Node `22.12.0+` recommended, or any version allowed by the root `package.json`
+- Node `24.14.1` LTS
 - npm
 - Deno if you need to run the Edge Function checks locally
 - Supabase CLI if you are changing Supabase infrastructure or verifying deploy commands
