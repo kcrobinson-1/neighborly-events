@@ -16,6 +16,7 @@ const {
 const lockPath = `${tmpRoot}/test-functions-integration.lock`;
 const serveEnvPath = path.join(tmpRoot, "test-functions.env");
 const serveReadyTimeoutMs = 20_000;
+const serveShutdownTimeoutMs = 5_000;
 const sessionSigningSecret = "local-trust-path-test-secret";
 const allowedOrigin = "http://127.0.0.1:4173";
 
@@ -62,6 +63,7 @@ function startFunctionsServe() {
     ["supabase", "functions", "serve", "--env-file", serveEnvPath],
     {
       cwd: repoRoot,
+      detached: process.platform !== "win32",
       env: process.env,
       stdio: ["ignore", "pipe", "pipe"],
     },
@@ -84,6 +86,27 @@ function startFunctionsServe() {
   };
 }
 
+function signalFunctionsServe(serveProcess, signal) {
+  if (!serveProcess || serveProcess.exitCode !== null) {
+    return;
+  }
+
+  try {
+    if (process.platform !== "win32" && serveProcess.pid) {
+      process.kill(-serveProcess.pid, signal);
+      return;
+    }
+  } catch {
+    // Fall back to signaling the direct child process below.
+  }
+
+  try {
+    serveProcess.kill(signal);
+  } catch {
+    // Ignore already-exited processes during shutdown cleanup.
+  }
+}
+
 async function stopFunctionsServe(serveProcess) {
   if (!serveProcess || serveProcess.killed || serveProcess.exitCode !== null) {
     return;
@@ -93,16 +116,27 @@ async function stopFunctionsServe(serveProcess) {
     serveProcess.once("close", resolve);
   });
 
-  serveProcess.kill("SIGTERM");
+  signalFunctionsServe(serveProcess, "SIGTERM");
 
-  const forceKillTimer = setTimeout(() => {
-    if (serveProcess.exitCode === null) {
-      serveProcess.kill("SIGKILL");
-    }
-  }, 3_000);
+  const timedClose = Promise.race([
+    closed,
+    new Promise((resolve) => setTimeout(resolve, serveShutdownTimeoutMs)),
+  ]);
 
-  await closed;
-  clearTimeout(forceKillTimer);
+  await timedClose;
+
+  if (serveProcess.exitCode !== null) {
+    return;
+  }
+
+  signalFunctionsServe(serveProcess, "SIGKILL");
+  serveProcess.stdout?.destroy();
+  serveProcess.stderr?.destroy();
+
+  await Promise.race([
+    closed,
+    new Promise((resolve) => setTimeout(resolve, 1_000)),
+  ]);
 }
 
 async function invokeJson(url, init) {
@@ -271,6 +305,7 @@ async function main() {
         "Expected the retry path not to increment the attempt number for the same request id.",
       );
     } finally {
+      logStep("Stopping local Edge Functions runtime");
       await stopFunctionsServe(serveRuntime.child);
       fs.rmSync(serveEnvPath, { force: true });
     }
