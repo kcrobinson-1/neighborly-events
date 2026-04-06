@@ -41,19 +41,65 @@ Do not default to the local browser-only completion fallback when a remote Supab
 
 ## Expected Workflow
 
-When asked to make a change:
+Work should follow the repo process even when the prompt only describes the end state.
 
-1. Read the relevant code and the matching docs before editing.
-2. Make the smallest coherent change that solves the task cleanly.
-3. Review your own diff before finishing.
-4. Update comments and documentation if the change affects behavior, architecture, setup, or workflow.
+Use the lightweight path only when the change is small and low-risk, for example:
+
+- a single-file fix
+- a narrow copy or style adjustment
+- a small test update that does not change structure
+
+Use the full structured path when the change is multi-file, architectural, refactor-heavy, or changes tests, validation, documentation, or workflow.
+
+### Lightweight Path
+
+1. Read the relevant code and matching docs before editing.
+2. Make the smallest coherent change that solves the task.
+3. Update any touched tests and docs in the same pass when they would otherwise drift.
+4. Review the diff before finishing.
 5. Run the relevant validation commands before handing off.
 
+### Full Structured Path
+
+1. Ground in the current code and docs before making structural decisions.
+2. Write down the execution plan before editing.
+   Use a local README, checklist, or equivalent in the relevant area when the work spans multiple files or steps.
+3. Define the target structure and file responsibilities up front so the refactor is constraint-driven, not improvised file by file.
+4. Execute in small, reversible commits.
+   Each commit should leave the repo working, keep tests aligned with code, and preserve a reviewable intermediate state.
+5. Validate continuously, not just at the end.
+   Run the relevant checks before each commit and after any risky structural step.
+6. Keep documentation current as the work progresses.
+   Do not save README or architecture updates for the very end if the structure is already changing underneath them.
+7. Self-review each commit-sized diff, then self-review the final branch as a whole before handing off or opening a PR.
+
 If you discover that the current docs no longer describe the code accurately, fix the docs in the same change when practical.
+
+## Execution Rules
+
+Prefer constraint-driven execution over open-ended refactoring.
+
+- decide the intended module boundaries before moving files around
+- prefer extracting one seam at a time over broad rewrites
+- keep code, tests, and docs moving together
+- externalize plan state when the work spans multiple steps so later decisions do not depend on memory
+- prefer adding focused tests for newly exposed pure seams instead of relying only on higher-level coverage
+
+For multi-step work, do not batch everything into one large uncommitted transformation.
+
+- create or maintain a local checklist in the relevant area when it helps track structure, responsibilities, or remaining work
+- update that checklist or README as steps are completed
+- keep intermediate states understandable to the next engineer or agent
 
 ## Documentation Expectations
 
 Keep documentation synchronized with the implementation.
+
+For structural or multi-file work, documentation is part of the execution loop, not a final polish pass.
+
+- maintain or create a local README or equivalent in the relevant area when the change introduces or reorganizes module structure
+- document file responsibilities and intended ownership when the structure is non-obvious
+- update area docs as changes are made so the written structure never lags far behind the code
 
 Update `README.md` when:
 
@@ -125,6 +171,15 @@ Do not overstate what was validated.
 - If a new validation step cannot be run locally, call out the exact blocker in the handoff and PR description.
 - Do not describe a branch as fully validated if any newly introduced check has not been exercised end to end.
 - If docs describe a test as covering the "real" backend or browser path, make sure the implementation actually does that. If the test runs in fallback or mocked mode, document that precisely.
+
+### Continuous Validation
+
+Do not wait until the end of a large change to discover that the branch drifted.
+
+- for multi-file or non-trivial work, run the relevant checks before each commit, not only before handoff
+- when code movement changes test layout, confirm the normal repo runners still pick up the affected tests
+- when adding a new test file pattern or directory, make sure the configured runner includes it
+- if a step cannot yet pass validation, shrink the step until it can
 
 ### PR Readiness
 
@@ -270,6 +325,24 @@ For testing and tooling changes, confirm:
 - the new or changed commands work locally with the documented setup
 - docs and PR descriptions accurately describe what the tests do and do not prove
 - new validation paths are included in the self-review, not delegated entirely to CI
+
+For multi-commit work, also review:
+
+- whether each commit would make sense to a reviewer on its own
+- whether a later commit silently fixed issues introduced by an earlier one
+- whether any structural change remains undocumented
+
+## Anti-Patterns
+
+Avoid these unless the task explicitly requires them:
+
+- large one-shot refactors with no written plan or intermediate checkpoints
+- letting tests lag behind renamed, moved, or restructured code
+- deferring all validation until the final step of a long change
+- undocumented module splits, file moves, or ownership changes
+- combining unrelated cleanup with the requested change
+- using a final commit to clean up drift that should have been caught in earlier self-review
+- treating a prompt as permission to skip the repo workflow
 
 ## Change Boundaries
 
