@@ -214,7 +214,7 @@ Rationale:
 - [x] `feat(supabase): add published quiz content schema and demo backfill`
 - [x] `refactor(shared): add DB-to-GameConfig mapping and isolate sample fixtures`
 - [x] `feat(supabase): load canonical published quiz content in complete-quiz`
-- [ ] `feat(web): load game routes and demo summaries from published quiz content`
+- [x] `feat(web): load game routes and demo summaries from published quiz content`
 - [ ] `docs: finalize durable reference and refresh repo docs`
 
 ## Validation Plan
@@ -244,6 +244,17 @@ Validation implementation note:
 - local Supabase validation now needs to reset the local database to the
   current repo migrations before integration and pgTAP runs so warm local stack
   state cannot hide new schema changes
+- web-commit validation has been exercised with `npm run lint`, `npm test`,
+  `npm run test:functions`, `npm run test:supabase`, `npm run build:web`,
+  `npm run test:e2e`, `deno check --no-lock supabase/functions/issue-session/index.ts`,
+  and `deno check --no-lock supabase/functions/complete-quiz/index.ts`
+- UI review captures for this milestone live in
+  `tmp/ui-review/20260406-130427-before` and
+  `tmp/ui-review/20260406-132240-after`
+- the after capture focuses on landing and route-level DB-backed states because
+  local `supabase functions serve` currently returns wildcard CORS headers for
+  credentialed browser preflights, which blocks the browser-start session flow
+  during local UI review even though function and integration tests still pass
 
 ## Progress Checklist
 
@@ -255,9 +266,9 @@ Validation implementation note:
 - [x] Add published content schema and seeded demo events
 - [x] Add shared DB row mapping and tests
 - [x] Add backend published-content loader and switch `complete-quiz`
-- [ ] Add browser published-content reads and async route integration
+- [x] Add browser published-content reads and async route integration
 - [ ] Update architecture/dev/README docs
-- [ ] Run before/after UI review captures
+- [x] Run before/after UI review captures
 - [ ] Complete final whole-branch validation and self-review
 
 ## Deferred Future Improvements
