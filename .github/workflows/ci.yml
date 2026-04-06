@@ -8,7 +8,7 @@ on:
 
 jobs:
   validate:
-    name: Lint, Tests, Build, DB, and Edge Checks
+    name: Lint, Tests, Build, and Supabase Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -38,8 +38,11 @@ jobs:
       - name: Run unit tests
         run: npm test
 
-      - name: Run database tests
-        run: npm run test:db
+      - name: Run Edge Function Deno tests
+        run: npm run test:functions
+
+      - name: Run local Supabase integration and database tests
+        run: npm run test:supabase
 
       - name: Build web app
         run: npm run build:web

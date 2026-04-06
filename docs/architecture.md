@@ -248,16 +248,6 @@ This keeps deployment repo-driven without requiring hotfixes to start in product
 
 The repository has a working prototype slice, but it does not yet satisfy the full event-ready MVP described in `product.md` and `experience.md`. The major remaining gaps are:
 
-### Backend trust-path validation
-
-Today, the repo has strong first-wave validation for shared logic, the browser flow, and the completion RPC, but it does not yet exercise the full Edge Function path in tests.
-
-What is missing:
-
-- Deno tests for the shared Edge Function helpers and request handling seams
-- at least one local Supabase integration test that exercises `issue-session` plus `complete-quiz`
-- CI coverage for the highest-value browser smoke path once that local test surface is in place
-
 ### Database-backed event content
 
 Today, quiz content still lives in the shared `game-config` module.
@@ -318,10 +308,9 @@ This is an explicit product tradeoff, not an accidental omission.
 
 The most sensible next architectural steps are:
 
-1. Add Deno tests for the Edge Function helpers and at least one local Supabase integration test that exercises the full session-plus-completion path.
-2. Add a staging or branch-based Supabase promotion path if local verification plus direct-to-production release stops feeling sufficient.
-3. Move event and quiz content into database-backed records while preserving one trusted scoring/validation path.
-4. Add organizer-facing content management and publish controls.
-5. Add lightweight analytics/reporting for live events.
-6. Replace sample-demo route resolution with published event lookup behind direct QR entry URLs, while allowing `/` to remain a marketing or demo surface.
-7. Revisit abuse controls after observing live event behavior.
+1. Add a staging or branch-based Supabase promotion path if local verification plus direct-to-production release stops feeling sufficient.
+2. Move event and quiz content into database-backed records while preserving one trusted scoring/validation path.
+3. Add organizer-facing content management and publish controls.
+4. Add lightweight analytics/reporting for live events.
+5. Replace sample-demo route resolution with published event lookup behind direct QR entry URLs, while allowing `/` to remain a marketing or demo surface.
+6. Revisit abuse controls after observing live event behavior.

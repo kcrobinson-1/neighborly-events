@@ -23,20 +23,17 @@ Today the repo validates with:
 - `npm run test:functions:integration`
 - `npm run test:e2e`
 - `npm run test:db`
+- `npm run test:supabase`
 - `npm run build:web`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
 - `deno check --no-lock supabase/functions/complete-quiz/index.ts`
 - `npm run ui:review:capture` for screenshot-based browser review
 
-That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite, and pgTAP coverage for the completion RPC.
-
-The helper and handler Deno coverage is now in place for the Edge Function trust boundary, and the repo now has a real local Supabase integration test for the full session-plus-completion path.
-
-What is still missing is the rollout layer: wiring the new trust-path checks into the standard local validation command, PR CI, and contributor workflow docs.
+That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite, pgTAP coverage for the completion RPC, Deno coverage for the Edge Function trust boundary, and a real local Supabase integration test for the full session-plus-completion path.
 
 ## Trust-Path Validation Strategy
 
-The next trust-path validation layer should land in four steps:
+The trust-path validation layer landed in four steps:
 
 1. Add Deno unit coverage for the shared Edge Function trust helpers.
 2. Refactor the Edge Function entrypoints just enough to make request handling directly testable without depending on `Deno.serve` side effects.
@@ -60,8 +57,8 @@ The intended split is:
 - [x] Add Deno handler tests for `complete-quiz`, including payload validation and trusted completion behavior.
 - [x] Add a local Supabase integration test for `issue-session` plus `complete-quiz`.
 - [x] Add a repo command for the local trust-path integration test.
-- [ ] Update local validation and CI to run the new trust-path checks.
-- [ ] Update contributor docs so the new commands and local prerequisites are clear.
+- [x] Update local validation and CI to run the new trust-path checks.
+- [x] Update contributor docs so the new commands and local prerequisites are clear.
 
 ## Implementation Notes
 
@@ -84,7 +81,9 @@ The current setup includes a few deliberate choices that are worth documenting:
 - `npm run test:db` now manages the local stack for contributors
   it checks Docker, starts `npx supabase start` when needed, runs pgTAP, and only stops the stack afterward if it started it itself
 - `npm run validate:local` is the repo-level local validation shortcut
-  it runs lint, unit tests, Playwright smoke, database tests, web build, and the two Deno checks in one pass
+  it runs lint, unit tests, Edge Function Deno tests, Playwright smoke, the shared local Supabase validation command, the web build, and the two Deno checks in one pass
+- `npm run test:supabase` is the shared local-backend validation command
+  it reuses one local Supabase stack for the Edge Function integration test and the pgTAP database suite
 - `deno.json` keeps `nodeModulesDir` in manual mode
   that avoids `deno check` rewriting the Node workspace installation in ways that can break Playwright resolution
 - the Edge Function request handlers are now exported behind `create*Handler` factories
@@ -340,7 +339,7 @@ Run the smallest relevant set while iterating:
 
 Notes:
 
-- `npm run test:db` requires a Docker API-compatible runtime because the local Supabase stack depends on it
+- `npm run test:supabase` and `npm run test:db` require a Docker API-compatible runtime because the local Supabase stack depends on it
 - `npm run test:setup:local` is the easiest one-time setup path for local contributors
 - `npm run test:e2e` currently exercises the browser flow in explicit local fallback mode, so it complements rather than replaces real backend integration coverage
 
@@ -350,11 +349,12 @@ PR CI currently runs:
 
 - `npm run lint`
 - `npm test`
-- `npm run test:db`
+- `npm run test:functions`
+- `npm run test:supabase`
 - `npm run build:web`
 - `deno check` for both Edge Functions
 
-The database step now owns local Supabase startup itself instead of paying that setup cost before every earlier step in the job.
+The shared `test:supabase` step now owns local Supabase startup for the backend validation slice, so CI only pays that setup cost once for the trust-path integration and database tests.
 
 Keep PR CI focused on fast confidence:
 
@@ -365,7 +365,6 @@ Keep PR CI focused on fast confidence:
 Still worth adding to PR CI:
 
 - the small Playwright mobile smoke suite
-- future Deno function tests once they exist
 
 ### Post-Merge Or Nightly
 
@@ -393,6 +392,10 @@ Next wave:
 7. Decide whether the Playwright smoke suite should also run in PR CI.
 
 That order still gives the most confidence for the least complexity.
+
+Progress note:
+
+- steps 5 and 6 are now complete
 
 ## Proposed Test Inventory
 

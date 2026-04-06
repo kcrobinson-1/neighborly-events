@@ -19,8 +19,9 @@ function main() {
   const steps = [
     ["Lint", ["npm", ["run", "lint"]]],
     ["Unit tests", ["npm", ["run", "test"]]],
+    ["Edge Function Deno tests", ["npm", ["run", "test:functions"]]],
     ["Browser smoke tests", ["npm", ["run", "test:e2e"]]],
-    ["Database tests", ["npm", ["run", "test:db"]]],
+    ["Local Supabase tests", ["npm", ["run", "test:supabase"]]],
     ["Web build", ["npm", ["run", "build:web"]]],
     ["Check issue-session function", ["deno", ["check", "--no-lock", "supabase/functions/issue-session/index.ts"]]],
     ["Check complete-quiz function", ["deno", ["check", "--no-lock", "supabase/functions/complete-quiz/index.ts"]]],
