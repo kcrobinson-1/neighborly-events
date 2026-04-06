@@ -19,12 +19,33 @@ Today the repo validates with:
 
 - `npm run lint`
 - `npm test`
+- `npm run test:e2e`
+- `npm run test:db`
 - `npm run build:web`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
 - `deno check --no-lock supabase/functions/complete-quiz/index.ts`
 - `npm run ui:review:capture` for screenshot-based browser review
 
-That is a useful baseline, but it is not yet a real testing strategy. It catches type and build breakage, but it does not systematically verify quiz correctness, reducer behavior, API retry rules, SQL idempotency, or end-to-end completion behavior.
+That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite, and pgTAP coverage for the completion RPC.
+
+What is still missing is the next layer: Deno tests for Edge Function helpers and at least one local Supabase integration test that exercises the full `issue-session` plus `complete-quiz` path.
+
+## Implementation Notes
+
+The current setup includes a few deliberate choices that are worth documenting:
+
+- tests live under the root `tests/` directory instead of being colocated everywhere
+  this keeps test-only files out of the main app and shared build surfaces while the suite is still small
+- `Vitest` currently uses one global `jsdom` environment
+  shared-domain tests would also work in pure Node, but one config keeps the early repo setup simple because the hook tests need a browser-like environment
+- frontend API tests currently mock `fetch` and `window.localStorage` directly
+  that is enough for the current `quizApi` and hook coverage; `msw` is still a good follow-on option if request mocking grows more complex
+- Playwright smoke tests intentionally run with `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK=true`
+  this keeps browser smoke coverage deterministic and independent from local Supabase env setup
+- the Playwright mobile project uses Chromium-backed mobile emulation, not WebKit
+  the original iPhone device preset implied WebKit, but Chromium is the lower-friction browser target for this repo's local workflow and CI
+- database tests live in `supabase/tests/database` and depend on a local Supabase stack
+  in practice that means Docker must be available locally; CI already handles this by starting Supabase before `npm run test:db`
 
 ## Strategy Summary
 
@@ -240,14 +261,17 @@ Recommended additions:
   fast unit and integration tests aligned with the Vite frontend toolchain
 - `@testing-library/react`
   route and component integration tests from the user-facing DOM perspective
-- `@testing-library/user-event`
-  realistic click and keyboard interactions in frontend tests
-- `msw`
-  stable network mocking for browser-facing tests without hand-rolling fetch stubs everywhere
 - `Playwright Test`
   assertion-based mobile-first end-to-end and UX coverage
 - `pgTAP`
   Postgres-level tests for the completion RPC and database constraints
+
+Still useful to add when the suite grows:
+
+- `@testing-library/user-event`
+  realistic click and keyboard interactions once more DOM-driven integration tests are added
+- `msw`
+  stable network mocking for browser-facing tests if direct `fetch` stubs start getting repetitive
 - built-in `Deno.test`
   lightweight function/helper tests on the Edge Function side
 
@@ -262,27 +286,36 @@ Suggested non-goals:
 
 Run the smallest relevant set while iterating:
 
-- shared/frontend changes: lint, web build, shared/frontend unit tests
+- shared/frontend changes: `npm run lint`, `npm test`, `npm run build:web`
 - Edge Function changes: lint, `deno check`, Deno tests, relevant local integration tests
-- migration changes: SQL tests against local Supabase or local Postgres
-- UX changes: Playwright tests plus the screenshot capture workflow when visuals materially changed
+- migration changes: `npm run test:db` against a local Supabase stack
+- UX changes: `npm run test:e2e` plus the screenshot capture workflow when visuals materially changed
+
+Notes:
+
+- `npm run test:db` requires Docker because the local Supabase stack depends on it
+- `npm run test:e2e` currently exercises the browser flow in explicit local fallback mode, so it complements rather than replaces real backend integration coverage
 
 ### Pull Request CI
 
-PR CI should eventually run:
+PR CI currently runs:
 
 - `npm run lint`
+- `npm test`
+- `npm run test:db`
 - `npm run build:web`
-- shared/frontend Vitest suite
-- Deno function tests
-- database tests against a local Supabase or Postgres service
-- a small Playwright smoke suite on mobile viewport
+- `deno check` for both Edge Functions
 
 Keep PR CI focused on fast confidence:
 
 - one or two happy paths
 - one or two critical edge cases
 - no giant screenshot diff gate
+
+Still worth adding to PR CI:
+
+- the small Playwright mobile smoke suite
+- future Deno function tests once they exist
 
 ### Post-Merge Or Nightly
 
@@ -296,13 +329,20 @@ This is optional for now. The repo does not yet need an elaborate nightly test m
 
 ## Suggested Rollout Order
 
-1. Add shared-domain unit tests first.
+Completed first wave:
+
+1. Add shared-domain unit tests.
 2. Add frontend tests for `useQuizSession` and `quizApi`.
 3. Add Postgres tests for the completion RPC and entitlement rules.
 4. Add assertion-based Playwright smoke tests for the mobile attendee path.
-5. Add a few Deno tests for session/cors helpers and request validation.
 
-That order gives the most confidence for the least complexity.
+Next wave:
+
+5. Add a few Deno tests for session/cors helpers and request validation.
+6. Add a local Supabase integration test that exercises the full function path.
+7. Decide whether the Playwright smoke suite should also run in PR CI.
+
+That order still gives the most confidence for the least complexity.
 
 ## Proposed Test Inventory
 
@@ -333,7 +373,8 @@ Everything beyond that should earn its keep.
 - [ ] Add Deno tests for `session-cookie.ts` and `cors.ts`.
 - [ ] Refactor Edge Function request handling slightly if needed so validation and response logic are directly testable.
 - [ ] Add an integration test that exercises `issue-session` plus `complete-quiz` against a local Supabase stack.
-- [ ] Add PR CI jobs for the new unit, database, and Playwright smoke suites.
+- [ ] Add PR CI coverage for the Playwright smoke suite.
+- [ ] Add PR CI coverage for future Deno function tests once they exist.
 
 ### Later, Only If Needed
 
