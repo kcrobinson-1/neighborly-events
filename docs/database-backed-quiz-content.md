@@ -210,8 +210,8 @@ Rationale:
 
 ## Commit Plan
 
-- [ ] `docs(database-backed-quiz-content): capture MVP scope and decisions`
-- [ ] `feat(supabase): add published quiz content schema and demo backfill`
+- [x] `docs(database-backed-quiz-content): capture MVP scope and decisions`
+- [x] `feat(supabase): add published quiz content schema and demo backfill`
 - [ ] `refactor(shared): add DB-to-GameConfig mapping and isolate sample fixtures`
 - [ ] `feat(supabase): load canonical published quiz content in complete-quiz`
 - [ ] `feat(web): load game routes and demo summaries from published quiz content`
@@ -239,14 +239,20 @@ Expected per-stage validation:
 - web commit: previous commands plus `npm run build:web` and `npm run test:e2e`
 - final branch pass: full validation suite plus final self-review
 
+Validation implementation note:
+
+- local Supabase validation now needs to reset the local database to the
+  current repo migrations before integration and pgTAP runs so warm local stack
+  state cannot hide new schema changes
+
 ## Progress Checklist
 
 - [x] Ground in current docs, shared config, web flow, backend flow, and
       migrations
 - [x] Create dedicated branch
 - [x] Run full baseline validation suite on the new branch
-- [ ] Add decision doc and commit it
-- [ ] Add published content schema and seeded demo events
+- [x] Add decision doc and commit it
+- [x] Add published content schema and seeded demo events
 - [ ] Add shared DB row mapping and tests
 - [ ] Add backend published-content loader and switch `complete-quiz`
 - [ ] Add browser published-content reads and async route integration
