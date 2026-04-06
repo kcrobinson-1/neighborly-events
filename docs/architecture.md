@@ -52,7 +52,8 @@ Keep the quiz interaction local and fast, but make the completion state backend-
 
 ### Frontend Structure
 
-The current frontend is intentionally shallow:
+The current frontend is still intentionally small, but the quiz flow is now
+grouped into a dedicated `apps/web/src/game/` module:
 
 - `apps/web/src/main.tsx`
   Browser entry point. Mounts the React app.
@@ -65,13 +66,22 @@ The current frontend is intentionally shallow:
 - `apps/web/src/pages/LandingPage.tsx`
   Product overview and entry point into sample games.
 - `apps/web/src/pages/GamePage.tsx`
-  End-to-end player flow: intro, active question UI, correctness feedback, and completion screen.
+  Route-level shell for the attendee game flow. It bootstraps the session,
+  consumes the quiz hook, and renders quiz panels from the game module.
 - `apps/web/src/pages/NotFoundPage.tsx`
   Fallback route.
 - `apps/web/src/game/useQuizSession.ts`
-  Reducer-driven quiz session state machine.
+  Public quiz-session hook that coordinates reducer state, derived selectors,
+  and completion submission.
+- `apps/web/src/game/quizSessionState.ts`
+  Internal pure reducer/state-machine logic for quiz progression and completion.
+- `apps/web/src/game/quizSessionSelectors.ts`
+  Internal pure derived-state selectors for React-facing quiz view state.
 - `apps/web/src/game/quizUtils.ts`
-  Quiz-specific selection, label, and feedback helpers.
+  Public quiz-specific selection, label, and feedback helpers.
+- `apps/web/src/game/components/`
+  Quiz-specific intro, question, feedback, and completion panels extracted from
+  the route shell.
 - `apps/web/src/lib/quizApi.ts`
   Client-side session bootstrap and completion submission logic, including the local-development fallback.
 - `apps/web/src/lib/session.ts`

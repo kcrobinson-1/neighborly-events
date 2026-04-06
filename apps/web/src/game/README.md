@@ -1,79 +1,82 @@
-# Web Quiz Module Refactor Plan
+# Web Quiz Module
 
 ## Purpose
 
 This folder owns the frontend quiz module for the attendee game flow.
 
-The current implementation already has the right high-level boundary:
+It keeps the quiz-specific browser code together while leaving shared quiz
+correctness in `shared/game-config` and backend trust/completion behavior in
+`apps/web/src/lib/quizApi.ts` plus the Supabase backend.
 
-- `useQuizSession.ts` owns the reducer-backed quiz session flow
-- `quizUtils.ts` owns quiz-specific pure helpers
+## Public Entrypoints
 
-This refactor keeps that boundary intact while making the module easier to read,
-test, and maintain.
+- `useQuizSession.ts`
+  Public React hook for the quiz session lifecycle. This is the main interface
+  that route-level UI should consume.
+- `quizUtils.ts`
+  Public pure helper surface for quiz-specific selection, labeling, and
+  feedback-copy logic.
 
-## Current Pain Points
+These are the stable imports that other frontend files should prefer.
 
-- `useQuizSession.ts` mixes reducer logic, state helpers, derived view state,
-  side-effect orchestration, and hook-facing actions in one large file.
-- `GamePage.tsx` still owns several quiz-specific presentation components that
-  fit better inside this module.
-- The current folder lacks a local guide that explains which files are public
-  entrypoints, which files are internal implementation details, and how tests
-  map onto the module.
+## Internal Structure
 
-## Target Architecture
+- `quizSessionState.ts`
+  Pure reducer-owned state machine types, initial-state helpers, request-id
+  creation for final-question completion, and transition logic.
+- `quizSessionSelectors.ts`
+  Pure derived-state selectors that turn reducer state plus game config into the
+  React-facing view state used by the page and quiz components.
+- `components/`
+  Quiz-specific presentation components used by `GamePage.tsx`.
+  These components should stay presentational and receive state/actions through
+  props rather than owning quiz business rules themselves.
 
-- Keep `useQuizSession.ts` as the stable public hook entrypoint.
-- Extract reducer-owned state machine logic into internal files in this folder.
-- Extract derived session selectors into internal files in this folder.
-- Move quiz-specific UI panels from `pages/GamePage.tsx` into
-  `game/components/`.
-- Keep `quizUtils.ts` as the stable pure-helper entrypoint.
-- Add matching tests so the refactor preserves behavior while making the new
-  internal seams easier to validate directly.
+## Ownership Boundaries
 
-## Commit Plan
+- `GamePage.tsx` should stay a route shell.
+  It handles route-level framing, session bootstrap, and choosing which quiz
+  panel to render.
+- `useQuizSession.ts` owns the browser quiz lifecycle.
+  It wires reducer state, derived selectors, completion submission, retries, and
+  hook-facing actions together.
+- `quizSessionState.ts` owns state transitions.
+  If a quiz phase or reducer transition changes, update that file first.
+- `quizSessionSelectors.ts` owns read-only derived state.
+  If a page/component needs new derived booleans or progress calculations, add
+  them there instead of growing the hook body.
+- `quizUtils.ts` owns frontend-only helper logic.
+  Keep shared answer correctness, scoring, and validation in `shared/game-config`.
 
-1. `docs(game): add module refactor plan readme`
-2. `refactor(game): extract quiz session state machine`
-3. `refactor(game): separate hook selectors and derived session state`
-4. `refactor(game): extract quiz UI components from game page`
-5. `test(game): add quiz utils and page wiring coverage`
-6. `docs(game): finalize module documentation`
+## Testing Layout
 
-## Todo Checklist
+- `tests/web/game/useQuizSession.test.ts`
+  Hook contract coverage.
+- `tests/web/game/quizSessionState.test.ts`
+  Pure reducer/state-machine coverage.
+- `tests/web/game/quizSessionSelectors.test.ts`
+  Pure derived-state selector coverage.
+- `tests/web/game/quizUtils.test.ts`
+  Pure helper coverage.
+- `tests/web/game/components/`
+  Focused component rendering and interaction coverage for extracted quiz
+  panels.
+- `tests/web/pages/GamePage.test.tsx`
+  Route-shell wiring coverage for intro, active question, start-error, and
+  completion states.
 
-- [x] Add this README with the working plan and checklist.
-- [x] Extract quiz session state machine files and matching tests.
-- [x] Extract derived session selectors/helpers and matching tests.
-- [x] Extract quiz UI components from `GamePage.tsx` and add matching tests.
-- [x] Add direct `quizUtils` coverage and focused `GamePage` wiring coverage.
-- [ ] Finalize this README as a stable module guide.
-- [ ] Update `docs/architecture.md` for the new frontend structure.
-- [ ] Update `docs/testing.md` for the new test layout and coverage.
-- [ ] Run final review, final validation, and open a review-ready PR.
+## Maintenance Notes
 
-## Non-Goals
+- Keep this module non-authoritative for quiz correctness.
+  Shared quiz rules still belong in `shared/game-config`.
+- Preserve current strings and class names when refactoring components unless
+  there is an intentional UX change.
+- Prefer adding a small pure helper or selector over pushing more logic back
+  into `GamePage.tsx`.
+- Prefer direct tests for pure state, selector, and helper modules plus focused
+  wiring tests for the page shell.
 
-- No user-facing copy changes.
-- No route changes.
-- No CSS class changes except extraction-safe moves that preserve output.
-- No scoring, correctness, or backend behavior changes.
-- No movement of shared quiz rules out of `shared/game-config`.
+## Current Status
 
-## Validation Standard
-
-Before each implementation commit, run:
-
-```bash
-npm run lint
-npm test
-npm run test:functions
-npm run test:supabase
-npm run build:web
-deno check --no-lock supabase/functions/issue-session/index.ts
-deno check --no-lock supabase/functions/complete-quiz/index.ts
-```
-
-Each commit should stay reviewable, behaviorally unchanged, and green.
+The quiz module refactor is complete. The reducer, derived selectors, quiz
+panels, and tests now follow the current module boundaries described above.
