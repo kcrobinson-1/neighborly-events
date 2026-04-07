@@ -20,6 +20,9 @@ It is responsible for:
   Shared answer normalization, validation, and scoring.
 - `game-validation.ts`
   Structural validation for any `GameConfig`.
+- `draft-content.ts`
+  Parses and validates canonical authoring draft JSON, then maps it into
+  `GameConfig`.
 - `db-content.ts`
   Maps published Supabase rows into `GameConfig`.
 - `sample-games.ts`
@@ -39,5 +42,8 @@ It is responsible for:
   than duplicating rules in the browser or the backend.
 - Keep database loading concerns out of `answers.ts`; DB reads should happen in
   app/backend code and be mapped into `GameConfig` through `db-content.ts`.
+- Keep authoring-payload parsing and canonical draft validation in
+  `draft-content.ts`; future admin or AI write paths should normalize there
+  before persisting or publishing.
 - Treat `sample-fixtures.ts` as an explicit escape hatch for tests and local
   prototype fallback, not as the standard runtime content source.
