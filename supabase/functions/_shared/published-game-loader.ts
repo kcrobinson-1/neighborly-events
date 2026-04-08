@@ -1,4 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2.101.1";
 import {
   mapPublishedGameRowsToGameConfig,
   type GameConfig,
