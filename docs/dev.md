@@ -89,6 +89,19 @@ That means:
 - the browser has the signed session credential ready before completion submission
 - the start screen is a better place for a recoverable backend setup error
 
+### Admin auth stays on the real Supabase path
+
+The new `/admin` route is intentionally different from the attendee fallback
+story.
+
+That means:
+
+- `/admin` requires a configured Supabase project
+- magic-link auth and private draft reads do not run in the local-only
+  prototype fallback
+- the allowlist check lives in SQL through `public.is_quiz_admin()`, not in
+  browser-only state
+
 ### Offline fallback stays explicit
 
 When Supabase environment variables are missing, the app now fails loudly unless offline mode is explicitly enabled.
@@ -155,6 +168,12 @@ Notes:
   the connected Supabase project; the repo migrations seed the current demo
   events for local and fresh-project setup
 
+If you also need the admin route locally:
+
+1. make sure Supabase Auth redirect URLs include your local `/admin` origin
+2. add your normalized email to `public.quiz_admin_users` in the connected project
+3. open `/admin` after starting `npm run dev:web` or `npm run dev:web:local`
+
 ### Frontend-only fallback development
 
 Use this path when you do not have backend access and only need frontend iteration:
@@ -172,6 +191,8 @@ Constraint:
 - this fallback is development-only and should not be treated as production trust logic
 - it also uses explicit shared sample fixtures rather than the published-content
   tables
+- it does not support `/admin`; the admin shell requires real Supabase auth and
+  private draft reads
 
 ## Validation Commands
 
@@ -290,6 +311,12 @@ Then set these frontend env vars locally and in your Vercel project:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 
+Then finish the manual authoring setup in Supabase:
+
+- add Auth redirect URLs for `http://127.0.0.1:4173/admin`,
+  `http://localhost:4173/admin`, and your deployed `/admin` origin
+- add at least one normalized admin email to `public.quiz_admin_users`
+
 ### Vercel
 
 - create your own Vercel project for `apps/web`
@@ -344,8 +371,8 @@ One concrete gotcha already hit in this repo:
 
 The next likely development steps are:
 
-1. Add organizer/admin tooling for editing, publishing, and operating
-   database-backed events without code changes.
+1. Add draft save, editing, and publish tooling on top of the new admin auth
+   and authorization path.
 2. Add lightweight reporting for quiz starts, completions, and timing.
 3. Add richer event publish controls such as drafts, previews, or expiry
    windows if operations need them.

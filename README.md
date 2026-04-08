@@ -8,6 +8,7 @@ The current product shape is:
 - complete a fast 5-7 question experience
 - see local sponsors woven into the game
 - finish with a backend-verified raffle-entry confirmation state
+- admins can sign in at `/admin` to verify private draft-authoring access
 
 The product is intended for community events like concerts, fairs, and neighborhood markets, where the experience needs to be fast, outdoor-friendly, and easy to run without technical overhead.
 
@@ -18,6 +19,7 @@ This repository currently includes:
 - a Vite + React attendee experience prototype
 - a landing page plus published demo game routes
 - database-backed published event and quiz content
+- a Supabase Auth-backed admin shell for private draft access at `/admin`
 - one-question-at-a-time quiz flow with back navigation
 - multiple quiz feedback modes
 - shared quiz mapping, validation, and scoring logic
@@ -111,6 +113,11 @@ Use `npm run dev:web:local` if you want a fixed local origin for browser automat
 Published landing-page summaries and `/game/:slug` routes now load from
 Supabase-backed published content in this mode.
 
+The admin authoring shell at `/admin` also requires:
+
+- Supabase Auth redirect URLs that include your local `/admin` origin
+- your admin email to be present in `public.quiz_admin_users`
+
 If you do not have backend access and only need frontend iteration:
 
 1. Copy [apps/web/.env.example](./apps/web/.env.example) to `apps/web/.env`.
@@ -123,6 +130,11 @@ If you do not have backend access and only need frontend iteration:
 
 In this explicit local-only mode, the app uses shared sample fixtures for both
 route content and completion fallback behavior.
+
+Constraint:
+
+- `/admin` does not support the local-only prototype fallback; it requires a
+  configured Supabase project for auth and private draft reads
 
 Validation commands:
 
@@ -151,6 +163,8 @@ In short:
 
 - create your own Supabase project
 - apply the repo migrations and deploy the Edge Functions
+- configure Supabase Auth redirect URLs for your `/admin` origins
+- add at least one allowlisted admin email in `public.quiz_admin_users`
 - create your own Vercel project for `apps/web`
 - set the frontend env vars in Vercel
 - set Supabase secrets such as `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS`
@@ -178,7 +192,7 @@ Operational setting ownership lives in [docs/operations.md](./docs/operations.md
 
 The main remaining gaps before the broader event-ready MVP are:
 
-- organizer/admin tooling for editing and publishing database-backed events
+- draft editing, AI-assisted authoring, and publish controls for database-backed events
 - analytics and reporting for starts, completions, and completion time
 - richer publishing controls such as drafts, previews, or expiry windows for
   live event URLs

@@ -31,7 +31,7 @@ For this project today, that means:
 | --- | --- | --- |
 | GitHub | workflows, validation logic | branch protection, rulesets, required checks, reviewer policy, Actions secrets, environment approvals |
 | Vercel | `vercel.json`, frontend build config | project creation, domains, env var values, deployment protection, team access |
-| Supabase | `config.toml`, migrations, Edge Function source | project creation, runtime secret values, org membership, billing, dashboard-only admin settings |
+| Supabase | `config.toml`, migrations, Edge Function source | project creation, runtime secret values, Auth URL settings, admin allowlist membership, org membership, billing, dashboard-only admin settings |
 
 ## Repo-Managed Settings
 
@@ -45,7 +45,7 @@ For this project today, that means:
 ### Vercel
 
 - [`apps/web/vercel.json`](../apps/web/vercel.json)
-  SPA route rewrites and other project behavior supported by `vercel.json`
+  SPA route rewrites for `/admin` and `/game/:slug`, plus other supported project behavior
 - [`apps/web/package.json`](../apps/web/package.json)
   frontend build commands
 - [`apps/web/vite.config.ts`](../apps/web/vite.config.ts)
@@ -108,12 +108,16 @@ Why manual for now:
 - runtime secret values:
   - `SESSION_SIGNING_SECRET`
   - `ALLOWED_ORIGINS`
+- Auth URL configuration for magic-link sign-in:
+  - local `/admin` redirect URLs
+  - deployed `/admin` redirect URLs
+- operational allowlist membership in `public.quiz_admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 
 Why manual for now:
 
 - migrations, functions, and function config are repo-friendly
-- secret values and project/account administration are not appropriate to store in the repo
+- secret values, Auth URL settings, and environment-specific admin membership are not appropriate to store in the repo
 
 ## Fresh Deployment Checklist
 
@@ -124,7 +128,9 @@ For a new deployment from a fork:
 3. Create a new Vercel project for the `apps/web` app.
 4. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in Vercel.
 5. Set `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` in Supabase.
-6. Recreate the desired GitHub branch protection and Actions secret configuration.
+6. Add Supabase Auth redirect URLs for your local and deployed `/admin` origins.
+7. Insert at least one normalized admin email into `public.quiz_admin_users`.
+8. Recreate the desired GitHub branch protection and Actions secret configuration.
 
 ## Current Operating Discipline
 
