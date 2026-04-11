@@ -21,11 +21,10 @@ Rules for this checklist:
   while keeping shared test fixtures in a small helper.
   Validation: `npm run test:functions`.
 
-- [ ] Split the Phase 3 database publish pgTAP coverage by behavior.
-  `supabase/tests/database/quiz_authoring_phase3_publish.test.sql` combines
-  privileges, first publish, republish, unpublish, audit, and failed-publish
-  rollback checks. Split into smaller `.test.sql` files grouped by publish
-  projection, unpublish/audit behavior, and failure/permission behavior.
+- [x] Split the Phase 3 database publish pgTAP coverage by behavior.
+  Replaced `supabase/tests/database/quiz_authoring_phase3_publish.test.sql`
+  with smaller `.test.sql` files grouped by publish projection/version
+  behavior, unpublish/audit behavior, and failure/permission behavior.
   Validation: `npm run test:db`.
 
 - [ ] Extract shared authoring Edge Function HTTP/auth boilerplate.
