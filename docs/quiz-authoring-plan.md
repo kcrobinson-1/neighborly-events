@@ -4,9 +4,9 @@
 
 - State: proposed design
 - Phase 0 status: complete for this document revision
-- Phase 1 status: implemented on branch `feat/quiz-authoring-phase-1`
+- Phase 1 status: implemented in the current repo
 - Phases 2-5 status: proposed implementation work
-- Last updated: 2026-04-06
+- Last updated: 2026-04-08
 - Owner area: product, UX, web app, shared quiz domain, and Supabase backend
 
 ## Purpose
@@ -656,8 +656,8 @@ Status note:
 
 - Phase 0 is complete at the planning level in this document. The items below
   are settled scope decisions, not open questions.
-- Phase 1 is complete in the current implementation branch and should be treated
-  as merge-ready on its own.
+- Phase 1 is complete in the current repo and should be treated as merge-ready
+  on its own.
 - Phases 2-5 are still proposed execution work.
 
 ### Phase 0: Align Product And Scope (Complete)
@@ -686,7 +686,7 @@ Acceptance criteria:
 
 Implementation status:
 
-- implemented on branch `feat/quiz-authoring-phase-1`
+- implemented in the current repo
 - landed as:
   - `feat(supabase): add quiz authoring draft and version tables`
   - `feat(shared): add authoring draft mapping and validation`

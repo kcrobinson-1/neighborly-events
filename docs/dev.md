@@ -15,6 +15,7 @@ Use it for:
 System shape and data ownership live in `architecture.md`. UX intent lives in `experience.md`. Platform setting ownership lives in `operations.md`.
 
 Testing scope, layer ownership, and rollout priorities live in `testing.md`.
+Unresolved contributor-workflow and release questions live in `open-questions.md`.
 
 ## Current Tooling
 

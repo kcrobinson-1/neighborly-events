@@ -9,6 +9,7 @@ Related docs:
 - `experience.md` covers the attendee, volunteer, and organizer experience
 - `architecture.md` covers system shape, data, and backend responsibilities
 - `dev.md` covers implementation choices, tooling, and milestone sequencing
+- `open-questions.md` tracks unresolved product and operating decisions that the repo should not guess
 
 ## Purpose
 A mobile-first neighborhood game designed for local events (concerts, fairs, markets) that drives sponsor engagement and raffle participation through a short, interactive quiz experience. Organizers control all content and sponsorships, enabling lightweight fundraising without adding operational complexity.
@@ -29,6 +30,19 @@ Provide a fast, mobile-native quiz experience that:
 - Embeds sponsor visibility directly into questions
 
 Organizers configure the quiz, sell sponsored questions to local businesses, and use the quiz as both an engagement and fundraising tool.
+
+## Current Implemented Slice
+
+Today the repo implements a narrower engineering slice of that product:
+
+- a demo-overview landing page at `/`
+- published attendee quiz routes at `/game/:slug`
+- backend-verified completion with one raffle entitlement per event/session pair
+- shared quiz correctness, validation, and scoring logic
+- draft/version groundwork for future authoring, but no organizer-facing admin UI yet
+
+Broader organizer tooling, reporting, and richer live-event operations remain
+future product work rather than completed behavior.
 
 ## Target Users
 

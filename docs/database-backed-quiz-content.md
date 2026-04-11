@@ -2,9 +2,8 @@
 
 ## Status
 
-- State: implementation reference
-- Branch: `codex/database-backed-quiz-content`
-- Last updated: 2026-04-06
+- State: implemented reference
+- Last updated: 2026-04-08
 
 ## Summary
 

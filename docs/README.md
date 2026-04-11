@@ -17,6 +17,8 @@ If you want:
 - the local workflow, validation commands, release flow, or troubleshooting steps, read [dev.md](./dev.md)
 - the testing strategy, coverage priorities, and rollout plan, read [testing.md](./testing.md)
 - the platform ownership model for GitHub, Vercel, and Supabase settings, read [operations.md](./operations.md)
+- the unresolved product, UX, and workflow decisions, read [open-questions.md](./open-questions.md)
+- the documentation maintenance plan, read [documentation-quality-checklist.md](./documentation-quality-checklist.md)
 
 ## Doc Ownership
 
@@ -42,6 +44,10 @@ Use these boundaries to keep the docs tidy:
   what to test, where tests should run, what to mock, and what is intentionally overkill right now
 - `docs/operations.md`
   what is repo-managed versus manually maintained across platforms
+- `docs/open-questions.md`
+  unresolved decisions that should stay explicit instead of being guessed in canonical docs
+- `docs/documentation-quality-checklist.md`
+  recurring documentation maintenance checklist and quality-improvement plan
 
 ## Editing Rule Of Thumb
 

@@ -394,10 +394,13 @@ Completed first wave:
 3. Add Postgres tests for the completion RPC and entitlement rules.
 4. Add assertion-based Playwright smoke tests for the mobile attendee path.
 
-Next wave:
+Completed second wave:
 
 5. Add a few Deno tests for session/cors helpers and request validation.
 6. Add a local Supabase integration test that exercises the full function path.
+
+Remaining next wave:
+
 7. Decide whether the Playwright smoke suite should also run in PR CI.
 
 That order still gives the most confidence for the least complexity.
@@ -434,11 +437,11 @@ Everything beyond that should earn its keep.
 
 ### Soon After
 
-- [ ] Add Deno tests for `session-cookie.ts` and `cors.ts`.
-- [ ] Refactor Edge Function request handling slightly if needed so validation and response logic are directly testable.
-- [ ] Add an integration test that exercises `issue-session` plus `complete-quiz` against a local Supabase stack.
+- [x] Add Deno tests for `session-cookie.ts` and `cors.ts`.
+- [x] Refactor Edge Function request handling slightly if needed so validation and response logic are directly testable.
+- [x] Add an integration test that exercises `issue-session` plus `complete-quiz` against a local Supabase stack.
 - [ ] Add PR CI coverage for the Playwright smoke suite.
-- [ ] Add PR CI coverage for future Deno function tests once they exist.
+- [x] Add PR CI coverage for Deno function tests.
 
 ### Later, Only If Needed
 

@@ -20,8 +20,10 @@ Before making major architectural assumptions, read:
 - `README.md`
 - `docs/architecture.md`
 - `docs/dev.md`
+- `docs/open-questions.md`
 
 Use `docs/product.md` and `docs/experience.md` as product and UX targets, not as proof that every planned feature already exists.
+When the repo leaves a decision unresolved, capture that uncertainty in `docs/open-questions.md` instead of inventing an answer.
 
 ## Architecture Guardrails
 
@@ -132,6 +134,16 @@ Update `docs/dev.md` when:
 - local workflow changes
 - validation commands change
 - tooling choices or deployment steps change
+
+Update `docs/open-questions.md` when:
+
+- you discover an unresolved product, UX, architecture, or operations decision that materially affects future work
+- a previously open question has been answered in code, docs, or platform configuration
+
+Update `docs/documentation-quality-checklist.md` when:
+
+- a docs improvement pass completes a checklist item
+- a new recurring docs debt pattern shows up in review or handoff
 
 Update inline comments and function/type documentation when:
 

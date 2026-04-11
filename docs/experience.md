@@ -13,6 +13,7 @@ It should answer questions like:
 - What should the completion moment communicate?
 
 Implementation details such as backend structure, data ownership, and stack choice belong in `architecture.md` and `dev.md`.
+Cross-cutting unresolved UX and live-operation questions belong in `open-questions.md`.
 
 ## UX Philosophy
 

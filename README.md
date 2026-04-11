@@ -56,6 +56,9 @@ Runtime responsibilities are:
 
 Start with [docs/README.md](./docs/README.md) for the documentation map.
 
+The docs intentionally call unresolved decisions out as open questions instead
+of guessing.
+
 The main docs are:
 
 - [Product Overview](./docs/product.md)
@@ -74,6 +77,10 @@ The main docs are:
   what should be tested across the site, shared logic, Supabase, and UX flows
 - [Operations Guide](./docs/operations.md)
   which settings are repo-managed versus manually maintained across GitHub, Vercel, and Supabase
+- [Open Questions](./docs/open-questions.md)
+  unresolved product, workflow, and operational decisions that should stay explicit
+- [Documentation Quality Checklist](./docs/documentation-quality-checklist.md)
+  action checklist for keeping the documentation set accurate and complete
 
 ## Quick Start
 
