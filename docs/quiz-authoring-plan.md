@@ -2,11 +2,12 @@
 
 ## Status
 
-- State: proposed design
+- State: phased implementation in progress
 - Phase 0 status: complete for this document revision
-- Phase 1 status: implemented on branch `feat/quiz-authoring-phase-1`
-- Phases 2-5 status: proposed implementation work
-- Last updated: 2026-04-06
+- Phase 1 status: implemented in the current repo
+- Phase 2 status: implemented in the current repo
+- Phases 3-5 status: proposed implementation work
+- Last updated: 2026-04-08
 - Owner area: product, UX, web app, shared quiz domain, and Supabase backend
 
 ## Purpose
@@ -656,9 +657,11 @@ Status note:
 
 - Phase 0 is complete at the planning level in this document. The items below
   are settled scope decisions, not open questions.
-- Phase 1 is complete in the current implementation branch and should be treated
-  as merge-ready on its own.
-- Phases 2-5 are still proposed execution work.
+- Phase 1 is complete in the current repo and should be treated as merge-ready
+  on its own.
+- Phase 2 is complete in the current repo and should be treated as merge-ready
+  on its own.
+- Phases 3-5 are still proposed execution work.
 
 ### Phase 0: Align Product And Scope (Complete)
 
@@ -686,15 +689,16 @@ Acceptance criteria:
 
 Implementation status:
 
-- implemented on branch `feat/quiz-authoring-phase-1`
+- implemented in the current repo
 - landed as:
   - `feat(supabase): add quiz authoring draft and version tables`
   - `feat(shared): add authoring draft mapping and validation`
   - `test(authoring): cover draft validation and schema backfill`
   - `docs(shared): document draft content module`
-- current scope intentionally stops short of auth, admin APIs, or publish flows
+- Phase 1 scope intentionally stopped short of auth, admin APIs, or publish
+  flows
 
-### Phase 2: Auth And Authorization
+### Phase 2: Auth And Authorization (Complete)
 
 Deliverables:
 
@@ -706,6 +710,18 @@ Acceptance criteria:
 
 - an authenticated admin can access the authoring system and all draft events
 - anonymous users cannot read or write draft content
+
+Implementation status:
+
+- `/admin` now exists inside `apps/web`
+- Supabase Auth magic-link sign-in now restores and maintains the admin session
+- `quiz_admin_users` now provides the private allowlist table
+- `public.is_quiz_admin()` now provides one shared authorization check for both
+  the admin shell and authoring-table RLS
+- RLS now exposes `quiz_event_drafts` and `quiz_event_versions` only to
+  allowlisted authenticated admins
+- current scope intentionally stops short of draft save, AI upsert, and publish
+  flows
 
 ### Phase 3: Admin APIs And Publish Workflow
 

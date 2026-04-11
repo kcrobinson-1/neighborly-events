@@ -26,7 +26,9 @@ Tooling and local workflow live in `dev.md`. Product intent lives in `product.md
 The current implementation is:
 
 - a React single-page app for the attendee experience
+- a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
+- private authoring draft and admin-allowlist tables protected by RLS
 - a shared TypeScript domain module for quiz runtime shape, mapping, validation, and scoring
 - two Supabase edge functions for session bootstrap and trusted completion
 - Supabase SQL migrations that store published content, record completion attempts, and award one raffle entitlement per event/session pair
@@ -66,6 +68,9 @@ grouped into a dedicated `apps/web/src/game/` module:
   Minimal client-side navigation hook built on the History API.
 - `apps/web/src/pages/LandingPage.tsx`
   Product overview and entry point into published demo events.
+- `apps/web/src/pages/AdminPage.tsx`
+  Minimal authoring access shell for `/admin`, including magic-link sign-in,
+  allowlist status, and private draft listing.
 - `apps/web/src/pages/GameRoutePage.tsx`
   Async route loader that resolves `/game/:slug` into published content before
   rendering the quiz shell.
@@ -88,13 +93,18 @@ grouped into a dedicated `apps/web/src/game/` module:
   the route shell.
 - `apps/web/src/lib/quizApi.ts`
   Client-side session bootstrap and completion submission logic, including the local-development fallback.
+- `apps/web/src/lib/adminQuizApi.ts`
+  Browser auth, admin-status RPC, and private draft reads for the authoring
+  shell.
 - `apps/web/src/lib/quizContentApi.ts`
   Browser reads for published event summaries and route content.
 - `apps/web/src/lib/supabaseBrowser.ts`
   Shared browser-side Supabase env, auth-header, and error helpers used by
-  both content reads and function calls.
+  public content reads, admin auth, and function calls.
 - `apps/web/src/lib/session.ts`
   Small client id-generation helpers.
+- `apps/web/src/admin/`
+  Admin-session hook and local module documentation for the `/admin` route.
 - `apps/web/src/types/quiz.ts`
   Client-side types for completion payloads and results.
 - `apps/web/src/data/games.ts`
@@ -147,6 +157,12 @@ The Supabase side is intentionally small:
 - `supabase/migrations/20260406130000_add_published_quiz_content.sql`
   Published event, question, and option tables plus demo-event backfill and
   public read policies.
+- `supabase/migrations/20260406150000_add_quiz_authoring_drafts.sql`
+  Private draft and version tables plus backfill from the current published
+  demo events.
+- `supabase/migrations/20260407103000_add_quiz_authoring_auth.sql`
+  Admin allowlist table, admin-status RPC, authoring RLS policies, and draft
+  audit stamping.
 
 ## What Is Implemented Now
 
@@ -202,6 +218,21 @@ The current shared game model and frontend support more than one quiz behavior:
 
 This capability is implemented in both the shared config model and the `useQuizSession` reducer flow.
 
+### Minimal admin auth shell for authoring access
+
+The web app now includes a dedicated `/admin` route.
+
+Today that route:
+
+- signs admins in with Supabase Auth magic links
+- checks a private email allowlist through `public.is_quiz_admin()`
+- lists private draft events for allowlisted admins
+- keeps non-admin authenticated users out of the draft data path
+
+This intentionally stops short of draft editing or publishing. The current goal
+is to prove the auth boundary and private data access before adding write and
+publish flows.
+
 ## Runtime Request Flow
 
 The current system works like this:
@@ -240,6 +271,12 @@ The current implementation uses:
   `quiz_question_options`
   The browser uses the publishable key plus RLS-filtered reads for public event
   content, while the backend uses the same tables through the service-role key.
+- direct authenticated PostgREST reads for private `quiz_event_drafts`
+  The admin shell loads draft summaries through the authenticated browser
+  session plus RLS.
+- `public.is_quiz_admin()`
+  Security-definer SQL helper that turns the current authenticated email/user
+  context into one shared allowlist decision for both the admin UI and RLS.
 
 There is still no custom general-purpose application API beyond those bounded
 surfaces, and that is intentional. The system exposes only the reads and
@@ -252,6 +289,7 @@ trusted function endpoints needed by the attendee flow.
 The browser currently owns:
 
 - published summary and event reads for public rendering
+- the persisted Supabase Auth session for `/admin`
 - current question index
 - pending selection state
 - submitted local answers
@@ -285,7 +323,9 @@ Those services have distinct roles:
 - `Vercel` is not the backend of record. It serves the built SPA and handles route rewrites for browser navigation.
 - `Supabase` is not rendering the quiz UI. It stores data and runs the trusted completion/session logic.
 
-In this repo, [apps/web/vercel.json](../apps/web/vercel.json) rewrites `/game/:path*` to `index.html` so the SPA can resolve those URLs in the browser after deployment.
+In this repo, [apps/web/vercel.json](../apps/web/vercel.json) rewrites `/admin`
+and `/game/:path*` to `index.html` so the SPA can resolve those URLs in the
+browser after deployment.
 
 The current deployment discipline is simpler:
 
@@ -303,13 +343,14 @@ The repository has a working prototype slice, but it does not yet satisfy the fu
 
 ### Organizer/admin tooling
 
-Today, there is no organizer interface.
+Today, the repo has a minimal organizer/admin access shell, but not a full
+authoring product.
 
 What is missing:
 
-- creating and editing events without code changes
+- draft editing and duplication without code changes
 - publishing and unpublishing events
-- managing sponsor attribution and question content
+- managing sponsor attribution and question content beyond draft visibility
 
 ### Analytics and reporting
 
@@ -351,8 +392,8 @@ This is an explicit product tradeoff, not an accidental omission.
 The most sensible next architectural steps are:
 
 1. Add a staging or branch-based Supabase promotion path if local verification plus direct-to-production release stops feeling sufficient.
-2. Add organizer-facing content management and publish controls on top of the
-   published event schema.
+2. Add organizer-facing draft editing and publish controls on top of the new
+   admin auth path.
 3. Add lightweight analytics/reporting for live events.
 4. Add richer publish behavior such as drafts, previews, or expiry windows if
    live operations need them.
