@@ -11,6 +11,14 @@ Rules for this checklist:
 - move tests with the code they cover
 - run the existing validation command for the touched area
 - avoid mixing these cleanups with product or schema behavior changes
+- add a task only when the issue was observed while implementing or reviewing
+  real work
+- name the exact file or module, the concrete responsibility problem, the
+  desired target shape, and the minimum validation command
+- keep each task small enough for one focused PR
+- do not add tasks for cosmetic preferences, speculative abstraction, or general
+  cleanup without clear reviewability, correctness, ownership, duplication, or
+  future-change-cost value
 
 ## Candidate Tasks
 
@@ -62,11 +70,21 @@ Rules for this checklist:
   Validation: `npm test -- tests/web/lib/quizApi.test.ts` and
   `npm run build:web`.
 
-- [ ] Split quiz SCSS by component group.
-  `apps/web/src/styles/_quiz.scss` is over 300 lines and includes styles for the
-  intro, question, feedback, completion, and option controls. Split into focused
-  partials imported by the SCSS entrypoint or a quiz index partial.
+- [x] Split quiz SCSS by component group.
+  `apps/web/src/styles/_quiz.scss` now stays a quiz style index partial.
+  Focused quiz partials own panel, control, progress, shared flow layout,
+  question/option, feedback, question-action, result/review, completion-token,
+  focus, and motion styles.
   Validation: `npm run build:web`.
+
+- [ ] Consolidate repeated SCSS color and spacing literals into semantic tokens.
+  `apps/web/src/styles/` now has focused partials, but many components still use
+  repeated `rgba(...)` alpha variants and shared spacing/font-weight literals
+  directly. Add semantic tokens in `apps/web/src/styles/_tokens.scss` for
+  repeated surface, border, state, focus, and spacing roles, then update
+  component partials to use those tokens where it improves readability without
+  tokenizing one-off layout values.
+  Validation: `npm run build:web` plus compiled CSS comparison before/after.
 
 - [x] Split local Edge Function integration runner by responsibility.
   Extracted process lifecycle, readiness polling, completion retry, and JSON
