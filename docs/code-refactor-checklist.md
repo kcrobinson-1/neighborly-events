@@ -77,6 +77,15 @@ Rules for this checklist:
   focus, and motion styles.
   Validation: `npm run build:web`.
 
+- [ ] Consolidate repeated SCSS color and spacing literals into semantic tokens.
+  `apps/web/src/styles/` now has focused partials, but many components still use
+  repeated `rgba(...)` alpha variants and shared spacing/font-weight literals
+  directly. Add semantic tokens in `apps/web/src/styles/_tokens.scss` for
+  repeated surface, border, state, focus, and spacing roles, then update
+  component partials to use those tokens where it improves readability without
+  tokenizing one-off layout values.
+  Validation: `npm run build:web` plus compiled CSS comparison before/after.
+
 - [x] Split local Edge Function integration runner by responsibility.
   Extracted process lifecycle, readiness polling, completion retry, and JSON
   HTTP diagnostics into `scripts/testing/` utilities so
