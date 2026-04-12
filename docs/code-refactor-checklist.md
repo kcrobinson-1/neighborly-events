@@ -19,6 +19,8 @@ Rules for this checklist:
 - do not add tasks for cosmetic preferences, speculative abstraction, or general
   cleanup without clear reviewability, correctness, ownership, duplication, or
   future-change-cost value
+- styling refactor tasks should prefer semantic tokens, avoid tokenizing one-off
+  layout values, and include compiled CSS comparison in validation when practical
 
 ## Candidate Tasks
 

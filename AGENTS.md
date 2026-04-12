@@ -41,6 +41,25 @@ If quiz correctness, scoring, or answer validation changes, make sure the shared
 Do not treat the local browser-only completion fallback as production backend behavior.
 Do not default to the local browser-only completion fallback when a remote Supabase integration run is feasible.
 
+### Styling Token Discipline
+
+Use the SCSS token layer before adding new hard-coded visual values.
+
+- prefer existing tokens from `apps/web/src/styles/_tokens.scss` for colors,
+  spacing, radii, shadows, font weights, and shared component dimensions
+- add a new semantic token when a value is repeated, represents a reusable
+  surface, state, interaction, or layout role, or should change consistently
+  across multiple components
+- name tokens by UI role or intent, such as `$color-success-surface` or
+  `$space-7`, rather than by vague appearance names
+- keep one-off layout values local when a token would add indirection without
+  improving readability or future change cost
+- do not introduce broad token rewrites inside unrelated feature work; add a
+  bounded checklist item when token cleanup is useful but not required for the
+  feature
+- for behavior-preserving token refactors, compare compiled CSS before and
+  after when practical, in addition to running `npm run build:web`
+
 ## Expected Workflow
 
 Work should follow the repo process even when the prompt only describes the end state.
