@@ -8,8 +8,7 @@ import type {
   AdminSelectedDraftState,
 } from "./useAdminDashboard";
 import type { AdminEventDetailsFormValues } from "./eventDetails";
-import type { AdminQuestionFormValues } from "./questionBuilder";
-import type { DraftEventSummary } from "../lib/adminQuizApi";
+import type { DraftEventDetail, DraftEventSummary } from "../lib/adminQuizApi";
 import { AdminEventWorkspace } from "./AdminEventWorkspace";
 import { AdminSignInForm } from "./AdminSignInForm";
 
@@ -27,9 +26,9 @@ type AdminDashboardContentProps = {
   onSaveSelectedEventDetails: (
     values: AdminEventDetailsFormValues,
   ) => Promise<DraftEventSummary | null>;
-  onSaveSelectedQuestion: (
+  onSaveSelectedQuestionContent: (
+    content: DraftEventDetail["content"],
     questionId: string,
-    values: AdminQuestionFormValues,
   ) => Promise<DraftEventSummary | null>;
   onSubmitMagicLink: (event: FormEvent<HTMLFormElement>) => void;
   questionSaveState: AdminQuestionSaveState;
@@ -60,7 +59,7 @@ export function AdminDashboardContent({
   onNavigate,
   onRetryDashboard,
   onSaveSelectedEventDetails,
-  onSaveSelectedQuestion,
+  onSaveSelectedQuestionContent,
   onSubmitMagicLink,
   questionSaveState,
   selectedDraftState,
@@ -159,7 +158,7 @@ export function AdminDashboardContent({
           focusedQuestionId={focusedQuestionId}
           onFocusQuestion={onFocusQuestion}
           onSaveSelectedEventDetails={onSaveSelectedEventDetails}
-          onSaveSelectedQuestion={onSaveSelectedQuestion}
+          onSaveSelectedQuestionContent={onSaveSelectedQuestionContent}
           questionSaveState={questionSaveState}
           selectedDraftState={selectedDraftState}
           selectedEventId={selectedEventId}

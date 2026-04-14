@@ -1,4 +1,4 @@
-import type { DraftEventSummary } from "../lib/adminQuizApi";
+import type { DraftEventDetail, DraftEventSummary } from "../lib/adminQuizApi";
 import { routes } from "../routes";
 import { AdminEventDetailsForm } from "./AdminEventDetailsForm";
 import { AdminQuestionEditor } from "./AdminQuestionEditor";
@@ -8,7 +8,6 @@ import type {
   AdminSelectedDraftState,
 } from "./useAdminDashboard";
 import type { AdminEventDetailsFormValues } from "./eventDetails";
-import type { AdminQuestionFormValues } from "./questionBuilder";
 
 type AdminEventWorkspaceProps = {
   draftMutationState: AdminDraftMutationState;
@@ -22,9 +21,9 @@ type AdminEventWorkspaceProps = {
   onSaveSelectedEventDetails: (
     values: AdminEventDetailsFormValues,
   ) => Promise<DraftEventSummary | null>;
-  onSaveSelectedQuestion: (
+  onSaveSelectedQuestionContent: (
+    content: DraftEventDetail["content"],
     questionId: string,
-    values: AdminQuestionFormValues,
   ) => Promise<DraftEventSummary | null>;
   questionSaveState: AdminQuestionSaveState;
   selectedDraftState: AdminSelectedDraftState;
@@ -117,7 +116,7 @@ export function AdminEventWorkspace({
   onNavigate,
   onRefresh,
   onSaveSelectedEventDetails,
-  onSaveSelectedQuestion,
+  onSaveSelectedQuestionContent,
   questionSaveState,
   selectedDraftState,
   selectedEventId,
@@ -245,10 +244,11 @@ export function AdminEventWorkspace({
             draft={selectedDraftState.draft}
             focusedQuestionId={focusedQuestionId}
             isSaving={isQuestionSavePending}
+            key={`${selectedDraftState.draft.id}-${selectedDraftState.draft.updatedAt}`}
             message={questionSaveState.message}
             messageKind={getQuestionMessageKind(questionSaveState)}
             onFocusQuestion={onFocusQuestion}
-            onSave={onSaveSelectedQuestion}
+            onSave={onSaveSelectedQuestionContent}
           />
         ) : null}
         {draftMutationState.status !== "idle" ? (

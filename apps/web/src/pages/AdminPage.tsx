@@ -33,7 +33,7 @@ export function AdminPage({ onNavigate, selectedEventId }: AdminPageProps) {
         onNavigate={onNavigate}
         onRetryDashboard={adminDashboard.retryDashboard}
         onSaveSelectedEventDetails={adminDashboard.saveSelectedEventDetails}
-        onSaveSelectedQuestion={adminDashboard.saveSelectedQuestion}
+        onSaveSelectedQuestionContent={adminDashboard.saveSelectedQuestionContent}
         onSubmitMagicLink={adminDashboard.requestMagicLink}
         questionSaveState={adminDashboard.questionSaveState}
         selectedDraftState={adminDashboard.selectedDraftState}
