@@ -812,6 +812,14 @@ Acceptance criteria:
 - non-admin and missing-config states continue to block draft access
 - no draft content or live projection mutation is introduced in this subphase
 
+Implementation status:
+
+- implemented in the current repo as the read-only `/admin` event workspace
+- `/admin/events/:eventId` selects one private draft summary for orientation
+  without enabling editing
+- create, duplicate, edit, preview, publish, unpublish, and AI-assisted entry
+  points remain deferred to later Phase 4 subphases
+
 Suggested validation:
 
 - `npm test -- tests/web/pages/AdminPage.test.tsx`
