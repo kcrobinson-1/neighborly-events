@@ -162,7 +162,11 @@ export function useAdminDashboard(selectedEventId?: string) {
       return;
     }
 
-    if (!dashboardState.drafts.some((draft) => draft.id === selectedEventId)) {
+    const visibleDraftIdSet = new Set(
+      visibleDraftIds ? visibleDraftIds.split("\0") : [],
+    );
+
+    if (!visibleDraftIdSet.has(selectedEventId)) {
       setSelectedDraftState({ status: "idle" });
       return;
     }

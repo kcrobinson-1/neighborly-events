@@ -17,10 +17,10 @@ export type AdminEventDetailsFormValues = {
   summary: string;
 };
 
-const REQUIRED_STRING_FIELDS: Array<keyof Pick<
+type RequiredStringField = keyof Pick<
   AdminEventDetailsFormValues,
   "intro" | "location" | "name" | "raffleLabel" | "slug" | "summary"
->> = ["name", "slug", "location", "raffleLabel", "intro", "summary"];
+>;
 
 function parseEstimatedMinutes(value: string) {
   const trimmedValue = value.trim();
@@ -56,7 +56,7 @@ function createRequiredFieldMessage(field: keyof AdminEventDetailsFormValues) {
 
 function trimRequiredString(
   values: AdminEventDetailsFormValues,
-  field: (typeof REQUIRED_STRING_FIELDS)[number],
+  field: RequiredStringField,
 ) {
   const value = values[field].trim();
 
