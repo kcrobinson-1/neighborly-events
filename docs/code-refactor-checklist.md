@@ -24,43 +24,12 @@ Rules for this checklist:
 
 ## Candidate Tasks
 
-- [x] Split authoring Edge Function tests by endpoint.
-  `tests/supabase/functions/authoring.test.ts` is over 400 lines and now covers
-  three independent handlers. Move coverage into focused files such as
-  `save-draft.test.ts`, `publish-draft.test.ts`, and `unpublish-event.test.ts`
-  while keeping shared test fixtures in a small helper.
-  Validation: `npm run test:functions`.
-
-- [x] Split the Phase 3 database publish pgTAP coverage by behavior.
-  Replaced `supabase/tests/database/quiz_authoring_phase3_publish.test.sql`
-  with smaller `.test.sql` files grouped by publish projection/version
-  behavior, unpublish/audit behavior, and failure/permission behavior.
-  Validation: `npm run test:db`.
-
-- [x] Extract shared authoring Edge Function HTTP/auth boilerplate.
-  `supabase/functions/save-draft/index.ts`,
-  `supabase/functions/publish-draft/index.ts`, and
-  `supabase/functions/unpublish-event/index.ts` repeat CORS, method,
-  configuration, admin-auth, JSON response, and persistence-error mapping
-  patterns. Add a small shared helper under `supabase/functions/_shared/` so
-  each endpoint file mostly owns payload validation and its persistence call.
-  Validation: `npm run test:functions` plus `deno check --no-lock` for the three
-  authoring functions.
-
-- [x] Split the admin page shell into state and presentation pieces.
-  `apps/web/src/pages/AdminPage.tsx` now stays a thin route adapter. Admin
-  session orchestration, dashboard loading, magic-link form state, sign-out
-  state, status rendering, and draft-list presentation live in focused modules
-  under `apps/web/src/admin/`.
-  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx` and
-  `npm run build:web`.
-
 - [ ] Split authoring draft parsing primitives from draft mapping.
   `shared/game-config/draft-content.ts` contains JSON parsing primitives,
   question/option parsing, draft row types, validation, and draft-to-runtime
   mapping. Move generic JSON expectation helpers and question parsing into
   focused shared modules so `draft-content.ts` reads as the public authoring
-  contract.
+  contract. Score: 8/10.
   Validation: `npm test -- tests/shared/game-config/draft-content.test.ts` and
   `npm run build:web`.
 
@@ -68,7 +37,7 @@ Rules for this checklist:
   `apps/web/src/lib/quizApi.ts` owns local prototype entitlement storage,
   server-session bootstrap, completion submission, retry handling, and response
   mapping. Extract local fallback storage/completion into a separate module so
-  the production Supabase path is easier to review.
+  the production Supabase path is easier to review. Score: 8/10.
   Validation: `npm test -- tests/web/lib/quizApi.test.ts` and
   `npm run build:web`.
 
@@ -78,7 +47,7 @@ Rules for this checklist:
   controls, dirty state, and save messages for the Phase 4.4 question builder.
   Extract focused presentation pieces such as `AdminQuestionList` and
   `AdminOptionEditor` so the top-level editor reads as buffer/save
-  orchestration.
+  orchestration. Score: 7/10.
   Validation: `npm test -- tests/web/pages/AdminPage.test.tsx` and
   `npm run build:web`.
 
@@ -87,42 +56,44 @@ Rules for this checklist:
   save-time normalization, id generation, question structure transforms,
   option structure transforms, and correctness repair. Move structure helpers
   into a focused module while preserving the existing public helper behavior.
+  Score: 8/10.
   Validation: `npm test -- tests/web/admin/questionBuilder.test.ts` and
   `npm run build:web`.
 
-- [x] Split quiz SCSS by component group.
-  `apps/web/src/styles/_quiz.scss` now stays a quiz style index partial.
-  Focused quiz partials own panel, control, progress, shared flow layout,
-  question/option, feedback, question-action, result/review, completion-token,
-  focus, and motion styles.
-  Validation: `npm run build:web`.
+- [ ] Split admin dashboard orchestration from mutation and selection state.
+  `apps/web/src/admin/useAdminDashboard.ts` now owns session bootstrap,
+  allowlist checks, draft loading, create, duplicate, event-details saves,
+  question saves, publish/unpublish state, and the selected-question focus
+  state. Extract the selected-draft and mutation state machines into focused
+  hooks so the top-level dashboard reads as auth/loading orchestration rather
+  than one long event handler module. Score: 9/10.
+  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts` and `npm run build:web`.
 
-- [x] Consolidate repeated SCSS color and spacing literals into semantic tokens.
-  `apps/web/src/styles/_tokens.scss` now owns repeated surface, border, state,
-  focus, glow, spacing, font-weight, and shared component-size roles. Component
-  partials use those tokens where they improve readability, while one-off layout
-  values remain local.
-  Validation: `npm run build:web` plus compiled CSS comparison before/after.
+- [ ] Split admin event workspace presentation from route-level state wiring.
+  `apps/web/src/admin/AdminEventWorkspace.tsx` mixes summary counts, selected
+  draft orientation, save-state messaging, create/duplicate navigation, and the
+  event-details/question-editor composition. Extract smaller presentational
+  pieces for the summary card, selected draft header, and action groups so the
+  route-level component mainly coordinates layout and callbacks.
+  Score: 6/10.
+  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts` and `npm run build:web`.
 
-- [x] Split local Edge Function integration runner by responsibility.
-  Extracted process lifecycle, readiness polling, completion retry, and JSON
-  HTTP diagnostics into `scripts/testing/` utilities so
-  `scripts/testing/run-function-integration-tests.cjs` reads as the trusted
-  Edge Function scenario being tested.
-  Validation: `npm run test:functions:integration`.
+- [ ] Split admin authoring API transport from session and draft mapping.
+  `apps/web/src/lib/adminQuizApi.ts` combines browser session restore, allowlist
+  RPC calls, draft reads, function transport, and response mapping for all admin
+  mutations. Extract shared transport and response helpers so the public exports
+  focus on intent-specific admin operations instead of request plumbing.
+  Score: 5/10.
+  Validation: `npm test -- tests/web/lib/adminQuizApi.test.ts` and `npm run build:web`.
 
-- [x] Split `complete-quiz` handler utilities from request orchestration.
-  `supabase/functions/complete-quiz/index.ts` is over 300 lines and includes
-  persistence types, payload validation, JSON response helpers, and the full
-  handler. Move reusable response/payload/persistence helpers into local or
-  shared modules without changing the public function contract.
-  Extracted local `dependencies.ts`, `payload.ts`, `persistence.ts`, and
-  `response.ts` modules so `index.ts` now stays focused on request
-  orchestration and compatibility exports. The handler entrypoint dropped from
-  325 lines to 200 lines without changing response bodies, status codes, RPC
-  parameters, or validation behavior.
-  Validation: `npm run test:functions` and
-  `deno check --no-lock supabase/functions/complete-quiz/index.ts`.
+- [ ] Split the admin screenshot runner’s admin mode into dedicated helpers.
+  `scripts/ui-review/capture-ui-review.cjs` now mixes attendee capture,
+  admin-specific Supabase mocks, admin screenshot sequences, and environment
+  loading. Extract the admin mode into focused helper modules so the shared
+  runner stays readable and future admin capture changes do not keep inflating
+  one 800+ line script.
+  Score: 7/10.
+  Validation: `npm run ui:review:capture:admin`.
 
 ## Large Files To Leave Alone For Now
 
