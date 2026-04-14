@@ -31,7 +31,9 @@ function getEventCounts(drafts: DraftEventSummary[]) {
   };
 }
 
-function formatCount(count: number, label: string) {
+function formatCount(count: number, singularLabel: string, pluralLabel = `${singularLabel}s`) {
+  const label = count === 1 ? singularLabel : pluralLabel;
+
   return `${count} ${label}`;
 }
 
@@ -105,10 +107,12 @@ export function AdminEventWorkspace({
   return (
     <>
       <div className="admin-summary-grid" aria-label="Event workspace summary">
-        <div className="admin-summary-item">{formatCount(counts.totalCount, "events")}</div>
-        <div className="admin-summary-item">{formatCount(counts.liveCount, "live")}</div>
+        <div className="admin-summary-item">{formatCount(counts.totalCount, "event")}</div>
         <div className="admin-summary-item">
-          {formatCount(counts.draftOnlyCount, "draft only")}
+          {formatCount(counts.liveCount, "live", "live")}
+        </div>
+        <div className="admin-summary-item">
+          {formatCount(counts.draftOnlyCount, "draft only", "draft only")}
         </div>
       </div>
       <div className="admin-toolbar">

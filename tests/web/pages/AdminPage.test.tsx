@@ -178,6 +178,22 @@ describe("AdminPage", () => {
     expect(screen.getByText("Draft only")).toBeTruthy();
   });
 
+  it("uses singular event count copy for one draft", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue([draftSummaries[0]]);
+
+    render(<AdminPage onNavigate={() => {}} />);
+
+    expect(await screen.findByText("1 event")).toBeTruthy();
+    expect(screen.getByText("1 live")).toBeTruthy();
+    expect(screen.getByText("0 draft only")).toBeTruthy();
+  });
+
   it("navigates from event cards to workspaces and live quiz routes", async () => {
     const navigate = vi.fn();
     mockUseAdminSession.mockReturnValue({

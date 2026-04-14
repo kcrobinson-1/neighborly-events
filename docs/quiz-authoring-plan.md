@@ -820,6 +820,16 @@ Implementation status:
 - create, duplicate, edit, preview, publish, unpublish, and AI-assisted entry
   points remain deferred to later Phase 4 subphases
 
+Implementation decisions:
+
+- Use the draft event `id` as the selected workspace route segment because it
+  is the stable private authoring identifier; keep slugs reserved for public
+  attendee routes.
+- Keep the selected workspace summary-only in this phase so direct event
+  routing does not imply draft content editing, preview, or mutation readiness.
+- Expose `Open live quiz` only when `live_version_number` is present because a
+  draft-only event has no public attendee projection to open.
+
 Suggested validation:
 
 - `npm test -- tests/web/pages/AdminPage.test.tsx`
