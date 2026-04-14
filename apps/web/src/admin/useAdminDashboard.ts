@@ -18,8 +18,7 @@ import {
   type AdminEventDetailsFormValues,
 } from "./eventDetails";
 import {
-  applyQuestionFormValues,
-  type AdminQuestionFormValues,
+  prepareQuestionContentForSave,
 } from "./questionBuilder";
 import { useAdminSession } from "./useAdminSession";
 
@@ -402,9 +401,9 @@ export function useAdminDashboard(selectedEventId?: string) {
     }
   };
 
-  const saveSelectedQuestion = async (
+  const saveSelectedQuestionContent = async (
+    content: DraftEventDetail["content"],
     questionId: string,
-    values: AdminQuestionFormValues,
   ) => {
     if (
       selectedDraftState.status !== "ready" &&
@@ -422,16 +421,12 @@ export function useAdminDashboard(selectedEventId?: string) {
     });
 
     try {
-      const content = applyQuestionFormValues(
-        currentDraft.content,
-        questionId,
-        values,
-      );
-      const savedDraft = await saveDraftEvent(content);
+      const preparedContent = prepareQuestionContentForSave(content);
+      const savedDraft = await saveDraftEvent(preparedContent);
       const nextDraft: DraftEventDetail = {
         ...currentDraft,
         ...savedDraft,
-        content,
+        content: preparedContent,
       };
 
       setDashboardState((currentState) =>
@@ -529,7 +524,7 @@ export function useAdminDashboard(selectedEventId?: string) {
     requestMagicLink,
     retryDashboard,
     saveSelectedEventDetails,
-    saveSelectedQuestion,
+    saveSelectedQuestionContent,
     selectedDraftState,
     sessionState,
     setFocusedQuestionId,

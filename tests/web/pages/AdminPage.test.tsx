@@ -850,6 +850,240 @@ describe("AdminPage", () => {
     );
   });
 
+  it("adds a question and saves the updated draft structure", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+
+    renderAdminRoute("madrona-music-2026");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add question" }));
+
+    expect(getFieldValue("Question prompt")).toBe("New question");
+    expect(screen.getByRole("button", { name: /Question 7: New question/ }))
+      .toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Saved question changes.")).toBeTruthy();
+    const savedContent = mockSaveDraftEvent.mock.calls[0]?.[0];
+    expect(savedContent.questions).toHaveLength(selectedDraftContent.questions.length + 1);
+    expect(savedContent.questions.at(-1)).toMatchObject({
+      correctAnswerIds: ["a"],
+      id: "q7",
+      prompt: "New question",
+      selectionMode: "single",
+      sponsor: "New sponsor",
+    });
+  });
+
+  it("duplicates and reorders questions before save", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Question builder");
+    fireEvent.click(screen.getByRole("button", { name: "Duplicate question" }));
+    fireEvent.click(screen.getByRole("button", { name: "Move down" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Saved question changes.")).toBeTruthy();
+    const savedQuestions = mockSaveDraftEvent.mock.calls[0]?.[0].questions;
+    expect(savedQuestions.map((question) => question.id).slice(0, 3)).toEqual([
+      "q1",
+      "q2",
+      "q7",
+    ]);
+    expect(savedQuestions[2]).toMatchObject({
+      ...selectedDraftContent.questions[0],
+      id: "q7",
+      prompt: `${selectedDraftContent.questions[0].prompt} Copy`,
+    });
+  });
+
+  it("requires confirmation before deleting questions and saves confirmed deletes", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Question builder");
+    fireEvent.click(screen.getByRole("button", { name: "Delete question" }));
+    expect(screen.getByText("Delete this question from the draft?")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("button", { name: /Question 1:/ })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete question" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm delete" }));
+    expect(getFieldValue("Question prompt")).toBe(selectedDraftContent.questions[1].prompt);
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Saved question changes.")).toBeTruthy();
+    const savedQuestions = mockSaveDraftEvent.mock.calls[0]?.[0].questions;
+    expect(savedQuestions.map((question) => question.id)).not.toContain("q1");
+    expect(savedQuestions[0].id).toBe("q2");
+  });
+
+  it("blocks deleting the final question", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(
+      createDraftDetail({
+        ...selectedDraftContent,
+        questions: [selectedDraftContent.questions[0]],
+      }),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Question builder");
+    expect(screen.getByText("Keep at least one question.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Delete question" }).hasAttribute("disabled"))
+      .toBe(true);
+  });
+
+  it("adds and deletes options while repairing correct answers", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+
+    renderAdminRoute("madrona-music-2026");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Add option" }));
+    expect(getFieldValue("Option 4 label")).toBe("New option");
+    fireEvent.click(screen.getAllByRole("button", { name: "Delete option" })[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Saved question changes.")).toBeTruthy();
+    const savedQuestion = mockSaveDraftEvent.mock.calls[0]?.[0].questions[0];
+    expect(savedQuestion.options.map((option) => option.id)).toEqual([
+      "b",
+      "c",
+      "d",
+    ]);
+    expect(savedQuestion.correctAnswerIds).toEqual(["b"]);
+  });
+
+  it("blocks deleting the final option", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(
+      createDraftDetail({
+        ...selectedDraftContent,
+        questions: [
+          {
+            ...selectedDraftContent.questions[0],
+            correctAnswerIds: ["a"],
+            options: [{ id: "a", label: "Only option" }],
+          },
+        ],
+      }),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Question builder");
+    expect(screen.getByText("Keep at least one answer option.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Delete option" }).hasAttribute("disabled"))
+      .toBe(true);
+  });
+
+  it("repairs correct answers when selection mode changes before save", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+
+    renderAdminRoute("madrona-music-2026");
+
+    fireEvent.change(await screen.findByLabelText("Selection mode"), {
+      target: { value: "multiple" },
+    });
+    fireEvent.click(screen.getAllByLabelText("Correct")[2]);
+    fireEvent.change(screen.getByLabelText("Selection mode"), {
+      target: { value: "single" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Saved question changes.")).toBeTruthy();
+    expect(mockSaveDraftEvent.mock.calls[0]?.[0].questions[0]).toMatchObject({
+      correctAnswerIds: ["a"],
+      selectionMode: "single",
+    });
+  });
+
   it("surfaces local question validation without saving", async () => {
     mockUseAdminSession.mockReturnValue({
       email: "admin@example.com",
@@ -868,6 +1102,28 @@ describe("AdminPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
 
     expect(await screen.findByText("Question prompt is required.")).toBeTruthy();
+    expect(mockSaveDraftEvent).not.toHaveBeenCalled();
+  });
+
+  it("surfaces manual correct-answer validation without saving", async () => {
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+
+    renderAdminRoute("madrona-music-2026");
+
+    fireEvent.change(await screen.findByLabelText("Selection mode"), {
+      target: { value: "multiple" },
+    });
+    fireEvent.click(screen.getAllByLabelText("Correct")[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Choose at least one correct answer.")).toBeTruthy();
     expect(mockSaveDraftEvent).not.toHaveBeenCalled();
   });
 
@@ -890,7 +1146,8 @@ describe("AdminPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
 
     expect(await screen.findByText("Draft save failed.")).toBeTruthy();
-    expect(screen.queryByRole("button", { name: /Unsaved prompt/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /Unsaved prompt/ })).toBeTruthy();
+    expect(screen.queryByText("Saved question changes.")).toBeNull();
   });
 
   it("surfaces selected event save failures without updating the summary list", async () => {
