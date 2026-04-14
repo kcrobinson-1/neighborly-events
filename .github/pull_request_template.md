@@ -28,6 +28,12 @@ ownership boundaries. For other changes, write `N/A`.
 
 List docs or checklist updates. If none are needed, explain why.
 
+## UX Review
+
+For UX, layout, interaction, or user-facing copy changes, include before/after
+screenshots or explain why browser screenshots were not feasible. For non-UX
+changes, write `N/A`.
+
 ## Validation
 
 - [ ] `npm run lint`

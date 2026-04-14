@@ -358,6 +358,9 @@ Every PR body should include:
   production configuration
 - target-shape evidence for behavior-preserving refactors and checklist work
 - documentation updates or why none were needed
+- UX review notes, including before/after screenshots for meaningful UX,
+  layout, interaction, or user-facing copy changes, or why screenshots were not
+  feasible
 - exact validation commands run and any checks that could not be run
 - remaining risk, blockers, or follow-up work
 
