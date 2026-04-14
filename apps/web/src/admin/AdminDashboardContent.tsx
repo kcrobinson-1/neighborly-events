@@ -32,7 +32,7 @@ function SignedInAs({ email }: { email: string | null }) {
   );
 }
 
-/** Renders the active admin auth, authorization, and draft-list state. */
+/** Renders the active admin auth, authorization, and event-workspace state. */
 export function AdminDashboardContent({
   dashboardState,
   draftMutationState,

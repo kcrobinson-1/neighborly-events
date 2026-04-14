@@ -66,6 +66,21 @@ const draftSummaries = [
   },
 ];
 
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+
+  return {
+    promise,
+    reject,
+    resolve,
+  };
+}
+
 describe("AdminPage", () => {
   beforeEach(() => {
     mockGetQuizAdminStatus.mockReset();
@@ -301,6 +316,41 @@ describe("AdminPage", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("disables workspace actions while a draft is being created", async () => {
+    const saveDraft = createDeferred<unknown>();
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockSaveDraftEvent.mockReturnValue(saveDraft.promise);
+
+    render(<AdminPage onNavigate={() => {}} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Create draft" }));
+
+    expect(
+      (await screen.findByRole("button", { name: "Creating draft..." }))
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.getByRole("button", { name: "Refresh events" }).hasAttribute("disabled"))
+      .toBe(true);
+    for (const button of screen.getAllByRole("button", { name: "Duplicate draft" })) {
+      expect(button.hasAttribute("disabled")).toBe(true);
+    }
+
+    saveDraft.resolve({
+      id: "untitled-event-created",
+      liveVersionNumber: null,
+      name: "Untitled event created",
+      slug: "untitled-event-created",
+      updatedAt: "2026-04-12T12:00:00.000Z",
+    });
+    expect(await screen.findByText("Untitled event created")).toBeTruthy();
+  });
+
   it("duplicates an existing draft, updates the list, and opens the duplicate", async () => {
     const navigate = vi.fn();
     mockUseAdminSession.mockReturnValue({
@@ -411,7 +461,56 @@ describe("AdminPage", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it("shows a read-only selected event workspace", async () => {
+  it("disables workspace actions while a draft is being duplicated", async () => {
+    const saveDraft = createDeferred<unknown>();
+    mockUseAdminSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetQuizAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue({
+      content: sampleDraft,
+      createdAt: "2026-04-07T12:00:00.000Z",
+      id: sampleDraft.id,
+      lastSavedBy: "22222222-2222-4222-8222-222222222222",
+      liveVersionNumber: 1,
+      name: sampleDraft.name,
+      slug: sampleDraft.slug,
+      updatedAt: "2026-04-08T12:00:00.000Z",
+    });
+    mockSaveDraftEvent.mockReturnValue(saveDraft.promise);
+
+    render(<AdminPage onNavigate={() => {}} />);
+
+    const liveEventCard = await screen.findByLabelText(
+      "Madrona Music in the Playfield event",
+    );
+    fireEvent.click(
+      within(liveEventCard).getByRole("button", { name: "Duplicate draft" }),
+    );
+
+    expect(
+      (await within(liveEventCard).findByRole("button", { name: "Duplicating..." }))
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    expect(screen.getByRole("button", { name: "Create draft" }).hasAttribute("disabled"))
+      .toBe(true);
+    expect(screen.getByRole("button", { name: "Refresh events" }).hasAttribute("disabled"))
+      .toBe(true);
+
+    saveDraft.resolve({
+      id: "madrona-copy",
+      liveVersionNumber: null,
+      name: "Madrona Music in the Playfield Copy",
+      slug: "madrona-copy",
+      updatedAt: "2026-04-12T12:00:00.000Z",
+    });
+    expect(await screen.findByText("Madrona Music in the Playfield Copy")).toBeTruthy();
+  });
+
+  it("shows selected event workspace actions", async () => {
     mockUseAdminSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
