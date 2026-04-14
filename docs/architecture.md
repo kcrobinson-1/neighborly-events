@@ -263,6 +263,8 @@ Today that route:
   attendee content
 - lets admins edit existing question text, sponsor attribution, selection mode,
   option labels, and correct answers in private drafts
+- lets admins add, duplicate, reorder, and delete draft questions plus add and
+  delete draft answer options
 - keeps non-admin authenticated users out of the draft data path
 
 The browser requests magic links with an explicit `/admin` redirect on the
@@ -270,9 +272,9 @@ current origin. Supabase Auth dashboard settings still have to allow that URL,
 and the project Site URL should match the deployed web origin so email links do
 not fall back to a local default.
 
-The visible admin page can create, duplicate, and update event-level and
-existing-question private draft content, but the backend API surface owns
-validation and persistence:
+The visible admin page can create, duplicate, and update event-level,
+question-level, and answer-option private draft content, but the backend API
+surface owns validation and persistence:
 
 - `save-draft` writes validated private draft JSON for allowlisted admins
 - `publish-draft` validates the draft and updates the public event, question,
@@ -281,8 +283,8 @@ validation and persistence:
   preserving private draft and version history
 - `quiz_event_audit_log` records publish and unpublish transitions
 
-The current scope still stops short of question and option structure
-management, a preview route, publish controls in the UI, or AI authoring UI.
+The current scope still stops short of a preview route, publish controls in the
+UI, or AI authoring UI.
 
 ## Runtime Request Flow
 
@@ -409,13 +411,14 @@ The repository has a working prototype slice, but it does not yet satisfy the fu
 
 Today, the repo has an organizer/admin event workspace for private draft
 orientation, create/duplicate actions, event-level draft details editing, and
-existing-question content editing, but not a full authoring product.
+question/option editing, but not a full authoring product.
 
 What is missing:
 
-- question and option structure management plus preview UI without code changes
+- preview UI without code changes
 - AI-assisted authoring entry points in the admin experience
-- managing full authoring workflows beyond the current selected-question editor
+- managing full authoring workflows beyond the current selected question and
+  option editor
 
 ### Analytics and reporting
 

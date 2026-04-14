@@ -1033,6 +1033,22 @@ Deliverables:
 - keep Phase 4.2 create/duplicate regression coverage while delete behavior is
   added
 
+Status:
+
+- implemented in the current repo as question and option structure controls in
+  the selected event workspace
+- question edits now use a local draft buffer so add, duplicate, reorder,
+  delete, option changes, and focused field edits save together through one
+  explicit `Save question changes` action
+- new question ids use the first available `qN`; new option ids use the first
+  available lowercase letter, then `option-N`
+- deleting the final question or final option is blocked
+- deleting questions requires inline confirmation and remains local until save
+- option deletion and selection-mode changes repair correct-answer state before
+  save
+- preview, publish, unpublish, shareable preview links, backend endpoints,
+  schema changes, and live-content mutation remain deferred
+
 Acceptance criteria:
 
 - an admin can build and save a valid question set through the UI

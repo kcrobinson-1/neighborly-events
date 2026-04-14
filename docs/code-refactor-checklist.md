@@ -72,6 +72,24 @@ Rules for this checklist:
   Validation: `npm test -- tests/web/lib/quizApi.test.ts` and
   `npm run build:web`.
 
+- [ ] Split admin question editor structure UI from field editing.
+  `apps/web/src/admin/AdminQuestionEditor.tsx` now owns the local draft buffer,
+  question list controls, delete confirmation, focused question fields, option
+  controls, dirty state, and save messages for the Phase 4.4 question builder.
+  Extract focused presentation pieces such as `AdminQuestionList` and
+  `AdminOptionEditor` so the top-level editor reads as buffer/save
+  orchestration.
+  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx` and
+  `npm run build:web`.
+
+- [ ] Split admin question structure helpers from question form mapping.
+  `apps/web/src/admin/questionBuilder.ts` now owns form-value mapping,
+  save-time normalization, id generation, question structure transforms,
+  option structure transforms, and correctness repair. Move structure helpers
+  into a focused module while preserving the existing public helper behavior.
+  Validation: `npm test -- tests/web/admin/questionBuilder.test.ts` and
+  `npm run build:web`.
+
 - [x] Split quiz SCSS by component group.
   `apps/web/src/styles/_quiz.scss` now stays a quiz style index partial.
   Focused quiz partials own panel, control, progress, shared flow layout,
