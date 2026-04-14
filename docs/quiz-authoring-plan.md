@@ -942,33 +942,103 @@ Suggested validation:
 
 #### Phase 4.4: Question Builder
 
+Phase 4.4 should be split into smaller PR-sized subphases. The full question
+builder touches nested draft editing, local validation, generated ids, focused
+editor UI, list mutations, option mutations, delete confirmation, save
+orchestration, screenshots, and broad admin page regression coverage. That is
+too much surface for one clean reviewable PR, especially now that
+`useAdminDashboard`, `AdminEventWorkspace`, and `AdminPage` tests are already
+large.
+
+Phase 4.4 uses these shared decisions across all subphases:
+
+- keep the editor on `/admin/events/:eventId`
+- use a question list plus one focused question editor
+- keep one explicit full-draft `Save changes` action
+- keep 5-7 question-count guidance out of this phase
+- persist only through `save-draft`
+- keep preview, publish, unpublish, new routes, backend endpoints, schema
+  changes, and live-content mutation deferred
+
+#### Phase 4.4.1: Existing Question Content Editing
+
 Deliverables:
 
-- add question list and focused question editor surfaces
-- support add, duplicate, reorder, delete, prompt, sponsor, selection mode,
-  options, correct answers, explanation, and sponsor fact
+- add the question list and focused question editor surfaces
+- edit existing question prompt, sponsor, selection mode, explanation, sponsor
+  fact, existing option labels, and correct answers
+- map question form values back into the full canonical draft document while
+  preserving event details and question order
 - reuse shared draft validation for local feedback where practical, while
   preserving backend publish validation as the final gate
-- require confirmation for deleting questions
 
 Acceptance criteria:
 
-- an admin can build and save a valid 5-7 question draft through the UI
-- question ordering, correct-answer selection, and validation messages survive
-  save and reload
-- malformed question changes cannot be published accidentally through the UI
-- existing event create and duplicate flows keep page-level regression coverage
-  while question delete behavior is added
+- an admin can edit existing question content and save the draft through the UI
+- question prompt, sponsor, selection mode, option labels, correct answers,
+  explanation, and sponsor fact survive save and reload
+- malformed existing-question changes surface actionable validation messages
+- existing event detail, create, and duplicate flows keep page-level regression
+  coverage
 
 Suggested validation:
 
-- focused frontend tests for question editing behavior
+- focused frontend tests for question form mapping and validation
+- page-level tests for selected route question loading, existing-question
+  editing, correct-answer editing, local validation failure, save success, save
+  failure, and reload
+- `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts`
+- `npm run build:web`
+- browser UI review of focused question editing, validation, saved, and
+  failed-save states
+
+#### Phase 4.4.2: Question And Option Structure Management
+
+Phase 4.4.2 is expected to be safe as one PR if Phase 4.4.1 has already landed
+the shared question edit buffer, form mapping, focused editor shell, and
+full-draft save path. The remaining structural operations share the same
+ownership boundary: they transform the selected draft's `questions` array and
+then save through the same canonical draft path.
+
+Split Phase 4.4.2 further only if implementation review shows the structural
+operations no longer fit one clean PR. The fallback split is:
+
+- 4.4.2a: add, duplicate, reorder, and delete questions
+- 4.4.2b: add/delete options, correct-answer repair, and selection-mode repair
+
+Deliverables:
+
+- add, duplicate, reorder, and delete questions
+- add and delete options
+- generate question and option ids that avoid collisions within the current
+  draft/question
+- require inline confirmation for deleting questions
+- prevent deleting the final question or final option
+- repair correct-answer state when options are deleted or selection mode changes
+- keep Phase 4.2 create/duplicate regression coverage while delete behavior is
+  added
+
+Acceptance criteria:
+
+- an admin can build and save a valid question set through the UI
+- question ordering, duplicated content, deleted questions/options, and
+  correct-answer selection survive save and reload
+- invalid structural changes cannot be saved into malformed draft content
+- delete actions are reversible until the inline confirmation is accepted
+
+Suggested validation:
+
+- focused frontend tests for question and option structure helpers
+- page-level tests for add, duplicate, reorder, delete confirmation/cancel,
+  add/delete option, correct-answer repair, save success, save failure, and
+  reload
 - Phase 4.2 create and duplicate regression tests, including successful create,
   successful duplicate, load/save failures, local list updates, and
   post-create/post-duplicate navigation
-- `npm test -- tests/web/lib/adminQuizApi.test.ts`
+- `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts`
 - `npm run build:web`
-- browser UI review of add, reorder, delete, and save flows
+- browser UI review of add, duplicate, reorder, delete, option mutation,
+  validation, saved, and failed-save states
 
 #### Phase 4.5: Mobile Preview
 
