@@ -240,6 +240,36 @@ For multi-step work, do not batch everything into one large uncommitted transfor
 - if the work started from `main`, do not leave implementation only in the working tree on `main`; move it onto a feature branch before substantial edits accumulate
 - if the change spans backend, frontend, tests, and docs, assume it should land as multiple commits unless there is a specific reason not to
 
+### Sub-Agent Delegation
+
+Sub-agents spawned via delegation tools do not inherit this file. They only
+know what is explicitly included in their prompt.
+
+When delegating to a sub-agent, choose one of two approaches and apply it
+strictly:
+
+**Narrow scope — AGENTS.md is not relevant.**
+Keep the sub-agent's task purely mechanical and self-contained: reading files,
+searching the codebase, running a specific named command, or implementing a
+single isolated pure function. If the task is scoped tightly enough that the
+process rules here would not apply to a human doing the same work, no
+additional guidance is needed.
+
+**Broader scope — include the relevant rules directly.**
+If the sub-agent will edit files, run validation, or make structural decisions,
+include the applicable rules from this file verbatim in the prompt. Do not
+write "follow AGENTS.md" — the sub-agent cannot read it. Copy the specific
+sections that govern the work being delegated.
+
+Workflow gates belong in the orchestrating session, not in sub-agents.
+Branch creation, committing, PR creation, doc updates, and self-review are
+high-risk steps that require the full process context. Keep these in the main
+session. Delegate only the implementation or research slice.
+
+If a delegated task grew beyond its original scope during execution, the
+orchestrating session is responsible for catching the drift and applying
+the missing gates before treating the work as done.
+
 ### Refactor Completion Proof
 
 For checklist, cleanup, split, extraction, or other behavior-preserving refactor
