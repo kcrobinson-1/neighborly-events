@@ -84,11 +84,14 @@ export function AdminEventDetailsForm({
             value={values.name}
           />
         </label>
-        <label className="admin-field">
-          <span className="admin-field-label">Slug</span>
+        <div className="admin-field">
+          <label htmlFor="admin-event-slug">
+            <span className="admin-field-label">Slug</span>
+          </label>
           <input
             className="admin-input"
             disabled={disabled || draft.liveVersionNumber !== null}
+            id="admin-event-slug"
             onChange={updateTextValue("slug")}
             title={
               draft.liveVersionNumber !== null
@@ -104,7 +107,7 @@ export function AdminEventDetailsForm({
               this.
             </span>
           ) : null}
-        </label>
+        </div>
         <label className="admin-field">
           <span className="admin-field-label">Location</span>
           <input
