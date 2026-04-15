@@ -90,18 +90,18 @@ export function AdminEventDetailsForm({
           </label>
           <input
             className="admin-input"
-            disabled={disabled || draft.liveVersionNumber !== null}
+            disabled={disabled || draft.hasBeenPublished}
             id="admin-event-slug"
             onChange={updateTextValue("slug")}
             title={
-              draft.liveVersionNumber !== null
+              draft.hasBeenPublished
                 ? "Slug is locked after publishing — printed QR codes and URLs depend on it."
                 : undefined
             }
             type="text"
             value={values.slug}
           />
-          {draft.liveVersionNumber !== null ? (
+          {draft.hasBeenPublished ? (
             <span className="admin-field-hint">
               Locked after publishing — printed QR codes and URLs depend on
               this.

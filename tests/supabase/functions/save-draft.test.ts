@@ -134,6 +134,7 @@ Deno.test("save-draft upserts the normalized draft and returns a safe summary", 
 
   assertEquals(response.status, 200);
   assertEquals(await response.json(), {
+    hasBeenPublished: true,
     id: sampleDraft.id,
     liveVersionNumber: 2,
     name: sampleDraft.name,

@@ -189,6 +189,7 @@ export function createSaveDraftHandler(
       return context.jsonResponse(
         200,
         {
+          hasBeenPublished: data.live_version_number !== null,
           id: data.id,
           liveVersionNumber: data.live_version_number,
           name: data.name,

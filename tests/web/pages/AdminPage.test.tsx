@@ -57,6 +57,7 @@ if (!sampleDraft) {
 
 const draftSummaries = [
   {
+    hasBeenPublished: true,
     id: "madrona-music-2026",
     liveVersionNumber: 1,
     name: "Madrona Music in the Playfield",
@@ -64,6 +65,7 @@ const draftSummaries = [
     updatedAt: "2026-04-07T16:15:00.000Z",
   },
   {
+    hasBeenPublished: false,
     id: "draft-market-2026",
     liveVersionNumber: null,
     name: "Draft Market Day",
@@ -86,6 +88,7 @@ function createDraftDetail(
   return {
     content,
     createdAt: "2026-04-07T12:00:00.000Z",
+    hasBeenPublished: liveVersionNumber !== null,
     id: content.id,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
     liveVersionNumber,
