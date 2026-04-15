@@ -789,11 +789,14 @@ Acceptance criteria:
 
 MVP sequencing:
 
-- Complete Phases 4.1 through 4.6 before moving to Phase 5.
+- MVP now treats Phases 4.1 through 4.4 and 4.6 as the required admin UX
+  milestone.
+- With that scope, Phase 5 is the next implementation phase.
+- Defer Phase 4.5 unless authenticated in-editor preview becomes necessary for
+  the first event-ready release; shareable preview links remain post-MVP because
+  the preview access model is still an open question.
 - Defer Phase 4.7 unless AI-assisted authoring becomes necessary for the first
   event-ready release.
-- Keep Phase 4.5 scoped to authenticated in-editor preview; shareable preview
-  links stay post-MVP because the preview access model is still an open question.
 
 #### Phase 4.1: Admin Event Workspace
 
