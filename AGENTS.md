@@ -447,21 +447,81 @@ Do not wait until the end of a large change to discover that the branch drifted.
 Treat pull requests as reviewable engineering work, not speculative drafts with known unverified edges hidden inside them.
 
 - Before opening or updating a PR, make sure every new script or validation command added by the branch is runnable by a contributor following repo docs.
-- In the PR description, explain why the change is worth merging: name the
-  concrete maintainability, correctness, user, or operational value that
-  outweighs the added diff and review cost.
-- In the PR description, state the expected user-behavior difference from the branch in plain language.
-- If the branch changes user behavior, describe what a user can now do differently or what flow now behaves differently.
-- If the branch does not change current user behavior, say that explicitly and describe the groundwork laid for a later stage.
+- If a PR is intentionally still exploratory, keep it clearly framed as draft work and do not present it as merge-ready.
 - For new test runners or test directories, confirm the existing runners do not accidentally pick them up or conflict with them.
 - If a helper script depends on local tools such as Docker, Deno, Playwright, or the Supabase CLI, either make the script self-checking with clear failure messages or document the setup in the same change.
 - For new helper scripts that start local services or background processes, validate teardown as well as setup so CI cannot hang after the assertions already passed.
 - Prefer fixing local workflow blockers in the repo when reasonable instead of relying on CI to be the first real execution environment.
-- For PRs that create or materially modify UX, layout, interaction flow, or
-  user-facing copy, follow the screenshot requirements in `docs/dev.md`: include
-  uploaded screenshots in the PR description or explicitly state why screenshots
-  were not captured.
-- If a PR is intentionally still exploratory, keep it clearly framed as draft work and do not present it as merge-ready.
+
+#### PR Body Template
+
+Every pull request body **must** use the following section structure, taken
+verbatim from `.github/pull_request_template.md`. Fill every section; do not
+omit, rename, or reorder them.
+
+```markdown
+## Summary
+
+-
+
+## Why This Is Worth Merging
+
+Name the concrete maintainability, correctness, user, or operational value that
+outweighs the added diff and review cost.
+
+## User Behavior
+
+Describe what a user can now do differently or what flow behaves differently.
+If this is behavior-preserving, say that explicitly.
+
+## Contract And Scope
+
+Call out whether this changes public API contracts, status codes, response
+bodies, database schema or semantics, authentication or authorization rules,
+routing, production platform configuration, or generated artifacts.
+
+## Target Shape Evidence
+
+For behavior-preserving refactors or checklist work, describe the final
+responsibility split and include concrete evidence such as before/after size or
+ownership boundaries. For other changes, write `N/A`.
+
+## Documentation
+
+List docs or checklist updates. If none are needed, explain why.
+
+## UX Review
+
+For UX, layout, interaction, or user-facing copy changes, include before/after
+screenshots or explain why browser screenshots were not feasible. For non-UX
+changes, write `N/A`.
+
+## Validation
+
+- [ ] `npm run lint`
+- [ ] `npm test`
+- [ ] `npm run test:functions`
+- [ ] `npm run build:web`
+
+List any additional checks run, and state any relevant checks that could not be
+run.
+
+## Remaining Risk
+
+Name residual risk, blockers, or follow-up work. If none are known, say so.
+```
+
+Section-specific rules:
+
+- **UX Review**: For PRs that create or materially modify UX, layout,
+  interaction flow, or user-facing copy, follow the screenshot requirements in
+  `docs/dev.md`: include uploaded screenshots or explicitly state why
+  screenshots were not captured.
+- **Validation**: Check off every item you actually ran. Add rows for any
+  extra commands run. Explicitly list any named check that could not be run and
+  why.
+- **Remaining Risk**: Never leave this blank. Write "None known." if there are
+  no residual risks.
 
 ### Regression Discipline
 
