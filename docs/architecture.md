@@ -402,22 +402,19 @@ The current deployment discipline is simpler:
 
 This keeps deployment repo-driven without requiring hotfixes to start in production, and without introducing preview-branch infrastructure on the backend yet.
 
-## Remaining Gaps To Event-Ready MVP
+## Post-MVP Planned Work
 
-The repository has a working prototype slice, but it does not yet satisfy the full event-ready MVP described in `product.md` and `experience.md`. The major remaining gaps are:
+The MVP milestone is complete. The following areas represent planned post-MVP
+enhancements, deferred capabilities, and open operational questions that were
+intentionally out of scope for the initial release.
 
 ### Organizer/admin tooling
 
-Today, the repo has an organizer/admin event workspace for private draft
-orientation, create/duplicate actions, event-level draft details editing, and
-question/option editing, but not a full authoring product.
+The admin workspace ships create, duplicate, event-level edit, question and
+option edit, publish, and unpublish. The deferred capabilities are:
 
-What is missing:
-
-- preview UI without code changes
+- preview UI: let an admin see the attendee experience before publishing
 - AI-assisted authoring entry points in the admin experience
-- managing full authoring workflows beyond the current selected question and
-  option editor
 
 ### Analytics and reporting
 

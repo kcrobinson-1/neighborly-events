@@ -12,6 +12,14 @@
 - Last updated: 2026-04-14
 - Owner area: product, UX, web app, shared quiz domain, and Supabase backend
 
+## Document Status
+
+This document is a complete historical reference for Phases 0–5 of the quiz
+authoring implementation. All phases are now either implemented or explicitly
+deferred post-MVP. This is not an active execution document.
+
+Post-MVP follow-up items are tracked in [`docs/backlog.md`](./backlog.md).
+
 ## Purpose
 
 This document lays out a practical MVP path for creating and editing quizzes
