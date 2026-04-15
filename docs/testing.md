@@ -65,11 +65,24 @@ The intended split is:
 
 ## Admin Functionality Validation Goal
 
-Phase 5.1 introduced `npm run test:e2e:admin` for deterministic local admin
-end-to-end validation against a real local Supabase stack.
+Current status:
 
-Remaining goal: add a lightweight production or post-release admin smoke check
-after the local suite is stable.
+- local admin end-to-end validation is now available through
+  `npm run test:e2e:admin`
+- contributor workflow docs in `docs/dev.md` now require this command for
+  admin-affecting changes
+
+Planned future:
+
+- add a lightweight production or post-release admin smoke check after the
+  local suite is stable
+- keep that smoke check separate from normal PR CI unless a future staging
+  backend makes remote checks isolated and cheap
+
+Tracking:
+
+- the remaining production-smoke work is tracked in this section under
+  `Recommended rollout status`, item 7 (`[ ] Add production smoke...`)
 
 The desired end state is:
 
@@ -118,7 +131,7 @@ Recommended rollout status:
    the expected publish state.
 5. [x] Expose the suite as a repo command.
    Landed as `npm run test:e2e:admin`, intentionally separate from
-   `npm run validate:local` in Phase 5.1.
+   `npm run validate:local` for now.
 6. [x] Update contributor workflow docs.
    `docs/dev.md` now names the command for admin-affecting changes.
 7. [ ] Add production smoke after the local suite is stable.
