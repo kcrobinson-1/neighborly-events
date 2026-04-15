@@ -12,8 +12,8 @@ It is responsible for:
 - coordinating allowlist checks, draft summary loading, selected-event
   workspace state, selected draft detail loading, event-detail saves,
   existing-question and question-structure saves, create/duplicate draft
-  mutations, magic-link requests, and sign-out state for the `/admin`
-  dashboard
+  mutations, publish/unpublish actions, magic-link requests, and sign-out
+  state for the `/admin` dashboard
 - rendering the small presentational pieces used by the `/admin` route shell
 - keeping route-level admin auth state out of the attendee quiz module
 
@@ -23,10 +23,10 @@ It is responsible for:
 - keep `/admin` dashboard state orchestration in `useAdminDashboard`
 - keep the top-level page route adapter thin; route navigation remains in
   `src/pages/AdminPage.tsx`
-- keep `/admin/events/:eventId` limited to workspace orientation,
+- keep `/admin/events/:eventId` scoped to workspace orientation,
   create/duplicate actions, event-level detail editing, existing-question
-  content editing, and question/option structure editing until later preview
-  and publish phases add their own state
+  content editing, question/option structure editing, and publish/unpublish
+  with a pre-publish validation checklist
 - load full private draft content only after the selected event is visible in
   the authorized draft-summary list
 - keep client-side draft identity and content-template helpers in
@@ -46,7 +46,9 @@ It is responsible for:
   authenticated draft reads
 - keep draft reads, admin RPC calls, and authoring function calls in
   `src/lib/adminQuizApi.ts`
-- keep quiz correctness and publish validation out of this module; those remain
-  shared/backend responsibilities
-- do not introduce preview, publish, unpublish, or live-content mutation in the
-  admin workspace before their dedicated phases
+- keep publish checklist logic in `publishChecklist.ts`; it runs the five
+  semantic content checks as independent pass/fail items so the UI can name
+  each blocker; the backend remains authoritative for structural validation
+  and slug uniqueness
+- keep `usePreviewSession` (Phase 4.5, deferred) in this module when it
+  lands; it must not modify production `useQuizSession`

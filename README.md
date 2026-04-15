@@ -22,8 +22,11 @@ This repository currently includes:
 - a landing page plus published demo game routes
 - database-backed published event and quiz content
 - a Supabase Auth-backed admin event workspace for private draft access plus
-  draft create, duplicate, event-detail edit, question edit, and answer-option
-  edit actions at `/admin`
+  draft create, duplicate, event-detail edit, question edit, answer-option
+  edit, and publish/unpublish actions at `/admin`
+- a publish checklist that validates draft content before allowing publish,
+  with named per-check pass/fail indicators and a live-URL confirmation after
+  a successful publish
 - authenticated admin APIs for draft save, publish, and unpublish operations
 - one-question-at-a-time quiz flow with back navigation
 - multiple quiz feedback modes
@@ -202,8 +205,8 @@ Operational setting ownership lives in [docs/operations.md](./docs/operations.md
 
 The main remaining gaps before the broader event-ready MVP are:
 
-- admin preview and AI-assisted authoring UI
+- admin draft preview (Phase 4.5, deprioritized post-MVP)
+- admin AI-assisted authoring (Phase 4.7, post-MVP)
 - analytics and reporting for starts, completions, and completion time
-- richer publishing controls such as drafts, previews, or expiry windows for
-  live event URLs
+- richer publishing controls such as expiry windows for live event URLs
 - stronger anti-abuse controls if live event usage shows browser-session dedupe is insufficient
