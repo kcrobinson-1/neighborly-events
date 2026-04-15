@@ -1103,6 +1103,8 @@ Suggested validation:
 
 #### Phase 4.6: Publish Checklist And Status Surfaces
 
+Status: implemented in the current repo (`feature/admin-publish-controls`).
+
 Deliverables:
 
 - add publish and unpublish controls backed by the existing authoring functions
