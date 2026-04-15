@@ -19,7 +19,7 @@ export default defineConfig({
         process.env.VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY ?? "",
       VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL ?? "",
     },
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     url: baseUrl,
   },
   projects: [

@@ -3,7 +3,6 @@ import {
   ensureAdminE2eFixture,
   installAuthoringFunctionProxy,
   readPublishedEventState,
-  setAuthoringProxyAccessToken,
 } from "./admin-auth-fixture";
 
 test.describe("admin authoring workflow", () => {
@@ -12,7 +11,6 @@ test.describe("admin authoring workflow", () => {
     const editedEventName = `${fixture.eventName} Updated`;
     const editedQuestionPrompt = "Phase 5.1 e2e prompt update";
     await installAuthoringFunctionProxy(page);
-    setAuthoringProxyAccessToken(fixture.adminAccessToken);
 
     await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });
 

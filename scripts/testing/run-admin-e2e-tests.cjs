@@ -96,7 +96,6 @@ async function main() {
       env: {
         VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY: status.PUBLISHABLE_KEY,
         VITE_SUPABASE_URL: status.API_URL,
-        TEST_SUPABASE_PUBLISHABLE_KEY: status.PUBLISHABLE_KEY,
         TEST_SUPABASE_SERVICE_ROLE_KEY: status.SERVICE_ROLE_KEY,
         TEST_SUPABASE_URL: status.API_URL,
       },
