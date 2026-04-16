@@ -47,10 +47,11 @@ here in the same change.
   behavior beyond immediate unpublish?
   The current backend supports explicit publish and unpublish by clearing
   `quiz_events.published_at`, but richer lifecycle controls are still deferred.
-- **Decided:** Slugs are locked after first publish. The admin UI will make the
-  slug field read-only once an event has been published, with a padlock
-  affordance and tooltip. Redirect table approach was ruled out due to
-  slug-recycling complexity.
+- **Decided:** Slugs are locked after first publish. The admin UI makes the
+  slug field read-only once an event has been published, with explanatory inline
+  copy and tooltip text. The backend enforces the same rule, and the DB trigger
+  protects against concurrent publish/save races. Redirect table approach was
+  ruled out due to slug-recycling complexity.
 
 Detailed authoring-specific scope questions are expanded further in
 [`quiz-authoring-plan.md`](./quiz-authoring-plan.md).
@@ -85,4 +86,3 @@ Detailed authoring-specific scope questions are expanded further in
   will live usage require person-level or device-level abuse controls?
   The current MVP intentionally uses a lighter no-login trust boundary and does
   not yet answer how much stronger it needs to become.
-

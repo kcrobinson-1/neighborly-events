@@ -30,13 +30,14 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-- [ ] **`feat` Lock slug after first publish**
-  Slugs are read-only once an event is published. The slug field becomes
-  non-editable in the admin UI with a clear affordance (padlock icon + tooltip)
-  explaining that QR codes and printed URLs depend on it. If a rename is ever
-  needed, it must be an intentional manual operation rather than an accidental
-  edit. Decision: redirect table was ruled out due to slug-recycling edge cases.
-  Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
+- [x] **`feat` Lock slug after first publish**
+  Slugs are read-only once an event is published. The admin UI now locks the
+  slug field after first publish and explains why with inline copy plus tooltip
+  text (printed QR codes and URLs depend on it). The backend enforces the same
+  rule in `save-draft`, and a DB trigger enforces it atomically during updates
+  so concurrent publish/save races cannot bypass the lock. Decision: redirect
+  table was ruled out due to slug-recycling edge cases.
+  Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
 
 - [x] **`dev` Make `sponsor` nullable in `quiz_questions`**
   The `sponsor` column is currently `NOT NULL`, which forces every question to
