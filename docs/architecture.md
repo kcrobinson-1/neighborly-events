@@ -212,6 +212,11 @@ The Supabase side is intentionally small:
   inserts. RLS enabled; analytics-only, accessed via service role. Provides
   the funnel denominator (starts → completions → raffle entries) that is
   permanently unrecoverable without this table in place before an event runs.
+- `supabase/migrations/20260416010000_add_quiz_starts_event_fk.sql`
+  Adds a foreign key from `quiz_starts.event_id` to `quiz_events(id) ON DELETE
+  CASCADE`. Enforces referential integrity so `issue-session` cannot record
+  start rows for nonexistent event IDs (which would pollute analytics), and
+  ensures start rows are cleaned up if an event is hard-deleted.
 
 ## What Is Implemented Now
 
