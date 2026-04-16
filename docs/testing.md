@@ -536,6 +536,19 @@ Everything beyond that should earn its keep.
   it before PR handoff for admin, authoring, auth, RLS, publish/unpublish, and
   related Supabase configuration changes.
 
+### Known Flaky Tests
+
+- [ ] **Stabilize `AdminPage > draft changes not published label > shows the status label
+  after a save on a live event, then clears it after publish`**
+  (`tests/web/pages/AdminPage.test.tsx`)
+  Intermittently fails in CI with "Unable to find an element with the text: /Draft
+  changes not published/". The test exercises multiple sequential async state
+  transitions (save → publish → banner clear). The likely cause is a `waitFor` or
+  `findBy*` assertion firing before the preceding async state settles. Fix: audit
+  the async sequencing in this test case, replace any `getBy*` calls that follow
+  async actions with `findBy*` or explicit `waitFor`, and confirm the test passes
+  reliably across 10+ local runs before closing.
+
 ### Later, Only If Needed
 
 - [ ] Add broader Playwright coverage for retry-after-401 and backend failure messaging.
