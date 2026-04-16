@@ -38,6 +38,45 @@ Today the repo validation surface includes:
 
 That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite, pgTAP coverage for the completion RPC, Deno coverage for the Edge Function trust boundary, and a real local Supabase integration test for the full session-plus-completion path.
 
+## Developer Test Guide
+
+Use this table to pick the smallest useful command for your change.
+
+| Goal | Command | What it covers | What it does **not** cover | Run when |
+| --- | --- | --- | --- | --- |
+| Fast static + unit confidence | `npm run lint` and `npm test` | TypeScript/frontend/shared-domain/unit behavior and linting | Real Supabase stack, browser e2e, production behavior | Almost every PR |
+| Edge Function request/helper logic | `npm run test:functions` | Deno-level function helper and handler behavior | Real Supabase runtime wiring and DB/RPC integration | Edge Function logic changes |
+| Trust-path backend integration | `npm run test:supabase` | Local Supabase stack, function integration (`issue-session` + `complete-quiz`), pgTAP DB checks | Browser/admin UX path, production deployment wiring | Backend trust/data/auth changes |
+| Attendee browser smoke | `npm run test:e2e` | Mobile browser smoke for attendee route flow | Real backend path (runs with local fallback mode), admin flows | Attendee UX/route-shell changes |
+| Admin local e2e | `npm run test:e2e:admin` | Real local Supabase-backed `/admin` auth/allowlist/save/publish/unpublish flow | Deployed production auth redirect and production infrastructure wiring | Admin auth/authoring/publish or related UI changes |
+| Full local default gate | `npm run validate:local` | Lint, unit tests, Deno function tests, attendee Playwright smoke, local Supabase validation, web build, Deno checks | Admin local e2e and production smoke | Before handoff when you need broad local confidence |
+| Production admin smoke | `npm run test:e2e:admin:production-smoke` (normally via workflow) | Deployed production admin auth/allowlist/save/publish/unpublish on dedicated smoke fixtures | General attendee production coverage, non-smoke event data, PR CI checks | Post-release validation or manual production smoke rerun |
+
+## Coverage Snapshot
+
+### Covered Today
+
+- shared-domain correctness and validation logic
+- frontend reducer/session/API behavior
+- Edge Function helpers and handler request validation
+- local Supabase trust-path integration and pgTAP database rules
+- attendee mobile browser smoke (fallback-mode deterministic path)
+- local admin e2e against real local Supabase
+- production admin smoke (manual + post-release workflow) against dedicated smoke fixtures
+
+### Intentionally Not Covered Yet
+
+- Playwright attendee smoke in PR CI
+- broad cross-browser matrix for attendee/admin e2e
+- visual regression/screenshot diff gates
+- remote-production browser checks for attendee flow
+- comprehensive production role-matrix testing beyond dedicated smoke users
+
+For currently tracked testing gaps and sequencing, see the backlog-linked items in:
+
+- [`docs/backlog.md`](./backlog.md)
+- [`docs/testing.md` — Todo List](#todo-list)
+
 ## Trust-Path Validation Strategy
 
 The trust-path validation layer landed in four steps:
