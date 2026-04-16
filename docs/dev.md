@@ -245,6 +245,17 @@ Local tooling note:
 
 - `deno.json` uses manual `nodeModulesDir` mode so `deno check` does not rewrite the main Node workspace packages and break Playwright resolution
 
+Edge Function isolate lifecycle:
+
+- Edge Function isolates terminate as soon as the response is sent. Unresolved
+  promises are discarded at that point — a `.catch()`-only fire-and-forget write
+  is not guaranteed to complete and will silently drop data in practice.
+- Await all side-effect writes (DB inserts, external calls) before returning the
+  response. If a write must be best-effort, use `await` + `try/catch` so the
+  write completes but a failure does not block the response. `EdgeRuntime.waitUntil`
+  is an alternative for work that genuinely must not delay the response, but
+  `await` + `try/catch` is simpler and correct for most cases in this repo.
+
 Edge Function trust-path test notes:
 
 - `npm run test:functions` runs the fast Deno helper and handler tests for the Supabase Edge Functions

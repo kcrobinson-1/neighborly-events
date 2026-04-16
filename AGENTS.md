@@ -184,6 +184,12 @@ Before editing for any non-trivial task:
   failure instead of changing files
 - if no baseline command is specified, identify the smallest relevant validation
   surface before editing and run it when practical
+- for any change that adds or modifies a backend write reachable from a public
+  or origin-gated endpoint, answer before writing code: what prevents a caller
+  from writing arbitrary or nonexistent data? Prefer DB-level referential
+  integrity and constraints over application-layer validation — the database is
+  the authoritative enforcement point and cannot be bypassed by a future code
+  path. If no enforcement exists yet, add it in the same change.
 
 ### Lightweight Path
 
@@ -660,6 +666,9 @@ Before finishing, review your own work for:
 - duplicated logic
 - stale inline comments or stale docs — walk the "Doc Currency Is a PR Gate" triggers and confirm every relevant named doc was updated
 - missing validation
+- complete call-site coverage: when a function signature changes or a new
+  parameter is added, audit every call site including error, retry, and fallback
+  paths — not just the primary happy path
 - accessibility or usability regressions in the mobile flow
 - whether the final change is still positive value for the codebase and should
   be merged, rather than being needless churn or adding noise that offsets its
@@ -688,6 +697,9 @@ For backend or trust-related changes, confirm:
 - client input is still validated defensively
 - shared quiz logic is still the source of truth where appropriate
 - completion verification and entitlement behavior remain coherent
+- every new DB write reachable from a public or origin-gated endpoint has
+  referential integrity or a constraint enforcing what values are valid — not
+  just application-layer checks that a future code path could skip
 
 For testing and tooling changes, confirm:
 
