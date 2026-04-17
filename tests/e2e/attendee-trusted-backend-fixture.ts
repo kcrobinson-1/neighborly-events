@@ -30,6 +30,7 @@ export type TamperedCompletionRequestCapture = {
 };
 
 type AttendeeFunctionProxyOptions = {
+  failFirstIssueSessionRequest?: boolean;
   captureTamperedCompletionRequest?: TamperedCompletionRequestCapture;
   tamperFirstCompletionPayload?: boolean;
 };
@@ -148,11 +149,13 @@ export async function installAttendeeFunctionProxy(
   options: AttendeeFunctionProxyOptions = {},
 ) {
   const {
+    failFirstIssueSessionRequest = false,
     captureTamperedCompletionRequest,
     tamperFirstCompletionPayload = false,
   } = options;
   const supabaseUrl = readRequiredEnv("TEST_SUPABASE_URL").replace(/\/$/, "");
   const functionNames = new Set(["issue-session", "complete-quiz"]);
+  let hasFailedFirstIssueSessionRequest = false;
   let hasTamperedFirstCompletionPayload = false;
 
   await page.route(`${supabaseUrl}/functions/v1/**`, async (route) => {
@@ -180,6 +183,27 @@ export async function installAttendeeFunctionProxy(
           vary: "Origin",
         },
         status: 200,
+      });
+      return;
+    }
+
+    const shouldFailIssueSessionRequest =
+      failFirstIssueSessionRequest &&
+      functionName === "issue-session" &&
+      request.method() === "POST" &&
+      !hasFailedFirstIssueSessionRequest;
+
+    if (shouldFailIssueSessionRequest) {
+      hasFailedFirstIssueSessionRequest = true;
+      await route.fulfill({
+        body: JSON.stringify({ error: "Backend bootstrap smoke failure." }),
+        headers: {
+          "access-control-allow-credentials": "true",
+          "access-control-allow-origin": "http://127.0.0.1:4173",
+          "content-type": "application/json",
+          vary: "Origin",
+        },
+        status: 503,
       });
       return;
     }

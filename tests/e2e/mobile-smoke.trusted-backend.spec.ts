@@ -119,3 +119,26 @@ test("rejects malformed completion payload before persistence, then succeeds on 
 
   await assertTrustedAttendeeCompletionPersisted(verificationCode);
 });
+
+test("shows bootstrap failure messaging when trusted session bootstrap fails", async ({
+  page,
+}) => {
+  await installAttendeeFunctionProxy(page, {
+    failFirstIssueSessionRequest: true,
+  });
+
+  await page.goto("/game/first-sample", { waitUntil: "networkidle" });
+  await expect(
+    page.getByRole("heading", { name: "Madrona Music in the Playfield" }),
+  ).toBeVisible();
+
+  const startButton = page.getByRole("button", { exact: true, name: "Start quiz" });
+  await expect(startButton).toBeVisible();
+  await activate(startButton);
+
+  await expect(
+    page.getByText("Can't start the quiz right now."),
+  ).toBeVisible();
+  await expect(page.getByText("Backend bootstrap smoke failure.")).toBeVisible();
+  await expect(startButton).toBeVisible();
+});
