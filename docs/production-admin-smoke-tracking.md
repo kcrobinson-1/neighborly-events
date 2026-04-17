@@ -51,7 +51,18 @@ The first production smoke version intentionally excludes:
 
 The workflow runs in the GitHub `production` environment.
 
+Current release-readiness status:
+
+- GitHub `production` environment settings are configured.
+- `Production Admin Smoke` passed on the release-readiness branch in run
+  `24541137250`.
+- Fixture emails and event identifiers have built-in defaults. Use the optional
+  fixture override variables below only when the default dedicated smoke fixture
+  needs to change.
+
 ### GitHub Environment Variables
+
+Required:
 
 - `PRODUCTION_SMOKE_BASE_URL`
   deployed web origin for smoke browser checks, such as `https://neighborly.example`
@@ -59,16 +70,21 @@ The workflow runs in the GitHub `production` environment.
   production Supabase URL
 - `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`
   production publishable key used by the admin app
+
+Optional fixture overrides:
+
 - `PRODUCTION_SMOKE_ADMIN_EMAIL`
-  dedicated allowlisted smoke admin account email
+  dedicated allowlisted smoke admin account email; defaults to
+  `production-smoke-admin@example.com`
 - `PRODUCTION_SMOKE_DENIED_ADMIN_EMAIL`
-  dedicated non-allowlisted smoke account email
+  dedicated non-allowlisted smoke account email; defaults to
+  `production-smoke-denied@example.com`
 - `PRODUCTION_SMOKE_EVENT_ID`
-  dedicated smoke event id
+  dedicated smoke event id; defaults to `production-smoke-event`
 - `PRODUCTION_SMOKE_EVENT_SLUG`
-  dedicated smoke event slug
+  dedicated smoke event slug; defaults to `production-smoke-event`
 - `PRODUCTION_SMOKE_EVENT_NAME`
-  dedicated smoke event name
+  dedicated smoke event name; defaults to `Production Smoke Event`
 - `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` (optional)
   defaults to `<PRODUCTION_SMOKE_BASE_URL>/admin` when omitted
 

@@ -27,12 +27,10 @@ this file.
   The current web app treats `/` as a preview surface and `/game/:slug` as the
   attendee route, but the long-term production entry contract is still a product
   decision rather than a settled implementation rule.
-- What exact volunteer verification affordance is required beyond the current
-  completion message plus verification code?
-  The product and UX docs are clear that the finish should feel official, but
-  the repo does not yet document whether live operation needs a timestamp,
-  rotating proof treatment, volunteer fallback flow, or anything stronger than
-  the current code-based proof.
+- **Pre-launch decision:** For the Madrona pre-launch release milestone, the
+  current completion screen plus verification code is sufficient for volunteer
+  raffle handoff. Revisit stronger proof treatments after this release is
+  finished.
 - Is one quiz experience per event enough for the MVP, or do some events need
   multiple attendee routes under one organizer-owned event?
   The current runtime model assumes one event maps to one quiz route.

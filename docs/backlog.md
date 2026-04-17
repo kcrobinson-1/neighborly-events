@@ -68,6 +68,20 @@ Must be resolved before QR codes are printed or the first real event runs.
   a dedicated production smoke event.
   Detail: [`docs/production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md) and [`docs/testing.md` — Admin Functionality Validation Goal](./testing.md)
 
+- [x] **`infra` Configure production admin smoke settings and rerun release-candidate smoke**
+  GitHub `production` environment settings are configured, and
+  `Production Admin Smoke` passed on the release-readiness branch in run
+  `24541137250`. The smoke path validated deployed admin auth, allowlist
+  enforcement, draft persistence, publish/unpublish, and public route state
+  changes against the dedicated production smoke event.
+  Detail: [`docs/production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md)
+
+- [x] **`decision` Volunteer verification affordance**
+  For the pre-launch Madrona release milestone, the current completion screen
+  plus verification code is sufficient for volunteer raffle handoff. Stronger
+  proof treatments can be revisited after this release is finished.
+  Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
+
 ---
 
 ## Tier 2 — Operational Confidence
@@ -162,12 +176,6 @@ prioritization before starting.
   inactive-event behavior beyond immediate unpublish.
   Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
 
-- [ ] **`decision` Volunteer verification affordance**
-  Define whether live operation needs a timestamp, rotating proof treatment,
-  volunteer fallback flow, or anything stronger than the current code-based
-  completion proof.
-  Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
-
 - [ ] **`decision` Sponsor reporting requirements**
   Determine the minimum reporting slice sponsors actually need: simple inclusion
   proof, aggregate event totals, or question-level reporting.
@@ -179,6 +187,21 @@ prioritization before starting.
 
 Internal maintainability and contributor workflow. No user-facing impact.
 Execute in any order.
+
+- [ ] **`dev` Audit file-level TSDoc/JSDoc and inline code-documentation gaps**
+  Do a thorough source audit against the code documentation standard in
+  `docs/dev.md` and the release-readiness Dimension 2 gate. Produce a concrete
+  gap list and remediation plan before editing implementation code. The audit
+  should prioritize file-level responsibility headers for large route-level,
+  orchestration, and boundary modules, plus exported seams and durable
+  boundaries in `shared/`, `apps/web/src/lib/`, `apps/web/src/admin/`,
+  `apps/web/src/game/`, `supabase/functions/`, and database migrations/RPCs.
+  Files like `AdminEventWorkspace.tsx` should be evaluated for whether a reader
+  can quickly understand what the file owns and what it delegates. The output
+  should separate required comments from comment noise, name the files/symbols
+  that need work, and recommend PR-sized follow-up slices with validation
+  commands.
+  Detail: [`docs/dev.md` — Code documentation standard](./dev.md#code-documentation-standard) and [`docs/release-readiness.md` — Code Documentation And Comments](./release-readiness.md#2-code-documentation-and-comments)
 
 - [ ] **`dev` Split `quizApi.ts` local fallback** (refactor score 8/10)
   Extract local prototype entitlement storage and completion into a separate

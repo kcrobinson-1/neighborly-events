@@ -9,7 +9,7 @@ test.describe("admin authoring workflow", () => {
   test("covers save, publish, and unpublish on the shipped admin MVP path", async ({ page }) => {
     const fixture = await ensureAdminE2eFixture();
     const editedEventName = `${fixture.eventName} Updated`;
-    const editedQuestionPrompt = "Phase 5.1 e2e prompt update";
+    const editedQuestionPrompt = "Admin e2e prompt update";
     await installAuthoringFunctionProxy(page);
 
     await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });

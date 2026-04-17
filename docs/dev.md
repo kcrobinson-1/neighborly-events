@@ -57,6 +57,50 @@ The main working areas are:
 
 ## Implementation Decisions That Matter During Development
 
+### Code documentation standard
+
+Use TypeScript types, clear names, and small modules as the first layer of
+documentation. Add TSDoc/JSDoc or concise inline comments only where the code's
+contract, intent, or failure behavior is not obvious from the implementation.
+
+Required comment targets:
+
+- file-level responsibility headers for large, route-level, orchestration, or
+  boundary modules whose ownership is not obvious from the filename alone
+- exported functions, hooks, types, and constants at shared domain boundaries
+  such as scoring, answer validation, published quiz mapping, and config
+  construction
+- trust, persistence, authorization, idempotency, completion verification,
+  entitlement, publish, and unpublish boundaries
+- API clients and Edge Function helpers whose callers need to understand
+  fallback behavior, trusted versus untrusted inputs, or expected failures
+- durable SQL functions, triggers, or migrations when the database enforces a
+  non-obvious invariant
+- surprising internal behavior such as best-effort observability writes,
+  retry semantics, local prototype fallback, smoke-only fixtures, or magic-link
+  redirect assumptions
+
+Avoid comment noise:
+
+- do not add file headers to tiny modules, obvious leaf components, or files
+  where the name and exports already make ownership clear
+- do not add comments that merely restate names, types, or straightforward
+  control flow
+- do not use inline comments as phase tracking, release status, or TODO storage;
+  put durable follow-up work in `docs/backlog.md`, `docs/open-questions.md`, or
+  the relevant detail doc
+- keep comments short and update them in the same change as the behavior they
+  describe
+
+Release-readiness documentation checks are defined in
+[`release-readiness.md` — Code Documentation And Comments](./release-readiness.md#2-code-documentation-and-comments).
+
+File-level headers should answer "what is this file responsible for?" and,
+when useful, "what does this file deliberately not own?" For example, a
+route-level admin component such as `AdminEventWorkspace.tsx` should make clear
+whether it owns layout/orchestration only, or whether it also owns persistence,
+validation, mutation state, or API calls.
+
 ### DB-backed content with a shared runtime model
 
 Published quiz content now lives in Supabase tables, not in the default shared
@@ -340,6 +384,9 @@ Use the detailed runbook in
 [`production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md)
 for owner routing and first-response checks.
 
+For live-event monitoring beyond the smoke workflow, use
+[`operations.md` — Live Monitoring And Log Triage](./operations.md#live-monitoring-and-log-triage).
+
 ## UI Review Workflow
 
 Use browser review when validating UI changes, especially mobile-first flow changes.
@@ -530,6 +577,10 @@ Important boundary:
   secret values
 
 ## Integration Troubleshooting
+
+For live site, admin, Supabase Edge Function, or database triage during an
+event, start with the operator runbook in
+[`operations.md` — Live Monitoring And Log Triage](./operations.md#live-monitoring-and-log-triage).
 
 ### Session bootstrap succeeds but completion returns 401
 
