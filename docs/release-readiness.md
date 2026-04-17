@@ -219,6 +219,8 @@ Release bar (see G1, G2, G3, G8):
 Scope:
 
 - repo-level docs in `README.md` and `docs/`
+- file-level responsibility headers for large, route-level, orchestration, or
+  boundary modules whose ownership is not obvious from the filename alone
 - TSDoc/JSDoc or concise inline comments at shared domain, trust, persistence,
   migration, API, and workflow boundaries
 - area readmes where module ownership would otherwise be non-obvious
@@ -230,7 +232,8 @@ human-edited, per
 [documentation-quality-checklist.md](./documentation-quality-checklist.md).
 
 The project standard is: document intent, contracts, invariants, and
-non-obvious failure behavior at durable boundaries; do not document obvious
+non-obvious failure behavior at durable boundaries; document file
+responsibility when module ownership is not obvious; do not document obvious
 implementation details that names and TypeScript types already explain.
 
 How to run:
@@ -240,8 +243,11 @@ How to run:
    branch. For each named doc, confirm it reflects the shipped state.
 2. Open the top ~15 largest source files (see the size observation under
    [4. Code Cleanliness And Quality](#4-code-cleanliness-and-quality)) and
-   audit public function, hook, constant, and type-level comments for the
-   following:
+   audit file-level responsibility, public function, hook, constant, and
+   type-level comments for the following:
+   - large, route-level, orchestration, or boundary modules have a short
+     file-level header when a reader cannot quickly infer what the file owns
+     and does not own
    - exported symbols at shared domain, trust, persistence, authorization,
      idempotency, completion verification, entitlement, publish, unpublish, API
      client, or workflow boundaries have a comment or self-explanatory
@@ -288,6 +294,9 @@ Release bar (see G7):
   or workflow boundary ships without either self-explanatory types/names or a
   short TSDoc/JSDoc/inline comment that explains its intent and failure
   behavior
+- no large route-level, orchestration, or boundary module ships with ambiguous
+  file ownership; if ownership is not obvious from the filename and exports, it
+  has a short file-level responsibility header
 - `open-questions.md` has been reviewed for newly answered or newly opened
   items
 

@@ -188,15 +188,19 @@ prioritization before starting.
 Internal maintainability and contributor workflow. No user-facing impact.
 Execute in any order.
 
-- [ ] **`dev` Audit TSDoc/JSDoc and inline code-documentation gaps**
+- [ ] **`dev` Audit file-level TSDoc/JSDoc and inline code-documentation gaps**
   Do a thorough source audit against the code documentation standard in
   `docs/dev.md` and the release-readiness Dimension 2 gate. Produce a concrete
   gap list and remediation plan before editing implementation code. The audit
-  should prioritize exported seams and durable boundaries in `shared/`,
-  `apps/web/src/lib/`, `apps/web/src/admin/`, `apps/web/src/game/`,
-  `supabase/functions/`, and database migrations/RPCs. The output should
-  separate required comments from comment noise, name the files/symbols that
-  need work, and recommend PR-sized follow-up slices with validation commands.
+  should prioritize file-level responsibility headers for large route-level,
+  orchestration, and boundary modules, plus exported seams and durable
+  boundaries in `shared/`, `apps/web/src/lib/`, `apps/web/src/admin/`,
+  `apps/web/src/game/`, `supabase/functions/`, and database migrations/RPCs.
+  Files like `AdminEventWorkspace.tsx` should be evaluated for whether a reader
+  can quickly understand what the file owns and what it delegates. The output
+  should separate required comments from comment noise, name the files/symbols
+  that need work, and recommend PR-sized follow-up slices with validation
+  commands.
   Detail: [`docs/dev.md` — Code documentation standard](./dev.md#code-documentation-standard) and [`docs/release-readiness.md` — Code Documentation And Comments](./release-readiness.md#2-code-documentation-and-comments)
 
 - [ ] **`dev` Split `quizApi.ts` local fallback** (refactor score 8/10)

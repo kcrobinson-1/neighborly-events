@@ -65,6 +65,8 @@ contract, intent, or failure behavior is not obvious from the implementation.
 
 Required comment targets:
 
+- file-level responsibility headers for large, route-level, orchestration, or
+  boundary modules whose ownership is not obvious from the filename alone
 - exported functions, hooks, types, and constants at shared domain boundaries
   such as scoring, answer validation, published quiz mapping, and config
   construction
@@ -80,6 +82,8 @@ Required comment targets:
 
 Avoid comment noise:
 
+- do not add file headers to tiny modules, obvious leaf components, or files
+  where the name and exports already make ownership clear
 - do not add comments that merely restate names, types, or straightforward
   control flow
 - do not use inline comments as phase tracking, release status, or TODO storage;
@@ -90,6 +94,12 @@ Avoid comment noise:
 
 Release-readiness documentation checks are defined in
 [`release-readiness.md` — Code Documentation And Comments](./release-readiness.md#2-code-documentation-and-comments).
+
+File-level headers should answer "what is this file responsible for?" and,
+when useful, "what does this file deliberately not own?" For example, a
+route-level admin component such as `AdminEventWorkspace.tsx` should make clear
+whether it owns layout/orchestration only, or whether it also owns persistence,
+validation, mutation state, or API calls.
 
 ### DB-backed content with a shared runtime model
 
