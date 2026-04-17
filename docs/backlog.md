@@ -188,20 +188,35 @@ prioritization before starting.
 Internal maintainability and contributor workflow. No user-facing impact.
 Execute in any order.
 
-- [ ] **`dev` Audit file-level TSDoc/JSDoc and inline code-documentation gaps**
-  Do a thorough source audit against the code documentation standard in
-  `docs/dev.md` and the release-readiness Dimension 2 gate. Produce a concrete
-  gap list and remediation plan before editing implementation code. The audit
-  should prioritize file-level responsibility headers for large route-level,
-  orchestration, and boundary modules, plus exported seams and durable
-  boundaries in `shared/`, `apps/web/src/lib/`, `apps/web/src/admin/`,
-  `apps/web/src/game/`, `supabase/functions/`, and database migrations/RPCs.
-  Files like `AdminEventWorkspace.tsx` should be evaluated for whether a reader
-  can quickly understand what the file owns and what it delegates. The output
-  should separate required comments from comment noise, name the files/symbols
-  that need work, and recommend PR-sized follow-up slices with validation
-  commands.
-  Detail: [`docs/dev.md` — Code documentation standard](./dev.md#code-documentation-standard) and [`docs/release-readiness.md` — Code Documentation And Comments](./release-readiness.md#2-code-documentation-and-comments)
+- [x] **`dev` Audit file-level TSDoc/JSDoc and inline code-documentation gaps**
+  Completed on 2026-04-17 as an audit-only pass with scoped inventory,
+  Required/Optional/Noise classification, and remediation slices.
+  Detail: [`docs/code-documentation-audit.md`](./code-documentation-audit.md),
+  [`docs/dev.md` — Code documentation standard](./dev.md#code-documentation-standard), and [`docs/release-readiness.md` — Code Documentation And Comments](./release-readiness.md#2-code-documentation-and-comments)
+
+- [ ] **`dev` Code-documentation remediation Slice A (admin modules)**
+  Add required file-level and exported-seam documentation updates for admin
+  orchestration and form modules.
+  Detail: [`docs/code-documentation-audit.md` — Slice A](./code-documentation-audit.md#slice-a--admin-orchestration-and-form-modules)
+
+- [ ] **`dev` Code-documentation remediation Slice B (shared barrel clarity)**
+  Add required shared-domain barrel boundary documentation updates.
+  Detail: [`docs/code-documentation-audit.md` — Slice B](./code-documentation-audit.md#slice-b--shared-domain-exports-and-barrel-clarity)
+
+- [ ] **`dev` Code-documentation remediation Slice C (browser API boundaries)**
+  Add required file-level ownership documentation in browser API boundary
+  modules.
+  Detail: [`docs/code-documentation-audit.md` — Slice C](./code-documentation-audit.md#slice-c--browser-api-boundary-helpers)
+
+- [ ] **`dev` Code-documentation remediation Slice D (edge function boundaries)**
+  Add required helper/dependency-boundary documentation in shared and completion
+  edge-function modules.
+  Detail: [`docs/code-documentation-audit.md` — Slice D](./code-documentation-audit.md#slice-d--edge-function-boundary-helpers-and-handler-dependencies)
+
+- [ ] **`dev` Code-documentation remediation Slice E (migration/RPC invariants)**
+  Add required migration-level and RPC-invariant documentation for durable SQL
+  trust/persistence boundaries.
+  Detail: [`docs/code-documentation-audit.md` — Slice E](./code-documentation-audit.md#slice-e--migrationrpc-invariant-comments)
 
 - [ ] **`dev` Split `quizApi.ts` local fallback** (refactor score 8/10)
   Extract local prototype entitlement storage and completion into a separate
