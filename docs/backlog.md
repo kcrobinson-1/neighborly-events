@@ -71,7 +71,7 @@ Must be resolved before QR codes are printed or the first real event runs.
 - [x] **`infra` Configure production admin smoke settings and rerun release-candidate smoke**
   GitHub `production` environment settings are configured, and
   `Production Admin Smoke` passed on the release-readiness branch in run
-  `24541064734`. The smoke path validated deployed admin auth, allowlist
+  `24541137250`. The smoke path validated deployed admin auth, allowlist
   enforcement, draft persistence, publish/unpublish, and public route state
   changes against the dedicated production smoke event.
   Detail: [`docs/production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md)

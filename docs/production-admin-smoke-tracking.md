@@ -55,7 +55,7 @@ Current release-readiness status:
 
 - GitHub `production` environment settings are configured.
 - `Production Admin Smoke` passed on the release-readiness branch in run
-  `24541064734`.
+  `24541137250`.
 - Fixture emails and event identifiers have built-in defaults. Use the optional
   fixture override variables below only when the default dedicated smoke fixture
   needs to change.
