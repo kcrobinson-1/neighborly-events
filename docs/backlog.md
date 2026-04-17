@@ -71,6 +71,27 @@ Reduce deployment risk and contributor friction before the live event.
   merge can break the attendee flow without CI catching it.
   Detail: [`docs/testing.md` — Where Tests Should Run](./testing.md)
 
+- [x] **`infra` Attendee smoke path must exercise trusted backend completion**
+  Completed: `npm run test:e2e:attendee:trusted-backend` now runs a mobile
+  attendee smoke flow against local Supabase + local Edge Functions (prototype
+  fallback disabled) and asserts trusted backend persistence in
+  `raffle_entitlements`, `quiz_completions`, and `quiz_starts`.
+  Detail: [`docs/testing.md` — Developer Test Guide](./testing.md)
+
+- [x] **`infra` Attendee smoke invalid submission rejection**
+  Completed: trusted-backend attendee smoke now tampers one completion payload
+  to trigger backend `400` rejection, asserts the error UI and retry action,
+  verifies no `quiz_completions` row persisted for the malformed request id,
+  then retries successfully.
+  Detail: [`docs/testing.md` — Trust-Path Validation Strategy](./testing.md)
+
+- [x] **`infra` Attendee smoke bootstrap failure messaging**
+  Completed: trusted-backend attendee smoke now forces a one-shot
+  `issue-session` bootstrap failure, then asserts intro-screen error messaging
+  (`Can't start the quiz right now.` + backend failure detail) while preserving
+  recoverable start state.
+  Detail: [`docs/testing.md` — What Needs Coverage](./testing.md)
+
 - [ ] **`decision` Staging or branch-based Supabase promotion path**
   Decide whether the current local-validation-plus-direct-to-production release
   model is sufficient or whether a staging backend is needed before the first
