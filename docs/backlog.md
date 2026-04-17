@@ -68,15 +68,12 @@ Must be resolved before QR codes are printed or the first real event runs.
   a dedicated production smoke event.
   Detail: [`docs/production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md) and [`docs/testing.md` — Admin Functionality Validation Goal](./testing.md)
 
-- [ ] **`infra` Configure production admin smoke settings and rerun release-candidate smoke**
-  The workflow exists, but the release-readiness pass found no successful smoke
-  evidence for release candidate `70977d6`: the latest `Production Admin Smoke`
-  workflow run was skipped, and the prior run failed while validating required
-  smoke settings. Before a live event, populate the GitHub `production`
-  environment variables/secrets documented in
-  `production-admin-smoke-tracking.md`, then rerun the smoke workflow against
-  the release candidate commit and record the successful run in
-  `release-readiness.md`.
+- [x] **`infra` Configure production admin smoke settings and rerun release-candidate smoke**
+  GitHub `production` environment settings are configured, and
+  `Production Admin Smoke` passed on the release-readiness branch in run
+  `24541064734`. The smoke path validated deployed admin auth, allowlist
+  enforcement, draft persistence, publish/unpublish, and public route state
+  changes against the dedicated production smoke event.
   Detail: [`docs/production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md)
 
 - [x] **`decision` Volunteer verification affordance**

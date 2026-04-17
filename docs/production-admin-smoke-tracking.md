@@ -53,13 +53,12 @@ The workflow runs in the GitHub `production` environment.
 
 Current release-readiness status:
 
-- as of the 2026-04-16 release-readiness pass, no successful production admin
-  smoke run exists for release candidate `70977d6`
-- the latest `Production Admin Smoke` run for that commit was skipped, and the
-  prior run failed during `Validate smoke settings`
-- configuring the GitHub `production` environment settings below and rerunning
-  the workflow is tracked as a Tier 1 item in
-  [`backlog.md`](./backlog.md)
+- GitHub `production` environment settings are configured.
+- `Production Admin Smoke` passed on the release-readiness branch in run
+  `24541064734`.
+- Fixture emails and event identifiers have built-in defaults. Use the optional
+  fixture override variables below only when the default dedicated smoke fixture
+  needs to change.
 
 ### GitHub Environment Variables
 
