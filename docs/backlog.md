@@ -79,13 +79,10 @@ Must be resolved before QR codes are printed or the first real event runs.
   `release-readiness.md`.
   Detail: [`docs/production-admin-smoke-tracking.md`](./production-admin-smoke-tracking.md)
 
-- [ ] **`decision` Volunteer verification affordance**
-  Decide whether the current completion message plus verification code is
-  sufficient for Madrona volunteer handoff, or whether live operation needs a
-  timestamp, rotating proof treatment, volunteer fallback flow, or anything
-  stronger before raffle tickets are issued. This decision is needed before
-  volunteer training; implementation follow-up is only required if the current
-  affordance is insufficient.
+- [x] **`decision` Volunteer verification affordance**
+  For the pre-launch Madrona release milestone, the current completion screen
+  plus verification code is sufficient for volunteer raffle handoff. Stronger
+  proof treatments can be revisited after this release is finished.
   Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
 
 ---

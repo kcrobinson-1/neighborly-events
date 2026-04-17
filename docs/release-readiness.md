@@ -71,8 +71,8 @@ in [AGENTS.md](../AGENTS.md) reads first.
 | Doc established | 2026-04-16 |
 | Last full pass | 2026-04-16 — completed with no-go findings |
 | Current release target | Madrona Music in the Playfield (initial validation target) |
-| Current go/no-go | _no-go — production admin smoke evidence and volunteer verification decision are missing_ |
-| Blocking items summary | production admin smoke settings/rerun and volunteer verification decision are open in [backlog.md](./backlog.md) |
+| Current go/no-go | _no-go — production admin smoke evidence is missing_ |
+| Blocking items summary | production admin smoke settings/rerun is open in [backlog.md](./backlog.md) |
 
 The first pass produces the initial findings tables under
 [Running Findings](#running-findings). Subsequent passes append a new dated
@@ -555,11 +555,10 @@ Refresh instructions:
   directly in [open-questions.md](./open-questions.md), then remove it from
   this list
 
-The list below was refreshed during the 2026-04-16 pass.
+The list below was refreshed during the 2026-04-16 pass and updated after the
+Madrona pre-launch volunteer handoff decision.
 
-- [Product And Live Event Operation — volunteer verification affordance](./open-questions.md)
-  must be decided for Madrona, or explicitly deferred with a named volunteer
-  handoff plan, before the release target can be considered ready.
+- _no entries currently block the release target_
 
 ## Running Findings
 
@@ -632,7 +631,7 @@ progresses.
 - G2 Attendee e2e: met for the coordinator branch — `npm run test:e2e` passed 3 mobile Chromium attendee smoke tests after the default Playwright config was restricted to `mobile-smoke.spec.ts`
 - G3 Admin production smoke: not met — GitHub run `24538237545` for `70977d6` was skipped, and the prior run `24537110190` failed at `Validate smoke settings`
 - G4 Starts + completion instrumentation: met — `npm run validate:local` exercised start-row Deno tests, local Supabase integration, and pgTAP; release workflow run `24537097693` successfully applied migrations and deployed functions at `d08f65e`, which already contained `20260416000000_add_quiz_starts.sql` and `20260416010000_add_quiz_starts_event_fk.sql`; `70977d6` is docs-only and its release job was skipped
-- G5 Release-blocking open questions: not met — volunteer verification affordance must be decided or explicitly deferred before the release target
+- G5 Release-blocking open questions: met — Madrona pre-launch volunteer handoff uses the current completion screen plus verification code; stronger proof treatment is deferred until after this release
 - G6 Observability: not met — manual operator surfaces are identified below, but production admin smoke is not producing release-candidate evidence yet and remains a Tier 1 operational visibility blocker
 - G7 Docs currency: met for the coordinator branch — Dimension 2 doc-currency audit completed, with stale README release-flow and production-smoke status docs updated
 - G8 PR CI depth: not met — no PR CI evidence exists for the coordinator branch yet; `.github/workflows/ci.yml` covers lint, unit tests, Deno function tests, local Supabase integration/database tests, build, and function `deno check`, while attendee Playwright smoke in PR CI remains tracked in [backlog.md](./backlog.md)
@@ -754,11 +753,10 @@ progresses.
 
 - Dimension 6 audit completed against [open-questions.md](./open-questions.md)
   and `decision` entries in [backlog.md](./backlog.md).
-- Release-blocking: [Product And Live Event Operation — volunteer
-  verification affordance](./open-questions.md). The current completion message
-  plus verification code may be enough, but the repo has not yet recorded that
-  decision for Madrona volunteer handoff. Promoted to Tier 1 in
-  [backlog.md](./backlog.md).
+- Release-blocking question resolved after the pass: for the Madrona pre-launch
+  release milestone, the current completion screen plus verification code is
+  sufficient for volunteer raffle handoff. Stronger proof treatment is deferred
+  until after this release.
 - Not release-blocking for this target: QR entry route. `experience.md`
   already says QR codes should open directly into the event quiz experience,
   and `/game/:slug` exists for that purpose; the long-term question of whether
@@ -769,13 +767,13 @@ progresses.
   organizer roles/root admin UI, richer publish controls, multi-quiz events,
   and stronger trust-boundary/abuse controls.
 
-**Go/no-go:** no-go — production admin smoke evidence is missing, and the volunteer verification decision has not been recorded.
+**Go/no-go:** no-go — production admin smoke evidence is missing.
 
 **Follow-ups opened:**
 
 - Tier 1: configure production admin smoke settings and rerun release-candidate smoke in [backlog.md](./backlog.md).
-- Tier 1: decide volunteer verification affordance for Madrona in
-  [backlog.md](./backlog.md).
+- Resolved after pass: volunteer verification affordance for Madrona recorded in
+  [backlog.md](./backlog.md) and [open-questions.md](./open-questions.md).
 - Refactor candidate: split selected draft publish/unpublish state from draft
   loading and save state in [code-refactor-checklist.md](./code-refactor-checklist.md).
 
