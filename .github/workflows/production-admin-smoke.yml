@@ -70,11 +70,6 @@ jobs:
           test -n "$TEST_SUPABASE_SERVICE_ROLE_KEY"
           test -n "$VITE_SUPABASE_URL"
           test -n "$VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY"
-          test -n "$TEST_ADMIN_EMAIL"
-          test -n "$TEST_DENIED_ADMIN_EMAIL"
-          test -n "$TEST_ADMIN_EVENT_ID"
-          test -n "$TEST_ADMIN_EVENT_SLUG"
-          test -n "$TEST_ADMIN_EVENT_NAME"
 
       - name: Run production admin smoke
         run: npm run test:e2e:admin:production-smoke

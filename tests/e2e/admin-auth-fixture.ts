@@ -29,11 +29,11 @@ type AdminFixture = {
   deniedMagicLinkUrl?: string;
 };
 
-const defaultAdminEmail = "phase5-admin-e2e@example.com";
-const defaultDeniedAdminEmail = "phase5-admin-denied-e2e@example.com";
-const defaultEventId = "phase5-admin-e2e-event";
-const defaultEventSlug = "phase5-admin-e2e-slug";
-const defaultEventName = "Phase 5.1 Admin E2E Event";
+const defaultAdminEmail = "production-smoke-admin@example.com";
+const defaultDeniedAdminEmail = "production-smoke-denied@example.com";
+const defaultEventId = "production-smoke-event";
+const defaultEventSlug = "production-smoke-event";
+const defaultEventName = "Production Smoke Event";
 const defaultAdminRedirectUrl = "http://127.0.0.1:4173/admin";
 
 function readRequiredEnv(name: string) {

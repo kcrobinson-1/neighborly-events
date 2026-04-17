@@ -2,6 +2,13 @@ const { logStep, run } = require("./utils.cjs");
 
 const defaultReadinessTimeoutMs = 180_000;
 const defaultReadinessPollMs = 5_000;
+const defaultSmokeFixture = {
+  adminEmail: "production-smoke-admin@example.com",
+  deniedAdminEmail: "production-smoke-denied@example.com",
+  eventId: "production-smoke-event",
+  eventName: "Production Smoke Event",
+  eventSlug: "production-smoke-event",
+};
 
 function readRequiredEnv(name) {
   const value = process.env[name];
@@ -62,17 +69,20 @@ async function waitForRouteReady({ routeLabel, routeUrl, timeoutMs, pollMs }) {
 
 async function main() {
   const baseUrl = readRequiredEnv("PRODUCTION_SMOKE_BASE_URL").replace(/\/$/, "");
-  const eventSlug = readRequiredEnv("TEST_ADMIN_EVENT_SLUG");
+  const eventSlug =
+    process.env.TEST_ADMIN_EVENT_SLUG || defaultSmokeFixture.eventSlug;
 
-  // Validate all expected smoke inputs up front so failures are actionable.
+  process.env.TEST_ADMIN_EMAIL ||= defaultSmokeFixture.adminEmail;
+  process.env.TEST_DENIED_ADMIN_EMAIL ||= defaultSmokeFixture.deniedAdminEmail;
+  process.env.TEST_ADMIN_EVENT_ID ||= defaultSmokeFixture.eventId;
+  process.env.TEST_ADMIN_EVENT_NAME ||= defaultSmokeFixture.eventName;
+  process.env.TEST_ADMIN_EVENT_SLUG ||= defaultSmokeFixture.eventSlug;
+
+  // Validate required deployment and Supabase inputs up front so failures are actionable.
   readRequiredEnv("TEST_SUPABASE_URL");
   readRequiredEnv("TEST_SUPABASE_SERVICE_ROLE_KEY");
   readRequiredEnv("VITE_SUPABASE_URL");
   readRequiredEnv("VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY");
-  readRequiredEnv("TEST_ADMIN_EMAIL");
-  readRequiredEnv("TEST_DENIED_ADMIN_EMAIL");
-  readRequiredEnv("TEST_ADMIN_EVENT_ID");
-  readRequiredEnv("TEST_ADMIN_EVENT_NAME");
 
   const timeoutMs = readDurationEnv(
     "PRODUCTION_SMOKE_READY_TIMEOUT_MS",
