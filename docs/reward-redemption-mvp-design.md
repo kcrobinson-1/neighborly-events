@@ -65,6 +65,30 @@ The MVP redemption workflow **must not** reuse full root-admin access.
 - keep root-admin-only controls (global user/role management and cross-event
   operations) unavailable to agents and organizers
 
+### Authorization architecture decision (MVP)
+
+- use a hybrid enforcement model:
+  - `SECURITY DEFINER` RPCs are the only allowed write path for redeem/reverse
+  - RLS policies provide read scoping and defense-in-depth protections
+- use Edge Functions as the mutation invocation boundary for client write calls;
+  Edge Functions call the write RPCs and normalize response contracts
+- do not rely on frontend route/button visibility as a security boundary
+
+### Canonical SQL permission-helper contract (MVP decision)
+
+- keep permission helpers in schema `public` for consistent use by RPCs and RLS
+- use event-id based helpers (not slug based) to avoid lookup ambiguity inside
+  policy/mutation paths
+- helper signatures:
+  - `public.is_agent_for_event(target_event_id uuid) returns boolean`
+  - `public.is_organizer_for_event(target_event_id uuid) returns boolean`
+  - `public.is_root_admin() returns boolean`
+- read and write enforcement should call the same helpers so role logic does not
+  drift between policy and RPC layers
+- `redeem` authorization contract: `is_agent_for_event(...) OR is_root_admin()`
+- `reverse` authorization contract:
+  `is_organizer_for_event(...) OR is_root_admin()`
+
 ### MVP role-management decision
 
 - manage agent/organizer assignments by direct SQL inserts in the database for
@@ -370,11 +394,19 @@ with DB-level enforcement and deterministic response shape.
   - resolves event + code suffix to a single entitlement
   - performs atomic redeem update
   - treats cross-event lookups as `not_found` to avoid event-data leakage
-  - returns normalized statuses: `redeemed_now`, `already_redeemed`, `not_found`,
-    `not_authorized`
-  - supports a reversible action with statuses:
-    `reversed_now`, `already_unredeemed`, `reverse_not_allowed`
+  - returns a normalized response envelope: `{ outcome, result }`
+  - redeem result codes:
+    `redeemed_now`, `already_redeemed`, `not_found`, `not_authorized`,
+    `internal_error`
+  - reverse result codes:
+    `reversed_now`, `already_unredeemed`, `not_found`, `not_authorized`,
+    `internal_error`
+  - note: no `event_mismatch` result for redeem in MVP (cross-event is
+    intentionally mapped to `not_found`)
+  - note: no `reason_required` or `reverse_not_allowed` result in MVP
   - requires organizer/root-admin authorization for reversal writes
+  - executes writes through `SECURITY DEFINER` RPC paths only
+  - is invoked through Edge Functions for all client-originated mutation calls
 
 - Add a read endpoint/query for agent workspace:
   - exact 4-digit lookup within current event scope
@@ -399,7 +431,7 @@ with DB-level enforcement and deterministic response shape.
 
 - Event-scoped operational workspace with constrained MVP controls
 - Reversal action in `/event/:slug/redemptions` only, with confirmation and
-  reason
+  optional reason
 
 ### Attendee UI
 
@@ -413,6 +445,8 @@ with DB-level enforcement and deterministic response shape.
 - Agent identity must use authenticated agent access, never attendee/public
   endpoints.
 - Reversal writes must use authenticated organizer/root-admin access.
+- Mutation authorization is enforced through RPC logic; RLS remains enabled for
+  scoped reads and defense-in-depth.
 - DB constraints/RPC semantics should enforce one-way state transitions,
   preventing race-condition double redemption.
 - Auditability should capture who redeemed/reversed, from which role, and for
@@ -503,9 +537,9 @@ deferral) and an owner.
 - Decided:
   - separate event-scoped `agent` and `organizer` roles
   - `agent` can redeem; `organizer`/`root_admin` can reverse
+  - hybrid model: `SECURITY DEFINER` RPCs for writes + RLS for scoped reads
 - Needs decision:
-  - final enforcement shape (`RLS`, `SECURITY DEFINER` RPCs, or both)
-  - canonical SQL permission-check helpers and naming
+  - none
 - Owner:
   - `TBD`
 
@@ -513,9 +547,11 @@ deferral) and an owner.
 
 - Decided:
   - redemption writes are backend-trusted operations
+  - write path is RPC-only for redeem/reverse mutations
+  - invocation boundary: Edge Function wrapper over write RPCs
+  - client apps do not call write RPCs directly
 - Needs decision:
-  - single write path: Edge Function wrapper over RPC vs direct RPC client calls
-  - prohibition of alternate write paths once chosen
+  - none
 - Owner:
   - `TBD`
 
@@ -523,9 +559,14 @@ deferral) and an owner.
 
 - Decided:
   - redeem and reverse operations must be idempotent
+  - response contract uses `{ outcome, result }` envelope
+  - `already_redeemed` and `already_unredeemed` are idempotent outcomes with
+    `outcome=success` and distinct non-terminal `result` values
+  - no `event_mismatch`, `reason_required`, or `reverse_not_allowed` in MVP
+  - concurrent writes are resolved in a single transaction with row-level lock
+    semantics before state transition checks
 - Needs decision:
-  - lock/update strategy for concurrent writes
-  - exact status contract for duplicate and racing requests
+  - none
 - Owner:
   - `TBD`
 
@@ -534,9 +575,9 @@ deferral) and an owner.
 - Decided:
   - include `redeemed_*` and `reversed_*` identity/timestamp metadata
   - no additional device/session logging in MVP
+  - reversal reason is optional in MVP (no required-field enforcement)
 - Needs decision:
   - whether MVP also requires append-only audit history rows
-  - whether reversal reason is required at DB-level constraint vs API-only check
 - Owner:
   - `TBD`
 
