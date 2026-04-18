@@ -350,6 +350,32 @@ Operational implications:
 - the agent only types the 4-digit suffix
 - backend still validates full-code uniqueness and event matching
 
+### Implementation prerequisite
+
+The event-prefixed code format is delivered by a separate prerequisite feature
+that must land before the redemption MVP implementation begins. At a minimum
+that feature:
+
+- adds an `event_code` column to `public.quiz_events`, authored at event
+  creation, with a `UNIQUE` constraint, a `CHECK`-constrained shape
+  (case-normalized, dash-free, bounded length), and an immutability lock once
+  any entitlement references the event (following the existing slug lock
+  trigger precedent)
+- rewrites the verification-code generator to emit `<event_code>-<NNNN>` with
+  a bounded retry loop on per-event suffix collisions, and adds
+  `UNIQUE (event_id, verification_code)` on `raffle_entitlements` so per-event
+  4-digit suffix uniqueness is DB-enforced rather than relying on entropy
+- updates `publish-draft` / `public.publish_quiz_event_draft(...)` to refuse
+  to publish an event that lacks a valid `event_code`
+- coordinates the corresponding updates to the completion response shape,
+  frontend completion screen copy, test fixtures, and Playwright expectations
+
+Because the repo currently holds no production redemption data, this
+prerequisite can backfill existing test events with dummy event codes rather
+than designing a legacy-code migration path. The prerequisite feature owns its
+own design doc, migration sequence, and rollback plan; the redemption MVP
+inherits the resulting single-column, single-equality lookup contract.
+
 ## Data Model Proposal (MVP)
 
 Extend reward entitlement records with redemption metadata.
@@ -593,32 +619,43 @@ deferral) and an owner.
 
 - Decided:
   - mobile monitoring must support quick lookup, filtering, and recent-first scan
-  - a unique constraint per `event_id` + 4-digit suffix is required regardless
-    of pagination choice, because both agent lookup on `/event/:slug/redeem`
-    and dispute lookup on `/event/:slug/redemptions` must resolve a single
-    entitlement per event+suffix; the exact column shape (dedicated
-    `code_suffix` column, functional index on a substring of the existing
-    `verification_code`, or parsing `verification_code` against the
-    `<event-acronym>-<NNNN>` format) is covered by the broader discussion
-    below
-- Needs decision (deferred pending a broader design discussion before the
-  implementation plan is written):
-  - storage/index shape for the per-event 4-digit uniqueness guarantee,
-    reconciled with the existing `raffle_entitlements.verification_code`
-    column
-  - pagination strategy (cursor vs offset) — trade-offs between implementation
-    simplicity and stability under concurrent writes during a live event have
-    not been fully explored
-  - index plan for `(event_id, status, redeemed_at)` vs partial indexes on
-    redeemed/unredeemed subsets vs composite coverage for filter chips
-    (`Last 15m`, `Redeemed`, `Reversed`, `By me`); this depends on the
-    pagination decision above
+  - per-event 4-digit suffix uniqueness is delivered by the prerequisite
+    feature described in the
+    [Completion Code Format](#completion-code-format-mvp-decision) section:
+    that feature rewrites `verification_code` to the event-prefixed format
+    and adds `UNIQUE (event_id, verification_code)` on `raffle_entitlements`,
+    so the redemption feature inherits a single-column equality lookup on the
+    agent redeem path and on dispute lookup in the monitoring screen
+  - pagination strategy: MVP uses a bounded single fetch of the most recent
+    N redemption records per event (default `N = 500`, to be validated
+    against anticipated pilot-event volume before first use and tunable by
+    configuration). Filter chips (`Last 15m`, `Redeemed`, `Reversed`,
+    `By me`) and suffix-first search operate client-side against that
+    cached slice, so filter changes are instant and do not round-trip to
+    the server. When the cap is hit, the UI shows a visible
+    "showing most recent N" affordance and prompts the operator to narrow
+    the time or status window for older records.
+  - post-MVP upgrade path for pagination: cursor (keyset) pagination on
+    `(redeemed_at DESC, id DESC)` with a matching index, triggered when
+    real event data approaches the cap (for example, multiple pilot events
+    producing more than ~400 redemptions each) or when the
+    "showing most recent N" affordance is regularly hit. Named here so the
+    handoff to post-MVP is explicit and the MVP doesn't quietly become the
+    long-term shape.
+  - index plan: minimalist. The redemption MVP migration adds exactly one
+    new B-tree index, `(event_id, redeemed_at DESC NULLS LAST)` on
+    `raffle_entitlements`, which covers the default recent-first list,
+    the `Last 15m` filter, and the `Redeemed` filter. The `Reversed`,
+    `By me`, and suffix-search query patterns are intentionally served by
+    event-scoped scans in MVP — at the stated scale of hundreds to
+    low-thousands of records these scans run in milliseconds and do not
+    justify extra write amplification. Add partial or functional indexes
+    for those patterns post-MVP only when EXPLAIN plans against real
+    event data show they are needed.
+- Needs decision:
+  - none
 - Owner:
   - `@kcrobinson`
-- Blocker to resolve before implementation:
-  - the code-storage shape, pagination, and composite-index choices should be
-    decided together in a single discussion so the monitoring query shape,
-    index set, and Edge Function list contract stay consistent
 
 ### 6) Code lookup and non-leakage behavior
 
@@ -764,9 +801,13 @@ deferral) and an owner.
        `redemption_status default 'unredeemed'`,
        `redemption_reversed_at`, `redemption_reversed_by`,
        `redemption_reversed_by_role`, `redemption_note`) land as nullable
-       or defaulted columns, plus the per-event 4-digit uniqueness constraint
-       in the shape resolved by item 5; the role-assignment table(s) are
-       created empty
+       or defaulted columns, plus the new monitoring B-tree index
+       `(event_id, redeemed_at DESC NULLS LAST)` from item 5; the
+       role-assignment table(s) are created empty. The per-event 4-digit
+       uniqueness constraint on `raffle_entitlements.verification_code` is
+       provided by the prerequisite feature described in the
+       [Completion Code Format](#completion-code-format-mvp-decision)
+       section and is not part of this MVP migration sequence
     2. permission helpers: `public.is_agent_for_event(uuid)`,
        `public.is_organizer_for_event(uuid)`, and `public.is_root_admin()` are
        added before any policy or RPC references them
@@ -803,8 +844,10 @@ deferral) and an owner.
     - schema: all redemption columns are nullable/defaulted additions, so a
       rollback leaves existing `raffle_entitlements` rows valid; if the
       columns must be removed, a follow-up migration drops them in the
-      reverse order and drops the per-event 4-digit uniqueness
-      constraint/index added in step 1
+      reverse order and drops the `(event_id, redeemed_at DESC NULLS LAST)`
+      monitoring index added in step 1. The per-event 4-digit uniqueness
+      constraint is owned by the prerequisite feature and is out of scope
+      for this rollback plan
     - RPCs: rollback replaces the `redeem_*` and `reverse_*` RPC bodies with
       a safe-error no-op (`raise exception 'redemption not enabled'`) rather
       than dropping them, so the Edge Functions never 500 on a missing
