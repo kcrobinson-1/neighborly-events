@@ -152,17 +152,7 @@ function startLocalSupabaseStack() {
 
 function resetLocalSupabaseDatabase() {
   logStep("Resetting local Supabase database to current migrations");
-
-  try {
-    run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
-  } catch {
-    // CI occasionally flakes here while the storage API is still settling after
-    // container restart. Recover by restarting the local stack once, then retry.
-    logStep("Local Supabase reset failed; restarting stack before one retry");
-    run("npx", ["supabase", "stop"], { check: false });
-    run("npx", ["supabase", "start"]);
-    run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
-  }
+  run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
 }
 
 function stopLocalSupabaseStack() {
