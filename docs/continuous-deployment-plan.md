@@ -45,13 +45,13 @@ overhead.
 Goals:
 
 - consistent preview deployments for every PR/branch
-- required PR checks before merge to production branch
+- required CI checks for production-targeting changes
 - explicit deployment ownership and rollback playbook
 
 Exit criteria:
 
 - protected production branch with required checks enabled
-- no direct production pushes outside approved workflow
+- direct production pushes constrained by required checks and deployment workflow
 - deployment runbook documented and tested
 
 ### Gamma (staged confidence)
@@ -118,6 +118,49 @@ Required baseline:
 - protected production branch
 - required status checks before merge
 - environment protections for production deployments
+
+### Solo-safe beta profile (current operating model)
+
+This repo is currently operated by one maintainer, so beta guardrails should
+prioritize release safety without mandatory multi-reviewer workflows.
+
+Recommended `main` settings:
+
+- pull requests: optional (do not require PRs)
+- reviewer approvals: not required
+- branch protection: enabled for `main`
+- required status checks: enabled for `main`
+- force push: allowed for repository owner to support docs-history cleanup
+- deletion: blocked for `main`
+
+Required branch check example (use the exact workflow check name from this repo):
+
+- `Lint, Tests, Build, and Supabase Checks / Lint, Tests, Build, and Supabase Checks`
+
+Production deployment gate:
+
+- `Release / Sync Supabase Production` runs after successful `CI` on `main`
+  and should be monitored as the production promotion gate, not configured as a
+  pre-merge required branch check
+
+Conditional/operational checks (not always required on every push):
+
+- `Production Admin Smoke / Smoke Admin On Production` (post-deploy confidence
+  gate for production health)
+
+Docs-only trigger policy:
+
+- markdown/docs-only commits do not trigger CI, so they also do not trigger the
+  production Supabase release workflow
+- any change outside docs runs the full CI validation suite before production
+  release can run
+
+Release target integrity:
+
+- require production release workflow runs to resolve an explicit target SHA and
+  confirm that SHA already has a successful `CI` push run on `main`
+- keep production deploy pinned to the validated target SHA rather than a moving
+  branch head
 
 ## Compatibility Strategy (Frontend + Backend)
 
