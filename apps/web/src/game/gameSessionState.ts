@@ -1,4 +1,4 @@
-/** Internal quiz session state machine for reducer-driven quiz progression. */
+/** Internal game session state machine for reducer-driven game progression. */
 import type { Question } from "../data/games";
 import { createRequestId } from "../lib/session";
 import type { Answers, GameCompletionResult } from "../types/game";
@@ -9,7 +9,7 @@ import {
   normalizeOptionIds,
 } from "./gameUtils";
 
-/** All high-level phases the browser quiz session can occupy. */
+/** All high-level phases the browser game session can occupy. */
 export type GamePhase =
   | "intro"
   | "question"
@@ -17,7 +17,7 @@ export type GamePhase =
   | "submitting_completion"
   | "complete";
 
-/** Reducer state that drives the full quiz interaction flow. */
+/** Reducer state that drives the full game interaction flow. */
 export type GameState = {
   answers: Answers;
   completionError: string | null;
@@ -31,7 +31,7 @@ export type GameState = {
   startedAt: number | null;
 };
 
-/** Supported reducer events for quiz interaction and completion submission. */
+/** Supported reducer events for game interaction and completion submission. */
 export type GameAction =
   | { type: "completeCompletionSubmit"; completion: GameCompletionResult }
   | { type: "failCompletionSubmit"; message: string }
@@ -93,15 +93,15 @@ export function createGameState(
   } satisfies GameState;
 }
 
-/** Moves the reducer into the backend submission phase after local quiz play ends. */
+/** Moves the reducer into the backend submission phase after local game play ends. */
 function createCompletionSubmissionState(
   state: GameState,
   completionRequestId: string,
   answers: Answers,
 ) {
-  // Completion is a distinct phase because we want the quiz UX to stay local
+  // Completion is a distinct phase because we want the game UX to stay local
   // and fast during play, while still letting the backend own the official
-  // raffle entitlement decision at the end.
+  // reward entitlement decision at the end.
   return {
     ...state,
     answers,
@@ -114,7 +114,7 @@ function createCompletionSubmissionState(
   };
 }
 
-/** Central state machine for quiz progression, feedback, and completion. */
+/** Central state machine for game progression, feedback, and completion. */
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case "start":

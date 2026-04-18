@@ -216,7 +216,7 @@ describe("gameApi", () => {
         status: "new",
         verificationCode: "MMP-SERVER01",
       },
-      message: "You're checked in for the raffle.",
+      message: "You're checked in for the reward.",
       entitlementEligible: true,
       score: 2,
     };

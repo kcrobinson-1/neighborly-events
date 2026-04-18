@@ -31,7 +31,7 @@ const localPrototypeSessionStorageKey = "neighborly.local-session.v1";
 /** Browser storage key for the signed server session token fallback. */
 const serverSessionTokenStorageKey = "neighborly.server-session-token.v1";
 
-/** Stored raffle entitlement for a prototype browser session. */
+/** Stored reward entitlement for a prototype browser session. */
 type LocalEntitlementRecord = {
   createdAt: string;
   verificationCode: string;
@@ -156,11 +156,11 @@ function getOrCreateLocalPrototypeSessionId() {
   return sessionId;
 }
 
-/** Returns the user-facing entitlement copy for a new or reused raffle entry. */
+/** Returns the user-facing entitlement copy for a new or reused reward entry. */
 function buildEntitlementMessage(status: GameCompletionEntitlement["status"]) {
   return status === "new"
-    ? "You're checked in for the raffle."
-    : "You're still checked in for the raffle. Playing again does not add another ticket.";
+    ? "You're checked in for the reward."
+    : "You're still checked in for the reward. Playing again does not add another reward entry.";
 }
 
 /** Simulates the backend completion flow when running locally without Supabase. */
@@ -187,7 +187,7 @@ function buildLocalCompletionResult(
   const game = getGameById(input.eventId);
 
   if (!game) {
-    throw new Error("This quiz event could not be found.");
+    throw new Error("This game event could not be found.");
   }
 
   const nextAttemptNumber = (attempts[lookupKey] ?? 0) + 1;
@@ -232,7 +232,7 @@ async function handleCompletionResponse(response: Response) {
   if (!response.ok) {
     const errorMessage = await readSupabaseErrorMessage(
       response,
-      "We couldn't finish your raffle check-in right now.",
+      "We couldn't finish your reward check-in right now.",
     );
 
     throw Object.assign(new Error(errorMessage), { status: response.status });
@@ -266,7 +266,7 @@ export async function ensureServerSession(eventId?: string) {
 
   // We bootstrap the signed server session before gameplay starts so the
   // entitlement flow fails early and recoverably on the intro screen instead
-  // of only surfacing a problem after the user finishes the quiz.
+  // of only surfacing a problem after the user finishes the game.
   const response = await fetch(`${supabaseUrl}/functions/v1/issue-session`, {
     method: "POST",
     headers: createServerSessionHeaders(supabaseClientKey),
@@ -278,7 +278,7 @@ export async function ensureServerSession(eventId?: string) {
     throw new Error(
       await readSupabaseErrorMessage(
         response,
-        "We couldn't get the quiz ready right now.",
+        "We couldn't get the game ready right now.",
       ),
     );
   }
@@ -287,7 +287,7 @@ export async function ensureServerSession(eventId?: string) {
   writeStoredServerSessionToken(payload.sessionToken ?? null);
 }
 
-/** Submits quiz completion to Supabase and retries once after a 401 response. */
+/** Submits game completion to Supabase and retries once after a 401 response. */
 async function submitGameCompletionToSupabase(
   input: SubmitGameCompletionInput,
   retryOnUnauthorized = true,
@@ -313,7 +313,7 @@ async function submitGameCompletionToSupabase(
   return handleCompletionResponse(response);
 }
 
-/** Finalizes quiz completion using Supabase or the local prototype fallback. */
+/** Finalizes game completion using Supabase or the local prototype fallback. */
 export async function submitGameCompletion(input: SubmitGameCompletionInput) {
   if (!getSupabaseConfig().enabled) {
     if (isPrototypeFallbackEnabled()) {

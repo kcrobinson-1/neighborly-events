@@ -13,7 +13,7 @@ test.describe("production admin smoke", () => {
 
     await expect(
       page.getByRole("heading", {
-        name: "This account is not allowlisted for quiz authoring.",
+        name: "This account is not allowlisted for game authoring.",
       }),
     ).toBeVisible();
   });
@@ -25,7 +25,7 @@ test.describe("production admin smoke", () => {
 
     await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });
 
-    await expect(page.getByRole("heading", { name: "Quiz draft access" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Game draft access" })).toBeVisible();
 
     const eventCard = page.getByLabel(`${fixture.eventName} event`);
     await expect(eventCard).toBeVisible();
@@ -52,7 +52,7 @@ test.describe("production admin smoke", () => {
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { name: editedEventName })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Start quiz" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Start game" })).toBeVisible();
 
     await page.goto(`/admin/events/${fixture.eventId}`, { waitUntil: "networkidle" });
     await expect(page.getByRole("button", { name: "Unpublish" })).toBeVisible();
@@ -68,7 +68,7 @@ test.describe("production admin smoke", () => {
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(
-      page.getByRole("heading", { name: "This quiz isn't available right now." }),
+      page.getByRole("heading", { name: "This game isn't available right now." }),
     ).toBeVisible();
   });
 });

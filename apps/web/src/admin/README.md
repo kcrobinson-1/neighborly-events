@@ -15,7 +15,7 @@ It is responsible for:
   mutations, publish/unpublish actions, magic-link requests, and sign-out
   state for the `/admin` dashboard
 - rendering the small presentational pieces used by the `/admin` route shell
-- keeping route-level admin auth state out of the attendee quiz module
+- keeping route-level admin auth state out of the attendee game module
 
 ## Boundaries
 

@@ -13,7 +13,7 @@ import {
   gameReducer,
 } from "./gameSessionState";
 
-/** Manages the complete quiz session lifecycle for a single game instance. */
+/** Manages the complete game session lifecycle for a single game instance. */
 export function useGameSession(game: GameConfig) {
   const [state, dispatch] = useReducer(gameReducer, undefined, () => createGameState());
   const handledSubmissionRequestId = useRef<string | null>(null);
@@ -76,7 +76,7 @@ export function useGameSession(game: GameConfig) {
             message:
               error instanceof Error
                 ? error.message
-                : "We couldn't finish your raffle check-in right now.",
+                : "We couldn't finish your reward check-in right now.",
           });
         }
       });

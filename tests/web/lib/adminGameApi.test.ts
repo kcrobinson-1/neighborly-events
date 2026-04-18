@@ -245,12 +245,12 @@ describe("adminGameApi", () => {
       },
     });
     const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ error: "Nope" }, 409));
-    mockReadSupabaseErrorMessage.mockResolvedValue("A quiz event already uses that slug.");
+    mockReadSupabaseErrorMessage.mockResolvedValue("A game event already uses that slug.");
     mockGetBrowserSupabaseClient.mockReturnValue(client);
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(saveDraftEvent(sampleDraft)).rejects.toThrow(
-      "A quiz event already uses that slug.",
+      "A game event already uses that slug.",
     );
   });
 });

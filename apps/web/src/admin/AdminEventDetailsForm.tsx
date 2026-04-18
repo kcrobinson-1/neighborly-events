@@ -148,7 +148,7 @@ export function AdminEventDetailsForm({
           />
         </label>
         <label className="admin-field">
-          <span className="admin-field-label">Entitlement label</span>
+          <span className="admin-field-label">Reward label</span>
           <input
             className="admin-input"
             disabled={disabled}

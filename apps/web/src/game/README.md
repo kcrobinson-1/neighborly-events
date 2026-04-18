@@ -1,17 +1,17 @@
-# Web Quiz Module
+# Web Game Module
 
 ## Purpose
 
-This folder owns the frontend quiz module for the attendee game flow.
+This folder owns the frontend game module for the attendee game flow.
 
-It keeps the game-specific browser code together while leaving shared quiz
+It keeps the game-specific browser code together while leaving shared game
 correctness in `shared/game-config` and backend trust/completion behavior in
 `apps/web/src/lib/gameApi.ts` plus the Supabase backend.
 
 ## Public Entrypoints
 
 - `useGameSession.ts`
-  Public React hook for the quiz session lifecycle. This is the main interface
+  Public React hook for the game session lifecycle. This is the main interface
   that route-level UI should consume.
 - `gameUtils.ts`
   Public pure helper surface for game-specific selection, labeling, and
@@ -26,22 +26,22 @@ These are the stable imports that other frontend files should prefer.
   creation for final-question completion, and transition logic.
 - `gameSessionSelectors.ts`
   Pure derived-state selectors that turn reducer state plus game config into the
-  React-facing view state used by the page and quiz components.
+  React-facing view state used by the page and game components.
 - `components/`
-  Quiz-specific presentation components used by `GamePage.tsx`.
+  Game-specific presentation components used by `GamePage.tsx`.
   These components should stay presentational and receive state/actions through
-  props rather than owning quiz business rules themselves.
+  props rather than owning game business rules themselves.
 
 ## Ownership Boundaries
 
 - `GamePage.tsx` should stay a route shell.
-  It handles route-level framing, session bootstrap, and choosing which quiz
+  It handles route-level framing, session bootstrap, and choosing which game
   panel to render.
-- `useGameSession.ts` owns the browser quiz lifecycle.
+- `useGameSession.ts` owns the browser game lifecycle.
   It wires reducer state, derived selectors, completion submission, retries, and
   hook-facing actions together.
 - `gameSessionState.ts` owns state transitions.
-  If a quiz phase or reducer transition changes, update that file first.
+  If a game phase or reducer transition changes, update that file first.
 - `gameSessionSelectors.ts` owns read-only derived state.
   If a page/component needs new derived booleans or progress calculations, add
   them there instead of growing the hook body.
@@ -59,7 +59,7 @@ These are the stable imports that other frontend files should prefer.
 - `tests/web/game/gameUtils.test.ts`
   Pure helper coverage.
 - `tests/web/game/components/`
-  Focused component rendering and interaction coverage for extracted quiz
+  Focused component rendering and interaction coverage for extracted game
   panels.
 - `tests/web/pages/GamePage.test.tsx`
   Route-shell wiring coverage for intro, active question, start-error, and
@@ -67,8 +67,8 @@ These are the stable imports that other frontend files should prefer.
 
 ## Maintenance Notes
 
-- Keep this module non-authoritative for quiz correctness.
-  Shared quiz rules still belong in `shared/game-config`.
+- Keep this module non-authoritative for game correctness.
+  Shared game rules still belong in `shared/game-config`.
 - Preserve current strings and class names when refactoring components unless
   there is an intentional UX change.
 - Prefer adding a small pure helper or selector over pushing more logic back
@@ -78,5 +78,5 @@ These are the stable imports that other frontend files should prefer.
 
 ## Current Status
 
-The quiz module refactor is complete. The reducer, derived selectors, quiz
+The game module refactor is complete. The reducer, derived selectors, game
 panels, and tests now follow the current module boundaries described above.

@@ -3,10 +3,10 @@ import type { SubmittedAnswers } from "../../../../shared/game-config";
 /** Client alias for the canonical shared answers payload. */
 export type Answers = SubmittedAnswers;
 
-/** Indicates whether the session earned a new raffle entitlement or reused an old one. */
+/** Indicates whether the session earned a new reward entitlement or reused an old one. */
 export type EntitlementStatus = "new" | "existing";
 
-/** Verification data returned after the backend finalizes quiz completion. */
+/** Verification data returned after the backend finalizes game completion. */
 export type GameCompletionEntitlement = {
   createdAt: string;
   status: EntitlementStatus;
@@ -23,7 +23,7 @@ export type GameCompletionResult = {
   score: number;
 };
 
-/** Browser payload sent when the player finishes a quiz attempt. */
+/** Browser payload sent when the player finishes a game attempt. */
 export type SubmitGameCompletionInput = {
   answers: Answers;
   durationMs: number;

@@ -129,11 +129,11 @@ export function AdminDashboardContent({
   if (dashboardState.status === "unauthorized") {
     return (
       <div className="admin-state-stack">
-        <h2>This account is not allowlisted for quiz authoring.</h2>
+        <h2>This account is not allowlisted for game authoring.</h2>
         <SignedInAs email={dashboardState.email} />
         <p>
           The auth link worked, but this email does not currently have admin
-          access to private quiz drafts.
+          access to private game drafts.
         </p>
       </div>
     );

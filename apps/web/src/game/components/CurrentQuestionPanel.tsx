@@ -1,4 +1,4 @@
-/** Active-question panel and answer field rendering for quiz gameplay. */
+/** Active-question panel and answer field rendering for game gameplay. */
 import { type FormEvent } from "react";
 import type { GameConfig, Question } from "../../data/games";
 import { getSelectionLabel } from "../gameUtils";

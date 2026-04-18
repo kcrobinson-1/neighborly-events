@@ -1,9 +1,9 @@
-/** Pure selectors for the React-facing quiz session view state. */
+/** Pure selectors for the React-facing game session view state. */
 import type { GameConfig } from "../data/games";
 import type { GameCompletionResult } from "../types/game";
 import type { GameState } from "./gameSessionState";
 
-/** Read-only quiz state derived from the reducer plus game configuration. */
+/** Read-only game state derived from the reducer plus game configuration. */
 export type GameSessionViewState = {
   allowRetake: boolean;
   canGoBack: boolean;
@@ -25,7 +25,7 @@ export function getGameSessionScore(
   return latestCompletion?.score ?? localScore;
 }
 
-/** Derives the view-facing session state the page and quiz panels consume. */
+/** Derives the view-facing session state the page and game panels consume. */
 export function getGameSessionViewState(
   game: GameConfig,
   state: GameState,

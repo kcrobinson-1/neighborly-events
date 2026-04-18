@@ -12,7 +12,7 @@ function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
     name: "Test Game",
     location: "Seattle",
     estimatedMinutes: 2,
-    entitlementLabel: "raffle ticket",
+    entitlementLabel: "reward ticket",
     intro: "Test intro",
     summary: "Test summary",
     feedbackMode: "final_score_reveal",
@@ -45,7 +45,7 @@ function createCompletionResult(
       status: "new",
       verificationCode: "MMP-1234ABCD",
     },
-    message: "You're checked in for the raffle.",
+    message: "You're checked in for the reward.",
     entitlementEligible: true,
     score: 1,
     ...overrides,
@@ -73,7 +73,7 @@ describe("GameCompletionPanel", () => {
       />,
     );
 
-    expect(screen.getByText("Raffle entry ready")).toBeTruthy();
+    expect(screen.getByText("Reward entry ready")).toBeTruthy();
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
     expect(screen.getByText("Final score")).toBeTruthy();
     expect(screen.getByText("Your answer:", { exact: false })).toBeTruthy();

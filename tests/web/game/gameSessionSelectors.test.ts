@@ -16,7 +16,7 @@ function createGame(
     name: "Test Game",
     location: "Seattle",
     estimatedMinutes: 2,
-    entitlementLabel: "raffle ticket",
+    entitlementLabel: "reward ticket",
     intro: "Test intro",
     summary: "Test summary",
     feedbackMode: "final_score_reveal",
@@ -60,7 +60,7 @@ function createCompletionResult(
       status: "new",
       verificationCode: "MMP-1234ABCD",
     },
-    message: "You're checked in for the raffle.",
+    message: "You're checked in for the reward.",
     entitlementEligible: true,
     score: 2,
     ...overrides,
@@ -68,7 +68,7 @@ function createCompletionResult(
 }
 
 describe("gameSessionSelectors", () => {
-  it("derives the active question state for an in-progress quiz", () => {
+  it("derives the active question state for an in-progress game", () => {
     const game = createGame();
     const state = {
       ...createGameState("question", 100),

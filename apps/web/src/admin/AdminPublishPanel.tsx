@@ -87,7 +87,7 @@ export function AdminPublishPanel({
           <p className="admin-message admin-message-success">
             Published as version {publishState.result.versionNumber}.{" "}
             <a href={routes.game(publishState.result.slug)}>
-              View live quiz
+              View live game
             </a>
           </p>
         </div>

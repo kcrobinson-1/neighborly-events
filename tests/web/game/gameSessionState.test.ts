@@ -26,7 +26,7 @@ function createCompletionResult(
       status: "new",
       verificationCode: "MMP-1234ABCD",
     },
-    message: "You're checked in for the raffle.",
+    message: "You're checked in for the reward.",
     entitlementEligible: true,
     score: 2,
     ...overrides,
@@ -73,7 +73,7 @@ describe("gameSessionState", () => {
     expect(createCompletionRequestId(1, 2)).toBe("req-123");
   });
 
-  it("moves a final-score quiz into completion submission on the last question", () => {
+  it("moves a final-score game into completion submission on the last question", () => {
     const state = {
       ...createGameState("question", 100),
       answers: { q0: ["a"] },
@@ -115,7 +115,7 @@ describe("gameSessionState", () => {
     });
   });
 
-  it("keeps instant-feedback quizzes on the same question until the answer is correct", () => {
+  it("keeps instant-feedback games on the same question until the answer is correct", () => {
     const question = createQuestion({
       explanation: "Choose the right answer to move on.",
     });

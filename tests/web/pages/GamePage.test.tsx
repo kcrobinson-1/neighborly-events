@@ -26,7 +26,7 @@ function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
     name: "Test Game",
     location: "Seattle",
     estimatedMinutes: 2,
-    entitlementLabel: "raffle ticket",
+    entitlementLabel: "reward ticket",
     intro: "Test intro",
     summary: "Test summary",
     feedbackMode: "final_score_reveal",
@@ -59,7 +59,7 @@ function createCompletionResult(
       status: "new",
       verificationCode: "MMP-1234ABCD",
     },
-    message: "You're checked in for the raffle.",
+    message: "You're checked in for the reward.",
     entitlementEligible: true,
     score: 1,
     ...overrides,
@@ -118,7 +118,7 @@ describe("GamePage", () => {
 
     expect(screen.getByText(`Finish to earn your ${game.entitlementLabel}`)).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
 
     await waitFor(() => {
       expect(mockEnsureServerSession).toHaveBeenCalledTimes(1);
@@ -134,7 +134,7 @@ describe("GamePage", () => {
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Start quiz" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start game" }));
 
     expect(await screen.findByText("Backend is unavailable.")).toBeTruthy();
     expect(sessionState.start).not.toHaveBeenCalled();
