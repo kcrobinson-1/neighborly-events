@@ -65,8 +65,9 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 - [ ] **`dev` Terminology migration (`quiz`/`raffle` → `game`/`entitlement`)**
   Decision made: phase-based direct rename (Alt C). Phase 0 complete (migration
-  map finalized). Phase 1 documentation alignment in progress; Phases 2–5
-  (DB, Edge Functions, Frontend, cleanup/guardrails) are queued.
+  map finalized). Phase 2 database and SQL contract rename is implemented on
+  the current branch; Phases 3–5 (Edge Functions endpoint/contracts, Frontend,
+  cleanup/guardrails) remain queued.
   Detail: [`docs/terminology-migration-strategy.md`](./terminology-migration-strategy.md)
 
 ---

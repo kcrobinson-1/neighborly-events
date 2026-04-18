@@ -132,7 +132,7 @@ describe("adminQuizApi", () => {
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
 
-    expect(client.from).toHaveBeenCalledWith("quiz_event_drafts");
+    expect(client.from).toHaveBeenCalledWith("game_event_drafts");
   });
 
   it("saves drafts through the authenticated Edge Function with the user token", async () => {

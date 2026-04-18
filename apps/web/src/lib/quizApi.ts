@@ -305,7 +305,7 @@ async function submitQuizCompletionToSupabase(
     // session once and replay the same request. The request id must stay the
     // same so the backend can dedupe safely. Pass eventId so the re-bootstrap
     // also records a start row — without it, a 401-retry path would produce a
-    // completion row with no corresponding quiz_starts entry.
+    // completion row with no corresponding game_starts entry.
     await ensureServerSession(input.eventId);
     return submitQuizCompletionToSupabase(input, false);
   }

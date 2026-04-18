@@ -95,7 +95,7 @@ export async function listPublishedGameSummaries(): Promise<PublishedGameSummary
   }
 
   const eventRows = await fetchPostgrestRows<PublishedGameSummaryRow[]>(
-    "quiz_events",
+    "game_events",
     {
       published_at: "not.is.null",
       select: "id,slug,name,summary,feedback_mode",
@@ -121,7 +121,7 @@ export async function loadPublishedGameBySlug(slug: string): Promise<GameConfig 
   }
 
   const eventRows = await fetchPostgrestRows<PublishedGameEventRow[]>(
-    "quiz_events",
+    "game_events",
     {
       published_at: "not.is.null",
       select: [
@@ -130,7 +130,7 @@ export async function loadPublishedGameBySlug(slug: string): Promise<GameConfig 
         "name",
         "location",
         "estimated_minutes",
-        "raffle_label",
+        "raffle_label:entitlement_label",
         "intro",
         "summary",
         "feedback_mode",
@@ -150,7 +150,7 @@ export async function loadPublishedGameBySlug(slug: string): Promise<GameConfig 
 
   const [questionRows, optionRows] = await Promise.all([
     fetchPostgrestRows<PublishedGameQuestionRow[]>(
-      "quiz_questions",
+      "game_questions",
       {
         event_id: `eq.${eventRow.id}`,
         order: "display_order.asc",
@@ -168,7 +168,7 @@ export async function loadPublishedGameBySlug(slug: string): Promise<GameConfig 
       "We couldn't load this quiz event right now.",
     ),
     fetchPostgrestRows<PublishedGameOptionRow[]>(
-      "quiz_question_options",
+      "game_question_options",
       {
         event_id: `eq.${eventRow.id}`,
         order: "question_id.asc,display_order.asc",

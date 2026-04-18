@@ -7,9 +7,8 @@ and naming rules. See `terminology-migration-strategy.md` for the phased plan.
 ## Phase 0 decisions
 
 **Event-code sequencing**: Phase 2 (DB rename) runs first. The
-`event-code-prerequisite-plan.md` is explicitly written against pre-migration
-names pending this migration; it will be updated to target names before
-implementation begins.
+`event-code-prerequisite-plan.md` now uses target database names directly, so
+the event-code prerequisite can be implemented against the renamed schema.
 
 **Top-level published entity table**: `game_events` (not `games`). The "event"
 qualifier is semantically load-bearing — the entity is a live published instance
@@ -19,6 +18,11 @@ tables follow the same `game_event_*` convention.
 ---
 
 ## Database layer (Phase 2)
+
+**Implementation status:** complete in migration
+`20260418000000_rename_database_terminology_to_game.sql`. Historical migration
+filenames still contain the original words where they were created before this
+rename.
 
 ### Tables
 
@@ -126,9 +130,10 @@ throughout: `GameConfig`, `Question`, `AnswerOption`, `PublishedGameEventRow`,
 `AuthoringGameDraftRow`, `AuthoringGameVersionRow`,
 `mapPublishedGameRowsToGameConfig()`.
 
-The `raffle_label` field name on `GameConfig` and related types will need
-updating to `entitlement_label` to match the DB column rename. This is a
-shared/Phase 3 concern since it crosses the DB–type boundary.
+The `raffle_label` field name on `GameConfig` and related types still needs
+updating to `entitlement_label` in Phase 3. Until then, DB read call sites alias
+`entitlement_label` back to the existing `raffle_label` TypeScript row field so
+the Phase 2 schema rename does not force shared/frontend type renames.
 
 ---
 

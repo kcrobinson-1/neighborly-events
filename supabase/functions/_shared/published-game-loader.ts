@@ -13,7 +13,7 @@ const publishedGameEventColumns = [
   "name",
   "location",
   "estimated_minutes",
-  "raffle_label",
+  "raffle_label:entitlement_label",
   "intro",
   "summary",
   "feedback_mode",
@@ -41,7 +41,7 @@ const publishedGameOptionColumns = [
   "is_correct",
 ].join(", ");
 
-/** Loads one published quiz by its event id and maps it into the shared domain model. */
+/** Loads one published game by its event id and maps it into the shared domain model. */
 export async function loadPublishedGameById(
   eventId: string,
   supabaseUrl: string,
@@ -54,7 +54,7 @@ export async function loadPublishedGameById(
   });
 
   const { data: eventRow, error: eventError } = await supabase
-    .from("quiz_events")
+    .from("game_events")
     .select(publishedGameEventColumns)
     .eq("id", eventId)
     .not("published_at", "is", null)
@@ -62,7 +62,7 @@ export async function loadPublishedGameById(
 
   if (eventError) {
     throw new Error(
-      `Failed to load published quiz event "${eventId}": ${eventError.message}`,
+      `Failed to load published game event "${eventId}": ${eventError.message}`,
     );
   }
 
@@ -75,13 +75,13 @@ export async function loadPublishedGameById(
     { data: optionRows, error: optionError },
   ] = await Promise.all([
     supabase
-      .from("quiz_questions")
+      .from("game_questions")
       .select(publishedGameQuestionColumns)
       .eq("event_id", eventId)
       .order("display_order", { ascending: true })
       .returns<PublishedGameQuestionRow[]>(),
     supabase
-      .from("quiz_question_options")
+      .from("game_question_options")
       .select(publishedGameOptionColumns)
       .eq("event_id", eventId)
       .order("question_id", { ascending: true })
@@ -91,13 +91,13 @@ export async function loadPublishedGameById(
 
   if (questionError) {
     throw new Error(
-      `Failed to load published quiz questions for "${eventId}": ${questionError.message}`,
+      `Failed to load published game questions for "${eventId}": ${questionError.message}`,
     );
   }
 
   if (optionError) {
     throw new Error(
-      `Failed to load published quiz options for "${eventId}": ${optionError.message}`,
+      `Failed to load published game options for "${eventId}": ${optionError.message}`,
     );
   }
 
@@ -110,8 +110,8 @@ export async function loadPublishedGameById(
   } catch (error: unknown) {
     throw new Error(
       error instanceof Error
-        ? `Published quiz event "${eventId}" is malformed: ${error.message}`
-        : `Published quiz event "${eventId}" is malformed.`,
+        ? `Published game event "${eventId}" is malformed: ${error.message}`
+        : `Published game event "${eventId}" is malformed.`,
     );
   }
 }

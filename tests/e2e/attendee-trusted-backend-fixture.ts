@@ -65,7 +65,7 @@ export async function assertTrustedAttendeeCompletionPersisted(
   const serviceRoleClient = createServiceRoleClient();
 
   const { data: entitlementRows, error: entitlementError } = await serviceRoleClient
-    .from("raffle_entitlements")
+    .from("game_entitlements")
     .select("id,event_id,client_session_id,verification_code,status")
     .eq("event_id", eventId)
     .eq("verification_code", verificationCode)
@@ -84,7 +84,7 @@ export async function assertTrustedAttendeeCompletionPersisted(
   expect(entitlement.verification_code).toBe(verificationCode);
 
   const { data: completionRows, error: completionError } = await serviceRoleClient
-    .from("quiz_completions")
+    .from("game_completions")
     .select(
       "id,event_id,client_session_id,verification_code,attempt_number,entitlement_awarded",
     )
@@ -106,7 +106,7 @@ export async function assertTrustedAttendeeCompletionPersisted(
   expect(completionRows[0]?.client_session_id).toBe(entitlement.client_session_id);
 
   const { data: startRow, error: startError } = await serviceRoleClient
-    .from("quiz_starts")
+    .from("game_starts")
     .select("event_id,client_session_id")
     .eq("event_id", eventId)
     .eq("client_session_id", entitlement.client_session_id)
@@ -129,7 +129,7 @@ export async function assertNoTrustedCompletionPersistedForRequest(
 ) {
   const serviceRoleClient = createServiceRoleClient();
   const { data: completionRows, error: completionError } = await serviceRoleClient
-    .from("quiz_completions")
+    .from("game_completions")
     .select("id")
     .eq("event_id", eventId)
     .eq("request_id", requestId)

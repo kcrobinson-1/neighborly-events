@@ -7,7 +7,7 @@ export type CompletionRpcRow = {
   entitlement_created_at: string;
   entitlement_status: "existing" | "new";
   message: string;
-  raffle_eligible: boolean;
+  entitlement_eligible: boolean;
   score: number;
   verification_code: string;
 };
@@ -38,7 +38,7 @@ export async function persistCompletion(
   });
 
   return await supabase
-    .rpc("complete_quiz_and_award_entitlement", {
+    .rpc("complete_game_and_award_entitlement", {
       p_client_session_id: input.sessionId,
       p_duration_ms: input.durationMs,
       p_event_id: input.eventId,

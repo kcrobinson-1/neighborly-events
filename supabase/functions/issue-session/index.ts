@@ -35,7 +35,7 @@ async function defaultInsertQuizStart(
   // ignoreDuplicates: true maps to ON CONFLICT DO NOTHING — a second call for
   // the same (event_id, client_session_id) pair is a safe no-op.
   const { error } = await supabase
-    .from("quiz_starts")
+    .from("game_starts")
     .upsert(
       { event_id: eventId, client_session_id: clientSessionId },
       { onConflict: "event_id,client_session_id", ignoreDuplicates: true },

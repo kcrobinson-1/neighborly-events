@@ -162,7 +162,7 @@ export async function signOutAdmin() {
 
 /** Checks whether the current authenticated session is allowlisted for quiz authoring. */
 export async function getQuizAdminStatus() {
-  const { data, error } = await getBrowserSupabaseClient().rpc("is_quiz_admin");
+  const { data, error } = await getBrowserSupabaseClient().rpc("is_admin");
 
   if (error) {
     throw new Error("We couldn't verify admin access right now.");
@@ -174,7 +174,7 @@ export async function getQuizAdminStatus() {
 /** Lists the private draft events visible to an authenticated quiz admin. */
 export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
   const { data, error } = await getBrowserSupabaseClient()
-    .from("quiz_event_drafts")
+    .from("game_event_drafts")
     .select("id,live_version_number,name,slug,updated_at")
     .order("updated_at", { ascending: false });
 
@@ -188,7 +188,7 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
 /** Loads one private draft event document for an authenticated quiz admin. */
 export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail | null> {
   const { data, error } = await getBrowserSupabaseClient()
-    .from("quiz_event_drafts")
+    .from("game_event_drafts")
     .select("content,created_at,id,last_saved_by,live_version_number,name,slug,updated_at")
     .eq("id", eventId)
     .maybeSingle<DraftEventRow>();

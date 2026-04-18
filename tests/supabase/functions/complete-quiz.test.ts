@@ -205,7 +205,7 @@ Deno.test("complete-quiz persists the trusted normalized payload and clamped dur
           entitlement_created_at: "2026-04-05T12:00:00.000Z",
           entitlement_status: "new",
           message: "You're checked in for the raffle.",
-          raffle_eligible: true,
+          entitlement_eligible: true,
           score: input.trustedScore,
           verification_code: "MMP-SERVER01",
         },

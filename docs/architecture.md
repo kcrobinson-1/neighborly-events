@@ -149,11 +149,11 @@ The Supabase side is intentionally small:
   Creates or reuses the signed browser session credential. When an `event_id`
   is present in the POST body, also fires a best-effort upsert into
   `game_starts` to record the funnel denominator for analytics.
-- `supabase/functions/complete-game/index.ts`
+- `supabase/functions/complete-quiz/index.ts`
   Orchestrates trusted completion requests: origin and method gates, session
   verification, published content loading, shared validation and scoring, and
   final response mapping.
-- `supabase/functions/complete-game/`
+- `supabase/functions/complete-quiz/`
   Local helper modules for completion payload parsing, JSON responses,
   dependency wiring, and service-role RPC persistence used by the handler and
   function tests.
@@ -217,6 +217,14 @@ The Supabase side is intentionally small:
   CASCADE`. Enforces referential integrity so `issue-session` cannot record
   start rows for nonexistent event IDs (which would pollute analytics), and
   ensures start rows are cleaned up if an event is hard-deleted.
+- `supabase/migrations/20260418000000_rename_database_terminology_to_game.sql`
+  Renames the persistent SQL contract from the historical quiz/raffle names to
+  the current game/entitlement names. The active schema uses `game_events`,
+  `game_questions`, `game_question_options`, `game_completions`,
+  `game_entitlements`, `game_event_drafts`, `game_event_versions`,
+  `game_event_audit_log`, `game_starts`, `admin_users`, `is_admin()`,
+  `complete_game_and_award_entitlement()`, `publish_game_event_draft()`, and
+  `unpublish_game_event()`.
 
 ## What Is Implemented Now
 
@@ -241,7 +249,7 @@ That means:
 
 The backend issues a signed browser session through `issue-session`.
 
-That credential is then used by `complete-game` to:
+That credential is then used by `complete-quiz` to:
 
 - associate completions with a backend-controlled browser session
 - avoid trusting a client-generated session identifier
@@ -328,7 +336,7 @@ The current system works like this:
    `game_starts` so the event has a permanent record of this session starting.
 7. The player completes the quiz entirely in local browser state.
 8. At the end, the browser submits answers, duration, event id, and request id
-   to `complete-game`.
+   to `complete-quiz`.
 9. The backend verifies the signed session credential, reloads the canonical
    published event by `eventId`, validates answers against the shared
    `game-config` runtime model, recomputes score, and executes the database RPC.
@@ -348,7 +356,7 @@ The current implementation uses:
   writes a best-effort start row to `game_starts` for analytics. A DB failure
   on the start write does not prevent the session response from returning —
   session issuance is the trust boundary; analytics is observability.
-- `complete-game`
+- `complete-quiz`
   Owns final validation, scoring, dedupe, and verification-code return.
 - direct PostgREST reads for published `game_events`, `game_questions`, and
   `game_question_options`
