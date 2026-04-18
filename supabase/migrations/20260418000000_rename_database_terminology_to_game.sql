@@ -272,6 +272,15 @@ begin
 end;
 $$;
 
+drop function public.complete_game_and_award_entitlement(
+  text,
+  text,
+  text,
+  jsonb,
+  integer,
+  integer
+);
+
 create or replace function public.complete_game_and_award_entitlement(
   p_event_id text,
   p_client_session_id text,
@@ -287,7 +296,7 @@ returns table (
   entitlement_status text,
   verification_code text,
   entitlement_created_at timestamptz,
-  raffle_eligible boolean,
+  entitlement_eligible boolean,
   message text
 )
 language plpgsql

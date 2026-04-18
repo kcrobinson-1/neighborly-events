@@ -7,7 +7,7 @@ export type CompletionRpcRow = {
   entitlement_created_at: string;
   entitlement_status: "existing" | "new";
   message: string;
-  raffle_eligible: boolean;
+  entitlement_eligible: boolean;
   score: number;
   verification_code: string;
 };

@@ -30,7 +30,7 @@ select is(
 );
 
 select ok(
-  (select raffle_eligible from first_attempt),
+  (select entitlement_eligible from first_attempt),
   'first completion is raffle eligible'
 );
 
@@ -105,7 +105,7 @@ select is(
 );
 
 select ok(
-  not (select raffle_eligible from second_attempt),
+  not (select entitlement_eligible from second_attempt),
   'a later request does not earn a second raffle entry'
 );
 

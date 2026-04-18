@@ -183,7 +183,7 @@ export function createCompleteQuizHandler(
           verificationCode: data.verification_code,
         },
         message: data.message,
-        raffleEligible: data.raffle_eligible,
+        raffleEligible: data.entitlement_eligible,
         score: data.score,
       },
       origin,
