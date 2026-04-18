@@ -22,62 +22,38 @@ this file.
 
 ## Product And Live Event Operation
 
-- Is one quiz experience per event enough for the MVP, or do some events need
-  multiple attendee routes under one organizer-owned event?
-  The current runtime model assumes one event maps to one game route.
-  **Post-MVP product direction:** events should not be limited to a single game
-  and are expected to have their own event page concept.
 - Should live event QR codes always route directly to event/game entry surfaces
   while `/` becomes a marketing page post-MVP?
   Current behavior is `/` preview plus `/game/:slug` attendee route; long-term
   URL contract is not finalized.
+  Preferred direction: evolve toward an event landing model where
+  `/event/:slug` is the event entry surface and gameplay lives on
+  `/event/:slug/game`.
 
 ## Authoring And Publishing
 
-- Should the repo add a root-level admin role and UI for managing
-  `public.quiz_admin_users` membership instead of requiring direct SQL edits?
-  The current setup intentionally keeps allowlist membership as a manual
-  Supabase operation, but that is operationally awkward once more than one
-  trusted operator needs to grant or revoke access.
-  Priority direction: next milestone.
-- After the MVP role split (`admin`, `organizer`, `agent`), what is the
-  long-term permission model?
-  Open points include organizer authoring/publish scope, assignment
-  self-management UX, and long-term role inheritance across event boundaries.
-- Do organizers need expiry, scheduled publish, or friendlier inactive-event
-  behavior beyond immediate unpublish?
-  The current backend supports explicit publish and unpublish by clearing
-  `quiz_events.published_at`, but richer lifecycle controls are still deferred.
-  Priority direction: low priority; not in current roadmap.
-
-Detailed authoring-specific scope questions are expanded further in
-[`quiz-authoring-plan.md`](./quiz-authoring-plan.md).
+No currently open questions in this section under the current tracking rule.
+Authoring/publishing follow-up work is already represented as direct backlog
+items and should be tracked there rather than duplicated here.
 
 ## Reporting And Sponsor Measurement
 
-- Which event metrics are required first: starts, completions, completion time,
-  sponsor-level engagement, or volunteer handoff counts?
-  The backend now persists trusted completion data, but there is no reporting
-  surface yet and no documented minimum reporting slice.
-- What proof of value do sponsors actually need after an event?
-  The product docs frame sponsor engagement as a goal, but the repo does not yet
-  capture whether sponsors need simple inclusion proof, aggregate event totals,
-  or question-level reporting.
-  Priority direction: low priority; not in current roadmap.
+No currently open questions in this section under the current tracking rule.
+Recommended first metrics and sponsor-proof baseline are documented in
+[`analytics-strategy.md`](./analytics-strategy.md), and implementation priority
+is tracked in [`backlog.md`](./backlog.md).
 
 ## Development And Release Workflow
 
-- Is the current workflow of local validation plus direct promotion to the
-  production Supabase project sufficient, or should the repo adopt a branch or
-  staging backend path?
-  The docs mention this as a likely next step, but the repo has not yet decided
-  whether backend preview environments are necessary for normal review flow.
-  Priority direction: low priority; not in current roadmap.
-- What is the supported full-browser UI-review path for backend-backed preview
-  environments?
-  Local browser review currently prefers a configured remote Supabase project
-  because `supabase functions serve` can block the browser trust path with CORS
-  behavior during credentialed preflights.
+- What is the phased path from current local-validation-plus-direct-production
+  releases to a safer continuous deployment model?
+  Ownership and planning now live in
+  [`continuous-deployment-plan.md`](./continuous-deployment-plan.md), including
+  beta/gamma targets, staged database strategy, and compatibility guardrails.
+- The supported full-browser UI-review path for backend-backed preview
+  environments is now documented in [`dev.md`](./dev.md) (local app +
+  Playwright capture, preferring configured remote Supabase for full trust-path
+  browser review).
 
 ## Trust Boundary And Abuse Controls
 

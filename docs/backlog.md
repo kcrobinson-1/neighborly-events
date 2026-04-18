@@ -20,6 +20,7 @@ steps, and validation commands.
 - Open questions and product decisions: [`docs/open-questions.md`](./open-questions.md)
 - Admin UX polish: [`docs/admin-ux-roadmap.md`](./admin-ux-roadmap.md)
 - Contributor workflow tooling: [`docs/dev-workflow-improvements.md`](./dev-workflow-improvements.md)
+- Continuous deployment planning: [`docs/continuous-deployment-plan.md`](./continuous-deployment-plan.md)
 - Code refactors: [`docs/code-refactor-checklist.md`](./code-refactor-checklist.md)
 - Test coverage rollout: [`docs/testing.md`](./testing.md)
 - Deferred authoring features: [`docs/quiz-authoring-plan.md`](./quiz-authoring-plan.md)
@@ -103,7 +104,7 @@ Reduce deployment risk and contributor friction before the live event.
   Decide whether the current local-validation-plus-direct-to-production release
   model is sufficient or whether a staging backend is needed before the first
   real event. A bad migration today goes directly to the production project.
-  Detail: [`docs/open-questions.md` — Development And Release Workflow](./open-questions.md)
+  Detail: [`docs/continuous-deployment-plan.md`](./continuous-deployment-plan.md) and [`docs/open-questions.md` — Development And Release Workflow](./open-questions.md)
 
 - [ ] **`dev` Admin UI-review capture mode**
   Add `npm run ui:review:capture -- --mode admin` (or a sibling script) so
@@ -184,6 +185,13 @@ prioritization before starting.
   Expiry windows, scheduled publish, multiple quizzes per event, and friendlier
   inactive-event behavior beyond immediate unpublish.
   Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
+
+- [ ] **`ux` Event landing route model (`/event/:slug` -> `/event/:slug/game`)**
+  Move from the current home-plus-direct-game routing shape to an event landing
+  model where `/event/:slug` is the event entry surface and gameplay lives on a
+  nested route. Intended target once the product starts supporting multiple
+  experiences per event so navigation and URL contracts scale cleanly.
+  Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
 
 - [ ] **`decision` Sponsor reporting requirements**
   Determine the minimum reporting slice sponsors actually need: simple inclusion
