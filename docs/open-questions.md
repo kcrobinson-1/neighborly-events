@@ -47,9 +47,7 @@ is tracked in [`backlog.md`](./backlog.md).
 
 - What is the phased path from current local-validation-plus-direct-production
   releases to a safer continuous deployment model?
-  Ownership and planning now live in
-  [`continuous-deployment-plan.md`](./continuous-deployment-plan.md), including
-  beta/gamma targets, staged database strategy, and compatibility guardrails.
+  Answer: check [`continuous-deployment-plan.md`](./continuous-deployment-plan.md).
 - The supported full-browser UI-review path for backend-backed preview
   environments is now documented in [`dev.md`](./dev.md) (local app +
   Playwright capture, preferring configured remote Supabase for full trust-path
@@ -57,9 +55,6 @@ is tracked in [`backlog.md`](./backlog.md).
 
 ## Trust Boundary And Abuse Controls
 
-- Is browser-session dedupe enough once the product is used at real events, or
-  will live usage require person-level or device-level abuse controls?
-  The current MVP intentionally uses a lighter no-login trust boundary and does
-  not yet answer how much stronger it needs to become.
-  Follow-up direction: maintain a dedicated security notes doc that tracks
-  abuse/threat scenarios against both system integrity and game integrity.
+The trust-boundary and abuse-controls tracker now lives in
+[`security-and-abuse-plan.md`](./security-and-abuse-plan.md), including current
+MVP accepted risk, abuse scenarios, and post-MVP hardening direction.

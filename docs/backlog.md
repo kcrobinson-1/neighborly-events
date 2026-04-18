@@ -21,6 +21,7 @@ steps, and validation commands.
 - Admin UX polish: [`docs/admin-ux-roadmap.md`](./admin-ux-roadmap.md)
 - Contributor workflow tooling: [`docs/dev-workflow-improvements.md`](./dev-workflow-improvements.md)
 - Continuous deployment planning: [`docs/continuous-deployment-plan.md`](./continuous-deployment-plan.md)
+- Security and abuse planning: [`docs/security-and-abuse-plan.md`](./security-and-abuse-plan.md)
 - Code refactors: [`docs/code-refactor-checklist.md`](./code-refactor-checklist.md)
 - Test coverage rollout: [`docs/testing.md`](./testing.md)
 - Deferred authoring features: [`docs/quiz-authoring-plan.md`](./quiz-authoring-plan.md)
@@ -174,12 +175,12 @@ prioritization before starting.
   Priority direction: next milestone.
   Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
 
-- [ ] **`dev` Security notes baseline doc**
-  Create a dedicated security notes doc to track abuse/threat scenarios for both
-  system integrity (authz, write paths, environment controls) and game integrity
-  (abuse of participation and redemption flows). Keep it lightweight but durable
-  so future hardening work has a single source of context.
-  Detail: [`docs/open-questions.md` — Trust Boundary And Abuse Controls](./open-questions.md)
+- [x] **`dev` Security notes baseline doc**
+  Completed on 2026-04-18.
+  Created a dedicated security and abuse tracker covering system-integrity and
+  game-integrity threat scenarios, MVP accepted risk, and post-MVP hardening
+  direction.
+  Detail: [`docs/security-and-abuse-plan.md`](./security-and-abuse-plan.md)
 
 - [ ] **`dev` Richer publish controls**
   Expiry windows, scheduled publish, multiple quizzes per event, and friendlier
