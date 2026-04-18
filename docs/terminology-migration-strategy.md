@@ -231,6 +231,12 @@ unambiguous.
 
 ### Phase 2 — Database and SQL contract migration
 
+**Status: complete in this branch** — migration
+`20260418000000_rename_database_terminology_to_game.sql` renames the persistent
+schema, SQL functions, RLS policies, constraints, indexes, SQL tests, and direct
+backend DB call sites to the target names. Phase 3 still owns the
+`complete-quiz` endpoint/module rename and shared response/type terminology.
+
 **Goal**: move persistence layer names to target terminology and migrate seeded
 (test/demo) data.
 
