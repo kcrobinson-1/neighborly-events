@@ -186,6 +186,10 @@ before refactors.
 - Define canonical replacements and prohibited legacy names for new code.
 - Identify order dependencies (for example, DB rename preconditions for edge
   function updates).
+- Decide whether `event-code-prerequisite-plan` migrations land before or after
+  Phase 2, and document the ordering as a binding phase constraint.
+- Finalize canonical name for the top-level published entity table
+  (`game_events` vs `games`) so Phase 2 migrations use the decided name.
 
 **Demonstrable launch difference**
 
@@ -246,6 +250,9 @@ unambiguous.
 - Local migration reset + tests pass with only new schema names.
 - Explicit verification that seeded test events and redemption-relevant records
   still function.
+- Regenerate Supabase TypeScript types (`supabase gen types typescript`) and
+  verify no stale `quiz_*`/`raffle_*` identifiers remain in the generated
+  output before Phase 3 begins.
 
 ---
 
@@ -301,8 +308,12 @@ unambiguous.
 **Scope**
 
 - Remove any temporary migration notes and stale references.
-- Add lightweight guardrails (for example lint/custom checks or review checklist
-  entries) to discourage introducing new `quiz_`/`raffle_` identifiers.
+- Add guardrails to prevent regression into legacy naming:
+  - ESLint `no-restricted-syntax` rule banning identifiers matching
+    `quiz_`/`raffle_` prefixes in `apps/` and `shared/`.
+  - CI grep gate: `grep -r "quiz_\|raffle_" supabase/migrations/ apps/ shared/ --include="*.ts"`
+    fails on any non-historical match (gate can allowlist existing migration
+    file names that are intentional historical references).
 - Final docs sweep and backlog updates.
 
 **Demonstrable launch difference**
@@ -354,21 +365,25 @@ possible.
 
 ## Open questions
 
-These must stay visible and resolved before Phase 2 implementation starts:
+Resolve questions 2–4 before Phase 2 starts. Question 1 is a Phase 4 blocker
+only (frontend concern; does not affect DB or edge function work).
 
-1. **Naming decision for attendee route shape**
-   - Keep `/game/:slug` as-is, or move to future `/event/:slug/game` model in
-     the same migration stream?
-2. **Role naming convergence timing**
-   - Should `quiz admin` rename be bundled with the broader organizer/agent/root
-     role rollout, or handled independently now?
-3. **Analytics naming migration scope**
-   - Do we rename analytics-facing SQL/view columns immediately, or perform a
-     targeted translation layer in reporting docs first?
-4. **Historical docs policy**
-   - For archival docs describing already-landed migrations/functions, should we
-     preserve original names verbatim with a glossary note, or rewrite to new
-     terms plus historical annotation?
+1. ~~**Naming decision for attendee route shape**~~ **DECIDED**
+   - Adopt `/event/:slug/game`. Cost is low: only `routes.ts` (type, prefix,
+     builder, matcher) and `vercel.json` require changes; all 7 link sites
+     already use `routes.game()` and need no edits. Execute in Phase 4.
+2. ~~**Role naming convergence timing**~~ **DECIDED**
+   - Rename `is_quiz_admin()` → `is_admin()` in Phase 2. "Admin" is the global
+     platform role; no qualifier needed. The future organizer role (event-scoped)
+     will get its own separate function and does not conflict with this name.
+3. ~~**Analytics naming migration scope**~~ **DECIDED**
+   - Rename `quiz_starts` → `game_starts` in Phase 2 along with all other DB
+     artifacts. No live analytics consumers exist, so no breakage risk. The FK
+     to `quiz_events` is already in Phase 2 scope regardless.
+4. ~~**Historical docs policy**~~ **DECIDED**
+   - Rewrite docs to use current names. Where a doc references an immutable
+     artifact by its original name (e.g., a migration filename), add a short
+     inline note. No repo-wide glossary.
 
 ## Exit criteria
 
