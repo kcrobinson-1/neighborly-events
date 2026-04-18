@@ -1,5 +1,5 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import type { DraftEventDetail, DraftEventSummary } from "../lib/adminQuizApi";
+import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
 import {
   createEventDetailsFormValues,
   type AdminEventDetailsFormValues,

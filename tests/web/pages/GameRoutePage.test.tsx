@@ -7,7 +7,7 @@ const { mockLoadPublishedGameBySlug } = vi.hoisted(() => ({
   mockLoadPublishedGameBySlug: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/lib/quizContentApi.ts", () => ({
+vi.mock("../../../apps/web/src/lib/gameContentApi.ts", () => ({
   loadPublishedGameBySlug: mockLoadPublishedGameBySlug,
 }));
 

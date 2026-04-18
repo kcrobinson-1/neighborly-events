@@ -161,7 +161,7 @@ export async function signOutAdmin() {
 }
 
 /** Checks whether the current authenticated session is allowlisted for quiz authoring. */
-export async function getQuizAdminStatus() {
+export async function getGameAdminStatus() {
   const { data, error } = await getBrowserSupabaseClient().rpc("is_admin");
 
   if (error) {

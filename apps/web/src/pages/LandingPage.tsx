@@ -3,7 +3,7 @@ import { featuredGameSlug } from "../data/games";
 import {
   listPublishedGameSummaries,
   type PublishedGameSummary,
-} from "../lib/quizContentApi";
+} from "../lib/gameContentApi";
 import { routes } from "../routes";
 
 /** Props for the landing page route. */

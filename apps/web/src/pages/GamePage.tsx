@@ -5,8 +5,8 @@ import { CorrectAnswerPanel } from "../game/components/CorrectAnswerPanel";
 import { CurrentQuestionPanel } from "../game/components/CurrentQuestionPanel";
 import { GameCompletionPanel } from "../game/components/GameCompletionPanel";
 import { GameIntroPanel } from "../game/components/GameIntroPanel";
-import { useQuizSession } from "../game/useQuizSession";
-import { ensureServerSession } from "../lib/quizApi";
+import { useGameSession } from "../game/useGameSession";
+import { ensureServerSession } from "../lib/gameApi";
 import { routes } from "../routes";
 
 /** Props for the top-level game route. */
@@ -46,7 +46,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
     selectOption,
     start,
     submit,
-  } = useQuizSession(game);
+  } = useGameSession(game);
 
   const questionCount = game.questions.length;
   const isQuizActive = isStarted && !isComplete && !isSubmittingCompletion;

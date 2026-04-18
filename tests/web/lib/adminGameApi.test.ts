@@ -25,7 +25,7 @@ import {
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
-} from "../../../apps/web/src/lib/adminQuizApi.ts";
+} from "../../../apps/web/src/lib/adminGameApi.ts";
 
 const sampleDraft = getGameById("madrona-music-2026");
 
@@ -81,7 +81,7 @@ function createSupabaseClientMock(
   };
 }
 
-describe("adminQuizApi", () => {
+describe("adminGameApi", () => {
   beforeEach(() => {
     vi.unstubAllGlobals();
     mockCreateSupabaseAuthHeaders.mockReset();

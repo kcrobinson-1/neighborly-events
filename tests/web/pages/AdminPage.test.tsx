@@ -35,8 +35,8 @@ vi.mock("../../../apps/web/src/admin/useAdminSession.ts", () => ({
   useAdminSession: mockUseAdminSession,
 }));
 
-vi.mock("../../../apps/web/src/lib/adminQuizApi.ts", () => ({
-  getQuizAdminStatus: mockGetQuizAdminStatus,
+vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
+  getGameAdminStatus: mockGetQuizAdminStatus,
   listDraftEventSummaries: mockListDraftEventSummaries,
   loadDraftEvent: mockLoadDraftEvent,
   publishDraftEvent: mockPublishDraftEvent,

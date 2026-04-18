@@ -7,24 +7,24 @@ export type Answers = SubmittedAnswers;
 export type EntitlementStatus = "new" | "existing";
 
 /** Verification data returned after the backend finalizes quiz completion. */
-export type QuizCompletionEntitlement = {
+export type GameCompletionEntitlement = {
   createdAt: string;
   status: EntitlementStatus;
   verificationCode: string;
 };
 
 /** Official completion record returned by the prototype fallback or backend. */
-export type QuizCompletionResult = {
+export type GameCompletionResult = {
   attemptNumber: number;
   completionId: string;
-  entitlement: QuizCompletionEntitlement;
+  entitlement: GameCompletionEntitlement;
   message: string;
   entitlementEligible: boolean;
   score: number;
 };
 
 /** Browser payload sent when the player finishes a quiz attempt. */
-export type SubmitQuizCompletionInput = {
+export type SubmitGameCompletionInput = {
   answers: Answers;
   durationMs: number;
   eventId: string;

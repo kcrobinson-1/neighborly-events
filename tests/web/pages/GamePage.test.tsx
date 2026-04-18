@@ -2,19 +2,19 @@ import React from "react";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
-import type { QuizCompletionResult } from "../../../apps/web/src/types/quiz.ts";
+import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
 
-const { mockEnsureServerSession, mockUseQuizSession } = vi.hoisted(() => ({
+const { mockEnsureServerSession, mockUseGameSession } = vi.hoisted(() => ({
   mockEnsureServerSession: vi.fn(),
-  mockUseQuizSession: vi.fn(),
+  mockUseGameSession: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/lib/quizApi.ts", () => ({
+vi.mock("../../../apps/web/src/lib/gameApi.ts", () => ({
   ensureServerSession: mockEnsureServerSession,
 }));
 
-vi.mock("../../../apps/web/src/game/useQuizSession.ts", () => ({
-  useQuizSession: mockUseQuizSession,
+vi.mock("../../../apps/web/src/game/useGameSession.ts", () => ({
+  useGameSession: mockUseGameSession,
 }));
 
 import { GamePage } from "../../../apps/web/src/pages/GamePage.tsx";
@@ -49,8 +49,8 @@ function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
 }
 
 function createCompletionResult(
-  overrides: Partial<QuizCompletionResult> = {},
-): QuizCompletionResult {
+  overrides: Partial<GameCompletionResult> = {},
+): GameCompletionResult {
   return {
     attemptNumber: 1,
     completionId: "cmp-123",
@@ -101,7 +101,7 @@ function createSessionState(game: GameConfig, overrides = {}) {
 describe("GamePage", () => {
   beforeEach(() => {
     mockEnsureServerSession.mockReset();
-    mockUseQuizSession.mockReset();
+    mockUseGameSession.mockReset();
   });
 
   afterEach(() => {
@@ -112,7 +112,7 @@ describe("GamePage", () => {
     const game = createGame();
     const sessionState = createSessionState(game);
     mockEnsureServerSession.mockResolvedValue(undefined);
-    mockUseQuizSession.mockReturnValue(sessionState);
+    mockUseGameSession.mockReturnValue(sessionState);
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
@@ -130,7 +130,7 @@ describe("GamePage", () => {
     const game = createGame();
     const sessionState = createSessionState(game);
     mockEnsureServerSession.mockRejectedValue(new Error("Backend is unavailable."));
-    mockUseQuizSession.mockReturnValue(sessionState);
+    mockUseGameSession.mockReturnValue(sessionState);
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
@@ -149,7 +149,7 @@ describe("GamePage", () => {
       pendingSelection: ["a"],
       progressValue: 100,
     });
-    mockUseQuizSession.mockReturnValue(sessionState);
+    mockUseGameSession.mockReturnValue(sessionState);
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
@@ -174,7 +174,7 @@ describe("GamePage", () => {
       latestCompletion: createCompletionResult(),
       score: 1,
     });
-    mockUseQuizSession.mockReturnValue(sessionState);
+    mockUseGameSession.mockReturnValue(sessionState);
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 

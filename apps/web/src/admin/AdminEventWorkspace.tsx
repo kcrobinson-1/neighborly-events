@@ -1,4 +1,4 @@
-import type { DraftEventDetail, DraftEventSummary } from "../lib/adminQuizApi";
+import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
 import { routes } from "../routes";
 import { AdminEventDetailsForm } from "./AdminEventDetailsForm";
 import { AdminPublishPanel } from "./AdminPublishPanel";

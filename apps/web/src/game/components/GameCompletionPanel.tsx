@@ -1,13 +1,13 @@
 /** Completion-state panel for verification, retries, retakes, and answer review. */
 import { answersMatch } from "../../../../../shared/game-config";
 import type { GameConfig } from "../../data/games";
-import { getOptionLabels } from "../quizUtils";
-import type { Answers, QuizCompletionResult } from "../../types/quiz";
+import { getOptionLabels } from "../gameUtils";
+import type { Answers, GameCompletionResult } from "../../types/game";
 
 /** Props for the quiz completion screen. */
 type GameCompletionPanelProps = {
   answers: Answers;
-  completion: QuizCompletionResult | null;
+  completion: GameCompletionResult | null;
   completionError: string | null;
   game: GameConfig;
   isSubmitting: boolean;

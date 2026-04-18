@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { GameCompletionPanel } from "../../../../apps/web/src/game/components/GameCompletionPanel.tsx";
 import type { GameConfig } from "../../../../apps/web/src/data/games.ts";
-import type { QuizCompletionResult } from "../../../../apps/web/src/types/quiz.ts";
+import type { GameCompletionResult } from "../../../../apps/web/src/types/game.ts";
 
 function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
   return {
@@ -35,8 +35,8 @@ function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
 }
 
 function createCompletionResult(
-  overrides: Partial<QuizCompletionResult> = {},
-): QuizCompletionResult {
+  overrides: Partial<GameCompletionResult> = {},
+): GameCompletionResult {
   return {
     attemptNumber: 1,
     completionId: "cmp-123",

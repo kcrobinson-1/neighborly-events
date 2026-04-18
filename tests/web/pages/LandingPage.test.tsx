@@ -6,9 +6,9 @@ const { mockListPublishedGameSummaries } = vi.hoisted(() => ({
   mockListPublishedGameSummaries: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/lib/quizContentApi.ts", async () => {
-  const actual = await vi.importActual<typeof import("../../../apps/web/src/lib/quizContentApi.ts")>(
-    "../../../apps/web/src/lib/quizContentApi.ts",
+vi.mock("../../../apps/web/src/lib/gameContentApi.ts", async () => {
+  const actual = await vi.importActual<typeof import("../../../apps/web/src/lib/gameContentApi.ts")>(
+    "../../../apps/web/src/lib/gameContentApi.ts",
   );
 
   return {

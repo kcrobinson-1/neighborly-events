@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { DraftEventDetail } from "../lib/adminQuizApi";
+import type { DraftEventDetail } from "../lib/adminGameApi";
 import { routes } from "../routes";
 import { computePublishChecklist, isPublishReady } from "./publishChecklist";
 import type { AdminPublishState, AdminUnpublishState } from "./useAdminDashboard";

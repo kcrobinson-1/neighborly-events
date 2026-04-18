@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { featuredGameSlug, type GameConfig } from "../data/games";
-import { loadPublishedGameBySlug } from "../lib/quizContentApi";
+import { loadPublishedGameBySlug } from "../lib/gameContentApi";
 import { GamePage } from "./GamePage";
 import { routes } from "../routes";
 
