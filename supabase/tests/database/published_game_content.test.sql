@@ -5,27 +5,27 @@ create extension if not exists pgtap with schema extensions;
 select plan(14);
 
 select ok(
-  has_table_privilege('anon', 'public.quiz_events', 'SELECT'),
-  'anon can select published quiz events'
+  has_table_privilege('anon', 'public.game_events', 'SELECT'),
+  'anon can select published game events'
 );
 
 select ok(
-  has_table_privilege('anon', 'public.quiz_questions', 'SELECT'),
-  'anon can select published quiz questions'
+  has_table_privilege('anon', 'public.game_questions', 'SELECT'),
+  'anon can select published game questions'
 );
 
 select ok(
-  has_table_privilege('anon', 'public.quiz_question_options', 'SELECT'),
-  'anon can select published quiz question options'
+  has_table_privilege('anon', 'public.game_question_options', 'SELECT'),
+  'anon can select published game question options'
 );
 
-insert into public.quiz_events (
+insert into public.game_events (
   id,
   slug,
   name,
   location,
   estimated_minutes,
-  raffle_label,
+  entitlement_label,
   intro,
   summary,
   feedback_mode,
@@ -48,7 +48,7 @@ values (
   null
 );
 
-insert into public.quiz_questions (
+insert into public.game_questions (
   event_id,
   id,
   display_order,
@@ -65,7 +65,7 @@ values (
   'single'
 );
 
-insert into public.quiz_question_options (
+insert into public.game_question_options (
   event_id,
   question_id,
   id,
@@ -85,7 +85,7 @@ values (
 set local role anon;
 
 select is(
-  (select count(*) from public.quiz_events where slug = 'first-sample'),
+  (select count(*) from public.game_events where slug = 'first-sample'),
   1::bigint,
   'anon can read the published featured event'
 );
@@ -93,7 +93,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_events
+    from public.game_events
     where slug in ('first-sample', 'sponsor-spotlight', 'community-checklist')
   ),
   3::bigint,
@@ -101,13 +101,13 @@ select is(
 );
 
 select is(
-  (select count(*) from public.quiz_events where slug = 'hidden-event'),
+  (select count(*) from public.game_events where slug = 'hidden-event'),
   0::bigint,
   'anon cannot read unpublished events'
 );
 
 select is(
-  (select count(*) from public.quiz_questions where event_id = 'hidden-event'),
+  (select count(*) from public.game_questions where event_id = 'hidden-event'),
   0::bigint,
   'anon cannot read unpublished event questions'
 );
@@ -115,7 +115,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_question_options
+    from public.game_question_options
     where event_id = 'hidden-event'
   ),
   0::bigint,
@@ -125,7 +125,7 @@ select is(
 select is(
   (
     select string_agg(id, ',' order by display_order)
-    from public.quiz_questions
+    from public.game_questions
     where event_id = 'madrona-music-2026'
   ),
   'q1,q2,q3,q4,q5,q6',
@@ -135,7 +135,7 @@ select is(
 select is(
   (
     select string_agg(id, ',' order by display_order)
-    from public.quiz_question_options
+    from public.game_question_options
     where event_id = 'madrona-music-2026'
       and question_id = 'q1'
   ),
@@ -146,7 +146,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_question_options
+    from public.game_question_options
     where event_id = 'madrona-music-2026'
       and question_id = 'q1'
       and is_correct
@@ -158,7 +158,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_question_options
+    from public.game_question_options
     where event_id = 'community-checklist-2026'
       and question_id = 'q1'
       and is_correct
@@ -171,7 +171,7 @@ reset role;
 
 create temp table seeded_event_completion as
 select *
-from public.complete_quiz_and_award_entitlement(
+from public.complete_game_and_award_entitlement(
   'madrona-music-2026',
   'seeded-test-session',
   'seeded-test-request',

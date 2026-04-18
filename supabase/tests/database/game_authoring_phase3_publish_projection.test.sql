@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(9);
 
-insert into public.quiz_event_drafts (
+insert into public.game_event_drafts (
   id,
   slug,
   name,
@@ -46,7 +46,7 @@ values (
 set local role service_role;
 
 select results_eq(
-  $$ select event_id, slug, version_number from public.publish_quiz_event_draft('phase3-publish-event', '22222222-2222-4222-8222-222222222222') $$,
+  $$ select event_id, slug, version_number from public.publish_game_event_draft('phase3-publish-event', '22222222-2222-4222-8222-222222222222') $$,
   $$ values ('phase3-publish-event'::text, 'phase3-publish'::text, 1) $$,
   'publish returns the published event and first version number'
 );
@@ -56,7 +56,7 @@ reset role;
 select is(
   (
     select live_version_number
-    from public.quiz_event_drafts
+    from public.game_event_drafts
     where id = 'phase3-publish-event'
   ),
   1,
@@ -66,7 +66,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_event_versions
+    from public.game_event_versions
     where event_id = 'phase3-publish-event'
   ),
   1::bigint,
@@ -76,36 +76,36 @@ select is(
 select is(
   (
     select allow_back_navigation
-    from public.quiz_events
+    from public.game_events
     where id = 'phase3-publish-event'
   ),
   false,
-  'publish projects event metadata into public quiz_events'
+  'publish projects event metadata into public game_events'
 );
 
 select is(
   (
     select count(*)
-    from public.quiz_questions
+    from public.game_questions
     where event_id = 'phase3-publish-event'
   ),
   1::bigint,
-  'publish projects draft questions into public quiz_questions'
+  'publish projects draft questions into public game_questions'
 );
 
 select is(
   (
     select count(*)
-    from public.quiz_question_options
+    from public.game_question_options
     where event_id = 'phase3-publish-event'
       and question_id = 'q1'
       and is_correct
   ),
   1::bigint,
-  'publish projects correct answer flags into public quiz_question_options'
+  'publish projects correct answer flags into public game_question_options'
 );
 
-update public.quiz_event_drafts
+update public.game_event_drafts
 set
   name = 'Phase 3 Republished Event',
   content = jsonb_build_object(
@@ -139,7 +139,7 @@ where id = 'phase3-publish-event';
 set local role service_role;
 
 select results_eq(
-  $$ select event_id, slug, version_number from public.publish_quiz_event_draft('phase3-publish-event', '33333333-3333-4333-8333-333333333333') $$,
+  $$ select event_id, slug, version_number from public.publish_game_event_draft('phase3-publish-event', '33333333-3333-4333-8333-333333333333') $$,
   $$ values ('phase3-publish-event'::text, 'phase3-publish'::text, 2) $$,
   'republish returns the next version number'
 );
@@ -149,7 +149,7 @@ reset role;
 select is(
   (
     select count(*)
-    from public.quiz_questions
+    from public.game_questions
     where event_id = 'phase3-publish-event'
       and id = 'q1'
   ),
@@ -160,7 +160,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_question_options
+    from public.game_question_options
     where event_id = 'phase3-publish-event'
       and question_id = 'q2'
   ),

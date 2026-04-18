@@ -9,10 +9,10 @@ select ok(
     select 1
     from pg_tables
     where schemaname = 'public'
-      and tablename = 'quiz_event_drafts'
+      and tablename = 'game_event_drafts'
       and rowsecurity
   ),
-  'quiz_event_drafts keeps row level security enabled'
+  'game_event_drafts keeps row level security enabled'
 );
 
 select ok(
@@ -20,10 +20,10 @@ select ok(
     select 1
     from pg_tables
     where schemaname = 'public'
-      and tablename = 'quiz_event_versions'
+      and tablename = 'game_event_versions'
       and rowsecurity
   ),
-  'quiz_event_versions keeps row level security enabled'
+  'game_event_versions keeps row level security enabled'
 );
 
 select ok(
@@ -31,78 +31,78 @@ select ok(
     select 1
     from pg_tables
     where schemaname = 'public'
-      and tablename = 'quiz_admin_users'
+      and tablename = 'admin_users'
       and rowsecurity
   ),
-  'quiz_admin_users exists with row level security enabled'
+  'admin_users exists with row level security enabled'
 );
 
 select ok(
-  not has_table_privilege('anon', 'public.quiz_admin_users', 'SELECT'),
-  'anon cannot read quiz_admin_users directly'
+  not has_table_privilege('anon', 'public.admin_users', 'SELECT'),
+  'anon cannot read admin_users directly'
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.quiz_admin_users', 'SELECT'),
-  'authenticated cannot read quiz_admin_users directly'
+  not has_table_privilege('authenticated', 'public.admin_users', 'SELECT'),
+  'authenticated cannot read admin_users directly'
 );
 
 select ok(
-  has_table_privilege('service_role', 'public.quiz_admin_users', 'SELECT,INSERT,UPDATE,DELETE'),
-  'service_role can manage quiz_admin_users'
+  has_table_privilege('service_role', 'public.admin_users', 'SELECT,INSERT,UPDATE,DELETE'),
+  'service_role can manage admin_users'
 );
 
 select ok(
-  not has_table_privilege('anon', 'public.quiz_event_drafts', 'SELECT'),
+  not has_table_privilege('anon', 'public.game_event_drafts', 'SELECT'),
   'anon cannot read authoring drafts'
 );
 
 select ok(
-  not has_table_privilege('anon', 'public.quiz_event_versions', 'SELECT'),
+  not has_table_privilege('anon', 'public.game_event_versions', 'SELECT'),
   'anon cannot read authoring versions'
 );
 
 select ok(
-  has_table_privilege('authenticated', 'public.quiz_event_drafts', 'SELECT'),
+  has_table_privilege('authenticated', 'public.game_event_drafts', 'SELECT'),
   'authenticated can read authoring drafts through admin RLS'
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.quiz_event_drafts', 'INSERT'),
+  not has_table_privilege('authenticated', 'public.game_event_drafts', 'INSERT'),
   'authenticated cannot insert drafts directly'
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.quiz_event_drafts', 'UPDATE'),
+  not has_table_privilege('authenticated', 'public.game_event_drafts', 'UPDATE'),
   'authenticated cannot update drafts directly'
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.quiz_event_drafts', 'DELETE'),
+  not has_table_privilege('authenticated', 'public.game_event_drafts', 'DELETE'),
   'authenticated cannot delete drafts directly'
 );
 
 select ok(
-  has_table_privilege('authenticated', 'public.quiz_event_versions', 'SELECT'),
+  has_table_privilege('authenticated', 'public.game_event_versions', 'SELECT'),
   'authenticated can read authoring versions through RLS'
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.quiz_event_versions', 'INSERT'),
+  not has_table_privilege('authenticated', 'public.game_event_versions', 'INSERT'),
   'authenticated cannot insert authoring versions'
 );
 
 select ok(
-  has_table_privilege('service_role', 'public.quiz_event_drafts', 'SELECT,INSERT,UPDATE,DELETE'),
+  has_table_privilege('service_role', 'public.game_event_drafts', 'SELECT,INSERT,UPDATE,DELETE'),
   'service_role can manage authoring drafts'
 );
 
 select ok(
-  has_table_privilege('service_role', 'public.quiz_event_versions', 'SELECT,INSERT,UPDATE,DELETE'),
+  has_table_privilege('service_role', 'public.game_event_versions', 'SELECT,INSERT,UPDATE,DELETE'),
   'service_role can manage authoring versions'
 );
 
-insert into public.quiz_admin_users (email)
+insert into public.admin_users (email)
 values ('admin@example.com');
 
 set local role authenticated;
@@ -113,25 +113,25 @@ select set_config(
 );
 
 select ok(
-  not public.is_quiz_admin(),
-  'is_quiz_admin returns false for an authenticated non-admin'
+  not public.is_admin(),
+  'is_admin returns false for an authenticated non-admin'
 );
 
 select is(
-  (select count(*) from public.quiz_event_drafts),
+  (select count(*) from public.game_event_drafts),
   0::bigint,
   'authenticated non-admin cannot read any drafts through RLS'
 );
 
 select is(
-  (select count(*) from public.quiz_event_versions),
+  (select count(*) from public.game_event_versions),
   0::bigint,
   'authenticated non-admin cannot read any versions through RLS'
 );
 
 select throws_ok(
   $$
-    insert into public.quiz_event_drafts (id, slug, name, content)
+    insert into public.game_event_drafts (id, slug, name, content)
     values (
       'viewer-test-event',
       'viewer-test-event',
@@ -164,25 +164,25 @@ select set_config(
 );
 
 select ok(
-  public.is_quiz_admin(),
-  'is_quiz_admin returns true for an allowlisted admin'
+  public.is_admin(),
+  'is_admin returns true for an allowlisted admin'
 );
 
 select is(
-  (select count(*) from public.quiz_event_drafts),
+  (select count(*) from public.game_event_drafts),
   3::bigint,
   'authenticated admin can read all draft events'
 );
 
 select is(
-  (select count(*) from public.quiz_event_versions),
+  (select count(*) from public.game_event_versions),
   3::bigint,
   'authenticated admin can read all draft versions'
 );
 
 select throws_ok(
   $$
-    insert into public.quiz_event_drafts (id, slug, name, content)
+    insert into public.game_event_drafts (id, slug, name, content)
     values (
       'admin-test-event',
       'admin-test-event',
@@ -219,7 +219,7 @@ select throws_ok(
 
 select throws_ok(
   $$
-    insert into public.quiz_event_versions (
+    insert into public.game_event_versions (
       event_id,
       version_number,
       content

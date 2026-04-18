@@ -4,7 +4,7 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(5);
 
-insert into public.quiz_event_drafts (
+insert into public.game_event_drafts (
   id,
   slug,
   name,
@@ -47,7 +47,7 @@ set local role service_role;
 
 create temp table unpublish_audit_first_publish as
 select *
-from public.publish_quiz_event_draft(
+from public.publish_game_event_draft(
   'phase3-publish-event',
   '22222222-2222-4222-8222-222222222222'
 );
@@ -57,7 +57,7 @@ reset role;
 select is(
   (
     select count(*)
-    from public.quiz_event_audit_log
+    from public.game_event_audit_log
     where event_id = 'phase3-publish-event'
       and action = 'publish'
       and version_number = 1
@@ -67,7 +67,7 @@ select is(
   'publish records audit metadata'
 );
 
-update public.quiz_event_drafts
+update public.game_event_drafts
 set
   name = 'Phase 3 Republished Event',
   content = jsonb_build_object(
@@ -102,13 +102,13 @@ set local role service_role;
 
 create temp table unpublish_audit_second_publish as
 select *
-from public.publish_quiz_event_draft(
+from public.publish_game_event_draft(
   'phase3-publish-event',
   '33333333-3333-4333-8333-333333333333'
 );
 
 select results_eq(
-  $$ select event_id from public.unpublish_quiz_event('phase3-publish-event', '44444444-4444-4444-8444-444444444444') $$,
+  $$ select event_id from public.unpublish_game_event('phase3-publish-event', '44444444-4444-4444-8444-444444444444') $$,
   $$ values ('phase3-publish-event'::text) $$,
   'unpublish returns the unpublished event id'
 );
@@ -120,7 +120,7 @@ set local role anon;
 select is(
   (
     select count(*)
-    from public.quiz_events
+    from public.game_events
     where id = 'phase3-publish-event'
   ),
   0::bigint,
@@ -132,7 +132,7 @@ reset role;
 select is(
   (
     select count(*)
-    from public.quiz_event_versions
+    from public.game_event_versions
     where event_id = 'phase3-publish-event'
   ),
   2::bigint,
@@ -142,7 +142,7 @@ select is(
 select is(
   (
     select count(*)
-    from public.quiz_event_audit_log
+    from public.game_event_audit_log
     where event_id = 'phase3-publish-event'
       and action = 'unpublish'
       and actor_id = '44444444-4444-4444-8444-444444444444'

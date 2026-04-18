@@ -53,7 +53,7 @@ async function saveDraft(
   });
 
   const { data: existing } = await supabase
-    .from("quiz_event_drafts")
+    .from("game_event_drafts")
     .select("live_version_number, slug")
     .eq("id", input.content.id)
     .maybeSingle<{ live_version_number: number | null; slug: string }>();
@@ -73,7 +73,7 @@ async function saveDraft(
   }
 
   return await supabase
-    .from("quiz_event_drafts")
+    .from("game_event_drafts")
     .upsert(
       {
         content: input.content,

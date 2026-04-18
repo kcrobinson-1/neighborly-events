@@ -42,7 +42,7 @@ async function unpublishEvent(
   });
 
   return await supabase
-    .rpc("unpublish_quiz_event", {
+    .rpc("unpublish_game_event", {
       p_actor_id: actorUserId,
       p_event_id: eventId,
     })

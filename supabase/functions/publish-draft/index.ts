@@ -60,7 +60,7 @@ async function loadDraft(
   });
 
   return await supabase
-    .from("quiz_event_drafts")
+    .from("game_event_drafts")
     .select("content,id,name,slug")
     .eq("id", eventId)
     .maybeSingle<DraftContentRow>();
@@ -79,7 +79,7 @@ async function publishDraft(
   });
 
   return await supabase
-    .rpc("publish_quiz_event_draft", {
+    .rpc("publish_game_event_draft", {
       p_event_id: eventId,
       p_published_by: actorUserId,
     })

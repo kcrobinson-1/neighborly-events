@@ -144,7 +144,7 @@ export async function ensureAdminE2eFixture(
   const serviceRoleClient = createServiceRoleClient(env);
 
   const { error: allowlistError } = await serviceRoleClient
-    .from("quiz_admin_users")
+    .from("admin_users")
     .upsert(
       {
         active: true,
@@ -158,7 +158,7 @@ export async function ensureAdminE2eFixture(
   }
 
   const { error: deniedAllowlistError } = await serviceRoleClient
-    .from("quiz_admin_users")
+    .from("admin_users")
     .upsert(
       {
         active: false,
@@ -174,7 +174,7 @@ export async function ensureAdminE2eFixture(
   }
 
   const { error: ensureDraftError } = await serviceRoleClient
-    .from("quiz_event_drafts")
+    .from("game_event_drafts")
     .upsert(
       {
         content: createDraftContent(config),
@@ -192,7 +192,7 @@ export async function ensureAdminE2eFixture(
 
   // Ensure the test event starts unpublished so the publish assertion is deterministic.
   const { error: unpublishSeedError } = await serviceRoleClient
-    .from("quiz_events")
+    .from("game_events")
     .update({
       published_at: null,
       slug: config.eventSlug,
@@ -234,7 +234,7 @@ export async function readPublishedEventState(id: string): Promise<{
   const serviceRoleClient = createServiceRoleClient(env);
 
   const { data, error } = await serviceRoleClient
-    .from("quiz_events")
+    .from("game_events")
     .select("published_at,slug")
     .eq("id", id)
     .maybeSingle<{ published_at: string | null; slug: string }>();

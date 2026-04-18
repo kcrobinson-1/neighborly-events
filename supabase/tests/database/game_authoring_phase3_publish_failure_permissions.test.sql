@@ -9,43 +9,43 @@ select ok(
     select 1
     from pg_tables
     where schemaname = 'public'
-      and tablename = 'quiz_event_audit_log'
+      and tablename = 'game_event_audit_log'
       and rowsecurity
   ),
-  'quiz_event_audit_log keeps row level security enabled'
+  'game_event_audit_log keeps row level security enabled'
 );
 
 select ok(
-  not has_table_privilege('anon', 'public.quiz_event_audit_log', 'SELECT'),
-  'anon cannot read quiz event audit rows'
+  not has_table_privilege('anon', 'public.game_event_audit_log', 'SELECT'),
+  'anon cannot read game event audit rows'
 );
 
 select ok(
-  not has_table_privilege('authenticated', 'public.quiz_event_audit_log', 'SELECT'),
-  'authenticated users cannot read quiz event audit rows directly'
+  not has_table_privilege('authenticated', 'public.game_event_audit_log', 'SELECT'),
+  'authenticated users cannot read game event audit rows directly'
 );
 
 select ok(
-  has_table_privilege('service_role', 'public.quiz_event_audit_log', 'SELECT,INSERT'),
-  'service_role can read and insert quiz event audit rows'
+  has_table_privilege('service_role', 'public.game_event_audit_log', 'SELECT,INSERT'),
+  'service_role can read and insert game event audit rows'
 );
 
 select ok(
-  not has_function_privilege('authenticated', 'public.publish_quiz_event_draft(text, uuid)', 'EXECUTE'),
+  not has_function_privilege('authenticated', 'public.publish_game_event_draft(text, uuid)', 'EXECUTE'),
   'authenticated users cannot execute publish directly'
 );
 
 select ok(
-  has_function_privilege('service_role', 'public.publish_quiz_event_draft(text, uuid)', 'EXECUTE'),
+  has_function_privilege('service_role', 'public.publish_game_event_draft(text, uuid)', 'EXECUTE'),
   'service_role can execute publish'
 );
 
 select ok(
-  has_function_privilege('service_role', 'public.unpublish_quiz_event(text, uuid)', 'EXECUTE'),
+  has_function_privilege('service_role', 'public.unpublish_game_event(text, uuid)', 'EXECUTE'),
   'service_role can execute unpublish'
 );
 
-insert into public.quiz_event_drafts (
+insert into public.game_event_drafts (
   id,
   slug,
   name,
@@ -82,7 +82,7 @@ values (
   1
 );
 
-insert into public.quiz_event_versions (
+insert into public.game_event_versions (
   event_id,
   version_number,
   content
@@ -91,16 +91,16 @@ select
   id,
   1,
   content
-from public.quiz_event_drafts
+from public.game_event_drafts
 where id = 'phase3-failed-publish';
 
-insert into public.quiz_events (
+insert into public.game_events (
   id,
   slug,
   name,
   location,
   estimated_minutes,
-  raffle_label,
+  entitlement_label,
   intro,
   summary,
   feedback_mode,
@@ -119,7 +119,7 @@ values (
   now()
 );
 
-insert into public.quiz_questions (
+insert into public.game_questions (
   event_id,
   id,
   display_order,
@@ -136,7 +136,7 @@ values (
   'single'
 );
 
-insert into public.quiz_question_options (
+insert into public.game_question_options (
   event_id,
   question_id,
   id,
@@ -153,14 +153,14 @@ values (
   true
 );
 
-update public.quiz_event_drafts
+update public.game_event_drafts
 set content = jsonb_set(content, '{questions,0,selectionMode}', to_jsonb('broken'::text))
 where id = 'phase3-failed-publish';
 
 set local role service_role;
 
 select throws_ok(
-  $$ select * from public.publish_quiz_event_draft('phase3-failed-publish', '55555555-5555-4555-8555-555555555555') $$,
+  $$ select * from public.publish_game_event_draft('phase3-failed-publish', '55555555-5555-4555-8555-555555555555') $$,
   '23514',
   null,
   'failed publish raises before committing the public projection'
@@ -171,7 +171,7 @@ reset role;
 select is(
   (
     select count(*)
-    from public.quiz_event_versions
+    from public.game_event_versions
     where event_id = 'phase3-failed-publish'
   ),
   1::bigint,
@@ -181,7 +181,7 @@ select is(
 select is(
   (
     select selection_mode
-    from public.quiz_questions
+    from public.game_questions
     where event_id = 'phase3-failed-publish'
       and id = 'q1'
   ),
