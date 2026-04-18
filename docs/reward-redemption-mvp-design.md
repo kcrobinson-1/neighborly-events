@@ -350,6 +350,32 @@ Operational implications:
 - the agent only types the 4-digit suffix
 - backend still validates full-code uniqueness and event matching
 
+### Implementation prerequisite
+
+The event-prefixed code format is delivered by a separate prerequisite feature
+that must land before the redemption MVP implementation begins. At a minimum
+that feature:
+
+- adds an `event_code` column to `public.quiz_events`, authored at event
+  creation, with a `UNIQUE` constraint, a `CHECK`-constrained shape
+  (case-normalized, dash-free, bounded length), and an immutability lock once
+  any entitlement references the event (following the existing slug lock
+  trigger precedent)
+- rewrites the verification-code generator to emit `<event_code>-<NNNN>` with
+  a bounded retry loop on per-event suffix collisions, and adds
+  `UNIQUE (event_id, verification_code)` on `raffle_entitlements` so per-event
+  4-digit suffix uniqueness is DB-enforced rather than relying on entropy
+- updates `publish-draft` / `public.publish_quiz_event_draft(...)` to refuse
+  to publish an event that lacks a valid `event_code`
+- coordinates the corresponding updates to the completion response shape,
+  frontend completion screen copy, test fixtures, and Playwright expectations
+
+Because the repo currently holds no production redemption data, this
+prerequisite can backfill existing test events with dummy event codes rather
+than designing a legacy-code migration path. The prerequisite feature owns its
+own design doc, migration sequence, and rollback plan; the redemption MVP
+inherits the resulting single-column, single-equality lookup contract.
+
 ## Data Model Proposal (MVP)
 
 Extend reward entitlement records with redemption metadata.
@@ -541,7 +567,7 @@ deferral) and an owner.
 - Needs decision:
   - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 2) Trusted mutation boundary
 
@@ -553,7 +579,7 @@ deferral) and an owner.
 - Needs decision:
   - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 3) Idempotency and concurrency contract
 
@@ -568,7 +594,7 @@ deferral) and an owner.
 - Needs decision:
   - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 4) Audit data contract
 
@@ -576,72 +602,273 @@ deferral) and an owner.
   - include `redeemed_*` and `reversed_*` identity/timestamp metadata
   - no additional device/session logging in MVP
   - reversal reason is optional in MVP (no required-field enforcement)
+  - no append-only redemption audit history table in MVP; the inline
+    `redeemed_*` and `reversed_*` columns capture identity, role, and timestamp
+    for the single legal transition cycle
+    (`unredeemed -> redeemed -> unredeemed`), which is sufficient for MVP
+    dispute handling
+  - revisit as a post-MVP follow-up if live event data shows a need for
+    attempt-level history (including failed or repeated cycles beyond the
+    current inline fields)
 - Needs decision:
-  - whether MVP also requires append-only audit history rows
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 5) Query model for `/event/:slug/redemptions`
 
 - Decided:
   - mobile monitoring must support quick lookup, filtering, and recent-first scan
+  - per-event 4-digit suffix uniqueness is delivered by the prerequisite
+    feature described in the
+    [Completion Code Format](#completion-code-format-mvp-decision) section:
+    that feature rewrites `verification_code` to the event-prefixed format
+    and adds `UNIQUE (event_id, verification_code)` on `raffle_entitlements`,
+    so the redemption feature inherits a single-column equality lookup on the
+    agent redeem path and on dispute lookup in the monitoring screen
+  - pagination strategy: MVP uses a bounded single fetch of the most recent
+    N redemption records per event (default `N = 500`, to be validated
+    against anticipated pilot-event volume before first use and tunable by
+    configuration). Filter chips (`Last 15m`, `Redeemed`, `Reversed`,
+    `By me`) and suffix-first search operate client-side against that
+    cached slice, so filter changes are instant and do not round-trip to
+    the server. When the cap is hit, the UI shows a visible
+    "showing most recent N" affordance and prompts the operator to narrow
+    the time or status window for older records.
+  - post-MVP upgrade path for pagination: cursor (keyset) pagination on
+    `(redeemed_at DESC, id DESC)` with a matching index, triggered when
+    real event data approaches the cap (for example, multiple pilot events
+    producing more than ~400 redemptions each) or when the
+    "showing most recent N" affordance is regularly hit. Named here so the
+    handoff to post-MVP is explicit and the MVP doesn't quietly become the
+    long-term shape.
+  - index plan: minimalist. The redemption MVP migration adds exactly one
+    new B-tree index, `(event_id, redeemed_at DESC NULLS LAST)` on
+    `raffle_entitlements`, which covers the default recent-first list,
+    the `Last 15m` filter, and the `Redeemed` filter. The `Reversed`,
+    `By me`, and suffix-search query patterns are intentionally served by
+    event-scoped scans in MVP — at the stated scale of hundreds to
+    low-thousands of records these scans run in milliseconds and do not
+    justify extra write amplification. Add partial or functional indexes
+    for those patterns post-MVP only when EXPLAIN plans against real
+    event data show they are needed.
 - Needs decision:
-  - pagination strategy (cursor vs offset)
-  - index plan for event/status/time/suffix query patterns
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 6) Code lookup and non-leakage behavior
 
 - Decided:
   - use `<event-acronym>-<4-digit-code>` with event-scoped lookup
   - cross-event mismatches should not leak details
+  - normalization/canonicalization rules for lookup input:
+    - the event-acronym prefix is derived from the event record on
+      `/event/:slug/redeem` and is not user-entered; only the 4-digit suffix
+      crosses the trust boundary on the redeem path
+    - the suffix is trimmed of leading/trailing whitespace before validation
+    - the suffix must match `^\d{4}$`; any other shape is rejected client-side
+      and server-side with the same `not_found` result envelope (never with a
+      distinct "invalid format" leak)
+    - on `/event/:slug/redemptions`, a full-code dispute lookup accepts an
+      optional dash between acronym and suffix, uppercases the acronym, trims
+      surrounding whitespace, and then splits on the final 4-digit group; any
+      prefix that does not match the locked event acronym is treated as a
+      cross-event mismatch (see below) rather than as an error
+  - exact response contract for non-matching event context:
+    - redeem: `{ outcome: "failure", result: "not_found" }`, identical to an
+      unknown code in the current event
+    - reverse: `{ outcome: "failure", result: "not_found" }`, identical to an
+      unknown code in the current event
+    - no acronym, slug, or existence hint about the other event is ever
+      returned, logged to the client, or surfaced in error copy
+    - server-side telemetry may distinguish cross-event attempts internally for
+      fraud investigation, but that distinction must not reach the client
+      response body or HTTP status
 - Needs decision:
-  - final normalization/canonicalization rules for lookup input
-  - exact response contract for non-matching event context
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 7) Reversal policy enforcement
 
 - Decided:
   - reversal is only available in `/event/:slug/redemptions`
   - reversal requires organizer/root-admin authorization
+  - reversal reason is not required anywhere in MVP: the
+    `redemption_note`/reason field remains nullable in the schema, neither the
+    DB constraint layer nor the trusted RPC/API layer rejects missing reasons,
+    and the UI encourages but does not block entry of a reason
+  - reversal eligibility rules:
+    - an entitlement is reversible if and only if its current
+      `redemption_status` is `redeemed`
+    - a reverse request against an entitlement already in `unredeemed` is
+      idempotent and returns
+      `{ outcome: "success", result: "already_unredeemed" }`
+    - no time-window restriction in MVP: a reversal is permitted at any time
+      the entitlement is in `redeemed`, regardless of how long ago
+      `redeemed_at` was; this matches the dispute-handling goal of the
+      monitoring screen and keeps the RPC to a single idempotent state check
+    - after a reversal, the entitlement is eligible for a new redemption
+      through the normal redeem path; the inline `redeemed_*` and `reversed_*`
+      columns capture only the most recent cycle, consistent with item 4
 - Needs decision:
-  - whether to enforce "reason required" in DB constraints or trusted API layer
-  - reversal eligibility rules for already-reversed/recently-redeemed edge cases
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 8) Frontend data synchronization strategy
 
 - Decided:
   - attendee status uses polling every 5 seconds; no realtime in MVP
+  - cache invalidation/refresh strategy across `/redeem` and `/redemptions`:
+    - `/event/:slug/redeem` holds no persistent lookup cache between codes; on
+      a successful redeem or a `not_found`/`not_authorized` result, the local
+      input and lookup state are cleared so the next attendee starts from a
+      clean state
+    - `/event/:slug/redemptions` refetches the active filter/page on: initial
+      mount, filter change, explicit pull-to-refresh or retry action, and
+      after a successful reversal from the detail bottom sheet
+    - after a reversal, the detail bottom sheet re-reads the single record by
+      id so the status badge, actor, and timestamp reflect the new state
+      before the list refetch resolves
+    - the two screens do not share cache invalidation across tabs or devices:
+      agents and organizers typically operate on separate devices, and
+      redemption writes always go through the Edge Function RPC boundary, so
+      cross-screen reconciliation is handled by the next refetch on each
+      surface rather than by a shared client cache
+    - the attendee completion screen replaces its redemption snapshot on each
+      5-second poll tick; it does not accumulate or merge prior snapshots
+  - visibility/offline/error retry behavior contract:
+    - polling respects the Page Visibility API: the attendee 5-second poll is
+      paused when the tab becomes hidden and resumes with one immediate
+      refresh on the next `visibilitychange` to `visible`
+    - `/event/:slug/redemptions` does not auto-poll; it is operator-driven and
+      refreshes only on explicit user actions and after mutations
+    - transient network errors (5xx, network failure) on redeem, reverse,
+      list, or status reads show a non-dismissive inline banner with an
+      explicit `Retry` action; one automatic retry with ~2s backoff is
+      allowed before the banner persists
+    - offline detection (`navigator.onLine === false` or repeated failures)
+      puts primary actions into a disabled state with an "You are offline"
+      explanation; on reconnect, a single reconcile fetch is fired before
+      re-enabling actions
+    - the monitoring header shows a "last updated at" timestamp so operators
+      can see freshness at a glance; the attendee completion screen shows the
+      equivalent via its own `Refresh status` affordance
 - Needs decision:
-  - exact cache invalidation/refresh strategy across `/redeem` and `/redemptions`
-  - visibility/offline/error retry behavior contract for monitoring screens
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 9) Operational role-management path
 
 - Decided:
   - role assignments are managed via direct SQL inserts in MVP
+  - canonical SQL scripts/runbook shape and ownership:
+    - canonical location is a tracked directory at
+      `supabase/role-management/` containing:
+      - a `README.md` that documents the role model, required inputs
+        (user id or email, event slug/id, role), and the execution process
+      - versioned, parameterized SQL snippet files (e.g.
+        `assign-agent.sql`, `assign-organizer.sql`, `revoke-assignment.sql`)
+        that use `INSERT ... ON CONFLICT DO NOTHING` for idempotency and
+        explicit `DELETE ... RETURNING` for revocation
+    - every role change lands through a reviewed pull request so the commit
+      history is the audit trail; no role change is applied from a local-only
+      script
+    - the runbook names `@kcrobinson` as the reviewer/executor for MVP
+  - revocation and audit process for manual role changes:
+    - revocation deletes by `(user_id, event_id, role)` from the role
+      assignment table, in the same PR-reviewed flow as assignment
+    - the PR description is required to state who requested the change, which
+      event, and why; this is the MVP audit record
+    - there is no self-serve revocation path and no automated review cadence
+      in MVP; a post-MVP follow-up can add a role-change log table or a
+      dedicated admin UI if manual volume grows
 - Needs decision:
-  - canonical SQL scripts/runbook shape and ownership
-  - revocation and audit process for manual role changes
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ### 10) Migration and rollout sequence
 
 - Decided:
   - MVP lands as backend + mobile redemption + monitoring + attendee status phases
+  - backward-compatible migration order and deployment gates:
+    1. schema additions: all new columns on `raffle_entitlements`
+       (`redeemed_at`, `redeemed_by`, `redeemed_by_role`, `redeemed_event_id`,
+       `redemption_status default 'unredeemed'`,
+       `redemption_reversed_at`, `redemption_reversed_by`,
+       `redemption_reversed_by_role`, `redemption_note`) land as nullable
+       or defaulted columns, plus the new monitoring B-tree index
+       `(event_id, redeemed_at DESC NULLS LAST)` from item 5; the
+       role-assignment table(s) are created empty. The per-event 4-digit
+       uniqueness constraint on `raffle_entitlements.verification_code` is
+       provided by the prerequisite feature described in the
+       [Completion Code Format](#completion-code-format-mvp-decision)
+       section and is not part of this MVP migration sequence
+    2. permission helpers: `public.is_agent_for_event(uuid)`,
+       `public.is_organizer_for_event(uuid)`, and `public.is_root_admin()` are
+       added before any policy or RPC references them
+    3. write RPCs: `public.redeem_entitlement_by_code(...)` and
+       `public.reverse_entitlement_redemption(...)` ship as
+       `SECURITY DEFINER` with row-level locking and the
+       `{ outcome, result }` envelope
+    4. RLS policies: scoped read policies on `raffle_entitlements` and the
+       role-assignment table(s) are enabled; existing attendee/public flows
+       remain behaviorally unchanged
+    5. Edge Functions: redeem and reverse wrappers plus the attendee
+       redemption-status read path deploy, calling the RPCs added in step 3
+    6. frontend: `/event/:slug/redeem` and `/event/:slug/redemptions` routes
+       deploy behind an unadvertised entry (no nav links, not linked from
+       `/admin`) so they are inert until roles are seeded
+    7. role seeding: the runbook from item 9 seeds a single pilot event's
+       agent/organizer assignments via a reviewed PR
+    8. dry run: a volunteer dress rehearsal exercises redeem and reverse on
+       the pilot event before general rollout
+  - deployment gates between phases:
+    - steps 1-3 (schema + helpers + RPCs): `npm test`,
+      `npm run test:functions`, and `deno check --no-lock` on any touched
+      function file must pass; a migration-reversal dry run against a
+      Supabase branch project must succeed before merge to `main`
+    - step 5 (Edge Functions): `deno check --no-lock` on each new handler
+      must pass; the new RPC paths must be exercised by function tests
+      against the branch project
+    - step 6 (frontend): `npm run lint`, `npm run build:web`, and a
+      Playwright mobile-viewport smoke covering agent lookup, redeem,
+      reverse, and attendee status must pass
+    - step 7 (role seeding): the runbook PR must be reviewed by `@kcrobinson`
+      before apply
+  - rollback strategy for schema + RPC changes:
+    - schema: all redemption columns are nullable/defaulted additions, so a
+      rollback leaves existing `raffle_entitlements` rows valid; if the
+      columns must be removed, a follow-up migration drops them in the
+      reverse order and drops the `(event_id, redeemed_at DESC NULLS LAST)`
+      monitoring index added in step 1. The per-event 4-digit uniqueness
+      constraint is owned by the prerequisite feature and is out of scope
+      for this rollback plan
+    - RPCs: rollback replaces the `redeem_*` and `reverse_*` RPC bodies with
+      a safe-error no-op (`raise exception 'redemption not enabled'`) rather
+      than dropping them, so the Edge Functions never 500 on a missing
+      function; once clients have been redeployed off the redemption paths,
+      a final drop migration may remove them
+    - role-assignment tables: on rollback, truncate the assignment rows
+      first so no role is silently left active; keep the table definitions
+      unless a follow-up explicitly drops them
+    - Edge Functions: redeploy the prior version from git history; the
+      wrapper functions are additive and do not alter existing function
+      contracts
+    - frontend: revert the route components or hide them behind the same
+      unadvertised entry used in step 6; direct navigation to
+      `/event/:slug/redeem` and `/event/:slug/redemptions` should render a
+      not-available state rather than a broken page during rollback
+    - no destructive data migration: redemption history captured in the
+      inline columns is preserved across both rollout and rollback
 - Needs decision:
-  - backward-compatible migration order and deployment gates
-  - rollback strategy for schema + RPC changes
+  - none
 - Owner:
-  - `TBD`
+  - `@kcrobinson`
 
 ## Suggested Next Step
 
