@@ -37,10 +37,10 @@ Today the repo implements:
 
 - a demo-overview landing page at `/`
 - published attendee quiz routes at `/game/:slug`
-- backend-verified completion with one raffle entitlement per event/session pair
+- backend-verified completion with one entitlement per event/session pair
 - shared quiz correctness, validation, and scoring logic
 - an organizer-facing admin workspace at `/admin` for drafting, editing, publishing, and unpublishing events
-- `quiz_starts` table and session-issuance write so analytics has the funnel denominator (starts → completions → raffle entries) before the first live event
+- `game_starts` table and session-issuance write so analytics has the funnel denominator (starts → completions → entitlements) before the first live event
 
 What remains as future product work:
 

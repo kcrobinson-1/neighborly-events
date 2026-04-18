@@ -29,10 +29,10 @@ The current implementation is:
 - a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
 - private authoring draft and admin-allowlist tables protected by RLS
-- a shared TypeScript domain module for quiz runtime shape, mapping, validation, and scoring
+- a shared TypeScript domain module for game runtime shape, mapping, validation, and scoring
 - Supabase edge functions for session bootstrap, trusted completion, and
   authenticated authoring transitions
-- Supabase SQL migrations that store published content, record completion attempts, and award one raffle entitlement per event/session pair
+- Supabase SQL migrations that store published content, record completion attempts, and award one game entitlement per event/session pair
 - local browser state during quiz play, with the backend owning the final verification result
 
 The core architectural principle already embodied in the code is:
@@ -50,7 +50,7 @@ Keep the quiz interaction local and fast, but make the completion state backend-
 - `supabase/functions`
   Edge functions for session bootstrap and trusted completion.
 - `supabase/migrations`
-  SQL schema, tables, and RPC logic for quiz completion and raffle entitlement behavior.
+  SQL schema, tables, and RPC logic for game completion and entitlement behavior.
 - `docs`
   Product, UX, architecture, and development documentation.
 
@@ -80,24 +80,24 @@ grouped into a dedicated `apps/web/src/game/` module:
   the quiz hook, and renders quiz panels from the game module.
 - `apps/web/src/pages/NotFoundPage.tsx`
   Fallback route.
-- `apps/web/src/game/useQuizSession.ts`
-  Public quiz-session hook that coordinates reducer state, derived selectors,
+- `apps/web/src/game/useGameSession.ts`
+  Public game-session hook that coordinates reducer state, derived selectors,
   and completion submission.
-- `apps/web/src/game/quizSessionState.ts`
-  Internal pure reducer/state-machine logic for quiz progression and completion.
-- `apps/web/src/game/quizSessionSelectors.ts`
-  Internal pure derived-state selectors for React-facing quiz view state.
-- `apps/web/src/game/quizUtils.ts`
-  Public quiz-specific selection, label, and feedback helpers.
+- `apps/web/src/game/gameSessionState.ts`
+  Internal pure reducer/state-machine logic for game progression and completion.
+- `apps/web/src/game/gameSessionSelectors.ts`
+  Internal pure derived-state selectors for React-facing game view state.
+- `apps/web/src/game/gameUtils.ts`
+  Public game-specific selection, label, and feedback helpers.
 - `apps/web/src/game/components/`
   Quiz-specific intro, question, feedback, and completion panels extracted from
   the route shell.
-- `apps/web/src/lib/quizApi.ts`
+- `apps/web/src/lib/gameApi.ts`
   Client-side session bootstrap and completion submission logic, including the local-development fallback.
-- `apps/web/src/lib/adminQuizApi.ts`
+- `apps/web/src/lib/adminGameApi.ts`
   Browser auth, admin-status RPC, private draft reads, and authenticated
   authoring function calls.
-- `apps/web/src/lib/quizContentApi.ts`
+- `apps/web/src/lib/gameContentApi.ts`
   Browser reads for published event summaries and route content.
 - `apps/web/src/lib/supabaseBrowser.ts`
   Shared browser-side Supabase env, auth-header, and error helpers used by
@@ -108,10 +108,10 @@ grouped into a dedicated `apps/web/src/game/` module:
   Admin-session and dashboard hooks plus presentational components for
   magic-link sign-in, status states, the event workspace, and selected draft
   event routes under `/admin`.
-- `apps/web/src/types/quiz.ts`
+- `apps/web/src/types/game.ts`
   Client-side types for completion payloads and results.
 - `apps/web/src/data/games.ts`
-  Re-export layer for shared quiz definitions.
+  Re-export layer for shared game definitions.
 - `apps/web/src/styles.scss`
   Frontend styling entrypoint.
 - `apps/web/src/styles/`
@@ -130,15 +130,15 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
 
 Together they contain:
 
-- shared quiz domain types
+- shared game domain types
 - DB-row mapping into `GameConfig`
 - answer normalization
 - scoring
 - submitted-answer validation
 - explicit sample fixtures for tests and the local-only prototype fallback
 
-Published quiz content now lives in Supabase, but this shared layer is still
-the source of truth for the in-memory quiz model and quiz correctness once that
+Published game content now lives in Supabase, but this shared layer is still
+the source of truth for the in-memory game model and game correctness once that
 content has been loaded.
 
 ### Backend Structure
@@ -148,12 +148,12 @@ The Supabase side is intentionally small:
 - `supabase/functions/issue-session/index.ts`
   Creates or reuses the signed browser session credential. When an `event_id`
   is present in the POST body, also fires a best-effort upsert into
-  `quiz_starts` to record the funnel denominator for analytics.
-- `supabase/functions/complete-quiz/index.ts`
+  `game_starts` to record the funnel denominator for analytics.
+- `supabase/functions/complete-game/index.ts`
   Orchestrates trusted completion requests: origin and method gates, session
   verification, published content loading, shared validation and scoring, and
   final response mapping.
-- `supabase/functions/complete-quiz/`
+- `supabase/functions/complete-game/`
   Local helper modules for completion payload parsing, JSON responses,
   dependency wiring, and service-role RPC persistence used by the handler and
   function tests.
@@ -167,7 +167,7 @@ The Supabase side is intentionally small:
   Authenticated admin endpoint that hides a live event without deleting draft or
   version history.
 - `supabase/functions/_shared/admin-auth.ts`
-  Shared Supabase Auth JWT and quiz-admin allowlist verification for authoring
+  Shared Supabase Auth JWT and admin allowlist verification for authoring
   endpoints.
 - `supabase/functions/_shared/authoring-http.ts`
   Shared CORS, method, configuration, admin-auth, and JSON response handling
@@ -180,7 +180,7 @@ The Supabase side is intentionally small:
 - `supabase/functions/_shared/session-cookie.ts`
   Session signing and verification helpers shared by both the cookie and header-fallback path.
 - `supabase/migrations/20260403120000_complete_quiz_entitlements.sql`
-  Database objects that store completion attempts and ensure only one raffle entitlement is granted per event/session pair.
+  Database objects that store completion attempts and ensure only one game entitlement is granted per event/session pair.
 - `supabase/migrations/20260405171549_fix_verification_code_pgcrypto_search_path.sql`
   Fixes the pgcrypto search path used for verification code generation.
 - `supabase/migrations/20260405175756_harden_completion_backend.sql`
@@ -192,10 +192,10 @@ The Supabase side is intentionally small:
   Private draft and version tables plus backfill from the current published
   demo events.
 - `supabase/migrations/20260407103000_add_quiz_authoring_auth.sql`
-  Admin allowlist table, admin-status RPC, authoring RLS policies, and draft
-  audit stamping.
+  Admin allowlist table (`admin_users`), admin-status RPC (`is_admin()`),
+  authoring RLS policies, and draft audit stamping.
 - `supabase/migrations/20260410170000_add_quiz_authoring_publish_workflow.sql`
-  Authoring audit log plus service-role publish and unpublish RPCs that update
+  Game event audit log plus service-role publish and unpublish RPCs that update
   the public runtime projection transactionally.
 - `supabase/migrations/20260415000000_add_quiz_event_draft_slug_lock_trigger.sql`
   Database trigger that enforces slug immutability once an event is first
@@ -203,17 +203,17 @@ The Supabase side is intentionally small:
   publish can bypass the check; the application layer also validates this
   before upserting, but the trigger is the authoritative enforcement point.
 - `supabase/migrations/20260415010000_make_sponsor_nullable.sql`
-  Drops the `NOT NULL` constraint on `quiz_questions.sponsor` so unsponsored
+  Drops the `NOT NULL` constraint on `game_questions.sponsor` so unsponsored
   house questions can be modeled correctly. Required before analytics views
   can distinguish sponsored from unsponsored questions.
 - `supabase/migrations/20260416000000_add_quiz_starts.sql`
-  Adds the `quiz_starts` table (`event_id`, `client_session_id`, `issued_at`)
+  Adds the `game_starts` table (`event_id`, `client_session_id`, `issued_at`)
   with a unique constraint on `(event_id, client_session_id)` for idempotent
   inserts. RLS enabled; analytics-only, accessed via service role. Provides
-  the funnel denominator (starts → completions → raffle entries) that is
+  the funnel denominator (starts → completions → entitlements) that is
   permanently unrecoverable without this table in place before an event runs.
 - `supabase/migrations/20260416010000_add_quiz_starts_event_fk.sql`
-  Adds a foreign key from `quiz_starts.event_id` to `quiz_events(id) ON DELETE
+  Adds a foreign key from `game_starts.event_id` to `game_events(id) ON DELETE
   CASCADE`. Enforces referential integrity so `issue-session` cannot record
   start rows for nonexistent event IDs (which would pollute analytics), and
   ensures start rows are cleaned up if an event is hard-deleted.
@@ -222,7 +222,7 @@ The Supabase side is intentionally small:
 
 ### Database-backed published content with shared runtime logic
 
-Published event, question, and option records now live in Supabase.
+Published game event, question, and option records now live in Supabase.
 
 Those rows are mapped into the shared `GameConfig` runtime shape before either
 the browser or backend uses them.
@@ -241,11 +241,11 @@ That means:
 
 The backend issues a signed browser session through `issue-session`.
 
-That credential is then used by `complete-quiz` to:
+That credential is then used by `complete-game` to:
 
 - associate completions with a backend-controlled browser session
 - avoid trusting a client-generated session identifier
-- allow repeat completions without minting repeat raffle entitlements
+- allow repeat completions without minting repeat game entitlements
 
 The preferred transport is still a secure cookie, but the frontend also stores the signed session token fallback and sends it explicitly when browsers refuse cross-site cookie round-trips.
 
@@ -270,7 +270,7 @@ The current shared game model and frontend support more than one quiz behavior:
 - `final_score_reveal`
 - `instant_feedback_required`
 
-This capability is implemented in both the shared config model and the `useQuizSession` reducer flow.
+This capability is implemented in both the shared config model and the `useGameSession` reducer flow.
 
 ### Admin event workspace for authoring access
 
@@ -279,7 +279,7 @@ The web app now includes a dedicated `/admin` route.
 Today that route:
 
 - signs admins in with Supabase Auth magic links
-- checks a private email allowlist through `public.is_quiz_admin()`
+- checks a private email allowlist through `public.is_admin()`
 - shows an event-centered workspace for private draft events visible to
   allowlisted admins
 - supports direct event selection under `/admin/events/:eventId`
@@ -307,7 +307,7 @@ surface owns validation and persistence:
   and option tables through one database transaction
 - `unpublish-event` clears the public event's `published_at` value while
   preserving private draft and version history
-- `quiz_event_audit_log` records publish and unpublish transitions
+- `game_event_audit_log` records publish and unpublish transitions
 
 The current scope still stops short of a preview route or AI authoring UI.
 
@@ -325,14 +325,14 @@ The current system works like this:
    edge function with the `event_id` in the request body.
 6. Supabase returns a signed browser session credential and attempts to set the
    secure session cookie. As a best-effort side effect, it upserts a row into
-   `quiz_starts` so the event has a permanent record of this session starting.
+   `game_starts` so the event has a permanent record of this session starting.
 7. The player completes the quiz entirely in local browser state.
 8. At the end, the browser submits answers, duration, event id, and request id
-   to `complete-quiz`.
+   to `complete-game`.
 9. The backend verifies the signed session credential, reloads the canonical
    published event by `eventId`, validates answers against the shared
    `game-config` runtime model, recomputes score, and executes the database RPC.
-10. The RPC records the completion attempt, creates or reuses the raffle
+10. The RPC records the completion attempt, creates or reuses the game
     entitlement, and returns the official verification data.
 11. The frontend renders the completion screen using that trusted response.
 
@@ -345,30 +345,30 @@ The current implementation uses:
 - `issue-session`
   Prepares the signed browser session credential used as the trust boundary
   for the no-login MVP. When `event_id` is present in the request body, also
-  writes a best-effort start row to `quiz_starts` for analytics. A DB failure
+  writes a best-effort start row to `game_starts` for analytics. A DB failure
   on the start write does not prevent the session response from returning —
   session issuance is the trust boundary; analytics is observability.
-- `complete-quiz`
+- `complete-game`
   Owns final validation, scoring, dedupe, and verification-code return.
-- direct PostgREST reads for published `quiz_events`, `quiz_questions`, and
-  `quiz_question_options`
+- direct PostgREST reads for published `game_events`, `game_questions`, and
+  `game_question_options`
   The browser uses the publishable key plus RLS-filtered reads for public event
   content, while the backend uses the same tables through the service-role key.
-- direct authenticated PostgREST reads for private `quiz_event_drafts`
+- direct authenticated PostgREST reads for private `game_event_drafts`
   The admin shell loads draft summaries through the authenticated browser
   session plus RLS.
 - `save-draft`
-  Authenticates the Supabase user, checks the quiz-admin allowlist, validates
+  Authenticates the Supabase user, checks the admin allowlist, validates
   canonical draft content, and writes private draft rows with service-role
   privileges.
 - `publish-draft`
-  Authenticates an admin, revalidates the draft through shared quiz logic, and
-  calls `public.publish_quiz_event_draft(...)` to update live public content in
+  Authenticates an admin, revalidates the draft through shared game logic, and
+  calls `public.publish_game_event_draft(...)` to update live public content in
   one transaction.
 - `unpublish-event`
-  Authenticates an admin and calls `public.unpublish_quiz_event(...)` to hide a
+  Authenticates an admin and calls `public.unpublish_game_event(...)` to hide a
   live event without deleting authoring history.
-- `public.is_quiz_admin()`
+- `public.is_admin()`
   Security-definer SQL helper that turns the current authenticated email/user
   context into one shared allowlist decision for both the admin UI and RLS.
 
@@ -399,11 +399,11 @@ Supabase currently owns:
 - private authoring drafts, immutable versions, and audit rows
 - draft save, publish, and unpublish transitions
 - signed browser-session trust
-- quiz start records (`quiz_starts`) for analytics funnel tracking
+- game start records (`game_starts`) for analytics funnel tracking
 - final answer validation
 - trusted score calculation
 - completion attempt persistence
-- raffle entitlement dedupe
+- game entitlement dedupe
 - verification code return
 
 ## Current Deployment Shape
@@ -418,7 +418,7 @@ Those services have distinct roles:
 
 - `Vite` is not a hosting platform. It is the frontend build tool and local dev server.
 - `Vercel` is not the backend of record. It serves the built SPA and handles route rewrites for browser navigation.
-- `Supabase` is not rendering the quiz UI. It stores data and runs the trusted completion/session logic.
+- `Supabase` is not rendering the game UI. It stores data and runs the trusted completion/session logic.
 
 In this repo, [apps/web/vercel.json](../apps/web/vercel.json) rewrites `/admin`
 and `/game/:path*` to `index.html` so the SPA can resolve those URLs in the
@@ -450,9 +450,9 @@ option edit, publish, and unpublish. The deferred capabilities are:
 
 ### Analytics and reporting
 
-The backend now persists both quiz start records (`quiz_starts`) and trusted
-completion data (`quiz_completions`, `raffle_entitlements`). This gives the
-full funnel: starts → completions → raffle entries.
+The backend now persists both game start records (`game_starts`) and trusted
+completion data (`game_completions`, `game_entitlements`). This gives the
+full funnel: starts → completions → entitlements.
 
 What is still missing:
 
@@ -474,7 +474,7 @@ What is missing for live operation:
 Today, the trust boundary is:
 
 - signed browser session credential
-- one raffle entitlement per event/session pair
+- one game entitlement per event/session pair
 
 What is not yet implemented:
 

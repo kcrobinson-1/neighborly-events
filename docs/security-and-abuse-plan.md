@@ -124,7 +124,7 @@ This limitation is an explicit MVP tradeoff and is tracked here.
 
 Minimum controls to add/verify during MVP hardening:
 
-1. endpoint-level rate limits on issue-session, complete-quiz, redeem, reverse
+1. endpoint-level rate limits on issue-session, complete-game, redeem, reverse
 2. abuse-observability queries/runbook for entitlement spikes and repeated
    failed lookup bursts
 3. explicit incident response notes for live event operators (who checks what,

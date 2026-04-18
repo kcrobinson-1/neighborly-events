@@ -34,13 +34,13 @@ This is explicitly not a goal: building a complex, always-on analytics platform.
 
 Before adding anything, the current schema provides a meaningful foundation.
 
-The `quiz_completions` table records `event_id`, `client_session_id`, `score`, `duration_ms`, `submitted_answers` (as JSONB), `attempt_number`, `entitlement_awarded`, and `completed_at`. This is enough to compute completion counts, score distributions, median completion times, and retake rates per event.
+The `game_completions` table records `event_id`, `client_session_id`, `score`, `duration_ms`, `submitted_answers` (as JSONB), `attempt_number`, `entitlement_awarded`, and `completed_at`. This is enough to compute completion counts, score distributions, median completion times, and retake rates per event.
 
-The `submitted_answers` JSONB column stores a `Record<string, string[]>` — an object keyed by question ID with sorted arrays of selected option IDs (e.g., `{"q1": ["a"], "q2": ["b", "c"]}`). Because the keys match `quiz_questions.id` directly, per-question answer distributions are queryable via `jsonb_each` without a schema change. These queries are non-trivial and should be written and tested against the existing demo data before the first live event, not after.
+The `submitted_answers` JSONB column stores a `Record<string, string[]>` — an object keyed by question ID with sorted arrays of selected option IDs (e.g., `{"q1": ["a"], "q2": ["b", "c"]}`). Because the keys match `game_questions.id` directly, per-question answer distributions are queryable via `jsonb_each` without a schema change. These queries are non-trivial and should be written and tested against the existing demo data before the first live event, not after.
 
-The `raffle_entitlements` table records one entry per unique session, with `created_at` on the first entitlement. Counting distinct entitlements per event gives unique participant counts.
+The `game_entitlements` table records one entry per unique session, with `created_at` on the first entitlement. Counting distinct entitlements per event gives unique participant counts.
 
-The `quiz_events`, `quiz_questions`, and `quiz_question_options` tables contain the published content structure — sponsor attribution, question count, and answer options — needed to join behavioral data back to the authored experience.
+The `game_events`, `game_questions`, and `game_question_options` tables contain the published content structure — sponsor attribution, question count, and answer options — needed to join behavioral data back to the authored experience.
 
 **What is currently missing:** There is no record of session starts — how many people called `issue-session` but never completed the quiz. This is the only analytics gap that is unrecoverable after the fact. Everything else (scores, times, answer distributions, retake rates) is already captured at completion. Start tracking must be in place before the first live event.
 
@@ -50,9 +50,9 @@ The `quiz_events`, `quiz_questions`, and `quiz_question_options` tables contain 
 
 Two schema issues had to be resolved before the analytics views can be written correctly. Both are now landed.
 
-**`quiz_starts` table** — Added via `20260416000000_add_quiz_starts.sql`. The table exists; `issue-session` inserts into it when `event_id` is provided. Must be applied to production before the first live event.
+**`game_starts` table** — Added via `20260416000000_add_game_starts.sql`. The table exists; `issue-session` inserts into it when `event_id` is provided. Must be applied to production before the first live event.
 
-**`sponsor` nullable on `quiz_questions`** — Resolved via `20260415010000_make_sponsor_nullable.sql`. Analytics queries can now correctly distinguish sponsored from unsponsored questions.
+**`sponsor` nullable on `game_questions`** — Resolved via `20260415010000_make_sponsor_nullable.sql`. Analytics queries can now correctly distinguish sponsored from unsponsored questions.
 
 ---
 
@@ -66,11 +66,11 @@ This is the right first move because the data already exists. No new instrumenta
 
 ### Approach 2 — Session Start Tracking (One Migration, Pre-Event Requirement)
 
-Add a `quiz_starts` table and insert a row from the `issue-session` edge function each time a session is issued. This creates the denominator for a true funnel: starts → completions → raffle entries. The table needs only `event_id`, `client_session_id`, and `issued_at`.
+Add a `game_starts` table and insert a row from the `issue-session` edge function each time a session is issued. This creates the denominator for a true funnel: starts → completions → entitlements. The table needs only `event_id`, `client_session_id`, and `issued_at`.
 
 This is the most impactful single addition relative to its implementation cost, and it is the only analytics item that is a hard pre-event dependency rather than a post-MVP enhancement. It is tracked as a Tier 1 backlog item for that reason.
 
-**Note on the fuller attempt model:** A more complete design would have `issue-session` create a first-class attempt record that `complete-quiz` then closes, giving the completion a natural parent and enabling server-side timing. That model is architecturally cleaner but requires the completion flow to change (the client would need to carry an attempt ID, and retakes would need a new attempt row rather than reusing the session). The simple `quiz_starts` table delivers the funnel denominator with no changes to the completion path. The fuller model is the right direction for a future iteration if server-side timing, progress recovery, or richer per-attempt metadata becomes a need.
+**Note on the fuller attempt model:** A more complete design would have `issue-session` create a first-class attempt record that `complete-game` then closes, giving the completion a natural parent and enabling server-side timing. That model is architecturally cleaner but requires the completion flow to change (the client would need to carry an attempt ID, and retakes would need a new attempt row rather than reusing the session). The simple `game_starts` table delivers the funnel denominator with no changes to the completion path. The fuller model is the right direction for a future iteration if server-side timing, progress recovery, or richer per-attempt metadata becomes a need.
 
 ### Approach 3 — Frontend Event Instrumentation
 
@@ -90,9 +90,9 @@ This is valuable for quiz design iteration but not urgent for the first event. T
 
 The SQL views need to make explicit, documented choices about what they are counting. Two distinct counts are useful and mean different things.
 
-**Unique participants** — the count of distinct `client_session_id` values per event in `raffle_entitlements`, or equivalently in `quiz_starts`. This represents how many people engaged with the quiz, regardless of retakes. It is the right number for organizer reporting and sponsor engagement claims.
+**Unique participants** — the count of distinct `client_session_id` values per event in `game_entitlements`, or equivalently in `game_starts`. This represents how many people engaged with the quiz, regardless of retakes. It is the right number for organizer reporting and sponsor engagement claims.
 
-**Total plays** — the count of rows in `quiz_completions` per event. This is higher than unique participants on any event where retakes occurred. It is useful for product health signals (is the retake rate normal?) but should not be presented to sponsors as the participation count.
+**Total plays** — the count of rows in `game_completions` per event. This is higher than unique participants on any event where retakes occurred. It is useful for product health signals (is the retake rate normal?) but should not be presented to sponsors as the participation count.
 
 Any view that computes sponsor engagement should use unique participants, not total plays. A sponsor's question was engaged by the person, not by each of their attempts.
 
@@ -100,11 +100,11 @@ Any view that computes sponsor engagement should use unique participants, not to
 
 ## Sponsor Engagement Is Completion Count
 
-Because the `complete-quiz` validation requires an answer to every question before the completion is accepted, every completion necessarily includes every question. This means sponsor question engagement always equals completion count for the current quiz model — it is not an independent or richer signal.
+Because the `complete-game` validation requires an answer to every question before the completion is accepted, every completion necessarily includes every question. This means sponsor question engagement always equals completion count for the current game model — it is not an independent or richer signal.
 
-For the first sponsor conversation, this is fine and is the honest thing to report: "X people completed the quiz and therefore saw and answered your question." The dashboard should not imply question-level engagement is a deeper funnel stage than it actually is.
+For the first sponsor conversation, this is fine and is the honest thing to report: "X people completed the game and therefore saw and answered your question." The dashboard should not imply question-level engagement is a deeper funnel stage than it actually is.
 
-This will change if the quiz ever supports optional questions, early-exit paths, or a question-skip affordance. Until then, per-question engagement metrics are per-question answer distributions (which answer did most people select?) rather than reach counts.
+This will change if the game ever supports optional questions, early-exit paths, or a question-skip affordance. Until then, per-question engagement metrics are per-question answer distributions (which answer did most people select?) rather than reach counts.
 
 ---
 
@@ -114,7 +114,7 @@ Evaluate each approach against four criteria.
 
 **Value per stakeholder.** Does this approach produce something an organizer, sponsor, or the product team can act on? SQL views on existing data immediately answer the organizer's "did it work" question. Session start tracking immediately answers the funnel question. Frontend instrumentation answers the design iteration question but is lower priority for the first event.
 
-**Implementation cost.** Prefer approaches that build on what already exists. SQL views cost almost nothing. A `quiz_starts` table and one insert call in `issue-session` costs an afternoon. A full frontend instrumentation pipeline with a third-party SDK costs a week or more.
+**Implementation cost.** Prefer approaches that build on what already exists. SQL views cost almost nothing. A `game_starts` table and one insert call in `issue-session` costs an afternoon. A full frontend instrumentation pipeline with a third-party SDK costs a week or more.
 
 **Privacy footprint.** The product currently has no user logins for attendees and sends no personally identifiable data to third parties. Any analytics approach that changes this needs to be evaluated against the product's zero-friction principle and may require a cookie or privacy notice on the QR-code-entry path — which is a user experience cost at live events.
 
@@ -132,7 +132,7 @@ Evaluate each approach against four criteria.
 
 **Test JSONB queries against demo data before the event.** The per-question answer distribution queries use `jsonb_each` and `jsonb_array_elements_text` against `submitted_answers`. These are non-trivial and should be validated against the existing demo event completions before the first live event, not discovered to be wrong afterward.
 
-**Separate behavioral data from content data.** Do not mix analytics rows into the published content tables. Keep `quiz_completions`, `quiz_starts`, and any future behavioral tables as a distinct analytics schema layer. This makes it easy to query, prune, or export analytics data independently.
+**Separate behavioral data from content data.** Do not mix analytics rows into the published content tables. Keep `game_completions`, `game_starts`, and any future behavioral tables as a distinct analytics schema layer. This makes it easy to query, prune, or export analytics data independently.
 
 **Be explicit about what is measured and what is not.** Document what the analytics layer does not capture. If mid-quiz abandonment is not tracked, say so. This prevents the team from over-interpreting completion rate data that is actually missing the drop-off numerator.
 
@@ -151,7 +151,7 @@ This is the right choice for:
 - Post-event summary metrics (completions, scores, timing)
 - Per-event organizer reports
 - Sponsor engagement counts per question
-- Anything that can be computed from `quiz_completions`, `quiz_starts`, and `quiz_events`
+- Anything that can be computed from `game_completions`, `game_starts`, and `game_events`
 
 ### When PostHog is the Right Third-Party Tool
 
@@ -203,18 +203,18 @@ Two phases are the right structure. They cannot be collapsed into one because th
 
 ### Phase 1 — Data Collection (Pre-Event) ✓ Complete
 
-`quiz_starts` table added via migration `20260416000000_add_quiz_starts.sql`.
+`game_starts` table added via migration `20260416000000_add_game_starts.sql`.
 `issue-session` now accepts an optional `event_id` in the POST body and fires
-a best-effort upsert (idempotent via unique constraint) into `quiz_starts`.
+a best-effort upsert (idempotent via unique constraint) into `game_starts`.
 `GamePage` passes `game.id` to `ensureServerSession` at the call site.
 The `sponsor` nullable migration (`20260415010000_make_sponsor_nullable.sql`)
 landed in the preceding PR.
 
 Both migrations must be applied to the production Supabase project before the
-first live event. The `quiz_starts` migration is a hard pre-event dependency:
+first live event. The `game_starts` migration is a hard pre-event dependency:
 start data is permanently unrecoverable for any event that runs without it.
 
-**Demonstrable outcome:** After the first live event runs, a Supabase Studio query returns a complete funnel row — starts, completions, and raffle entries — for that event. The data exists and is correct. Engineering can verify this immediately after the event closes.
+**Demonstrable outcome:** After the first live event runs, a Supabase Studio query returns a complete funnel row — starts, completions, and entitlements — for that event. The data exists and is correct. Engineering can verify this immediately after the event closes.
 
 ### Phase 2 — Organizer Reporting Surface (Post-First-Event)
 
@@ -234,11 +234,11 @@ Phase 1 is two pull requests. They cannot be combined because they require diffe
 
 ### PR 1 — Make `sponsor` nullable
 
-**Why:** The `quiz_questions.sponsor` column is currently `NOT NULL`, which prevents modeling unsponsored house questions. This is a prerequisite for analytics views that need to correctly distinguish sponsored from unsponsored questions. It is also a standalone data model correctness fix.
+**Why:** The `game_questions.sponsor` column is currently `NOT NULL`, which prevents modeling unsponsored house questions. This is a prerequisite for analytics views that need to correctly distinguish sponsored from unsponsored questions. It is also a standalone data model correctness fix.
 
 **Files:**
 
-- `supabase/migrations/` — new migration: `ALTER TABLE public.quiz_questions ALTER COLUMN sponsor DROP NOT NULL`
+- `supabase/migrations/` — new migration: `ALTER TABLE public.game_questions ALTER COLUMN sponsor DROP NOT NULL`
 - `shared/game-config/types.ts` — change `sponsor: string` to `sponsor: string | null` on the `Question` type; the TypeScript compiler will surface every downstream call site that needs updating
 - `shared/game-config/db-content.ts` — update the sponsor type annotation in the DB row type
 - `shared/game-config/draft-content.ts` — update the sponsor field validation to accept null/undefined in addition to a string; update the type annotation
@@ -248,19 +248,19 @@ Phase 1 is two pull requests. They cannot be combined because they require diffe
 - `apps/web/src/game/components/GameCompletionPanel.tsx` — null guard on any sponsor label
 - `supabase/functions/_shared/published-game-loader.ts` — the sponsor field is selected and mapped; update the type to allow null
 
-**Validation:** `npm run lint`, `npm test`, `npm run test:functions`, `deno check` on `issue-session` and `complete-quiz`, `npm run build:web`. The type change on `Question.sponsor` will cause compiler errors at every unguarded call site, so the build itself enforces completeness.
+**Validation:** `npm run lint`, `npm test`, `npm run test:functions`, `deno check` on `issue-session` and `complete-game`, `npm run build:web`. The type change on `Question.sponsor` will cause compiler errors at every unguarded call site, so the build itself enforces completeness.
 
 ---
 
-### PR 2 — Add quiz start tracking
+### PR 2 — Add game start tracking
 
-**Why:** `issue-session` currently mints a signed session credential but writes nothing to the database. Adding a single INSERT into a new `quiz_starts` table provides the funnel denominator — how many people started the quiz — which is permanently unrecoverable for any event that runs without this in place.
+**Why:** `issue-session` currently mints a signed session credential but writes nothing to the database. Adding a single INSERT into a new `game_starts` table provides the funnel denominator — how many people started the quiz — which is permanently unrecoverable for any event that runs without this in place.
 
 **Files:**
 
-- `supabase/migrations/` — new migration adding a `quiz_starts` table with columns `id uuid`, `event_id text`, `client_session_id text not null`, `issued_at timestamptz not null default now()`, and a unique constraint on `(event_id, client_session_id)`. RLS enabled; no public read policy needed at this stage since the table is analytics-only.
-- `supabase/functions/issue-session/index.ts` — accept an optional `event_id` field in the POST body. After a session is confirmed (new or existing), if `event_id` is present, INSERT into `quiz_starts` with `ON CONFLICT DO NOTHING` for idempotency. The INSERT must be best-effort: a database failure must not prevent the session response from returning. The function gains `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as new runtime dependencies; add them to `IssueSessionHandlerDependencies` following the same pattern as `complete-quiz`.
-- `apps/web/src/lib/quizApi.ts` — update `ensureServerSession()` to accept an optional `eventId` parameter and include it in the POST body when provided.
+- `supabase/migrations/` — new migration adding a `game_starts` table with columns `id uuid`, `event_id text`, `client_session_id text not null`, `issued_at timestamptz not null default now()`, and a unique constraint on `(event_id, client_session_id)`. RLS enabled; no public read policy needed at this stage since the table is analytics-only.
+- `supabase/functions/issue-session/index.ts` — accept an optional `event_id` field in the POST body. After a session is confirmed (new or existing), if `event_id` is present, INSERT into `game_starts` with `ON CONFLICT DO NOTHING` for idempotency. The INSERT must be best-effort: a database failure must not prevent the session response from returning. The function gains `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as new runtime dependencies; add them to `IssueSessionHandlerDependencies` following the same pattern as `complete-game`.
+- `apps/web/src/lib/gameApi.ts` — update `ensureServerSession()` to accept an optional `eventId` parameter and include it in the POST body when provided.
 - `apps/web/src/pages/GamePage.tsx` — pass `game.id` to `ensureServerSession(game.id)` at the existing call site.
 - `tests/supabase/functions/issue-session.test.ts` — add cases covering: start row is inserted when `event_id` is provided, a second call for the same event/session pair is idempotent, and a missing `event_id` leaves the starts table untouched.
 
@@ -275,5 +275,5 @@ Phase 1 is two pull requests. They cannot be combined because they require diffe
 
 - **Which event metrics are required first:** starts and completions, with completion rate as the primary derived metric. Timing and score distribution are secondary. Sponsor question engagement is the key third-party-facing metric.
 - **What proof of value sponsors need:** unique completion count for the event plus the answer distribution for their attributed question. A simple post-event summary satisfies the first sponsor conversation.
-- **Simple starts table vs. fuller attempt model:** Use the simple `quiz_starts` table now. The fuller model where `issue-session` creates a first-class attempt record that `complete-quiz` closes is the right long-term direction but is deferred until server-side timing or progress recovery becomes a real need.
-- **Whether a post-hoc SQL query is sufficient for Madrona:** Yes, for the views. No, for starts tracking. The SQL views can be written and run after the event against completion data. The `quiz_starts` table must exist before the event or that data is gone permanently.
+- **Simple starts table vs. fuller attempt model:** Use the simple `game_starts` table now. The fuller model where `issue-session` creates a first-class attempt record that `complete-game` closes is the right long-term direction but is deferred until server-side timing or progress recovery becomes a real need.
+- **Whether a post-hoc SQL query is sufficient for Madrona:** Yes, for the views. No, for starts tracking. The SQL views can be written and run after the event against completion data. The `game_starts` table must exist before the event or that data is gone permanently.

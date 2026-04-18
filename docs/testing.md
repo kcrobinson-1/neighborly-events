@@ -29,7 +29,7 @@ Today the repo validation surface includes:
 - `npm run test:supabase`
 - `npm run build:web`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
-- `deno check --no-lock supabase/functions/complete-quiz/index.ts`
+- `deno check --no-lock supabase/functions/complete-game/index.ts`
 - `deno check --no-lock supabase/functions/save-draft/index.ts`
 - `deno check --no-lock supabase/functions/publish-draft/index.ts`
 - `deno check --no-lock supabase/functions/unpublish-event/index.ts`
@@ -47,7 +47,7 @@ Use this table to pick the smallest useful command for your change.
 | --- | --- | --- | --- | --- |
 | Fast static + unit confidence | `npm run lint` and `npm test` | TypeScript/frontend/shared-domain/unit behavior and linting | Real Supabase stack, browser e2e, production behavior | Almost every PR |
 | Edge Function request/helper logic | `npm run test:functions` | Deno-level function helper and handler behavior | Real Supabase runtime wiring and DB/RPC integration | Edge Function logic changes |
-| Trust-path backend integration | `npm run test:supabase` | Local Supabase stack, function integration (`issue-session` + `complete-quiz`), pgTAP DB checks | Browser/admin UX path, production deployment wiring | Backend trust/data/auth changes |
+| Trust-path backend integration | `npm run test:supabase` | Local Supabase stack, function integration (`issue-session` + `complete-game`), pgTAP DB checks | Browser/admin UX path, production deployment wiring | Backend trust/data/auth changes |
 | Attendee browser smoke (fallback mode) | `npm run test:e2e` | Mobile browser smoke for attendee route flow with explicit prototype fallback mode | Trusted backend persistence assertions, admin flows | Attendee UX/route-shell changes |
 | Attendee browser smoke (trusted backend) | `npm run test:e2e:attendee:trusted-backend` | Mobile attendee flow against local Supabase + local functions runtime, with assertions for success persistence, malformed-submission non-persistence, and session-bootstrap failure messaging | PR CI wiring, production deployment behavior, admin flows | Attendee trust-path smoke updates and backend completion-path confidence checks |
 | Admin local e2e | `npm run test:e2e:admin` | Real local Supabase-backed `/admin` auth/allowlist/save/publish/unpublish flow | Deployed production auth redirect and production infrastructure wiring | Admin auth/authoring/publish or related UI changes |
@@ -86,7 +86,7 @@ The trust-path validation layer landed in four steps:
 
 1. Add Deno unit coverage for the shared Edge Function trust helpers.
 2. Refactor the Edge Function entrypoints just enough to make request handling directly testable without depending on `Deno.serve` side effects.
-3. Add Deno handler tests for the important request and response behavior of `issue-session` and `complete-quiz`.
+3. Add Deno handler tests for the important request and response behavior of `issue-session` and `complete-game`.
 4. Add one local Supabase integration test that runs the real local stack, serves the local Edge Functions, and exercises the full session bootstrap plus completion flow over HTTP.
 
 The intended split is:
@@ -101,10 +101,10 @@ The intended split is:
 - [x] Add helper tests for `cors.ts`.
 - [x] Add helper tests for `session-cookie.ts`.
 - [x] Refactor `issue-session` so its request handler can be imported and tested directly.
-- [x] Refactor `complete-quiz` so its request handler and payload normalization can be tested directly.
+- [x] Refactor `complete-game` so its request handler and payload normalization can be tested directly.
 - [x] Add Deno handler tests for `issue-session`.
-- [x] Add Deno handler tests for `complete-quiz`, including payload validation and trusted completion behavior.
-- [x] Add a local Supabase integration test for `issue-session` plus `complete-quiz`.
+- [x] Add Deno handler tests for `complete-game`, including payload validation and trusted completion behavior.
+- [x] Add a local Supabase integration test for `issue-session` plus `complete-game`.
 - [x] Add a repo command for the local trust-path integration test.
 - [x] Update local validation and CI to run the new trust-path checks.
 - [x] Update contributor docs so the new commands and local prerequisites are clear.
@@ -162,7 +162,7 @@ Recommended rollout status:
 
 1. [x] Add local admin test seed data.
    Seed a known admin user or authenticated test path, an active
-   `public.quiz_admin_users` row, and a dedicated authoring test event in the
+   `public.admin_users` row, and a dedicated authoring test event in the
    local Supabase stack.
 2. [x] Add a local admin auth test helper.
    Prefer a deterministic local Supabase Auth session setup over reading magic
@@ -195,7 +195,7 @@ The current setup includes a few deliberate choices that are worth documenting:
 - `Vitest` currently uses one global `jsdom` environment
   shared-domain tests would also work in pure Node, but one config keeps the early repo setup simple because the hook tests need a browser-like environment
 - frontend API tests currently mock `fetch` and `window.localStorage` directly
-  that is enough for the current `quizApi` and hook coverage; `msw` is still a good follow-on option if request mocking grows more complex
+  that is enough for the current `gameApi` and hook coverage; `msw` is still a good follow-on option if request mocking grows more complex
 - Playwright smoke tests intentionally run with `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK=true`
   this keeps browser smoke coverage deterministic and independent from local Supabase env setup
 - the Playwright config also clears inherited Supabase browser env vars
@@ -315,17 +315,17 @@ The site does not need exhaustive tests for every presentational component. It d
 
 Test:
 
-- `useQuizSession`
+- `useGameSession`
   start, select, submit, back navigation, feedback transitions, completion submission phase, retry behavior, retake reset
-- `quizSessionState`
+- `gameSessionState`
   reducer transitions and non-React state-machine behavior
-- `quizSessionSelectors`
+- `gameSessionSelectors`
   read-only derived state such as progress, phase booleans, and current-question selection
-- `quizUtils`
+- `gameUtils`
   selection behavior, selection labels, feedback copy helpers where logic exists
 - extracted quiz components
   focused rendering and interaction checks where the extracted component boundary now carries meaningful UI logic
-- `quizApi`
+- `gameApi`
   missing env handling, explicit offline fallback gating, stored session token handling, `401` retry path, idempotent request reuse on retry, local fallback persistence behavior
 - route-level rendering
   landing page, featured game route, missing route, missing game route
@@ -346,7 +346,7 @@ Test:
 
 - `issue-session`
   rejects disallowed origins, rejects wrong methods, returns session-ready payload, reuses an existing valid session, includes `Set-Cookie` when creating a new session
-- `complete-quiz`
+- `complete-game`
   rejects disallowed origins, wrong methods, invalid JSON, invalid payload shapes, unknown events, invalid sessions, invalid answers
 - request normalization behavior
   duration clamping, trusted score recomputation, canonical answer persistence inputs
@@ -364,7 +364,7 @@ This may require a light refactor so handler logic can be imported and tested wi
 
 The SQL migration contains real business logic and should be tested directly in Postgres.
 
-Test the RPC `complete_quiz_and_award_entitlement` for:
+Test the RPC `complete_game_and_award_entitlement` for:
 
 - first completion creates one entitlement
 - repeat completion with a new `request_id` increments `attempt_number` but reuses the entitlement
@@ -412,14 +412,14 @@ Use mocked Supabase behavior in frontend tests when the goal is to verify browse
 
 Good mock use cases:
 
-- `quizApi` handling of 200, 400, 401, and 500 responses
+- `gameApi` handling of 200, 400, 401, and 500 responses
 - retry after session refresh
 - offline fallback behavior when env vars are absent
 - `GamePage` integration tests that need stable completion results
 
 Prefer mocking at the `fetch` boundary or using `msw` instead of mocking internal React hooks or shared quiz logic.
 One exception in this repo is route-shell wiring around `GamePage`, where mocking
-`useQuizSession` is acceptable because the hook itself has direct behavior
+`useGameSession` is acceptable because the hook itself has direct behavior
 coverage and the page test is intentionally verifying shell-to-module wiring.
 
 ## When To Use Real Supabase Behavior
@@ -536,7 +536,7 @@ This is optional for now. The repo does not yet need an elaborate nightly test m
 Completed first wave:
 
 1. Add shared-domain unit tests.
-2. Add frontend tests for `useQuizSession` and `quizApi`.
+2. Add frontend tests for `useGameSession` and `gameApi`.
 3. Add Postgres tests for the completion RPC and entitlement rules.
 4. Add assertion-based Playwright smoke tests for the mobile attendee path.
 
@@ -560,10 +560,10 @@ Progress note:
 The first useful wave should probably include:
 
 - shared answer normalization, validation, scoring, and catalog tests
-- `useQuizSession` happy path, instant-feedback mode, back navigation, retry, and retake tests
-- `quizSessionState`, `quizSessionSelectors`, and `quizUtils` tests for the pure quiz module seams
+- `useGameSession` happy path, instant-feedback mode, back navigation, retry, and retake tests
+- `gameSessionState`, `gameSessionSelectors`, and `gameUtils` tests for the pure quiz module seams
 - focused `GamePage` route-shell wiring tests plus extracted quiz component tests
-- `quizApi` session bootstrap, missing env, offline fallback, and `401` retry tests
+- `gameApi` session bootstrap, missing env, offline fallback, and `401` retry tests
 - RPC tests for idempotency, single entitlement, attempt numbering, and verification code reuse
 - Playwright mobile smoke for featured flow, spotlight wrong-answer path, and direct route loading
 - Playwright mobile trusted-backend smoke with DB assertions for completion and entitlement persistence
@@ -576,17 +576,17 @@ Everything beyond that should earn its keep.
 
 - [x] Add `Vitest` and create a root test script for shared and frontend tests.
 - [x] Add shared-domain tests for `answers.ts`, `game-validation.ts`, and `catalog.ts`.
-- [x] Add frontend tests for `useQuizSession`.
-- [x] Add frontend tests for `quizApi` with mocked network responses and storage.
+- [x] Add frontend tests for `useGameSession`.
+- [x] Add frontend tests for `gameApi` with mocked network responses and storage.
 - [x] Add Playwright Test config instead of relying only on the screenshot script.
 - [x] Add a small mobile smoke suite that covers featured flow, direct route load, and not-found states.
-- [x] Add local database tests for `complete_quiz_and_award_entitlement`.
+- [x] Add local database tests for `complete_game_and_award_entitlement`.
 
 ### Soon After
 
 - [x] Add Deno tests for `session-cookie.ts` and `cors.ts`.
 - [x] Refactor Edge Function request handling slightly if needed so validation and response logic are directly testable.
-- [x] Add an integration test that exercises `issue-session` plus `complete-quiz` against a local Supabase stack.
+- [x] Add an integration test that exercises `issue-session` plus `complete-game` against a local Supabase stack.
 - [x] Add trusted-backend attendee Playwright smoke coverage that runs against local Supabase + local Edge Functions and asserts completion persistence through database reads.
 - [x] Add attendee smoke malformed-submission rejection coverage that forces a backend `400`, asserts no completion persistence for the malformed request, and verifies retry-to-success.
 - [x] Add attendee smoke bootstrap-failure messaging coverage that forces `issue-session` startup failure and asserts the intro error banner plus backend failure detail.

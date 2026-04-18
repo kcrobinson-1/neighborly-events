@@ -145,7 +145,7 @@ That means:
 - `/admin` requires a configured Supabase project
 - magic-link auth and private draft reads do not run in the local-only
   prototype fallback
-- the allowlist check lives in SQL through `public.is_quiz_admin()`, not in
+- the allowlist check lives in SQL through `public.is_admin()`, not in
   browser-only state
 
 Magic-link sign-in uses the current browser origin to request a Supabase Auth
@@ -224,7 +224,7 @@ Notes:
 If you also need the admin route locally:
 
 1. make sure Supabase Auth redirect URLs include your local `/admin` origin
-2. add your normalized email to `public.quiz_admin_users` in the connected
+2. add your normalized email to `public.admin_users` in the connected
    project
 3. make sure the `save-draft`, `publish-draft`, and `unpublish-event` Edge
    Functions are deployed when testing authoring writes against a remote project
@@ -262,7 +262,7 @@ npm run test:supabase
 npm run test:e2e:attendee:trusted-backend
 npm run build:web
 deno check --no-lock supabase/functions/issue-session/index.ts
-deno check --no-lock supabase/functions/complete-quiz/index.ts
+deno check --no-lock supabase/functions/complete-game/index.ts
 deno check --no-lock supabase/functions/save-draft/index.ts
 deno check --no-lock supabase/functions/publish-draft/index.ts
 deno check --no-lock supabase/functions/unpublish-event/index.ts
@@ -314,7 +314,8 @@ Edge Function isolate lifecycle:
 Edge Function trust-path test notes:
 
 - `npm run test:functions` runs the fast Deno helper and handler tests for the Supabase Edge Functions
-- `npm run test:functions:integration` serves the local Edge Functions and exercises the real `issue-session` plus `complete-quiz` flow against the local Supabase stack
+- `npm run test:functions:integration` serves the local Edge Functions and exercises the real `issue-session` plus `complete-game` flow against the local Supabase stack
+
 - `npm run test:supabase` is the preferred local backend validation command because it runs the trust-path integration test and pgTAP database suite on one shared local stack
 
 Database test note:
@@ -435,7 +436,7 @@ npm run ui:review:capture:admin
 
 No production data is read or written. Playwright registers `page.route()`
 interceptors for all Supabase endpoints (auth session, token exchange,
-`is_quiz_admin`, `quiz_event_drafts`, and `save-draft`) before any network
+`is_admin`, `game_event_drafts`, and `save-draft`) before any network
 request leaves the machine. The capture script uses `VITE_SUPABASE_URL` from
 the shell if present and falls back to `apps/web/.env` so the interceptors are
 registered on the correct URL pattern — the requests never reach the remote
@@ -476,8 +477,8 @@ npm run test:e2e:attendee:trusted-backend
 
 That command starts the local Supabase stack and local Edge Functions runtime,
 runs a mobile attendee completion flow with prototype fallback disabled, and
-asserts backend persistence through `raffle_entitlements`, `quiz_completions`,
-and `quiz_starts`.
+asserts backend persistence through `game_entitlements`, `game_completions`,
+and `game_starts`.
 
 If Chromium is not installed yet, either run `npm run test:setup:local`, `npm run test:e2e:install`, or:
 
@@ -498,7 +499,7 @@ npx supabase db push
 npx supabase secrets set SESSION_SIGNING_SECRET=your-long-random-secret
 npx supabase secrets set ALLOWED_ORIGINS=http://127.0.0.1:4173,http://localhost:4173,http://127.0.0.1:5173,http://localhost:5173,https://your-production-web-origin.example
 npx supabase functions deploy issue-session
-npx supabase functions deploy complete-quiz
+npx supabase functions deploy complete-game
 npx supabase functions deploy save-draft
 npx supabase functions deploy publish-draft
 npx supabase functions deploy unpublish-event
@@ -515,10 +516,10 @@ Then finish the manual authoring setup in Supabase:
   `https://your-production-web-origin.example`
 - add Auth redirect URLs for `http://127.0.0.1:4173/admin`,
   `http://localhost:4173/admin`, and your deployed `/admin` origin
-- add at least one normalized admin email to `public.quiz_admin_users`:
+- add at least one normalized admin email to `public.admin_users`:
 
 ```sql
-insert into public.quiz_admin_users (email)
+insert into public.admin_users (email)
 values ('admin@example.com')
 on conflict (email)
 do update set active = true, updated_at = now();
@@ -607,7 +608,7 @@ event, start with the operator runbook in
 
 ### Session bootstrap succeeds but completion returns 401
 
-If `issue-session` returns `200` but `complete-quiz` returns `401 Session is missing or invalid`, the session credential is not round-tripping correctly.
+If `issue-session` returns `200` but `complete-game` returns `401 Session is missing or invalid`, the session credential is not round-tripping correctly.
 
 Current expectation:
 
@@ -618,7 +619,7 @@ If this regresses, inspect both Edge Functions together rather than treating it 
 
 ### Completion returns 500 after backend verification succeeds
 
-If the user reaches the completion step but receives the generic backend failure message, inspect the Supabase Edge Function logs for the `details` field returned by `complete-quiz`.
+If the user reaches the completion step but receives the generic backend failure message, inspect the Supabase Edge Function logs for the `details` field returned by `complete-game`.
 
 One concrete gotcha already hit in this repo:
 

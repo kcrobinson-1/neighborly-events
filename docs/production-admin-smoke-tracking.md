@@ -18,7 +18,7 @@ This workflow complements local admin e2e (`npm run test:e2e:admin`). It does no
 Local admin e2e proves the shipped admin workflow against a local Supabase stack, but it cannot prove deployed production behavior for:
 
 - real Supabase Auth redirect behavior on the deployed web origin
-- production `public.quiz_admin_users` allowlist enforcement
+- production `public.admin_users` allowlist enforcement
 - deployed `save-draft`, `publish-draft`, and `unpublish-event` function path wiring
 - release-time timing and integration behavior between Vercel deployment and Supabase promotion
 
@@ -96,7 +96,7 @@ Optional fixture overrides:
 ### Supabase Runtime Requirements
 
 - Auth Site URL and redirect URL must include the deployed `/admin` origin used by smoke
-- `public.quiz_admin_users` allowlist must permit the smoke admin and deny the smoke denied user
+- `public.admin_users` allowlist must permit the smoke admin and deny the smoke denied user
 - `ALLOWED_ORIGINS` must allow the deployed web origin used by smoke
 - `save-draft`, `publish-draft`, and `unpublish-event` must be deployed and healthy
 
@@ -169,7 +169,7 @@ Start in GitHub Actions job logs for `Production Admin Smoke`.
    - validate Auth URL settings and `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL`
 3. **Allowlist failure for smoke admin**
    - likely allowlist row drift or RLS/policy regression
-   - inspect `public.quiz_admin_users` for smoke admin
+   - inspect `public.admin_users` for smoke admin
 4. **Expected deny check fails for denied user**
    - denied user may be accidentally allowlisted
    - ensure denied account remains inactive or absent in allowlist

@@ -49,18 +49,18 @@ Out of scope:
 
 Chosen tables:
 
-- `public.quiz_events`
-- `public.quiz_questions`
-- `public.quiz_question_options`
+- `public.game_events`
+- `public.game_questions`
+- `public.game_question_options`
 
-`quiz_events` columns:
+`game_events` columns:
 
 - `id text primary key`
 - `slug text not null unique`
 - `name text not null`
 - `location text not null`
 - `estimated_minutes integer not null`
-- `raffle_label text not null`
+- `entitlement_label text not null`
 - `intro text not null`
 - `summary text not null`
 - `feedback_mode text not null`
@@ -70,7 +70,7 @@ Chosen tables:
 - `created_at timestamptz not null default now()`
 - `updated_at timestamptz not null default now()`
 
-`quiz_questions` columns:
+`game_questions` columns:
 
 - `event_id text not null`
 - `id text not null`
@@ -83,7 +83,7 @@ Chosen tables:
 - primary key `(event_id, id)`
 - unique `(event_id, display_order)`
 
-`quiz_question_options` columns:
+`game_question_options` columns:
 
 - `event_id text not null`
 - `question_id text not null`
@@ -133,7 +133,7 @@ Rationale:
 
 Chosen approach:
 
-- `complete-quiz` loads published content by `eventId` through a small shared
+- `complete-game` loads published content by `eventId` through a small shared
   loader module under `supabase/functions/_shared`
 - the loader returns `null` for missing or unpublished content
 - the loader throws on malformed content or backend read failures
@@ -145,7 +145,7 @@ Failure behavior:
 
 Rationale:
 
-- `complete-quiz` already receives `eventId`
+- `complete-game` already receives `eventId`
 - scoring must run against canonical content fetched within the trust boundary
 - keeping a loader module separate from the handler keeps the request code
   readable and testable
@@ -207,7 +207,7 @@ Rationale:
   loads one published event by `eventId` inside the trusted backend path
 - `apps/web/src/lib/supabaseBrowser.ts`
   centralizes browser-side Supabase env, auth-header, and error helpers
-- `apps/web/src/lib/quizContentApi.ts`
+- `apps/web/src/lib/gameContentApi.ts`
   owns browser reads for landing-page summaries and `/game/:slug`
 - `apps/web/src/pages/GameRoutePage.tsx`
   separates route-level published-content loading from the quiz shell in
@@ -220,7 +220,7 @@ Implemented in these reviewable commits:
 - `docs(database-backed-quiz-content): capture MVP scope and decisions`
 - `feat(supabase): add published quiz content schema and demo backfill`
 - `refactor(shared): add DB-to-GameConfig mapping and isolate sample fixtures`
-- `feat(supabase): load canonical published quiz content in complete-quiz`
+- `feat(supabase): load canonical published quiz content in complete-game`
 - `feat(web): load game routes and demo summaries from published quiz content`
 - `docs: finalize durable reference and refresh repo docs`
 
@@ -235,7 +235,7 @@ The milestone was validated with:
 - `npm run build:web`
 - `npm run test:e2e`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
-- `deno check --no-lock supabase/functions/complete-quiz/index.ts`
+- `deno check --no-lock supabase/functions/complete-game/index.ts`
 
 Validation notes:
 
@@ -254,7 +254,7 @@ Validation notes:
 
 - add organizer/admin authoring UI
 - introduce preview or draft workflows beyond `published_at`
-- decide whether `quiz_completions.event_id` and `raffle_entitlements.event_id`
+- decide whether `game_completions.event_id` and `game_entitlements.event_id`
   should become foreign keys once historical data guarantees are clear
 - add caching or response shaping if public content reads grow more expensive
 - add event expiry semantics or publish windows if production needs them

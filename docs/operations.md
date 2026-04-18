@@ -157,7 +157,7 @@ Why manual for now:
   - deployed web origin as the Supabase Auth Site URL
   - local `/admin` redirect URLs
   - deployed `/admin` redirect URLs
-- operational allowlist membership in `public.quiz_admin_users`
+- operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 
 Why manual for now:
@@ -176,7 +176,7 @@ For a new deployment from a fork:
 5. Set `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` in Supabase.
 6. Set the Supabase Auth Site URL to the deployed web origin and add redirect
    URLs for your local and deployed `/admin` origins.
-7. Insert at least one normalized admin email into `public.quiz_admin_users`.
+7. Insert at least one normalized admin email into `public.admin_users`.
 8. Recreate the desired GitHub branch protection and Actions secret
    configuration, including the `SUPABASE_ACCESS_TOKEN`,
    `SUPABASE_DB_PASSWORD`, and `SUPABASE_PROJECT_REF` release secrets.
@@ -255,7 +255,7 @@ Open the production Supabase project and inspect:
 
 - Edge Function logs for:
   - `issue-session`
-  - `complete-quiz`
+  - `complete-game`
   - `save-draft`
   - `publish-draft`
   - `unpublish-event`
@@ -270,10 +270,10 @@ Open the production Supabase project and inspect:
 
 Function-specific interpretation:
 
-- `issue-session` failures affect quiz start and usually involve origin
+- `issue-session` failures affect game start and usually involve origin
   allowlisting, event availability, request validation, or the best-effort
-  `quiz_starts` write
-- `complete-quiz` failures affect final verification and usually involve a
+  `game_starts` write
+- `complete-game` failures affect final verification and usually involve a
   missing/invalid session, answer validation, or completion/entitlement writes
 - `save-draft`, `publish-draft`, and `unpublish-event` failures affect admin
   authoring and usually involve Supabase Auth, admin allowlist policy, draft
@@ -284,14 +284,14 @@ Function-specific interpretation:
 Run these in the production Supabase SQL editor when you need to confirm
 whether users are reaching the backend. Replace placeholders before running.
 
-Recent quiz starts:
+Recent game starts:
 
 ```sql
 select
   event_id,
   count(*) as starts,
   max(issued_at) as latest_start
-from public.quiz_starts
+from public.game_starts
 group by event_id
 order by latest_start desc;
 ```
@@ -303,18 +303,18 @@ select
   event_id,
   count(*) as completions,
   max(completed_at) as latest_completion
-from public.quiz_completions
+from public.game_completions
 group by event_id
 order by latest_completion desc;
 ```
 
-Active raffle entitlements:
+Active entitlements:
 
 ```sql
 select
   event_id,
   count(*) as active_entitlements
-from public.raffle_entitlements
+from public.game_entitlements
 where status = 'active'
 group by event_id
 order by active_entitlements desc;
@@ -329,10 +329,10 @@ select
   count(distinct s.client_session_id) as starts,
   count(distinct c.client_session_id) as completed_sessions,
   count(distinct r.client_session_id) filter (where r.status = 'active') as active_entitlements
-from public.quiz_events e
-left join public.quiz_starts s on s.event_id = e.id
-left join public.quiz_completions c on c.event_id = e.id
-left join public.raffle_entitlements r on r.event_id = e.id
+from public.game_events e
+left join public.game_starts s on s.event_id = e.id
+left join public.game_completions c on c.event_id = e.id
+left join public.game_entitlements r on r.event_id = e.id
 where e.slug = '<event-slug>'
 group by e.id, e.slug;
 ```
@@ -346,7 +346,7 @@ select
   case when published_at is null then 'unpublished' else 'published' end as publish_state,
   published_at,
   updated_at
-from public.quiz_events
+from public.game_events
 where slug = 'production-smoke-event';
 ```
 
@@ -358,9 +358,9 @@ If attendees report that the event is broken:
 2. Check the latest `Production Admin Smoke` run.
 3. If the site does not load, inspect Vercel deployment/build/runtime logs.
 4. If the quiz loads but cannot start, inspect `issue-session` logs and query
-   `quiz_starts`.
-5. If the quiz starts but cannot complete, inspect `complete-quiz` logs and
-   query `quiz_completions` plus `raffle_entitlements`.
+   `game_starts`.
+5. If the game starts but cannot complete, inspect `complete-game` logs and
+   query `game_completions` plus `game_entitlements`.
 6. If admin save/publish/unpublish is broken, inspect the admin Edge Function
    logs and Auth/allowlist configuration.
 7. Record whether the failure is a deployment issue, frontend route issue,

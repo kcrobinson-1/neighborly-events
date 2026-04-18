@@ -39,12 +39,12 @@ Must be resolved before QR codes are printed or the first real event runs.
   function, and DB trigger enforcement.
   Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
 
-- [x] **`dev` Make `sponsor` nullable in `quiz_questions`**
+- [x] **`dev` Make `sponsor` nullable in `game_questions`**
   Completed: unsponsored questions are supported in schema and shared runtime
   types.
 
-- [x] **`dev` Record quiz starts in Supabase**
-  Completed: `quiz_starts` persistence is wired from `issue-session` for funnel
+- [x] **`dev` Record game starts in Supabase**
+  Completed: `game_starts` persistence is wired from `issue-session` for funnel
   denominator coverage.
   Detail: [`docs/analytics-strategy.md` — Approach 2 and Recommended Sequencing](./analytics-strategy.md)
 
@@ -63,11 +63,10 @@ Must be resolved before QR codes are printed or the first real event runs.
   stronger proof is deferred.
   Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
 
-- [ ] **`decision` Terminology migration strategy (`quiz`/`raffle` -> `game`/`entitlement`)**
-  Decide whether and how to reframe product/domain language across code, routes,
-  database schema/contracts, and UX copy before launch makes broad cleanup
-  risky. Include compatibility/rollout approach so existing paths and data
-  references remain stable during transition.
+- [ ] **`dev` Terminology migration (`quiz`/`raffle` → `game`/`entitlement`)**
+  Decision made: phase-based direct rename (Alt C). Phase 0 complete (migration
+  map finalized). Phase 1 documentation alignment in progress; Phases 2–5
+  (DB, Edge Functions, Frontend, cleanup/guardrails) are queued.
   Detail: [`docs/terminology-migration-strategy.md`](./terminology-migration-strategy.md)
 
 ---
@@ -87,13 +86,13 @@ Reduce deployment risk and contributor friction before the live event.
   Completed: `npm run test:e2e:attendee:trusted-backend` now runs a mobile
   attendee smoke flow against local Supabase + local Edge Functions (prototype
   fallback disabled) and asserts trusted backend persistence in
-  `raffle_entitlements`, `quiz_completions`, and `quiz_starts`.
+  `game_entitlements`, `game_completions`, and `game_starts`.
   Detail: [`docs/testing.md` — Developer Test Guide](./testing.md)
 
 - [x] **`infra` Attendee smoke invalid submission rejection**
   Completed: trusted-backend attendee smoke now tampers one completion payload
   to trigger backend `400` rejection, asserts the error UI and retry action,
-  verifies no `quiz_completions` row persisted for the malformed request id,
+  verifies no `game_completions` row persisted for the malformed request id,
   then retries successfully.
   Detail: [`docs/testing.md` — Trust-Path Validation Strategy](./testing.md)
 
@@ -163,13 +162,11 @@ prioritization before starting.
   Detail: [`docs/quiz-authoring-plan.md` — Phase 4.7](./quiz-authoring-plan.md)
 
 - [ ] **`dev` Analytics and reporting**
-  SQL views on `quiz_completions`, `raffle_entitlements`, and `quiz_starts`
-  (see Tier 1) to produce per-event completion counts, score distributions,
-  timing summaries, and sponsor question engagement. Follow-on: an
-  organizer-facing reporting section in the admin workspace that surfaces those
-  views for a selected event without requiring Supabase Studio access.
-  Prerequisite: the Tier 1 quiz starts item must land before the first live
-  event or the funnel denominator will be missing.
+  SQL views on `game_completions`, `game_entitlements`, and `game_starts`
+  to produce per-event completion counts, score distributions, timing summaries,
+  and sponsor question engagement. Follow-on: an organizer-facing reporting
+  section in the admin workspace that surfaces those views for a selected event
+  without requiring Supabase Studio access.
   Detail: [`docs/analytics-strategy.md`](./analytics-strategy.md)
 
 - [ ] **`decision` Authoring roles and root admin UI**
@@ -247,7 +244,7 @@ Execute in any order.
   Completed on 2026-04-17.
   Detail: [`docs/code-documentation-audit.md` — Slice E](./code-documentation-audit.md#slice-e--migrationrpc-invariant-comments)
 
-- [ ] **`dev` Split `quizApi.ts` local fallback** (refactor score 8/10)
+- [ ] **`dev` Split `gameApi.ts` local fallback** (refactor score 8/10)
   Extract local prototype entitlement storage and completion into a separate
   module so the production Supabase path is easier to review.
   Detail: [`docs/code-refactor-checklist.md`](./code-refactor-checklist.md)
@@ -267,7 +264,7 @@ Execute in any order.
   route-level component mainly coordinates layout and callbacks.
   Detail: [`docs/code-refactor-checklist.md`](./code-refactor-checklist.md)
 
-- [ ] **`dev` Split `adminQuizApi.ts`** (refactor score 5/10)
+- [ ] **`dev` Split `adminGameApi.ts`** (refactor score 5/10)
   Extract shared transport and response helpers so the public exports focus on
   intent-specific admin operations.
   Detail: [`docs/code-refactor-checklist.md`](./code-refactor-checklist.md)

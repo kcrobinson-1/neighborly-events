@@ -10,7 +10,7 @@
 - Phase 4 status: Phases 4.1–4.4 and 4.6 implemented; 4.5 and 4.7 deferred post-MVP
 - Phase 5 status: Phase 5.1 complete; Phase 5.2 complete
 - Last updated: 2026-04-14
-- Owner area: product, UX, web app, shared quiz domain, and Supabase backend
+- Owner area: product, UX, web app, shared game domain, and Supabase backend
 
 ## Document Status
 
@@ -438,19 +438,19 @@ browser route loader and completion backend.
 
 Keep the current public runtime tables for attendee reads in phase one:
 
-- `quiz_events`
-- `quiz_questions`
-- `quiz_question_options`
+- `game_events`
+- `game_questions`
+- `game_question_options`
 
 Add private authoring tables:
 
-- `quiz_event_drafts`
+- `game_event_drafts`
   one mutable draft per event, stored as authoring JSON plus metadata
-- `quiz_event_versions`
+- `game_event_versions`
   immutable published snapshots
-- `quiz_admin_users`
+- `admin_users`
   admin allowlist or profile rows for who can access the authoring surface
-- `quiz_event_audit_log`
+- `game_event_audit_log`
   optional but recommended for publish, unpublish, archive, and restore actions
 
 Recommended shape of the draft/version content:
@@ -527,7 +527,7 @@ Recommended web structure:
   - `AdminEventEditorPage`
   - `AdminPreviewPage` if preview needs its own route
 - add a small authenticated data layer such as
-  `apps/web/src/lib/adminQuizApi.ts`
+  `apps/web/src/lib/adminGameApi.ts`
 
 Important boundary:
 
@@ -616,7 +616,7 @@ Recommended migration path:
 2. add private authoring tables and auth scaffolding
 3. backfill existing published demo events into draft and version records
 4. point the new authoring UI at the private authoring tables
-5. keep attendee loaders and `complete-quiz` reading the current public tables
+5. keep attendee loaders and `complete-game` reading the current public tables
 6. only revisit the public read model later if a second-stage refactor becomes worthwhile
 
 This sequence minimizes risk because it isolates authoring changes from the live
@@ -729,10 +729,10 @@ Implementation status:
 
 - `/admin` now exists inside `apps/web`
 - Supabase Auth magic-link sign-in now restores and maintains the admin session
-- `quiz_admin_users` now provides the private allowlist table
-- `public.is_quiz_admin()` now provides one shared authorization check for both
+- `admin_users` now provides the private allowlist table
+- `public.is_admin()` now provides one shared authorization check for both
   the admin shell and authoring-table RLS
-- RLS now exposes `quiz_event_drafts` and `quiz_event_versions` only to
+- RLS now exposes `game_event_drafts` and `game_event_versions` only to
   allowlisted authenticated admins
 - current scope intentionally stopped short of draft save, AI upsert, and
   publish flows, which are covered by Phase 3
@@ -758,11 +758,11 @@ Implementation status:
 - `save-draft` validates canonical authoring JSON and writes private draft rows
   for allowlisted admins
 - `publish-draft` validates a draft and calls
-  `public.publish_quiz_event_draft(...)` to update public attendee tables in
+  `public.publish_game_event_draft(...)` to update public attendee tables in
   one transaction
 - `unpublish-event` clears the live event's `published_at` value while keeping
   draft and version history
-- `quiz_event_audit_log` records publish and unpublish transitions
+- `game_event_audit_log` records publish and unpublish transitions
 - current scope intentionally stops short of the full editor UI, preview route,
   duplication flow, and AI authoring UI
 
@@ -845,7 +845,7 @@ Implementation decisions:
 Suggested validation:
 
 - `npm test -- tests/web/pages/AdminPage.test.tsx`
-- `npm test -- tests/web/lib/adminQuizApi.test.ts`
+- `npm test -- tests/web/lib/adminGameApi.test.ts`
 - `npm run build:web`
 - browser UI review for `/admin` when Supabase admin configuration is available
 
@@ -899,7 +899,7 @@ Suggested validation:
 
 - `npm test -- tests/web/pages/AdminPage.test.tsx`
 - `npm test -- tests/web/admin/draftCreation.test.ts`
-- `npm test -- tests/web/lib/adminQuizApi.test.ts`
+- `npm test -- tests/web/lib/adminGameApi.test.ts`
 - `npm run build:web`
 - browser UI review for create and duplicate paths when Supabase admin
   configuration is available
@@ -909,7 +909,7 @@ Suggested validation:
 Deliverables:
 
 - add an editor surface for event-level draft fields: name, slug, location,
-  estimated minutes, raffle label, intro, summary, feedback mode, back
+  estimated minutes, entitlement label, intro, summary, feedback mode, back
   navigation, and retake settings
 - save through `save-draft` using the full canonical draft document
 - show saved, saving, and error states clearly
@@ -948,7 +948,7 @@ Suggested validation:
 
 - `npm test -- tests/web/pages/AdminPage.test.tsx`
 - `npm test -- tests/web/admin/eventDetails.test.ts`
-- `npm test -- tests/web/lib/adminQuizApi.test.ts`
+- `npm test -- tests/web/lib/adminGameApi.test.ts`
 - `npm run build:web`
 - browser UI review covering saved and failed-save states when practical
 
@@ -1014,7 +1014,7 @@ Suggested validation:
 - page-level tests for selected route question loading, existing-question
   editing, correct-answer editing, local validation failure, save success, save
   failure, and reload
-- `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts`
+- `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminGameApi.test.ts tests/web/routes.test.ts`
 - `npm run build:web`
 - browser UI review of focused question editing, validation, saved, and
   failed-save states
@@ -1078,7 +1078,7 @@ Suggested validation:
 - Phase 4.2 create and duplicate regression tests, including successful create,
   successful duplicate, load/save failures, local list updates, and
   post-create/post-duplicate navigation
-- `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts`
+- `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminGameApi.test.ts tests/web/routes.test.ts`
 - `npm run build:web`
 - browser UI review of add, duplicate, reorder, delete, option mutation,
   validation, saved, and failed-save states
@@ -1097,8 +1097,8 @@ Deliverables:
 - keep preview read access admin-only; do not add shareable preview links in
   this subphase
 - make preview visually mobile-sized and clearly labeled as draft preview
-- ensure preview does not issue attendee completion sessions or write raffle
-  entitlement data
+- ensure preview does not issue attendee completion sessions or write entitlement
+  data
 
 Acceptance criteria:
 
@@ -1135,7 +1135,7 @@ Acceptance criteria:
 Suggested validation:
 
 - `npm test -- tests/web/pages/AdminPage.test.tsx`
-- `npm test -- tests/web/lib/adminQuizApi.test.ts`
+- `npm test -- tests/web/lib/adminGameApi.test.ts`
 - `npm run test:functions`
 - `npm run test:supabase`
 - `npm run build:web`
@@ -1166,7 +1166,7 @@ Acceptance criteria:
 Suggested validation:
 
 - frontend tests for applying generated draft/question output into editor state
-- `npm test -- tests/web/lib/adminQuizApi.test.ts`
+- `npm test -- tests/web/lib/adminGameApi.test.ts`
 - `npm run build:web`
 - browser UI review of the generated-content review flow when the AI path is
   configured
@@ -1212,7 +1212,7 @@ Suggested validation:
 - `npm run test:e2e:admin`
 - `npm run build:web`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
-- `deno check --no-lock supabase/functions/complete-quiz/index.ts`
+- `deno check --no-lock supabase/functions/complete-game/index.ts`
 - `deno check --no-lock supabase/functions/save-draft/index.ts`
 - `deno check --no-lock supabase/functions/publish-draft/index.ts`
 - `deno check --no-lock supabase/functions/unpublish-event/index.ts`
@@ -1258,7 +1258,7 @@ When implementation starts, expect at least:
 - `npm run test:functions`
 - `npm run test:supabase`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
-- `deno check --no-lock supabase/functions/complete-quiz/index.ts`
+- `deno check --no-lock supabase/functions/complete-game/index.ts`
 - `deno check --no-lock supabase/functions/save-draft/index.ts`
 - `deno check --no-lock supabase/functions/publish-draft/index.ts`
 - `deno check --no-lock supabase/functions/unpublish-event/index.ts`

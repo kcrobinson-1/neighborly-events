@@ -33,7 +33,7 @@ This repository currently includes:
 - shared quiz mapping, validation, and scoring logic
 - Supabase-backed browser-session bootstrap
 - Supabase-backed completion verification
-- SQL-backed single raffle entitlement per event/session pair
+- SQL-backed single entitlement per event/session pair
 - SQL-backed draft publishing that transactionally updates public quiz content
 
 The current prototype is usable for engineering validation and local/demo testing, but it is not yet the full event-ready MVP described in the product and UX docs.
@@ -129,7 +129,7 @@ The admin authoring shell and authoring APIs also require:
 
 - Supabase Auth Site URL and redirect URLs that include the `/admin` origins
   you use
-- your normalized admin email to be active in `public.quiz_admin_users`
+- your normalized admin email to be active in `public.admin_users`
 
 If you do not have backend access and only need frontend iteration:
 
@@ -158,7 +158,7 @@ npm run test:functions
 npm run test:supabase
 npm run build:web
 deno check --no-lock supabase/functions/issue-session/index.ts
-deno check --no-lock supabase/functions/complete-quiz/index.ts
+deno check --no-lock supabase/functions/complete-game/index.ts
 deno check --no-lock supabase/functions/save-draft/index.ts
 deno check --no-lock supabase/functions/publish-draft/index.ts
 deno check --no-lock supabase/functions/unpublish-event/index.ts
@@ -180,7 +180,7 @@ In short:
 - create your own Supabase project
 - apply the repo migrations and deploy the Edge Functions
 - configure Supabase Auth redirect URLs for your `/admin` origins
-- add at least one allowlisted admin email in `public.quiz_admin_users`
+- add at least one allowlisted admin email in `public.admin_users`
 - create your own Vercel project for `apps/web`
 - set the frontend env vars in Vercel
 - set Supabase secrets such as `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS`

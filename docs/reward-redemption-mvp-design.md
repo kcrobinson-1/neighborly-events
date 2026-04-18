@@ -356,16 +356,16 @@ The event-prefixed code format is delivered by a separate prerequisite feature
 that must land before the redemption MVP implementation begins. At a minimum
 that feature:
 
-- adds an `event_code` column to `public.quiz_events`, authored at event
+- adds an `event_code` column to `public.game_events`, authored at event
   creation, with a `UNIQUE` constraint, a `CHECK`-constrained shape
   (case-normalized, dash-free, bounded length), and an immutability lock once
   any entitlement references the event (following the existing slug lock
   trigger precedent)
 - rewrites the verification-code generator to emit `<event_code>-<NNNN>` with
   a bounded retry loop on per-event suffix collisions, and adds
-  `UNIQUE (event_id, verification_code)` on `raffle_entitlements` so per-event
+  `UNIQUE (event_id, verification_code)` on `game_entitlements` so per-event
   4-digit suffix uniqueness is DB-enforced rather than relying on entropy
-- updates `publish-draft` / `public.publish_quiz_event_draft(...)` to refuse
+- updates `publish-draft` / `public.publish_game_event_draft(...)` to refuse
   to publish an event that lacks a valid `event_code`
 - coordinates the corresponding updates to the completion response shape,
   frontend completion screen copy, test fixtures, and Playwright expectations
@@ -380,9 +380,7 @@ inherits the resulting single-column, single-equality lookup contract.
 
 Extend reward entitlement records with redemption metadata.
 
-Current schema naming still uses `raffle_entitlements`; MVP implementation
-should preserve compatibility short term while introducing neutral
-"entitlement" language in product/UI/API contracts, then migrate naming later.
+The entitlement table is named `game_entitlements` (renamed from `game_entitlements` in the terminology migration Phase 2).
 
 - `redeemed_at timestamptz null`
 - `redeemed_by uuid null` (references authenticated agent identity)
@@ -623,7 +621,7 @@ deferral) and an owner.
     feature described in the
     [Completion Code Format](#completion-code-format-mvp-decision) section:
     that feature rewrites `verification_code` to the event-prefixed format
-    and adds `UNIQUE (event_id, verification_code)` on `raffle_entitlements`,
+    and adds `UNIQUE (event_id, verification_code)` on `game_entitlements`,
     so the redemption feature inherits a single-column equality lookup on the
     agent redeem path and on dispute lookup in the monitoring screen
   - pagination strategy: MVP uses a bounded single fetch of the most recent
@@ -644,7 +642,7 @@ deferral) and an owner.
     long-term shape.
   - index plan: minimalist. The redemption MVP migration adds exactly one
     new B-tree index, `(event_id, redeemed_at DESC NULLS LAST)` on
-    `raffle_entitlements`, which covers the default recent-first list,
+    `game_entitlements`, which covers the default recent-first list,
     the `Last 15m` filter, and the `Redeemed` filter. The `Reversed`,
     `By me`, and suffix-search query patterns are intentionally served by
     event-scoped scans in MVP — at the stated scale of hundreds to
@@ -796,7 +794,7 @@ deferral) and an owner.
 - Decided:
   - MVP lands as backend + mobile redemption + monitoring + attendee status phases
   - backward-compatible migration order and deployment gates:
-    1. schema additions: all new columns on `raffle_entitlements`
+    1. schema additions: all new columns on `game_entitlements`
        (`redeemed_at`, `redeemed_by`, `redeemed_by_role`, `redeemed_event_id`,
        `redemption_status default 'unredeemed'`,
        `redemption_reversed_at`, `redemption_reversed_by`,
@@ -804,7 +802,7 @@ deferral) and an owner.
        or defaulted columns, plus the new monitoring B-tree index
        `(event_id, redeemed_at DESC NULLS LAST)` from item 5; the
        role-assignment table(s) are created empty. The per-event 4-digit
-       uniqueness constraint on `raffle_entitlements.verification_code` is
+       uniqueness constraint on `game_entitlements.verification_code` is
        provided by the prerequisite feature described in the
        [Completion Code Format](#completion-code-format-mvp-decision)
        section and is not part of this MVP migration sequence
@@ -815,7 +813,7 @@ deferral) and an owner.
        `public.reverse_entitlement_redemption(...)` ship as
        `SECURITY DEFINER` with row-level locking and the
        `{ outcome, result }` envelope
-    4. RLS policies: scoped read policies on `raffle_entitlements` and the
+    4. RLS policies: scoped read policies on `game_entitlements` and the
        role-assignment table(s) are enabled; existing attendee/public flows
        remain behaviorally unchanged
     5. Edge Functions: redeem and reverse wrappers plus the attendee
@@ -842,7 +840,7 @@ deferral) and an owner.
       before apply
   - rollback strategy for schema + RPC changes:
     - schema: all redemption columns are nullable/defaulted additions, so a
-      rollback leaves existing `raffle_entitlements` rows valid; if the
+      rollback leaves existing `game_entitlements` rows valid; if the
       columns must be removed, a follow-up migration drops them in the
       reverse order and drops the `(event_id, redeemed_at DESC NULLS LAST)`
       monitoring index added in step 1. The per-event 4-digit uniqueness

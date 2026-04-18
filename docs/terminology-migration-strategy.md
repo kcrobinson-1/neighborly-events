@@ -387,6 +387,36 @@ only (frontend concern; does not affect DB or edge function work).
      artifact by its original name (e.g., a migration filename), add a short
      inline note. No repo-wide glossary.
 
+## Contributor naming reference
+
+Use these terms in new code, docs, and PR descriptions. The old terms appear
+only as immutable migration filenames or as the "before" side of this document.
+
+| Concept | Use this | Not this |
+|---|---|---|
+| Published event content table | `game_events` | `quiz_events` |
+| Questions table | `game_questions` | `quiz_questions` |
+| Question options table | `game_question_options` | `quiz_question_options` |
+| Completion record table | `game_completions` | `quiz_completions` |
+| Session start tracking table | `game_starts` | `quiz_starts` |
+| Reward/prize record table | `game_entitlements` | `raffle_entitlements` |
+| Admin allowlist table | `admin_users` | `quiz_admin_users` |
+| Auth check SQL function | `is_admin()` | `is_quiz_admin()` |
+| Trusted completion function | `complete-game` | `complete-quiz` |
+| Browser game API module | `gameApi.ts` | `quizApi.ts` |
+| Browser admin API module | `adminGameApi.ts` | `adminQuizApi.ts` |
+| Published content API module | `gameContentApi.ts` | `quizContentApi.ts` |
+| Session hook | `useGameSession` | `useQuizSession` |
+| Session state module | `gameSessionState.ts` | `quizSessionState.ts` |
+| In-memory runtime model | `GameConfig` (unchanged) | — |
+| Publish draft RPC | `publish_game_event_draft` | `publish_quiz_event_draft` |
+| Field: prize/reward label | `entitlement_label` | `raffle_label` |
+
+Migration filenames (e.g. `20260403120000_complete_quiz_entitlements.sql`) are
+immutable historical artifacts and intentionally preserve original names.
+
+---
+
 ## Exit criteria
 
 This strategy is complete when:

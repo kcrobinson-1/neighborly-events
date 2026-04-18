@@ -40,11 +40,11 @@ Rules for this checklist:
   `npm run build:web`.
 
 - [ ] Split browser quiz API local fallback from Supabase transport.
-  `apps/web/src/lib/quizApi.ts` owns local prototype entitlement storage,
+  `apps/web/src/lib/gameApi.ts` owns local prototype entitlement storage,
   server-session bootstrap, completion submission, retry handling, and response
   mapping. Extract local fallback storage/completion into a separate module so
   the production Supabase path is easier to review. Score: 8/10.
-  Validation: `npm test -- tests/web/lib/quizApi.test.ts` and
+  Validation: `npm test -- tests/web/lib/gameApi.test.ts` and
   `npm run build:web`.
 
 - [ ] Split admin question editor structure UI from field editing.
@@ -74,7 +74,7 @@ Rules for this checklist:
   publish/unpublish transition logic into a focused hook or helper so
   `useSelectedDraft.ts` reads as selected draft loading plus save orchestration.
   Score: 7/10.
-  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/lib/adminQuizApi.test.ts` and `npm run build:web`.
+  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/lib/adminGameApi.test.ts` and `npm run build:web`.
 
 - [x] Split admin dashboard orchestration from mutation and selection state.
   `apps/web/src/admin/useAdminDashboard.ts` now owns session bootstrap,
@@ -83,7 +83,7 @@ Rules for this checklist:
   state. Extract the selected-draft and mutation state machines into focused
   hooks so the top-level dashboard reads as auth/loading orchestration rather
   than one long event handler module. Score: 9/10.
-  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts` and `npm run build:web`.
+  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminGameApi.test.ts tests/web/routes.test.ts` and `npm run build:web`.
 
 - [ ] Split admin event workspace presentation from route-level state wiring.
   `apps/web/src/admin/AdminEventWorkspace.tsx` mixes summary counts, selected
@@ -92,15 +92,15 @@ Rules for this checklist:
   pieces for the summary card, selected draft header, and action groups so the
   route-level component mainly coordinates layout and callbacks.
   Score: 6/10.
-  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminQuizApi.test.ts tests/web/routes.test.ts` and `npm run build:web`.
+  Validation: `npm test -- tests/web/pages/AdminPage.test.tsx tests/web/admin/draftCreation.test.ts tests/web/admin/eventDetails.test.ts tests/web/admin/questionBuilder.test.ts tests/web/lib/adminGameApi.test.ts tests/web/routes.test.ts` and `npm run build:web`.
 
 - [ ] Split admin authoring API transport from session and draft mapping.
-  `apps/web/src/lib/adminQuizApi.ts` combines browser session restore, allowlist
+  `apps/web/src/lib/adminGameApi.ts` combines browser session restore, allowlist
   RPC calls, draft reads, function transport, and response mapping for all admin
   mutations. Extract shared transport and response helpers so the public exports
   focus on intent-specific admin operations instead of request plumbing.
   Score: 5/10.
-  Validation: `npm test -- tests/web/lib/adminQuizApi.test.ts` and `npm run build:web`.
+  Validation: `npm test -- tests/web/lib/adminGameApi.test.ts` and `npm run build:web`.
 
 - [ ] Split the admin screenshot runner’s admin mode into dedicated helpers.
   `scripts/ui-review/capture-ui-review.cjs` now mixes attendee capture,
