@@ -256,8 +256,12 @@ internal reference updates (table names, type imports): `issue-session.test.ts`,
 
 ## Documentation (Phase 1 and Phase 5)
 
-The following docs contain legacy terminology and are updated in Phase 1
-(high-level language alignment) and Phase 5 (final sweep):
+**Implementation status:** complete. Phase 1 and Phase 5 doc sweeps are done.
+All listed docs use target terminology; stale references in
+`continuous-deployment-plan.md` and `code-refactor-checklist.md` were corrected
+in Phase 5.
+
+The following docs were updated across Phase 1 and Phase 5:
 
 - `docs/architecture.md`
 - `docs/product.md`

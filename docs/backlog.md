@@ -63,13 +63,10 @@ Must be resolved before QR codes are printed or the first real event runs.
   stronger proof is deferred.
   Detail: [`docs/open-questions.md` — Product And Live Event Operation](./open-questions.md)
 
-- [ ] **`dev` Terminology migration (`quiz`/`raffle` → `game`/`entitlement`)**
-  Decision made: phase-based direct rename (Alt C). Phase 0 complete (migration
-  map finalized). Phase 2 database and SQL contract rename is implemented on
-  main. Phase 3 Edge Function endpoint and shared contract rename is
-  implemented on main. Phase 4 frontend module, route, and copy migration is
-  implemented on the current branch. Phase 5 cleanup, guardrails, and broad
-  stale-reference cleanup remain queued.
+- [x] **`dev` Terminology migration (`quiz`/`raffle` → `game`/`entitlement`)**
+  All phases complete. Core runtime (frontend/shared/functions/schema) uses
+  target terminology consistently. Final repo-wide scan confirmed zero legacy
+  identifiers in active code. Backlog decision closed.
   Detail: [`docs/terminology-migration-strategy.md`](./terminology-migration-strategy.md)
 
 ---
