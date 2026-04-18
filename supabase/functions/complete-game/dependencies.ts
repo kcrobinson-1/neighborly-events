@@ -18,7 +18,7 @@ import {
  * Keeps runtime wiring (env, loaders, persistence, trust helpers) explicit and
  * replaceable for tests without changing completion handler behavior.
  */
-export type CompleteQuizHandlerDependencies = {
+export type CompleteGameHandlerDependencies = {
   createCorsHeaders: typeof createCorsHeaders;
   getAllowedOrigin: typeof getAllowedOrigin;
   getServiceRoleKey: () => string | undefined;
@@ -41,8 +41,8 @@ export type CompleteQuizHandlerDependencies = {
 };
 
 /** Default production dependency wiring for the trusted completion handler. */
-export const defaultCompleteQuizHandlerDependencies:
-  CompleteQuizHandlerDependencies = {
+export const defaultCompleteGameHandlerDependencies:
+  CompleteGameHandlerDependencies = {
     createCorsHeaders,
     getAllowedOrigin,
     getServiceRoleKey: () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),

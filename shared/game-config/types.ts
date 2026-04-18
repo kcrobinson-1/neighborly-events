@@ -33,7 +33,7 @@ export type GameConfig = {
   name: string;
   location: string;
   estimatedMinutes: number;
-  raffleLabel: string;
+  entitlementLabel: string;
   intro: string;
   summary: string;
   feedbackMode: FeedbackMode;

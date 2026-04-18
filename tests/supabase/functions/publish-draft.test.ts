@@ -165,6 +165,6 @@ Deno.test("publish-draft reports slug collisions as 409", async () => {
   assertEquals(response.status, 409);
   assertEquals(await response.json(), {
     details: "slug_collision",
-    error: "A quiz event already uses that slug.",
+    error: "A game event already uses that slug.",
   });
 });

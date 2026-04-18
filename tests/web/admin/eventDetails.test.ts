@@ -23,7 +23,7 @@ describe("createEventDetailsFormValues", () => {
       intro: sampleGame.intro,
       location: sampleGame.location,
       name: sampleGame.name,
-      raffleLabel: sampleGame.raffleLabel,
+      entitlementLabel: sampleGame.entitlementLabel,
       slug: sampleGame.slug,
       summary: sampleGame.summary,
     });
@@ -41,7 +41,7 @@ describe("applyEventDetailsFormValues", () => {
       intro: " Updated intro ",
       location: " Playfield ",
       name: " Updated Event ",
-      raffleLabel: " bonus entry ",
+      entitlementLabel: " bonus entry ",
       slug: " updated-event ",
       summary: " Updated summary ",
     });
@@ -54,7 +54,7 @@ describe("applyEventDetailsFormValues", () => {
       intro: "Updated intro",
       location: "Playfield",
       name: "Updated Event",
-      raffleLabel: "bonus entry",
+      entitlementLabel: "bonus entry",
       slug: "updated-event",
       summary: "Updated summary",
     });

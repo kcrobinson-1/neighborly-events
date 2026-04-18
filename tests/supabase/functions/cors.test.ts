@@ -25,7 +25,7 @@ Deno.test("getAllowedOrigin uses the built-in allowlist when ALLOWED_ORIGINS is 
 
 Deno.test("getAllowedOrigin uses the configured allowlist when ALLOWED_ORIGINS is set", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: "https://quiz.example, https://preview.example " },
+    { ALLOWED_ORIGINS: "https://game.example, https://preview.example " },
     () => {
       const configuredRequest = createOriginRequest(
         "https://example.com",
@@ -41,10 +41,10 @@ Deno.test("getAllowedOrigin uses the configured allowlist when ALLOWED_ORIGINS i
 });
 
 Deno.test("createCorsHeaders reflects the allowed origin and shared trust headers", () => {
-  const headersWithOrigin = createCorsHeaders("https://quiz.example");
+  const headersWithOrigin = createCorsHeaders("https://game.example");
   const headersWithoutOrigin = createCorsHeaders(null);
 
-  assertEquals(headersWithOrigin["Access-Control-Allow-Origin"], "https://quiz.example");
+  assertEquals(headersWithOrigin["Access-Control-Allow-Origin"], "https://game.example");
   assertMatch(
     headersWithOrigin["Access-Control-Allow-Headers"],
     /x-neighborly-session/,

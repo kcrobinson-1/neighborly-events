@@ -13,7 +13,7 @@ const publishedGameEventColumns = [
   "name",
   "location",
   "estimated_minutes",
-  "raffle_label:entitlement_label",
+  "entitlement_label",
   "intro",
   "summary",
   "feedback_mode",

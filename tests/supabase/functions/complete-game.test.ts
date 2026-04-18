@@ -8,10 +8,10 @@ import {
 } from "../../../shared/game-config.ts";
 import { getGameById } from "../../../shared/game-config/sample-fixtures.ts";
 import {
-  createCompleteQuizHandler,
-  defaultCompleteQuizHandlerDependencies,
+  createCompleteGameHandler,
+  defaultCompleteGameHandlerDependencies,
   validateCompletionPayload,
-} from "../../../supabase/functions/complete-quiz/index.ts";
+} from "../../../supabase/functions/complete-game/index.ts";
 import { createOriginRequest } from "./helpers.ts";
 
 const sampleGame = getGameById("madrona-music-2026");
@@ -48,10 +48,10 @@ Deno.test("validateCompletionPayload trims ids and rejects malformed completion 
   assertEquals(validateCompletionPayload(null), null);
 });
 
-Deno.test("complete-quiz rejects invalid sessions before touching persistence", async () => {
+Deno.test("complete-game rejects invalid sessions before touching persistence", async () => {
   let persistCalls = 0;
-  const handler = createCompleteQuizHandler({
-    ...defaultCompleteQuizHandlerDependencies,
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -81,9 +81,9 @@ Deno.test("complete-quiz rejects invalid sessions before touching persistence", 
   assertEquals(persistCalls, 0);
 });
 
-Deno.test("complete-quiz rejects answers that fail shared validation", async () => {
-  const handler = createCompleteQuizHandler({
-    ...defaultCompleteQuizHandlerDependencies,
+Deno.test("complete-game rejects answers that fail shared validation", async () => {
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -111,9 +111,9 @@ Deno.test("complete-quiz rejects answers that fail shared validation", async () 
   assertExists((await response.json()).error);
 });
 
-Deno.test("complete-quiz returns 400 when published content is missing or unpublished", async () => {
-  const handler = createCompleteQuizHandler({
-    ...defaultCompleteQuizHandlerDependencies,
+Deno.test("complete-game returns 400 when published content is missing or unpublished", async () => {
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -138,12 +138,12 @@ Deno.test("complete-quiz returns 400 when published content is missing or unpubl
   );
 
   assertEquals(response.status, 400);
-  assertEquals(await response.json(), { error: "Quiz event was not found." });
+  assertEquals(await response.json(), { error: "Game event was not found." });
 });
 
-Deno.test("complete-quiz returns a 500 when the published content loader fails", async () => {
-  const handler = createCompleteQuizHandler({
-    ...defaultCompleteQuizHandlerDependencies,
+Deno.test("complete-game returns a 500 when the published content loader fails", async () => {
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -172,11 +172,11 @@ Deno.test("complete-quiz returns a 500 when the published content loader fails",
   assertEquals(response.status, 500);
   assertEquals(await response.json(), {
     details: "published content query failed",
-    error: "We couldn't load this quiz event right now.",
+    error: "We couldn't load this game event right now.",
   });
 });
 
-Deno.test("complete-quiz persists the trusted normalized payload and clamped duration", async () => {
+Deno.test("complete-game persists the trusted normalized payload and clamped duration", async () => {
   let capturedInput:
     | {
       durationMs: number;
@@ -188,8 +188,8 @@ Deno.test("complete-quiz persists the trusted normalized payload and clamped dur
     }
     | null = null;
 
-  const handler = createCompleteQuizHandler({
-    ...defaultCompleteQuizHandlerDependencies,
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -247,7 +247,7 @@ Deno.test("complete-quiz persists the trusted normalized payload and clamped dur
       verificationCode: "MMP-SERVER01",
     },
     message: "You're checked in for the raffle.",
-    raffleEligible: true,
+    entitlementEligible: true,
     score: 6,
   });
   assertEquals(capturedInput, {
@@ -277,9 +277,9 @@ Deno.test("complete-quiz persists the trusted normalized payload and clamped dur
   });
 });
 
-Deno.test("complete-quiz returns a 500 when trusted persistence fails", async () => {
-  const handler = createCompleteQuizHandler({
-    ...defaultCompleteQuizHandlerDependencies,
+Deno.test("complete-game returns a 500 when trusted persistence fails", async () => {
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -317,6 +317,6 @@ Deno.test("complete-quiz returns a 500 when trusted persistence fails", async ()
   assertEquals(response.status, 500);
   assertEquals(await response.json(), {
     details: "rpc failed",
-    error: "We couldn't finalize your raffle entry right now.",
+    error: "We couldn't finalize your entitlement right now.",
   });
 });

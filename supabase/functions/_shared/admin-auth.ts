@@ -65,7 +65,7 @@ export async function authenticateQuizAdmin(
 
   if (adminError || !isAdmin) {
     return {
-      error: "This account is not allowlisted for quiz authoring.",
+      error: "This account is not allowlisted for game authoring.",
       status: "forbidden",
     };
   }

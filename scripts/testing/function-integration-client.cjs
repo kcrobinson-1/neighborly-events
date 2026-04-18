@@ -105,31 +105,31 @@ function createFunctionIntegrationClient({
     );
   }
 
-  async function waitForCompleteQuizReady() {
+  async function waitForCompleteGameReady() {
     const deadline = Date.now() + readyTimeoutMs;
     let lastFailureDetails = "";
 
     while (Date.now() < deadline) {
       assertServeIsRunning(
         serveRuntime,
-        "`supabase functions serve` exited before complete-quiz became ready.",
+        "`supabase functions serve` exited before complete-game became ready.",
       );
 
       try {
-        const completeQuiz = await invokeJson(functionUrl("complete-quiz"), {
+        const completeGame = await invokeJson(functionUrl("complete-game"), {
           body: JSON.stringify(buildCompletionPayload(`warmup-${Date.now()}`)),
           headers: baseHeaders,
           method: "POST",
         });
 
         if (
-          completeQuiz.response.status === 401 &&
-          completeQuiz.body?.error === "Session is missing or invalid."
+          completeGame.response.status === 401 &&
+          completeGame.body?.error === "Session is missing or invalid."
         ) {
           return;
         }
 
-        lastFailureDetails = formatHttpResult(completeQuiz);
+        lastFailureDetails = formatHttpResult(completeGame);
       } catch (error) {
         lastFailureDetails = error instanceof Error ? error.message : String(error);
       }
@@ -139,7 +139,7 @@ function createFunctionIntegrationClient({
 
     throw new Error(
       [
-        "Timed out waiting for `supabase functions serve` to return a ready complete-quiz response.",
+        "Timed out waiting for `supabase functions serve` to return a ready complete-game response.",
         lastFailureDetails,
         serveRuntime.getOutput(),
       ].filter(Boolean).join("\n\n"),
@@ -164,7 +164,7 @@ function createFunctionIntegrationClient({
 
     for (let attempt = 1; attempt <= completionAttemptCount; attempt += 1) {
       try {
-        lastResult = await invokeJson(functionUrl("complete-quiz"), init);
+        lastResult = await invokeJson(functionUrl("complete-game"), init);
         lastError = null;
       } catch (error) {
         lastError = error;
@@ -198,7 +198,7 @@ function createFunctionIntegrationClient({
     throw new Error(`${label} request failed after ${completionAttemptCount} attempts.\n${errorMessage}`);
   }
 
-  async function completeQuizWithCookie(cookieHeader, payload) {
+  async function completeGameWithCookie(cookieHeader, payload) {
     return await invokeCompletionWithRetry("Cookie completion", {
       body: JSON.stringify(payload),
       headers: {
@@ -209,7 +209,7 @@ function createFunctionIntegrationClient({
     });
   }
 
-  async function completeQuizWithSessionHeader(sessionToken, payload) {
+  async function completeGameWithSessionHeader(sessionToken, payload) {
     return await invokeCompletionWithRetry("Header fallback completion", {
       body: JSON.stringify(payload),
       headers: {
@@ -221,15 +221,15 @@ function createFunctionIntegrationClient({
   }
 
   function assertTrustedCookieCompletion(cookieCompletion) {
-    assertHttpStatus(cookieCompletion, 200, "Expected complete-quiz to accept the signed cookie.");
+    assertHttpStatus(cookieCompletion, 200, "Expected complete-game to accept the signed cookie.");
     assertWithContext(
       cookieCompletion.body?.score === 6,
       "Expected the trusted completion score to be recomputed as 6.",
       formatHttpResult(cookieCompletion),
     );
     assertWithContext(
-      cookieCompletion.body?.raffleEligible === true,
-      "Expected the first completion to earn the raffle entry.",
+      cookieCompletion.body?.entitlementEligible === true,
+      "Expected the first completion to earn the entitlement.",
       formatHttpResult(cookieCompletion),
     );
   }
@@ -238,7 +238,7 @@ function createFunctionIntegrationClient({
     assertHttpStatus(
       repeatedCompletion,
       200,
-      "Expected complete-quiz to accept the explicit session header fallback.",
+      "Expected complete-game to accept the explicit session header fallback.",
     );
     assertWithContext(
       repeatedCompletion.body?.completionId === cookieCompletion.body?.completionId,
@@ -255,10 +255,10 @@ function createFunctionIntegrationClient({
   return {
     assertHeaderFallbackRetry,
     assertTrustedCookieCompletion,
-    completeQuizWithCookie,
-    completeQuizWithSessionHeader,
+    completeGameWithCookie,
+    completeGameWithSessionHeader,
     extractSessionCookie,
-    waitForCompleteQuizReady,
+    waitForCompleteGameReady,
     waitForIssueSessionReady,
   };
 }

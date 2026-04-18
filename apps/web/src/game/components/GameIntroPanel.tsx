@@ -24,7 +24,7 @@ export function GameIntroPanel({
   return (
     <section className="panel intro-panel">
       <span className="chip">About {game.estimatedMinutes} minutes</span>
-      <h2>Finish to earn your {game.raffleLabel}</h2>
+      <h2>Finish to earn your {game.entitlementLabel}</h2>
       <p>{game.intro}</p>
       <ul className="intro-list">
         <li>No sign-in</li>

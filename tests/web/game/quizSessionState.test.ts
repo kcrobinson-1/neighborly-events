@@ -27,7 +27,7 @@ function createCompletionResult(
       verificationCode: "MMP-1234ABCD",
     },
     message: "You're checked in for the raffle.",
-    raffleEligible: true,
+    entitlementEligible: true,
     score: 2,
     ...overrides,
   };

@@ -62,7 +62,7 @@ values (
     'name', 'Phase 3 Failed Publish',
     'location', 'Seattle',
     'estimatedMinutes', 2,
-    'raffleLabel', 'raffle ticket',
+    'entitlementLabel', 'raffle ticket',
     'intro', 'Intro',
     'summary', 'Summary',
     'feedbackMode', 'final_score_reveal',

@@ -15,7 +15,7 @@ export type PublishedGameEventRow = {
   intro: string;
   location: string;
   name: string;
-  raffle_label: string;
+  entitlement_label: string;
   slug: string;
   summary: string;
 };
@@ -106,7 +106,7 @@ export function mapPublishedGameRowsToGameConfig(
     intro: event.intro,
     location: event.location,
     name: event.name,
-    raffleLabel: event.raffle_label,
+    entitlementLabel: event.entitlement_label,
     slug: event.slug,
     summary: event.summary,
     questions: [...questions]

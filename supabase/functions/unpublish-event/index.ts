@@ -69,7 +69,7 @@ function getPersistenceStatus(error: { code?: string; message: string }) {
 
 function getPersistenceMessage(error: { code?: string; message: string }) {
   if (getPersistenceStatus(error) === 400) {
-    return "This quiz event is not live.";
+    return "This game event is not live.";
   }
 
   return "We couldn't unpublish the event right now.";
@@ -149,7 +149,7 @@ export function createUnpublishEventHandler(
   );
 }
 
-/** Unpublishes a live quiz event for an authenticated admin. */
+/** Unpublishes a live game event for an authenticated admin. */
 export const handleUnpublishEventRequest = createUnpublishEventHandler();
 
 if (import.meta.main) {

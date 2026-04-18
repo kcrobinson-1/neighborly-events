@@ -183,7 +183,7 @@ export function createSaveDraftHandler(
             error: error && getPersistenceStatus(error) === 422
               ? "The slug cannot be changed after the event has been published."
               : error && getPersistenceStatus(error) === 409
-              ? "A quiz event already uses that slug."
+              ? "A game event already uses that slug."
               : "We couldn't save the draft right now.",
           },
         );
@@ -204,7 +204,7 @@ export function createSaveDraftHandler(
   );
 }
 
-/** Saves a canonical private quiz draft for an authenticated admin. */
+/** Saves a canonical private game draft for an authenticated admin. */
 export const handleSaveDraftRequest = createSaveDraftHandler();
 
 if (import.meta.main) {

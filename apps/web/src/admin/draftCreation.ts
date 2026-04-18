@@ -79,7 +79,7 @@ export function createStarterDraftContent(
         sponsor: "Sponsor name",
       },
     ],
-    raffleLabel: "raffle ticket",
+    entitlementLabel: "raffle ticket",
     slug: identity.slug,
     summary: "Add the event summary before publishing.",
   };

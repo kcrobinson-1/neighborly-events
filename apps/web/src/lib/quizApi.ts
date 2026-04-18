@@ -217,7 +217,7 @@ function buildLocalCompletionResult(
       verificationCode: entitlement.verificationCode,
     },
     message: buildEntitlementMessage(entitlementStatus),
-    raffleEligible: entitlementStatus === "new",
+    entitlementEligible: entitlementStatus === "new",
     score: scoreAnswers(game, input.answers),
   } satisfies QuizCompletionResult;
 
@@ -293,7 +293,7 @@ async function submitQuizCompletionToSupabase(
   retryOnUnauthorized = true,
 ) {
   const { supabaseClientKey, supabaseUrl } = getSupabaseConfig();
-  const response = await fetch(`${supabaseUrl}/functions/v1/complete-quiz`, {
+  const response = await fetch(`${supabaseUrl}/functions/v1/complete-game`, {
     method: "POST",
     headers: createServerSessionHeaders(supabaseClientKey),
     credentials: "include",

@@ -48,7 +48,7 @@ Deno.test("save-draft rejects authenticated non-admin users", async () => {
     ...defaultSaveDraftHandlerDependencies,
     authoringHttp: createAuthoringHttpDependencies({
       authenticateQuizAdmin: async () => ({
-        error: "This account is not allowlisted for quiz authoring.",
+        error: "This account is not allowlisted for game authoring.",
         status: "forbidden",
       }),
     }),
@@ -63,7 +63,7 @@ Deno.test("save-draft rejects authenticated non-admin users", async () => {
 
   assertEquals(response.status, 403);
   assertEquals(await response.json(), {
-    error: "This account is not allowlisted for quiz authoring.",
+    error: "This account is not allowlisted for game authoring.",
   });
 });
 
@@ -201,6 +201,6 @@ Deno.test("save-draft reports slug conflicts as 409", async () => {
   assertEquals(response.status, 409);
   assertEquals(await response.json(), {
     details: "duplicate key value violates unique constraint",
-    error: "A quiz event already uses that slug.",
+    error: "A game event already uses that slug.",
   });
 });

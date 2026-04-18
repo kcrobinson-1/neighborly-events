@@ -12,7 +12,7 @@ export type IssueSessionHandlerDependencies = {
   getServiceRoleKey: () => string | undefined;
   getSigningSecret: () => string | undefined;
   getSupabaseUrl: () => string | undefined;
-  insertQuizStart: (
+  insertGameStart: (
     eventId: string,
     clientSessionId: string,
     supabaseUrl: string,
@@ -21,8 +21,8 @@ export type IssueSessionHandlerDependencies = {
   readVerifiedSession: typeof readVerifiedSession;
 };
 
-/** Records a quiz start row for the given event/session pair. Idempotent. */
-async function defaultInsertQuizStart(
+/** Records a game start row for the given event/session pair. Idempotent. */
+async function defaultInsertGameStart(
   eventId: string,
   clientSessionId: string,
   supabaseUrl: string,
@@ -53,7 +53,7 @@ export const defaultIssueSessionHandlerDependencies: IssueSessionHandlerDependen
   getServiceRoleKey: () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
   getSigningSecret: () => Deno.env.get("SESSION_SIGNING_SECRET"),
   getSupabaseUrl: () => Deno.env.get("SUPABASE_URL"),
-  insertQuizStart: defaultInsertQuizStart,
+  insertGameStart: defaultInsertGameStart,
   readVerifiedSession,
 };
 
@@ -139,7 +139,7 @@ export function createIssueSessionHandler(
 
         if (supabaseUrl && serviceRoleKey) {
           try {
-            await dependencies.insertQuizStart(
+            await dependencies.insertGameStart(
               eventId,
               existingSession.sessionId,
               supabaseUrl,
@@ -174,7 +174,7 @@ export function createIssueSessionHandler(
 
       if (supabaseUrl && serviceRoleKey) {
         try {
-          await dependencies.insertQuizStart(eventId, sessionId, supabaseUrl, serviceRoleKey);
+          await dependencies.insertGameStart(eventId, sessionId, supabaseUrl, serviceRoleKey);
         } catch {
           // Swallow: start tracking must not block session issuance.
         }

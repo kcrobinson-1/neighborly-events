@@ -100,18 +100,18 @@ async function main() {
       const issueSession = await functionClient.waitForIssueSessionReady();
       const cookieHeader = functionClient.extractSessionCookie(issueSession);
 
-      logStep("Warming the complete-quiz function before the trusted completion");
-      await functionClient.waitForCompleteQuizReady();
+      logStep("Warming the complete-game function before the trusted completion");
+      await functionClient.waitForCompleteGameReady();
 
-      logStep("Completing the quiz with the cookie transport");
-      const cookieCompletion = await functionClient.completeQuizWithCookie(
+      logStep("Completing the game with the cookie transport");
+      const cookieCompletion = await functionClient.completeGameWithCookie(
         cookieHeader,
         completionPayload,
       );
       functionClient.assertTrustedCookieCompletion(cookieCompletion);
 
       logStep("Retrying the same completion via the explicit session header fallback");
-      const repeatedCompletion = await functionClient.completeQuizWithSessionHeader(
+      const repeatedCompletion = await functionClient.completeGameWithSessionHeader(
         issueSession.body.sessionToken,
         completionPayload,
       );

@@ -652,7 +652,7 @@ describe("AdminPage", () => {
     expect(getFieldValue("Estimated minutes")).toBe(
       String(selectedDraftContent.estimatedMinutes),
     );
-    expect(getFieldValue("Raffle label")).toBe(sampleDraft.raffleLabel);
+    expect(getFieldValue("Entitlement label")).toBe(sampleDraft.entitlementLabel);
     expect(getFieldValue("Intro")).toBe(sampleDraft.intro);
     expect(getFieldValue("Summary")).toBe(sampleDraft.summary);
     expect(getFieldValue("Feedback mode")).toBe(sampleDraft.feedbackMode);

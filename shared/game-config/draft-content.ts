@@ -66,10 +66,10 @@ export function parseAuthoringGameDraftContent(
       "estimatedMinutes",
       'Draft content "estimatedMinutes"',
     ),
-    raffleLabel: expectString(
+    entitlementLabel: expectString(
       record,
-      "raffleLabel",
-      'Draft content "raffleLabel"',
+      "entitlementLabel",
+      'Draft content "entitlementLabel"',
     ),
     intro: expectString(record, "intro", 'Draft content "intro"'),
     summary: expectString(record, "summary", 'Draft content "summary"'),
@@ -114,7 +114,7 @@ export function mapAuthoringGameDraftContentToGameConfig(
     name: draft.name,
     location: draft.location,
     estimatedMinutes: draft.estimatedMinutes,
-    raffleLabel: draft.raffleLabel,
+    entitlementLabel: draft.entitlementLabel,
     intro: draft.intro,
     summary: draft.summary,
     feedbackMode: draft.feedbackMode,
