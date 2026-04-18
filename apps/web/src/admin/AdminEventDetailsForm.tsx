@@ -148,13 +148,13 @@ export function AdminEventDetailsForm({
           />
         </label>
         <label className="admin-field">
-          <span className="admin-field-label">Raffle label</span>
+          <span className="admin-field-label">Entitlement label</span>
           <input
             className="admin-input"
             disabled={disabled}
-            onChange={updateTextValue("raffleLabel")}
+            onChange={updateTextValue("entitlementLabel")}
             type="text"
-            value={values.raffleLabel}
+            value={values.entitlementLabel}
           />
         </label>
         <label className="admin-field">

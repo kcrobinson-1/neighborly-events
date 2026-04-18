@@ -12,7 +12,7 @@ function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
     name: "Test Game",
     location: "Seattle",
     estimatedMinutes: 2,
-    raffleLabel: "raffle ticket",
+    entitlementLabel: "raffle ticket",
     intro: "Test intro",
     summary: "Test summary",
     feedbackMode: "final_score_reveal",
@@ -46,7 +46,7 @@ function createCompletionResult(
       verificationCode: "MMP-1234ABCD",
     },
     message: "You're checked in for the raffle.",
-    raffleEligible: true,
+    entitlementEligible: true,
     score: 1,
     ...overrides,
   };

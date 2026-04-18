@@ -154,7 +154,7 @@ export async function installAttendeeFunctionProxy(
     tamperFirstCompletionPayload = false,
   } = options;
   const supabaseUrl = readRequiredEnv("TEST_SUPABASE_URL").replace(/\/$/, "");
-  const functionNames = new Set(["issue-session", "complete-quiz"]);
+  const functionNames = new Set(["issue-session", "complete-game"]);
   let hasFailedFirstIssueSessionRequest = false;
   let hasTamperedFirstCompletionPayload = false;
 
@@ -239,7 +239,7 @@ export async function installAttendeeFunctionProxy(
 
     const shouldTamperCompletionPayload =
       tamperFirstCompletionPayload &&
-      functionName === "complete-quiz" &&
+      functionName === "complete-game" &&
       request.method() === "POST" &&
       !hasTamperedFirstCompletionPayload;
     let originalPayload:

@@ -16,7 +16,7 @@ const firstSampleGame: GameConfig = {
   allowRetake: true,
   location: "Seattle",
   estimatedMinutes: 2,
-  raffleLabel: "raffle ticket",
+  entitlementLabel: "raffle ticket",
   summary:
     "Move through the quiz with explicit submit on each question and see your score plus the correct answers at the end.",
   feedbackMode: "final_score_reveal",
@@ -118,7 +118,7 @@ const sponsorSpotlightGame: GameConfig = {
   allowRetake: true,
   location: "Seattle",
   estimatedMinutes: 3,
-  raffleLabel: "bonus raffle ticket",
+  entitlementLabel: "bonus raffle ticket",
   summary:
     "You must submit the correct answer to move on, and each right answer reveals a sponsor fact before the next question.",
   feedbackMode: "instant_feedback_required",
@@ -197,7 +197,7 @@ const communityChecklistGame: GameConfig = {
   allowRetake: true,
   location: "Seattle",
   estimatedMinutes: 3,
-  raffleLabel: "sample raffle ticket",
+  entitlementLabel: "sample raffle ticket",
   summary:
     "Includes select-all-that-apply questions so we can validate multiple selection with an explicit submit button.",
   feedbackMode: "final_score_reveal",

@@ -107,7 +107,7 @@ Deno.test("issue-session issues a new signed session and returns Set-Cookie", as
 });
 
 // ---------------------------------------------------------------------------
-// Quiz start tracking
+// Game start tracking
 // ---------------------------------------------------------------------------
 
 Deno.test("issue-session inserts a start row for a new session when event_id is provided", async () => {
@@ -117,7 +117,7 @@ Deno.test("issue-session inserts a start row for a new session when event_id is 
     ...newSessionDeps,
     getSupabaseUrl: () => "https://example.supabase.co",
     getServiceRoleKey: () => "service-role-key",
-    insertQuizStart: async (eventId, clientSessionId) => {
+    insertGameStart: async (eventId, clientSessionId) => {
       insertedStarts.push({ eventId, clientSessionId });
     },
   });
@@ -143,7 +143,7 @@ Deno.test("issue-session inserts a start row for an existing session when event_
     ...existingSessionDeps,
     getSupabaseUrl: () => "https://example.supabase.co",
     getServiceRoleKey: () => "service-role-key",
-    insertQuizStart: async (eventId, clientSessionId) => {
+    insertGameStart: async (eventId, clientSessionId) => {
       insertedStarts.push({ eventId, clientSessionId });
     },
   });
@@ -168,7 +168,7 @@ Deno.test("issue-session does not insert a start row when event_id is absent", a
     ...newSessionDeps,
     getSupabaseUrl: () => "https://example.supabase.co",
     getServiceRoleKey: () => "service-role-key",
-    insertQuizStart: async (eventId, clientSessionId) => {
+    insertGameStart: async (eventId, clientSessionId) => {
       insertedStarts.push({ eventId, clientSessionId });
     },
   });
@@ -191,7 +191,7 @@ Deno.test("issue-session returns 200 even when the start row insert fails", asyn
     ...newSessionDeps,
     getSupabaseUrl: () => "https://example.supabase.co",
     getServiceRoleKey: () => "service-role-key",
-    insertQuizStart: async () => {
+    insertGameStart: async () => {
       throw new Error("database unavailable");
     },
   });

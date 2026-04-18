@@ -192,7 +192,7 @@ describe("quizApi", () => {
         status: "new",
         verificationCode: "MMP-12345678",
       },
-      raffleEligible: true,
+      entitlementEligible: true,
     });
 
     expect(secondAttempt).toMatchObject({
@@ -201,7 +201,7 @@ describe("quizApi", () => {
         status: "existing",
         verificationCode: "MMP-12345678",
       },
-      raffleEligible: false,
+      entitlementEligible: false,
     });
   });
 
@@ -217,7 +217,7 @@ describe("quizApi", () => {
         verificationCode: "MMP-SERVER01",
       },
       message: "You're checked in for the raffle.",
-      raffleEligible: true,
+      entitlementEligible: true,
       score: 2,
     };
 
@@ -245,13 +245,13 @@ describe("quizApi", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://example.supabase.co/functions/v1/complete-quiz",
+      "https://example.supabase.co/functions/v1/complete-game",
     );
     expect(fetchMock.mock.calls[1]?.[0]).toBe(
       "https://example.supabase.co/functions/v1/issue-session",
     );
     expect(fetchMock.mock.calls[2]?.[0]).toBe(
-      "https://example.supabase.co/functions/v1/complete-quiz",
+      "https://example.supabase.co/functions/v1/complete-game",
     );
 
     expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({

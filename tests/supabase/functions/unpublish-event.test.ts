@@ -16,7 +16,7 @@ Deno.test("unpublish-event rejects authenticated non-admin users before persiste
     ...defaultUnpublishEventHandlerDependencies,
     authoringHttp: createAuthoringHttpDependencies({
       authenticateQuizAdmin: async () => ({
-        error: "This account is not allowlisted for quiz authoring.",
+        error: "This account is not allowlisted for game authoring.",
         status: "forbidden",
       }),
     }),
@@ -32,7 +32,7 @@ Deno.test("unpublish-event rejects authenticated non-admin users before persiste
 
   assertEquals(response.status, 403);
   assertEquals(await response.json(), {
-    error: "This account is not allowlisted for quiz authoring.",
+    error: "This account is not allowlisted for game authoring.",
   });
   assertEquals(unpublishCalls, 0);
 });

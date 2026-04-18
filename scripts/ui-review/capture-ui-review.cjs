@@ -339,7 +339,7 @@ const ADMIN_DRAFT_DETAIL_FIXTURE = [
       name: "Madrona Summer Block Party",
       location: "Madrona Playfield, Seattle WA",
       estimatedMinutes: 5,
-      raffleLabel: "Show this at the raffle table",
+      entitlementLabel: "Show this at the raffle table",
       intro: "Welcome to the Madrona Summer Block Party quiz!",
       summary: "Thanks for playing. Good luck at the raffle!",
       feedbackMode: "final_score_reveal",
@@ -390,7 +390,7 @@ const ADMIN_DRAFT_DETAIL_FIXTURE = [
  *
  * @param {string} supabaseUrl - The real VITE_SUPABASE_URL value (read at runtime)
  * @param {object} [overrides]
- * @param {boolean} [overrides.isAdmin=true] - Whether is_quiz_admin returns true
+ * @param {boolean} [overrides.isAdmin=true] - Whether is_admin returns true
  * @param {object|null} [overrides.saveDraftResponse] - Override for save-draft response
  * @param {number} [overrides.saveDraftStatus] - Override HTTP status for save-draft
  */
@@ -432,8 +432,8 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       }
     });
 
-    // is_quiz_admin RPC (POST)
-    await page.route(`${supabaseUrl}/rest/v1/rpc/is_quiz_admin`, (route) => {
+    // is_admin RPC (POST)
+    await page.route(`${supabaseUrl}/rest/v1/rpc/is_admin`, (route) => {
       void route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -441,10 +441,10 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       });
     });
 
-    // quiz_event_drafts table reads (GET)
+    // game_event_drafts table reads (GET)
     // Detail reads include content,created_at,last_saved_by in the select param.
     // Summary reads include only id,live_version_number,name,slug,updated_at.
-    await page.route(`${supabaseUrl}/rest/v1/quiz_event_drafts*`, (route) => {
+    await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
         return;

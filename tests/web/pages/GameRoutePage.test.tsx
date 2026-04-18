@@ -27,7 +27,7 @@ function createGame(overrides: Partial<GameConfig> = {}): GameConfig {
     intro: "Test intro",
     location: "Seattle",
     name: "Test Game",
-    raffleLabel: "raffle ticket",
+    entitlementLabel: "raffle ticket",
     slug: "test-game",
     summary: "Test summary",
     questions: [

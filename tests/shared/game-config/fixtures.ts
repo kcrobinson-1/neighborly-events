@@ -8,7 +8,7 @@ export function createTestGame(): GameConfig {
     name: "Test Game",
     location: "Seattle",
     estimatedMinutes: 2,
-    raffleLabel: "test raffle",
+    entitlementLabel: "test raffle",
     intro: "Test intro",
     summary: "Test summary",
     feedbackMode: "final_score_reveal",

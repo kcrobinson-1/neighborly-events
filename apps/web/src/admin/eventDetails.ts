@@ -17,14 +17,14 @@ export type AdminEventDetailsFormValues = {
   intro: string;
   location: string;
   name: string;
-  raffleLabel: string;
+  entitlementLabel: string;
   slug: string;
   summary: string;
 };
 
 type RequiredStringField = keyof Pick<
   AdminEventDetailsFormValues,
-  "intro" | "location" | "name" | "raffleLabel" | "slug" | "summary"
+  "intro" | "location" | "name" | "entitlementLabel" | "slug" | "summary"
 >;
 
 function parseEstimatedMinutes(value: string) {
@@ -51,7 +51,7 @@ function createRequiredFieldMessage(field: keyof AdminEventDetailsFormValues) {
     intro: "Intro",
     location: "Location",
     name: "Event name",
-    raffleLabel: "Raffle label",
+    entitlementLabel: "Entitlement label",
     slug: "Slug",
     summary: "Summary",
   };
@@ -86,7 +86,7 @@ export function createEventDetailsFormValues(
     intro: content.intro,
     location: content.location,
     name: content.name,
-    raffleLabel: content.raffleLabel,
+    entitlementLabel: content.entitlementLabel,
     slug: content.slug,
     summary: content.summary,
   };
@@ -109,7 +109,7 @@ export function applyEventDetailsFormValues(
     intro: trimRequiredString(values, "intro"),
     location: trimRequiredString(values, "location"),
     name: trimRequiredString(values, "name"),
-    raffleLabel: trimRequiredString(values, "raffleLabel"),
+    entitlementLabel: trimRequiredString(values, "entitlementLabel"),
     slug: trimRequiredString(values, "slug"),
     summary: trimRequiredString(values, "summary"),
   };

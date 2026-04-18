@@ -114,7 +114,7 @@ function getPersistenceMessage(error: { code?: string; message: string }) {
   const status = getPersistenceStatus(error);
 
   if (status === 409) {
-    return "A quiz event already uses that slug.";
+    return "A game event already uses that slug.";
   }
 
   if (status === 400) {
@@ -255,7 +255,7 @@ export function createPublishDraftHandler(
   );
 }
 
-/** Publishes a private draft into the public quiz projection for an admin. */
+/** Publishes a private draft into the public game projection for an admin. */
 export const handlePublishDraftRequest = createPublishDraftHandler();
 
 if (import.meta.main) {

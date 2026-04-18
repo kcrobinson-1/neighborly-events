@@ -67,8 +67,8 @@ jobs:
       - name: Check issue-session function
         run: deno check --no-lock supabase/functions/issue-session/index.ts
 
-      - name: Check complete-quiz function
-        run: deno check --no-lock supabase/functions/complete-quiz/index.ts
+      - name: Check complete-game function
+        run: deno check --no-lock supabase/functions/complete-game/index.ts
 
       - name: Check save-draft function
         run: deno check --no-lock supabase/functions/save-draft/index.ts

@@ -19,7 +19,7 @@ export type QuizCompletionResult = {
   completionId: string;
   entitlement: QuizCompletionEntitlement;
   message: string;
-  raffleEligible: boolean;
+  entitlementEligible: boolean;
   score: number;
 };
 

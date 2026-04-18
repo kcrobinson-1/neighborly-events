@@ -1,6 +1,6 @@
 project_id = "neighborly-scavenger-game"
 
-[functions.complete-quiz]
+[functions.complete-game]
 verify_jwt = false
 
 [functions.issue-session]

@@ -1,14 +1,14 @@
 import { type GameConfig } from "../../../shared/game-config.ts";
 import {
-  type CompleteQuizHandlerDependencies,
-  defaultCompleteQuizHandlerDependencies,
+  type CompleteGameHandlerDependencies,
+  defaultCompleteGameHandlerDependencies,
 } from "./dependencies.ts";
 import { validateCompletionPayload } from "./payload.ts";
 import { jsonResponse } from "./response.ts";
 
 export {
-  type CompleteQuizHandlerDependencies,
-  defaultCompleteQuizHandlerDependencies,
+  type CompleteGameHandlerDependencies,
+  defaultCompleteGameHandlerDependencies,
 } from "./dependencies.ts";
 export type {
   CompletionPersistenceInput,
@@ -21,15 +21,15 @@ export {
 } from "./payload.ts";
 
 /** Builds the request handler used by the trusted completion function. */
-export function createCompleteQuizHandler(
-  dependencies: CompleteQuizHandlerDependencies =
-    defaultCompleteQuizHandlerDependencies,
+export function createCompleteGameHandler(
+  dependencies: CompleteGameHandlerDependencies =
+    defaultCompleteGameHandlerDependencies,
 ) {
   return async (request: Request) => {
     const origin = dependencies.getAllowedOrigin(request);
 
     // We require an allowed browser origin here because this function issues
-    // raffle entitlements. The signed cookie is the main trust primitive, and the
+    // entitlements. The signed cookie is the main trust primitive, and the
     // origin gate keeps that cookie flow scoped to the product's own surfaces.
     if (!origin) {
       return jsonResponse(
@@ -108,7 +108,7 @@ export function createCompleteQuizHandler(
         500,
         {
           details: error instanceof Error ? error.message : undefined,
-          error: "We couldn't load this quiz event right now.",
+          error: "We couldn't load this game event right now.",
         },
         origin,
         dependencies.createCorsHeaders,
@@ -118,7 +118,7 @@ export function createCompleteQuizHandler(
     if (!game) {
       return jsonResponse(
         400,
-        { error: "Quiz event was not found." },
+        { error: "Game event was not found." },
         origin,
         dependencies.createCorsHeaders,
       );
@@ -164,7 +164,7 @@ export function createCompleteQuizHandler(
       return jsonResponse(
         500,
         {
-          error: "We couldn't finalize your raffle entry right now.",
+          error: "We couldn't finalize your entitlement right now.",
           details: error?.message,
         },
         origin,
@@ -183,7 +183,7 @@ export function createCompleteQuizHandler(
           verificationCode: data.verification_code,
         },
         message: data.message,
-        raffleEligible: data.entitlement_eligible,
+        entitlementEligible: data.entitlement_eligible,
         score: data.score,
       },
       origin,
@@ -192,9 +192,9 @@ export function createCompleteQuizHandler(
   };
 }
 
-/** Finalizes a quiz attempt and awards or reuses the raffle entitlement. */
-export const handleCompleteQuizRequest = createCompleteQuizHandler();
+/** Finalizes a game attempt and awards or reuses the entitlement. */
+export const handleCompleteGameRequest = createCompleteGameHandler();
 
 if (import.meta.main) {
-  Deno.serve(handleCompleteQuizRequest);
+  Deno.serve(handleCompleteGameRequest);
 }
