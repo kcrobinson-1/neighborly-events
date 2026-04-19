@@ -84,6 +84,92 @@ Because the 3-letter code lives inside the entitlement code (`ABC-1234`), it doe
 
 A new endpoint or `save-draft` action is **not** required for "Regenerate" — the admin UI calls a small `generate-event-code` edge function that returns `{ outcome: "ok", result: { eventCode: "XYZ" } }` and the admin form fills the field with the suggestion. Save still happens through the same `save-draft` path.
 
+## Implementation Phases And PR Slicing
+
+The plan has a clean release seam between the server-side foundation and the
+admin control surface. Phase 1 is independently deployable: the system does not
+break without the UI because new drafts still get auto-generated codes, publish
+carries the code through, and entitlements issue as `ABC-1234`. Phase 2 builds
+the admin affordances on top of those server-side invariants. A single larger
+phase would work, but the seam is clear enough that the split earns its
+coordination overhead.
+
+This sequence also unblocks the reward redemption MVP's backend work as soon as
+Phase 1 lands, because the database and RPC invariants it depends on are already
+in place before admins can view or customize codes.
+
+### Phase 1 — Server-Side Foundation
+
+**Releasable state:** event codes exist, flow through the publish path, and are
+enforced automatically. New drafts get auto-generated codes, publish carries the
+code through to `game_events`, and entitlements issue in `ABC-1234` format.
+Admins cannot see or override codes yet, but the data layer is stable.
+
+Scope:
+
+- Migrations A, B, C, and D: schema, backfill, lock trigger, RPC rewrite, and
+  entitlement code uniqueness.
+- `save-draft` edge function update to generate and validate `event_code` when
+  omitted or supplied.
+- `generate-event-code` edge function.
+- pgTAP tests plus Vitest coverage for edge function and RPC behavior.
+
+#### PR 1 — Event Code Data Model
+
+Scope:
+
+- Migrations A, B, and C: schema, backfill, `NOT NULL`, indexes, and lock
+  trigger.
+- `save-draft` edge function update to generate and validate `event_code`.
+- `generate-event-code` edge function.
+- pgTAP coverage for constraint checks, unique violations, lock trigger
+  behavior, and `generate_random_event_code()`.
+
+Why together: Migration B makes `event_code` `NOT NULL`, so `save-draft` must
+ship in the same PR or draft creation breaks. Migrations A through C are
+sequential and small. This PR tells a complete story: event codes exist, are
+enforced, and draft creation handles them. The intermediate state after this PR
+is stable and safe: event codes exist in the database while old
+`MMP-XXXXXXXX` entitlements still issue.
+
+#### PR 2 — Entitlement Code Format
+
+Scope:
+
+- Migration D: new `generate_neighborly_verification_code`, rewrite of
+  `complete_game_and_award_entitlement`, unique constraint on
+  `game_entitlements`, and `publish_game_event_draft` update.
+- pgTAP coverage for the new code generator format plus RPC retry and
+  exhaustion behavior.
+- Vitest coverage for `save-draft` handler error codes and the
+  `generate-event-code` handler.
+
+Why separate: Migration D is the most complex piece. It includes the retry loop,
+two new error codes, idempotency preservation, and a touched
+`publish_game_event_draft` path that is easy to overlook. Isolating it lets a
+reviewer focus on behavioral correctness of the RPC without the schema noise
+from PR 1.
+
+### Phase 2 — Admin Control Surface
+
+**Releasable state:** admins can view and customize event codes before publish.
+
+#### PR 3 — Admin Control Surface
+
+Scope:
+
+- `AdminEventDetailsForm.tsx`: event-code input, Regenerate button,
+  disabled-after-publish state, and error surfaces.
+- `draftCreation.ts`: omit `eventCode` on initial save so the server generates
+  it.
+- Frontend mock `createVerificationCode()` rewrite plus call-site updates.
+- Vitest coverage for form component behavior.
+- `complete-game.test.ts` expectation updates.
+
+Why one PR: this is a unified frontend/mock story ("admins can now see and
+customize event codes") with no internal coupling hazard that requires another
+split. The diff should be reviewable in one sitting once Phase 1 has landed.
+
 ## Rollout Sequence
 
 ### Migration A — `20260418000000_add_event_code_columns.sql`
