@@ -57,13 +57,22 @@ function run(command, args, options = {}) {
     capture = false,
     check = true,
     env,
+    input,
   } = options;
+
+  let stdio = "inherit";
+  if (capture) {
+    stdio = ["ignore", "pipe", "pipe"];
+  } else if (input !== undefined) {
+    stdio = ["pipe", "inherit", "inherit"];
+  }
 
   const result = spawnSync(command, args, {
     cwd: repoRoot,
     encoding: "utf8",
+    input,
     env: env ? { ...process.env, ...env } : process.env,
-    stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+    stdio,
   });
 
   if (result.error) {
@@ -201,14 +210,18 @@ function resetLocalSupabaseDatabase() {
   logStep("Resetting local Supabase database to current migrations");
 
   try {
-    runSupabase(["db", "reset", "--local", "--no-seed", "--yes"]);
+    runSupabase(["db", "reset", "--local", "--no-seed"], {
+      input: "y\n",
+    });
   } catch {
     // CI occasionally flakes here while the storage API is still settling after
     // container restart. Recover by restarting the local stack once, then retry.
     logStep("Local Supabase reset failed; restarting stack before one retry");
     runSupabase(["stop"], { check: false });
     runSupabase(["start"]);
-    runSupabase(["db", "reset", "--local", "--no-seed", "--yes"]);
+    runSupabase(["db", "reset", "--local", "--no-seed"], {
+      input: "y\n",
+    });
   }
 }
 
