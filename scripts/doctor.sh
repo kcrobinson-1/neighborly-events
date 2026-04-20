@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_FILE="${REPO_ROOT}/mise.toml"
+DENO_DOCTOR_ANCHOR="${REPO_ROOT}/supabase/functions/_shared/doctor-check-anchor.ts"
 export PATH="${HOME}/.local/bin:${PATH}"
 
 EXIT_MISSING_TOOL=10
@@ -20,11 +21,25 @@ fail() {
 }
 
 read_pin() {
-  local key="$1"
+  local section="$1"
+  local key="$2"
   local value
-  value="$(awk -F'"' -v key="${key}" '$1 ~ ("^" key " = ") { print $2 }' "${MISE_FILE}")"
+
+  value="$(
+    awk -F'"' -v section="${section}" -v key="${key}" '
+      /^\[.*\]$/ {
+        in_section = ($0 == "[" section "]")
+        next
+      }
+      in_section && $1 ~ ("^" key " = ") {
+        print $2
+        exit
+      }
+    ' "${MISE_FILE}"
+  )"
+
   if [[ -z "${value}" ]]; then
-    fail "${EXIT_UNKNOWN}" "missing pin for ${key} in mise.toml"
+    fail "${EXIT_UNKNOWN}" "missing pin for ${key} in [${section}] of mise.toml"
   fi
   printf '%s' "${value}"
 }
@@ -53,6 +68,56 @@ assert_version() {
   fi
 }
 
+normalize_version() {
+  local value="$1"
+  printf '%s' "${value}" | sed -E 's/^v//'
+}
+
+assert_optional_version_file_matches_node() {
+  local file="$1"
+  local expected="$2"
+  local actual
+
+  [[ -f "${file}" ]] || return 0
+
+  actual="$(tr -d '[:space:]' < "${file}")"
+  if [[ -z "${actual}" ]]; then
+    fail "${EXIT_WRONG_VERSION}" "${file} is empty; expected Node ${expected}"
+  fi
+
+  if [[ "$(normalize_version "${actual}")" != "$(normalize_version "${expected}")" ]]; then
+    fail "${EXIT_WRONG_VERSION}" "${file} does not match pinned Node version in mise.toml (expected ${expected}, got ${actual})"
+  fi
+}
+
+assert_required_env_vars() {
+  local required="${DOCTOR_REQUIRED_ENV_VARS:-}"
+  local env_name
+
+  if [[ -z "${required}" ]]; then
+    return 0
+  fi
+
+  # Accept comma or whitespace separators.
+  required="${required//,/ }"
+
+  for env_name in ${required}; do
+    if [[ -z "${!env_name:-}" ]]; then
+      fail "${EXIT_MISSING_ENV}" "required environment variable is missing: ${env_name}"
+    fi
+  done
+}
+
+check_deno_offline_smoke() {
+  if [[ ! -f "${DENO_DOCTOR_ANCHOR}" ]]; then
+    fail "${EXIT_UNKNOWN}" "Deno doctor anchor missing: ${DENO_DOCTOR_ANCHOR}"
+  fi
+
+  if ! deno check --no-lock --no-remote "${DENO_DOCTOR_ANCHOR}" >/dev/null 2>&1; then
+    fail "${EXIT_DEPS_MISSING}" "offline Deno check failed for ${DENO_DOCTOR_ANCHOR}"
+  fi
+}
+
 cd "${REPO_ROOT}"
 
 [[ -f "${MISE_FILE}" ]] || fail "${EXIT_UNKNOWN}" "mise.toml not found"
@@ -64,9 +129,9 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate bash)"
 fi
 
-EXPECTED_NODE="$(read_pin "node")"
-EXPECTED_DENO="$(read_pin "deno")"
-EXPECTED_SUPABASE="$(read_pin "SUPABASE_CLI_VERSION")"
+EXPECTED_NODE="$(read_pin "tools" "node")"
+EXPECTED_DENO="$(read_pin "tools" "deno")"
+EXPECTED_SUPABASE="$(read_pin "env" "SUPABASE_CLI_VERSION")"
 
 assert_command_exists "node"
 assert_command_exists "npm"
@@ -76,6 +141,9 @@ assert_command_exists "supabase"
 assert_version "node" "$(command_version node)" "${EXPECTED_NODE}"
 assert_version "deno" "$(command_version deno)" "${EXPECTED_DENO}"
 assert_version "supabase" "$(command_version supabase)" "${EXPECTED_SUPABASE}"
+assert_optional_version_file_matches_node "${REPO_ROOT}/.nvmrc" "${EXPECTED_NODE}"
+assert_optional_version_file_matches_node "${REPO_ROOT}/.node-version" "${EXPECTED_NODE}"
+assert_required_env_vars
 
 [[ -d "${REPO_ROOT}/node_modules" ]] || fail "${EXIT_DEPS_MISSING}" "node_modules is missing; run npm ci"
 
@@ -83,9 +151,7 @@ if ! npm ci --ignore-scripts --prefer-offline --dry-run >/dev/null 2>&1; then
   fail "${EXIT_DEPS_MISSING}" "npm dependencies are out of sync with package-lock.json"
 fi
 
-if ! deno check --no-lock supabase/functions/issue-session/index.ts >/dev/null 2>&1; then
-  fail "${EXIT_DEPS_MISSING}" "Deno dependency resolution failed for supabase/functions imports"
-fi
+check_deno_offline_smoke
 
 echo "doctor: environment OK"
 exit 0

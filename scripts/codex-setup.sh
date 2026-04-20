@@ -4,6 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 MISE_INSTALL_URL="https://mise.run"
+MISE_FILE="mise.toml"
 export PATH="${HOME}/.local/bin:${PATH}"
 
 ensure_mise() {
@@ -51,14 +52,40 @@ install_supabase_cli() {
   rm -rf "${tmp_dir}"
 }
 
+read_pin() {
+  local section="$1"
+  local key="$2"
+  local value
+
+  value="$(
+    awk -F'"' -v section="${section}" -v key="${key}" '
+      /^\[.*\]$/ {
+        in_section = ($0 == "[" section "]")
+        next
+      }
+      in_section && $1 ~ ("^" key " = ") {
+        print $2
+        exit
+      }
+    ' "${MISE_FILE}"
+  )"
+
+  if [[ -z "${value}" ]]; then
+    echo "Missing pinned value for ${key} in [${section}] of ${MISE_FILE}" >&2
+    exit 1
+  fi
+
+  printf '%s' "${value}"
+}
+
 cd "${REPO_ROOT}"
 
 echo "Installing pinned toolchain with mise..."
-mise trust --yes mise.toml
+mise trust --yes "${MISE_FILE}"
 mise install
 eval "$(mise activate bash)"
 
-SUPABASE_CLI_VERSION="$(mise env --json | node -e 'const fs=require("fs");const data=JSON.parse(fs.readFileSync(0,"utf8"));if(!data.SUPABASE_CLI_VERSION){process.exit(1)}process.stdout.write(String(data.SUPABASE_CLI_VERSION));')"
+SUPABASE_CLI_VERSION="$(read_pin "env" "SUPABASE_CLI_VERSION")"
 
 if ! command -v supabase >/dev/null 2>&1 || [[ "$(supabase --version | grep -Eo '[0-9]+(\.[0-9]+){1,2}' | head -n1)" != "${SUPABASE_CLI_VERSION}" ]]; then
   install_supabase_cli "${SUPABASE_CLI_VERSION}"
