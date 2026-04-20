@@ -113,10 +113,8 @@ export function AdminEventDetailsForm({
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     void onSave(values, localEventCode).then((saved) => {
-      if (saved) {
-        // Mirror the server's normalization: an empty submission means the server
-        // preserved the existing code, so snap the field back to the baseline.
-        setLocalEventCode(localEventCode.trim() || baselineEventCode);
+      if (saved?.eventCode != null) {
+        setLocalEventCode(saved.eventCode);
       }
     });
   };

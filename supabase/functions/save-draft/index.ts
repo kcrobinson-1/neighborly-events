@@ -21,6 +21,7 @@ type DraftSavePersistenceInput = {
 };
 
 type DraftSaveRow = {
+  event_code: string | null;
   id: string;
   live_version_number: number | null;
   name: string;
@@ -191,7 +192,7 @@ async function upsertDraft(
         onConflict: "id",
       },
     )
-    .select("id,live_version_number,name,slug,updated_at")
+    .select("event_code,id,live_version_number,name,slug,updated_at")
     .single<DraftSaveRow>();
 }
 
@@ -378,6 +379,7 @@ export function createSaveDraftHandler(
       return context.jsonResponse(
         200,
         {
+          eventCode: data.event_code,
           hasBeenPublished: data.live_version_number !== null,
           id: data.id,
           liveVersionNumber: data.live_version_number,

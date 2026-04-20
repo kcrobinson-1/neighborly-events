@@ -1917,6 +1917,7 @@ describe("AdminPage", () => {
     it("snaps the event-code field back to the preserved DB value when an empty code is submitted", async () => {
       setupSignedInWithDraft(null, "ABC");
       mockSaveDraftEvent.mockResolvedValue({
+        eventCode: "ABC",
         id: "draft-market-2026",
         liveVersionNumber: null,
         name: "Draft Market Day",
@@ -1936,8 +1937,9 @@ describe("AdminPage", () => {
 
       await screen.findByText("Saved Draft Market Day.");
 
-      // The field should snap back to the preserved "ABC" code (server keeps the
-      // existing code when an empty value is submitted).
+      // The field should snap back to the preserved "ABC" code — the server
+      // keeps the existing code when an empty value is submitted and returns it
+      // in the response so the client syncs to the canonical DB value.
       expect((screen.getByLabelText("Event code") as HTMLInputElement).value).toBe("ABC");
     });
   });

@@ -29,6 +29,7 @@ type DraftEventRow = {
 };
 
 export type DraftEventSummary = {
+  eventCode: string | null;
   hasBeenPublished: boolean;
   id: string;
   liveVersionNumber: number | null;
@@ -40,7 +41,6 @@ export type DraftEventSummary = {
 export type DraftEventDetail = DraftEventSummary & {
   content: AuthoringGameDraftContent;
   createdAt: string;
-  eventCode: string | null;
   lastSavedBy: string | null;
 };
 
@@ -58,6 +58,7 @@ export type UnpublishEventResult = {
 
 function mapDraftSummary(row: DraftEventRow): DraftEventSummary {
   return {
+    eventCode: row.event_code ?? null,
     hasBeenPublished: row.live_version_number !== null,
     id: row.id,
     liveVersionNumber: row.live_version_number,
@@ -207,7 +208,6 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
     ...mapDraftSummary(data),
     content: parseAuthoringGameDraftContent(data.content),
     createdAt: data.created_at ?? data.updated_at,
-    eventCode: data.event_code ?? null,
     lastSavedBy: data.last_saved_by ?? null,
   };
 }
