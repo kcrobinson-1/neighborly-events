@@ -25,21 +25,32 @@ function readSupabaseCliPinFromMiseToml() {
   }
 }
 
+function extractCliVersion(text) {
+  const match = text.match(/\d+\.\d+\.\d+/);
+  return match ? match[0] : null;
+}
+
 function resolveSupabaseCommand() {
+  const pinnedVersion = readSupabaseCliPinFromMiseToml();
   const localCli = spawnSync("supabase", ["--version"], {
     cwd: repoRoot,
     encoding: "utf8",
-    stdio: "ignore",
+    stdio: ["ignore", "pipe", "pipe"],
   });
 
   if (!localCli.error && localCli.status === 0) {
-    return {
-      command: "supabase",
-      prefixArgs: [],
-    };
+    const localVersion = extractCliVersion(
+      `${localCli.stdout ?? ""}\n${localCli.stderr ?? ""}`,
+    );
+
+    if (!pinnedVersion || localVersion === pinnedVersion) {
+      return {
+        command: "supabase",
+        prefixArgs: [],
+      };
+    }
   }
 
-  const pinnedVersion = readSupabaseCliPinFromMiseToml();
   return {
     command: "npx",
     prefixArgs: pinnedVersion ? [`supabase@${pinnedVersion}`] : ["supabase"],
@@ -164,14 +175,18 @@ function normalizeSupabaseStatus(status) {
     return status;
   }
 
-  if (!status.FUNCTIONS_URL && typeof status.API_URL === "string") {
-    return {
-      ...status,
-      FUNCTIONS_URL: `${status.API_URL.replace(/\/$/, "")}/functions/v1`,
-    };
+  const normalized = { ...status };
+
+  if (!normalized.FUNCTIONS_URL && typeof normalized.API_URL === "string") {
+    normalized.FUNCTIONS_URL = `${normalized.API_URL.replace(/\/$/, "")}/functions/v1`;
   }
 
-  return status;
+  // Supabase CLI <=2.20 reports ANON_KEY instead of PUBLISHABLE_KEY.
+  if (!normalized.PUBLISHABLE_KEY && typeof normalized.ANON_KEY === "string") {
+    normalized.PUBLISHABLE_KEY = normalized.ANON_KEY;
+  }
+
+  return normalized;
 }
 
 function readSupabaseStatus() {
