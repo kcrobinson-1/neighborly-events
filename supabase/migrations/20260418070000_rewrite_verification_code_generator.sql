@@ -28,6 +28,33 @@ from public, anon, authenticated;
 grant execute on function public.generate_neighborly_verification_code(text)
 to service_role;
 
+-- Guard: the old generator had no per-event uniqueness constraint, so a prior
+-- environment could theoretically contain duplicate (event_id, verification_code)
+-- pairs. Abort with a clear message rather than letting ALTER TABLE fail opaquely.
+do $$
+declare
+  v_dup_count integer;
+begin
+  select count(*)
+  into v_dup_count
+  from (
+    select event_id, verification_code
+    from public.game_entitlements
+    group by event_id, verification_code
+    having count(*) > 1
+  ) as duplicates;
+
+  if v_dup_count > 0 then
+    raise exception 'entitlement_code_duplicates_found'
+      using detail = format(
+        'Found %s duplicate (event_id, verification_code) pair(s) in game_entitlements. '
+        'Deduplicate them manually before running this migration.',
+        v_dup_count
+      );
+  end if;
+end;
+$$;
+
 -- Per-event uniqueness on verification codes. The 4-digit token space (10,000
 -- slots) is safe at MVP event sizes but the retry loop below handles collisions
 -- as the space fills up.
