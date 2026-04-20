@@ -1,3 +1,10 @@
+/**
+ * Doctor invariant note:
+ * `scripts/doctor.sh` runs an offline Deno check through
+ * `_shared/doctor-check-anchor.ts`, which re-exports `sessionHeaderName`.
+ * Keep this module free of remote (`jsr:`/`https:`/`npm:`) imports so doctor
+ * remains deterministic and does not self-heal the Deno cache via network.
+ */
 const sessionCookieName = "neighborly_session";
 export const sessionHeaderName = "x-neighborly-session";
 const sessionCookieMaxAgeSeconds = 60 * 60 * 24 * 30;

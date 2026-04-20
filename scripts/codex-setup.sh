@@ -71,6 +71,7 @@ read_pin() {
   )"
 
   if [[ -z "${value}" ]]; then
+    # Setup uses generic non-zero exits; doctor.sh owns typed exit taxonomy.
     echo "Missing pinned value for ${key} in [${section}] of ${MISE_FILE}" >&2
     exit 1
   fi

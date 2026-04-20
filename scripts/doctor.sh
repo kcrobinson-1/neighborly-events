@@ -78,6 +78,8 @@ assert_optional_version_file_matches_node() {
   local expected="$2"
   local actual
 
+  # .nvmrc/.node-version are optional compatibility files in this repo.
+  # When present, they must match the pinned mise Node version.
   [[ -f "${file}" ]] || return 0
 
   actual="$(tr -d '[:space:]' < "${file}")"
@@ -91,6 +93,8 @@ assert_optional_version_file_matches_node() {
 }
 
 assert_required_env_vars() {
+  # Requirements are intentionally caller-driven so cloud/local contexts can
+  # enforce different env surfaces without editing this script.
   local required="${DOCTOR_REQUIRED_ENV_VARS:-}"
   local env_name
 
