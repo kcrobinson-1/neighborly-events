@@ -205,6 +205,16 @@ describe("gameApi", () => {
     });
   });
 
+  it("local fallback verification code matches event-code format for each unique event", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    setSupabaseEnv({ fallbackEnabled: true });
+
+    const result = await submitGameCompletion(sampleInput);
+
+    expect(result.entitlement.verificationCode).toMatch(/^LOC-[0-9]{4}$/);
+  });
+
   it("retries completion once after a 401 and reuses the same request id", async () => {
     window.localStorage.setItem(serverSessionTokenStorageKey, "expired-token");
 

@@ -10,6 +10,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
+  mockGenerateEventCode,
   mockGetGameAdminStatus,
   mockListDraftEventSummaries,
   mockLoadDraftEvent,
@@ -20,6 +21,7 @@ const {
   mockUnpublishEvent,
   mockUseAdminSession,
 } = vi.hoisted(() => ({
+  mockGenerateEventCode: vi.fn(),
   mockGetGameAdminStatus: vi.fn(),
   mockListDraftEventSummaries: vi.fn(),
   mockLoadDraftEvent: vi.fn(),
@@ -36,6 +38,7 @@ vi.mock("../../../apps/web/src/admin/useAdminSession.ts", () => ({
 }));
 
 vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
+  generateEventCode: mockGenerateEventCode,
   getGameAdminStatus: mockGetGameAdminStatus,
   listDraftEventSummaries: mockListDraftEventSummaries,
   loadDraftEvent: mockLoadDraftEvent,
@@ -84,10 +87,12 @@ const selectedDraftContent = {
 function createDraftDetail(
   content = selectedDraftContent,
   liveVersionNumber: number | null = 1,
+  eventCode: string | null = "MMF",
 ) {
   return {
     content,
     createdAt: "2026-04-07T12:00:00.000Z",
+    eventCode,
     hasBeenPublished: liveVersionNumber !== null,
     id: content.id,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
@@ -1752,6 +1757,127 @@ describe("AdminPage", () => {
       fireEvent.click(screen.getByRole("button", { name: "Unpublish" }));
       expect(await screen.findByText("Are you sure?")).toBeTruthy();
       expect(screen.getByRole("button", { name: "Confirm unpublish" })).toBeTruthy();
+    });
+  });
+
+  describe("event-code field", () => {
+    function setupSignedInWithDraft(liveVersionNumber: number | null = null, eventCode: string | null = "ABC") {
+      mockUseAdminSession.mockReturnValue({
+        email: "admin@example.com",
+        session: { access_token: "admin-token" },
+        status: "signed_in",
+      });
+      mockGetGameAdminStatus.mockResolvedValue(true);
+      mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+      mockLoadDraftEvent.mockResolvedValue(
+        createDraftDetail(selectedDraftContent, liveVersionNumber, eventCode),
+      );
+    }
+
+    it("renders the event-code input and Regenerate button when draft is unpublished", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      renderAdminRoute("draft-market-2026");
+
+      const input = await screen.findByLabelText("Event code");
+      expect(input).toBeTruthy();
+      expect((input as HTMLInputElement).value).toBe("ABC");
+      expect((input as HTMLInputElement).disabled).toBe(false);
+
+      const regenerateButton = screen.getByRole("button", { name: "Regenerate" });
+      expect(regenerateButton).toBeTruthy();
+      expect((regenerateButton as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it("disables event-code input and Regenerate button when draft has been published", async () => {
+      setupSignedInWithDraft(1, "XYZ");
+      renderAdminRoute("madrona-music-2026");
+
+      const input = await screen.findByLabelText("Event code");
+      expect((input as HTMLInputElement).disabled).toBe(true);
+
+      const regenerateButton = screen.getByRole("button", { name: "Regenerate" });
+      expect((regenerateButton as HTMLButtonElement).disabled).toBe(true);
+    });
+
+    it("uppercases event-code input value on blur", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      renderAdminRoute("draft-market-2026");
+
+      const input = await screen.findByLabelText("Event code");
+      fireEvent.change(input, { target: { value: "xyz" } });
+      expect((input as HTMLInputElement).value).toBe("XYZ");
+    });
+
+    it("fills the event-code field with the server-generated code when Regenerate is clicked", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockGenerateEventCode.mockResolvedValue("QRS");
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+      fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+
+      expect(await screen.findByDisplayValue("QRS")).toBeTruthy();
+      expect(mockGenerateEventCode).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends eventCode alongside content when saving event details", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockSaveDraftEvent.mockResolvedValue({
+        id: "draft-market-2026",
+        liveVersionNumber: null,
+        name: "Draft Market Day",
+        slug: "draft-market",
+        updatedAt: "2026-04-13T12:00:00.000Z",
+      });
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: "Draft Market Day Updated" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      await screen.findByText("Saved Draft Market Day.");
+      expect(mockSaveDraftEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Draft Market Day Updated" }),
+        "ABC",
+      );
+    });
+
+    it("surfaces event_code_taken error returned by save-draft", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockSaveDraftEvent.mockRejectedValue(
+        new Error("That code is already used by another event. Try a different one."),
+      );
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: "Conflict Test" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      expect(
+        await screen.findByText("That code is already used by another event. Try a different one."),
+      ).toBeTruthy();
+    });
+
+    it("surfaces event_code_locked error returned by save-draft", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockSaveDraftEvent.mockRejectedValue(
+        new Error("Event code can't change after the event is published."),
+      );
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: "Lock Test" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      expect(
+        await screen.findByText("Event code can't change after the event is published."),
+      ).toBeTruthy();
     });
   });
 });
