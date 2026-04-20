@@ -205,6 +205,7 @@ export function useSelectedDraft({
 
   const saveSelectedEventDetails = async (
     values: AdminEventDetailsFormValues,
+    eventCode: string,
   ) => {
     if (
       selectedDraftState.status !== "ready" &&
@@ -224,11 +225,12 @@ export function useSelectedDraft({
 
     try {
       const content = applyEventDetailsFormValues(currentDraft.content, values);
-      const savedDraft = await saveDraftEvent(content);
+      const savedDraft = await saveDraftEvent(content, eventCode);
       const nextDraft: DraftEventDetail = {
         ...currentDraft,
         ...savedDraft,
         content,
+        eventCode,
       };
 
       onUpdateDraftsList((drafts) => mergeDraftSummary(drafts, savedDraft));

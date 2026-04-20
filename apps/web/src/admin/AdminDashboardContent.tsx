@@ -32,6 +32,7 @@ type AdminDashboardContentProps = {
   onRetryDashboard: () => void;
   onSaveSelectedEventDetails: (
     values: AdminEventDetailsFormValues,
+    eventCode: string,
   ) => Promise<DraftEventSummary | null>;
   onSaveSelectedQuestionContent: (
     content: DraftEventDetail["content"],

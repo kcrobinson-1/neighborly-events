@@ -19,6 +19,7 @@ import {
 type DraftEventRow = {
   content?: AuthoringGameDraftContent;
   created_at?: string;
+  event_code?: string | null;
   id: string;
   last_saved_by?: string | null;
   live_version_number: number | null;
@@ -39,6 +40,7 @@ export type DraftEventSummary = {
 export type DraftEventDetail = DraftEventSummary & {
   content: AuthoringGameDraftContent;
   createdAt: string;
+  eventCode: string | null;
   lastSavedBy: string | null;
 };
 
@@ -189,7 +191,7 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
 export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail | null> {
   const { data, error } = await getBrowserSupabaseClient()
     .from("game_event_drafts")
-    .select("content,created_at,id,last_saved_by,live_version_number,name,slug,updated_at")
+    .select("content,created_at,event_code,id,last_saved_by,live_version_number,name,slug,updated_at")
     .eq("id", eventId)
     .maybeSingle<DraftEventRow>();
 
@@ -205,6 +207,7 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
     ...mapDraftSummary(data),
     content: parseAuthoringGameDraftContent(data.content),
     createdAt: data.created_at ?? data.updated_at,
+    eventCode: data.event_code ?? null,
     lastSavedBy: data.last_saved_by ?? null,
   };
 }
@@ -212,12 +215,23 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
 /** Saves a private game draft through the authenticated authoring function. */
 export async function saveDraftEvent(
   content: AuthoringGameDraftContent,
+  eventCode?: string | null,
 ): Promise<DraftEventSummary> {
   return await callAuthoringFunction<DraftEventSummary>(
     "save-draft",
-    { content },
+    { content, eventCode: eventCode ?? null },
     "We couldn't save the draft right now.",
   );
+}
+
+/** Requests a server-generated random 3-letter event code. */
+export async function generateEventCode(): Promise<string> {
+  const result = await callAuthoringFunction<{ eventCode: string }>(
+    "generate-event-code",
+    {},
+    "We couldn't generate an event code right now.",
+  );
+  return result.eventCode;
 }
 
 /** Publishes a private draft into the live attendee-facing game projection. */
