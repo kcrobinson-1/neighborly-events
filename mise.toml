@@ -6,4 +6,4 @@ deno = "2.5.4"
 # Consumed by scripts/codex-setup.sh and scripts/doctor.sh to verify/install
 # the pinned Supabase CLI version. This is in [env] because there is currently
 # no core mise Supabase plugin in this repo workflow.
-SUPABASE_CLI_VERSION = "2.20.3"
+SUPABASE_CLI_VERSION = "2.93.0"
