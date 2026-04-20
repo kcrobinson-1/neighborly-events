@@ -122,6 +122,44 @@ check_deno_offline_smoke() {
   fi
 }
 
+find_deno_entrypoint_smoke_target() {
+  local preferred="${REPO_ROOT}/supabase/functions/issue-session/index.ts"
+  local entrypoint
+
+  if [[ -f "${preferred}" ]]; then
+    printf '%s' "${preferred}"
+    return 0
+  fi
+
+  for entrypoint in "${REPO_ROOT}"/supabase/functions/*/index.ts; do
+    if [[ -f "${entrypoint}" ]]; then
+      printf '%s' "${entrypoint}"
+      return 0
+    fi
+  done
+
+  fail "${EXIT_UNKNOWN}" "no Supabase function entrypoint found for Deno import smoke check"
+}
+
+check_deno_entrypoint_import_smoke() {
+  local entrypoint
+  local output
+
+  entrypoint="$(find_deno_entrypoint_smoke_target)"
+
+  output="$(deno check --no-lock "${entrypoint}" 2>&1)" || fail \
+    "${EXIT_DEPS_MISSING}" \
+    "Deno dependency resolution failed for ${entrypoint}: ${output}"
+
+  # `deno check` can self-heal by downloading missing imports. Doctor treats
+  # any download as dependency drift and fails instead of reporting green.
+  if printf '%s' "${output}" | grep -q '^Download '; then
+    fail \
+      "${EXIT_DEPS_MISSING}" \
+      "Deno check for ${entrypoint} required network downloads; warm and pin dependencies before running doctor"
+  fi
+}
+
 cd "${REPO_ROOT}"
 
 [[ -f "${MISE_FILE}" ]] || fail "${EXIT_UNKNOWN}" "mise.toml not found"
@@ -156,6 +194,7 @@ if ! npm ci --ignore-scripts --prefer-offline --dry-run >/dev/null 2>&1; then
 fi
 
 check_deno_offline_smoke
+check_deno_entrypoint_import_smoke
 
 echo "doctor: environment OK"
 exit 0
