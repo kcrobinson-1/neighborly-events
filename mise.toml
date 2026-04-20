@@ -1,0 +1,6 @@
+[tools]
+node = "24.14.1"
+deno = "2.5.4"
+
+[env]
+SUPABASE_CLI_VERSION = "2.20.3"
