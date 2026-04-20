@@ -4,6 +4,49 @@ const path = require("node:path");
 
 const repoRoot = path.resolve(__dirname, "..", "..");
 const tmpRoot = path.join(repoRoot, "tmp");
+const miseTomlPath = path.join(repoRoot, "mise.toml");
+
+function readSupabaseCliPinFromMiseToml() {
+  try {
+    const content = fs.readFileSync(miseTomlPath, "utf8");
+    const envSectionMatch = content.match(/\[env\]([\s\S]*?)(?:\n\[|$)/);
+
+    if (!envSectionMatch) {
+      return null;
+    }
+
+    const versionMatch = envSectionMatch[1].match(
+      /SUPABASE_CLI_VERSION\s*=\s*"([^"]+)"/,
+    );
+
+    return versionMatch ? versionMatch[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveSupabaseCommand() {
+  const localCli = spawnSync("supabase", ["--version"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    stdio: "ignore",
+  });
+
+  if (!localCli.error && localCli.status === 0) {
+    return {
+      command: "supabase",
+      prefixArgs: [],
+    };
+  }
+
+  const pinnedVersion = readSupabaseCliPinFromMiseToml();
+  return {
+    command: "npx",
+    prefixArgs: pinnedVersion ? [`supabase@${pinnedVersion}`] : ["supabase"],
+  };
+}
+
+const supabaseCommand = resolveSupabaseCommand();
 
 function formatCommand(command, args) {
   return [command, ...args].join(" ");
@@ -33,6 +76,10 @@ function run(command, args, options = {}) {
   }
 
   return result;
+}
+
+function runSupabase(args, options = {}) {
+  return run(supabaseCommand.command, [...supabaseCommand.prefixArgs, ...args], options);
 }
 
 function logStep(message) {
@@ -119,7 +166,7 @@ function normalizeSupabaseStatus(status) {
 }
 
 function readSupabaseStatus() {
-  const result = run("npx", ["supabase", "status", "-o", "json"], {
+  const result = runSupabase(["status", "-o", "json"], {
     capture: true,
     check: false,
   });
@@ -138,14 +185,14 @@ function isSupabaseStackRunning() {
 function startLocalSupabaseStack() {
   try {
     logStep("Starting local Supabase stack");
-    run("npx", ["supabase", "start"]);
+    runSupabase(["start"]);
     return true;
   } catch {
     logStep("Cleaning up a partial local Supabase stack before retry");
-    run("npx", ["supabase", "stop"], { check: false });
+    runSupabase(["stop"], { check: false });
 
     logStep("Retrying local Supabase startup");
-    run("npx", ["supabase", "start"]);
+    runSupabase(["start"]);
     return true;
   }
 }
@@ -154,20 +201,20 @@ function resetLocalSupabaseDatabase() {
   logStep("Resetting local Supabase database to current migrations");
 
   try {
-    run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
+    runSupabase(["db", "reset", "--local", "--no-seed", "--yes"]);
   } catch {
     // CI occasionally flakes here while the storage API is still settling after
     // container restart. Recover by restarting the local stack once, then retry.
     logStep("Local Supabase reset failed; restarting stack before one retry");
-    run("npx", ["supabase", "stop"], { check: false });
-    run("npx", ["supabase", "start"]);
-    run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
+    runSupabase(["stop"], { check: false });
+    runSupabase(["start"]);
+    runSupabase(["db", "reset", "--local", "--no-seed", "--yes"]);
   }
 }
 
 function stopLocalSupabaseStack() {
   logStep("Stopping local Supabase stack");
-  run("npx", ["supabase", "stop"], {
+  runSupabase(["stop"], {
     check: false,
   });
 }
@@ -186,6 +233,7 @@ module.exports = {
   logStep,
   repoRoot,
   run,
+  runSupabase,
   startLocalSupabaseStack,
   stopLocalSupabaseStack,
   tmpRoot,

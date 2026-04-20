@@ -177,6 +177,7 @@ Use this startup ritual before running validation commands in a freshly created
 local or cloud environment:
 
 ```bash
+mise trust --yes mise.toml
 mise install
 npm ci
 npm run doctor
