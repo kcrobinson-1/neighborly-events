@@ -102,6 +102,13 @@ function runSupabase(args, options = {}) {
   return run(supabaseCommand.command, [...supabaseCommand.prefixArgs, ...args], options);
 }
 
+function getSupabaseCommandInvocation() {
+  return {
+    command: supabaseCommand.command,
+    prefixArgs: [...supabaseCommand.prefixArgs],
+  };
+}
+
 function logStep(message) {
   console.log(`\n[local-tests] ${message}`);
 }
@@ -258,6 +265,7 @@ module.exports = {
   parseSupabaseStatusOutput,
   readSupabaseStatus,
   resetLocalSupabaseDatabase,
+  getSupabaseCommandInvocation,
   logStep,
   repoRoot,
   run,

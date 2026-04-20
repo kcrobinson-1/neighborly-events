@@ -177,15 +177,14 @@ Use this startup ritual before running validation commands in a freshly created
 local or cloud environment:
 
 ```bash
-mise trust --yes mise.toml
-mise install
-npm ci
-npm run doctor
+bash scripts/codex-setup.sh
 ```
 
 This aligns local development, CI assumptions, and cloud-agent setup around the
-same pinned toolchain source (`mise.toml`). If `npm run doctor` fails, stop and
-fix environment drift before running repo validation.
+same pinned toolchain source (`mise.toml`). The setup script handles trust,
+tool install, Supabase CLI install, npm dependency install, Deno cache warmup,
+and `npm run doctor`. If doctor fails, stop and fix environment drift before
+running repo validation.
 
 ### Prerequisites
 

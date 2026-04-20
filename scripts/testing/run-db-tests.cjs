@@ -4,7 +4,7 @@ const {
   isSupabaseStackRunning,
   logStep,
   resetLocalSupabaseDatabase,
-  run,
+  runSupabase,
   startLocalSupabaseStack,
   stopLocalSupabaseStack,
   tmpRoot,
@@ -55,7 +55,7 @@ function main() {
     }
 
     logStep("Running pgTAP database tests");
-    run("npx", ["supabase", "test", "db"]);
+    runSupabase(["test", "db"]);
   } finally {
     if (startedLocalStack) {
       stopLocalSupabaseStack();
