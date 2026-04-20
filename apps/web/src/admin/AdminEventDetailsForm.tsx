@@ -44,10 +44,14 @@ export function AdminEventDetailsForm({
   );
   const [values, setValues] =
     useState<AdminEventDetailsFormValues>(baselineValues);
-  const isDirty = serializeValues(values) !== serializeValues(baselineValues);
 
   const [localEventCode, setLocalEventCode] = useState(draft.eventCode ?? "");
   const [isRegenerating, setIsRegenerating] = useState(false);
+
+  const baselineEventCode = draft.eventCode ?? "";
+  const isDirty =
+    serializeValues(values) !== serializeValues(baselineValues) ||
+    localEventCode !== baselineEventCode;
 
   useEffect(() => {
     setValues(baselineValues);
@@ -104,7 +108,13 @@ export function AdminEventDetailsForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void onSave(values, localEventCode);
+    void onSave(values, localEventCode).then((saved) => {
+      if (saved) {
+        // Mirror the server's normalization: an empty submission means the server
+        // preserved the existing code, so snap the field back to the baseline.
+        setLocalEventCode(localEventCode.trim() || baselineEventCode);
+      }
+    });
   };
 
   return (

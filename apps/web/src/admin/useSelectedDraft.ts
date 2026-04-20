@@ -226,11 +226,14 @@ export function useSelectedDraft({
     try {
       const content = applyEventDetailsFormValues(currentDraft.content, values);
       const savedDraft = await saveDraftEvent(content, eventCode);
+      // The server treats an empty eventCode as "preserve existing", so mirror
+      // that normalization here to keep client state in sync with the DB.
+      const persistedEventCode = eventCode.trim() || currentDraft.eventCode;
       const nextDraft: DraftEventDetail = {
         ...currentDraft,
         ...savedDraft,
         content,
-        eventCode,
+        eventCode: persistedEventCode,
       };
 
       onUpdateDraftsList((drafts) => mergeDraftSummary(drafts, savedDraft));

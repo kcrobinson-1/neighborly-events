@@ -1879,5 +1879,52 @@ describe("AdminPage", () => {
         await screen.findByText("Event code can't change after the event is published."),
       ).toBeTruthy();
     });
+
+    it("marks the form dirty when only the event code changes, enabling Save changes", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockGenerateEventCode.mockResolvedValue("XYZ");
+      renderAdminRoute("draft-market-2026");
+
+      // Before any change the button is disabled.
+      await screen.findByLabelText("Event code");
+      expect(
+        (screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+
+      // Regenerate changes only the event code — Save changes must become enabled.
+      fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+      await screen.findByDisplayValue("XYZ");
+
+      expect(
+        (screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+
+    it("snaps the event-code field back to the preserved DB value when an empty code is submitted", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockSaveDraftEvent.mockResolvedValue({
+        id: "draft-market-2026",
+        liveVersionNumber: null,
+        name: "Draft Market Day",
+        slug: "draft-market",
+        updatedAt: "2026-04-13T12:00:00.000Z",
+      });
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+
+      // Clear the event code and save alongside an unrelated change.
+      fireEvent.change(screen.getByLabelText("Event code"), { target: { value: "" } });
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: "Draft Market Day Updated" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      await screen.findByText("Saved Draft Market Day.");
+
+      // The field should snap back to the preserved "ABC" code (server keeps the
+      // existing code when an empty value is submitted).
+      expect((screen.getByLabelText("Event code") as HTMLInputElement).value).toBe("ABC");
+    });
   });
 });
