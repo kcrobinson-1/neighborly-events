@@ -171,6 +171,21 @@ Constraint:
 
 ## Local Workflow
 
+### First command in a fresh environment
+
+Use this startup ritual before running validation commands in a freshly created
+local or cloud environment:
+
+```bash
+mise install
+npm ci
+npm run doctor
+```
+
+This aligns local development, CI assumptions, and cloud-agent setup around the
+same pinned toolchain source (`mise.toml`). If `npm run doctor` fails, stop and
+fix environment drift before running repo validation.
+
 ### Prerequisites
 
 For regular contribution work, install:

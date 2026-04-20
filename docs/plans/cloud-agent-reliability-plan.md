@@ -27,6 +27,26 @@ Owner docs this file coordinates:
 - [operations.md](../operations.md) — platform-managed settings
 - [backlog.md](../backlog.md) — priority-ordered follow-up work
 
+## Current Status (2026-04-20)
+
+Phase 1 kickoff is now implemented in-repo:
+
+- added pinned toolchain source of truth in `mise.toml` for Node, Deno, and
+  Supabase CLI version pinning
+- added `scripts/codex-setup.sh` to install tooling with `mise`, install npm
+  dependencies, and enforce preflight via doctor
+- added `scripts/doctor.sh` plus `npm run doctor` for verify-only environment
+  checks with explicit exit codes (`0`, `10`, `11`, `12`, `20`, `99`)
+- added startup ritual documentation in `docs/dev.md`
+
+Deferred to follow-up slices:
+
+- Phase 3 (`AGENTS.md` failure-handling clause and
+  `docs/plans/recoverable-agent-failures.md`)
+- Phase 4 (`scripts/test-codex-setup.sh` and CI parity gate)
+- Phase 6 (cloud-agent prompt template rollout)
+- Phase 7 (scheduled drift-detection job)
+
 ## Problem Statement
 
 Cloud coding agents run in a container image we do not fully control. Today
