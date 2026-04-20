@@ -190,7 +190,7 @@ describe("gameApi", () => {
       completionId: "cmp-1",
       entitlement: {
         status: "new",
-        verificationCode: "MMP-12345678",
+        verificationCode: expect.stringMatching(/^LOC-[0-9]{4}$/),
       },
       entitlementEligible: true,
     });
@@ -199,7 +199,7 @@ describe("gameApi", () => {
       attemptNumber: 2,
       entitlement: {
         status: "existing",
-        verificationCode: "MMP-12345678",
+        verificationCode: firstResult.entitlement.verificationCode,
       },
       entitlementEligible: false,
     });
