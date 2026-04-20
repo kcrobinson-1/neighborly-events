@@ -133,9 +133,12 @@ Recommended `main` settings:
 - force push: allowed for repository owner to support docs-history cleanup
 - deletion: blocked for `main`
 
-Required branch check example (use the exact workflow check name from this repo):
+Required branch checks (use the exact workflow check names from this repo):
 
-- `Lint, Tests, Build, and Supabase Checks / Lint, Tests, Build, and Supabase Checks`
+- `Lint, Tests, Build, and Supabase Checks` (job from the `CI` workflow)
+- `Vercel` (Vercel deploy check) — beta-stage decision: gate merges to `main`
+  on a successful Vercel build for the same SHA in lieu of moving Vercel
+  production promotion behind CI
 
 Production deployment gate:
 
@@ -188,9 +191,12 @@ these platform and proof-run steps:
   - preview deployments remain enabled for branches and pull requests
   - production env vars point at production Supabase:
     `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
-  - decide whether automatic frontend production deploys before CI completion
-    are acceptable for beta; if not, move Vercel production promotion behind CI
-    in a follow-up
+  - Vercel-before-CI decision for beta: require the `Vercel` deploy check as a
+    pre-merge status check on `main` so commits cannot land without a
+    successful Vercel build for the same SHA; this is kept in place of moving
+    Vercel production promotion behind CI for the beta milestone and should be
+    revisited in gamma if stronger gating between build success and production
+    promotion is needed
 - verify Supabase production settings:
   - no Supabase staging project, branching setup, or account upgrade is required
     for beta

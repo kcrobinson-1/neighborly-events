@@ -1,7 +1,7 @@
 const { spawn } = require("node:child_process");
 const path = require("node:path");
 
-const { fs, repoRoot } = require("./utils.cjs");
+const { fs, getSupabaseCommandInvocation, repoRoot } = require("./utils.cjs");
 
 const serveShutdownTimeoutMs = 5_000;
 
@@ -21,9 +21,10 @@ function writeFunctionsServeEnvFile(envFilePath, { allowedOrigins, sessionSignin
 }
 
 function startFunctionsServe(envFilePath) {
+  const supabase = getSupabaseCommandInvocation();
   const child = spawn(
-    "npx",
-    ["supabase", "functions", "serve", "--env-file", envFilePath],
+    supabase.command,
+    [...supabase.prefixArgs, "functions", "serve", "--env-file", envFilePath],
     {
       cwd: repoRoot,
       detached: process.platform !== "win32",

@@ -4,6 +4,60 @@ const path = require("node:path");
 
 const repoRoot = path.resolve(__dirname, "..", "..");
 const tmpRoot = path.join(repoRoot, "tmp");
+const miseTomlPath = path.join(repoRoot, "mise.toml");
+
+function readSupabaseCliPinFromMiseToml() {
+  try {
+    const content = fs.readFileSync(miseTomlPath, "utf8");
+    const envSectionMatch = content.match(/\[env\]([\s\S]*?)(?:\n\[|$)/);
+
+    if (!envSectionMatch) {
+      return null;
+    }
+
+    const versionMatch = envSectionMatch[1].match(
+      /SUPABASE_CLI_VERSION\s*=\s*"([^"]+)"/,
+    );
+
+    return versionMatch ? versionMatch[1] : null;
+  } catch {
+    return null;
+  }
+}
+
+function extractCliVersion(text) {
+  const match = text.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);
+  return match ? match[0] : null;
+}
+
+function resolveSupabaseCommand() {
+  const pinnedVersion = readSupabaseCliPinFromMiseToml();
+  const localCli = spawnSync("supabase", ["--version"], {
+    cwd: repoRoot,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  if (!localCli.error && localCli.status === 0) {
+    const localVersion = extractCliVersion(
+      `${localCli.stdout ?? ""}\n${localCli.stderr ?? ""}`,
+    );
+
+    if (!pinnedVersion || localVersion === pinnedVersion) {
+      return {
+        command: "supabase",
+        prefixArgs: [],
+      };
+    }
+  }
+
+  return {
+    command: "npx",
+    prefixArgs: pinnedVersion ? [`supabase@${pinnedVersion}`] : ["supabase"],
+  };
+}
+
+const supabaseCommand = resolveSupabaseCommand();
 
 function formatCommand(command, args) {
   return [command, ...args].join(" ");
@@ -14,13 +68,22 @@ function run(command, args, options = {}) {
     capture = false,
     check = true,
     env,
+    input,
   } = options;
+
+  let stdio = "inherit";
+  if (capture) {
+    stdio = ["ignore", "pipe", "pipe"];
+  } else if (input !== undefined) {
+    stdio = ["pipe", "inherit", "inherit"];
+  }
 
   const result = spawnSync(command, args, {
     cwd: repoRoot,
     encoding: "utf8",
+    input,
     env: env ? { ...process.env, ...env } : process.env,
-    stdio: capture ? ["ignore", "pipe", "pipe"] : "inherit",
+    stdio,
   });
 
   if (result.error) {
@@ -33,6 +96,17 @@ function run(command, args, options = {}) {
   }
 
   return result;
+}
+
+function runSupabase(args, options = {}) {
+  return run(supabaseCommand.command, [...supabaseCommand.prefixArgs, ...args], options);
+}
+
+function getSupabaseCommandInvocation() {
+  return {
+    command: supabaseCommand.command,
+    prefixArgs: [...supabaseCommand.prefixArgs],
+  };
 }
 
 function logStep(message) {
@@ -108,18 +182,22 @@ function normalizeSupabaseStatus(status) {
     return status;
   }
 
-  if (!status.FUNCTIONS_URL && typeof status.API_URL === "string") {
-    return {
-      ...status,
-      FUNCTIONS_URL: `${status.API_URL.replace(/\/$/, "")}/functions/v1`,
-    };
+  const normalized = { ...status };
+
+  if (!normalized.FUNCTIONS_URL && typeof normalized.API_URL === "string") {
+    normalized.FUNCTIONS_URL = `${normalized.API_URL.replace(/\/$/, "")}/functions/v1`;
   }
 
-  return status;
+  // Supabase CLI <=2.20 reports ANON_KEY instead of PUBLISHABLE_KEY.
+  if (!normalized.PUBLISHABLE_KEY && typeof normalized.ANON_KEY === "string") {
+    normalized.PUBLISHABLE_KEY = normalized.ANON_KEY;
+  }
+
+  return normalized;
 }
 
 function readSupabaseStatus() {
-  const result = run("npx", ["supabase", "status", "-o", "json"], {
+  const result = runSupabase(["status", "-o", "json"], {
     capture: true,
     check: false,
   });
@@ -138,14 +216,14 @@ function isSupabaseStackRunning() {
 function startLocalSupabaseStack() {
   try {
     logStep("Starting local Supabase stack");
-    run("npx", ["supabase", "start"]);
+    runSupabase(["start"]);
     return true;
   } catch {
     logStep("Cleaning up a partial local Supabase stack before retry");
-    run("npx", ["supabase", "stop"], { check: false });
+    runSupabase(["stop"], { check: false });
 
     logStep("Retrying local Supabase startup");
-    run("npx", ["supabase", "start"]);
+    runSupabase(["start"]);
     return true;
   }
 }
@@ -154,20 +232,24 @@ function resetLocalSupabaseDatabase() {
   logStep("Resetting local Supabase database to current migrations");
 
   try {
-    run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
+    runSupabase(["db", "reset", "--local", "--no-seed"], {
+      input: "y\n",
+    });
   } catch {
     // CI occasionally flakes here while the storage API is still settling after
     // container restart. Recover by restarting the local stack once, then retry.
     logStep("Local Supabase reset failed; restarting stack before one retry");
-    run("npx", ["supabase", "stop"], { check: false });
-    run("npx", ["supabase", "start"]);
-    run("npx", ["supabase", "db", "reset", "--local", "--no-seed", "--yes"]);
+    runSupabase(["stop"], { check: false });
+    runSupabase(["start"]);
+    runSupabase(["db", "reset", "--local", "--no-seed"], {
+      input: "y\n",
+    });
   }
 }
 
 function stopLocalSupabaseStack() {
   logStep("Stopping local Supabase stack");
-  run("npx", ["supabase", "stop"], {
+  runSupabase(["stop"], {
     check: false,
   });
 }
@@ -183,9 +265,11 @@ module.exports = {
   parseSupabaseStatusOutput,
   readSupabaseStatus,
   resetLocalSupabaseDatabase,
+  getSupabaseCommandInvocation,
   logStep,
   repoRoot,
   run,
+  runSupabase,
   startLocalSupabaseStack,
   stopLocalSupabaseStack,
   tmpRoot,

@@ -1,0 +1,9 @@
+[tools]
+node = "24.14.1"
+deno = "2.5.4"
+
+[env]
+# Consumed by scripts/codex-setup.sh and scripts/doctor.sh to verify/install
+# the pinned Supabase CLI version. This is in [env] because there is currently
+# no core mise Supabase plugin in this repo workflow.
+SUPABASE_CLI_VERSION = "2.93.0"

@@ -115,8 +115,12 @@ Beta baseline settings for this repo's solo-operator workflow:
 - do not require reviewer approvals
 - allow force pushes for repository owner use cases such as docs-history cleanup
 - block branch deletion on `main`
-- require this status check on `main`:
-  - `Lint, Tests, Build, and Supabase Checks / Lint, Tests, Build, and Supabase Checks`
+- require these status checks on `main`:
+  - `Lint, Tests, Build, and Supabase Checks` (job from the `CI` workflow)
+  - `Vercel` (Vercel deploy check) — keeps merges gated on a successful
+    Vercel build for the same SHA; recorded as the beta-stage Vercel-before-CI
+    decision in
+    [`continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md)
 - monitor `Release / Sync Supabase Production` as the post-CI production
   deployment gate; it runs after successful CI on `main` and should not be a
   pre-merge required branch check
