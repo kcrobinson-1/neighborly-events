@@ -47,6 +47,7 @@ export function AdminEventDetailsForm({
 
   const [localEventCode, setLocalEventCode] = useState(draft.eventCode ?? "");
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const baselineEventCode = draft.eventCode ?? "";
   const isDirty =
@@ -75,9 +76,12 @@ export function AdminEventDetailsForm({
 
   const handleRegenerateEventCode = async () => {
     setIsRegenerating(true);
+    setRegenerateError(null);
     try {
       const newCode = await generateEventCode();
       setLocalEventCode(newCode);
+    } catch {
+      setRegenerateError("We couldn't generate an event code right now.");
     } finally {
       setIsRegenerating(false);
     }
@@ -184,11 +188,15 @@ export function AdminEventDetailsForm({
               {isRegenerating ? "Generating..." : "Regenerate"}
             </button>
           </div>
-          <span className="admin-field-hint">
-            {draft.hasBeenPublished
-              ? "Locked after publishing — entitlement codes depend on this."
-              : "3-letter prefix used in entitlement codes (e.g. ABC-1234). Auto-generated — change it if you want a more memorable prefix."}
-          </span>
+          {regenerateError ? (
+            <span className="admin-field-hint admin-field-hint-error">{regenerateError}</span>
+          ) : (
+            <span className="admin-field-hint">
+              {draft.hasBeenPublished
+                ? "Locked after publishing — entitlement codes depend on this."
+                : "3-letter prefix used in entitlement codes (e.g. ABC-1234). Auto-generated — change it if you want a more memorable prefix."}
+            </span>
+          )}
         </div>
         <label className="admin-field">
           <span className="admin-field-label">Location</span>

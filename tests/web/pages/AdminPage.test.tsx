@@ -1880,6 +1880,20 @@ describe("AdminPage", () => {
       ).toBeTruthy();
     });
 
+    it("shows an error message when Regenerate fails and leaves the code unchanged", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockGenerateEventCode.mockRejectedValue(new Error("Server error"));
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+      fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+
+      expect(
+        await screen.findByText("We couldn't generate an event code right now."),
+      ).toBeTruthy();
+      expect((screen.getByLabelText("Event code") as HTMLInputElement).value).toBe("ABC");
+    });
+
     it("marks the form dirty when only the event code changes, enabling Save changes", async () => {
       setupSignedInWithDraft(null, "ABC");
       mockGenerateEventCode.mockResolvedValue("XYZ");
