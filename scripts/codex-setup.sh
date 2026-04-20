@@ -79,6 +79,34 @@ read_pin() {
   printf '%s' "${value}"
 }
 
+find_deno_cache_target() {
+  local preferred="${REPO_ROOT}/supabase/functions/issue-session/index.ts"
+  local entrypoint
+
+  if [[ -f "${preferred}" ]]; then
+    printf '%s' "${preferred}"
+    return 0
+  fi
+
+  for entrypoint in "${REPO_ROOT}"/supabase/functions/*/index.ts; do
+    if [[ -f "${entrypoint}" ]]; then
+      printf '%s' "${entrypoint}"
+      return 0
+    fi
+  done
+
+  echo "No Supabase function entrypoint found for Deno cache warmup." >&2
+  exit 1
+}
+
+warm_deno_import_graph() {
+  local entrypoint
+  entrypoint="$(find_deno_cache_target)"
+
+  echo "Warming Deno import graph via ${entrypoint}..."
+  deno cache --no-lock "${entrypoint}"
+}
+
 cd "${REPO_ROOT}"
 
 echo "Installing pinned toolchain with mise..."
@@ -94,6 +122,8 @@ fi
 
 echo "Installing npm dependencies from lockfile..."
 npm ci
+
+warm_deno_import_graph
 
 echo "Running environment doctor..."
 bash scripts/doctor.sh

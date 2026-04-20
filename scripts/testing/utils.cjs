@@ -26,7 +26,7 @@ function readSupabaseCliPinFromMiseToml() {
 }
 
 function extractCliVersion(text) {
-  const match = text.match(/\d+\.\d+\.\d+/);
+  const match = text.match(/\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?/);
   return match ? match[0] : null;
 }
 

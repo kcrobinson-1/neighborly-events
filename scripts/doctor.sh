@@ -123,6 +123,8 @@ check_deno_offline_smoke() {
 }
 
 find_deno_entrypoint_smoke_target() {
+  # Prefer a stable, commonly present entrypoint to reduce churn in output.
+  # This is an optimization only; the glob fallback is the real requirement.
   local preferred="${REPO_ROOT}/supabase/functions/issue-session/index.ts"
   local entrypoint
 
@@ -153,6 +155,8 @@ check_deno_entrypoint_import_smoke() {
 
   # `deno check` can self-heal by downloading missing imports. Doctor treats
   # any download as dependency drift and fails instead of reporting green.
+  # This match is based on Deno 2.5.4 output ("Download ..."). Re-verify this
+  # check whenever the Deno pin in mise.toml changes.
   if printf '%s' "${output}" | grep -q '^Download '; then
     fail \
       "${EXIT_DEPS_MISSING}" \

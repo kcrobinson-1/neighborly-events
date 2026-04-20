@@ -142,6 +142,8 @@ Write `scripts/doctor.sh`. Responsibilities:
 - check project-level prerequisites that the agent assumes (for example that
   `node_modules` is present and lockfile-consistent, that `supabase/functions`
   imports resolve under the pinned Deno)
+- when bumping Deno, re-verify any doctor log-pattern checks that detect
+  dependency downloads so doctor does not silently miss cache-warming drift
 - exit with distinct codes per failure class:
   - `0` — environment OK
   - `10` — a pinned tool is missing
