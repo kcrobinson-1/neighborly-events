@@ -161,8 +161,9 @@ export function createCompleteGameHandler(
     );
 
     if (error || !data) {
+      const status = error?.message === "entitlement_code_exhausted" ? 503 : 500;
       return jsonResponse(
-        500,
+        status,
         {
           error: "We couldn't finalize your entitlement right now.",
           details: error?.message,

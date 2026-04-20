@@ -207,7 +207,7 @@ Deno.test("complete-game persists the trusted normalized payload and clamped dur
           message: "You're checked in for the raffle.",
           entitlement_eligible: true,
           score: input.trustedScore,
-          verification_code: "MMP-SERVER01",
+          verification_code: "TST-1234",
         },
         error: null,
       };
@@ -244,7 +244,7 @@ Deno.test("complete-game persists the trusted normalized payload and clamped dur
     entitlement: {
       createdAt: "2026-04-05T12:00:00.000Z",
       status: "new",
-      verificationCode: "MMP-SERVER01",
+      verificationCode: "TST-1234",
     },
     message: "You're checked in for the raffle.",
     entitlementEligible: true,
@@ -317,6 +317,80 @@ Deno.test("complete-game returns a 500 when trusted persistence fails", async ()
   assertEquals(response.status, 500);
   assertEquals(await response.json(), {
     details: "rpc failed",
+    error: "We couldn't finalize your entitlement right now.",
+  });
+});
+
+Deno.test("complete-game returns 503 when entitlement_code_exhausted", async () => {
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSigningSecret: () => "session-secret",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadPublishedGameById: async () => sampleGame,
+    persistCompletion: async () => ({
+      data: null,
+      error: { message: "entitlement_code_exhausted" },
+    }),
+    readVerifiedSession: async () => ({
+      sessionId: "session-id",
+      sessionToken: "session-token",
+    }),
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({
+        answers: { q1: ["a"], q2: ["b"], q3: ["b"], q4: ["a"], q5: ["b"], q6: ["a"] },
+        durationMs: 1200,
+        eventId: sampleGame.id,
+        requestId: "req-exhausted",
+      }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 503);
+  assertEquals(await response.json(), {
+    details: "entitlement_code_exhausted",
+    error: "We couldn't finalize your entitlement right now.",
+  });
+});
+
+Deno.test("complete-game returns 500 when event_code_missing", async () => {
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSigningSecret: () => "session-secret",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadPublishedGameById: async () => sampleGame,
+    persistCompletion: async () => ({
+      data: null,
+      error: { message: "event_code_missing" },
+    }),
+    readVerifiedSession: async () => ({
+      sessionId: "session-id",
+      sessionToken: "session-token",
+    }),
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({
+        answers: { q1: ["a"], q2: ["b"], q3: ["b"], q4: ["a"], q5: ["b"], q6: ["a"] },
+        durationMs: 1200,
+        eventId: sampleGame.id,
+        requestId: "req-missing-code",
+      }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 500);
+  assertEquals(await response.json(), {
+    details: "event_code_missing",
     error: "We couldn't finalize your entitlement right now.",
   });
 });

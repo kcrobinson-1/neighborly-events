@@ -4,6 +4,16 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(19);
 
+-- The RPC now looks up event_code from game_events, so the event must exist.
+insert into public.game_events (
+  id, slug, event_code, name, location, estimated_minutes, entitlement_label,
+  intro, summary, feedback_mode
+)
+values (
+  'test-event', 'test-event', 'TST', 'Test Event',
+  'Seattle', 2, 'reward ticket', 'Intro', 'Summary', 'final_score_reveal'
+);
+
 -- Exercise the completion RPC at the database layer because this is where
 -- idempotency, attempt numbering, and single-entitlement enforcement live.
 create temp table first_attempt as
