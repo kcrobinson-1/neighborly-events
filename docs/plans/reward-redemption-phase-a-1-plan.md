@@ -116,17 +116,20 @@ indexes are added in A.1.
 ```
 create table if not exists public.event_role_assignments (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null,
+  user_id uuid not null references auth.users(id) on delete cascade,
   event_id text not null references public.game_events(id) on delete cascade,
   role text not null check (role in ('agent', 'organizer')),
   created_at timestamptz not null default now(),
-  created_by uuid,
+  created_by uuid references auth.users(id) on delete set null,
   constraint event_role_assignments_unique unique (user_id, event_id, role)
 );
 
 alter table public.event_role_assignments enable row level security;
 
 revoke all on table public.event_role_assignments from anon, authenticated;
+-- Supabase's baseline `grant all on all tables in schema public to
+-- service_role` would otherwise leave UPDATE enabled.
+revoke update on table public.event_role_assignments from service_role;
 grant select, insert, delete on table public.event_role_assignments to service_role;
 ```
 
@@ -135,9 +138,10 @@ Design notes:
 - `role` is constrained to `('agent', 'organizer')` only. Root admin is
   not an event-scoped assignment — it lives in `public.admin_users`
   and is queried through `is_root_admin()`.
-- No update grant; role changes are an insert plus a delete, which keeps
-  the row history append-only in practice and matches the runbook's
-  insert/delete shape.
+- UPDATE is explicitly revoked from `service_role` after the baseline
+  `grant all` Supabase applies, so role changes must be an insert plus a
+  delete. This keeps the row history append-only in practice and matches
+  the runbook's insert/delete shape.
 - RLS is enabled with no authenticated policies in A.1. The helpers in the
   next section are `security definer` so they see the table regardless.
   A.2 may add an authenticated read policy if a UI ever needs to show
@@ -313,10 +317,10 @@ over `is_admin()` in the MVP.
 - `event_role_assignments`:
   - unique `(user_id, event_id, role)` rejects duplicates
   - `role` CHECK rejects anything outside `('agent', 'organizer')`
+  - FK to `auth.users` cascades on user delete
   - FK to `public.game_events` cascades on event delete
   - RLS is enabled; an `authenticated` role cannot select
-- Helper truth tables, each seeded via direct insert of synthetic UUIDs
-  (no `auth.users` FK constraint to satisfy) plus a
+- Helper truth tables, each seeded with a fresh `auth.users` row plus a
   `set_config('request.jwt.claims', …)` to impersonate:
   - `is_agent_for_event('evt-x')` returns true when the caller has an
     `('agent', 'evt-x')` assignment; false for a different event,

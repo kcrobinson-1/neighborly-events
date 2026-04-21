@@ -2,129 +2,88 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(49);
+select plan(55);
 
 -- ─── game_entitlements column additions ──────────────────────────────────────
--- Use information_schema + pg_catalog queries instead of pgTAP's col_* /
--- has_* functions to avoid pgTAP version variance on type-name formatting.
 
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redeemed_at'
-  ),
-  'YES|timestamp with time zone',
-  'game_entitlements.redeemed_at is nullable timestamptz'
+select col_type_is(
+  'public', 'game_entitlements', 'redeemed_at', 'timestamp with time zone',
+  'game_entitlements.redeemed_at is timestamptz'
+);
+select col_is_null(
+  'public', 'game_entitlements', 'redeemed_at',
+  'game_entitlements.redeemed_at is nullable'
 );
 
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redeemed_by'
-  ),
-  'YES|uuid',
-  'game_entitlements.redeemed_by is nullable uuid'
+select col_type_is(
+  'public', 'game_entitlements', 'redeemed_by', 'uuid',
+  'game_entitlements.redeemed_by is uuid'
+);
+select col_is_null(
+  'public', 'game_entitlements', 'redeemed_by',
+  'game_entitlements.redeemed_by is nullable'
 );
 
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redeemed_by_role'
-  ),
-  'YES|text',
-  'game_entitlements.redeemed_by_role is nullable text'
+select col_type_is(
+  'public', 'game_entitlements', 'redeemed_by_role', 'text',
+  'game_entitlements.redeemed_by_role is text'
+);
+select col_is_null(
+  'public', 'game_entitlements', 'redeemed_by_role',
+  'game_entitlements.redeemed_by_role is nullable'
 );
 
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redeemed_event_id'
-  ),
-  'YES|text',
-  'game_entitlements.redeemed_event_id is nullable text'
+select col_type_is(
+  'public', 'game_entitlements', 'redeemed_event_id', 'text',
+  'game_entitlements.redeemed_event_id is text'
+);
+select col_is_null(
+  'public', 'game_entitlements', 'redeemed_event_id',
+  'game_entitlements.redeemed_event_id is nullable'
 );
 
+select col_type_is(
+  'public', 'game_entitlements', 'redemption_status', 'text',
+  'game_entitlements.redemption_status is text'
+);
+select col_not_null(
+  'public', 'game_entitlements', 'redemption_status',
+  'game_entitlements.redemption_status is not null'
+);
 select is(
   (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redemption_status'
+    select pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)
+    from pg_attribute
+    join pg_attrdef on pg_attrdef.adrelid = pg_attribute.attrelid
+      and pg_attrdef.adnum = pg_attribute.attnum
+    where pg_attribute.attrelid = 'public.game_entitlements'::regclass
+      and pg_attribute.attname = 'redemption_status'
   ),
-  'NO|text',
-  'game_entitlements.redemption_status is not null text'
+  '''unredeemed''::text',
+  'game_entitlements.redemption_status defaults to unredeemed'
 );
 
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redemption_reversed_at'
-  ),
-  'YES|timestamp with time zone',
-  'game_entitlements.redemption_reversed_at is nullable timestamptz'
+select col_type_is(
+  'public', 'game_entitlements', 'redemption_reversed_at', 'timestamp with time zone',
+  'game_entitlements.redemption_reversed_at is timestamptz'
 );
-
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redemption_reversed_by'
-  ),
-  'YES|uuid',
-  'game_entitlements.redemption_reversed_by is nullable uuid'
+select col_type_is(
+  'public', 'game_entitlements', 'redemption_reversed_by', 'uuid',
+  'game_entitlements.redemption_reversed_by is uuid'
 );
-
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redemption_reversed_by_role'
-  ),
-  'YES|text',
-  'game_entitlements.redemption_reversed_by_role is nullable text'
+select col_type_is(
+  'public', 'game_entitlements', 'redemption_reversed_by_role', 'text',
+  'game_entitlements.redemption_reversed_by_role is text'
 );
-
-select is(
-  (
-    select is_nullable || '|' || data_type
-    from information_schema.columns
-    where table_schema = 'public'
-      and table_name = 'game_entitlements'
-      and column_name = 'redemption_note'
-  ),
-  'YES|text',
-  'game_entitlements.redemption_note is nullable text'
+select col_type_is(
+  'public', 'game_entitlements', 'redemption_note', 'text',
+  'game_entitlements.redemption_note is text'
 );
 
 -- ─── Monitoring index ────────────────────────────────────────────────────────
 
-select ok(
-  exists (
-    select 1 from pg_indexes
-    where schemaname = 'public'
-      and tablename = 'game_entitlements'
-      and indexname = 'game_entitlements_event_redeemed_at_idx'
-  ),
+select has_index(
+  'public', 'game_entitlements', 'game_entitlements_event_redeemed_at_idx',
   'game_entitlements_event_redeemed_at_idx exists'
 );
 
@@ -328,14 +287,7 @@ select throws_ok(
 
 -- ─── event_role_assignments table structure ─────────────────────────────────
 
-select ok(
-  exists (
-    select 1 from information_schema.tables
-    where table_schema = 'public'
-      and table_name = 'event_role_assignments'
-  ),
-  'event_role_assignments exists'
-);
+select has_table('public', 'event_role_assignments', 'event_role_assignments exists');
 
 select ok(
   (select rowsecurity from pg_tables where schemaname = 'public' and tablename = 'event_role_assignments'),
@@ -367,6 +319,9 @@ select ok(
 );
 
 -- role CHECK rejects values outside ('agent', 'organizer').
+-- Bypass the auth.users FK trigger for this isolated structural test.
+set local session_replication_role = 'replica';
+
 select throws_ok(
   $$
     insert into public.event_role_assignments (user_id, event_id, role)
@@ -403,7 +358,11 @@ select throws_ok(
   'event_role_assignments unique constraint rejects duplicate (user_id, event_id, role)'
 );
 
--- event FK cascades on event delete.
+-- Seed a cascade fixture. The event_role_assignments insert still needs
+-- FK-bypass because user_id points at a fake auth.users row, but the
+-- cascade delete assertion itself must run with FK triggers re-enabled
+-- — in 'replica' mode the ON DELETE CASCADE trigger on game_events does
+-- not fire, which would pass the assertion for the wrong reason.
 insert into public.game_events (
   id, slug, event_code, name, location, estimated_minutes, entitlement_label,
   intro, summary, feedback_mode
@@ -419,6 +378,8 @@ values (
   'redemption-a1-cascade',
   'organizer'
 );
+
+set local session_replication_role = 'origin';
 
 delete from public.game_events where id = 'redemption-a1-cascade';
 
@@ -475,14 +436,17 @@ select ok(
 );
 
 -- ─── Permission helpers: truth tables ────────────────────────────────────────
--- event_role_assignments.user_id has no FK to auth.users, so synthetic
--- UUIDs insert cleanly. Impersonate each scenario via JWT claims and
--- assert the helper verdicts.
+-- Seed assignments (FK-suppressed) then impersonate each scenario via JWT
+-- claims and assert the helper verdicts.
+
+set local session_replication_role = 'replica';
 
 insert into public.event_role_assignments (user_id, event_id, role)
 values
   ('66666666-6666-4666-8666-666666666666'::uuid, 'redemption-a1-event', 'agent'),
   ('77777777-7777-4777-8777-777777777777'::uuid, 'redemption-a1-event', 'organizer');
+
+set local session_replication_role = 'origin';
 
 -- Impersonate the agent user.
 select set_config(
