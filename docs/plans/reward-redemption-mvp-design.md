@@ -410,8 +410,8 @@ Constraints:
 
 If row-level mutation complexity increases, provide an RPC such as:
 
-- `public.redeem_entitlement_by_code(event_slug text, code_suffix text)`
-- `public.reverse_entitlement_redemption(event_slug text, code_suffix text, reason text)`
+- `public.redeem_entitlement_by_code(event_id text, code_suffix text)`
+- `public.reverse_entitlement_redemption(event_id text, code_suffix text, reason text)`
 
 with DB-level enforcement and deterministic response shape.
 
