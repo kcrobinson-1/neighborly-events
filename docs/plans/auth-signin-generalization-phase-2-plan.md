@@ -553,8 +553,19 @@ similar amount of deleted code, and concentrated doc edits.
      session restoration in a test env, now that the error message
      changed from `"Admin sign-in is required."` to
      `"Sign-in is required."`;
-   - any remaining reference to the deleted admin helpers
-     (`grep -r getAdminSession apps/web/src tests` returns zero).
+   - any remaining reference to the deleted admin helpers, via a
+     single alternation search against the code surface only (the
+     plan docs themselves name these symbols, so `docs/` is excluded
+     by design):
+
+     ```sh
+     rg -n \
+       'getAdminSession|subscribeToAdminAuthState|requestAdminMagicLink|signOutAdmin|getAdminAccessToken|AdminMagicLinkState|AdminSessionState' \
+       apps/web/src tests
+     ```
+
+     Expected exit code: `1` (no matches). A non-empty result blocks
+     merge.
 
    Land review-fix commits separately when they clarify history.
 10. **Structure review.** Confirm `apps/web/src/auth/` imports no
@@ -711,11 +722,19 @@ No SQL audit applies. No migration, grant, or RPC change.
   `docs/operations.md` rewriting to describe the new allowlist
   entry as the single source of truth per environment. Reviewers
   should coordinate the dashboard update before clicking merge.
-- **Forgotten admin import.** `grep -r getAdminSession
-  subscribeToAdminAuthState requestAdminMagicLink signOutAdmin
-  getAdminAccessToken AdminMagicLinkState AdminSessionState
-  apps/web/src tests docs` should return zero hits after commit 4.
-  Mitigated by a pre-push verification step in the rollout.
+- **Forgotten admin import.** After commit 4, the following
+  alternation search must return zero hits (exit code `1`) against
+  the code surface — the plan documents themselves name these
+  symbols, so `docs/` is excluded by design:
+
+  ```sh
+  rg -n \
+    'getAdminSession|subscribeToAdminAuthState|requestAdminMagicLink|signOutAdmin|getAdminAccessToken|AdminMagicLinkState|AdminSessionState' \
+    apps/web/src tests
+  ```
+
+  Mitigated by a pre-push verification step in the rollout (see
+  § Rollout Sequence step 9), which runs this exact command.
 - **SCSS regressions.** Duplicating admin form primitives into
   `_signin.scss` risks visual drift vs. today's admin shell.
   Mitigated by the manual round-trip (step 8); the test suite does
