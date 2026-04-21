@@ -1,11 +1,20 @@
 # Auth Sign-In Generalization — Phase 1 Execution Plan
 
-**Status:** Proposed — not started.
+**Status:** Partially landed. Commits `b16fa24`
+(`feat(web): add role-neutral auth api helpers`) and `adc4f3f`
+(`feat(web): add validateNextPath with bypass-vector tests`) merged
+to `main` via
+[PR #64](https://github.com/kcrobinson-1/neighborly-scavenger-game/pull/64).
+The `requestMagicLink` URL-shape and error-copy unit suite at
+`tests/web/lib/authApi.test.ts` (see Rollout Sequence § Commit 3 and
+Tests § `tests/web/lib/authApi.test.ts`) is required by this plan but
+did not land in PR #64. It must land as a follow-up commit on `main`
+before Phase 2 begins, to close the reviewer flag that URL
+composition is security-adjacent and should not be left optional.
 **Parent overview:** [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
-**Successor:** Phase 2 detail plan (forthcoming as
-`auth-signin-generalization-phase-2-plan.md`) lands the session hook,
-sign-in form, callback route, and admin-shell migration against the
-Phase 1 foundation.
+**Successor:** [`auth-signin-generalization-phase-2-plan.md`](./auth-signin-generalization-phase-2-plan.md)
+lands the session hook, sign-in form, callback route, and admin-shell
+migration against the Phase 1 foundation.
 **Scope:** Phase 1 only — the inert auth primitive surface and the
 open-redirect validator. Nothing in `main` consumes any of this at
 the end of the phase; the PR is structural and ships safely on its
@@ -58,6 +67,11 @@ but nothing calls any of it.
   validator's behavior against every bypass class named in this
   plan plus the positive round-trip cases for every currently-valid
   `AppPath`.
+- `tests/web/lib/authApi.test.ts` exists and pins the
+  `requestMagicLink` URL-shape contract (origin composition,
+  `encodeURIComponent` on `next`, round-trip decoding) plus the
+  locked error-copy strings for `getAuthSession`, `signOut`,
+  `requestMagicLink`, and `getAccessToken`.
 - `npm run lint`, `npm test`, `npm run build:web` pass on a clean
   tree.
 - At the end of Phase 1, nothing in `apps/web/src` imports anything
@@ -209,6 +223,9 @@ apps/web/src/
 
 tests/web/auth/
 └── validateNextPath.test.ts    (new)
+
+tests/web/lib/
+└── authApi.test.ts             (new — pins URL-shape + error copy)
 ```
 
 No existing file is modified in Phase 1. `adminGameApi.ts`,
@@ -230,7 +247,14 @@ admin consumer stay untouched.
    `tests/web/auth/validateNextPath.test.ts` with the full
    bypass-vector + positive-case suite described below. Validate
    with `npm run lint`, `npm test`, `npm run build:web`.
-4. **Automated code-review feedback loop.** Review from a
+4. **Commit 3 — authApi URL-shape and error-copy unit suite.** Add
+   `tests/web/lib/authApi.test.ts` pinning the `requestMagicLink`
+   URL composition invariant, the `encodeURIComponent` round-trip,
+   the email-trim behavior, and every locked error string in
+   `authApi.ts`. URL composition is security-adjacent; the suite is
+   required in Phase 1, not deferred. Validate with `npm run lint`,
+   `npm test`, `npm run build:web`.
+5. **Automated code-review feedback loop.** Review from a
    senior-engineer / security-review stance for:
    - bypass classes that should be in the test suite but are not
    - validator logic that branches on string shape rather than on
@@ -240,19 +264,35 @@ admin consumer stay untouched.
    - helper methods in `authApi.ts` that still carry admin copy or
      admin routes
    - `requestMagicLink` constructing a malformed callback URL for
-     edge-case `next` values
+     edge-case `next` values (commit 3 pins the happy path; the
+     review loop is where reviewers probe whether the suite's
+     assertion set is complete)
    - `getAccessToken` error copy that leaks admin-specific wording
-   
+
    Land review-fix commits separately when they clarify history.
-5. **Structure review.** Confirm `apps/web/src/auth/` contains no
+6. **Structure review.** Confirm `apps/web/src/auth/` contains no
    admin-only code and `authApi.ts` imports no admin symbol. Confirm
    no existing file has been modified.
-6. **Documentation currency sync.** Phase 1 does not change
-   documented flows or durable architecture, so most triggers do not
-   fire. Add a short pointer in
-   [`docs/architecture.md`](../architecture.md) only if that doc
-   enumerates frontend module boundaries; otherwise defer docs
-   updates to Phase 2, which is where the user-visible flow changes.
+6. **Documentation currency sync.** Walk every repo-policy doc
+   surface and record explicitly why each did or did not change in
+   Phase 1. No surface is skipped on the "most triggers don't fire"
+   vibe; the check is itself the deliverable. Expected resolution for
+   Phase 1:
+
+   | Doc | Checked? | Change in Phase 1? | Why |
+   |-----|----------|---------------------|-----|
+   | [`README.md`](../../README.md) | yes | no | Phase 1 adds no setup step, env var, or user-facing flow. |
+   | [`AGENTS.md`](../../AGENTS.md) | yes | no | No new agent conventions, planning rules, or debugging norms introduced. |
+   | [`docs/architecture.md`](../architecture.md) | yes | no | Module enumeration at `:60-108` describes live surfaces. The Phase 1 files are inert and unconsumed; describing them alongside live code would mislead. Phase 2 adds them when they become load-bearing in the architecture. |
+   | [`docs/operations.md`](../operations.md) | yes | no | No change to Supabase Auth URL settings, deploy surface, or platform-managed config yet. Phase 2 rewrites the `:162` Auth URL block when the new redirect URL goes live. |
+   | [`docs/dev.md`](../dev.md) | yes | no | Dev loop unchanged; magic-link return URL still targets `/admin` until Phase 2. |
+   | [`apps/web/src/admin/README.md`](../../apps/web/src/admin/README.md) | yes | no | Admin module untouched in Phase 1. |
+   | [`docs/self-review-catalog.md`](../self-review-catalog.md) | yes | no | No new recurring audit pattern yet; catalog entry may land after Phase 2 ships per this plan's Self-Review Audits section. |
+   | `docs/tracking/*` | yes | no | No activity-log entry required for an inert foundation PR; the PR body itself is the trace. |
+
+   If any row would flip to "yes" during implementation, stop and add
+   the doc edit to this PR rather than carrying doc drift forward
+   into Phase 2.
 7. **Final validation.** Run `npm run lint`, `npm test`,
    `npm run build:web` from a clean working tree.
 8. **PR preparation.** Open a PR against `main` using the repo PR
@@ -266,8 +306,9 @@ Intended commit boundary summary:
 |---|--------|------------|
 | 1 | `feat(web): add role-neutral auth api helpers` | `npm run lint`, `npm test`, `npm run build:web` |
 | 2 | `feat(web): add validateNextPath with bypass-vector tests` | `npm run lint`, `npm test`, `npm run build:web` |
+| 3 | `test(web): pin requestMagicLink URL shape and error copy` | `npm run lint`, `npm test`, `npm run build:web` |
 
-Review-fix commits, if any, land after commit 2.
+Review-fix commits, if any, land after commit 3.
 
 ## Tests
 
@@ -324,6 +365,33 @@ defense.
 The suite must also assert that `validateNextPath` does not throw
 on any input, including intentionally malformed strings.
 
+### `tests/web/lib/authApi.test.ts`
+
+Vitest with `window.location.origin` stubbed to
+`https://example.test` and `getBrowserSupabaseClient` mocked via
+`vi.hoisted`. The suite mirrors the existing
+[`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts)
+mock pattern for consistency.
+
+**`requestMagicLink` URL composition (required):**
+
+- `next=/admin` → `emailRedirectTo === "https://example.test/auth/callback?next=%2Fadmin"`.
+- `next=/admin/events/id-with-dashes` → every `/` is percent-encoded,
+  and `new URL(emailRedirectTo).searchParams.get("next")` round-trips
+  to the original path.
+- Email input is trimmed before the Supabase call.
+
+**Error-copy contracts (pin each locked string):**
+
+- `requestMagicLink`: preserves `error.message` when Supabase
+  provides one; falls back to `"We couldn't send the sign-in link."`
+  when the message is empty.
+- `getAuthSession`: throws
+  `"We couldn't restore your session right now."` on error.
+- `signOut`: throws `"We couldn't sign out right now."` on error.
+- `getAccessToken`: returns the session token when present; throws
+  `"Sign-in is required."` when no session exists.
+
 No other test file is added in Phase 1.
 
 ## Self-Review Audits
@@ -347,8 +415,10 @@ No SQL audit applies; no migration, grant, or RPC changes.
 ## Validation Expectations
 
 - `npm run lint` — passes.
-- `npm test` — passes; the new `validateNextPath.test.ts` asserts
-  every bypass vector and every positive case.
+- `npm test` — passes; `validateNextPath.test.ts` asserts every
+  bypass vector and every positive case, and `authApi.test.ts`
+  asserts the `requestMagicLink` URL-shape contract and each locked
+  error string.
 - `npm run build:web` — passes.
 - `deno check` — not required; no Edge Function source touched.
 - Manual verification — not required. Nothing is reachable from a
@@ -367,12 +437,26 @@ No SQL audit applies; no migration, grant, or RPC changes.
   string-prefix checks; the implementation pulls `parsed.origin`
   from the URL API.
 - **`requestMagicLink` composes a malformed callback URL.** If
-  `encodeURIComponent(next)` is forgotten, spaces or slashes in
-  `next` could break the round-trip. Mitigation: tests for
-  `requestMagicLink` can be added if the implementation gets
-  non-trivial; at minimum, the locked contract names the encoding
-  explicitly. A focused Vitest case for the constructed URL shape
-  is optional but recommended.
+  `encodeURIComponent(next)` is forgotten or the origin is composed
+  incorrectly, spaces or slashes in `next` could break the round-trip
+  — or worse, a misplaced `//` could cross origins. URL composition
+  is security-adjacent, so a deterministic unit suite is **required**
+  in Phase 1, not optional. Landing file:
+  [`tests/web/lib/authApi.test.ts`](../../tests/web/lib/authApi.test.ts).
+  Required assertions:
+  - `emailRedirectTo` equals
+    `"https://example.test/auth/callback?next=%2Fadmin"` for
+    `next=/admin` and `window.location.origin = "https://example.test"`.
+  - Every `/` in `next` is percent-encoded (e.g.
+    `/admin/events/id-with-dashes` → `%2Fadmin%2Fevents%2Fid-with-dashes`)
+    and the round-trip parse via `URL`/`searchParams.get("next")`
+    returns the original unencoded path.
+  - Email input is trimmed before the Supabase call.
+  - Supabase-provided error messages are preserved; a missing
+    Supabase message falls back to the locked role-neutral copy.
+  The suite also covers the `getAuthSession` / `signOut` /
+  `getAccessToken` error contracts so the entire `authApi.ts`
+  surface has at least one pinned assertion per locked error string.
 - **Type drift between `AuthSessionState` and the admin consumers.**
   Phase 2 expects a verbatim port. If Phase 1 tightens or alters a
   field, Phase 2's migration becomes a behavior change rather than
