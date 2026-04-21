@@ -2,11 +2,24 @@
 
 **Status:** Proposed — not started.
 **Parent overview:** [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
-**Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md) — landed in
-[PR #64](https://github.com/kcrobinson-1/neighborly-scavenger-game/pull/64)
-as inert foundation (two commits: `feat(web): add role-neutral auth
-api helpers`, `feat(web): add validateNextPath with bypass-vector
-tests`).
+**Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md).
+Phase 1 is **partially landed**:
+
+- [PR #64](https://github.com/kcrobinson-1/neighborly-scavenger-game/pull/64)
+  shipped the two inert-foundation commits (`b16fa24`
+  `feat(web): add role-neutral auth api helpers` and `adc4f3f`
+  `feat(web): add validateNextPath with bypass-vector tests`).
+- The `requestMagicLink` URL-shape and error-copy unit suite at
+  `tests/web/lib/authApi.test.ts` — required by the Phase 1 plan as
+  its Commit 3 in response to a security-adjacent reviewer flag — is
+  **not yet on `main`**. Phase 2 implementation **must not begin
+  until that test commit lands**; the suite's assertions are the
+  guardrail that `requestMagicLink`'s URL composition (which Phase 2
+  exercises end-to-end through the admin shell and the new
+  `/auth/callback` route) cannot silently regress.
+
+Phase 2's first step in § Rollout Sequence explicitly checks for that
+commit on `main` as a prerequisite before editing.
 **Scope:** Phase 2 only — the integration phase that wires the Phase 1
 primitives into a user-reachable flow. Ships the `/auth/callback`
 route, the role-neutral sign-in form and session hook, the admin-shell
@@ -84,8 +97,8 @@ routes against the stable primitive shape.
   overview-locked session-establishment ordering: mount → force
   `getAuthSession()` → await a session (initial or via
   `subscribeToAuthState`'s `SIGNED_IN`) with a 10-second timeout →
-  `history.replaceState` to `validateNextPath(new
-  URLSearchParams(window.location.search).get("next"))` → on timeout
+  `onNavigate(validatedNext, { replace: true })` (a single call;
+  never combined with a direct `history.replaceState`) → on timeout
   or persistent `signed_out`, render the neutral
   "sign-in link couldn't be used" state with a link back to
   `routes.home`.
@@ -95,9 +108,11 @@ routes against the stable primitive shape.
   `Exclude` (no hand-editing required).
 - `apps/web/src/App.tsx` resolves `/auth/callback` to
   `<AuthCallbackPage onNavigate={navigate} />` before any other
-  pathname branch fires. `AuthCallbackPage` uses `onNavigate` only
-  for the final post-validation transition; `replaceState` is the
-  locked transport inside the callback itself.
+  pathname branch fires. `AuthCallbackPage` uses `onNavigate`
+  exactly once — with `{ replace: true }` — for the final
+  post-validation transition. It does not call `window.history`
+  directly; the single navigation mechanism is the locked
+  transport.
 - `apps/web/src/styles/_signin.scss` exists, is imported by the
   project's SCSS entry, and defines neutral class names
   (`signin-stack`, `signin-form`, `signin-field`, `signin-input`,
@@ -247,19 +262,43 @@ Locked session-establishment sequence (from the overview plan's
 3. Race three promises: the initial `getAuthSession()` result, a
    `SIGNED_IN` event delivered through `subscribeToAuthState`, and a
    10-second `setTimeout` guard.
-4. On session resolved (either source), call
-   `onNavigate(validatedNext)`. `onNavigate` is
-   `usePathnameNavigation`'s `navigate`, which uses `history.pushState`
-   today; inside `AuthCallbackPage` it must use `replaceState`
-   semantics so the callback URL does not remain in the browser's
-   back-stack. The locked approach: `AuthCallbackPage` calls
-   `window.history.replaceState(null, "", validatedNext)` directly
-   and then calls `onNavigate(validatedNext)` only to trigger the
-   pathname-state refresh — **or**, equivalently, extend
-   `usePathnameNavigation` with a `replace` variant and use that. The
-   final wiring choice lives in the implementation; the invariant is
-   that no history entry for `/auth/callback?next=…` survives the
-   redirect.
+4. On session resolved (either source), perform the final
+   transition through a **single navigation mechanism**. The current
+   `usePathnameNavigation.navigate`
+   ([`usePathnameNavigation.ts:33-47`](../../apps/web/src/usePathnameNavigation.ts))
+   always calls `history.pushState`, which would leave
+   `/auth/callback?next=…` in the back-stack; combining it with a
+   pre-emptive `replaceState` would duplicate the destination entry
+   and make back-button behavior inconsistent (user hits back on
+   `/admin`, lands on `/admin` again, then on the previous page).
+   Both are disallowed.
+
+   **Locked mechanism:** extend `usePathnameNavigation` with a
+   `replace` option — `navigate(path, { replace: true })` — that
+   internally uses `history.replaceState` instead of `pushState` and
+   still updates the hook's pathname state in one call.
+   `AuthCallbackPage` invokes this once:
+
+   ```ts
+   onNavigate(validatedNext, { replace: true });
+   ```
+
+   where the prop is typed
+
+   ```ts
+   onNavigate: (path: AuthNextPath, options?: { replace?: boolean }) => void;
+   ```
+
+   `AuthCallbackPage` never touches `window.history` directly. No
+   other call site changes behavior: every existing caller of
+   `navigate(path)` keeps `pushState` semantics by default. This is
+   the only navigation-contract change Phase 2 introduces, and it
+   lives in commit 1 (route + rewrite scaffolding) so subsequent
+   commits consume the new signature.
+
+   Invariant: at most one history entry exists for the magic-link
+   round-trip, and it is the destination (`validatedNext`), not
+   `/auth/callback?next=…`.
 5. On timeout or persistent `signed_out`, render the neutral
    "sign-in link couldn't be used" state with a link to
    `routes.home`.
@@ -495,18 +534,38 @@ similar amount of deleted code, and concentrated doc edits.
 
 1. **Baseline validation.** `npm run lint`, `npm test`,
    `npm run build:web` on a clean tree pulled from `main`. Stop and
-   report any pre-existing failure before editing.
-2. **Commit 1 — route + rewrite scaffolding.** Extend `AppPath`,
-   add `routes.authCallback`, wire the `/auth/callback` branch into
-   `App.tsx` rendering a stub `AuthCallbackPage` that simply
-   `replaceState`s to `routes.home`, add the Vercel rewrite. This
-   lets subsequent commits reference a real route without breaking
-   the build. Validate.
+   report any pre-existing failure before editing. Also confirm the
+   Phase 1 follow-up test file is present on `main` as the
+   prerequisite gate:
+
+   ```sh
+   test -f tests/web/lib/authApi.test.ts && \
+     npx vitest run tests/web/lib/authApi.test.ts
+   ```
+
+   If the file is missing, stop — land the Phase 1 Commit 3 on
+   `main` first, then restart Phase 2. See the Phase 1 plan's
+   § Status and § Tests for the required assertion set.
+2. **Commit 1 — route + rewrite scaffolding + navigate replace
+   option.** Extend `AppPath`, add `routes.authCallback`, wire the
+   `/auth/callback` branch into `App.tsx` rendering a stub
+   `AuthCallbackPage` that simply calls
+   `onNavigate(routes.home, { replace: true })`, add the Vercel
+   rewrite. Extend `usePathnameNavigation.navigate` with the
+   `{ replace?: boolean }` option described in § AuthCallbackPage
+   step 4: `replace: true` uses `history.replaceState`;
+   default/absent stays on `history.pushState` so every existing
+   caller keeps today's semantics. This commit is where the
+   navigation-contract change lives so subsequent commits consume
+   the new signature. Add a focused Vitest case for the
+   `usePathnameNavigation` extension asserting
+   `history.replaceState` is called when `replace: true` and
+   `pushState` is not. Validate.
 3. **Commit 2 — auth primitives: SignInForm, useAuthSession,
    AuthCallbackPage.** Implement the three new files against the
    locked contracts above. Replace the stub callback with the real
    implementation (race `getAuthSession()` / `SIGNED_IN` / 10s
-   timeout → `replaceState` to validated `next`). Add
+   timeout → `onNavigate(validatedNext, { replace: true })`). Add
    `tests/web/auth/AuthCallbackPage.test.tsx` with the invariants
    listed under § Tests. Validate.
 4. **Commit 3 — SCSS partial.** Add `_signin.scss` and ensure it is
@@ -547,8 +606,11 @@ similar amount of deleted code, and concentrated doc edits.
      the gap only surfaces in Vercel deployments);
    - `AuthCallbackPage` navigating before the session is available
      (race window);
-   - `replaceState` forgetting to preserve the pathname encoding
-     for admin-event routes;
+   - `AuthCallbackPage` calling `onNavigate` more than once, or
+     reaching into `window.history` directly — both violate the
+     single-mechanism contract;
+   - `navigate(path, { replace: true })` forgetting to preserve
+     the pathname encoding for admin-event routes;
    - `callAuthoringFunction` accidentally being called before
      session restoration in a test env, now that the error message
      changed from `"Admin sign-in is required."` to
@@ -604,8 +666,9 @@ Review-fix commits, if any, land after commit 6.
 
 ### `tests/web/auth/AuthCallbackPage.test.tsx` (new)
 
-Vitest + React Testing Library. Mocks
-`apps/web/src/lib/authApi.ts` (`getAuthSession`,
+Vitest + React Testing Library. Passes a mock `onNavigate`
+(`vi.fn()`) into `AuthCallbackPage` and asserts against its calls.
+Mocks `apps/web/src/lib/authApi.ts` (`getAuthSession`,
 `subscribeToAuthState`) and `apps/web/src/auth/validateNextPath.ts`
 (spy through to the real implementation so positive cases exercise
 the real validator). `window.location.search` is stubbed per test.
@@ -613,29 +676,57 @@ the real validator). `window.location.search` is stubbed per test.
 Required assertions:
 
 1. **Validated `next` from initial `getAuthSession`.** `getAuthSession`
-   resolves to a truthy session, `next=/admin`. Expect
-   `history.replaceState` to be called with `/admin`, and the
-   component to render nothing user-visible once redirected.
+   resolves to a truthy session, `next=/admin`. Expect `onNavigate`
+   to have been called exactly once with
+   `("/admin", { replace: true })`, and the component to render
+   nothing user-visible once redirected.
 2. **Validated `next` from `SIGNED_IN` event.** `getAuthSession`
    resolves null, `subscribeToAuthState` fires `SIGNED_IN` with a
-   session. Expect `replaceState` with `/admin`.
+   session. Expect `onNavigate` called once with
+   `("/admin", { replace: true })`.
 3. **Bypass vector rejected.** `next=https://evil.com/foo`. Expect
-   `replaceState` with `routes.home`, not `evil.com`.
+   `onNavigate` called once with `(routes.home, { replace: true })`,
+   never with `evil.com`.
 4. **`/auth/callback` self-loop rejected.** `next=/auth/callback`.
-   Expect `replaceState` with `routes.home`.
-5. **Missing `next`.** No `next` query. Expect `replaceState` with
-   `routes.home`.
+   Expect `onNavigate` called once with
+   `(routes.home, { replace: true })`.
+5. **Missing `next`.** No `next` query. Expect `onNavigate` called
+   once with `(routes.home, { replace: true })`.
 6. **Timeout.** `getAuthSession` resolves null; `subscribeToAuthState`
    never fires. After the 10s guard fires (fake timers), expect the
    neutral "sign-in link couldn't be used" rendered state with a
-   link to `routes.home`, and **no** `replaceState` call.
-7. **No navigation before session.** Even after
-   `validateNextPath` returns, if `getAuthSession` has not yet
-   resolved, `replaceState` must not fire. Enforce by intercepting
-   the promise resolution and asserting order.
-8. **`AuthCallbackPage` unsubscribes on unmount.** Unmount mid-wait
-   and assert `subscribeToAuthState`'s returned unsubscribe fn was
-   called.
+   link to `routes.home`, and **no** `onNavigate` call.
+7. **No navigation before session.** Even after `validateNextPath`
+   returns, if `getAuthSession` has not yet resolved, `onNavigate`
+   must not fire. Enforce by intercepting the promise resolution and
+   asserting `onNavigate.mock.calls.length === 0` at that point.
+8. **Single-call invariant.** Across every success path, assert
+   `onNavigate.mock.calls.length === 1` — never 0 (silent stall) and
+   never 2 (the double-navigation bug the single-mechanism
+   contract prevents).
+9. **No direct `window.history` writes.** Spy on
+   `window.history.pushState` and `window.history.replaceState`
+   and assert both remain un-called by `AuthCallbackPage`'s own
+   code. `usePathnameNavigation`'s mock is separate; the point is
+   that the component itself never reaches into `window.history`.
+10. **Unsubscribes on unmount.** Unmount mid-wait and assert
+    `subscribeToAuthState`'s returned unsubscribe fn was called.
+
+### `tests/web/usePathnameNavigation.test.ts` (new, for the
+`{ replace }` option)
+
+Add focused coverage for the navigation-contract extension landed
+in commit 1:
+
+- `navigate(path)` without options calls `window.history.pushState`,
+  not `replaceState` — preserves today's behavior for every
+  existing call site.
+- `navigate(path, { replace: true })` calls
+  `window.history.replaceState` and does not call `pushState`.
+- Both variants update the hook's `pathname` state so React
+  rerenders pick up the new route.
+- `navigate(path, { replace: false })` is equivalent to the
+  no-options call (uses `pushState`).
 
 ### `tests/web/pages/AdminPage.test.tsx` (migrated)
 
@@ -709,6 +800,17 @@ No SQL audit applies. No migration, grant, or RPC change.
   sequence (step 3: race `getAuthSession` / `SIGNED_IN` / timeout)
   and by the `AuthCallbackPage.test.tsx` "no navigation before
   session" invariant. Review focus in commit 2.
+- **Double-navigation on callback completion.** Combining
+  `window.history.replaceState` with `usePathnameNavigation.navigate`
+  (which calls `pushState`) would leave two destination entries in
+  the history stack, so the user's back button cycles on the same
+  page. Mitigated by the locked single-mechanism contract
+  (§ AuthCallbackPage step 4): `AuthCallbackPage` calls
+  `onNavigate(validatedNext, { replace: true })` exactly once and
+  never touches `window.history` directly. The Tests section adds
+  a single-call invariant and a "no direct history writes" spy
+  assertion. Navigation-contract extension lives in commit 1 so
+  subsequent commits consume the new signature.
 - **Missed Vercel rewrite.** Local dev never notices the missing
   rewrite (Vite serves `index.html` for any path); the gap only
   surfaces on production direct-loads of the magic-link return URL.
