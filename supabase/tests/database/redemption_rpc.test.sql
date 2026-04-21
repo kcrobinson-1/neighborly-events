@@ -7,7 +7,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(58);
 
 -- ─── Structural checks ──────────────────────────────────────────────────────
 
@@ -344,6 +344,370 @@ select is(
   (public.redeem_entitlement_by_code('redeem-rpc-event-1', '3333'))->>'redeemed_by_role',
   'agent',
   'already_redeemed envelope echoes redeemed_by_role'
+);
+
+-- ═══ reverse_entitlement_redemption ════════════════════════════════════════
+
+-- State at the start of this section:
+--   RRA-1111: redeemed by agent 11111111-…
+--   RRA-2222: redeemed by root_admin (via email-seeded admin_users row)
+--   RRA-3333: redeemed by agent 11111111-… (after the idempotent cycle)
+--   RRB-7777: unredeemed on event 2 (cross-event probe target)
+
+-- ─── Reverse: structural checks ────────────────────────────────────────────
+
+select ok(
+  exists (
+    select 1 from pg_proc
+    join pg_namespace on pg_namespace.oid = pg_proc.pronamespace
+    where pg_namespace.nspname = 'public'
+      and pg_proc.proname = 'reverse_entitlement_redemption'
+      and pg_get_function_arguments(pg_proc.oid)
+        = 'p_event_id text, p_code_suffix text, p_reason text DEFAULT NULL::text'
+  ),
+  'reverse_entitlement_redemption(text, text, text) exists with default reason'
+);
+
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.reverse_entitlement_redemption(text, text, text)',
+    'EXECUTE'
+  ),
+  'authenticated can execute reverse_entitlement_redemption'
+);
+
+select ok(
+  has_function_privilege(
+    'service_role',
+    'public.reverse_entitlement_redemption(text, text, text)',
+    'EXECUTE'
+  ),
+  'service_role can execute reverse_entitlement_redemption'
+);
+
+select ok(
+  has_function_privilege(
+    'anon',
+    'public.reverse_entitlement_redemption(text, text, text)',
+    'EXECUTE'
+  ),
+  'anon is granted execute (matches redeem RPC; null-JWT guard protects)'
+);
+
+-- ─── Reverse: null JWT → not_authorized ────────────────────────────────────
+
+select set_config('request.jwt.claims', '', true);
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '1111', null
+  ))->>'result',
+  'not_authorized',
+  'reverse with null JWT returns not_authorized'
+);
+
+-- ─── Reverse: authenticated but unassigned → not_authorized ────────────────
+
+select set_config(
+  'request.jwt.claims',
+  '{"role":"authenticated","sub":"44444444-4444-4444-8444-444444444444"}',
+  true
+);
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '1111', null
+  ))->>'result',
+  'not_authorized',
+  'reverse by an unassigned authenticated caller is not_authorized'
+);
+
+-- ─── Reverse: agent role on the event → not_authorized ────────────────────
+
+select set_config(
+  'request.jwt.claims',
+  '{"role":"authenticated","sub":"11111111-1111-4111-8111-111111111111"}',
+  true
+);
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '1111', null
+  ))->>'result',
+  'not_authorized',
+  'reverse by an agent is not_authorized (organizer-only gate)'
+);
+
+-- ─── Reverse: organizer for a different event → not_authorized ────────────
+-- Seed an organizer for event 2 so we can exercise the cross-event case
+-- without granting the existing event-1 organizer broader scope.
+
+insert into public.event_role_assignments (user_id, event_id, role)
+values (
+  '66666666-6666-4666-8666-666666666666'::uuid,
+  'redeem-rpc-event-2',
+  'organizer'
+);
+
+select set_config(
+  'request.jwt.claims',
+  '{"role":"authenticated","sub":"66666666-6666-4666-8666-666666666666"}',
+  true
+);
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '1111', null
+  ))->>'result',
+  'not_authorized',
+  'reverse by an organizer of a different event is not_authorized'
+);
+
+-- ─── Reverse: organizer, unknown suffix → not_found ────────────────────────
+
+select set_config(
+  'request.jwt.claims',
+  '{"role":"authenticated","sub":"33333333-3333-4333-8333-333333333333"}',
+  true
+);
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '9999', null
+  ))->>'result',
+  'not_found',
+  'reverse with an unknown suffix returns not_found'
+);
+
+-- ─── Reverse: cross-event suffix → not_found ───────────────────────────────
+-- Suffix 7777 only exists on event 2. Organizer for event 1 probes '7777'
+-- on event 1; the row on event 2 must not leak through.
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '7777', null
+  ))->>'result',
+  'not_found',
+  'reverse cross-event suffix returns not_found (no cross-event leak)'
+);
+
+-- ─── Reverse: organizer reverses redeemed row, null reason → reversed_now ─
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '1111', null
+  ))->>'result',
+  'reversed_now',
+  'organizer reverse of a redeemed row returns reversed_now'
+);
+
+select is(
+  (
+    select redemption_status
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  'unredeemed',
+  'after reverse, redemption_status is unredeemed'
+);
+
+select is(
+  (
+    select redeemed_at
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::timestamptz,
+  'after reverse, redeemed_at is cleared'
+);
+
+select is(
+  (
+    select redeemed_by
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::uuid,
+  'after reverse, redeemed_by is cleared'
+);
+
+select is(
+  (
+    select redeemed_by_role
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::text,
+  'after reverse, redeemed_by_role is cleared'
+);
+
+select is(
+  (
+    select redeemed_event_id
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::text,
+  'after reverse, redeemed_event_id is cleared'
+);
+
+select isnt(
+  (
+    select redemption_reversed_at
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::timestamptz,
+  'after reverse, redemption_reversed_at is populated'
+);
+
+select is(
+  (
+    select redemption_reversed_by
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  '33333333-3333-4333-8333-333333333333'::uuid,
+  'after reverse, redemption_reversed_by = the organizer user id'
+);
+
+select is(
+  (
+    select redemption_reversed_by_role
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  'organizer',
+  'after reverse, redemption_reversed_by_role = organizer'
+);
+
+select is(
+  (
+    select redemption_note
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::text,
+  'null reason stores NULL in redemption_note'
+);
+
+-- ─── Reverse: organizer with reason → reason stored verbatim ──────────────
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '2222', 'booth correction'
+  ))->>'result',
+  'reversed_now',
+  'organizer reverse with a reason returns reversed_now'
+);
+
+select is(
+  (
+    select redemption_note
+      from public.game_entitlements
+     where verification_code = 'RRA-2222'
+  ),
+  'booth correction',
+  'reason is stored verbatim in redemption_note'
+);
+
+-- ─── Reverse: already unredeemed → already_unredeemed ─────────────────────
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '1111', null
+  ))->>'result',
+  'already_unredeemed',
+  'reverse on an already-unredeemed row returns already_unredeemed'
+);
+
+-- ─── Reverse: root admin → reversed_now with root_admin role ──────────────
+-- RRA-3333 is still redeemed by agent 11111111-… at this point.
+
+select set_config(
+  'request.jwt.claims',
+  '{"role":"authenticated",'
+  || '"email":"redeem-root@example.com",'
+  || '"sub":"55555555-5555-4555-8555-555555555555"}',
+  true
+);
+
+select is(
+  (public.reverse_entitlement_redemption(
+    'redeem-rpc-event-1', '3333', 'root-admin correction'
+  ))->>'result',
+  'reversed_now',
+  'root admin reverse returns reversed_now'
+);
+
+select is(
+  (
+    select redemption_reversed_by_role
+      from public.game_entitlements
+     where verification_code = 'RRA-3333'
+  ),
+  'root_admin',
+  'root admin reverse sets redemption_reversed_by_role = root_admin'
+);
+
+-- ─── Post-reverse redeem cycle ────────────────────────────────────────────
+-- RRA-1111 is currently unredeemed (after reverse). A fresh redeem must
+-- transition it back to redeemed as redeemed_now (not already_redeemed),
+-- while the reversal audit columns retain the prior cycle's values.
+
+select set_config(
+  'request.jwt.claims',
+  '{"role":"authenticated","sub":"11111111-1111-4111-8111-111111111111"}',
+  true
+);
+
+select is(
+  (public.redeem_entitlement_by_code(
+    'redeem-rpc-event-1', '1111'
+  ))->>'result',
+  'redeemed_now',
+  'post-reverse redeem returns redeemed_now (not already_redeemed)'
+);
+
+select is(
+  (
+    select redemption_status
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  'redeemed',
+  'post-reverse redeem flips redemption_status back to redeemed'
+);
+
+select is(
+  (
+    select redeemed_by_role
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  'agent',
+  'post-reverse redeem records the new agent cycle'
+);
+
+select isnt(
+  (
+    select redemption_reversed_at
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  null::timestamptz,
+  'post-reverse redeem preserves the prior reversal audit timestamp'
+);
+
+select is(
+  (
+    select redemption_reversed_by_role
+      from public.game_entitlements
+     where verification_code = 'RRA-1111'
+  ),
+  'organizer',
+  'post-reverse redeem preserves the prior reversal actor role'
 );
 
 select * from finish();
