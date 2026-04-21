@@ -205,7 +205,7 @@ export function useSelectedDraft({
 
   const saveSelectedEventDetails = async (
     values: AdminEventDetailsFormValues,
-    eventCode: string,
+    eventCode: string | null,
   ) => {
     if (
       selectedDraftState.status !== "ready" &&

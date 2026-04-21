@@ -18,7 +18,7 @@ type AdminEventDetailsFormProps = {
   isSaving: boolean;
   message: string | null;
   messageKind: "error" | "info" | "success";
-  onSave: (values: AdminEventDetailsFormValues, eventCode: string) => Promise<DraftEventSummary | null>;
+  onSave: (values: AdminEventDetailsFormValues, eventCode: string | null) => Promise<DraftEventSummary | null>;
 };
 
 type TextFieldName = Exclude<
@@ -112,7 +112,8 @@ export function AdminEventDetailsForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void onSave(values, localEventCode).then((saved) => {
+    const eventCodeToSave = localEventCode !== baselineEventCode ? localEventCode : null;
+    void onSave(values, eventCodeToSave).then((saved) => {
       if (saved?.eventCode != null) {
         setLocalEventCode(saved.eventCode);
       }

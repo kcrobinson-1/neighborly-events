@@ -1838,9 +1838,10 @@ describe("AdminPage", () => {
       fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
 
       await screen.findByText("Saved Draft Market Day.");
+      // Event code is unchanged, so null is sent to let save-draft preserve the DB value.
       expect(mockSaveDraftEvent).toHaveBeenCalledWith(
         expect.objectContaining({ name: "Draft Market Day Updated" }),
-        "ABC",
+        null,
       );
     });
 
@@ -1912,6 +1913,31 @@ describe("AdminPage", () => {
       expect(
         (screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement).disabled,
       ).toBe(false);
+    });
+
+    it("sends the new event code when it has been changed from the baseline", async () => {
+      setupSignedInWithDraft(null, "ABC");
+      mockSaveDraftEvent.mockResolvedValue({
+        eventCode: "XYZ",
+        id: "draft-market-2026",
+        liveVersionNumber: null,
+        name: "Draft Market Day",
+        slug: "draft-market",
+        updatedAt: "2026-04-13T12:00:00.000Z",
+      });
+      mockGenerateEventCode.mockResolvedValue("XYZ");
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event code");
+      fireEvent.click(screen.getByRole("button", { name: "Regenerate" }));
+      await screen.findByDisplayValue("XYZ");
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      await screen.findByText("Saved Draft Market Day.");
+      expect(mockSaveDraftEvent).toHaveBeenCalledWith(
+        expect.objectContaining({}),
+        "XYZ",
+      );
     });
 
     it("snaps the event-code field back to the preserved DB value when an empty code is submitted", async () => {
