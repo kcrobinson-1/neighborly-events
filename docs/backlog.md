@@ -103,11 +103,14 @@ Reduce deployment risk and contributor friction before the live event.
   recoverable start state.
   Detail: [`docs/testing.md` — What Needs Coverage](./testing.md)
 
-- [ ] **`decision` Staging or branch-based Supabase promotion path**
-  Decide whether the current local-validation-plus-direct-to-production release
-  model is sufficient or whether a staging backend is needed before the first
-  real event. A bad migration today goes directly to the production project.
-  Detail: [`docs/plans/continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md) and [`docs/open-questions.md` — Development And Release Workflow](./open-questions.md)
+- [x] **`decision` Stable staging backend path**
+  Completed decision: remain in `Phase 1` for now and defer a stable
+  non-production full-stack staging environment while the project stays on the
+  current cost profile and operator workflow. Current posture remains local
+  validation + PR CI + direct production promotion + production smoke. Revisit
+  with a separate infra item before migration-rehearsal risk outweighs the cost
+  and maintenance burden of a second backend environment.
+  Detail: [`docs/plans/continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md)
 
 - [ ] **`dev` Admin UI-review capture mode**
   Add `npm run ui:review:capture -- --mode admin` (or a sibling script) so
