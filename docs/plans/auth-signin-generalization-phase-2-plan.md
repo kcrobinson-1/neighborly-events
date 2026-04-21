@@ -242,11 +242,24 @@ export function useAuthSession(): AuthSessionState;
 
 ```ts
 export type AuthCallbackPageProps = {
-  onNavigate: (path: AuthNextPath) => void;
+  onNavigate: (
+    path: AuthNextPath,
+    options?: { replace?: boolean },
+  ) => void;
 };
 
 export function AuthCallbackPage(props: AuthCallbackPageProps): JSX.Element;
 ```
+
+The `options?: { replace?: boolean }` parameter matches the
+extended `usePathnameNavigation.navigate` signature from commit 1
+(see § Rollout Sequence step 2 and the `App.tsx` wiring:
+`<AuthCallbackPage onNavigate={navigate} />`). `AuthCallbackPage`'s
+session-establishment sequence below (step 4) invokes
+`onNavigate(validatedNext, { replace: true })`; declaring the
+options parameter here is what makes that call type-check. No other
+`AuthCallbackPage` consumer exists, so the signature is specified
+exactly once and consumed exactly once.
 
 Locked session-establishment sequence (from the overview plan's
 "Locked expectations" block, lines 177–199):
