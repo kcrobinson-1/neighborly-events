@@ -1,10 +1,7 @@
-import {
-  type ChangeEvent,
-  type FormEvent,
-  useMemo,
-  useState,
-} from "react";
+import { type FormEvent, useMemo, useState } from "react";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
+import { AdminQuestionFields } from "./AdminQuestionFields";
+import { AdminQuestionList } from "./AdminQuestionList";
 import {
   createQuestionFormValues,
   updateQuestionFormValues,
@@ -92,57 +89,56 @@ export function AdminQuestionEditor({
       updateQuestionFormValues(currentContent, focusedQuestionId, nextValues));
   };
 
-  const updateTextValue =
-    (field: keyof Pick<
+  const updateTextValue = (
+    field: keyof Pick<
       AdminQuestionFormValues,
       "explanation" | "prompt" | "sponsor" | "sponsorFact"
-    >) =>
-    (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      updateValues({
-        ...values,
-        [field]: event.target.value,
-      });
-    };
+    >,
+    value: string,
+  ) => {
+    updateValues({
+      ...values,
+      [field]: value,
+    });
+  };
 
-  const updateSelectionMode = (event: ChangeEvent<HTMLSelectElement>) => {
+  const updateSelectionMode = (
+    selectionMode: AdminQuestionFormValues["selectionMode"],
+  ) => {
     applyContentChange((currentContent) =>
       updateQuestionSelectionMode(
         updateQuestionFormValues(currentContent, focusedQuestionId, values),
         focusedQuestionId,
-        event.target.value as AdminQuestionFormValues["selectionMode"],
+        selectionMode,
       ));
   };
 
-  const updateOptionLabel =
-    (optionId: string) => (event: ChangeEvent<HTMLInputElement>) => {
-      updateValues({
-        ...values,
-        options: values.options.map((option) =>
-          option.id === optionId
-            ? { ...option, label: event.target.value }
-            : option,
-        ),
-      });
-    };
+  const updateOptionLabel = (optionId: string, label: string) => {
+    updateValues({
+      ...values,
+      options: values.options.map((option) =>
+        option.id === optionId ? { ...option, label } : option,
+      ),
+    });
+  };
 
-  const updateCorrectAnswer =
-    (optionId: string) => (event: ChangeEvent<HTMLInputElement>) => {
-      updateValues({
-        ...values,
-        options: values.options.map((option) => {
-          if (values.selectionMode === "single") {
-            return {
-              ...option,
-              isCorrect: option.id === optionId,
-            };
-          }
+  const updateCorrectAnswer = (optionId: string, checked: boolean) => {
+    updateValues({
+      ...values,
+      options: values.options.map((option) => {
+        if (values.selectionMode === "single") {
+          return {
+            ...option,
+            isCorrect: option.id === optionId,
+          };
+        }
 
-          return option.id === optionId
-            ? { ...option, isCorrect: event.target.checked }
-            : option;
-        }),
-      });
-    };
+        return option.id === optionId
+          ? { ...option, isCorrect: checked }
+          : option;
+      }),
+    });
+  };
 
   const applyStructureResult = (
     result: {
@@ -221,9 +217,7 @@ export function AdminQuestionEditor({
           <p className="eyebrow">Questions</p>
           <h3>Edit existing questions</h3>
         </div>
-        <span className="chip">
-          {editableContent.questions.length} questions
-        </span>
+        <span className="chip">{editableContent.questions.length} questions</span>
       </div>
       <div className="admin-toolbar">
         <button
@@ -236,211 +230,37 @@ export function AdminQuestionEditor({
         </button>
       </div>
       <div className="admin-question-layout">
-        <div className="admin-question-list" aria-label="Question list">
-          {editableContent.questions.map((question, index) => (
-            <button
-              aria-pressed={question.id === focusedQuestionId}
-              className="secondary-button admin-question-list-button"
-              disabled={disabled}
-              key={question.id}
-              onClick={() => {
-                onFocusQuestion(question.id);
-                setPendingDeleteQuestionId(null);
-              }}
-              type="button"
-            >
-              Question {index + 1}: {question.prompt || "Untitled question"}
-            </button>
-          ))}
-        </div>
-        <form className="admin-form admin-question-form" onSubmit={handleSubmit}>
-          <div className="admin-action-row">
-            <button
-              className="secondary-button"
-              disabled={disabled || focusedQuestionIndex <= 0}
-              onClick={() => handleMoveQuestion("up")}
-              type="button"
-            >
-              Move up
-            </button>
-            <button
-              className="secondary-button"
-              disabled={
-                disabled ||
-                focusedQuestionIndex < 0 ||
-                focusedQuestionIndex >= editableContent.questions.length - 1
-              }
-              onClick={() => handleMoveQuestion("down")}
-              type="button"
-            >
-              Move down
-            </button>
-            <button
-              className="secondary-button"
-              disabled={disabled}
-              onClick={handleDuplicateQuestion}
-              type="button"
-            >
-              Duplicate question
-            </button>
-            <button
-              className="secondary-button"
-              disabled={disabled || editableContent.questions.length <= 1}
-              onClick={() => setPendingDeleteQuestionId(focusedQuestionId)}
-              type="button"
-            >
-              Delete question
-            </button>
-          </div>
-          {editableContent.questions.length <= 1 ? (
-            <p className="draft-row-meta">Keep at least one question.</p>
-          ) : null}
-          {pendingDeleteQuestionId === focusedQuestionId ? (
-            <div className="admin-delete-confirmation">
-              <p>Delete this question from the draft?</p>
-              <div className="admin-action-row">
-                <button
-                  className="secondary-button"
-                  disabled={disabled}
-                  onClick={handleDeleteQuestion}
-                  type="button"
-                >
-                  Confirm delete
-                </button>
-                <button
-                  className="secondary-button"
-                  disabled={disabled}
-                  onClick={() => setPendingDeleteQuestionId(null)}
-                  type="button"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : null}
-          <label className="admin-field">
-            <span className="admin-field-label">Question prompt</span>
-            <textarea
-              className="admin-input admin-textarea"
-              disabled={disabled}
-              onChange={updateTextValue("prompt")}
-              value={values.prompt}
-            />
-          </label>
-          <div className="admin-details-grid">
-            <label className="admin-field">
-              <span className="admin-field-label">Question sponsor</span>
-              <input
-                className="admin-input"
-                disabled={disabled}
-                onChange={updateTextValue("sponsor")}
-                type="text"
-                value={values.sponsor}
-              />
-            </label>
-            <label className="admin-field">
-              <span className="admin-field-label">Selection mode</span>
-              <select
-                className="admin-input"
-                disabled={disabled}
-                onChange={updateSelectionMode}
-                value={values.selectionMode}
-              >
-                <option value="single">Single correct answer</option>
-                <option value="multiple">Multiple correct answers</option>
-              </select>
-            </label>
-          </div>
-          <label className="admin-field">
-            <span className="admin-field-label">Explanation</span>
-            <textarea
-              className="admin-input admin-textarea"
-              disabled={disabled}
-              onChange={updateTextValue("explanation")}
-              value={values.explanation}
-            />
-          </label>
-          <label className="admin-field">
-            <span className="admin-field-label">Sponsor fact</span>
-            <textarea
-              className="admin-input admin-textarea"
-              disabled={disabled}
-              onChange={updateTextValue("sponsorFact")}
-              value={values.sponsorFact}
-            />
-          </label>
-          <fieldset className="admin-option-fieldset">
-            <legend>Answer options</legend>
-            {values.options.map((option, index) => (
-              <div className="admin-option-row" key={option.id}>
-                <label className="admin-correct-answer">
-                  <input
-                    checked={option.isCorrect}
-                    disabled={disabled}
-                    name={
-                      values.selectionMode === "single"
-                        ? `correct-answer-${focusedQuestionId}`
-                        : undefined
-                    }
-                    onChange={updateCorrectAnswer(option.id)}
-                    type={values.selectionMode === "single" ? "radio" : "checkbox"}
-                  />{" "}
-                  Correct
-                </label>
-                <label className="admin-field">
-                  <span className="admin-field-label">
-                    Option {index + 1} label
-                  </span>
-                  <input
-                    className="admin-input"
-                    disabled={disabled}
-                    onChange={updateOptionLabel(option.id)}
-                    type="text"
-                    value={option.label}
-                  />
-                </label>
-                <button
-                  className="secondary-button"
-                  disabled={disabled || values.options.length <= 1}
-                  onClick={() => handleDeleteOption(option.id)}
-                  type="button"
-                >
-                  Delete option
-                </button>
-              </div>
-            ))}
-            {values.options.length <= 1 ? (
-              <p className="draft-row-meta">Keep at least one answer option.</p>
-            ) : null}
-            <button
-              className="secondary-button admin-inline-button"
-              disabled={disabled}
-              onClick={handleAddOption}
-              type="button"
-            >
-              Add option
-            </button>
-          </fieldset>
-          <div className="admin-action-row">
-            <button
-              className="primary-button"
-              disabled={disabled || !isDirty}
-              type="submit"
-            >
-              {isSaving ? "Saving question changes..." : "Save question changes"}
-            </button>
-            {isDirty ? (
-              <span className="admin-dirty-state">
-                Unsaved question changes.
-              </span>
-            ) : null}
-          </div>
-          {saveMessage ? (
-            <p className={`admin-message admin-message-${saveMessageKind}`}>
-              {saveMessage}
-            </p>
-          ) : null}
-        </form>
+        <AdminQuestionList
+          disabled={disabled}
+          focusedQuestionId={focusedQuestionId}
+          onFocusQuestion={onFocusQuestion}
+          onResetDeleteConfirmation={() => setPendingDeleteQuestionId(null)}
+          questions={editableContent.questions}
+        />
+        <AdminQuestionFields
+          disabled={disabled}
+          focusedQuestionId={focusedQuestionId}
+          focusedQuestionIndex={focusedQuestionIndex}
+          isDirty={isDirty}
+          isSaving={isSaving}
+          message={saveMessage}
+          messageKind={saveMessageKind}
+          onAddOption={handleAddOption}
+          onConfirmDeleteQuestion={handleDeleteQuestion}
+          onDeleteOption={handleDeleteOption}
+          onDuplicateQuestion={handleDuplicateQuestion}
+          onMoveQuestion={handleMoveQuestion}
+          onRequestDeleteQuestion={() => setPendingDeleteQuestionId(focusedQuestionId)}
+          onResetDeleteConfirmation={() => setPendingDeleteQuestionId(null)}
+          onSubmit={handleSubmit}
+          onUpdateCorrectAnswer={updateCorrectAnswer}
+          onUpdateOptionLabel={updateOptionLabel}
+          onUpdateSelectionMode={updateSelectionMode}
+          onUpdateTextValue={updateTextValue}
+          pendingDeleteQuestionId={pendingDeleteQuestionId}
+          questionCount={editableContent.questions.length}
+          values={values}
+        />
       </div>
     </section>
   );
