@@ -84,14 +84,22 @@ Deno.test("get-redemption-status rejects missing server config", async () => {
   });
 });
 
-Deno.test("get-redemption-status rejects malformed payloads before session lookup", async () => {
+Deno.test("get-redemption-status rejects malformed payloads after session validation but before DB load", async () => {
   let sessionReads = 0;
+  let loadCalls = 0;
   const handler = createGetRedemptionStatusHandler({
     ...defaultGetRedemptionStatusHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadRedemptionStatus: async () => {
+      loadCalls += 1;
+      return {
+        data: null,
+        error: null,
+      };
+    },
     readVerifiedSession: async () => {
       sessionReads += 1;
       return {
@@ -112,16 +120,25 @@ Deno.test("get-redemption-status rejects malformed payloads before session looku
   assertEquals(await response.json(), {
     error: "Invalid redemption status payload.",
   });
-  assertEquals(sessionReads, 0);
+  assertEquals(sessionReads, 1);
+  assertEquals(loadCalls, 0);
 });
 
 Deno.test("get-redemption-status returns 401 when the signed session is missing or invalid", async () => {
+  let loadCalls = 0;
   const handler = createGetRedemptionStatusHandler({
     ...defaultGetRedemptionStatusHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadRedemptionStatus: async () => {
+      loadCalls += 1;
+      return {
+        data: null,
+        error: null,
+      };
+    },
     readVerifiedSession: async () => null,
   });
 
@@ -136,6 +153,7 @@ Deno.test("get-redemption-status returns 401 when the signed session is missing 
   assertEquals(await response.json(), {
     error: "Session is missing or invalid.",
   });
+  assertEquals(loadCalls, 0);
 });
 
 Deno.test("get-redemption-status returns 404 when the event-session pair has no entitlement", async () => {
@@ -319,6 +337,12 @@ Deno.test("get-redemption-status enforces event scoping on the event-session loo
 });
 
 Deno.test("get-redemption-status treats query failures and malformed rows as 500", async () => {
+  const originalConsoleError = console.error;
+  const loggedErrors: string[] = [];
+  console.error = (...args: unknown[]) => {
+    loggedErrors.push(args.map(String).join(" "));
+  };
+
   const errorHandler = createGetRedemptionStatusHandler({
     ...defaultGetRedemptionStatusHandlerDependencies,
     getAllowedOrigin: () => "http://127.0.0.1:4173",
@@ -356,17 +380,28 @@ Deno.test("get-redemption-status treats query failures and malformed rows as 500
     }),
   });
 
-  for (const handler of [errorHandler, malformedRowHandler]) {
-    const response = await handler(
-      createOriginRequest("https://example.com", {
-        body: JSON.stringify({ eventId: "event-1" }),
-        method: "POST",
-      }),
-    );
+  try {
+    for (const handler of [errorHandler, malformedRowHandler]) {
+      const response = await handler(
+        createOriginRequest("https://example.com", {
+          body: JSON.stringify({ eventId: "event-1" }),
+          method: "POST",
+        }),
+      );
 
-    assertEquals(response.status, 500);
-    assertEquals(await response.json(), {
-      error: "Redemption status request failed.",
-    });
+      assertEquals(response.status, 500);
+      assertEquals(await response.json(), {
+        error: "Redemption status request failed.",
+      });
+    }
+  } finally {
+    console.error = originalConsoleError;
   }
+
+  assertEquals(loggedErrors.length, 2);
+  assertEquals(loggedErrors[0]?.includes("get-redemption-status query failed"), true);
+  assertEquals(
+    loggedErrors[1]?.includes("get-redemption-status returned malformed row"),
+    true,
+  );
 });

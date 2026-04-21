@@ -110,13 +110,19 @@ export function validateReversePayload(
   const eventId = typeof rawEventId === "string" ? rawEventId.trim() : "";
   const codeSuffix =
     typeof rawCodeSuffix === "string" ? rawCodeSuffix.trim() : "";
-  const reason =
-    typeof rawReason === "string" ? rawReason.trim() || null : rawReason ?? null;
+  if (
+    rawReason !== undefined &&
+    rawReason !== null &&
+    typeof rawReason !== "string"
+  ) {
+    return null;
+  }
+
+  const reason = typeof rawReason === "string" ? rawReason.trim() || null : null;
 
   if (
     !eventId ||
-    !/^[0-9]{4}$/.test(codeSuffix) ||
-    !(typeof reason === "string" || reason === null)
+    !/^[0-9]{4}$/.test(codeSuffix)
   ) {
     return null;
   }

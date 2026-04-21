@@ -44,6 +44,14 @@ Deno.test("validateReversePayload trims ids, normalizes blank reasons, and requi
     }),
     null,
   );
+  assertEquals(
+    validateReversePayload({
+      codeSuffix: "0427",
+      eventId: "event-1",
+      reason: 42,
+    }),
+    null,
+  );
   assertEquals(validateReversePayload({ codeSuffix: "0427", eventId: 1 }), null);
 });
 

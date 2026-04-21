@@ -55,6 +55,7 @@ export type ReverseEntitlementRedemptionRpcResponse =
   | ReverseEntitlementRedemptionSuccessResponse
   | RedemptionFailureEnvelope;
 
+/** Shared error envelope for authorized redemption failures. Unauthenticated 401 responses use `{ error }` only. */
 export type RedemptionHttpErrorResponse = {
   details: RedemptionFailureResult;
   error: string;

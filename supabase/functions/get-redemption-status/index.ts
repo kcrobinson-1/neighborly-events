@@ -162,6 +162,17 @@ export function createGetRedemptionStatusHandler(
       );
     }
 
+    const session = await dependencies.readVerifiedSession(request, signingSecret);
+
+    if (!session) {
+      return jsonResponse(
+        401,
+        { error: "Session is missing or invalid." },
+        origin,
+        dependencies.createCorsHeaders,
+      );
+    }
+
     const payload = validateGetRedemptionStatusPayload(
       await request.json().catch(() => null),
     );
@@ -175,17 +186,6 @@ export function createGetRedemptionStatusHandler(
       );
     }
 
-    const session = await dependencies.readVerifiedSession(request, signingSecret);
-
-    if (!session) {
-      return jsonResponse(
-        401,
-        { error: "Session is missing or invalid." },
-        origin,
-        dependencies.createCorsHeaders,
-      );
-    }
-
     const { data, error } = await dependencies.loadRedemptionStatus(
       payload.eventId,
       session.sessionId,
@@ -194,6 +194,15 @@ export function createGetRedemptionStatusHandler(
     );
 
     if (error) {
+      console.error(
+        "get-redemption-status query failed",
+        JSON.stringify({
+          code: error.code ?? null,
+          eventId: payload.eventId,
+          message: error.message,
+          sessionId: session.sessionId,
+        }),
+      );
       return jsonResponse(
         500,
         { error: "Redemption status request failed." },
@@ -214,6 +223,13 @@ export function createGetRedemptionStatusHandler(
     const response = mapRowToResponse(data);
 
     if (!response) {
+      console.error(
+        "get-redemption-status returned malformed row",
+        JSON.stringify({
+          eventId: payload.eventId,
+          sessionId: session.sessionId,
+        }),
+      );
       return jsonResponse(
         500,
         { error: "Redemption status request failed." },

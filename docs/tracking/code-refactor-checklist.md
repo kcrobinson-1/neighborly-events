@@ -30,6 +30,17 @@ Rules for this checklist:
 
 ## Candidate Tasks
 
+- [ ] Split reward-redemption operator wrapper pipeline from endpoint-specific payload/RPC seams.
+  `supabase/functions/redeem-entitlement/index.ts` and
+  `supabase/functions/reverse-entitlement-redemption/index.ts` both own nearly
+  the same origin gate, method gate, config gate, bearer-auth check, JSON
+  response helper, failure mapping, and RPC result handling. Extract a small
+  shared operator-handler pipeline or helper family so future operator
+  endpoints do not copy the same boilerplate while preserving the current HTTP
+  contract. Score: 6/10.
+  Validation: `npm run test:functions` and
+  `deno check --no-lock supabase/functions/redeem-entitlement/index.ts supabase/functions/reverse-entitlement-redemption/index.ts`.
+
 - [x] Split authoring draft parsing primitives from draft mapping.
   `shared/game-config/draft-content.ts` contains JSON parsing primitives,
   question/option parsing, draft row types, validation, and draft-to-runtime
