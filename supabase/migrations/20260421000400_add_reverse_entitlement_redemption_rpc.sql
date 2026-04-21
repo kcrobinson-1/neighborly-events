@@ -104,7 +104,12 @@ end;
 $$;
 
 revoke all on function public.reverse_entitlement_redemption(text, text, text) from public;
+revoke execute on function public.reverse_entitlement_redemption(text, text, text)
+  from service_role;
 grant execute on function public.reverse_entitlement_redemption(text, text, text)
-  to anon, authenticated, service_role;
--- See redeem_entitlement_by_code migration for the rationale on granting
--- execute to anon (null-JWT guard + Supabase baseline consistency).
+  to anon, authenticated;
+-- See redeem_entitlement_by_code migration for the full rationale. Short
+-- version: the RPC authenticates via the JWT sub; a service-role client
+-- with no user JWT forwarded would fall through to not_authorized, so the
+-- grant is withheld to keep the contract unambiguous. Edge Function
+-- wrappers in A.2b must forward the caller's bearer token.

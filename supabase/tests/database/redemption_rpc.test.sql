@@ -31,18 +31,19 @@ select ok(
 );
 
 select ok(
-  has_function_privilege(
+  not has_function_privilege(
     'service_role', 'public.redeem_entitlement_by_code(text, text)', 'EXECUTE'
   ),
-  'service_role can execute redeem_entitlement_by_code'
+  'service_role EXECUTE is revoked — the RPC authenticates via the JWT sub, '
+  'so a service-role client without a forwarded user JWT would fall through '
+  'to not_authorized. Edge Function wrappers must forward the user bearer token.'
 );
 
 select ok(
   has_function_privilege(
     'anon', 'public.redeem_entitlement_by_code(text, text)', 'EXECUTE'
   ),
-  'anon is granted execute (Supabase baseline + A.1 precedent); the RPC '
-  'rejects via the null-JWT guard rather than via privilege'
+  'anon is granted execute (null-JWT guard rejects behaviorally, safe)'
 );
 
 -- ─── Fixtures ──────────────────────────────────────────────────────────────
@@ -378,12 +379,12 @@ select ok(
 );
 
 select ok(
-  has_function_privilege(
+  not has_function_privilege(
     'service_role',
     'public.reverse_entitlement_redemption(text, text, text)',
     'EXECUTE'
   ),
-  'service_role can execute reverse_entitlement_redemption'
+  'service_role EXECUTE is revoked (matches redeem RPC; forces JWT-forwarding pattern)'
 );
 
 select ok(

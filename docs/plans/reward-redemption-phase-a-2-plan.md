@@ -9,7 +9,7 @@ the Vitest envelope-mapping coverage.
 **Scope:** A.2a only — the trusted database mutation surface and the
 scoped RLS read policies. After this PR merges, the database can redeem
 and reverse entitlements through `SECURITY DEFINER` RPCs callable by
-`service_role` or an authenticated JWT with the right event role, and
+an authenticated JWT with the right event role, and
 assigned operators can read their scoped entitlements through RLS. No
 Edge Function, no frontend, no attendee-facing surface ships in this PR.
 
@@ -67,8 +67,12 @@ implementer; the contract below is what the pgTAP suite pins down.
 
 - **Signature:** `(p_event_id text, p_code_suffix text) returns jsonb`
 - **Language:** PL/pgSQL, `security definer`, `set search_path = public`
-- **Grants:** revoke from `public`; grant execute to `authenticated` and
-  `service_role` (mirrors the A.1 helper grants).
+- **Grants:** revoke from `public`; revoke execute from `service_role`
+  (a service-role client without a forwarded user JWT would fall through
+  to `not_authorized` anyway); grant execute to `anon` and `authenticated`
+  (anon relies on the null-JWT guard). Edge Function wrappers in A.2b
+  must forward the caller's bearer token so `current_request_user_id`
+  resolves to the real operator.
 - **Authorization gate:**
   `public.is_agent_for_event(p_event_id) OR public.is_root_admin()`.
   A missing or unauthenticated JWT short-circuits to `not_authorized`.
@@ -356,8 +360,9 @@ is non-destructive and leaves A.1 intact.
 3. A.1 artifacts are untouched.
 
 A partial rollback that keeps the RPCs and drops only the RLS policies
-is safe: the RPCs are granted only to `authenticated` and `service_role`
-and still enforce authorization through the A.1 helpers.
+is safe: the RPCs are granted only to `anon` and `authenticated` (with
+`service_role` EXECUTE revoked) and still enforce authorization through
+the A.1 helpers + the null-JWT guard.
 
 ## Resolved Decisions
 

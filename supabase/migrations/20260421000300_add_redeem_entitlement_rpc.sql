@@ -105,8 +105,17 @@ end;
 $$;
 
 revoke all on function public.redeem_entitlement_by_code(text, text) from public;
+revoke execute on function public.redeem_entitlement_by_code(text, text)
+  from service_role;
 grant execute on function public.redeem_entitlement_by_code(text, text)
-  to anon, authenticated, service_role;
--- anon is granted execute to match the A.1 helper pattern; the RPC's first
--- guard turns a null JWT sub into not_authorized, so exposing the symbol to
--- anon is safe and avoids re-tripping Supabase's baseline function grants.
+  to anon, authenticated;
+-- service_role execute is revoked deliberately: the RPC is authenticated
+-- by the JWT sub + assignment-backed helpers, so a service-role client
+-- (no user JWT forwarded) would fall through to not_authorized even with
+-- the grant. Edge Function wrappers in A.2b must create their Supabase
+-- client with the caller's bearer token forwarded so current_request_user_id
+-- resolves to the real agent or organizer. Admin debugging from the SQL
+-- editor can still exercise the RPC by setting request.jwt.claims via
+-- set_config (see supabase/tests/database/redemption_rpc.test.sql for the
+-- pattern). anon is granted execute because the null-JWT guard makes that
+-- path safe and it matches the A.1 helper grants.
