@@ -116,11 +116,11 @@ indexes are added in A.1.
 ```
 create table if not exists public.event_role_assignments (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id uuid not null,
   event_id text not null references public.game_events(id) on delete cascade,
   role text not null check (role in ('agent', 'organizer')),
   created_at timestamptz not null default now(),
-  created_by uuid references auth.users(id) on delete set null,
+  created_by uuid,
   constraint event_role_assignments_unique unique (user_id, event_id, role)
 );
 
@@ -313,10 +313,10 @@ over `is_admin()` in the MVP.
 - `event_role_assignments`:
   - unique `(user_id, event_id, role)` rejects duplicates
   - `role` CHECK rejects anything outside `('agent', 'organizer')`
-  - FK to `auth.users` cascades on user delete
   - FK to `public.game_events` cascades on event delete
   - RLS is enabled; an `authenticated` role cannot select
-- Helper truth tables, each seeded with a fresh `auth.users` row plus a
+- Helper truth tables, each seeded via direct insert of synthetic UUIDs
+  (no `auth.users` FK constraint to satisfy) plus a
   `set_config('request.jwt.claims', …)` to impersonate:
   - `is_agent_for_event('evt-x')` returns true when the caller has an
     `('agent', 'evt-x')` assignment; false for a different event,

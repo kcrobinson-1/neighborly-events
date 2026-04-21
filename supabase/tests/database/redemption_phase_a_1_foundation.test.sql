@@ -362,15 +362,6 @@ select ok(
   'service_role cannot update event_role_assignments (insert+delete only)'
 );
 
--- Drop the auth.users FK for the duration of this test transaction so
--- the structural assertions below can use synthetic user_id UUIDs
--- without needing to seed auth.users (whose schema is owned by Supabase
--- and varies across CLI versions). The rollback at the end of the file
--- restores the FK; no other test file relies on it not being present
--- mid-transaction.
-alter table public.event_role_assignments
-  drop constraint event_role_assignments_user_id_fkey;
-
 -- role CHECK rejects values outside ('agent', 'organizer').
 select throws_ok(
   $$
@@ -480,9 +471,9 @@ select ok(
 );
 
 -- ─── Permission helpers: truth tables ────────────────────────────────────────
--- The auth.users FK was dropped above for this transaction, so synthetic
--- user_id UUIDs insert cleanly. Impersonate each scenario via JWT claims
--- and assert the helper verdicts.
+-- event_role_assignments.user_id has no FK to auth.users, so synthetic
+-- UUIDs insert cleanly. Impersonate each scenario via JWT claims and
+-- assert the helper verdicts.
 
 insert into public.event_role_assignments (user_id, event_id, role)
 values
