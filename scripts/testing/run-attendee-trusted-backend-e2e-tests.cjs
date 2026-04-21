@@ -18,9 +18,19 @@ const {
 
 const functionsEnvPath = `${tmpRoot}/test-attendee-trusted-backend-e2e-functions.env`;
 const servePollIntervalMs = 250;
-const serveReadyTimeoutMs = 20_000;
+const serveReadyTimeoutMs = 45_000;
 
-async function waitForAttendeeFunctionsReady(status) {
+function formatFunctionsRuntimeOutput(output) {
+  const trimmedOutput = output.trim();
+
+  if (!trimmedOutput) {
+    return "Functions runtime emitted no startup output.";
+  }
+
+  return `Functions runtime output:\n${trimmedOutput}`;
+}
+
+async function waitForAttendeeFunctionsReady(status, getFunctionsRuntimeOutput) {
   const deadline = Date.now() + serveReadyTimeoutMs;
   let lastFailure = "No response yet.";
 
@@ -63,7 +73,11 @@ async function waitForAttendeeFunctionsReady(status) {
   }
 
   throw new Error(
-    `Timed out waiting for issue-session to become ready in local functions runtime. Last failure: ${lastFailure}`,
+    [
+      "Timed out waiting for issue-session to become ready in local functions runtime.",
+      `Last failure: ${lastFailure}`,
+      formatFunctionsRuntimeOutput(getFunctionsRuntimeOutput()),
+    ].join("\n"),
   );
 }
 
@@ -102,7 +116,7 @@ async function main() {
     functionsRuntime = startFunctionsServe(functionsEnvPath);
 
     logStep("Waiting for attendee function runtime");
-    await waitForAttendeeFunctionsReady(status);
+    await waitForAttendeeFunctionsReady(status, () => functionsRuntime.getOutput());
 
     logStep("Running trusted-backend attendee Playwright smoke suite");
     run("npx", ["playwright", "test", "-c", "playwright.attendee-trusted-backend.config.ts"], {
