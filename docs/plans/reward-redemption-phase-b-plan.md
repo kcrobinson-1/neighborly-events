@@ -182,9 +182,12 @@ so each sub-phase plan can inherit them rather than re-deciding:
 - **Sign-in shell.** Both routes consume the generalized `SignInForm`
   from [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
   with redemption-specific copy ("Sign in to redeem codes" / "Sign in
-  to review redemptions"). The redirect target for magic-link follows
-  the requesting route (`/event/:slug/redeem` or
-  `/event/:slug/redemptions`).
+  to review redemptions"). Magic-link return always lands on
+  `/auth/callback?next=...`, which validates the `next` path through
+  `validateNextPath` and client-routes to the requesting route. Phase B
+  adds `matchEventRedeemPath` and `matchEventRedemptionsPath` to the
+  validator's allow-list as part of the sub-phase diffs — no Supabase
+  Auth dashboard change is required.
 - **Role-gate rendering.** Authenticated-but-unassigned callers see a
   role-gate state in-place, not a redirect. The state copy does not
   disclose whether the event exists, matching the design doc §6
