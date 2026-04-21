@@ -334,7 +334,11 @@ select throws_ok(
   'event_role_assignments unique constraint rejects duplicate (user_id, event_id, role)'
 );
 
--- event FK cascades on event delete.
+-- Seed a cascade fixture. The event_role_assignments insert still needs
+-- FK-bypass because user_id points at a fake auth.users row, but the
+-- cascade delete assertion itself must run with FK triggers re-enabled
+-- — in 'replica' mode the ON DELETE CASCADE trigger on game_events does
+-- not fire, which would pass the assertion for the wrong reason.
 insert into public.game_events (
   id, slug, event_code, name, location, estimated_minutes, entitlement_label,
   intro, summary, feedback_mode
@@ -351,6 +355,8 @@ values (
   'organizer'
 );
 
+set local session_replication_role = 'origin';
+
 delete from public.game_events where id = 'redemption-a1-cascade';
 
 select is(
@@ -358,8 +364,6 @@ select is(
   0::bigint,
   'deleting a game_events row cascades to event_role_assignments'
 );
-
-set local session_replication_role = 'origin';
 
 -- ─── Permission helpers: existence and privileges ────────────────────────────
 

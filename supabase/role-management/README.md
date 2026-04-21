@@ -60,8 +60,10 @@ script.
 5. Request review from `@kcrobinson`.
 6. After approval and merge, apply the snippet against the target
    Supabase project (branch project for staging, production project for
-   prod) through the Supabase SQL editor or `psql`. Capture the output
-   of the `returning *` block in a PR comment for the audit record.
+   prod) with `psql`. The snippet files use `\set` meta-commands, which
+   require psql and will not parse in the Supabase SQL editor. Capture
+   the output of the `returning *` block in a PR comment for the audit
+   record.
 7. If the snippet is idempotent (assignments always are; revocations are
    idempotent in the sense that re-running deletes nothing), re-running
    on the same inputs is safe.
