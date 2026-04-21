@@ -34,6 +34,13 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
+- [ ] **`ux` Admin live status must match public route availability**
+  The deployed admin currently shows at least one event as `Live` while its
+  `Open live game` action lands on the public unavailable state. Fix the status
+  model and action behavior before operators trust the admin surface for live
+  event setup.
+  Detail: [`docs/tracking/admin-ux-roadmap.md` — Align admin live status with public-route availability](./tracking/admin-ux-roadmap.md)
+
 - [x] **`feat` Lock slug after first publish**
   Completed: slug is now locked after first publish across admin UI, edge
   function, and DB trigger enforcement.
