@@ -34,6 +34,7 @@ If you want:
 - the published-content milestone details and tradeoffs, read [plans/archive/database-backed-quiz-content.md](./plans/archive/database-backed-quiz-content.md)
 - the historical quiz authoring plan, read [plans/archive/quiz-authoring-plan.md](./plans/archive/quiz-authoring-plan.md)
 - the local workflow, validation commands, release flow, or troubleshooting steps, read [dev.md](./dev.md)
+- the named audits to run on a diff before push, read [self-review-catalog.md](./self-review-catalog.md)
 - proposed improvements to local validation, screenshot, PR, and agent workflow,
   read [tracking/dev-workflow-improvements.md](./tracking/dev-workflow-improvements.md)
 - the testing strategy, current coverage snapshot, command-selection matrix, and rollout plan, read [testing.md](./testing.md)
@@ -63,6 +64,9 @@ Use these boundaries to keep the docs tidy:
   organizer/admin quiz creation, editing, preview, and publish workflows
 - `docs/dev.md`
   how engineers work in the repo today: setup, validation, release flow, and troubleshooting
+- `docs/self-review-catalog.md`
+  named, reusable audits to run on a diff before push — each audit has a
+  specific trigger, concrete check steps, and a past incident example
 - `docs/tracking/dev-workflow-improvements.md`
   concrete follow-up tasks for improving local validation, screenshot capture,
   PR evidence, and agent workflow
