@@ -94,14 +94,17 @@ routes against the stable primitive shape.
   imports (`getAuthSession` / `subscribeToAuthState` from
   `authApi.ts`).
 - `apps/web/src/auth/AuthCallbackPage.tsx` exists and implements the
-  overview-locked session-establishment ordering: mount → force
-  `getAuthSession()` → await a session (initial or via
-  `subscribeToAuthState`'s `SIGNED_IN`) with a 10-second timeout →
-  `onNavigate(validatedNext, { replace: true })` (a single call;
-  never combined with a direct `history.replaceState`) → on timeout
-  or persistent `signed_out`, render the neutral
-  "sign-in link couldn't be used" state with a link back to
-  `routes.home`.
+  overview-locked session-establishment ordering: mount → subscribe
+  to `subscribeToAuthState` → call `getAuthSession()` to trigger
+  hash consumption → wait for the first **non-null** session from
+  either source (initial `getAuthSession()` result or a `SIGNED_IN`
+  event), with a 10-second timeout guard. An initial null from
+  `getAuthSession()` does not end the wait; only a non-null session
+  or the timeout does. On success: a single
+  `onNavigate(validatedNext, { replace: true })` call (never
+  combined with direct `history.replaceState`). On timeout: render
+  the neutral "sign-in link couldn't be used" state with a link
+  back to `routes.home`.
 - `apps/web/src/routes.ts` extends `AppPath` with `"/auth/callback"`
   and exposes `routes.authCallback = "/auth/callback" as AppPath`.
   The `AuthNextPath` excludes `"/auth/callback"` via the Phase 1
@@ -267,15 +270,30 @@ Locked session-establishment sequence (from the overview plan's
 1. On mount, parse `validateNextPath(new URLSearchParams(
    window.location.search).get("next"))` once. Store the result; it
    never changes for this component's lifetime.
-2. Call `getAuthSession()` to force Supabase client instantiation and
-   trigger hash-based session detection
+2. Subscribe to `subscribeToAuthState` **before** calling
+   `getAuthSession()`. Ordering is load-bearing: if we called
+   `getAuthSession` first, a `SIGNED_IN` event triggered by hash
+   consumption could fire between that resolution and the
+   subscription starting, and we would miss it.
+3. Call `getAuthSession()` to force Supabase client instantiation
+   and trigger hash-based session detection
    (`detectSessionInUrl: true` is set at
    [`supabaseBrowser.ts:56`](../../apps/web/src/lib/supabaseBrowser.ts)
    and stays there).
-3. Race three promises: the initial `getAuthSession()` result, a
-   `SIGNED_IN` event delivered through `subscribeToAuthState`, and a
-   10-second `setTimeout` guard.
-4. On session resolved (either source), perform the final
+4. Wait for the first **non-null session** signal from either
+   source — a non-null return from `getAuthSession()` or a
+   `SIGNED_IN` event on the listener — or a 10-second
+   `setTimeout` guard, whichever fires first. A `getAuthSession()`
+   result of `null` **must not** terminate the wait: on a valid
+   magic-link return the initial `getSession()` call can resolve
+   `null` before Supabase finishes hash processing, and the
+   `SIGNED_IN` event arrives milliseconds later. Treating the
+   initial `null` as a failure turns successful sign-ins into
+   timeout states under normal async timing. The listener stays
+   subscribed throughout the wait window; only a non-null session
+   (from any source) or the timeout ends the wait.
+5. On non-null session resolved (from either source), perform the
+   final
    transition through a **single navigation mechanism**. The current
    `usePathnameNavigation.navigate`
    ([`usePathnameNavigation.ts:33-47`](../../apps/web/src/usePathnameNavigation.ts))
@@ -312,10 +330,14 @@ Locked session-establishment sequence (from the overview plan's
    Invariant: at most one history entry exists for the magic-link
    round-trip, and it is the destination (`validatedNext`), not
    `/auth/callback?next=…`.
-5. On timeout or persistent `signed_out`, render the neutral
-   "sign-in link couldn't be used" state with a link to
-   `routes.home`.
-6. `AuthCallbackPage` never calls `requestMagicLink` or `signOut`.
+6. On timeout, render the neutral "sign-in link couldn't be used"
+   state with a link to `routes.home`. Timeout is the only
+   terminal-failure path — an initial `getAuthSession()` returning
+   `null` is not terminal (see step 4).
+7. On unmount at any point, call the unsubscribe function returned
+   by `subscribeToAuthState` so no stray listener survives beyond
+   the component's lifetime.
+8. `AuthCallbackPage` never calls `requestMagicLink` or `signOut`.
    It is a pure consumer of Phase 1 primitives.
 
 Visual treatment during the session-wait window: a minimal
@@ -618,7 +640,12 @@ similar amount of deleted code, and concentrated doc edits.
      the rewrite because Vite serves `index.html` for any path —
      the gap only surfaces in Vercel deployments);
    - `AuthCallbackPage` navigating before the session is available
-     (race window);
+     (race window), or terminating the wait on an initial null
+     `getAuthSession()` result instead of continuing to listen for
+     `SIGNED_IN` — both turn successful sign-ins into failures;
+   - `subscribeToAuthState` registered after `getAuthSession()` is
+     called (ordering inversion can drop a `SIGNED_IN` fired during
+     hash consumption);
    - `AuthCallbackPage` calling `onNavigate` more than once, or
      reaching into `window.history` directly — both violate the
      single-mechanism contract;
@@ -697,6 +724,13 @@ Required assertions:
    resolves null, `subscribeToAuthState` fires `SIGNED_IN` with a
    session. Expect `onNavigate` called once with
    `("/admin", { replace: true })`.
+   Two sub-invariants pinned by this test:
+   (a) between the null resolution and the `SIGNED_IN` event,
+   `onNavigate.mock.calls.length === 0` — the initial null does not
+   fire navigation on its own;
+   (b) the listener subscription was registered before
+   `getAuthSession()` was called (assert on mock-invocation order),
+   so a `SIGNED_IN` fired during hash consumption cannot be missed.
 3. **Bypass vector rejected.** `next=https://evil.com/foo`. Expect
    `onNavigate` called once with `(routes.home, { replace: true })`,
    never with `evil.com`.
@@ -810,9 +844,21 @@ No SQL audit applies. No migration, grant, or RPC change.
   URL-based session detection leaves the target page in a transient
   `signed_out` state, which can bounce the user right back to the
   sign-in form. Mitigated by the locked session-establishment
-  sequence (step 3: race `getAuthSession` / `SIGNED_IN` / timeout)
-  and by the `AuthCallbackPage.test.tsx` "no navigation before
-  session" invariant. Review focus in commit 2.
+  sequence (§ AuthCallbackPage steps 2–4: subscribe before
+  `getAuthSession`, then wait for non-null from either source) and
+  by the `AuthCallbackPage.test.tsx` "no navigation before session"
+  invariant. Review focus in commit 2.
+- **Premature-null terminating the wait.** `getAuthSession()` can
+  resolve `null` on a valid magic-link return if it races ahead of
+  Supabase's hash processing; the `SIGNED_IN` event arrives
+  milliseconds later. Treating that first `null` as failure turns
+  successful sign-ins into timeout states for real users under
+  normal async timing. Mitigated by § AuthCallbackPage step 4's
+  "non-null session only" wait condition and by the
+  `AuthCallbackPage.test.tsx` assertion pair: (a) initial `null`
+  followed by `SIGNED_IN` navigates exactly once to the validated
+  destination, and (b) between the `null` resolution and the
+  `SIGNED_IN` event, `onNavigate` is never called.
 - **Double-navigation on callback completion.** Combining
   `window.history.replaceState` with `usePathnameNavigation.navigate`
   (which calls `pushState`) would leave two destination entries in
