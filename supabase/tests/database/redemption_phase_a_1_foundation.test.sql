@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(48);
+select plan(49);
 
 -- ─── game_entitlements column additions ──────────────────────────────────────
 -- Use information_schema + pg_catalog queries instead of pgTAP's col_* /
@@ -240,6 +240,26 @@ select throws_ok(
   'shape check rejects redeemed status with redeemed_event_id != event_id'
 );
 
+-- Shape check rejects: redeemed status with null redeemed_event_id.
+-- Without an explicit `redeemed_event_id is not null`, the `= event_id`
+-- comparison would evaluate to NULL and the CHECK would let the row
+-- through — this regression-guards that fix.
+select throws_ok(
+  $$
+    insert into public.game_entitlements (
+      event_id, client_session_id, verification_code,
+      redemption_status, redeemed_at, redeemed_by_role
+    )
+    values (
+      'redemption-a1-event', 'invalid-null-event-id', 'RED-1007',
+      'redeemed', now(), 'agent'
+    )
+  $$,
+  '23514',
+  null,
+  'shape check rejects redeemed status with null redeemed_event_id'
+);
+
 -- Shape check rejects: unredeemed status with non-null redeemed_at.
 select throws_ok(
   $$
@@ -342,10 +362,20 @@ select ok(
   'service_role cannot update event_role_assignments (insert+delete only)'
 );
 
--- role CHECK rejects values outside ('agent', 'organizer').
--- Bypass the auth.users FK trigger for this isolated structural test.
-set local session_replication_role = 'replica';
+-- Seed real auth.users rows so event_role_assignments FK checks pass
+-- with FK triggers fully enabled. This avoids needing session_replication_role
+-- = 'replica', which is superuser-only and would also suppress the
+-- ON DELETE CASCADE trigger we rely on further down. Only id is strictly
+-- required by the auth.users schema; everything else is defaulted or
+-- nullable, and the test transaction rolls back at the end.
+insert into auth.users (id) values
+  ('33333333-3333-4333-8333-333333333333'::uuid),
+  ('44444444-4444-4444-8444-444444444444'::uuid),
+  ('55555555-5555-4555-8555-555555555555'::uuid),
+  ('66666666-6666-4666-8666-666666666666'::uuid),
+  ('77777777-7777-4777-8777-777777777777'::uuid);
 
+-- role CHECK rejects values outside ('agent', 'organizer').
 select throws_ok(
   $$
     insert into public.event_role_assignments (user_id, event_id, role)
@@ -382,11 +412,7 @@ select throws_ok(
   'event_role_assignments unique constraint rejects duplicate (user_id, event_id, role)'
 );
 
--- Seed a cascade fixture. The event_role_assignments insert still needs
--- FK-bypass because user_id points at a fake auth.users row, but the
--- cascade delete assertion itself must run with FK triggers re-enabled
--- — in 'replica' mode the ON DELETE CASCADE trigger on game_events does
--- not fire, which would pass the assertion for the wrong reason.
+-- event FK cascades on event delete.
 insert into public.game_events (
   id, slug, event_code, name, location, estimated_minutes, entitlement_label,
   intro, summary, feedback_mode
@@ -402,8 +428,6 @@ values (
   'redemption-a1-cascade',
   'organizer'
 );
-
-set local session_replication_role = 'origin';
 
 delete from public.game_events where id = 'redemption-a1-cascade';
 
@@ -460,17 +484,14 @@ select ok(
 );
 
 -- ─── Permission helpers: truth tables ────────────────────────────────────────
--- Seed assignments (FK-suppressed) then impersonate each scenario via JWT
--- claims and assert the helper verdicts.
-
-set local session_replication_role = 'replica';
+-- auth.users rows were seeded above. Insert assignments under normal FK
+-- enforcement, then impersonate each scenario via JWT claims and assert
+-- the helper verdicts.
 
 insert into public.event_role_assignments (user_id, event_id, role)
 values
   ('66666666-6666-4666-8666-666666666666'::uuid, 'redemption-a1-event', 'agent'),
   ('77777777-7777-4777-8777-777777777777'::uuid, 'redemption-a1-event', 'organizer');
-
-set local session_replication_role = 'origin';
 
 -- Impersonate the agent user.
 select set_config(

@@ -49,6 +49,7 @@ alter table public.game_entitlements
       redemption_status = 'redeemed'
       and redeemed_at is not null
       and redeemed_by_role is not null
+      and redeemed_event_id is not null
       and redeemed_event_id = event_id
     )
   );
