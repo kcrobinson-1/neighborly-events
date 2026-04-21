@@ -120,6 +120,45 @@ step count.
   plan should list audit names by surface (SQL / frontend / CI / runbook)
   so the implementer runs them at commit boundaries rather than
   rediscovering review feedback at PR-review time
+- keep plans at the level of contracts and prose, not implementation
+  detail. One-line function signatures, short type declarations, and
+  short file-path references are fine; full function bodies, multi-line
+  shell pipelines, SCSS rule bodies, or any code block longer than
+  roughly five lines is implementation that belongs in the PR, not the
+  plan. Plans attract code review; every bug in a code snippet inside a
+  plan costs a review round on the plan doc itself before the
+  implementation even starts, which is pure churn
+
+### Plan-to-PR Completion Gate
+
+A PR that implements a plan must leave the plan in a terminal state.
+"Most of the plan" is not "the plan." A plan doc that still says
+`Proposed` or `In progress` after its implementation merges is drift,
+and drift compounds into follow-up PRs that re-review the same
+decisions.
+
+- before opening the PR, walk every Goal, Test, Validation step, and
+  Self-Review audit named in the plan; for each one confirm it is
+  either satisfied in the PR or explicitly deferred **in the plan
+  itself** with written rationale. Deferrals live in the plan, not in
+  the PR body, not in an issue, not as an unwritten promise
+- flip the plan's Status line from `Proposed` / `In progress` to
+  `Landed` in the same PR that implements it, and include the
+  implementing commit SHAs (or the merge-commit SHA) in the Status
+  block so future readers can navigate from plan to history
+- ban soft-commitment words in plans: "optional but recommended,"
+  "consider adding," "nice to have," "probably should." A requirement
+  is either in-scope or deferred — there is no third option. Soft
+  commitments silently relax under review pressure and reappear as
+  reviewer findings after merge
+- if a reviewer flags a gap that should have been named at plan time,
+  fix the plan first (tighten the requirement or defer with rationale),
+  then address the gap. Do not carry the gap as a post-merge follow-up
+  without updating the plan
+- if a plan requirement cannot be fully satisfied in the intended PR,
+  split the plan along a phase boundary before merging partial work so
+  each phase's Status can flip independently, rather than merging a
+  partially-satisfied plan and tracking the remainder informally
 
 ### Scope Guardrails
 
