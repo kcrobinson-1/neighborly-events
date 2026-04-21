@@ -80,9 +80,14 @@ The MVP redemption workflow **must not** reuse full root-admin access.
 - use event-id based helpers (not slug based) to avoid lookup ambiguity inside
   policy/mutation paths
 - helper signatures:
-  - `public.is_agent_for_event(target_event_id uuid) returns boolean`
-  - `public.is_organizer_for_event(target_event_id uuid) returns boolean`
+  - `public.is_agent_for_event(target_event_id text) returns boolean`
+  - `public.is_organizer_for_event(target_event_id text) returns boolean`
   - `public.is_root_admin() returns boolean`
+- `target_event_id` is `text` (not `uuid`) to match the actual type of
+  `public.game_events.id` and `public.game_entitlements.event_id`
+- `is_root_admin()` aliases the existing `public.is_admin()` (renamed
+  from `is_quiz_admin()` in the terminology migration) so the redemption
+  feature speaks its own vocabulary without a parallel allowlist
 - read and write enforcement should call the same helpers so role logic does not
   drift between policy and RPC layers
 - `redeem` authorization contract: `is_agent_for_event(...) OR is_root_admin()`

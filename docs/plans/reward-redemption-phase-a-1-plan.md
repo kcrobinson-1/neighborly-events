@@ -24,13 +24,15 @@ but nothing yet writes redemption state; that is Phase A.2.
   `/event/:slug/redemptions` (checklist item 5).
 - A new `public.event_role_assignments` table exists and is empty, with RLS
   enabled and no authenticated policies (service_role only in A.1, matching
-  the `public.quiz_admin_users` precedent).
+  the `public.admin_users` precedent).
 - Three permission helpers exist:
   `public.is_agent_for_event(target_event_id text)`,
   `public.is_organizer_for_event(target_event_id text)`,
   `public.is_root_admin()`. All three return `boolean`, are
   `stable security definer`, and read identity from
   `public.current_request_user_id()` / `public.current_request_email()`.
+  `is_root_admin()` aliases the existing `public.is_admin()` (renamed
+  from `is_admin()` in the terminology migration).
 - `supabase/role-management/` exists with a `README.md`, parameterized
   `assign-agent.sql`, `assign-organizer.sql`, and `revoke-assignment.sql`
   snippets, following checklist item 9.
@@ -131,7 +133,7 @@ grant select, insert, delete on table public.event_role_assignments to service_r
 Design notes:
 
 - `role` is constrained to `('agent', 'organizer')` only. Root admin is
-  not an event-scoped assignment — it lives in `public.quiz_admin_users`
+  not an event-scoped assignment — it lives in `public.admin_users`
   and is queried through `is_root_admin()`.
 - No update grant; role changes are an insert plus a delete, which keeps
   the row history append-only in practice and matches the runbook's
@@ -144,7 +146,7 @@ Design notes:
 ### Permission helpers
 
 All three live in `public`, match the shape of the existing
-`public.is_quiz_admin()`, and use `public.current_request_user_id()` for
+`public.is_admin()`, and use `public.current_request_user_id()` for
 identity.
 
 ```
@@ -187,11 +189,11 @@ stable
 security definer
 set search_path = public
 as $$
-  select public.is_quiz_admin();
+  select public.is_admin();
 $$;
 ```
 
-Grants mirror `is_quiz_admin`:
+Grants mirror `is_admin`:
 
 ```
 revoke all on function public.is_agent_for_event(text) from public;
@@ -207,7 +209,7 @@ Signature deviation from the design doc: `text` instead of `uuid` to
 match the actual type of `game_events.id` and `game_entitlements.event_id`.
 The design doc is updated at the same time so the two stay in sync.
 
-`is_root_admin` is a thin alias over `is_quiz_admin` in A.1. The alias
+`is_root_admin` is a thin alias over `is_admin` in A.1. The alias
 exists so downstream RPCs and RLS policies speak the vocabulary of the
 redemption feature without coupling to the authoring allowlist name. If
 a future product change separates authoring from redemption root-admin
@@ -228,7 +230,7 @@ supabase/role-management/
 `README.md` covers:
 
 - role model (agent, organizer, root-admin) and where each lives
-  (`event_role_assignments` vs `quiz_admin_users`)
+  (`event_role_assignments` vs `admin_users`)
 - required inputs (user id or email, event slug or id, role)
 - execution process: clone repo, edit a snippet, open a PR titled
   `role: <assign|revoke> <role> <email> for <event-slug>`, request review
@@ -290,7 +292,7 @@ documentation and parameterized snippets.
 The same PR updates `docs/plans/reward-redemption-mvp-design.md` in
 checklist item 1 so the canonical helper signatures read `text` not
 `uuid`, and adds a one-line note that `is_root_admin()` is an alias
-over `is_quiz_admin()` in the MVP.
+over `is_admin()` in the MVP.
 
 ## Tests
 
@@ -321,8 +323,8 @@ over `is_quiz_admin()` in the MVP.
     different role, or missing assignment; false when no JWT is present
   - `is_organizer_for_event('evt-x')` mirrors the same four cases
   - `is_root_admin()` returns true when the caller is in
-    `quiz_admin_users` with `active = true`; false otherwise; tracks
-    `is_quiz_admin()` one-for-one
+    `admin_users` with `active = true`; false otherwise; tracks
+    `is_admin()` one-for-one
 
 ### Vitest additions
 
@@ -349,7 +351,7 @@ None. No TypeScript surface changes in A.1.
 - **Reversal does not have its own shape check.** Documented above as
   intentional. If A.2 surfaces a case where a partially-populated
   reversal row is possible, extend the shape check then, not now.
-- **`is_root_admin` aliases `is_quiz_admin`, coupling the two concepts.**
+- **`is_root_admin` aliases `is_admin`, coupling the two concepts.**
   Accepted for MVP. The alias is the one place to change if the concepts
   diverge later; search/replace pain is low because nothing outside the
   redemption feature calls `is_root_admin` yet.
@@ -391,7 +393,7 @@ also safe — `game_entitlements` rows remain valid in their default
 - **Helper `target_event_id` type: `text`.** Matches the actual
   `game_events.id` and `game_entitlements.event_id` types. Supersedes
   the design doc's `uuid` signature.
-- **`is_root_admin()` reuses `is_quiz_admin()` in MVP.** Aliasing keeps
+- **`is_root_admin()` reuses `is_admin()` in MVP.** Aliasing keeps
   the redemption feature's vocabulary clean without inventing a second
   allowlist.
 - **`redeemed_event_id` is nullable with a shape-check invariant.** The
