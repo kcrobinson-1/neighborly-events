@@ -115,6 +115,11 @@ step count.
   or handoff work
 - for PR-sized work, name the intended commit boundaries before editing when
   practical, and keep review-fix commits distinct when they clarify the history
+- name the self-review audits that apply to this PR's diff surfaces, drawn
+  from [`docs/self-review-catalog.md`](docs/self-review-catalog.md). The
+  plan should list audit names by surface (SQL / frontend / CI / runbook)
+  so the implementer runs them at commit boundaries rather than
+  rediscovering review feedback at PR-review time
 
 ### Scope Guardrails
 
@@ -700,6 +705,12 @@ curl -F "reqtype=fileupload" -F "fileToUpload=@tmp/ui-review/<run>/<image>.png" 
 This keeps the repo aligned with the rule that generated screenshots live under `tmp/` and are not committed, while still making before/after comparisons visible in review.
 
 ## Self-Review Checklist
+
+Before finishing, walk the named audits from
+[`docs/self-review-catalog.md`](docs/self-review-catalog.md) that match
+the diff's surfaces — the plan step named them upfront. The general
+review items below are layered on top of those audits, not a substitute
+for them.
 
 Before finishing, review your own work for:
 

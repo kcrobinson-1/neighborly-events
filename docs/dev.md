@@ -266,6 +266,16 @@ Constraint:
 - it does not support `/admin`; the admin shell requires real Supabase auth and
   private draft reads
 
+## Self-Review Before Push
+
+Before pushing a branch, walk the named audits from
+[`self-review-catalog.md`](./self-review-catalog.md) that match the diff's
+surfaces. The catalog collects recurring review findings so self-review is
+targeted (which specific failure modes to look for, what concrete checks
+tell you you're safe) rather than generic. PR plans should list the
+applicable audits upfront — see [`AGENTS.md`](../AGENTS.md) § "Planning
+Depth".
+
 ## Validation Commands
 
 The current validation set is:
