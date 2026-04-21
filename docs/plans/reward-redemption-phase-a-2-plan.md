@@ -1,11 +1,11 @@
 # Reward Redemption — Phase A.2a Execution Plan
 
-**Status:** Not started
+**Status:** Completed
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
 **Predecessor:** [`reward-redemption-phase-a-1-plan.md`](./reward-redemption-phase-a-1-plan.md) — landed.
-**Successor:** A.2b plan doc (to be written after A.2a lands). A.2b owns
-the Edge Function wrappers, the attendee redemption-status read path, and
-the Vitest envelope-mapping coverage.
+**Successor:** [`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md).
+A.2b owns the Edge Function wrappers, the attendee redemption-status read path,
+and the HTTP-mapping handler coverage.
 **Scope:** A.2a only — the trusted database mutation surface and the
 scoped RLS read policies. After this PR merges, the database can redeem
 and reverse entitlements through `SECURITY DEFINER` RPCs callable by
