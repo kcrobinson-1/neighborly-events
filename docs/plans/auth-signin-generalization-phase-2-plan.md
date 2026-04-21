@@ -406,12 +406,44 @@ the SPA shell loads.
   `import { SignInForm } from "../auth/SignInForm"` and the admin
   copy constant.
 - At the `sessionState.status === "signed_out"` branch
-  (`AdminDashboardContent.tsx:107`), render
-  `<SignInForm copy={ADMIN_SIGN_IN_COPY} emailInput={emailInput}
-  magicLinkState={magicLinkState} onEmailInputChange={onEmailInputChange}
-  onSubmit={onSubmitMagicLink} />`.
+  (`AdminDashboardContent.tsx:107`), render the new `SignInForm`
+  with `ADMIN_SIGN_IN_COPY`, keeping the existing
+  `emailInput` / `magicLinkState` / `onEmailInputChange` /
+  `onSubmitMagicLink` wiring.
 - Replace the `AdminMagicLinkState` and `AdminSessionState` imports
   with `MagicLinkState` and `AuthSessionState` from `../auth/types`.
+
+### `apps/web/src/admin/useSelectedDraft.ts` — migrated
+
+[`useSelectedDraft.ts:16`](../../apps/web/src/admin/useSelectedDraft.ts)
+currently imports `useAdminSession` as a type and types its
+`sessionState` parameter as
+`ReturnType<typeof useAdminSession>`. Deleting `useAdminSession.ts`
+without updating this file will fail `tsc -b` on commit 4. Migrate
+in the same commit:
+
+- Replace the `import type { useAdminSession } from
+  "./useAdminSession"` with
+  `import type { AuthSessionState } from "../auth/types"`.
+- Replace the `sessionState: ReturnType<typeof useAdminSession>`
+  type annotation with `sessionState: AuthSessionState`.
+- No behavior change: `AuthSessionState` is a verbatim structural
+  port of `AdminSessionState` (locked in Phase 1), so every field
+  access in the hook body continues to compile and behave the same.
+
+Pre-migration check for any future consumer drift: run
+
+```sh
+rg -n 'useAdminSession|AdminSessionState' apps/web/src
+```
+
+before starting commit 4 and confirm the result lists only the
+files this plan names
+(`useAdminDashboard.ts`, `useSelectedDraft.ts`,
+`AdminDashboardContent.tsx`, plus `useAdminSession.ts` itself). If
+new consumers have appeared on `main` since the plan was drafted,
+extend commit 4's scope to cover them before deleting
+`useAdminSession.ts`.
 
 ### `apps/web/src/pages/AdminPage.tsx` — unchanged
 
@@ -525,6 +557,7 @@ apps/web/src/
 │   ├── AdminDashboardContent.tsx   (migrated: imports SignInForm, MagicLinkState, AuthSessionState)
 │   ├── AdminPage*.tsx              (unchanged)
 │   ├── useAdminDashboard.ts        (migrated: imports useAuthSession, requestMagicLink, signOut)
+│   ├── useSelectedDraft.ts         (migrated: sessionState typed as AuthSessionState, no behavior change)
 │   ├── AdminSignInForm.tsx         DELETED
 │   └── useAdminSession.ts          DELETED
 ├── lib/
@@ -561,7 +594,7 @@ apps/web/src/admin/README.md             (rewrite: references to AdminSignInForm
 README.md                                (rewrite: :129 bullet list)
 ```
 
-Files created: 4. Files deleted: 2. Files migrated: 6. Files rewritten
+Files created: 4. Files deleted: 2. Files migrated: 7. Files rewritten
 for docs: 5. Total surface: roughly 200 lines of net new code, a
 similar amount of deleted code, and concentrated doc edits.
 
@@ -609,12 +642,23 @@ similar amount of deleted code, and concentrated doc edits.
    confirms they are unreferenced elsewhere. Validate (visual parity
    is covered by the manual round-trip in step 7, not here).
 5. **Commit 4 — admin-shell migration.** Migrate
-   `AdminDashboardContent`, `useAdminDashboard` onto the new
-   primitives. Delete `AdminSignInForm.tsx`, `useAdminSession.ts`,
-   and the four helpers + `getAdminAccessToken` from
-   `adminGameApi.ts`. Update `tests/web/pages/AdminPage.test.tsx`
-   mocks and the `toHaveBeenCalledWith` assertion at line 213 for the
-   new `{ next: "/admin" }` argument shape. Validate — all 61 admin
+   `AdminDashboardContent`, `useAdminDashboard`, **and
+   `useSelectedDraft`** onto the new primitives. The
+   `useSelectedDraft` migration is load-bearing: it currently types
+   its `sessionState` parameter as
+   `ReturnType<typeof useAdminSession>`, so deleting
+   `useAdminSession.ts` without updating it will fail `tsc -b`. See
+   § `apps/web/src/admin/useSelectedDraft.ts — migrated` for the
+   exact swap. Before touching any file, run the
+   `rg 'useAdminSession|AdminSessionState' apps/web/src`
+   pre-migration check named in that section and extend commit 4's
+   scope if any new consumer has appeared on `main` since the plan
+   was drafted. Then delete `AdminSignInForm.tsx`,
+   `useAdminSession.ts`, and the four helpers +
+   `getAdminAccessToken` from `adminGameApi.ts`. Update
+   `tests/web/pages/AdminPage.test.tsx` mocks and the
+   `toHaveBeenCalledWith` assertion at line 213 for the new
+   `{ next: "/admin" }` argument shape. Validate — all 61 admin
    tests still pass.
 6. **Commit 5 — e2e + production smoke.** Update
    `tests/e2e/admin-auth-fixture.ts` redirect composition. Update
