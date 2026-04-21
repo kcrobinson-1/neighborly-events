@@ -333,6 +333,42 @@ When stopping, leave the worktree clean when practical. If stopping after
 partial edits, clearly identify the touched files, what remains incomplete, and
 whether any validation was run.
 
+### Debugging Discipline
+
+When a validation step (CI, a local test, a runtime assertion) fails, the next
+action must be informed by the actual error, not by a hypothesis about what
+the error might be.
+
+- If CI logs are accessible (local run, attached output, pasted excerpt), read
+  them before making any change.
+- If CI logs are not accessible from inside the session, stop after at most
+  one speculative attempt and ask the human for the log content before
+  continuing. Stacked guess-and-push attempts pollute the PR history with
+  commits that later need to be reverted and waste both agent time and human
+  review attention.
+- When you do push a fix whose connection to the observed failure is not
+  directly traceable to a specific line of error output, say so in the commit
+  body and flag that the commit may need to be reverted if the real cause
+  turns out to be elsewhere.
+- After finding the real cause, undo speculative commits from the same
+  debugging session instead of leaving them in the tree. A clean final tree
+  is more valuable than a clean history: a forward-revert commit that
+  restores the pre-speculation state is acceptable; a rewritten history via
+  force-push is acceptable only with explicit human permission.
+- When a local test passes but CI fails, verify the local environment
+  actually exercises the same baseline state CI does. Two gotchas this
+  repository has already hit:
+  - `has_table_privilege('service_role', ..., 'UPDATE')` assertions pass
+    vacuously in a bare PostgreSQL shell because `service_role` has no
+    grants at all; the real CI environment applies Supabase's baseline
+    `grant all on all tables in schema public to service_role`, which
+    flips the assertion. When asserting "role X does not have privilege
+    Y," reproduce the baseline grant locally before trusting a green run.
+  - pgTAP's `has_table_privilege(role, table, 'SELECT,INSERT,DELETE')`
+    returns true if **any** of the privileges are held, not all. Split
+    into per-privilege checks when the intent is "all of these are
+    granted."
+
 ### Versioning And Dependency Discipline
 
 Choose versions deliberately when you add or update libraries, actions, CLIs, or other tooling that pulls in libraries.
@@ -731,6 +767,11 @@ Avoid these unless the task explicitly requires them:
 - combining unrelated cleanup with the requested change
 - using a final commit to clean up drift that should have been caught in earlier self-review
 - treating a prompt as permission to skip the repo workflow
+- naming living test or code files after the rollout phase that produced them
+  (for example `foo_phase3_bar.test.sql`); name by the feature or surface under
+  test so the filename still makes sense after the phase ships, matching the
+  `<feature>_<aspect>.test.sql` convention established by
+  `event_code_data_model.test.sql` and `redemption_data_model.test.sql`
 
 ## Change Boundaries
 
