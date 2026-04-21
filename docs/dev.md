@@ -559,8 +559,11 @@ The intended release path is:
 1. Reproduce and validate the change locally.
 2. Open a pull request or push directly to `main` under the configured solo-safe
    branch protection policy.
-3. Let CI run the repo checks. Markdown/docs-only changes skip CI and therefore
-   do not trigger production Supabase release.
+3. Let CI run the repo checks. Docs-only pull requests still produce the
+   required CI check, but the workflow short-circuits the heavy validation
+   steps after a lightweight scope-detection pass. Docs-only pushes to `main`
+   still do not trigger CI and therefore do not trigger production Supabase
+   release.
 4. Let Vercel Git integration publish the frontend from the validated commit.
 5. Let [`.github/workflows/release.yml`](../.github/workflows/release.yml) apply
    production Supabase migrations and deploy production Edge Functions from that

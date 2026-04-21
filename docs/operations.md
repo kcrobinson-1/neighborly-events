@@ -129,10 +129,12 @@ Beta baseline settings for this repo's solo-operator workflow:
 
 CI docs-only trigger policy:
 
-- `.github/workflows/ci.yml` ignores markdown/docs-only diffs at the workflow
-  trigger level
-- docs-only pushes to `main` do not run CI and do not trigger the production
-  Supabase release workflow
+- `.github/workflows/ci.yml` always runs on pull requests so the required CI
+  check appears even for docs-only changes
+- docs-only pull requests short-circuit the heavy validation steps inside the CI
+  workflow after a lightweight scope-detection pass
+- docs-only pushes to `main` still do not run CI and therefore do not trigger
+  the production Supabase release workflow
 - any non-doc change continues to run full CI validation before release
 
 ### Vercel

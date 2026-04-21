@@ -153,8 +153,11 @@ Conditional/operational checks (not always required on every push):
 
 Docs-only trigger policy:
 
-- markdown/docs-only commits do not trigger CI, so they also do not trigger the
-  production Supabase release workflow
+- docs-only pull requests still run the required CI workflow, but the workflow
+  short-circuits heavy validation after a lightweight scope-detection pass so
+  branch protection still sees the expected check
+- markdown/docs-only commits to `main` do not trigger CI, so they also do not
+  trigger the production Supabase release workflow
 - any change outside docs runs the full CI validation suite before production
   release can run
 

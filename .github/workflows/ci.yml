@@ -2,88 +2,177 @@ name: CI
 
 on:
   pull_request:
-    paths-ignore:
-      - "docs/**"
-      - "*.md"
   push:
     branches:
       - main
     paths-ignore:
       - "docs/**"
+      - "**/*.md"
       - "*.md"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  validate:
-    name: Lint, Tests, Build, and Supabase Checks
+  detect-scope:
+    name: Detect CI Scope
     runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect docs-only changes
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          is_docs_path() {
+            local path="$1"
+            [[ "$path" == docs/* ]] || [[ "$path" == *.md ]]
+          }
+
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            base_sha="$PR_BASE_SHA"
+            head_sha="$PR_HEAD_SHA"
+          else
+            base_sha="$PUSH_BEFORE_SHA"
+            head_sha="$PUSH_HEAD_SHA"
+          fi
+
+          if [ -z "$base_sha" ] || [ "$base_sha" = "0000000000000000000000000000000000000000" ]; then
+            docs_only=false
+          else
+            docs_only=true
+            while IFS= read -r -d '' change_status; do
+              if ! IFS= read -r -d '' path_before; then
+                docs_only=false
+                break
+              fi
+
+              if ! is_docs_path "$path_before"; then
+                docs_only=false
+                break
+              fi
+
+              if [[ "$change_status" == R* ]] || [[ "$change_status" == C* ]]; then
+                if ! IFS= read -r -d '' path_after; then
+                  docs_only=false
+                  break
+                fi
+
+                if ! is_docs_path "$path_after"; then
+                  docs_only=false
+                  break
+                fi
+              fi
+            done < <(git diff --name-status -z "$base_sha" "$head_sha")
+          fi
+
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+          echo "docs_only=$docs_only"
+
+  validate:
+    name: Lint, Tests, Build, and Supabase Checks
+    needs: detect-scope
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Skip heavy validation for docs-only pull requests
+        if: needs.detect-scope.outputs.docs_only == 'true'
+        run: echo "Docs-only PR detected; heavy validation is intentionally skipped."
+
+      - name: Checkout
+        if: needs.detect-scope.outputs.docs_only != 'true'
+        uses: actions/checkout@v6
 
       - name: Setup Node
+        if: needs.detect-scope.outputs.docs_only != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24.14.1
           cache: npm
 
       - name: Setup Deno
+        if: needs.detect-scope.outputs.docs_only != 'true'
         uses: denoland/setup-deno@v2
         with:
           deno-version: v2.x
 
       - name: Setup Supabase CLI
+        if: needs.detect-scope.outputs.docs_only != 'true'
         uses: supabase/setup-cli@v1
         with:
           version: 2.93.0
 
       - name: Install dependencies
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm ci
 
       - name: Install Playwright Chromium
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npx playwright install chromium
 
       - name: Lint
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run lint
 
       - name: Run unit tests
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm test
 
       - name: Run Edge Function Deno tests
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run test:functions
 
       - name: Run local Supabase integration and database tests
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run test:supabase
 
       - name: Run attendee trusted-backend Playwright smoke tests
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run test:e2e:attendee:trusted-backend
 
       - name: Build web app
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run build:web
 
       - name: Check issue-session function
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/issue-session/index.ts
 
       - name: Check complete-game function
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/complete-game/index.ts
 
       - name: Check save-draft function
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/save-draft/index.ts
 
       - name: Check generate-event-code function
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/generate-event-code/index.ts
 
       - name: Check publish-draft function
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/publish-draft/index.ts
 
       - name: Check unpublish-event function
+        if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/unpublish-event/index.ts
 
       - name: Upload Playwright artifacts on failure
-        if: failure()
+        if: failure() && needs.detect-scope.outputs.docs_only != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-test-results
