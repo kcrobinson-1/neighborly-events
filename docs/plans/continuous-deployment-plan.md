@@ -8,8 +8,9 @@ workflow to a safer, increasingly automated continuous deployment model.
 Use this doc to track:
 
 - target end state for deployment automation
-- phased milestones (`beta` -> `gamma` -> `continuous deployment`)
-- decisions about staged database strategy
+- delivery phases (`Phase 1` -> `Phase 2` -> `Phase 3`)
+- environment model (`preview`, `staging`, `production`)
+- decisions about staged backend strategy
 - guardrails for frontend/backend compatibility during rollout
 
 This document is planning guidance, not a release checklist. Day-to-day release
@@ -23,6 +24,11 @@ Today the repo primarily relies on:
 - PR CI for core checks
 - direct promotion to the production Supabase project
 - production smoke validation after deploy
+
+The repo is currently operating in `Phase 1` under the environment model
+described below: `preview` and `production` exist today, while a stable
+`staging` environment is explicitly deferred until its cost and operator burden
+are justified.
 
 This is acceptable at current scale, but it leaves limited safety margin for
 schema mistakes and compatibility regressions.
@@ -38,15 +44,57 @@ Even at low traffic, deployment failures are costly because:
 The plan should improve safety without introducing enterprise-only process
 overhead.
 
-## Target Milestones
+## Environment Model
 
-### Beta (near-term safety baseline)
+### Preview
+
+Purpose:
+
+- consistent preview deployments for every PR/branch
+- quick UI validation before merge
+
+Not for:
+
+- migration rehearsal
+- stable backend release gating
+
+### Staging
+
+Purpose:
+
+- stable pre-production environment for backend validation
+- migration rehearsal before production
+- stable auth, origin, and smoke-test rehearsal
+
+Requirements:
+
+- non-production frontend target
+- non-production Supabase target
+- separate secrets and auth/origin configuration from production
+
+Current status:
+
+- deferred for now
+- future implementation remains open between a separate persistent staging
+  project and Supabase branching once account tier and operator cost justify it
+
+### Production
+
+Purpose:
+
+- live attendee and organizer traffic
+- real event operations
+
+## Delivery Phases
+
+### Phase 1 (near-term safety baseline)
 
 Goals:
 
-- consistent preview deployments for every PR/branch
 - required CI checks for production-targeting changes
 - explicit deployment ownership and rollback playbook
+- safer direct promotion to production without adding more long-lived
+  environments
 
 Exit criteria:
 
@@ -54,21 +102,22 @@ Exit criteria:
 - direct production pushes constrained by required checks and deployment workflow
 - deployment runbook documented and tested
 
-### Gamma (staged confidence)
+### Phase 2 (staged confidence)
 
 Goals:
 
-- stable pre-production environment for backend validation
-- migration rehearsal before production
-- clear promotion path from tested artifact/commit to production
+- add one stable `staging` environment
+- rehearse backend-affecting changes before production
+- define a clear promotion path from tested commit to production
 
 Exit criteria:
 
 - staging strategy chosen and in use (persistent staging project or equivalent)
 - migration + smoke checks run against staging before production
-- production promotion requires successful staged validation
+- production promotion requires successful staged validation for
+  backend-affecting changes
 
-### Continuous Deployment (steady-state target)
+### Phase 3 (continuous deployment)
 
 Goals:
 
@@ -84,12 +133,12 @@ Exit criteria:
 
 ## Scope Decisions To Make
 
-### 1) Staged database strategy
+### 1) Stable staging backend strategy
 
 Options:
 
-- Supabase preview/persistent branches for pre-production validation
 - separate persistent staging Supabase project
+- Supabase preview/persistent branches for pre-production validation
 
 Selection criteria for this repo:
 
@@ -119,9 +168,9 @@ Required baseline:
 - required status checks before merge
 - environment protections for production deployments
 
-### Solo-safe beta profile (current operating model)
+### Solo-safe Phase 1 profile (current operating model)
 
-This repo is currently operated by one maintainer, so beta guardrails should
+This repo is currently operated by one maintainer, so Phase 1 guardrails should
 prioritize release safety without mandatory multi-reviewer workflows.
 
 Recommended `main` settings:
@@ -136,7 +185,7 @@ Recommended `main` settings:
 Required branch checks (use the exact workflow check names from this repo):
 
 - `Lint, Tests, Build, and Supabase Checks` (job from the `CI` workflow)
-- `Vercel` (Vercel deploy check) — beta-stage decision: gate merges to `main`
+- `Vercel` (Vercel deploy check) — Phase 1 decision: gate merges to `main`
   on a successful Vercel build for the same SHA in lieu of moving Vercel
   production promotion behind CI
 
@@ -168,9 +217,9 @@ Release target integrity:
 - keep production deploy pinned to the validated target SHA rather than a moving
   branch head
 
-### Beta completion checklist
+### Phase 1 completion checklist
 
-After the beta guardrail workflow changes merge, finish the milestone with
+After the Phase 1 guardrail workflow changes merge, finish the milestone with
 these platform and proof-run steps:
 
 - configure GitHub `main` branch protection or ruleset settings:
@@ -187,29 +236,29 @@ these platform and proof-run steps:
     `PRODUCTION_SMOKE_BASE_URL`, `PRODUCTION_SMOKE_SUPABASE_URL`,
     `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`, and
     `PRODUCTION_SMOKE_SUPABASE_SERVICE_ROLE_KEY`
-  - keep production environment approval disabled for solo beta unless a
+  - keep production environment approval disabled for solo Phase 1 unless a
     deliberate manual pause before Supabase deployment is desired
 - verify Vercel production behavior:
   - production deploys remain tied to `main`
   - preview deployments remain enabled for branches and pull requests
   - production env vars point at production Supabase:
     `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
-  - Vercel-before-CI decision for beta: require the `Vercel` deploy check as a
-    pre-merge status check on `main` so commits cannot land without a
+  - Vercel-before-CI decision for Phase 1: require the `Vercel` deploy check as
+    a pre-merge status check on `main` so commits cannot land without a
     successful Vercel build for the same SHA; this is kept in place of moving
-    Vercel production promotion behind CI for the beta milestone and should be
-    revisited in gamma if stronger gating between build success and production
-    promotion is needed
+    Vercel production promotion behind CI for the Phase 1 milestone and should
+    be revisited in Phase 2 if stronger gating between build success and
+    production promotion is needed
 - verify Supabase production settings:
   - no Supabase staging project, branching setup, or account upgrade is required
-    for beta
+    for Phase 1
   - production function secrets exist: `SESSION_SIGNING_SECRET` and
     `ALLOWED_ORIGINS`
   - `ALLOWED_ORIGINS` includes the production Vercel origin
   - Supabase Auth Site URL and redirect URLs include the production `/admin`
     origin
   - at least one active admin email exists in `public.admin_users`
-- run beta acceptance checks after merge:
+- run Phase 1 acceptance checks after merge:
   - push or merge a non-doc change and confirm full `CI` runs
   - confirm `Release / Sync Supabase Production` runs only after successful `CI`
   - confirm release checks out and deploys the validated target SHA
@@ -253,14 +302,16 @@ Given current scale and team size, avoid:
 
 1. enforce protected production branch + required checks
 2. keep preview deployments for PR validation
-3. introduce one staging backend path (branch or project) for migration rehearsal
-4. require staged validation for backend-affecting changes
-5. automate production deploy on merge once staged flow is reliable
+3. introduce one `staging` backend path (project or branch-backed environment)
+   for migration rehearsal when budget and operator cost justify it
+4. require staged validation for backend-affecting changes once `staging`
+   exists
+5. automate production deploy on merge once the staged flow is reliable
 
 ## Tracking And Ownership
 
 - Backlog tracker:
-  [`backlog.md` — Tier 2 decision on staging/branch promotion path](../backlog.md)
+  [`backlog.md` — Tier 2 decision on stable staging backend path](../backlog.md)
 - Related open-question ownership:
   [`open-questions.md` — Development And Release Workflow](../open-questions.md)
 

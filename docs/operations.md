@@ -109,7 +109,7 @@ Why manual for now:
 
 - workflows are repo-managed, but branch protection, environment approvals, and secret values still live in GitHub settings
 
-Beta baseline settings for this repo's solo-operator workflow:
+Phase 1 baseline settings for this repo's solo-operator workflow:
 
 - keep pull requests optional on `main`
 - do not require reviewer approvals
@@ -118,7 +118,7 @@ Beta baseline settings for this repo's solo-operator workflow:
 - require these status checks on `main`:
   - `Lint, Tests, Build, and Supabase Checks` (job from the `CI` workflow)
   - `Vercel` (Vercel deploy check) — keeps merges gated on a successful
-    Vercel build for the same SHA; recorded as the beta-stage Vercel-before-CI
+    Vercel build for the same SHA; recorded as the Phase 1 Vercel-before-CI
     decision in
     [`continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md)
 - monitor `Release / Sync Supabase Production` as the post-CI production
