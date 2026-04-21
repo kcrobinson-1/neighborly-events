@@ -352,8 +352,12 @@ select ok(
   'authenticated cannot read event_role_assignments directly'
 );
 
+-- has_table_privilege with a comma-separated privilege list returns true
+-- if ANY are held, not all — so assert each privilege individually.
 select ok(
-  has_table_privilege('service_role', 'public.event_role_assignments', 'SELECT,INSERT,DELETE'),
+  has_table_privilege('service_role', 'public.event_role_assignments', 'SELECT')
+    and has_table_privilege('service_role', 'public.event_role_assignments', 'INSERT')
+    and has_table_privilege('service_role', 'public.event_role_assignments', 'DELETE'),
   'service_role can select/insert/delete event_role_assignments'
 );
 

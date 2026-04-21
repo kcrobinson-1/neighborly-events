@@ -32,4 +32,9 @@ create index if not exists event_role_assignments_event_role_idx
 alter table public.event_role_assignments enable row level security;
 
 revoke all on table public.event_role_assignments from anon, authenticated;
+-- Supabase's baseline `grant all on all tables in schema public to
+-- service_role` would otherwise leave UPDATE enabled; revoke it explicitly
+-- to enforce the "role changes are insert + delete, never in-place
+-- mutation" intent.
+revoke update on table public.event_role_assignments from service_role;
 grant select, insert, delete on table public.event_role_assignments to service_role;
