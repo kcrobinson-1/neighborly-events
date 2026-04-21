@@ -544,35 +544,51 @@ Operational success at event:
 ## Rollout Suggestion
 
 1. **Phase A**: backend schema + redeem/reverse RPC + seed agent manual path.
-   Sliced into two PRs along a scaffolding-vs-behavior seam so that reviewer
-   attention on the RPC contracts is not diluted by schema-churn noise:
-   - **Phase A.1 — Inert foundation.** Schema additions on `game_entitlements`
-     (all `redeemed_*` / `redemption_*` columns as nullable or defaulted),
-     the `(event_id, redeemed_at DESC NULLS LAST)` monitoring index from
-     checklist item 5, the role-assignment table (created empty), the three
-     permission helpers `public.is_agent_for_event(uuid)`,
-     `public.is_organizer_for_event(uuid)`, and `public.is_root_admin()`, and
-     the `supabase/role-management/` runbook skeleton from checklist item 9.
-     Nothing calls any of this yet, so the PR ships safely with pgTAP
-     coverage of constraints, helper return values, and index presence.
-     Review is structural. Corresponds to migration-sequence steps 1–2 in
-     checklist item 10.
-   - **Phase A.2 — Mutation surface.**
+   Sliced into phased PRs along scaffolding-vs-behavior and SQL-vs-TypeScript
+   seams so that reviewer attention on each seam is not diluted by noise from
+   the other:
+   - **Phase A.1 — Inert foundation.** *Landed.* Schema additions on
+     `game_entitlements` (all `redeemed_*` / `redemption_*` columns as
+     nullable or defaulted), the `(event_id, redeemed_at DESC NULLS LAST)`
+     monitoring index from checklist item 5, the role-assignment table
+     (created empty), the three permission helpers
+     `public.is_agent_for_event(text)`,
+     `public.is_organizer_for_event(text)`, and `public.is_root_admin()`,
+     and the `supabase/role-management/` runbook skeleton from checklist
+     item 9. Nothing calls any of this yet, so the PR ships safely with
+     pgTAP coverage of constraints, helper return values, and index
+     presence. Review was structural. Corresponds to migration-sequence
+     steps 1–2 in checklist item 10. See
+     [`reward-redemption-phase-a-1-plan.md`](./reward-redemption-phase-a-1-plan.md).
+   - **Phase A.2a — DB mutation surface.** *Landed.*
      `public.redeem_entitlement_by_code(...)` and
      `public.reverse_entitlement_redemption(...)` shipped as
-     `SECURITY DEFINER` with the `{ outcome, result }` envelope, row-level
-     locking, idempotent `already_redeemed` / `already_unredeemed` paths,
-     and cross-event-as-`not_found` behavior; scoped RLS read policies on
-     `game_entitlements` and the role-assignment table; the redeem and
-     reverse Edge Function wrappers; and the attendee redemption-status
-     read path. pgTAP for RPC state transitions and idempotency; Vitest
-     for Edge Function envelope mapping. Review is behavioral. Corresponds
-     to migration-sequence steps 3–5 in checklist item 10.
+     `SECURITY DEFINER` with the `{ outcome, result }` envelope,
+     row-level locking, idempotent `already_redeemed` /
+     `already_unredeemed` paths, and cross-event-as-`not_found` behavior;
+     scoped RLS read policies on `game_entitlements` and the
+     role-assignment table. pgTAP for RPC state transitions,
+     authorization matrix, cross-event non-leakage, and the new RLS
+     policies. Review was SQL-focused. Corresponds to migration-sequence
+     steps 3–4 in checklist item 10. See
+     [`reward-redemption-phase-a-2-plan.md`](./reward-redemption-phase-a-2-plan.md).
+   - **Phase A.2b — Edge Function wrappers + attendee read path.** *Open.*
+     The redeem and reverse Edge Function wrappers, the attendee
+     `get-redemption-status` read path, Vitest for envelope-to-HTTP
+     mapping, and a shared TypeScript envelope type in `shared/`. A.2a's
+     pgTAP suite pins the outcome contract so A.2b only has to mirror it
+     through HTTP. Corresponds to migration-sequence step 5 in checklist
+     item 10. A.2b will get its own plan doc when A.2a's reviewed state
+     is stable.
 
-   Not split finer than two PRs: separating redeem from reverse would
-   fragment the shared Edge Function scaffolding and envelope contract, and
-   the reverse RPC is close enough in shape to redeem that reviewing them
-   side-by-side is the clearer read.
+   Split along two seams. First seam: A.1 (inert foundation) vs. A.2
+   (mutation + read behavior), so structural review is not mixed with
+   behavioral review. Second seam: A.2a (SQL surface) vs. A.2b (TypeScript
+   surface), so each PR reviews against one validation runner. Redeem and
+   reverse are kept together in A.2a because separating them would fragment
+   shared RLS reasoning and the envelope contract, and the reverse RPC is
+   close enough in shape to redeem that reviewing them side-by-side is the
+   clearer read.
 2. **Phase B**: mobile agent workspace for lookup/redeem
 3. **Phase C**: attendee completion status updates for redeemed state
 4. **Phase D**: event dry run with volunteers and script

@@ -253,6 +253,43 @@ The Supabase side is intentionally small:
 - `supabase/migrations/20260418060000_project_event_code_on_publish.sql`
   Updates `publish_game_event_draft()` so the published `game_events` projection
   receives the draft event code.
+- `supabase/migrations/20260421000000_add_redemption_columns.sql`
+  Reward redemption Phase A.1: adds the inline `redeemed_*` and
+  `redemption_reversed_*` columns to `game_entitlements`, the composite
+  `game_entitlements_redeemed_shape_check` invariant, and the
+  `(event_id, redeemed_at DESC NULLS LAST)` monitoring index.
+- `supabase/migrations/20260421000100_add_event_role_assignments.sql`
+  Reward redemption Phase A.1: creates the event-scoped
+  `public.event_role_assignments` table (agent/organizer assignments keyed
+  by user_id + event_id + role), with RLS enabled and service_role limited
+  to select/insert/delete (UPDATE revoked).
+- `supabase/migrations/20260421000200_add_event_role_helpers.sql`
+  Reward redemption Phase A.1: permission helpers
+  `public.is_agent_for_event(text)`,
+  `public.is_organizer_for_event(text)`, and `public.is_root_admin()`
+  (aliases `is_admin()`). Used by both the redeem/reverse RPCs and the
+  scoped RLS read policies.
+- `supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql`
+  Reward redemption Phase A.2a: `public.redeem_entitlement_by_code(
+  p_event_id text, p_code_suffix text)` as `SECURITY DEFINER`. Gated by
+  `is_agent_for_event OR is_root_admin`, row-locks the target entitlement,
+  returns the `{ outcome, result, ... }` envelope, and is idempotent on
+  repeat calls against an already-redeemed row. Cross-event codes surface
+  as `not_found`.
+- `supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql`
+  Reward redemption Phase A.2a: `public.reverse_entitlement_redemption(
+  p_event_id text, p_code_suffix text, p_reason text)` as
+  `SECURITY DEFINER`. Gated by `is_organizer_for_event OR is_root_admin`,
+  clears the `redeemed_*` columns and records the reversing identity in
+  the `redemption_reversed_*` columns. Optional reason stored verbatim in
+  `redemption_note`.
+- `supabase/migrations/20260421000500_add_redemption_rls_policies.sql`
+  Reward redemption Phase A.2a: authenticated SELECT policy on
+  `game_entitlements` that scopes rows to the caller's assigned events
+  (agent, organizer, or root admin), and a self-read policy on
+  `event_role_assignments` so a user can read their own assignment rows.
+  Writes on both tables continue to flow through the service-role RPC
+  path.
 
 ## What Is Implemented Now
 
