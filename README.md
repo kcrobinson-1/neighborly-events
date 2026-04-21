@@ -200,7 +200,9 @@ Recommended release path:
 
 1. Reproduce and validate the change locally.
 2. Open a pull request.
-3. Let CI verify the repo.
+3. Let CI verify the repo. Docs-only pull requests still produce the required
+   CI check, but the workflow skips the heavy validation steps after a
+   lightweight scope-detection pass.
 4. Merge to `main`.
 5. Let Vercel publish the frontend from the merged commit.
 6. Let the release workflow promote the repo-backed Supabase changes.
