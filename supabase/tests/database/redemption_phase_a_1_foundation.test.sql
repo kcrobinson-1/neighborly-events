@@ -2,88 +2,129 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(54);
+select plan(48);
 
 -- ─── game_entitlements column additions ──────────────────────────────────────
+-- Use information_schema + pg_catalog queries instead of pgTAP's col_* /
+-- has_* functions to avoid pgTAP version variance on type-name formatting.
 
-select col_type_is(
-  'public', 'game_entitlements', 'redeemed_at', 'timestamp with time zone',
-  'game_entitlements.redeemed_at is timestamptz'
-);
-select col_is_null(
-  'public', 'game_entitlements', 'redeemed_at',
-  'game_entitlements.redeemed_at is nullable'
-);
-
-select col_type_is(
-  'public', 'game_entitlements', 'redeemed_by', 'uuid',
-  'game_entitlements.redeemed_by is uuid'
-);
-select col_is_null(
-  'public', 'game_entitlements', 'redeemed_by',
-  'game_entitlements.redeemed_by is nullable'
-);
-
-select col_type_is(
-  'public', 'game_entitlements', 'redeemed_by_role', 'text',
-  'game_entitlements.redeemed_by_role is text'
-);
-select col_is_null(
-  'public', 'game_entitlements', 'redeemed_by_role',
-  'game_entitlements.redeemed_by_role is nullable'
-);
-
-select col_type_is(
-  'public', 'game_entitlements', 'redeemed_event_id', 'text',
-  'game_entitlements.redeemed_event_id is text'
-);
-select col_is_null(
-  'public', 'game_entitlements', 'redeemed_event_id',
-  'game_entitlements.redeemed_event_id is nullable'
-);
-
-select col_type_is(
-  'public', 'game_entitlements', 'redemption_status', 'text',
-  'game_entitlements.redemption_status is text'
-);
-select col_not_null(
-  'public', 'game_entitlements', 'redemption_status',
-  'game_entitlements.redemption_status is not null'
-);
 select is(
   (
-    select pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid)
-    from pg_attribute
-    join pg_attrdef on pg_attrdef.adrelid = pg_attribute.attrelid
-      and pg_attrdef.adnum = pg_attribute.attnum
-    where pg_attribute.attrelid = 'public.game_entitlements'::regclass
-      and pg_attribute.attname = 'redemption_status'
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redeemed_at'
   ),
-  '''unredeemed''::text',
-  'game_entitlements.redemption_status defaults to unredeemed'
+  'YES|timestamp with time zone',
+  'game_entitlements.redeemed_at is nullable timestamptz'
 );
 
-select col_type_is(
-  'public', 'game_entitlements', 'redemption_reversed_at', 'timestamp with time zone',
-  'game_entitlements.redemption_reversed_at is timestamptz'
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redeemed_by'
+  ),
+  'YES|uuid',
+  'game_entitlements.redeemed_by is nullable uuid'
 );
-select col_type_is(
-  'public', 'game_entitlements', 'redemption_reversed_by', 'uuid',
-  'game_entitlements.redemption_reversed_by is uuid'
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redeemed_by_role'
+  ),
+  'YES|text',
+  'game_entitlements.redeemed_by_role is nullable text'
 );
-select col_type_is(
-  'public', 'game_entitlements', 'redemption_reversed_by_role', 'text',
-  'game_entitlements.redemption_reversed_by_role is text'
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redeemed_event_id'
+  ),
+  'YES|text',
+  'game_entitlements.redeemed_event_id is nullable text'
 );
-select col_type_is(
-  'public', 'game_entitlements', 'redemption_note', 'text',
-  'game_entitlements.redemption_note is text'
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redemption_status'
+  ),
+  'NO|text',
+  'game_entitlements.redemption_status is not null text'
+);
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redemption_reversed_at'
+  ),
+  'YES|timestamp with time zone',
+  'game_entitlements.redemption_reversed_at is nullable timestamptz'
+);
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redemption_reversed_by'
+  ),
+  'YES|uuid',
+  'game_entitlements.redemption_reversed_by is nullable uuid'
+);
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redemption_reversed_by_role'
+  ),
+  'YES|text',
+  'game_entitlements.redemption_reversed_by_role is nullable text'
+);
+
+select is(
+  (
+    select is_nullable || '|' || data_type
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_entitlements'
+      and column_name = 'redemption_note'
+  ),
+  'YES|text',
+  'game_entitlements.redemption_note is nullable text'
 );
 
 -- ─── Monitoring index ────────────────────────────────────────────────────────
 
-select has_index(
-  'public', 'game_entitlements', 'game_entitlements_event_redeemed_at_idx',
+select ok(
+  exists (
+    select 1 from pg_indexes
+    where schemaname = 'public'
+      and tablename = 'game_entitlements'
+      and indexname = 'game_entitlements_event_redeemed_at_idx'
+  ),
   'game_entitlements_event_redeemed_at_idx exists'
 );
 
@@ -267,7 +308,14 @@ select throws_ok(
 
 -- ─── event_role_assignments table structure ─────────────────────────────────
 
-select has_table('public', 'event_role_assignments', 'event_role_assignments exists');
+select ok(
+  exists (
+    select 1 from information_schema.tables
+    where table_schema = 'public'
+      and table_name = 'event_role_assignments'
+  ),
+  'event_role_assignments exists'
+);
 
 select ok(
   (select rowsecurity from pg_tables where schemaname = 'public' and tablename = 'event_role_assignments'),

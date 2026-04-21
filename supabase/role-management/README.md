@@ -60,13 +60,18 @@ script.
 5. Request review from `@kcrobinson`.
 6. After approval and merge, apply the snippet against the target
    Supabase project (branch project for staging, production project for
-   prod) with `psql`. The snippet files use `\set` meta-commands, which
-   require psql and will not parse in the Supabase SQL editor. Capture
-   the output of the `returning *` block in a PR comment for the audit
-   record.
-7. If the snippet is idempotent (assignments always are; revocations are
-   idempotent in the sense that re-running deletes nothing), re-running
-   on the same inputs is safe.
+   prod) with `psql`. The snippet files use `\set` meta-commands and a
+   `do $$ … $$` block, which require psql and will not parse in the
+   Supabase SQL editor. Capture the `NOTICE` output in a PR comment for
+   the audit record.
+7. A typo in `:user_email` or `:event_slug` will raise an explicit
+   exception ("No auth.users row found for email …" or similar) rather
+   than silently succeeding with zero rows, so you can tell the
+   difference between a bad input and an already-existing assignment.
+8. Re-running an `assign-*` snippet on an already-assigned
+   `(user, event, role)` is safe — it surfaces as a `NOTICE` with
+   `(idempotent no-op)`. Re-running `revoke-assignment.sql` after the
+   row is already gone raises an exception so the operator notices.
 
 ## Revocation and audit
 
@@ -84,11 +89,14 @@ the reward redemption design.
 
 - `README.md` — this document.
 - `assign-agent.sql` — assigns `role = 'agent'` for one user on one
-  event. Idempotent via `on conflict do nothing`.
+  event. Idempotent via `on conflict do nothing`. Raises an explicit
+  exception on missing user or event.
 - `assign-organizer.sql` — assigns `role = 'organizer'` for one user on
-  one event. Idempotent via `on conflict do nothing`.
+  one event. Idempotent via `on conflict do nothing`. Raises an explicit
+  exception on missing user or event.
 - `revoke-assignment.sql` — deletes a single `(user_id, event_id, role)`
-  row and returns the deleted row for audit.
+  row and logs the deleted row for audit. Raises an explicit exception
+  on missing user, event, or matching assignment.
 
 Each SQL file begins with
 `-- This file is applied by a reviewed PR only. See README.md.` so
