@@ -111,6 +111,23 @@ Rules for this checklist:
   Score: 7/10.
   Validation: `npm run ui:review:capture:admin`.
 
+- [ ] Rename phase-named pgTAP test files to describe their surface.
+  `supabase/tests/database/game_authoring_phase2_auth.test.sql`,
+  `game_authoring_phase3_publish_failure_permissions.test.sql`,
+  `game_authoring_phase3_publish_projection.test.sql`,
+  `game_authoring_phase3_unpublish_audit.test.sql`, and
+  `game_authoring_phase5_1_invariants.test.sql` are each named after the
+  authoring rollout phase that produced them. Once that planning context ages
+  out, the filenames read as noise and require cross-referencing the plan doc
+  to know what each file actually tests. Rename to follow the
+  `<feature>_<aspect>.test.sql` convention established by
+  `event_code_data_model.test.sql`, `redemption_data_model.test.sql`,
+  `verification_code_rewrite.test.sql`, and
+  `complete_game_and_award_entitlement.test.sql`. Pure rename; no assertion or
+  fixture changes. Score: 5/10.
+  Validation: `npm run test:db` and a repo-wide grep for each old filename
+  (none are expected to be referenced outside the file itself).
+
 ## Large Files To Leave Alone For Now
 
 - `supabase/migrations/20260406130000_add_published_quiz_content.sql` is large

@@ -118,6 +118,14 @@ Reduce deployment risk and contributor friction before the live event.
   data. Without this, each admin UX PR improvises its own screenshot approach.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Add an admin UI-review capture mode](./tracking/dev-workflow-improvements.md)
 
+- [ ] **`infra` Surface CI step logs in PR comments on failure**
+  AI coding agents working inside a session can't authenticate to the Actions
+  logs API, so a failing PR CI run leaves the agent without the real
+  diagnostic. Add an `if: failure()` step to the CI workflow that tails the
+  first failing step and posts it as a PR comment, so PR activity webhooks
+  relay the log back into the session automatically.
+  Detail: [`docs/tracking/dev-workflow-improvements.md` — Surface CI step logs in PR comments on failure](./tracking/dev-workflow-improvements.md)
+
 ---
 
 ## Tier 3 — Admin Authoring Polish
@@ -278,6 +286,14 @@ Execute in any order.
 - [ ] **`dev` Split `adminGameApi.ts`** (refactor score 5/10)
   Extract shared transport and response helpers so the public exports focus on
   intent-specific admin operations.
+  Detail: [`docs/tracking/code-refactor-checklist.md`](./tracking/code-refactor-checklist.md)
+
+- [ ] **`dev` Rename phase-named pgTAP test files** (refactor score 5/10)
+  `supabase/tests/database/game_authoring_phase{2,3,5_1}_*.test.sql` are named
+  after the authoring rollout phase that produced them, not the surface they
+  test. Rename to `<feature>_<aspect>.test.sql` to match the convention set by
+  `event_code_data_model.test.sql` and `redemption_data_model.test.sql`. Pure
+  rename, behavior-preserving.
   Detail: [`docs/tracking/code-refactor-checklist.md`](./tracking/code-refactor-checklist.md)
 
 - [ ] **`dev` Stable PR screenshot upload path**
