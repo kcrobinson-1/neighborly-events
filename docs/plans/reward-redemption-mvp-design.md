@@ -572,7 +572,7 @@ Operational success at event:
      policies. Review was SQL-focused. Corresponds to migration-sequence
      steps 3–4 in checklist item 10. See
      [`reward-redemption-phase-a-2-plan.md`](./reward-redemption-phase-a-2-plan.md).
-   - **Phase A.2b — Edge Function wrappers + attendee read path.** *Open.*
+   - **Phase A.2b — Edge Function wrappers + attendee read path.** *Landed.*
      The redeem and reverse Edge Function wrappers, the attendee
      `get-redemption-status` read path, handler coverage for
      envelope-to-HTTP mapping, and a shared TypeScript envelope type in

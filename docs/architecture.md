@@ -127,6 +127,10 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
 - `shared/game-config/`
   Internal shared modules for types, published-row mapping, explicit sample
   fixtures, validation, and answer/scoring logic.
+- `shared/redemption.ts`
+  Transport contracts for the reward-redemption Edge Functions and their future
+  callers. Owns request/response shapes for redeem, reverse, and attendee
+  status without pulling fetch or UI concerns into the shared layer.
 
 Together they contain:
 
@@ -157,6 +161,19 @@ The Supabase side is intentionally small:
   Local helper modules for completion payload parsing, JSON responses,
   dependency wiring, and service-role RPC persistence used by the handler and
   function tests.
+- `supabase/functions/redeem-entitlement/index.ts`
+  Authenticated operator endpoint that validates `eventId` + 4-digit suffix,
+  verifies the bearer token, forwards the caller JWT into
+  `redeem_entitlement_by_code(...)`, and maps the stable SQL envelope to HTTP.
+- `supabase/functions/reverse-entitlement-redemption/index.ts`
+  Authenticated organizer/root-admin endpoint that validates `eventId`,
+  4-digit suffix, and optional reason, then forwards the caller JWT into
+  `reverse_entitlement_redemption(...)` and mirrors the SQL envelope through
+  HTTP.
+- `supabase/functions/get-redemption-status/index.ts`
+  Session-bound attendee endpoint that accepts only `eventId`, verifies the
+  signed browser session, and reads the current entitlement state by
+  `(event_id, client_session_id)`.
 - `supabase/functions/save-draft/index.ts`
   Authenticated admin endpoint that validates canonical draft content and saves
   it to the private draft table. It also accepts an optional top-level
@@ -180,6 +197,8 @@ The Supabase side is intentionally small:
   for authenticated authoring endpoints.
 - `supabase/functions/_shared/cors.ts`
   Shared CORS helpers.
+- `supabase/functions/_shared/redemption-operator-auth.ts`
+  Shared bearer-token verification for operator-facing redemption endpoints.
 - `supabase/functions/_shared/published-game-loader.ts`
   Service-role loader that reads one published event from Supabase and maps it
   into the shared runtime model before trusted validation.

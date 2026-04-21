@@ -1,6 +1,9 @@
 # Reward Redemption — Phase A.2b Execution Plan
 
-**Status:** Not started
+**Status:** Completed — landed in commits `3755627`
+(`feat(functions): add redeem entitlement wrapper`), `af184c4`
+(`feat(functions): add reverse redemption wrapper`), and `2598c4f`
+(`feat(functions): add attendee redemption status endpoint`).
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
 **Predecessor:** [`reward-redemption-phase-a-2-plan.md`](./reward-redemption-phase-a-2-plan.md) — landed.
 **Scope:** Phase A.2b only — the Edge Function wrappers around the stable A.2a
@@ -37,6 +40,9 @@ Add three Edge Functions that sit on top of the stable A.2a contracts:
 
 After this phase merges, the trusted backend path for redemption is callable
 through HTTP, but no user-visible routes consume it yet.
+
+Phase B remains the next consumer of the operator endpoints, and Phase C
+remains the next consumer of the attendee status endpoint.
 
 ## Goals
 
