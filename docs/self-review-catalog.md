@@ -394,3 +394,38 @@ the user stayed unassigned while the operator thought the script had
 re-run harmlessly. Fix
 [`e52d0b3`](https://github.com/kcrobinson-1/neighborly-scavenger-game/commit/e52d0b3):
 DO-block fail-fast on empty lookup.
+
+---
+
+## Edge Functions & deployment config
+
+### Platform-auth-gate config audit
+
+**Trigger.** A commit adds a new `supabase/functions/<name>/index.ts`
+handler, **or** changes an existing handler's authentication surface so
+the handler owns auth (signed session cookie/header, in-handler bearer
+verification, or any scheme that does not rely on Supabase's platform
+JWT gate).
+
+**Check.** For every such function, confirm `supabase/config.toml`
+contains `[functions.<name>]` with `verify_jwt = false`. Supabase's
+platform default is `verify_jwt = true`, which rejects requests lacking
+a valid Supabase Auth JWT **before** the handler runs. For
+session-bound attendee endpoints this rejects every real request — a
+P1 on the happy path. For operator endpoints that verify the bearer
+themselves via `supabase.auth.getUser(token)`, the default produces
+double-gating inconsistent with the rest of `supabase/functions/`.
+Unit tests stub the auth layer and cannot catch this; the audit is
+always a config-vs-code consistency check. Grep `supabase/config.toml`
+for the new function name before push.
+
+**Example.** `feat/reward-redemption-a-2b` — Codex P1:
+`get-redemption-status` authenticates attendees via
+`readVerifiedSession` (signed cookie/header), but the branch shipped
+without a matching `[functions.get-redemption-status] verify_jwt = false`
+entry. The platform gate would 401 every attendee request before the
+handler ran. Fix
+[`19cee10`](https://github.com/kcrobinson-1/neighborly-scavenger-game/commit/19cee10):
+added `verify_jwt = false` for all three new redemption functions to
+restore the session-auth path and match the `save-draft` /
+`complete-game` convention.
