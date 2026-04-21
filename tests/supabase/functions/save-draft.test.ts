@@ -128,6 +128,7 @@ Deno.test("save-draft upserts the normalized draft and returns a safe summary", 
 
       return {
         data: {
+          event_code: "TST",
           id: input.content.id,
           live_version_number: 2,
           name: input.content.name,
@@ -145,6 +146,7 @@ Deno.test("save-draft upserts the normalized draft and returns a safe summary", 
 
   assertEquals(response.status, 200);
   assertEquals(await response.json(), {
+    eventCode: "TST",
     hasBeenPublished: true,
     id: sampleDraft.id,
     liveVersionNumber: 2,
@@ -174,6 +176,7 @@ Deno.test("save-draft passes supplied event codes to persistence", async () => {
 
       return {
         data: {
+          event_code: "ABC",
           id: input.content.id,
           live_version_number: null,
           name: input.content.name,

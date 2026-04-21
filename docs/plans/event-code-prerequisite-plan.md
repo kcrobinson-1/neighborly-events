@@ -1,6 +1,6 @@
 # Event Code Prerequisite Plan
 
-**Status:** Phase 1 complete; Phase 2 (PR 3 — Admin Control Surface) pending
+**Status:** Phase 1 complete; Phase 2 complete
 **Blocks:** Reward Redemption MVP (`docs/plans/reward-redemption-mvp-design.md`)
 **Sequencing note:** The Tier 1 terminology migration (`docs/plans/archive/terminology-migration-strategy.md`)
 has completed its Phase 2 database rename in this branch. This plan now uses

@@ -27,6 +27,7 @@ type AdminEventWorkspaceProps = {
   onRefresh: () => void;
   onSaveSelectedEventDetails: (
     values: AdminEventDetailsFormValues,
+    eventCode: string | null,
   ) => Promise<DraftEventSummary | null>;
   onSaveSelectedQuestionContent: (
     content: DraftEventDetail["content"],

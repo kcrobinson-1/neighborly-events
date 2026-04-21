@@ -123,6 +123,7 @@ describe("adminGameApi", () => {
     await expect(loadDraftEvent(sampleDraft.id)).resolves.toEqual({
       content: sampleDraft,
       createdAt: "2026-04-07T12:00:00.000Z",
+      eventCode: null,
       hasBeenPublished: true,
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
@@ -166,7 +167,7 @@ describe("adminGameApi", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "https://example.supabase.co/functions/v1/save-draft",
       expect.objectContaining({
-        body: JSON.stringify({ content: sampleDraft }),
+        body: JSON.stringify({ content: sampleDraft, eventCode: null }),
         credentials: "include",
         method: "POST",
       }),

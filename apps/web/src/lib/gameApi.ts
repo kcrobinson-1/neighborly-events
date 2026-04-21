@@ -69,13 +69,9 @@ function getLocalStorage() {
 }
 
 /** Creates the volunteer-facing verification code shown after completion. */
-function createVerificationCode() {
-  const token = createOpaqueId("vf")
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .slice(-8)
-    .toUpperCase();
-
-  return `MMP-${token}`;
+function createVerificationCode(eventCode: string): string {
+  const fourDigits = String(Math.floor(Math.random() * 10000)).padStart(4, "0");
+  return `${eventCode}-${fourDigits}`;
 }
 
 /** Reads and parses JSON from localStorage with a typed fallback value. */
@@ -199,7 +195,8 @@ function buildLocalCompletionResult(
   if (!entitlement) {
     entitlement = {
       createdAt: new Date().toISOString(),
-      verificationCode: createVerificationCode(),
+      // "LOC" identifies local-prototype codes as distinct from real event codes.
+      verificationCode: createVerificationCode("LOC"),
     };
     entitlements[lookupKey] = entitlement;
     entitlementStatus = "new";

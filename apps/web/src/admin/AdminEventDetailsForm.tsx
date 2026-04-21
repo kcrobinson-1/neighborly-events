@@ -1,5 +1,6 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
+import { generateEventCode } from "../lib/adminGameApi";
 import {
   createEventDetailsFormValues,
   type AdminEventDetailsFormValues,
@@ -17,7 +18,7 @@ type AdminEventDetailsFormProps = {
   isSaving: boolean;
   message: string | null;
   messageKind: "error" | "info" | "success";
-  onSave: (values: AdminEventDetailsFormValues) => Promise<DraftEventSummary | null>;
+  onSave: (values: AdminEventDetailsFormValues, eventCode: string | null) => Promise<DraftEventSummary | null>;
 };
 
 type TextFieldName = Exclude<
@@ -43,22 +44,48 @@ export function AdminEventDetailsForm({
   );
   const [values, setValues] =
     useState<AdminEventDetailsFormValues>(baselineValues);
-  const isDirty = serializeValues(values) !== serializeValues(baselineValues);
+
+  const [localEventCode, setLocalEventCode] = useState(draft.eventCode ?? "");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
+
+  const baselineEventCode = draft.eventCode ?? "";
+  const isDirty =
+    serializeValues(values) !== serializeValues(baselineValues) ||
+    localEventCode !== baselineEventCode;
 
   useEffect(() => {
     setValues(baselineValues);
   }, [baselineValues]);
 
-  // When publish transitions the slug to locked, discard any unsaved slug edit.
-  // Without this, a stale edit in form state would be sent on the next save and
-  // rejected by the backend with 422, leaving no way to correct it.
+  // When the draft is (re)loaded with a new eventCode, sync local state.
+  useEffect(() => {
+    setLocalEventCode(draft.eventCode ?? "");
+  }, [draft.eventCode]);
+
+  // When publish transitions the slug and event code to locked, discard any
+  // unsaved edits so a stale value cannot be re-sent on the next save.
   const prevHasBeenPublished = useRef(draft.hasBeenPublished);
   useEffect(() => {
     if (draft.hasBeenPublished && !prevHasBeenPublished.current) {
       setValues((currentValues) => ({ ...currentValues, slug: baselineValues.slug }));
+      setLocalEventCode(draft.eventCode ?? "");
     }
     prevHasBeenPublished.current = draft.hasBeenPublished;
-  }, [draft.hasBeenPublished, baselineValues.slug]);
+  }, [draft.hasBeenPublished, baselineValues.slug, draft.eventCode]);
+
+  const handleRegenerateEventCode = async () => {
+    setIsRegenerating(true);
+    setRegenerateError(null);
+    try {
+      const newCode = await generateEventCode();
+      setLocalEventCode(newCode);
+    } catch {
+      setRegenerateError("We couldn't generate an event code right now.");
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   const updateTextValue =
     (field: TextFieldName) =>
@@ -85,7 +112,12 @@ export function AdminEventDetailsForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void onSave(values);
+    const eventCodeToSave = localEventCode !== baselineEventCode ? localEventCode : null;
+    void onSave(values, eventCodeToSave).then((saved) => {
+      if (saved?.eventCode != null) {
+        setLocalEventCode(saved.eventCode);
+      }
+    });
   };
 
   return (
@@ -124,6 +156,46 @@ export function AdminEventDetailsForm({
               this.
             </span>
           ) : null}
+        </div>
+        <div className="admin-field">
+          <label htmlFor="admin-event-code">
+            <span className="admin-field-label">Event code</span>
+          </label>
+          <div className="admin-input-with-action">
+            <input
+              className="admin-input"
+              disabled={disabled || draft.hasBeenPublished}
+              id="admin-event-code"
+              maxLength={3}
+              onBlur={(e) => setLocalEventCode(e.target.value.toUpperCase())}
+              onChange={(e) => setLocalEventCode(e.target.value.toUpperCase())}
+              pattern="[A-Z]{3}"
+              title={
+                draft.hasBeenPublished
+                  ? "Event code is locked after publishing."
+                  : undefined
+              }
+              type="text"
+              value={localEventCode}
+            />
+            <button
+              className="secondary-button"
+              disabled={disabled || draft.hasBeenPublished || isRegenerating}
+              onClick={() => { void handleRegenerateEventCode(); }}
+              type="button"
+            >
+              {isRegenerating ? "Generating..." : "Regenerate"}
+            </button>
+          </div>
+          {regenerateError ? (
+            <span className="admin-field-hint admin-field-hint-error">{regenerateError}</span>
+          ) : (
+            <span className="admin-field-hint">
+              {draft.hasBeenPublished
+                ? "Locked after publishing — entitlement codes depend on this."
+                : "3-letter prefix used in entitlement codes (e.g. ABC-1234). Auto-generated — change it if you want a more memorable prefix."}
+            </span>
+          )}
         </div>
         <label className="admin-field">
           <span className="admin-field-label">Location</span>
