@@ -362,18 +362,14 @@ select ok(
   'service_role cannot update event_role_assignments (insert+delete only)'
 );
 
--- Seed real auth.users rows so event_role_assignments FK checks pass
--- with FK triggers fully enabled. This avoids needing session_replication_role
--- = 'replica', which is superuser-only and would also suppress the
--- ON DELETE CASCADE trigger we rely on further down. Only id is strictly
--- required by the auth.users schema; everything else is defaulted or
--- nullable, and the test transaction rolls back at the end.
-insert into auth.users (id) values
-  ('33333333-3333-4333-8333-333333333333'::uuid),
-  ('44444444-4444-4444-8444-444444444444'::uuid),
-  ('55555555-5555-4555-8555-555555555555'::uuid),
-  ('66666666-6666-4666-8666-666666666666'::uuid),
-  ('77777777-7777-4777-8777-777777777777'::uuid);
+-- Drop the auth.users FK for the duration of this test transaction so
+-- the structural assertions below can use synthetic user_id UUIDs
+-- without needing to seed auth.users (whose schema is owned by Supabase
+-- and varies across CLI versions). The rollback at the end of the file
+-- restores the FK; no other test file relies on it not being present
+-- mid-transaction.
+alter table public.event_role_assignments
+  drop constraint event_role_assignments_user_id_fkey;
 
 -- role CHECK rejects values outside ('agent', 'organizer').
 select throws_ok(
@@ -484,9 +480,9 @@ select ok(
 );
 
 -- ─── Permission helpers: truth tables ────────────────────────────────────────
--- auth.users rows were seeded above. Insert assignments under normal FK
--- enforcement, then impersonate each scenario via JWT claims and assert
--- the helper verdicts.
+-- The auth.users FK was dropped above for this transaction, so synthetic
+-- user_id UUIDs insert cleanly. Impersonate each scenario via JWT claims
+-- and assert the helper verdicts.
 
 insert into public.event_role_assignments (user_id, event_id, role)
 values
