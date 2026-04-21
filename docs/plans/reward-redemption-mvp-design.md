@@ -574,12 +574,12 @@ Operational success at event:
      [`reward-redemption-phase-a-2-plan.md`](./reward-redemption-phase-a-2-plan.md).
    - **Phase A.2b — Edge Function wrappers + attendee read path.** *Open.*
      The redeem and reverse Edge Function wrappers, the attendee
-     `get-redemption-status` read path, Vitest for envelope-to-HTTP
-     mapping, and a shared TypeScript envelope type in `shared/`. A.2a's
-     pgTAP suite pins the outcome contract so A.2b only has to mirror it
-     through HTTP. Corresponds to migration-sequence step 5 in checklist
-     item 10. A.2b will get its own plan doc when A.2a's reviewed state
-     is stable.
+     `get-redemption-status` read path, handler coverage for
+     envelope-to-HTTP mapping, and a shared TypeScript envelope type in
+     `shared/`. A.2a's pgTAP suite pins the outcome contract so A.2b only
+     has to mirror it through HTTP. Corresponds to migration-sequence step
+     5 in checklist item 10. See
+     [`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md).
 
    Split along two seams. First seam: A.1 (inert foundation) vs. A.2
    (mutation + read behavior), so structural review is not mixed with
