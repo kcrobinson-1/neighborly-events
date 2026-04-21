@@ -299,9 +299,13 @@ select ok(
   'anon cannot read event_role_assignments'
 );
 
+-- Updated by A.2a: the scoped RLS self-read policy grants authenticated
+-- SELECT on event_role_assignments; the policy filters rows to the
+-- caller's own assignments (plus root-admin overrides). Verified
+-- behaviorally in redemption_rls.test.sql.
 select ok(
-  not has_table_privilege('authenticated', 'public.event_role_assignments', 'SELECT'),
-  'authenticated cannot read event_role_assignments directly'
+  has_table_privilege('authenticated', 'public.event_role_assignments', 'SELECT'),
+  'authenticated has SELECT on event_role_assignments (RLS scopes the visible rows via A.2a policy)'
 );
 
 -- has_table_privilege with a comma-separated privilege list returns true
