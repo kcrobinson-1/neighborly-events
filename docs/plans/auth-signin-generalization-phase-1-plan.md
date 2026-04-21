@@ -154,8 +154,10 @@ Implementation contract:
 
 The function does not reach into Phase B route matchers; those get
 added to the allow-list as part of each Phase B sub-phase diff, not
-here. Sub-phases that add routes also extend `AuthNextPath` so the
-return type stays tight.
+here. Sub-phases extend `AppPath` in `routes.ts` and add matcher
+branches to `validateNextPath`'s allow-list; `AuthNextPath` stays in
+sync automatically via `Exclude<AppPath, "/auth/callback">` and must
+not be hand-edited per sub-phase.
 
 ### `apps/web/src/auth/types.ts`
 
