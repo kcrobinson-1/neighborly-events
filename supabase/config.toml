@@ -17,3 +17,12 @@ verify_jwt = false
 
 [functions.unpublish-event]
 verify_jwt = false
+
+[functions.redeem-entitlement]
+verify_jwt = false
+
+[functions.reverse-entitlement-redemption]
+verify_jwt = false
+
+[functions.get-redemption-status]
+verify_jwt = false
