@@ -11,6 +11,68 @@ changes in `docs/tracking/dev-workflow-improvements.md` instead.
 
 ## Candidate Refinements
 
+Recent browser walkthrough notes from the deployed `/admin` surface
+(`2026-04-21`) that should inform prioritization:
+
+- the signed-in desktop workspace is still dominated by the auth-era hero, so
+  the actual editor starts too low on the page
+- the selected-question actions and editor body feel detached from the selected
+  question list, which makes ownership harder to scan
+- answer-option rows feel cramped and fragile once labels, correctness
+  controls, and delete actions share the same space
+- at least one event currently appears as `Live` in admin while `Open live
+  game` lands on the public unavailable state
+
+### Align admin live status with public-route availability
+
+Status: open
+
+Value:
+
+- restores trust in the admin surface by making `Live` mean that the linked
+  public route is actually reachable
+- prevents organizers from using the admin dashboard as a source of truth while
+  it can still send them to an unavailable attendee route
+- clarifies whether smoke-only or temporarily unavailable events need a state
+  distinct from generic `Live`
+
+Work required:
+
+- reconcile dashboard and selected-workspace status badges with the real public
+  route availability state
+- make `Open live game` either land on a reachable public route or explain why
+  the event is not currently available
+- decide whether unavailable-but-published events need their own label, count,
+  or filtering treatment in the admin list
+- review whether production smoke fixtures should look identical to operator
+  events in the deployed admin UI
+
+Open questions:
+
+- should `Live` mean "published row exists" or "organizer can open the attendee
+  route successfully right now"?
+- should the admin list distinguish between live, draft-only, and unavailable
+  public-route states?
+- if an event is intentionally smoke-only or temporarily unavailable, should
+  the action be disabled, relabeled, or linked to diagnostics instead of the
+  attendee route?
+
+Steps to complete:
+
+1. Reproduce the mismatch from `/admin` through `Open live game`.
+2. Define the authoritative state model for admin status badges and counts.
+3. Update the dashboard/workspace UI so status and action behavior match the
+   real public-route state.
+4. Validate the corrected behavior in the browser before handoff.
+
+Minimum validation:
+
+- browser check from `/admin` list and selected workspace through `Open live
+  game`
+- `npm run test:e2e:admin`
+- production admin smoke rerun or equivalent deployed verification when this
+  lands on a release branch
+
 ### Improve the mobile question editor layout
 
 Status: open
@@ -21,6 +83,8 @@ Value:
   reviewers will reach first
 - reduces clipped option labels and the feeling that the editor is fighting the
   screen instead of fitting it
+- improves the crowded answer-option rows that already feel brittle in the
+  current desktop editor once labels and per-option actions compete for space
 - gives the admin workspace a clearer polish signal before preview and publish
   phases land
 
@@ -30,6 +94,8 @@ Work required:
   editor, and option controls do not crowd each other
 - tighten the spacing and width constraints around option labels and per-option
   actions
+- verify that longer option labels still read cleanly without making the
+  correctness control and delete action feel detached from the edited option
 - verify the editor still keeps its explicit save and validation states visible
   after the layout change
 
@@ -65,16 +131,22 @@ Value:
 - makes the selected event workspace easier to scan on wide screens
 - reduces the sense that the question list and editor are stacked as two equal
   panels when they actually have different jobs
+- removes the signed-in desktop feeling that the page is still an auth shell
+  with an oversized hero rather than an active editor workspace
 - helps future preview or publish controls fit into the page without crowding
   the editor
 
 Work required:
 
+- reduce or restack the signed-in hero/auth chrome so the selected workspace and
+  first editing actions appear higher in the viewport
 - reconsider the balance between the selected-event summary, the event-details
   form, and the question editor on desktop widths
 - decide whether the question list should read as navigation, as a sidebar, or
   as part of the editor body
-- make the action hierarchy clearer so primary save actions remain obvious
+- make the action hierarchy clearer so primary save actions remain obvious and
+  list-level actions such as `Open workspace` and `Open live game` do not blend
+  together visually
 
 Open questions:
 
@@ -83,6 +155,8 @@ Open questions:
   mobile?
 - does the question list need a separate heading or visual treatment to read as
   selection state rather than content?
+- should signed-in admins see a more compact page header than signed-out admins
+  so the editor starts above the fold on laptop-sized screens?
 - should the future preview and publish phases reserve a fixed space in the
   desktop layout now, or be added only when they land?
 
@@ -143,4 +217,3 @@ Minimum validation:
 
 - browser check of the selected-workspace saved and failed-save states
 - updated admin screenshot capture if the route or layout changes
-
