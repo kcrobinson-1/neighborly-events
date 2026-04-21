@@ -184,9 +184,13 @@ so each sub-phase plan can inherit them rather than re-deciding:
   with redemption-specific copy ("Sign in to redeem codes" / "Sign in
   to review redemptions"). Magic-link return always lands on
   `/auth/callback?next=...`, which validates the `next` path through
-  `validateNextPath` and client-routes to the requesting route. Phase B
-  adds `matchEventRedeemPath` and `matchEventRedemptionsPath` to the
-  validator's allow-list as part of the sub-phase diffs — no Supabase
+  `validateNextPath` and client-routes to the requesting route. Each
+  Phase B sub-phase extends `AppPath` in
+  [`apps/web/src/routes.ts`](../../apps/web/src/routes.ts) with its
+  new route literal, adds the route matcher to `validateNextPath`'s
+  allow-list, and adds positive-case Vitest assertions for the new
+  route. `AuthNextPath`'s `Exclude` narrowing is automatic, so
+  sub-phases do not maintain a parallel destination type. No Supabase
   Auth dashboard change is required.
 - **Role-gate rendering.** Authenticated-but-unassigned callers see a
   role-gate state in-place, not a redirect. The state copy does not

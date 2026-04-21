@@ -42,12 +42,18 @@ but nothing calls any of it.
   `signOut`, `getAccessToken`. Each is role-neutral (no admin copy,
   no hardcoded admin routes).
 - `apps/web/src/auth/validateNextPath.ts` exists as a pure function
-  `(rawNext: string | null) => AppPath`. Given any input, it either
-  returns a router-matcher-known path or falls through to
-  `routes.home`. It has no side effects.
-- `apps/web/src/auth/types.ts` exists and exports `MagicLinkState`
-  and `AuthSessionState`. The types mirror the shape the existing
-  admin code uses today so Phase 2's migration is purely rename.
+  `(rawNext: string | null) => AuthNextPath`. Given any input, it
+  either returns a router-matcher-known path that is a valid
+  post-sign-in destination or falls through to `routes.home`. It
+  has no side effects.
+- `apps/web/src/auth/types.ts` exists and exports `MagicLinkState`,
+  `AuthSessionState`, and `AuthNextPath`. `MagicLinkState` and
+  `AuthSessionState` mirror the shape the existing admin code uses
+  today so Phase 2's migration is purely rename. `AuthNextPath` is a
+  new type that narrows `AppPath` to the subset of paths that are
+  valid post-sign-in destinations — specifically excluding transport
+  routes like `/auth/callback` (added in Phase 2) — so the type
+  system prevents callback self-loops at compile time.
 - `tests/web/auth/validateNextPath.test.ts` exists and asserts the
   validator's behavior against every bypass class named in this
   plan plus the positive round-trip cases for every currently-valid
@@ -86,7 +92,7 @@ export function subscribeToAuthState(
 
 export async function requestMagicLink(
   email: string,
-  options: { next: AppPath },
+  options: { next: AuthNextPath },
 ): Promise<void>;
 
 export async function signOut(): Promise<void>;
@@ -98,8 +104,10 @@ export async function getAccessToken(): Promise<string>;
   [`supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts).
 - `requestMagicLink` always composes
   `emailRedirectTo = new URL("/auth/callback?next=" + encodeURIComponent(next), window.location.origin).toString()`.
-  No admin-specific behavior; `next` is typed as `AppPath` so callers
-  cannot pass arbitrary strings.
+  No admin-specific behavior; `next` is typed as `AuthNextPath` —
+  not `AppPath` — so callers cannot pass `/auth/callback` (or any
+  future transport-only route) as a post-sign-in destination, and
+  the type system rejects arbitrary strings.
 - `getAccessToken` returns the current session's access token or
   throws `new Error("Sign-in is required.")` when there is no session.
 - Error messages are role-neutral:
@@ -114,7 +122,7 @@ export async function getAccessToken(): Promise<string>;
 ### `apps/web/src/auth/validateNextPath.ts`
 
 ```ts
-export function validateNextPath(rawNext: string | null): AppPath;
+export function validateNextPath(rawNext: string | null): AuthNextPath;
 ```
 
 Implementation contract:
@@ -128,25 +136,32 @@ Implementation contract:
    protocol-relative `//` URLs, and non-http(s) schemes
    (`javascript:`, `data:`, `mailto:`, etc.) because their parsed
    `.origin` will not match.
-4. Match `parsed.pathname` against an allow-list:
+4. Match `parsed.pathname` against an allow-list of valid
+   post-sign-in destinations:
    - `routes.home` → return `routes.home`.
    - `routes.admin` → return `routes.admin`.
    - `matchAdminEventPath(parsed.pathname)` non-null → return
-     `parsed.pathname as AppPath`.
+     `parsed.pathname as AuthNextPath`.
    - `matchGamePath(parsed.pathname)` non-null → return
-     `parsed.pathname as AppPath`.
-5. Any unmatched pathname → return `routes.home`.
+     `parsed.pathname as AuthNextPath`.
+5. Any unmatched pathname → return `routes.home`. This includes
+   `/auth/callback` after Phase 2 adds it to `AppPath`:
+   transport-only routes are deliberately outside the validator's
+   allow-list, so `next=/auth/callback` falls through to home and
+   cannot self-loop.
 6. Never read or return `parsed.search`, `parsed.hash`, or
    `parsed.href`.
 
 The function does not reach into Phase B route matchers; those get
 added to the allow-list as part of each Phase B sub-phase diff, not
-here.
+here. Sub-phases that add routes also extend `AuthNextPath` so the
+return type stays tight.
 
 ### `apps/web/src/auth/types.ts`
 
 ```ts
 import type { Session } from "@supabase/supabase-js";
+import type { AppPath } from "../routes";
 
 export type MagicLinkState = {
   message: string | null;
@@ -158,11 +173,27 @@ export type AuthSessionState =
   | { status: "loading" }
   | { status: "signed_out" }
   | { email: string | null; session: Session; status: "signed_in" };
+
+/**
+ * A subset of `AppPath` that is valid as a post-sign-in destination.
+ * Transport-only routes like `/auth/callback` (added in Phase 2) are
+ * excluded so the type system prevents callback self-loops in
+ * `requestMagicLink` and `validateNextPath`.
+ *
+ * Each Phase B sub-phase that adds a new authenticated destination
+ * must extend both `AppPath` (for the router) and leave `AuthNextPath`
+ * unchanged; the `Exclude` keeps the narrowing automatic.
+ */
+export type AuthNextPath = Exclude<AppPath, "/auth/callback">;
 ```
 
-Shapes are verbatim ports of the existing `AdminMagicLinkState` and
-`AdminSessionState` so Phase 2's migration is a pure rename on the
-consumer side.
+`MagicLinkState` and `AuthSessionState` are verbatim ports of the
+existing `AdminMagicLinkState` and `AdminSessionState` so Phase 2's
+migration is a pure rename on the consumer side. `AuthNextPath` is
+new; at Phase 1 merge time, `AppPath` does not yet include
+`"/auth/callback"`, so `AuthNextPath` is structurally equal to
+`AppPath`. The `Exclude` becomes active in Phase 2 when `AppPath`
+gains the callback literal.
 
 ## Target Structure
 
@@ -266,7 +297,7 @@ Vitest with `window.location.origin` stubbed to a fixed
 | `"http://example.test/admin"` when origin is `https://example.test` | Scheme mismatch |
 | `"\u202e/admin"` | RTL override prefix |
 
-**Accepted — must return the unchanged pathname as `AppPath`:**
+**Accepted — must return the unchanged pathname as `AuthNextPath`:**
 
 | Input | Notes |
 |-------|-------|
@@ -276,6 +307,17 @@ Vitest with `window.location.origin` stubbed to a fixed
 | `"/admin/events/id%20with%20spaces"` | URL-encoded admin event id |
 | `"/event/some-slug/game"` | Attendee game route |
 | `"/event/some-slug/game?foo=bar"` | Query is dropped; pathname round-trips |
+
+**Callback self-loop guard:**
+
+A dedicated assertion asserts that `validateNextPath("/auth/callback")`
+returns `routes.home`. This is belt-and-suspenders: `AuthNextPath`'s
+`Exclude` already prevents callers from typing `/auth/callback` as a
+literal `next`, but the validator must also reject it when an
+attacker crafts a raw `?next=/auth/callback` query parameter that
+bypasses the type system. The assertion lives next to the other
+rejected-path entries so reviewers see it alongside the rest of the
+defense.
 
 The suite must also assert that `validateNextPath` does not throw
 on any input, including intentionally malformed strings.
@@ -360,8 +402,9 @@ Decisions and applied at the Phase 1 granularity:
 - `requestMagicLink` always targets `/auth/callback?next=...`.
 - `validateNextPath` uses a pure router-matcher allow-list with no
   HMAC signing.
-- `AppPath` at the API boundary is the type-level gate that makes
-  `next` handling safe.
+- `AuthNextPath` at the API boundary is the type-level gate that
+  makes `next` handling safe, narrower than `AppPath` to exclude
+  transport-only routes.
 
 Phase-local decisions:
 
