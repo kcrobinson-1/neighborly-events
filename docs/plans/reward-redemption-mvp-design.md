@@ -538,7 +538,36 @@ Operational success at event:
 
 ## Rollout Suggestion
 
-1. **Phase A**: backend schema + redeem/reverse RPC + seed agent manual path
+1. **Phase A**: backend schema + redeem/reverse RPC + seed agent manual path.
+   Sliced into two PRs along a scaffolding-vs-behavior seam so that reviewer
+   attention on the RPC contracts is not diluted by schema-churn noise:
+   - **Phase A.1 — Inert foundation.** Schema additions on `game_entitlements`
+     (all `redeemed_*` / `redemption_*` columns as nullable or defaulted),
+     the `(event_id, redeemed_at DESC NULLS LAST)` monitoring index from
+     checklist item 5, the role-assignment table (created empty), the three
+     permission helpers `public.is_agent_for_event(uuid)`,
+     `public.is_organizer_for_event(uuid)`, and `public.is_root_admin()`, and
+     the `supabase/role-management/` runbook skeleton from checklist item 9.
+     Nothing calls any of this yet, so the PR ships safely with pgTAP
+     coverage of constraints, helper return values, and index presence.
+     Review is structural. Corresponds to migration-sequence steps 1–2 in
+     checklist item 10.
+   - **Phase A.2 — Mutation surface.**
+     `public.redeem_entitlement_by_code(...)` and
+     `public.reverse_entitlement_redemption(...)` shipped as
+     `SECURITY DEFINER` with the `{ outcome, result }` envelope, row-level
+     locking, idempotent `already_redeemed` / `already_unredeemed` paths,
+     and cross-event-as-`not_found` behavior; scoped RLS read policies on
+     `game_entitlements` and the role-assignment table; the redeem and
+     reverse Edge Function wrappers; and the attendee redemption-status
+     read path. pgTAP for RPC state transitions and idempotency; Vitest
+     for Edge Function envelope mapping. Review is behavioral. Corresponds
+     to migration-sequence steps 3–5 in checklist item 10.
+
+   Not split finer than two PRs: separating redeem from reverse would
+   fragment the shared Edge Function scaffolding and envelope contract, and
+   the reverse RPC is close enough in shape to redeem that reviewing them
+   side-by-side is the clearer read.
 2. **Phase B**: mobile agent workspace for lookup/redeem
 3. **Phase C**: attendee completion status updates for redeemed state
 4. **Phase D**: event dry run with volunteers and script
