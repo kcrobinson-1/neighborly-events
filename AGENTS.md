@@ -128,6 +128,14 @@ step count.
   plan. Plans attract code review; every bug in a code snippet inside a
   plan costs a review round on the plan doc itself before the
   implementation even starts, which is pure churn
+- when a reviewer comment targets a code snippet inside a plan, the
+  correction is to **remove or summarize the snippet**, not to fix the
+  code in place. Code-correctness iteration belongs in the PR that
+  implements the plan. Exception: if the comment surfaces a genuine
+  design flaw whose phrasing happens to be code (e.g. an ordering
+  race, an invariant violation), fix the *prose contract* in the plan
+  and move the code to the implementation PR — don't fix both in the
+  plan
 
 ### Plan-to-PR Completion Gate
 
