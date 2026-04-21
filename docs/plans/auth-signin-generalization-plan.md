@@ -81,9 +81,11 @@ In scope:
   `subscribeToAuthState`, `requestMagicLink`, `signOut`,
   `getAccessToken`.
 - `apps/web/src/auth/validateNextPath.ts` as a pure function returning
-  `AppPath`.
-- `apps/web/src/auth/types.ts` with `MagicLinkState` and
-  `AuthSessionState`.
+  `AuthNextPath` — the narrowed subset of `AppPath` that excludes
+  transport-only routes like `/auth/callback`, so callback self-loops
+  are blocked at compile time.
+- `apps/web/src/auth/types.ts` with `MagicLinkState`,
+  `AuthSessionState`, and `AuthNextPath`.
 - `tests/web/auth/validateNextPath.test.ts` with exhaustive coverage
   of open-redirect bypass classes.
 
@@ -350,7 +352,14 @@ the `/auth/callback` allowlist entry in place for faster re-roll.
   route (Phase 2) with `validateNextPath` allow-list defense
   (Phase 1).
 - **Open-redirect defense:** pure allow-list using router matchers,
-  typed as `AppPath` at the API boundary. No HMAC signing.
+  typed as `AuthNextPath` at the API boundary —
+  `Exclude<AppPath, "/auth/callback">`, narrower than `AppPath` so
+  transport-only routes are rejected at compile time. No HMAC signing.
+- **Naming `AuthNextPath`.** The type lives in `auth/types.ts`
+  (Phase 1) and is consumed by `requestMagicLink` and
+  `validateNextPath`. Sub-phases that add routes only extend
+  `AppPath` and `validateNextPath`'s allow-list; `AuthNextPath`
+  stays in sync automatically via `Exclude`.
 - **SCSS scope:** `_signin.scss` (Phase 2) with neutral class names;
   admin form primitives stay in `_admin.scss`.
 - **`getAccessToken`:** role-neutral helper in `authApi.ts` (Phase 1).
@@ -364,7 +373,7 @@ the `/auth/callback` allowlist entry in place for faster re-roll.
 - `/admin` behaves as before but consumes role-neutral auth
   primitives.
 - `/auth/callback` is a role-neutral magic-link return handler that
-  consumes any validated `next: AppPath`.
+  consumes any validated `next: AuthNextPath`.
 - [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
   can schedule B.1 implementation against `SignInForm`,
   `useAuthSession`, `requestMagicLink({ next })`, `getAccessToken`,
