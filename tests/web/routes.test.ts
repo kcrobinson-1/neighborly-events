@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { matchAdminEventPath, matchGamePath, routes } from "../../apps/web/src/routes";
+import {
+  matchAdminEventPath,
+  matchEventRedeemPath,
+  matchGamePath,
+  routes,
+} from "../../apps/web/src/routes";
 
 describe("admin event routes", () => {
   it("builds and parses one selected admin event path", () => {
@@ -34,5 +39,23 @@ describe("game routes", () => {
     expect(matchGamePath("/event/madrona-music-2026")).toBeNull();
     expect(matchGamePath("/event/madrona-music-2026/game/extra")).toBeNull();
     expect(matchGamePath("/event/event%2Fid/game")).toBeNull();
+  });
+});
+
+describe("redeem routes", () => {
+  it("builds and parses one event redeem path", () => {
+    const path = routes.eventRedeem("madrona music 2026");
+
+    expect(path).toBe("/event/madrona%20music%202026/redeem");
+    expect(matchEventRedeemPath(path)).toEqual({
+      slug: "madrona music 2026",
+    });
+  });
+
+  it("rejects malformed and non-redeem paths", () => {
+    expect(matchEventRedeemPath("/event/madrona-music-2026")).toBeNull();
+    expect(matchEventRedeemPath("/event/madrona-music-2026/game")).toBeNull();
+    expect(matchEventRedeemPath("/event/madrona-music-2026/redeem/extra")).toBeNull();
+    expect(matchEventRedeemPath("/event/event%2Fid/redeem")).toBeNull();
   });
 });
