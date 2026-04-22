@@ -3,18 +3,20 @@ export type AppPath =
   | "/"
   | "/admin"
   | `/admin/events/${string}`
-  | `/event/${string}/game`;
+  | `/event/${string}/game`
+  | "/auth/callback";
 
 /** Central route definitions used by the pathname-based client router. */
 export const routes = {
-  home: "/" as AppPath,
-  admin: "/admin" as AppPath,
+  home: "/",
+  admin: "/admin",
   adminEventsPrefix: "/admin/events",
   adminEvent: (eventId: string): AppPath =>
     `/admin/events/${encodeURIComponent(eventId)}`,
   gamePrefix: "/event",
   game: (slug: string): AppPath =>
     `/event/${encodeURIComponent(slug)}/game`,
+  authCallback: "/auth/callback",
 } as const;
 
 /** Removes trailing slashes so route comparisons stay stable. */

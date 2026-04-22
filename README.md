@@ -128,8 +128,9 @@ Supabase-backed published content in this mode.
 
 The admin authoring shell and authoring APIs also require:
 
-- Supabase Auth Site URL and redirect URLs that include the `/admin` origins
-  you use
+- Supabase Auth Site URL and redirect URL allowlist that include each
+  `<origin>/auth/callback` you use (admin sign-in and future
+  authenticated routes all return through that single handler)
 - your normalized admin email to be active in `public.admin_users`
 
 If you do not have backend access and only need frontend iteration:

@@ -1,9 +1,9 @@
 import type { FormEvent } from "react";
-import type { AdminSessionState } from "./useAdminSession";
+import type { AuthSessionState, MagicLinkState } from "../auth/types";
+import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
 import type {
   AdminDashboardState,
   AdminDraftMutationState,
-  AdminMagicLinkState,
   AdminPublishState,
   AdminQuestionSaveState,
   AdminSelectedDraftState,
@@ -12,14 +12,23 @@ import type {
 import type { AdminEventDetailsFormValues } from "./eventDetails";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
 import { AdminEventWorkspace } from "./AdminEventWorkspace";
-import { AdminSignInForm } from "./AdminSignInForm";
+
+const ADMIN_SIGN_IN_COPY: SignInFormCopy = {
+  emailInputId: "admin-email",
+  emailLabel: "Admin email",
+  emailPlaceholder: "admin@example.com",
+  eyebrow: "Magic-link sign-in",
+  heading: "Send a sign-in link to an admin email.",
+  submitLabelIdle: "Email sign-in link",
+  submitLabelPending: "Sending sign-in link...",
+};
 
 type AdminDashboardContentProps = {
   dashboardState: AdminDashboardState;
   draftMutationState: AdminDraftMutationState;
   emailInput: string;
   hasDraftChanges: boolean;
-  magicLinkState: AdminMagicLinkState;
+  magicLinkState: MagicLinkState;
   focusedQuestionId: string | null;
   onCancelUnpublish: () => void;
   onConfirmUnpublish: () => void;
@@ -44,7 +53,7 @@ type AdminDashboardContentProps = {
   questionSaveState: AdminQuestionSaveState;
   selectedDraftState: AdminSelectedDraftState;
   selectedEventId?: string;
-  sessionState: AdminSessionState;
+  sessionState: AuthSessionState;
   unpublishState: AdminUnpublishState;
 };
 
@@ -106,7 +115,8 @@ export function AdminDashboardContent({
 
   if (sessionState.status === "signed_out") {
     return (
-      <AdminSignInForm
+      <SignInForm
+        copy={ADMIN_SIGN_IN_COPY}
         emailInput={emailInput}
         magicLinkState={magicLinkState}
         onEmailInputChange={onEmailInputChange}

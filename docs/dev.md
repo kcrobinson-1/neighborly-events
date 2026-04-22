@@ -148,12 +148,15 @@ That means:
 - the allowlist check lives in SQL through `public.is_admin()`, not in
   browser-only state
 
-Magic-link sign-in uses the current browser origin to request a Supabase Auth
-redirect back to `/admin`. For production, Supabase Auth must have the deployed
-web origin as its Site URL and must allow the deployed `/admin` URL as a
-redirect URL. If those dashboard values still point at a local default such as
-`http://localhost:3000`, emailed links can send admins to the wrong origin even
-when the app requested the correct redirect.
+Magic-link sign-in uses the current browser origin to request a Supabase
+Auth redirect back through `/auth/callback?next=/admin` — the role-neutral
+return handler that establishes the session and forwards the visitor to
+the validated destination. For production, Supabase Auth must have the
+deployed web origin as its Site URL and must allow the deployed
+`<origin>/auth/callback` as a redirect URL. If those dashboard values
+still point at a local default such as `http://localhost:3000`, emailed
+links can send admins to the wrong origin even when the app requested
+the correct redirect.
 
 ### Offline fallback stays explicit
 

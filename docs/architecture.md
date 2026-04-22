@@ -94,9 +94,20 @@ grouped into a dedicated `apps/web/src/game/` module:
   the route shell.
 - `apps/web/src/lib/gameApi.ts`
   Client-side session bootstrap and completion submission logic, including the local-development fallback.
+- `apps/web/src/lib/authApi.ts`
+  Role-neutral Supabase Auth helpers shared across every authenticated
+  surface: session restore/subscribe, magic-link requests targeting
+  `/auth/callback?next=…`, sign-out, and access-token retrieval.
 - `apps/web/src/lib/adminGameApi.ts`
-  Browser auth, admin-status RPC, private draft reads, and authenticated
-  authoring function calls.
+  Admin-status RPC, private draft reads, and authenticated authoring
+  function calls. Auth primitives live in `authApi.ts`;
+  `callAuthoringFunction` reads the session access token through
+  `getAccessToken()` there.
+- `apps/web/src/auth/`
+  Role-neutral sign-in surface consumed by every authenticated route:
+  `validateNextPath`, `SignInForm`, `useAuthSession`, and
+  `AuthCallbackPage` (the magic-link return handler at
+  `/auth/callback`).
 - `apps/web/src/lib/gameContentApi.ts`
   Browser reads for published event summaries and route content.
 - `apps/web/src/lib/supabaseBrowser.ts`
@@ -105,8 +116,8 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/web/src/lib/session.ts`
   Small client id-generation helpers.
 - `apps/web/src/admin/`
-  Admin-session and dashboard hooks plus presentational components for
-  magic-link sign-in, status states, the event workspace, and selected draft
+  Admin dashboard hooks plus presentational components for
+  status states, the event workspace, and selected draft
   event routes under `/admin`.
 - `apps/web/src/types/game.ts`
   Client-side types for completion payloads and results.
@@ -385,10 +396,14 @@ Today that route:
   delete draft answer options
 - keeps non-admin authenticated users out of the draft data path
 
-The browser requests magic links with an explicit `/admin` redirect on the
-current origin. Supabase Auth dashboard settings still have to allow that URL,
-and the project Site URL should match the deployed web origin so email links do
-not fall back to a local default.
+The browser requests magic links with `requestMagicLink(email,
+{ next: routes.admin })`, which transits the return trip through
+`/auth/callback?next=/admin`. The Supabase Auth dashboard redirect URL
+allowlist must include `<origin>/auth/callback` for every environment,
+and the project Site URL should match the deployed web origin so email
+links do not fall back to a local default. Adding a new authenticated
+route in a later phase only requires extending `AppPath` and the
+`validateNextPath` allow-list — no new dashboard entry is needed.
 
 The visible admin page can create, duplicate, and update event-level,
 question-level, and answer-option private draft content, but the backend API
@@ -512,9 +527,10 @@ Those services have distinct roles:
 - `Vercel` is not the backend of record. It serves the built SPA and handles route rewrites for browser navigation.
 - `Supabase` is not rendering the game UI. It stores data and runs the trusted completion/session logic.
 
-In this repo, [apps/web/vercel.json](../apps/web/vercel.json) rewrites `/admin`
-and `/event/:path*` to `index.html` so the SPA can resolve those URLs in the
-browser after deployment.
+In this repo, [apps/web/vercel.json](../apps/web/vercel.json) rewrites
+`/admin/:path*`, `/event/:path*`, and `/auth/:path*` to `index.html`
+so the SPA can resolve those URLs — including the magic-link return
+handler at `/auth/callback` — in the browser after deployment.
 
 The current deployment discipline is simpler:
 

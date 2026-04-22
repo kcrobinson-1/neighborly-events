@@ -1,12 +1,15 @@
 # Auth Sign-In Generalization — Overview Plan
 
-**Status:** Proposed — not started. This is a phase overview that names
-the two sub-phase boundaries and their prerequisite ordering. Full
-execution plans for each sub-phase are drafted separately, close to
-their implementation time, following the Phase A precedent
-([A.1](./archive/reward-redemption-phase-a-1-plan.md),
-[A.2a](./archive/reward-redemption-phase-a-2-plan.md),
-[A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
+**Status:** Landed. Both sub-phases are on `main`: Phase 1 delivered the
+role-neutral primitives inert, and Phase 2 wired them into the admin
+shell behind `/auth/callback`. See the sub-phase execution plans
+([Phase 1](./auth-signin-generalization-phase-1-plan.md),
+[Phase 2](./auth-signin-generalization-phase-2-plan.md)) for the
+landed surface; this overview remains as the architectural reference
+for Phase B consumers. Sub-phase plans follow the Phase A precedent
+([A.1](./reward-redemption-phase-a-1-plan.md),
+[A.2a](./reward-redemption-phase-a-2-plan.md),
+[A.2b](./reward-redemption-phase-a-2b-plan.md)).
 **Parent context:** Prerequisite for
 [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md).
 Both sub-phases must land before Phase B starts.

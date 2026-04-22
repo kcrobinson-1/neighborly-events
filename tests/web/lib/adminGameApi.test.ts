@@ -234,7 +234,7 @@ describe("adminGameApi", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(publishDraftEvent(sampleDraft.id)).rejects.toThrow(
-      "Admin sign-in is required.",
+      "Sign-in is required.",
     );
     expect(fetchMock).not.toHaveBeenCalled();
   });

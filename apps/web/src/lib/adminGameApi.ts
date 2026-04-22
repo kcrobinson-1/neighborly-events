@@ -1,9 +1,8 @@
-import type { Session } from "@supabase/supabase-js";
 import {
   parseAuthoringGameDraftContent,
   type AuthoringGameDraftContent,
 } from "../../../../shared/game-config";
-import { routes } from "../routes";
+import { getAccessToken } from "./authApi";
 import {
   createSupabaseAuthHeaders,
   getBrowserSupabaseClient,
@@ -72,16 +71,6 @@ function createFunctionUrl(functionName: string) {
   return `${getSupabaseConfig().supabaseUrl}/functions/v1/${functionName}`;
 }
 
-async function getAdminAccessToken() {
-  const session = await getAdminSession();
-
-  if (!session?.access_token) {
-    throw new Error("Admin sign-in is required.");
-  }
-
-  return session.access_token;
-}
-
 async function callAuthoringFunction<T>(
   functionName: string,
   body: Record<string, unknown>,
@@ -93,7 +82,7 @@ async function callAuthoringFunction<T>(
     throw new Error("Admin authoring needs Supabase configuration.");
   }
 
-  const accessToken = await getAdminAccessToken();
+  const accessToken = await getAccessToken();
   const response = await fetch(createFunctionUrl(functionName), {
     body: JSON.stringify(body),
     credentials: "include",
@@ -112,55 +101,6 @@ async function callAuthoringFunction<T>(
   }
 
   return (await response.json()) as T;
-}
-
-/** Restores the current browser auth session for the admin route. */
-export async function getAdminSession(): Promise<Session | null> {
-  const { data, error } = await getBrowserSupabaseClient().auth.getSession();
-
-  if (error) {
-    throw new Error("We couldn't restore the admin session right now.");
-  }
-
-  return data.session;
-}
-
-/** Subscribes to browser auth changes for the admin route. */
-export function subscribeToAdminAuthState(
-  onSessionChange: (session: Session | null) => void,
-) {
-  const { data } = getBrowserSupabaseClient().auth.onAuthStateChange(
-    (_event, session) => {
-      onSessionChange(session);
-    },
-  );
-
-  return () => {
-    data.subscription.unsubscribe();
-  };
-}
-
-/** Requests a Supabase magic-link sign-in email for the admin route. */
-export async function requestAdminMagicLink(email: string) {
-  const { error } = await getBrowserSupabaseClient().auth.signInWithOtp({
-    email: email.trim(),
-    options: {
-      emailRedirectTo: new URL(routes.admin, window.location.origin).toString(),
-    },
-  });
-
-  if (error) {
-    throw new Error(error.message || "We couldn't send the admin sign-in link.");
-  }
-}
-
-/** Signs the current browser admin session out. */
-export async function signOutAdmin() {
-  const { error } = await getBrowserSupabaseClient().auth.signOut();
-
-  if (error) {
-    throw new Error("We couldn't sign out right now.");
-  }
 }
 
 /** Checks whether the current authenticated session is allowlisted for game authoring. */

@@ -7,6 +7,10 @@
     {
       "source": "/event/:path*",
       "destination": "/index.html"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "/index.html"
     }
   ]
 }

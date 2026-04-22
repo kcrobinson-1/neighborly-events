@@ -13,7 +13,7 @@ import {
   type AdminEventDetailsFormValues,
 } from "./eventDetails";
 import { prepareQuestionContentForSave } from "./questionFormMapping";
-import type { useAdminSession } from "./useAdminSession";
+import type { AuthSessionState } from "../auth/types";
 
 // Structural subset of AdminDashboardState — only the fields useSelectedDraft
 // needs, so this file does not create a circular import with useAdminDashboard.
@@ -75,7 +75,7 @@ type UseSelectedDraftOptions = {
     updater: (drafts: DraftEventSummary[]) => DraftEventSummary[],
   ) => void;
   selectedEventId: string | undefined;
-  sessionState: ReturnType<typeof useAdminSession>;
+  sessionState: AuthSessionState;
 };
 
 /** Manages the selected draft's load, edit, save, and publish lifecycle. */

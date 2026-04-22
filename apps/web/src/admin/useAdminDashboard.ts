@@ -1,18 +1,22 @@
 import { type FormEvent, useEffect, useState } from "react";
+import { useAuthSession } from "../auth/useAuthSession";
+import type { MagicLinkState } from "../auth/types";
+import {
+  requestMagicLink as requestMagicLinkAuth,
+  signOut as signOutAuth,
+} from "../lib/authApi";
 import {
   getGameAdminStatus,
   listDraftEventSummaries,
   loadDraftEvent,
-  requestAdminMagicLink,
   saveDraftEvent,
-  signOutAdmin,
   type DraftEventSummary,
 } from "../lib/adminGameApi";
+import { routes } from "../routes";
 import {
   createDuplicatedDraftContent,
   createStarterDraftContent,
 } from "./draftCreation";
-import { useAdminSession } from "./useAdminSession";
 import { useSelectedDraft } from "./useSelectedDraft";
 
 // Re-export types that moved to useSelectedDraft so existing imports don't break.
@@ -30,10 +34,6 @@ export type AdminDashboardState =
   | { email: string | null; status: "unauthorized" }
   | { drafts: DraftEventSummary[]; email: string | null; status: "ready" };
 
-export type AdminMagicLinkState = {
-  message: string | null;
-  status: "idle" | "error" | "pending" | "success";
-};
 
 export type AdminDraftMutationState =
   | { message: null; status: "idle" }
@@ -57,9 +57,9 @@ function mergeDraftSummary(
 
 /** Coordinates /admin session auth, allowlist checks, and the draft list. Selected-draft editing and publish state are delegated to useSelectedDraft. */
 export function useAdminDashboard(selectedEventId?: string) {
-  const sessionState = useAdminSession();
+  const sessionState = useAuthSession();
   const [emailInput, setEmailInput] = useState("");
-  const [magicLinkState, setMagicLinkState] = useState<AdminMagicLinkState>({
+  const [magicLinkState, setMagicLinkState] = useState<MagicLinkState>({
     message: null,
     status: "idle",
   });
@@ -254,7 +254,7 @@ export function useAdminDashboard(selectedEventId?: string) {
     });
 
     try {
-      await requestAdminMagicLink(emailInput);
+      await requestMagicLinkAuth(emailInput, { next: routes.admin });
       setMagicLinkState({
         message: "Check your email for the admin sign-in link.",
         status: "success",
@@ -275,7 +275,7 @@ export function useAdminDashboard(selectedEventId?: string) {
     setIsSigningOut(true);
 
     try {
-      await signOutAdmin();
+      await signOutAuth();
     } catch (error: unknown) {
       setSignOutError(
         error instanceof Error
