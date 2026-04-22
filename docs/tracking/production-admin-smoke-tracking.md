@@ -86,7 +86,8 @@ Optional fixture overrides:
 - `PRODUCTION_SMOKE_EVENT_NAME`
   dedicated smoke event name; defaults to `Production Smoke Event`
 - `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` (optional)
-  defaults to `<PRODUCTION_SMOKE_BASE_URL>/admin` when omitted
+  defaults to `<PRODUCTION_SMOKE_BASE_URL>/auth/callback?next=/admin`
+  when omitted
 
 ### GitHub Environment Secrets
 
@@ -95,7 +96,8 @@ Optional fixture overrides:
 
 ### Supabase Runtime Requirements
 
-- Auth Site URL and redirect URL must include the deployed `/admin` origin used by smoke
+- Auth Site URL and redirect URL allowlist must include the deployed
+  `<origin>/auth/callback` entry used by smoke and admin sign-in
 - `public.admin_users` allowlist must permit the smoke admin and deny the smoke denied user
 - `ALLOWED_ORIGINS` must allow the deployed web origin used by smoke
 - `save-draft`, `publish-draft`, and `unpublish-event` must be deployed and healthy

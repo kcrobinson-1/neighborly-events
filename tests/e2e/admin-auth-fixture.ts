@@ -34,7 +34,8 @@ const defaultDeniedAdminEmail = "production-smoke-denied@example.com";
 const defaultEventId = "production-smoke-event";
 const defaultEventSlug = "production-smoke-event";
 const defaultEventName = "Production Smoke Event";
-const defaultAdminRedirectUrl = "http://127.0.0.1:4173/admin";
+const defaultAdminRedirectUrl =
+  "http://127.0.0.1:4173/auth/callback?next=/admin";
 const smokeEventCodeCandidates = ["SMK", "SMA", "SMB", "SMC", "SMD"];
 
 function readRequiredEnv(name: string) {
@@ -70,7 +71,9 @@ function readFixtureConfig(): FixtureConfig {
     eventSlug: readOptionalEnv("TEST_ADMIN_EVENT_SLUG") ?? defaultEventSlug,
     adminRedirectUrl:
       readOptionalEnv("TEST_ADMIN_REDIRECT_URL") ??
-      (baseUrl ? `${baseUrl}/admin` : defaultAdminRedirectUrl),
+      (baseUrl
+        ? `${baseUrl}/auth/callback?next=/admin`
+        : defaultAdminRedirectUrl),
   };
 }
 
