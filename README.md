@@ -29,6 +29,9 @@ This repository currently includes:
   a successful publish
 - authenticated admin APIs for draft save, publish, and unpublish operations
 - server-generated 3-letter event codes for drafts and published events
+- an authenticated direct-entry redeem route at `/event/:slug/redeem` for
+  event agents and root admins, backed by the existing trusted redemption API
+  and still intentionally undiscoverable in app navigation
 - one-question-at-a-time quiz flow with back navigation
 - multiple quiz feedback modes
 - shared quiz mapping, validation, and scoring logic

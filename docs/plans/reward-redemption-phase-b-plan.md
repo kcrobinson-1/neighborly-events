@@ -1,9 +1,11 @@
 # Reward Redemption — Phase B Overview Plan
 
-**Status:** Proposed — not started. This is a phase overview that names
-the sub-phase boundaries and the prerequisites each sub-phase inherits.
-Full execution plans for each sub-phase are drafted separately, close to
-their implementation time, following the Phase A precedent
+**Status:** In progress — B.1 landed in
+[`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md);
+B.2 is not started. This overview names the remaining sub-phase boundary
+and the prerequisites each sub-phase inherits. Full execution plans for
+each sub-phase are drafted separately, close to their implementation
+time, following the Phase A precedent
 ([A.1](./archive/reward-redemption-phase-a-1-plan.md),
 [A.2a](./archive/reward-redemption-phase-a-2-plan.md),
 [A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
@@ -59,7 +61,7 @@ its own.
 
 | Sub-phase | Route | Primary users | Primary actions | Detail plan |
 |-----------|-------|---------------|-----------------|-------------|
-| **B.1** | `/event/:slug/redeem` | agents (+ root admin) | lookup, redeem | [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md) (Proposed) |
+| **B.1** | `/event/:slug/redeem` | agents (+ root admin) | lookup, redeem | [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md) (Landed) |
 | **B.2** | `/event/:slug/redemptions` | organizers (+ root admin) | list, filter, search, view, reverse | drafted before B.2 implementation as `reward-redemption-phase-b-2-plan.md` |
 
 ## Prerequisites
@@ -114,17 +116,19 @@ Out of scope for B.1:
 - Any realtime subscription, offline queue, or multi-event picker.
 - Any admin-nav link pointing at the route.
 
-Open items the B.1 detail plan must settle before implementation:
+Landed decisions from B.1:
 
-- Exact keypad SCSS token reuse vs. new tokens (prefer existing tokens
-  per [`AGENTS.md`](../../AGENTS.md) § Styling Token Discipline).
-- Whether the "not authorized for this event" state reuses the existing
-  admin "access denied" copy pattern or introduces a redemption-specific
-  variant.
-- Whether B.1 introduces a Playwright mobile-viewport smoke covering
-  lookup + redeem, or defers smoke to a single Phase B combined suite.
-- Whether B.1 ships a focused Vitest file for keypad state or relies on
-  Playwright + component review.
+- The route ships behind direct URL entry only. There is no nav link,
+  `/admin` link, role seeding, monitoring behavior, or attendee polling
+  in the B.1 diff.
+- The page reuses the existing auth shell, adds a focused
+  `apps/web/src/redeem/` module set, and keeps route authorization to
+  exactly `authorized`, `role_gate`, and `transient_error`.
+- Styling reuses existing SCSS tokens and isolates redeem-specific
+  layout/component rules in `apps/web/src/styles/_redeem.scss`.
+- B.1 owns both a focused Vitest keypad-state suite and a dedicated
+  mobile-viewport Playwright smoke backed by local Supabase plus local
+  Edge Functions.
 
 ### B.2 — `/event/:slug/redemptions`
 
@@ -231,12 +235,12 @@ so each sub-phase plan can inherit them rather than re-deciding:
 1. **Land the auth generalization.** Merge
    [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
    to `main`. Confirm `/admin` behavior unchanged in production smoke.
-2. **Draft the B.1 detail plan.** Write
-   `reward-redemption-phase-b-1-plan.md` with a locked target shape,
-   rollout sequence, tests, self-review audits, and open-items
-   resolution, following the A.2b plan template.
-3. **Implement B.1.** Land `/event/:slug/redeem` behind an unadvertised
-   entry (no nav link). Validate per the B.1 plan's stated commands.
+2. **B.1 detail plan drafted and landed.**
+   `reward-redemption-phase-b-1-plan.md` is now the terminal record for
+   the direct-entry redeem route and its validation surface.
+3. **B.1 implemented.** `/event/:slug/redeem` now ships behind an
+   unadvertised entry (no nav link) and validates per the B.1 plan's
+   stated commands.
 4. **Draft the B.2 detail plan.** Same template, scoped to monitoring
    and reversal.
 5. **Implement B.2.** Land `/event/:slug/redemptions` behind an
