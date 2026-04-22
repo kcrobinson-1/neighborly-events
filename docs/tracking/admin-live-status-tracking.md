@@ -64,8 +64,9 @@ The intended semantic split is:
   the event has never been published
 - `live_with_draft_changes`
   the public route is live, and the draft has newer unpublished edits
-- optional follow-up state only if product needs it:
-  `unavailable` for a deliberate non-standard state beyond plain unpublish
+- `paused`
+  the event was previously live and the operator has temporarily taken the
+  public route offline with intent to restore, distinct from plain unpublish
 
 `Live` should mean "publicly available by product state," not "every runtime
 dependency is healthy right this second." Operational health belongs in smoke
@@ -77,10 +78,13 @@ This should land as a short sequence, not as one large cleanup PR.
 
 ### Slice 1: Correctness Fix
 
+Status: Open
+
 Goal:
 
-- stop the admin dashboard from showing `Live` or `Open live game` when the
-  public route is unavailable by current publication state
+- stop the admin dashboard from showing `Live` or offering a working
+  `Open live game` action when the public route is unavailable by current
+  publication state
 
 Required work:
 
@@ -93,12 +97,14 @@ Required work:
 Acceptance bar:
 
 - after unpublish, a fresh `/admin` load no longer shows the event as live
-- `Open live game` is absent or replaced with explanatory copy when the route is
-  not currently available
+- `Open live game` is disabled and non-navigating when the public route is not
+  currently available; final visual treatment is decided in Slice 3
 - local admin e2e and production smoke cover the reloaded state, not only the
   inline optimistic state
 
 ### Slice 2: Read-Model Cleanup
+
+Status: Open
 
 Goal:
 
@@ -106,12 +112,12 @@ Goal:
 
 Required work:
 
-- define a server-owned admin event status read model, preferably a view or RPC,
+- define a server-owned admin event status read model as a Postgres view,
   instead of browser-side inference
 - separate current-live status from historical publish metadata such as last
   published version and first/last publish timestamps
-- rename or otherwise clarify `live_version_number` if its long-term role is
-  historical rather than current-state
+- rename `live_version_number` to `last_published_version_number` so its role
+  is unambiguously historical, and stop consuming it as a current-state signal
 
 Acceptance bar:
 
@@ -120,16 +126,17 @@ Acceptance bar:
 - the data model makes "ever published" and "currently live" impossible to
   confuse
 
-### Slice 3: Fixture And UX Follow-Up
+### Slice 3: Non-Live Action UX Follow-Up
+
+Status: Open
 
 Goal:
 
-- make the deployed admin list readable once the status model is trustworthy
+- settle the non-live `Open live game` treatment once the status model is
+  trustworthy
 
 Required work:
 
-- decide whether production smoke fixtures should be hidden, labeled, or grouped
-  separately from operator events
 - decide whether a non-live event should show disabled `Open live game`,
   alternate copy, or no action at all
 
