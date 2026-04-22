@@ -237,6 +237,26 @@ describe("AuthCallbackPage", () => {
     expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 
+  it("renders the neutral failure state when subscribeToAuthState throws synchronously", async () => {
+    setLocationSearch("?next=/admin");
+    mockSubscribeToAuthState.mockImplementation(() => {
+      throw new Error("Supabase env vars are missing.");
+    });
+    mockGetAuthSession.mockResolvedValue(null);
+    const onNavigate = vi.fn();
+
+    render(<AuthCallbackPage onNavigate={onNavigate} />);
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", {
+          name: /couldn.t use this sign-in link/i,
+        }),
+      ).toBeTruthy(),
+    );
+    expect(onNavigate).not.toHaveBeenCalled();
+  });
+
   it("unsubscribes from auth state on unmount", async () => {
     setLocationSearch("?next=/admin");
     mockGetAuthSession.mockResolvedValue(null);

@@ -48,22 +48,40 @@ export function AuthCallbackPage({ onNavigate }: AuthCallbackPageProps) {
       onNavigate(validatedNext, { replace: true });
     };
 
-    const unsubscribe = subscribeToAuthState((session) => {
-      if (session) {
-        navigateOnce();
-      }
-    });
+    let unsubscribe: () => void = () => {};
 
-    void getAuthSession()
-      .then((session) => {
+    try {
+      unsubscribe = subscribeToAuthState((session) => {
         if (session) {
           navigateOnce();
         }
-      })
-      .catch(() => {
-        // Session restoration failure falls through to the timeout guard;
-        // the neutral timeout state is the user-visible failure surface.
       });
+
+      void getAuthSession()
+        .then((session) => {
+          if (session) {
+            navigateOnce();
+          }
+        })
+        .catch(() => {
+          // Session restoration failure falls through to the timeout guard;
+          // the neutral timeout state is the user-visible failure surface.
+        });
+    } catch {
+      // Supabase client construction can throw synchronously when env vars
+      // are missing (local dev without Supabase configured). Surface the
+      // neutral timeout state on the next tick rather than crashing the
+      // route; deferring avoids a setState-in-effect-body cascade warning.
+      const immediateTimeoutId = window.setTimeout(() => {
+        if (!isCancelled) {
+          setHasTimedOut(true);
+        }
+      }, 0);
+      return () => {
+        isCancelled = true;
+        window.clearTimeout(immediateTimeoutId);
+      };
+    }
 
     const timeoutId = window.setTimeout(() => {
       if (isCancelled || hasNavigatedRef.current) {
