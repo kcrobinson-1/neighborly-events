@@ -1,8 +1,12 @@
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
 import type { AuthNextPath, MagicLinkState } from "../auth/types";
 import { useAuthSession } from "../auth/useAuthSession";
 import { requestMagicLink } from "../lib/authApi";
+import {
+  authorizeRedeem,
+  type RedeemAuthorizationResult,
+} from "../redeem/authorizeRedeem";
 import { routes } from "../routes";
 
 type EventRedeemPageProps = {
@@ -35,7 +39,7 @@ function RedeemShell(
     children,
     onNavigateHome,
   }: {
-    children: React.ReactNode;
+    children: ReactNode;
     eyebrow?: string;
     onNavigateHome: () => void;
     title: string;
@@ -68,6 +72,12 @@ function RedeemShell(
   );
 }
 
+type RedeemAccessState =
+  | { status: "idle" }
+  | { email: string | null; eventCode: string; eventId: string; status: "authorized" }
+  | { email: string | null; status: "role_gate" }
+  | { email: string | null; message: string; status: "transient_error" };
+
 /** Signed-out redemption sign-in gate and placeholder route shell for `/event/:slug/redeem`. */
 export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
   const sessionState = useAuthSession();
@@ -76,6 +86,78 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     message: null,
     status: "idle",
   });
+  const [accessState, setAccessState] = useState<RedeemAccessState>({
+    status: "idle",
+  });
+  const [reloadToken, setReloadToken] = useState(0);
+  const [resolvedAccessKey, setResolvedAccessKey] = useState("");
+  const currentAccessKey =
+    sessionState.status === "signed_in"
+      ? `${slug}:${sessionState.email ?? ""}:${reloadToken}`
+      : "";
+  const activeAccessState =
+    sessionState.status === "signed_in"
+      ? accessState
+      : ({ status: "idle" } as RedeemAccessState);
+
+  useEffect(() => {
+    if (sessionState.status !== "signed_in") {
+      return;
+    }
+
+    let isCancelled = false;
+
+    void authorizeRedeem(slug)
+      .then((result: RedeemAuthorizationResult) => {
+        if (isCancelled) {
+          return;
+        }
+
+        if (result.status === "authorized") {
+          setAccessState({
+            email: sessionState.email,
+            eventCode: result.eventCode,
+            eventId: result.eventId,
+            status: "authorized",
+          });
+          setResolvedAccessKey(currentAccessKey);
+          return;
+        }
+
+        if (result.status === "role_gate") {
+          setAccessState({
+            email: sessionState.email,
+            status: "role_gate",
+          });
+          setResolvedAccessKey(currentAccessKey);
+          return;
+        }
+
+        setAccessState({
+          email: sessionState.email,
+          message: result.message,
+          status: "transient_error",
+        });
+        setResolvedAccessKey(currentAccessKey);
+      })
+      .catch((error: unknown) => {
+        if (!isCancelled) {
+          setAccessState({
+            email: sessionState.email,
+            message:
+              error instanceof Error
+                ? error.message
+                : "We couldn't verify redeem access right now.",
+            status: "transient_error",
+          });
+          setResolvedAccessKey(currentAccessKey);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentAccessKey, reloadToken, sessionState, slug]);
 
   const requestRedeemMagicLink = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -159,16 +241,80 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     );
   }
 
+  if (resolvedAccessKey !== currentAccessKey || activeAccessState.status === "idle") {
+    return (
+      <RedeemShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Loading redeem access"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={sessionState.email} />
+          <button className="secondary-button" disabled type="button">
+            Checking event access...
+          </button>
+        </div>
+      </RedeemShell>
+    );
+  }
+
+  if (activeAccessState.status === "role_gate") {
+    return (
+      <RedeemShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Redeem event codes"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={activeAccessState.email} />
+          <div className="section-heading">
+            <h2>Not available for this event.</h2>
+          </div>
+          <p>
+            Your account is not set up to redeem codes here. If you think this
+            is a mistake, check with the event organizer.
+          </p>
+        </div>
+      </RedeemShell>
+    );
+  }
+
+  if (activeAccessState.status === "transient_error") {
+    return (
+      <RedeemShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Redeem event codes"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={activeAccessState.email} />
+          <div className="section-heading">
+            <h2>We couldn&apos;t verify redeem access right now.</h2>
+          </div>
+          <p>{activeAccessState.message}</p>
+          <button
+            className="primary-button"
+            onClick={() => setReloadToken((value) => value + 1)}
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      </RedeemShell>
+    );
+  }
+
+  const authorizedAccessState = activeAccessState;
+
   return (
     <RedeemShell
       onNavigateHome={() => onNavigate(routes.home)}
       title="Preparing redeem access"
     >
       <div className="signin-stack">
-        <SignedInAs email={sessionState.email} />
+        <SignedInAs email={authorizedAccessState.email} />
+        <span className="chip">Event code {authorizedAccessState.eventCode}</span>
         <button className="secondary-button" disabled type="button">
           Loading redemption tools...
         </button>
+        <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
       </div>
     </RedeemShell>
   );
