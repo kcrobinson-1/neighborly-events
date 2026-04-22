@@ -4,9 +4,9 @@
 the two sub-phase boundaries and their prerequisite ordering. Full
 execution plans for each sub-phase are drafted separately, close to
 their implementation time, following the Phase A precedent
-([A.1](./reward-redemption-phase-a-1-plan.md),
-[A.2a](./reward-redemption-phase-a-2-plan.md),
-[A.2b](./reward-redemption-phase-a-2b-plan.md)).
+([A.1](./archive/reward-redemption-phase-a-1-plan.md),
+[A.2a](./archive/reward-redemption-phase-a-2-plan.md),
+[A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
 **Parent context:** Prerequisite for
 [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md).
 Both sub-phases must land before Phase B starts.
@@ -68,7 +68,7 @@ touching Phase 1 (or vice versa) is straightforward.
 
 | Sub-phase | Scope | Consumers at merge | Detail plan |
 |-----------|-------|--------------------|-------------|
-| **Phase 1** | `authApi.ts` (5 helpers), `validateNextPath`, `auth/types.ts`, bypass-vector tests | None — inert | [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md) |
+| **Phase 1** | `authApi.ts` (5 helpers), `validateNextPath`, `auth/types.ts`, bypass-vector tests | None — inert | [`auth-signin-generalization-phase-1-plan.md`](./archive/auth-signin-generalization-phase-1-plan.md) |
 | **Phase 2** | `useAuthSession`, `SignInForm`, `AuthCallbackPage`, `_signin.scss`, admin-shell migration, test mocks, docs | `/admin` uses all new primitives; `/auth/callback` lives in the router | drafted as `auth-signin-generalization-phase-2-plan.md` before Phase 2 implementation |
 
 ## Sub-Phase Scope Boundaries
@@ -255,7 +255,7 @@ either sub-phase.
 ## Rollout Sequence At The Phase Level
 
 1. **Draft the Phase 1 detail plan** (done — see
-   [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md)).
+   [`auth-signin-generalization-phase-1-plan.md`](./archive/auth-signin-generalization-phase-1-plan.md)).
 2. **Implement Phase 1.** Land the inert foundation with exhaustive
    validator tests. Review focus is open-redirect correctness.
 3. **Draft the Phase 2 detail plan** close to implementation, using
