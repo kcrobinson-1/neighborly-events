@@ -3,23 +3,14 @@
 **Status:** Proposed — not started.
 **Parent overview:** [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
 **Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md).
-Phase 1 is **partially landed**:
-
-- [PR #64](https://github.com/kcrobinson-1/neighborly-scavenger-game/pull/64)
-  shipped the two inert-foundation commits (`b16fa24`
-  `feat(web): add role-neutral auth api helpers` and `adc4f3f`
-  `feat(web): add validateNextPath with bypass-vector tests`).
-- The `requestMagicLink` URL-shape and error-copy unit suite at
-  `tests/web/lib/authApi.test.ts` — required by the Phase 1 plan as
-  its Commit 3 in response to a security-adjacent reviewer flag — is
-  **not yet on `main`**. Phase 2 implementation **must not begin
-  until that test commit lands**; the suite's assertions are the
-  guardrail that `requestMagicLink`'s URL composition (which Phase 2
-  exercises end-to-end through the admin shell and the new
-  `/auth/callback` route) cannot silently regress.
-
-Phase 2's first step in § Rollout Sequence explicitly checks for that
-commit on `main` as a prerequisite before editing.
+Phase 1 is **fully landed**. Three commits on `main` satisfy the
+Phase 1 plan: `b16fa24` (role-neutral auth API helpers), `adc4f3f`
+(`validateNextPath` with bypass-vector tests), and `48b3167`
+(`requestMagicLink` URL-shape and error-copy unit suite). Phase 2
+consumes those primitives; Rollout Sequence step 1's prerequisite
+check against `main` will pass on current `main` and serves as a
+guard in case the `authApi.test.ts` file is ever inadvertently
+removed.
 **Scope:** Phase 2 only — the integration phase that wires the Phase 1
 primitives into a user-reachable flow. Ships the `/auth/callback`
 route, the role-neutral sign-in form and session hook, the admin-shell

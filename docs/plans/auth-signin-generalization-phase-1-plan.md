@@ -1,16 +1,17 @@
 # Auth Sign-In Generalization — Phase 1 Execution Plan
 
-**Status:** Partially landed. Commits `b16fa24`
-(`feat(web): add role-neutral auth api helpers`) and `adc4f3f`
-(`feat(web): add validateNextPath with bypass-vector tests`) merged
-to `main` via
-[PR #64](https://github.com/kcrobinson-1/neighborly-scavenger-game/pull/64).
-The `requestMagicLink` URL-shape and error-copy unit suite at
-`tests/web/lib/authApi.test.ts` (see Rollout Sequence § Commit 3 and
-Tests § `tests/web/lib/authApi.test.ts`) is required by this plan but
-did not land in PR #64. It must land as a follow-up commit on `main`
-before Phase 2 begins, to close the reviewer flag that URL
-composition is security-adjacent and should not be left optional.
+**Status:** Landed. Three commits on `main` satisfy this plan:
+
+- `b16fa24` `feat(web): add role-neutral auth api helpers`
+  (landed via [PR #64](https://github.com/kcrobinson-1/neighborly-scavenger-game/pull/64))
+- `adc4f3f` `feat(web): add validateNextPath with bypass-vector tests`
+  (landed via PR #64)
+- `48b3167` `test(web): pin requestMagicLink URL shape and error copy`
+  (landed via the PR opened from branch `tests/authApi-url-shape`;
+  this is the Commit 3 URL-shape unit suite the plan requires)
+
+Phase 2 is now unblocked; its detail plan's Rollout Sequence step 1
+prerequisite check against `main` will pass.
 **Parent overview:** [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
 **Successor:** [`auth-signin-generalization-phase-2-plan.md`](./auth-signin-generalization-phase-2-plan.md)
 lands the session hook, sign-in form, callback route, and admin-shell
