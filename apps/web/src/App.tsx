@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { AdminPage } from "./pages/AdminPage";
 import { LandingPage } from "./pages/LandingPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
@@ -7,7 +8,14 @@ import { matchAdminEventPath, matchGamePath, routes } from "./routes";
 import { usePathnameNavigation } from "./usePathnameNavigation";
 
 /** Resolves the pathname to the page component that should be rendered. */
-function getPageContent(pathname: string, navigate: (path: string) => void): ReactNode {
+function getPageContent(
+  pathname: string,
+  navigate: (path: string, options?: { replace?: boolean }) => void,
+): ReactNode {
+  if (pathname === routes.authCallback) {
+    return <AuthCallbackPage onNavigate={navigate} />;
+  }
+
   if (pathname === routes.home) {
     return <LandingPage onNavigate={navigate} />;
   }
