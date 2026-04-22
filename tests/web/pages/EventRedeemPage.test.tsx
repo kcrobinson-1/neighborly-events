@@ -237,4 +237,63 @@ describe("EventRedeemPage", () => {
       expect(submitCode).toHaveBeenCalledWith("1234");
     });
   });
+
+  it("clears stale access state across sign-out and re-sign-in with the same slug+email", async () => {
+    let resolveSecondAuthorize: (value: {
+      eventCode: string;
+      eventId: string;
+      status: "authorized";
+    }) => void = () => {};
+    const secondAuthorizePromise = new Promise<{
+      eventCode: string;
+      eventId: string;
+      status: "authorized";
+    }>((resolve) => {
+      resolveSecondAuthorize = resolve;
+    });
+
+    mockUseAuthSession.mockReturnValue({
+      email: "agent@example.com",
+      session: { access_token: "token" },
+      status: "signed_in",
+    });
+    mockAuthorizeRedeem
+      .mockResolvedValueOnce({
+        eventCode: "MMF",
+        eventId: "madrona-music-2026",
+        status: "authorized",
+      })
+      .mockReturnValueOnce(secondAuthorizePromise);
+
+    const { rerender } = render(
+      <EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+
+    expect(await screen.findByLabelText("Code preview")).toBeTruthy();
+
+    mockUseAuthSession.mockReturnValue({ status: "signed_out" });
+    rerender(<EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />);
+
+    expect(
+      await screen.findByRole("heading", { name: "Sign in to redeem codes" }),
+    ).toBeTruthy();
+
+    mockUseAuthSession.mockReturnValue({
+      email: "agent@example.com",
+      session: { access_token: "token" },
+      status: "signed_in",
+    });
+    rerender(<EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />);
+
+    expect(await screen.findByText("Checking event access...")).toBeTruthy();
+    expect(screen.queryByLabelText("Code preview")).toBeNull();
+
+    resolveSecondAuthorize({
+      eventCode: "MMF",
+      eventId: "madrona-music-2026",
+      status: "authorized",
+    });
+
+    expect(await screen.findByLabelText("Code preview")).toBeTruthy();
+  });
 });

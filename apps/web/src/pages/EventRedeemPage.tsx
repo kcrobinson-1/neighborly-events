@@ -1,4 +1,10 @@
-import { type FormEvent, type ReactNode, useEffect, useEffectEvent, useState } from "react";
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useEffectEvent,
+  useState,
+} from "react";
 import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
 import type { AuthNextPath, MagicLinkState } from "../auth/types";
 import { useAuthSession } from "../auth/useAuthSession";
@@ -78,33 +84,38 @@ function RedeemShell(
 
 type RedeemAccessState =
   | { status: "idle" }
-  | { email: string | null; eventCode: string; eventId: string; status: "authorized" }
-  | { email: string | null; status: "role_gate" }
-  | { email: string | null; message: string; status: "transient_error" };
+  | { eventCode: string; eventId: string; status: "authorized" }
+  | { status: "role_gate" }
+  | { message: string; status: "transient_error" };
 
-/** Signed-out redemption sign-in gate and placeholder route shell for `/event/:slug/redeem`. */
-export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
-  const sessionState = useAuthSession();
-  const [emailInput, setEmailInput] = useState("");
-  const [magicLinkState, setMagicLinkState] = useState<MagicLinkState>({
-    message: null,
-    status: "idle",
-  });
+type SignedInRedeemFlowProps = {
+  email: string | null;
+  onNavigate: (path: string) => void;
+  slug: string;
+};
+
+/**
+ * Signed-in redemption experience for `/event/:slug/redeem`.
+ *
+ * Rendered only while `sessionState.status === "signed_in"`, so signing out
+ * unmounts this component and discards its authorization cache. A fresh
+ * sign-in mounts a new instance, which guarantees a new `authorizeRedeem`
+ * probe runs before any keypad input is accepted — even when the returning
+ * session has the same email on the same slug.
+ */
+function SignedInRedeemFlow({
+  email,
+  onNavigate,
+  slug,
+}: SignedInRedeemFlowProps) {
   const [accessState, setAccessState] = useState<RedeemAccessState>({
     status: "idle",
   });
   const [reloadToken, setReloadToken] = useState(0);
   const [resolvedAccessKey, setResolvedAccessKey] = useState("");
-  const currentAccessKey =
-    sessionState.status === "signed_in"
-      ? `${slug}:${sessionState.email ?? ""}:${reloadToken}`
-      : "";
-  const activeAccessState =
-    sessionState.status === "signed_in"
-      ? accessState
-      : ({ status: "idle" } as RedeemAccessState);
+  const currentAccessKey = `${slug}:${email ?? ""}:${reloadToken}`;
   const redeemSubmit = useRedeemSubmit(
-    activeAccessState.status === "authorized" ? activeAccessState.eventId : null,
+    accessState.status === "authorized" ? accessState.eventId : null,
   );
   const keypadState = useRedeemKeypadState({
     onStartEntry: () => {
@@ -113,10 +124,6 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
   });
 
   useEffect(() => {
-    if (sessionState.status !== "signed_in") {
-      return;
-    }
-
     let isCancelled = false;
 
     void authorizeRedeem(slug)
@@ -127,7 +134,6 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
 
         if (result.status === "authorized") {
           setAccessState({
-            email: sessionState.email,
             eventCode: result.eventCode,
             eventId: result.eventId,
             status: "authorized",
@@ -138,7 +144,6 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
 
         if (result.status === "role_gate") {
           setAccessState({
-            email: sessionState.email,
             status: "role_gate",
           });
           setResolvedAccessKey(currentAccessKey);
@@ -146,7 +151,6 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
         }
 
         setAccessState({
-          email: sessionState.email,
           message: result.message,
           status: "transient_error",
         });
@@ -155,7 +159,6 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
       .catch((error: unknown) => {
         if (!isCancelled) {
           setAccessState({
-            email: sessionState.email,
             message:
               error instanceof Error
                 ? error.message
@@ -169,7 +172,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     return () => {
       isCancelled = true;
     };
-  }, [currentAccessKey, reloadToken, sessionState, slug]);
+  }, [currentAccessKey, reloadToken, slug]);
 
   const handleSubmit = async () => {
     if (!keypadState.isSubmitEnabled || redeemSubmit.isSubmitting) {
@@ -215,7 +218,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
   });
 
   useEffect(() => {
-    if (activeAccessState.status !== "authorized") {
+    if (accessState.status !== "authorized") {
       return;
     }
 
@@ -228,7 +231,132 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeAccessState.status]);
+  }, [accessState.status]);
+
+  if (resolvedAccessKey !== currentAccessKey || accessState.status === "idle") {
+    return (
+      <RedeemShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Loading redeem access"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={email} />
+          <button className="secondary-button" disabled type="button">
+            Checking event access...
+          </button>
+        </div>
+      </RedeemShell>
+    );
+  }
+
+  if (accessState.status === "role_gate") {
+    return (
+      <RedeemShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Redeem event codes"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={email} />
+          <div className="section-heading">
+            <h2>Not available for this event.</h2>
+          </div>
+          <p>
+            Your account is not set up to redeem codes here. If you think this
+            is a mistake, check with the event organizer.
+          </p>
+        </div>
+      </RedeemShell>
+    );
+  }
+
+  if (accessState.status === "transient_error") {
+    return (
+      <RedeemShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Redeem event codes"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={email} />
+          <div className="section-heading">
+            <h2>We couldn&apos;t verify redeem access right now.</h2>
+          </div>
+          <p>{accessState.message}</p>
+          <button
+            className="primary-button"
+            onClick={() => setReloadToken((value) => value + 1)}
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      </RedeemShell>
+    );
+  }
+
+  const authorizedAccessState = accessState;
+
+  return (
+    <RedeemShell
+      onNavigateHome={() => onNavigate(routes.home)}
+      title="Redeem event codes"
+    >
+      <div className="redeem-layout">
+        <div className="redeem-card-stack">
+          <SignedInAs email={email} />
+          <span className="redeem-event-badge">{authorizedAccessState.eventCode}</span>
+          <div className="redeem-status-card">
+            <p
+              aria-label="Code preview"
+              className="redeem-code-preview"
+            >
+              <span className="redeem-code-preview-prefix">
+                {authorizedAccessState.eventCode}
+              </span>
+              <strong className="redeem-code-preview-suffix">
+                {keypadState.displayCodeSuffix}
+              </strong>
+            </p>
+          </div>
+          <RedeemResultCard
+            isSubmitting={redeemSubmit.isSubmitting}
+            onClear={() => {
+              keypadState.clearDigits();
+              redeemSubmit.resetResult();
+            }}
+            onRedeemNextCode={() => {
+              keypadState.reset();
+              redeemSubmit.resetResult();
+            }}
+            onRetry={() => {
+              void handleRetryLastSubmission();
+            }}
+            state={redeemSubmit.resultState}
+          />
+        </div>
+        <RedeemKeypad
+          isSubmitEnabled={keypadState.isSubmitEnabled}
+          isSubmitting={redeemSubmit.isSubmitting}
+          onBackspace={keypadState.backspaceDigit}
+          onClear={keypadState.clearDigits}
+          onDigit={keypadState.enterDigit}
+          onSubmit={() => {
+            void handleSubmit();
+          }}
+        />
+        <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
+      </div>
+    </RedeemShell>
+  );
+}
+
+/** Event-scoped redemption route shell that gates `/event/:slug/redeem` on sign-in. */
+export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
+  const sessionState = useAuthSession();
+  const [emailInput, setEmailInput] = useState("");
+  const [magicLinkState, setMagicLinkState] = useState<MagicLinkState>({
+    message: null,
+    status: "idle",
+  });
 
   const requestRedeemMagicLink = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -312,118 +440,11 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     );
   }
 
-  if (resolvedAccessKey !== currentAccessKey || activeAccessState.status === "idle") {
-    return (
-      <RedeemShell
-        onNavigateHome={() => onNavigate(routes.home)}
-        title="Loading redeem access"
-      >
-        <div className="signin-stack">
-          <SignedInAs email={sessionState.email} />
-          <button className="secondary-button" disabled type="button">
-            Checking event access...
-          </button>
-        </div>
-      </RedeemShell>
-    );
-  }
-
-  if (activeAccessState.status === "role_gate") {
-    return (
-      <RedeemShell
-        onNavigateHome={() => onNavigate(routes.home)}
-        title="Redeem event codes"
-      >
-        <div className="signin-stack">
-          <SignedInAs email={activeAccessState.email} />
-          <div className="section-heading">
-            <h2>Not available for this event.</h2>
-          </div>
-          <p>
-            Your account is not set up to redeem codes here. If you think this
-            is a mistake, check with the event organizer.
-          </p>
-        </div>
-      </RedeemShell>
-    );
-  }
-
-  if (activeAccessState.status === "transient_error") {
-    return (
-      <RedeemShell
-        onNavigateHome={() => onNavigate(routes.home)}
-        title="Redeem event codes"
-      >
-        <div className="signin-stack">
-          <SignedInAs email={activeAccessState.email} />
-          <div className="section-heading">
-            <h2>We couldn&apos;t verify redeem access right now.</h2>
-          </div>
-          <p>{activeAccessState.message}</p>
-          <button
-            className="primary-button"
-            onClick={() => setReloadToken((value) => value + 1)}
-            type="button"
-          >
-            Retry
-          </button>
-        </div>
-      </RedeemShell>
-    );
-  }
-
-  const authorizedAccessState = activeAccessState;
-
   return (
-    <RedeemShell
-      onNavigateHome={() => onNavigate(routes.home)}
-      title="Redeem event codes"
-    >
-      <div className="redeem-layout">
-        <div className="redeem-card-stack">
-          <SignedInAs email={authorizedAccessState.email} />
-          <span className="redeem-event-badge">{authorizedAccessState.eventCode}</span>
-          <div className="redeem-status-card">
-            <p
-              aria-label="Code preview"
-              className="redeem-code-preview"
-            >
-              <span className="redeem-code-preview-prefix">
-                {authorizedAccessState.eventCode}
-              </span>
-              <strong className="redeem-code-preview-suffix">
-                {keypadState.displayCodeSuffix}
-              </strong>
-            </p>
-          </div>
-          <RedeemResultCard
-            isSubmitting={redeemSubmit.isSubmitting}
-            onClear={() => {
-              keypadState.clearDigits();
-              redeemSubmit.resetResult();
-            }}
-            onRedeemNextCode={() => {
-              keypadState.reset();
-              redeemSubmit.resetResult();
-            }}
-            onRetry={() => {
-              void handleRetryLastSubmission();
-            }}
-            state={redeemSubmit.resultState}
-          />
-        </div>
-        <RedeemKeypad
-          isSubmitEnabled={keypadState.isSubmitEnabled}
-          isSubmitting={redeemSubmit.isSubmitting}
-          onBackspace={keypadState.backspaceDigit}
-          onClear={keypadState.clearDigits}
-          onDigit={keypadState.enterDigit}
-          onSubmit={() => {
-            void handleSubmit();
-          }}
-        />
-        <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
-      </div>
-    </RedeemShell>
+    <SignedInRedeemFlow
+      email={sessionState.email}
+      onNavigate={onNavigate}
+      slug={slug}
+    />
   );
 }
