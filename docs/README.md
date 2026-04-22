@@ -37,6 +37,8 @@ If you want:
 - the named audits to run on a diff before push, read [self-review-catalog.md](./self-review-catalog.md)
 - proposed improvements to local validation, screenshot, PR, and agent workflow,
   read [tracking/dev-workflow-improvements.md](./tracking/dev-workflow-improvements.md)
+- the current live-event-readiness tracker for admin live-status mismatch, read
+  [tracking/admin-live-status-tracking.md](./tracking/admin-live-status-tracking.md)
 - the testing strategy, current coverage snapshot, command-selection matrix, and rollout plan, read [testing.md](./testing.md)
 - the platform ownership model and live monitoring runbook for GitHub, Vercel, and Supabase, read [operations.md](./operations.md)
 - the analytics strategy, tool recommendations, and dashboard goals, read [plans/analytics-strategy.md](./plans/analytics-strategy.md)
@@ -70,6 +72,9 @@ Use these boundaries to keep the docs tidy:
 - `docs/tracking/dev-workflow-improvements.md`
   concrete follow-up tasks for improving local validation, screenshot capture,
   PR evidence, and agent workflow
+- `docs/tracking/admin-live-status-tracking.md`
+  live-event-readiness tracker for the admin/public publication-state mismatch
+  and the follow-up status-model cleanup
 - `docs/testing.md`
   what to test, where tests should run, what to mock, and what is intentionally overkill right now
 - `docs/operations.md`

@@ -21,6 +21,7 @@ steps, and validation commands.
 
 - Open questions and product decisions: [`docs/open-questions.md`](./open-questions.md)
 - Terminology migration planning: [`docs/plans/archive/terminology-migration-strategy.md`](./plans/archive/terminology-migration-strategy.md)
+- Admin live-status tracking: [`docs/tracking/admin-live-status-tracking.md`](./tracking/admin-live-status-tracking.md)
 - Admin UX polish: [`docs/tracking/admin-ux-roadmap.md`](./tracking/admin-ux-roadmap.md)
 - Contributor workflow tooling: [`docs/tracking/dev-workflow-improvements.md`](./tracking/dev-workflow-improvements.md)
 - Continuous deployment planning: [`docs/plans/continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md)
@@ -41,7 +42,7 @@ Must be resolved before QR codes are printed or the first real event runs.
   `Open live game` action lands on the public unavailable state. Fix the status
   model and action behavior before operators trust the admin surface for live
   event setup.
-  Detail: [`docs/tracking/admin-ux-roadmap.md` — Align admin live status with public-route availability](./tracking/admin-ux-roadmap.md)
+  Detail: [`docs/tracking/admin-live-status-tracking.md`](./tracking/admin-live-status-tracking.md)
 
 ---
 
