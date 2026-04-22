@@ -15,6 +15,7 @@ import {
 } from "../redemptions/authorizeRedemptions";
 import { filterRedemptions } from "../redemptions/filterRedemptions";
 import { parseSearchInput } from "../redemptions/parseSearchInput";
+import { RedemptionRow } from "../redemptions/RedemptionRow";
 import { RedemptionsFilterBar } from "../redemptions/RedemptionsFilterBar";
 import {
   REDEMPTIONS_FETCH_LIMIT,
@@ -387,14 +388,15 @@ function AuthorizedRedemptionsView({
             ) : (
               <ul className="redemptions-list">
                 {filteredRows.map((row) => (
-                  <li key={row.id} className="redemptions-row">
-                    <span>{row.verification_code}</span>
-                    <span>
-                      {row.redemption_reversed_at !== null
-                        ? "Reversed"
-                        : "Redeemed"}
-                    </span>
-                  </li>
+                  <RedemptionRow
+                    key={row.id}
+                    currentUserId={currentUserId}
+                    eventCode={eventCode}
+                    onView={() => {
+                      // Detail sheet wires into this handler in Commit 6.
+                    }}
+                    row={row}
+                  />
                 ))}
               </ul>
             )}
