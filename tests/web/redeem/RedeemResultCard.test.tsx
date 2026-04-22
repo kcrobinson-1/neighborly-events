@@ -87,6 +87,29 @@ describe("RedeemResultCard", () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it("disables the failure-state Try again button while a retry is pending", () => {
+    const onRetry = vi.fn();
+
+    render(
+      <RedeemResultCard
+        isSubmitting
+        onClear={() => {}}
+        onRedeemNextCode={() => {}}
+        onRetry={onRetry}
+        state={{
+          result: "not_authorized",
+          status: "failure",
+        }}
+      />,
+    );
+
+    const retryButton = screen.getByRole("button", { name: "Retrying..." });
+    expect((retryButton as HTMLButtonElement).disabled).toBe(true);
+
+    fireEvent.click(retryButton);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
   it("renders the transient retry state", () => {
     render(
       <RedeemResultCard

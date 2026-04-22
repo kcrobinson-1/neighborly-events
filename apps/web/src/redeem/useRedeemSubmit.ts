@@ -58,6 +58,7 @@ function isSuccessPayload(payload: unknown): payload is RedeemEntitlementSuccess
   return (
     candidate.outcome === "success" &&
     typeof candidate.redeemed_at === "string" &&
+    !Number.isNaN(new Date(candidate.redeemed_at).getTime()) &&
     (candidate.redeemed_by_role === "agent" ||
       candidate.redeemed_by_role === "root_admin") &&
     (candidate.result === "already_redeemed" ||

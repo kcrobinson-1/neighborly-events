@@ -59,8 +59,13 @@ export function RedeemResultCard({
           <button className="secondary-button" onClick={onClear} type="button">
             Clear
           </button>
-          <button className="primary-button" onClick={onRetry} type="button">
-            Try again
+          <button
+            className="primary-button"
+            disabled={isSubmitting}
+            onClick={onRetry}
+            type="button"
+          >
+            {isSubmitting ? "Retrying..." : "Try again"}
           </button>
         </div>
       </div>
