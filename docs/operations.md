@@ -161,8 +161,10 @@ Why manual for now:
   - `ALLOWED_ORIGINS`
 - Auth URL configuration for magic-link sign-in:
   - deployed web origin as the Supabase Auth Site URL
-  - local `/admin` redirect URLs
-  - deployed `/admin` redirect URLs
+  - local `<origin>/auth/callback` redirect URL
+  - deployed `<origin>/auth/callback` redirect URL
+  - a single entry per environment — every authenticated route returns
+    through `/auth/callback?next=…`
 - operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 
@@ -180,8 +182,9 @@ For a new deployment from a fork:
 3. Create a new Vercel project for the `apps/web` app.
 4. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in Vercel.
 5. Set `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` in Supabase.
-6. Set the Supabase Auth Site URL to the deployed web origin and add redirect
-   URLs for your local and deployed `/admin` origins.
+6. Set the Supabase Auth Site URL to the deployed web origin and add
+   `<origin>/auth/callback` as a redirect URL for each of your local
+   and deployed origins.
 7. Insert at least one normalized admin email into `public.admin_users`.
 8. Recreate the desired GitHub branch protection and Actions secret
    configuration, including the `SUPABASE_ACCESS_TOKEN`,

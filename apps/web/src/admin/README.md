@@ -7,19 +7,24 @@ app.
 
 It is responsible for:
 
-- restoring the browser auth session for `/admin`
-- reacting to Supabase auth changes
+- consuming the role-neutral `useAuthSession` hook and `requestMagicLink`
+  / `signOut` helpers from `src/auth/` and `src/lib/authApi.ts` for the
+  `/admin` session surface
 - coordinating allowlist checks, draft summary loading, selected-event
   workspace state, selected draft detail loading, event-detail saves,
   existing-question and question-structure saves, create/duplicate draft
-  mutations, publish/unpublish actions, magic-link requests, and sign-out
-  state for the `/admin` dashboard
+  mutations, publish/unpublish actions, magic-link requests (routed
+  through `/auth/callback?next=/admin`), and sign-out state for the
+  `/admin` dashboard
 - rendering the small presentational pieces used by the `/admin` route shell
-- keeping route-level admin auth state out of the attendee game module
+- keeping route-level admin dashboard state out of the attendee game module
 
 ## Boundaries
 
-- keep login/session concerns here, not inside attendee pages
+- role-neutral login/session primitives (`SignInForm`,
+  `useAuthSession`, `AuthCallbackPage`, `validateNextPath`) live under
+  `src/auth/`; this module consumes them and owns the admin-specific
+  shell state
 - keep `/admin` dashboard state orchestration in `useAdminDashboard`
 - keep the top-level page route adapter thin; route navigation remains in
   `src/pages/AdminPage.tsx`
