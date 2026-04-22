@@ -4,11 +4,11 @@
 the sub-phase boundaries and the prerequisites each sub-phase inherits.
 Full execution plans for each sub-phase are drafted separately, close to
 their implementation time, following the Phase A precedent
-([A.1](./reward-redemption-phase-a-1-plan.md),
-[A.2a](./reward-redemption-phase-a-2-plan.md),
-[A.2b](./reward-redemption-phase-a-2b-plan.md)).
+([A.1](./archive/reward-redemption-phase-a-1-plan.md),
+[A.2a](./archive/reward-redemption-phase-a-2-plan.md),
+[A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
-**Predecessor:** [`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md)
+**Predecessor:** [`reward-redemption-phase-a-2b-plan.md`](./archive/reward-redemption-phase-a-2b-plan.md)
 — landed; the trusted backend endpoints (`redeem-entitlement`,
 `reverse-entitlement-redemption`, `get-redemption-status`) are callable.
 **Scope:** Phase B only — the mobile operator UI for the redemption MVP.
@@ -71,7 +71,7 @@ Phase B does not start until all three prerequisites are in `main`:
    than the admin-labelled form. Landing the generalization first keeps
    B.1's diff focused on redemption UX and B.2's diff focused on
    monitoring UX rather than auth plumbing.
-2. **[A.2b](./reward-redemption-phase-a-2b-plan.md).** *Landed.* The
+2. **[A.2b](./archive/reward-redemption-phase-a-2b-plan.md).** *Landed.* The
    three Edge Functions and `shared/redemption.ts` contracts are in
    place. B.1 and B.2 consume them unchanged. Any discovered need to
    evolve the HTTP contract is a stop-and-report moment that reopens the

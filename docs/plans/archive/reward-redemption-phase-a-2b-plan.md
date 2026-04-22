@@ -4,7 +4,7 @@
 (`feat(functions): add redeem entitlement wrapper`), `af184c4`
 (`feat(functions): add reverse redemption wrapper`), and `2598c4f`
 (`feat(functions): add attendee redemption status endpoint`).
-**Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
 **Predecessor:** [`reward-redemption-phase-a-2-plan.md`](./reward-redemption-phase-a-2-plan.md) — landed.
 **Scope:** Phase A.2b only — the Edge Function wrappers around the stable A.2a
 SQL surface, the attendee `get-redemption-status` read path, the shared
@@ -321,7 +321,7 @@ What the suite must prove:
 
 ## Self-Review Audits
 
-Run the applicable named audits from [`docs/self-review-catalog.md`](../self-review-catalog.md):
+Run the applicable named audits from [`docs/self-review-catalog.md`](../../self-review-catalog.md):
 
 - **Edge Function / shared-contract surface:** standard senior-engineer review
   plus a no-drift check against the A.2a envelope contract. No existing catalog
