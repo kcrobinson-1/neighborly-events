@@ -24,6 +24,12 @@ vi.mock("../../apps/web/src/pages/GameRoutePage.tsx", () => ({
   GameRoutePage: () => <div>Game Route Page</div>,
 }));
 
+vi.mock("../../apps/web/src/pages/EventRedeemPage.tsx", () => ({
+  EventRedeemPage: ({ slug }: { slug: string }) => (
+    <div>Event Redeem Page: {slug}</div>
+  ),
+}));
+
 vi.mock("../../apps/web/src/pages/NotFoundPage.tsx", () => ({
   NotFoundPage: () => <div>Not Found Page</div>,
 }));
@@ -59,5 +65,16 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("Admin Page: madrona-music-2026")).toBeTruthy();
+  });
+
+  it("renders the event redeem route with the selected slug", () => {
+    mockUsePathnameNavigation.mockReturnValue({
+      navigate: vi.fn(),
+      pathname: "/event/madrona-music-2026/redeem",
+    });
+
+    render(<App />);
+
+    expect(screen.getByText("Event Redeem Page: madrona-music-2026")).toBeTruthy();
   });
 });

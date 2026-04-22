@@ -4,6 +4,7 @@ export type AppPath =
   | "/admin"
   | `/admin/events/${string}`
   | `/event/${string}/game`
+  | `/event/${string}/redeem`
   | "/auth/callback";
 
 /** Central route definitions used by the pathname-based client router. */
@@ -16,6 +17,8 @@ export const routes = {
   gamePrefix: "/event",
   game: (slug: string): AppPath =>
     `/event/${encodeURIComponent(slug)}/game`,
+  eventRedeem: (slug: string): AppPath =>
+    `/event/${encodeURIComponent(slug)}/redeem`,
   authCallback: "/auth/callback",
 } as const;
 
@@ -68,6 +71,44 @@ export function matchGamePath(pathname: string) {
   const normalizedPath = normalizePathname(pathname);
   const prefix = `${routes.gamePrefix}/`;
   const suffix = "/game";
+
+  if (!normalizedPath.startsWith(prefix)) {
+    return null;
+  }
+
+  if (!normalizedPath.endsWith(suffix)) {
+    return null;
+  }
+
+  const encodedSlug = normalizedPath.slice(
+    prefix.length,
+    normalizedPath.length - suffix.length,
+  );
+
+  if (!encodedSlug || encodedSlug.includes("/")) {
+    return null;
+  }
+
+  try {
+    const slug = decodeURIComponent(encodedSlug);
+
+    if (!slug || slug.includes("/")) {
+      return null;
+    }
+
+    return {
+      slug,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/** Parses a redeem route and returns the decoded slug when the path matches. */
+export function matchEventRedeemPath(pathname: string) {
+  const normalizedPath = normalizePathname(pathname);
+  const prefix = `${routes.gamePrefix}/`;
+  const suffix = "/redeem";
 
   if (!normalizedPath.startsWith(prefix)) {
     return null;

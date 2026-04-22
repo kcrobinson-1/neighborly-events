@@ -1,0 +1,117 @@
+@use "./mixins" as *;
+@use "./tokens" as *;
+
+.redeem-layout {
+  @include stack($space-7);
+}
+
+.redeem-card-stack,
+.redeem-status-card,
+.redeem-keypad {
+  @include stack($space-6);
+}
+
+.redeem-event-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 7px $space-5;
+  border-radius: $radius-pill;
+  background: $color-secondary-surface;
+  color: var(--secondary);
+  font-size: 0.88rem;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.redeem-code-preview-label,
+.redeem-status-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.redeem-code-preview {
+  display: flex;
+  align-items: baseline;
+  gap: $space-4;
+  margin: 0;
+  font-size: clamp(2.1rem, 9vw, 3.2rem);
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.08em;
+}
+
+.redeem-code-preview-prefix {
+  color: var(--secondary);
+}
+
+.redeem-code-preview-suffix {
+  color: var(--text);
+}
+
+.redeem-status-card {
+  padding: $space-8;
+  border: 1px solid $color-border-muted;
+  border-radius: $radius-card;
+  background: $color-surface-card;
+}
+
+.redeem-status-card h2 {
+  margin: 0;
+}
+
+.redeem-status-card-success {
+  background: $color-success-surface-muted;
+  border-color: $color-success-border;
+}
+
+.redeem-status-card-error {
+  background: $color-primary-surface;
+  border-color: $color-primary-border;
+}
+
+.redeem-status-meta {
+  font-weight: $font-weight-semibold;
+}
+
+.redeem-result-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $space-5;
+}
+
+.redeem-keypad {
+  gap: $space-5;
+}
+
+.redeem-keypad-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $space-5;
+}
+
+.redeem-keypad-button {
+  min-height: 72px;
+  border: 1px solid $color-border-muted;
+  border-radius: $radius-control;
+  background: $color-white-tint;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: $font-weight-bold;
+  @include interactive-control;
+}
+
+.redeem-keypad-button-secondary {
+  font-size: 1rem;
+  color: var(--secondary);
+  background: $color-secondary-surface;
+}
+
+.redeem-keypad-button:focus-visible,
+.redeem-submit-button:focus-visible {
+  @include focus-ring;
+}
+
+.redeem-submit-button {
+  margin-top: $space-2;
+}

@@ -72,6 +72,10 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/web/src/pages/AdminPage.tsx`
   Thin route adapter for `/admin` that composes the admin module and keeps
   route navigation at the page boundary.
+- `apps/web/src/pages/EventRedeemPage.tsx`
+  Event-scoped operator route for `/event/:slug/redeem`. Reuses the
+  role-neutral auth shell, resolves event authorization, and renders the
+  keypad-driven redemption UI.
 - `apps/web/src/pages/GameRoutePage.tsx`
   Async route loader that resolves `/event/:slug/game` into published content
   before rendering the game shell.
@@ -108,6 +112,10 @@ grouped into a dedicated `apps/web/src/game/` module:
   `validateNextPath`, `SignInForm`, `useAuthSession`, and
   `AuthCallbackPage` (the magic-link return handler at
   `/auth/callback`).
+- `apps/web/src/redeem/`
+  Event redemption modules for the direct-entry operator flow:
+  authorization resolution, keypad state, keypad UI, trusted submit, and
+  result-card rendering.
 - `apps/web/src/lib/gameContentApi.ts`
   Browser reads for published event summaries and route content.
 - `apps/web/src/lib/supabaseBrowser.ts`
@@ -127,7 +135,7 @@ grouped into a dedicated `apps/web/src/game/` module:
   Frontend styling entrypoint.
 - `apps/web/src/styles/`
   SCSS partials for tokens, mixins, layout, landing-page UI, focused game UI
-  component groups, admin UI, and responsive rules.
+  component groups, admin UI, redeem UI, and responsive rules.
 
 ### Shared Domain Structure
 
@@ -417,6 +425,31 @@ surface owns validation and persistence:
 - `game_event_audit_log` records publish and unpublish transitions
 
 The current scope still stops short of a preview route or AI authoring UI.
+
+### Direct-entry operator redeem route
+
+The web app now also includes an inert direct-entry route at
+`/event/:slug/redeem`.
+
+Today that route:
+
+- accepts magic-link sign-in through the same role-neutral auth shell used by
+  `/admin`, with `next=/event/:slug/redeem` validated through
+  `validateNextPath`
+- keeps signed-out, loading, missing-config, authorized, role-gated, and
+  transient-error states explicit in the page shell
+- resolves event context from `game_events.slug`, displays the locked
+  `event_code` prefix, and never lets the caller edit that event context
+- authorizes access with the existing readable surfaces only:
+  `is_agent_for_event(...)`, `is_root_admin()`, and a non-leaking role-gate
+  path shared by both unknown slugs and signed-in-but-unassigned users
+- submits exactly `{ eventId, codeSuffix }` to the existing
+  `redeem-entitlement` Edge Function with the caller's bearer token
+- maps the trusted response envelope into local before/ready, success
+  (`redeemed_now` / `already_redeemed`), rejected (`not_authorized` /
+  `not_found`), and transient retryable states
+- stays intentionally undiscoverable after merge: no nav link, no `/admin`
+  link, no role seeding, and no attendee polling or monitoring list behavior
 
 ## Runtime Request Flow
 

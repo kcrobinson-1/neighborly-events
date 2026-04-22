@@ -81,6 +81,18 @@ describe("validateNextPath", () => {
       );
     });
 
+    it("accepts an attendee redeem route", () => {
+      expect(validateNextPath("/event/some-slug/redeem")).toBe(
+        "/event/some-slug/redeem",
+      );
+    });
+
+    it("accepts a URL-encoded redeem route", () => {
+      expect(
+        validateNextPath("/event/slug%20with%20spaces/redeem"),
+      ).toBe("/event/slug%20with%20spaces/redeem");
+    });
+
     it("drops the query string and round-trips the pathname", () => {
       expect(validateNextPath("/event/some-slug/game?foo=bar")).toBe(
         "/event/some-slug/game",
