@@ -196,10 +196,19 @@ prioritization before starting.
   without requiring Supabase Studio access.
   Detail: [`docs/plans/analytics-strategy.md`](./plans/analytics-strategy.md)
 
-- [ ] **`decision` Authoring roles and root admin UI**
-  Decide whether to add a root-level admin role and UI for managing allowlist
-  membership instead of requiring direct SQL edits.
-  Priority direction: next milestone.
+- [ ] **`decision` Post-MVP authoring ownership and permission model**
+  Decide whether post-MVP authoring should stay managed
+  (root-admin-created events with manual organizer assignment) or move toward a
+  self-serve model where organizers can create and own their own events. This
+  decision should set the permission-management direction before any broader
+  root-admin or organizer self-service UX is built. Current working posture:
+  keep provisioning manual for now.
+  Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
+
+- [ ] **`ux` Organizer-managed agent assignment**
+  If the post-MVP operating model supports organizer-owned event operations,
+  add a way for an organizer to maintain event agents without requiring manual
+  root-admin SQL edits. Blocked on the broader authoring ownership decision.
   Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
 
 - [x] **`dev` Security notes baseline doc**
