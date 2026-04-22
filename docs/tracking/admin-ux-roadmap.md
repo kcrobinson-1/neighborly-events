@@ -25,53 +25,18 @@ Recent browser walkthrough notes from the deployed `/admin` surface
 
 ### Align admin live status with public-route availability
 
-Status: open
+Status: tracked in [`admin-live-status-tracking.md`](./admin-live-status-tracking.md)
 
-Value:
+This item graduated from the general admin UX roadmap into its own live-event
+readiness tracker because it is no longer just a polish concern. Use
+[`admin-live-status-tracking.md`](./admin-live-status-tracking.md) as the
+source of truth for:
 
-- restores trust in the admin surface by making `Live` mean that the linked
-  public route is actually reachable
-- prevents organizers from using the admin dashboard as a source of truth while
-  it can still send them to an unavailable attendee route
-- clarifies whether smoke-only or temporarily unavailable events need a state
-  distinct from generic `Live`
-
-Work required:
-
-- reconcile dashboard and selected-workspace status badges with the real public
-  route availability state
-- make `Open live game` either land on a reachable public route or explain why
-  the event is not currently available
-- decide whether unavailable-but-published events need their own label, count,
-  or filtering treatment in the admin list
-- review whether production smoke fixtures should look identical to operator
-  events in the deployed admin UI
-
-Open questions:
-
-- should `Live` mean "published row exists" or "organizer can open the attendee
-  route successfully right now"?
-- should the admin list distinguish between live, draft-only, and unavailable
-  public-route states?
-- if an event is intentionally smoke-only or temporarily unavailable, should
-  the action be disabled, relabeled, or linked to diagnostics instead of the
-  attendee route?
-
-Steps to complete:
-
-1. Reproduce the mismatch from `/admin` through `Open live game`.
-2. Define the authoritative state model for admin status badges and counts.
-3. Update the dashboard/workspace UI so status and action behavior match the
-   real public-route state.
-4. Validate the corrected behavior in the browser before handoff.
-
-Minimum validation:
-
-- browser check from `/admin` list and selected workspace through `Open live
-  game`
-- `npm run test:e2e:admin`
-- production admin smoke rerun or equivalent deployed verification when this
-  lands on a release branch
+- the confirmed root cause
+- the long-term end state
+- the bounded correctness-fix slice
+- the follow-up read-model and fixture cleanup work
+- the validation needed to close the Tier 1 backlog item
 
 ### Improve the mobile question editor layout
 
