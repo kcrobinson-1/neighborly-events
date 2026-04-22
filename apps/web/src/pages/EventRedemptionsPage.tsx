@@ -2,6 +2,7 @@ import {
   type FormEvent,
   type ReactNode,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
@@ -12,6 +13,10 @@ import {
   authorizeRedemptions,
   type RedemptionsAuthorizationResult,
 } from "../redemptions/authorizeRedemptions";
+import {
+  REDEMPTIONS_FETCH_LIMIT,
+  useRedemptionsList,
+} from "../redemptions/useRedemptionsList";
 import { routes } from "../routes";
 
 type EventRedemptionsPageProps = {
@@ -221,24 +226,143 @@ function SignedInRedemptionsFlow({
     );
   }
 
-  const authorizedAccessState = accessState;
+  return (
+    <AuthorizedRedemptionsView
+      email={email}
+      eventCode={accessState.eventCode}
+      eventId={accessState.eventId}
+      onNavigateHome={() => onNavigate(routes.home)}
+    />
+  );
+}
+
+type AuthorizedRedemptionsViewProps = {
+  email: string | null;
+  eventCode: string;
+  eventId: string;
+  onNavigateHome: () => void;
+};
+
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine
+  );
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
+function formatLastUpdated(fetchedAt: Date) {
+  try {
+    return fetchedAt.toLocaleTimeString();
+  } catch {
+    return fetchedAt.toISOString();
+  }
+}
+
+function AuthorizedRedemptionsView({
+  email,
+  eventCode,
+  eventId,
+  onNavigateHome,
+}: AuthorizedRedemptionsViewProps) {
+  const { refresh, state: listState } = useRedemptionsList({ eventId });
+  const isOnline = useOnlineStatus();
+  const wasOfflineRef = useRef(!isOnline);
+
+  useEffect(() => {
+    if (!isOnline) {
+      wasOfflineRef.current = true;
+      return;
+    }
+    if (wasOfflineRef.current) {
+      wasOfflineRef.current = false;
+      refresh();
+    }
+  }, [isOnline, refresh]);
 
   return (
     <RedemptionsShell
-      onNavigateHome={() => onNavigate(routes.home)}
+      onNavigateHome={onNavigateHome}
       title="Review redemptions"
     >
       <div className="redemptions-layout">
         <div className="redemptions-header">
           <SignedInAs email={email} />
-          <span className="redemptions-event-badge">
-            {authorizedAccessState.eventCode}
-          </span>
+          <span className="redemptions-event-badge">{eventCode}</span>
         </div>
-        <p className="redemptions-placeholder">
-          Monitoring list loads in the next commit.
-        </p>
-        <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
+        <div className="redemptions-toolbar">
+          {listState.status === "success" ? (
+            <p className="redemptions-updated">
+              Last updated {formatLastUpdated(listState.fetchedAt)}
+            </p>
+          ) : null}
+          <button
+            className="secondary-button"
+            disabled={!isOnline || listState.status === "loading"}
+            onClick={() => refresh()}
+            type="button"
+          >
+            {isOnline ? "Refresh" : "You are offline"}
+          </button>
+        </div>
+        {listState.status === "loading" ? (
+          <p className="redemptions-placeholder">Loading redemptions...</p>
+        ) : null}
+        {listState.status === "error" ? (
+          <div className="redemptions-error" role="alert">
+            <p>{listState.message}</p>
+            <button
+              className="primary-button"
+              onClick={() => refresh()}
+              type="button"
+            >
+              Retry
+            </button>
+          </div>
+        ) : null}
+        {listState.status === "success" ? (
+          <>
+            {listState.rows.length === REDEMPTIONS_FETCH_LIMIT ? (
+              <p className="redemptions-cap-banner">
+                Showing the most recent {REDEMPTIONS_FETCH_LIMIT} redemption
+                events. Older records are not shown. Narrow the filters or
+                scroll to the top of the list for the latest activity.
+              </p>
+            ) : null}
+            {listState.rows.length === 0 ? (
+              <p className="redemptions-placeholder">
+                No redemption activity yet for this event.
+              </p>
+            ) : (
+              <ul className="redemptions-list">
+                {listState.rows.map((row) => (
+                  <li key={row.id} className="redemptions-row">
+                    <span>{row.verification_code}</span>
+                    <span>
+                      {row.redemption_reversed_at !== null
+                        ? "Reversed"
+                        : "Redeemed"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        ) : null}
+        <p className="sr-only">Resolved event {eventId}</p>
       </div>
     </RedemptionsShell>
   );

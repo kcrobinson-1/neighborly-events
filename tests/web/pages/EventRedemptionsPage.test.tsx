@@ -10,12 +10,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockAuthorizeRedemptions,
+  mockRefreshRedemptions,
   mockRequestMagicLink,
   mockUseAuthSession,
+  mockUseRedemptionsList,
 } = vi.hoisted(() => ({
   mockAuthorizeRedemptions: vi.fn(),
+  mockRefreshRedemptions: vi.fn(),
   mockRequestMagicLink: vi.fn(),
   mockUseAuthSession: vi.fn(),
+  mockUseRedemptionsList: vi.fn(),
 }));
 
 vi.mock("../../../apps/web/src/auth/useAuthSession.ts", () => ({
@@ -30,13 +34,24 @@ vi.mock("../../../apps/web/src/redemptions/authorizeRedemptions.ts", () => ({
   authorizeRedemptions: mockAuthorizeRedemptions,
 }));
 
+vi.mock("../../../apps/web/src/redemptions/useRedemptionsList.ts", () => ({
+  REDEMPTIONS_FETCH_LIMIT: 500,
+  useRedemptionsList: mockUseRedemptionsList,
+}));
+
 import { EventRedemptionsPage } from "../../../apps/web/src/pages/EventRedemptionsPage.tsx";
 
 describe("EventRedemptionsPage", () => {
   beforeEach(() => {
     mockAuthorizeRedemptions.mockReset();
+    mockRefreshRedemptions.mockReset();
     mockRequestMagicLink.mockReset();
     mockUseAuthSession.mockReset();
+    mockUseRedemptionsList.mockReset();
+    mockUseRedemptionsList.mockReturnValue({
+      refresh: mockRefreshRedemptions,
+      state: { status: "loading" },
+    });
   });
 
   afterEach(() => {
@@ -109,7 +124,7 @@ describe("EventRedemptionsPage", () => {
     ).toBeTruthy();
   });
 
-  it("renders the authorized placeholder with the locked event code", async () => {
+  it("renders the authorized loading state with the locked event code", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
       status: "signed_in",
@@ -127,9 +142,214 @@ describe("EventRedemptionsPage", () => {
     await waitFor(() => {
       expect(screen.getByText("MAD")).toBeTruthy();
     });
+    expect(screen.getByText("Loading redemptions...")).toBeTruthy();
+  });
+
+  it("renders the list and last-updated timestamp on a successful fetch", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "organizer@example.com",
+      status: "signed_in",
+    });
+    mockAuthorizeRedemptions.mockResolvedValue({
+      eventCode: "MAD",
+      eventId: "event-1",
+      status: "authorized",
+    });
+    mockUseRedemptionsList.mockReturnValue({
+      refresh: mockRefreshRedemptions,
+      state: {
+        fetchedAt: new Date("2026-04-22T10:00:00Z"),
+        rows: [
+          {
+            event_id: "event-1",
+            id: "row-1",
+            redeemed_at: "2026-04-22T09:50:00Z",
+            redeemed_by: "user-a",
+            redeemed_by_role: "agent",
+            redemption_reversed_at: null,
+            redemption_reversed_by: null,
+            redemption_reversed_by_role: null,
+            redemption_status: "redeemed",
+            verification_code: "MAD-0001",
+          },
+        ],
+        status: "success",
+      },
+    });
+
+    render(
+      <EventRedemptionsPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("MAD-0001")).toBeTruthy();
+    });
+    expect(screen.getByText(/Last updated/)).toBeTruthy();
+  });
+
+  it("renders the 'showing most recent N' banner when the cached slice hits the cap", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "organizer@example.com",
+      status: "signed_in",
+    });
+    mockAuthorizeRedemptions.mockResolvedValue({
+      eventCode: "MAD",
+      eventId: "event-1",
+      status: "authorized",
+    });
+
+    const fiveHundredRows = Array.from({ length: 500 }, (_, index) => ({
+      event_id: "event-1",
+      id: `row-${index}`,
+      redeemed_at: "2026-04-22T09:50:00Z",
+      redeemed_by: "user-a",
+      redeemed_by_role: "agent" as const,
+      redemption_reversed_at: null,
+      redemption_reversed_by: null,
+      redemption_reversed_by_role: null,
+      redemption_status: "redeemed" as const,
+      verification_code: `MAD-${String(index).padStart(4, "0")}`,
+    }));
+
+    mockUseRedemptionsList.mockReturnValue({
+      refresh: mockRefreshRedemptions,
+      state: {
+        fetchedAt: new Date(),
+        rows: fiveHundredRows,
+        status: "success",
+      },
+    });
+
+    render(
+      <EventRedemptionsPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Showing the most recent 500 redemption events/),
+      ).toBeTruthy();
+    });
+  });
+
+  it("renders the fetch-error banner with Retry, not the role-gate copy", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "organizer@example.com",
+      status: "signed_in",
+    });
+    mockAuthorizeRedemptions.mockResolvedValue({
+      eventCode: "MAD",
+      eventId: "event-1",
+      status: "authorized",
+    });
+    mockUseRedemptionsList.mockReturnValue({
+      refresh: mockRefreshRedemptions,
+      state: {
+        message: "We couldn't load redemptions right now.",
+        status: "error",
+      },
+    });
+
+    render(
+      <EventRedemptionsPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("We couldn't load redemptions right now."),
+      ).toBeTruthy();
+    });
     expect(
-      screen.getByText("Monitoring list loads in the next commit."),
-    ).toBeTruthy();
+      screen.queryByText("Not available for this event."),
+    ).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Retry" }).length).toBe(1);
+  });
+
+  it("disables the refresh button with 'You are offline' when navigator is offline", async () => {
+    const onLineDescriptor = Object.getOwnPropertyDescriptor(
+      window.navigator,
+      "onLine",
+    );
+
+    try {
+      Object.defineProperty(window.navigator, "onLine", {
+        configurable: true,
+        value: false,
+      });
+
+      mockUseAuthSession.mockReturnValue({
+        email: "organizer@example.com",
+        status: "signed_in",
+      });
+      mockAuthorizeRedemptions.mockResolvedValue({
+        eventCode: "MAD",
+        eventId: "event-1",
+        status: "authorized",
+      });
+      mockUseRedemptionsList.mockReturnValue({
+        refresh: mockRefreshRedemptions,
+        state: {
+          fetchedAt: new Date(),
+          rows: [],
+          status: "success",
+        },
+      });
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      const offlineButton = await screen.findByRole("button", {
+        name: "You are offline",
+      });
+      expect((offlineButton as HTMLButtonElement).disabled).toBe(true);
+    } finally {
+      if (onLineDescriptor) {
+        Object.defineProperty(
+          window.navigator,
+          "onLine",
+          onLineDescriptor,
+        );
+      } else {
+        Object.defineProperty(window.navigator, "onLine", {
+          configurable: true,
+          value: true,
+        });
+      }
+    }
+  });
+
+  it("calls refresh when the explicit refresh button is clicked", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "organizer@example.com",
+      status: "signed_in",
+    });
+    mockAuthorizeRedemptions.mockResolvedValue({
+      eventCode: "MAD",
+      eventId: "event-1",
+      status: "authorized",
+    });
+    mockUseRedemptionsList.mockReturnValue({
+      refresh: mockRefreshRedemptions,
+      state: {
+        fetchedAt: new Date(),
+        rows: [],
+        status: "success",
+      },
+    });
+
+    render(
+      <EventRedemptionsPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+
+    const refreshButton = await screen.findByRole("button", {
+      name: "Refresh",
+    });
+    fireEvent.click(refreshButton);
+
+    expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
   });
 
   it("collapses slug-not-found and role-held-none branches into identical role-gate DOM", async () => {
