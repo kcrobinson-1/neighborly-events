@@ -39,6 +39,8 @@ export function AuthCallbackPage({ onNavigate }: AuthCallbackPageProps) {
     );
 
     let isCancelled = false;
+    let hasUnsubscribed = false;
+    let unsubscribe: () => void = () => {};
 
     const navigateOnce = () => {
       if (isCancelled || hasNavigatedRef.current) {
@@ -48,7 +50,13 @@ export function AuthCallbackPage({ onNavigate }: AuthCallbackPageProps) {
       onNavigate(validatedNext, { replace: true });
     };
 
-    let unsubscribe: () => void = () => {};
+    const safeUnsubscribe = () => {
+      if (hasUnsubscribed) {
+        return;
+      }
+      hasUnsubscribed = true;
+      unsubscribe();
+    };
 
     try {
       unsubscribe = subscribeToAuthState((session) => {
@@ -87,13 +95,20 @@ export function AuthCallbackPage({ onNavigate }: AuthCallbackPageProps) {
       if (isCancelled || hasNavigatedRef.current) {
         return;
       }
+      // Terminal-failure path: stop listening so a late SIGNED_IN event
+      // (slow hash processing, delayed network) can't silently redirect
+      // the user off the "couldn't use this sign-in link" screen, and
+      // flip isCancelled so any in-flight getAuthSession().then() result
+      // is ignored too.
+      isCancelled = true;
+      safeUnsubscribe();
       setHasTimedOut(true);
     }, SESSION_WAIT_TIMEOUT_MS);
 
     return () => {
       isCancelled = true;
       window.clearTimeout(timeoutId);
-      unsubscribe();
+      safeUnsubscribe();
     };
   }, [onNavigate]);
 

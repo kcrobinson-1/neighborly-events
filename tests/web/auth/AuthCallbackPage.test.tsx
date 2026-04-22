@@ -237,6 +237,49 @@ describe("AuthCallbackPage", () => {
     expect(replaceStateSpy).not.toHaveBeenCalled();
   });
 
+  it("stops listening after timeout so a late SIGNED_IN event cannot redirect off the failure state", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    setLocationSearch("?next=/admin");
+    mockGetAuthSession.mockResolvedValue(null);
+    let capturedListener: ((session: Session | null) => void) | null = null;
+    mockSubscribeToAuthState.mockImplementation(
+      (listener: (session: Session | null) => void) => {
+        capturedListener = listener;
+        return unsubscribeSpy;
+      },
+    );
+    const onNavigate = vi.fn();
+
+    render(<AuthCallbackPage onNavigate={onNavigate} />);
+
+    // Flush the initial getAuthSession(null) resolution.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10_000);
+    });
+
+    expect(
+      screen.getByRole("heading", {
+        name: /couldn.t use this sign-in link/i,
+      }),
+    ).toBeTruthy();
+    // Timeout path must have unsubscribed from auth state.
+    expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+
+    // A late SIGNED_IN event must not redirect off the failure state.
+    capturedListener?.(fakeSession());
+    await Promise.resolve();
+
+    expect(onNavigate).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("heading", {
+        name: /couldn.t use this sign-in link/i,
+      }),
+    ).toBeTruthy();
+  });
+
   it("renders the neutral failure state when subscribeToAuthState throws synchronously", async () => {
     setLocationSearch("?next=/admin");
     mockSubscribeToAuthState.mockImplementation(() => {
