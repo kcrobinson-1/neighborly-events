@@ -76,6 +76,13 @@ grouped into a dedicated `apps/web/src/game/` module:
   Event-scoped operator route for `/event/:slug/redeem`. Reuses the
   role-neutral auth shell, resolves event authorization, and renders the
   keypad-driven redemption UI.
+- `apps/web/src/pages/EventRedemptionsPage.tsx`
+  Event-scoped operator route for `/event/:slug/redemptions` (B.2a,
+  read-only monitoring). Gates on `is_organizer_for_event` /
+  `is_root_admin`, reads `game_entitlements` directly through the
+  browser Supabase client (RLS-scoped, explicit event-id filter), and
+  renders the sticky filter bar, bounded list, and view-only bottom
+  sheet. No Edge Function call; the reversal CTA lands in B.2b.
 - `apps/web/src/pages/GameRoutePage.tsx`
   Async route loader that resolves `/event/:slug/game` into published content
   before rendering the game shell.
@@ -116,6 +123,12 @@ grouped into a dedicated `apps/web/src/game/` module:
   Event redemption modules for the direct-entry operator flow:
   authorization resolution, keypad state, keypad UI, trusted submit, and
   result-card rendering.
+- `apps/web/src/redemptions/`
+  Event monitoring modules for the dispute-resolution surface (B.2a):
+  organizer authorization resolver, two-query list fetch with
+  client-side merge/dedupe/sort/truncate, filter state + pure search
+  parser + pure chip filter, sticky filter bar, list row, view-only
+  bottom sheet, and the shared actor-hint formatter.
 - `apps/web/src/lib/gameContentApi.ts`
   Browser reads for published event summaries and route content.
 - `apps/web/src/lib/supabaseBrowser.ts`
@@ -135,7 +148,8 @@ grouped into a dedicated `apps/web/src/game/` module:
   Frontend styling entrypoint.
 - `apps/web/src/styles/`
   SCSS partials for tokens, mixins, layout, landing-page UI, focused game UI
-  component groups, admin UI, redeem UI, and responsive rules.
+  component groups, admin UI, redeem UI, monitoring UI, and responsive
+  rules.
 
 ### Shared Domain Structure
 

@@ -1,6 +1,6 @@
 # Reward Redemption — Phase B.2a Execution Plan
 
-**Status:** Proposed — not started.
+**Status:** Landed in commits `c1b60a2`, `f6980fc`, `ff8dc65`, `9eb544c`, `19993fb`, `4accef3`, and `9b68f03`.
 **Parent overview:** [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
 **Predecessors (all landed):**

@@ -30,6 +30,20 @@ Rules for this checklist:
 
 ## Candidate Tasks
 
+- [ ] Extract shared event-context resolver from the redeem and redemptions
+  authorization files. `apps/web/src/redeem/authorizeRedeem.ts` and
+  `apps/web/src/redemptions/authorizeRedemptions.ts` share a slug→event
+  resolution + boolean role-RPC + retry pattern with only the role RPC
+  name differing (`is_agent_for_event` vs `is_organizer_for_event`).
+  B.2a parallels the B.1 file deliberately so the extraction can land
+  once B.2b introduces a third consumer; at that point, extract a
+  `resolveEventContext(slug)` helper that returns
+  `{ eventId, eventCode } | { status: "role_gate" } | { status: "transient_error" }`
+  plus a tiny `checkRole(eventId, rpcName)` helper, and reshape all
+  three consumers to thin compositions. Behavior-preserving. Score:
+  5/10.
+  Validation: `npm run lint`, `npm test`, and `npm run build:web`.
+
 - [ ] Split reward-redemption operator wrapper pipeline from endpoint-specific payload/RPC seams.
   `supabase/functions/redeem-entitlement/index.ts` and
   `supabase/functions/reverse-entitlement-redemption/index.ts` both own nearly
