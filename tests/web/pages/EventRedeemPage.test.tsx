@@ -238,6 +238,50 @@ describe("EventRedeemPage", () => {
     });
   });
 
+  it("disables keypad inputs and ignores keyboard digits while a redeem is in flight", async () => {
+    const submitCode = vi.fn();
+
+    mockUseAuthSession.mockReturnValue({
+      email: "agent@example.com",
+      session: { access_token: "token" },
+      status: "signed_in",
+    });
+    mockAuthorizeRedeem.mockResolvedValue({
+      eventCode: "MMF",
+      eventId: "madrona-music-2026",
+      status: "authorized",
+    });
+    mockUseRedeemSubmit.mockReturnValue({
+      isSubmitting: true,
+      resetResult: vi.fn(),
+      resultState: { status: "idle" },
+      retryLastSubmission: vi.fn(),
+      submitCode,
+    });
+
+    render(<EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />);
+
+    const preview = await screen.findByLabelText("Code preview");
+    expect(preview.textContent).toBe("MMF••••");
+
+    for (const label of ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]) {
+      expect(
+        (screen.getByRole("button", { name: label }) as HTMLButtonElement).disabled,
+      ).toBe(true);
+    }
+    expect(
+      (screen.getByRole("button", { name: "Clear" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Backspace" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    fireEvent.keyDown(window, { key: "1" });
+    fireEvent.keyDown(window, { key: "Backspace" });
+
+    expect(preview.textContent).toBe("MMF••••");
+  });
+
   it("clears stale access state across sign-out and re-sign-in with the same slug+email", async () => {
     let resolveSecondAuthorize: (value: {
       eventCode: string;

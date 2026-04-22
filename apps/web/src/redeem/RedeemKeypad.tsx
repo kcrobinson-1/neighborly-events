@@ -31,7 +31,7 @@ export function RedeemKeypad({
           {row.map((digit) => (
             <button
               className="redeem-keypad-button"
-              disabled={disabled}
+              disabled={disabled || isSubmitting}
               key={digit}
               onClick={() => onDigit(digit)}
               type="button"
@@ -44,7 +44,7 @@ export function RedeemKeypad({
       <div className="redeem-keypad-row">
         <button
           className="redeem-keypad-button redeem-keypad-button-secondary"
-          disabled={disabled}
+          disabled={disabled || isSubmitting}
           onClick={onClear}
           type="button"
         >
@@ -52,7 +52,7 @@ export function RedeemKeypad({
         </button>
         <button
           className="redeem-keypad-button"
-          disabled={disabled}
+          disabled={disabled || isSubmitting}
           onClick={() => onDigit("0")}
           type="button"
         >
@@ -61,7 +61,7 @@ export function RedeemKeypad({
         <button
           aria-label="Backspace"
           className="redeem-keypad-button redeem-keypad-button-secondary"
-          disabled={disabled}
+          disabled={disabled || isSubmitting}
           onClick={onBackspace}
           type="button"
         >

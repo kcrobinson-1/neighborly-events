@@ -194,7 +194,14 @@ function SignedInRedeemFlow({
     }
   };
 
+  const isKeypadVisible =
+    accessState.status === "authorized" && resolvedAccessKey === currentAccessKey;
+
   const handleAuthorizedKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (redeemSubmit.isSubmitting) {
+      return;
+    }
+
     if (/^\d$/.test(event.key)) {
       event.preventDefault();
       keypadState.enterDigit(event.key);
@@ -207,18 +214,14 @@ function SignedInRedeemFlow({
       return;
     }
 
-    if (
-      event.key === "Enter" &&
-      keypadState.isSubmitEnabled &&
-      !redeemSubmit.isSubmitting
-    ) {
+    if (event.key === "Enter" && keypadState.isSubmitEnabled) {
       event.preventDefault();
       void handleSubmit();
     }
   });
 
   useEffect(() => {
-    if (accessState.status !== "authorized") {
+    if (!isKeypadVisible) {
       return;
     }
 
@@ -231,7 +234,7 @@ function SignedInRedeemFlow({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [accessState.status]);
+  }, [isKeypadVisible]);
 
   if (resolvedAccessKey !== currentAccessKey || accessState.status === "idle") {
     return (
