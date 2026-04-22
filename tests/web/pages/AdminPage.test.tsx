@@ -15,26 +15,31 @@ const {
   mockListDraftEventSummaries,
   mockLoadDraftEvent,
   mockPublishDraftEvent,
-  mockRequestAdminMagicLink,
+  mockRequestMagicLink,
   mockSaveDraftEvent,
-  mockSignOutAdmin,
+  mockSignOut,
   mockUnpublishEvent,
-  mockUseAdminSession,
+  mockUseAuthSession,
 } = vi.hoisted(() => ({
   mockGenerateEventCode: vi.fn(),
   mockGetGameAdminStatus: vi.fn(),
   mockListDraftEventSummaries: vi.fn(),
   mockLoadDraftEvent: vi.fn(),
   mockPublishDraftEvent: vi.fn(),
-  mockRequestAdminMagicLink: vi.fn(),
+  mockRequestMagicLink: vi.fn(),
   mockSaveDraftEvent: vi.fn(),
-  mockSignOutAdmin: vi.fn(),
+  mockSignOut: vi.fn(),
   mockUnpublishEvent: vi.fn(),
-  mockUseAdminSession: vi.fn(),
+  mockUseAuthSession: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/admin/useAdminSession.ts", () => ({
-  useAdminSession: mockUseAdminSession,
+vi.mock("../../../apps/web/src/auth/useAuthSession.ts", () => ({
+  useAuthSession: mockUseAuthSession,
+}));
+
+vi.mock("../../../apps/web/src/lib/authApi.ts", () => ({
+  requestMagicLink: mockRequestMagicLink,
+  signOut: mockSignOut,
 }));
 
 vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
@@ -43,9 +48,7 @@ vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
   listDraftEventSummaries: mockListDraftEventSummaries,
   loadDraftEvent: mockLoadDraftEvent,
   publishDraftEvent: mockPublishDraftEvent,
-  requestAdminMagicLink: mockRequestAdminMagicLink,
   saveDraftEvent: mockSaveDraftEvent,
-  signOutAdmin: mockSignOutAdmin,
   unpublishEvent: mockUnpublishEvent,
 }));
 
@@ -170,11 +173,11 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockReset();
     mockLoadDraftEvent.mockReset();
     mockPublishDraftEvent.mockReset();
-    mockRequestAdminMagicLink.mockReset();
+    mockRequestMagicLink.mockReset();
     mockSaveDraftEvent.mockReset();
-    mockSignOutAdmin.mockReset();
+    mockSignOut.mockReset();
     mockUnpublishEvent.mockReset();
-    mockUseAdminSession.mockReset();
+    mockUseAuthSession.mockReset();
   });
 
   afterEach(() => {
@@ -182,7 +185,7 @@ describe("AdminPage", () => {
   });
 
   it("renders the sign-in form when no admin session exists", () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       status: "signed_out",
     });
 
@@ -197,10 +200,10 @@ describe("AdminPage", () => {
   });
 
   it("shows a success message after requesting a magic link", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       status: "signed_out",
     });
-    mockRequestAdminMagicLink.mockResolvedValue(undefined);
+    mockRequestMagicLink.mockResolvedValue(undefined);
 
     render(<AdminPage onNavigate={() => {}} />);
 
@@ -210,7 +213,9 @@ describe("AdminPage", () => {
     fireEvent.submit(screen.getByRole("button", { name: "Email sign-in link" }));
 
     await waitFor(() => {
-      expect(mockRequestAdminMagicLink).toHaveBeenCalledWith("admin@example.com");
+      expect(mockRequestMagicLink).toHaveBeenCalledWith("admin@example.com", {
+        next: "/admin",
+      });
     });
     expect(
       await screen.findByText("Check your email for the admin sign-in link."),
@@ -218,10 +223,10 @@ describe("AdminPage", () => {
   });
 
   it("shows the request error when magic-link delivery fails", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       status: "signed_out",
     });
-    mockRequestAdminMagicLink.mockRejectedValue(
+    mockRequestMagicLink.mockRejectedValue(
       new Error("Email delivery is unavailable."),
     );
 
@@ -236,7 +241,7 @@ describe("AdminPage", () => {
   });
 
   it("shows access denied for an authenticated non-admin session", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "viewer@example.com",
       session: { access_token: "viewer-token" },
       status: "signed_in",
@@ -257,7 +262,7 @@ describe("AdminPage", () => {
   });
 
   it("does not load drafts when admin configuration is missing", () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       message: "Supabase env vars are missing.",
       status: "missing_config",
     });
@@ -277,7 +282,7 @@ describe("AdminPage", () => {
   });
 
   it("shows the event workspace for an authenticated admin session", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -303,7 +308,7 @@ describe("AdminPage", () => {
   });
 
   it("uses singular event count copy for one draft", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -320,7 +325,7 @@ describe("AdminPage", () => {
 
   it("navigates from event cards to workspaces and live game routes", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -347,7 +352,7 @@ describe("AdminPage", () => {
 
   it("creates a starter draft, updates the list, and opens the new workspace", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -382,7 +387,7 @@ describe("AdminPage", () => {
 
   it("surfaces create failures without changing the list or navigating", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -406,7 +411,7 @@ describe("AdminPage", () => {
 
   it("disables workspace actions while a draft is being created", async () => {
     const saveDraft = createDeferred<unknown>();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -441,7 +446,7 @@ describe("AdminPage", () => {
 
   it("duplicates an existing draft, updates the list, and opens the duplicate", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -491,7 +496,7 @@ describe("AdminPage", () => {
 
   it("surfaces duplicate load failures without saving or navigating", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -516,7 +521,7 @@ describe("AdminPage", () => {
 
   it("surfaces duplicate save failures without changing the list or navigating", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -551,7 +556,7 @@ describe("AdminPage", () => {
 
   it("disables workspace actions while a draft is being duplicated", async () => {
     const saveDraft = createDeferred<unknown>();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -599,7 +604,7 @@ describe("AdminPage", () => {
   });
 
   it("shows selected event workspace actions", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -631,7 +636,7 @@ describe("AdminPage", () => {
 
   it("loads selected event details into an explicit-save form", async () => {
     const loadDraft = createDeferred<ReturnType<typeof createDraftDetail>>();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -669,7 +674,7 @@ describe("AdminPage", () => {
   });
 
   it("loads the selected draft question list and defaults to the first question", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -702,7 +707,7 @@ describe("AdminPage", () => {
   });
 
   it("changes the focused question without loading the draft again", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -726,7 +731,7 @@ describe("AdminPage", () => {
   });
 
   it("surfaces local event-details validation without saving", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -752,7 +757,7 @@ describe("AdminPage", () => {
   });
 
   it("saves event details, updates the summary list, and keeps questions unchanged", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -817,7 +822,7 @@ describe("AdminPage", () => {
       sponsor: "Updated sponsor",
       sponsorFact: "Updated sponsor fact",
     };
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -873,7 +878,7 @@ describe("AdminPage", () => {
   });
 
   it("adds a question and saves the updated draft structure", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -912,7 +917,7 @@ describe("AdminPage", () => {
   });
 
   it("duplicates and reorders questions before save", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -950,7 +955,7 @@ describe("AdminPage", () => {
   });
 
   it("requires confirmation before deleting questions and saves confirmed deletes", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -986,7 +991,7 @@ describe("AdminPage", () => {
   });
 
   it("blocks deleting the final question", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1009,7 +1014,7 @@ describe("AdminPage", () => {
   });
 
   it("adds and deletes options while repairing correct answers", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1043,7 +1048,7 @@ describe("AdminPage", () => {
   });
 
   it("blocks deleting the final option", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1072,7 +1077,7 @@ describe("AdminPage", () => {
   });
 
   it("repairs correct answers when selection mode changes before save", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1107,7 +1112,7 @@ describe("AdminPage", () => {
   });
 
   it("surfaces local question validation without saving", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1128,7 +1133,7 @@ describe("AdminPage", () => {
   });
 
   it("surfaces manual correct-answer validation without saving", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1150,7 +1155,7 @@ describe("AdminPage", () => {
   });
 
   it("surfaces selected question save failures without mutating draft state", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1173,7 +1178,7 @@ describe("AdminPage", () => {
   });
 
   it("surfaces selected event save failures without updating the summary list", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1197,7 +1202,7 @@ describe("AdminPage", () => {
   });
 
   it("shows a selected event detail load failure", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1218,7 +1223,7 @@ describe("AdminPage", () => {
   });
 
   it("reloads a selected route with saved draft details", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1255,7 +1260,7 @@ describe("AdminPage", () => {
   });
 
   it("reloads a selected route with saved question content", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1290,7 +1295,7 @@ describe("AdminPage", () => {
 
   it("shows an admin-only not-found state for an unknown selected event", async () => {
     const navigate = vi.fn();
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
@@ -1319,15 +1324,15 @@ describe("AdminPage", () => {
   });
 
   it("returns to the signed-out shell after sign-out completes", async () => {
-    mockUseAdminSession.mockReturnValue({
+    mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
       status: "signed_in",
     });
     mockGetGameAdminStatus.mockResolvedValue(true);
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
-    mockSignOutAdmin.mockImplementation(async () => {
-      mockUseAdminSession.mockReturnValue({
+    mockSignOut.mockImplementation(async () => {
+      mockUseAuthSession.mockReturnValue({
         status: "signed_out",
       });
     });
@@ -1339,7 +1344,7 @@ describe("AdminPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
 
     await waitFor(() => {
-      expect(mockSignOutAdmin).toHaveBeenCalledTimes(1);
+      expect(mockSignOut).toHaveBeenCalledTimes(1);
     });
     expect(
       await screen.findByRole("heading", {
@@ -1350,7 +1355,7 @@ describe("AdminPage", () => {
 
   describe("publish panel checklist", () => {
     it("shows all checklist items passing for a valid draft", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1372,7 +1377,7 @@ describe("AdminPage", () => {
     });
 
     it("shows check 1 failing and disables Publish for a zero-question draft", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1402,7 +1407,7 @@ describe("AdminPage", () => {
   describe("publish flow", () => {
     it("shows Publishing... while in progress and post-publish confirmation on success", async () => {
       const publishDraft = createDeferred<unknown>();
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1436,7 +1441,7 @@ describe("AdminPage", () => {
     it("shows Unpublish button immediately after publishing a draft-only event", async () => {
       // Regression: publishEvent must update selectedDraftState.draft.liveVersionNumber
       // so the unpublish section appears without a page reload for first-time publishes.
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1467,7 +1472,7 @@ describe("AdminPage", () => {
     });
 
     it("shows an error message when publish fails and re-enables the button", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1493,7 +1498,7 @@ describe("AdminPage", () => {
 
   describe("unpublish flow", () => {
     it("shows inline confirm for a live event, then resolves on confirm", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1525,7 +1530,7 @@ describe("AdminPage", () => {
     });
 
     it("cancels unpublish when Cancel is clicked and makes no API call", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1547,7 +1552,7 @@ describe("AdminPage", () => {
     });
 
     it("shows an error message when unpublish fails", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1575,7 +1580,7 @@ describe("AdminPage", () => {
     it("clears the publish success banner after unpublish", async () => {
       // Regression: confirmUnpublish must reset publishState to idle so
       // "Published as version N" is not shown after the event is unpublished.
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1633,7 +1638,7 @@ describe("AdminPage", () => {
     }
 
     it("shows the status label after a save on a live event, then clears it after publish", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1678,7 +1683,7 @@ describe("AdminPage", () => {
     });
 
     it("shows the label again when the draft is edited after publish", async () => {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1734,7 +1739,7 @@ describe("AdminPage", () => {
     it("cancel resets confirm state so unpublish can be retried cleanly", async () => {
       // Verifies that cancel → retry works: the confirm state fully resets
       // so a second click on Unpublish brings back "Are you sure?" correctly.
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
@@ -1762,7 +1767,7 @@ describe("AdminPage", () => {
 
   describe("event-code field", () => {
     function setupSignedInWithDraft(liveVersionNumber: number | null = null, eventCode: string | null = "ABC") {
-      mockUseAdminSession.mockReturnValue({
+      mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
         status: "signed_in",
