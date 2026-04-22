@@ -1,4 +1,4 @@
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useEffectEvent, useState } from "react";
 import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
 import type { AuthNextPath, MagicLinkState } from "../auth/types";
 import { useAuthSession } from "../auth/useAuthSession";
@@ -8,6 +8,8 @@ import {
   type RedeemAuthorizationResult,
 } from "../redeem/authorizeRedeem";
 import { RedeemKeypad } from "../redeem/RedeemKeypad";
+import { RedeemResultCard } from "../redeem/RedeemResultCard";
+import { useRedeemSubmit } from "../redeem/useRedeemSubmit";
 import { useRedeemKeypadState } from "../redeem/useRedeemKeypadState";
 import { routes } from "../routes";
 
@@ -97,11 +99,18 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     sessionState.status === "signed_in"
       ? `${slug}:${sessionState.email ?? ""}:${reloadToken}`
       : "";
-  const keypadState = useRedeemKeypadState();
   const activeAccessState =
     sessionState.status === "signed_in"
       ? accessState
       : ({ status: "idle" } as RedeemAccessState);
+  const redeemSubmit = useRedeemSubmit(
+    activeAccessState.status === "authorized" ? activeAccessState.eventId : null,
+  );
+  const keypadState = useRedeemKeypadState({
+    onStartEntry: () => {
+      redeemSubmit.resetResult();
+    },
+  });
 
   useEffect(() => {
     if (sessionState.status !== "signed_in") {
@@ -162,27 +171,56 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     };
   }, [currentAccessKey, reloadToken, sessionState, slug]);
 
+  const handleSubmit = async () => {
+    if (!keypadState.isSubmitEnabled || redeemSubmit.isSubmitting) {
+      return;
+    }
+
+    const submissionResult = await redeemSubmit.submitCode(keypadState.codeSuffix);
+
+    if (submissionResult.status === "success") {
+      keypadState.reset();
+    }
+  };
+
+  const handleRetryLastSubmission = async () => {
+    const submissionResult = await redeemSubmit.retryLastSubmission();
+
+    if (submissionResult?.status === "success") {
+      keypadState.reset();
+    }
+  };
+
+  const handleAuthorizedKeyDown = useEffectEvent((event: KeyboardEvent) => {
+    if (/^\d$/.test(event.key)) {
+      event.preventDefault();
+      keypadState.enterDigit(event.key);
+      return;
+    }
+
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      keypadState.backspaceDigit();
+      return;
+    }
+
+    if (
+      event.key === "Enter" &&
+      keypadState.isSubmitEnabled &&
+      !redeemSubmit.isSubmitting
+    ) {
+      event.preventDefault();
+      void handleSubmit();
+    }
+  });
+
   useEffect(() => {
     if (activeAccessState.status !== "authorized") {
       return;
     }
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (/^\d$/.test(event.key)) {
-        event.preventDefault();
-        keypadState.enterDigit(event.key);
-        return;
-      }
-
-      if (event.key === "Backspace") {
-        event.preventDefault();
-        keypadState.backspaceDigit();
-        return;
-      }
-
-      if (event.key === "Enter" && keypadState.isSubmitEnabled) {
-        event.preventDefault();
-      }
+      handleAuthorizedKeyDown(event);
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -190,7 +228,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeAccessState.status, keypadState]);
+  }, [activeAccessState.status]);
 
   const requestRedeemMagicLink = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -346,7 +384,6 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
           <SignedInAs email={authorizedAccessState.email} />
           <span className="redeem-event-badge">{authorizedAccessState.eventCode}</span>
           <div className="redeem-status-card">
-            <p className="redeem-code-preview-label">Enter the 4-digit code suffix.</p>
             <p
               aria-label="Code preview"
               className="redeem-code-preview"
@@ -358,16 +395,32 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
                 {keypadState.displayCodeSuffix}
               </strong>
             </p>
-            <h2>Enter a 4-digit code</h2>
-            <p>The keypad stays on-screen so the next attendee is fast to process.</p>
           </div>
+          <RedeemResultCard
+            isSubmitting={redeemSubmit.isSubmitting}
+            onClear={() => {
+              keypadState.clearDigits();
+              redeemSubmit.resetResult();
+            }}
+            onRedeemNextCode={() => {
+              keypadState.reset();
+              redeemSubmit.resetResult();
+            }}
+            onRetry={() => {
+              void handleRetryLastSubmission();
+            }}
+            state={redeemSubmit.resultState}
+          />
         </div>
         <RedeemKeypad
           isSubmitEnabled={keypadState.isSubmitEnabled}
+          isSubmitting={redeemSubmit.isSubmitting}
           onBackspace={keypadState.backspaceDigit}
           onClear={keypadState.clearDigits}
           onDigit={keypadState.enterDigit}
-          onSubmit={() => {}}
+          onSubmit={() => {
+            void handleSubmit();
+          }}
         />
         <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
       </div>

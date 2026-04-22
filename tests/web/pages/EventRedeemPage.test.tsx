@@ -11,10 +11,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const {
   mockAuthorizeRedeem,
   mockRequestMagicLink,
+  mockUseRedeemSubmit,
   mockUseAuthSession,
 } = vi.hoisted(() => ({
   mockAuthorizeRedeem: vi.fn(),
   mockRequestMagicLink: vi.fn(),
+  mockUseRedeemSubmit: vi.fn(),
   mockUseAuthSession: vi.fn(),
 }));
 
@@ -30,13 +32,25 @@ vi.mock("../../../apps/web/src/redeem/authorizeRedeem.ts", () => ({
   authorizeRedeem: mockAuthorizeRedeem,
 }));
 
+vi.mock("../../../apps/web/src/redeem/useRedeemSubmit.ts", () => ({
+  useRedeemSubmit: mockUseRedeemSubmit,
+}));
+
 import { EventRedeemPage } from "../../../apps/web/src/pages/EventRedeemPage.tsx";
 
 describe("EventRedeemPage", () => {
   beforeEach(() => {
     mockAuthorizeRedeem.mockReset();
     mockRequestMagicLink.mockReset();
+    mockUseRedeemSubmit.mockReset();
     mockUseAuthSession.mockReset();
+    mockUseRedeemSubmit.mockReturnValue({
+      isSubmitting: false,
+      resetResult: vi.fn(),
+      resultState: { status: "idle" },
+      retryLastSubmission: vi.fn(),
+      submitCode: vi.fn().mockResolvedValue({ status: "idle" }),
+    });
   });
 
   afterEach(() => {
@@ -155,5 +169,46 @@ describe("EventRedeemPage", () => {
       expect(mockAuthorizeRedeem).toHaveBeenCalledTimes(2);
     });
     expect(await screen.findByLabelText("Code preview")).toBeTruthy();
+  });
+
+  it("submits the entered 4-digit suffix through the redeem submit hook", async () => {
+    const submitCode = vi.fn().mockResolvedValue({
+      redeemedAt: "2026-04-21T12:00:00.000Z",
+      redeemedByRole: "agent",
+      result: "redeemed_now",
+      status: "success",
+    });
+
+    mockUseAuthSession.mockReturnValue({
+      email: "agent@example.com",
+      session: { access_token: "token" },
+      status: "signed_in",
+    });
+    mockAuthorizeRedeem.mockResolvedValue({
+      eventCode: "MMF",
+      eventId: "madrona-music-2026",
+      status: "authorized",
+    });
+    mockUseRedeemSubmit.mockReturnValue({
+      isSubmitting: false,
+      resetResult: vi.fn(),
+      resultState: { status: "idle" },
+      retryLastSubmission: vi.fn(),
+      submitCode,
+    });
+
+    render(<EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />);
+
+    await screen.findByLabelText("Code preview");
+
+    fireEvent.click(screen.getByRole("button", { name: "1" }));
+    fireEvent.click(screen.getByRole("button", { name: "2" }));
+    fireEvent.click(screen.getByRole("button", { name: "3" }));
+    fireEvent.click(screen.getByRole("button", { name: "4" }));
+    fireEvent.click(screen.getByRole("button", { name: "Redeem code" }));
+
+    await waitFor(() => {
+      expect(submitCode).toHaveBeenCalledWith("1234");
+    });
   });
 });
