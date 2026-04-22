@@ -2,12 +2,14 @@ import type { ReactNode } from "react";
 import { AuthCallbackPage } from "./auth/AuthCallbackPage";
 import { AdminPage } from "./pages/AdminPage";
 import { EventRedeemPage } from "./pages/EventRedeemPage";
+import { EventRedemptionsPage } from "./pages/EventRedemptionsPage";
 import { LandingPage } from "./pages/LandingPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import {
   matchAdminEventPath,
   matchEventRedeemPath,
+  matchEventRedemptionsPath,
   matchGamePath,
   routes,
 } from "./routes";
@@ -55,6 +57,18 @@ function getPageContent(
         key={matchedRedeem.slug}
         onNavigate={navigate}
         slug={matchedRedeem.slug}
+      />
+    );
+  }
+
+  const matchedRedemptions = matchEventRedemptionsPath(pathname);
+
+  if (matchedRedemptions) {
+    return (
+      <EventRedemptionsPage
+        key={matchedRedemptions.slug}
+        onNavigate={navigate}
+        slug={matchedRedemptions.slug}
       />
     );
   }

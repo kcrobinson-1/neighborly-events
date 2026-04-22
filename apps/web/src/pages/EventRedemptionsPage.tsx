@@ -1,0 +1,349 @@
+import {
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useState,
+} from "react";
+import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
+import type { AuthNextPath, MagicLinkState } from "../auth/types";
+import { useAuthSession } from "../auth/useAuthSession";
+import { requestMagicLink } from "../lib/authApi";
+import {
+  authorizeRedemptions,
+  type RedemptionsAuthorizationResult,
+} from "../redemptions/authorizeRedemptions";
+import { routes } from "../routes";
+
+type EventRedemptionsPageProps = {
+  onNavigate: (path: string) => void;
+  slug: string;
+};
+
+const REDEMPTIONS_SIGN_IN_COPY: SignInFormCopy = {
+  eyebrow: "Redemption monitoring",
+  emailInputId: "redemptions-signin-email",
+  emailLabel: "Email",
+  emailPlaceholder: "organizer@example.com",
+  heading: "Sign in to review redemptions",
+  submitLabelIdle: "Send sign-in link",
+  submitLabelPending: "Sending...",
+};
+
+function SignedInAs({ email }: { email: string | null }) {
+  return (
+    <p>
+      Signed in as <strong>{email ?? "this account"}</strong>.
+    </p>
+  );
+}
+
+function RedemptionsShell(
+  {
+    title,
+    eyebrow = "Redemption monitoring",
+    children,
+    onNavigateHome,
+  }: {
+    children: ReactNode;
+    eyebrow?: string;
+    onNavigateHome: () => void;
+    title: string;
+  },
+) {
+  return (
+    <section className="game-layout">
+      <nav className="sample-nav">
+        <button
+          className="text-link"
+          onClick={onNavigateHome}
+          type="button"
+        >
+          Back to demo overview
+        </button>
+      </nav>
+
+      <section className="app-card">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">{eyebrow}</p>
+            <h1 className="topbar-title-compact">{title}</h1>
+          </div>
+        </header>
+        <section className="panel">
+          {children}
+        </section>
+      </section>
+    </section>
+  );
+}
+
+type RedemptionsAccessState =
+  | { status: "idle" }
+  | { eventCode: string; eventId: string; status: "authorized" }
+  | { status: "role_gate" }
+  | { message: string; status: "transient_error" };
+
+type SignedInRedemptionsFlowProps = {
+  email: string | null;
+  onNavigate: (path: string) => void;
+  slug: string;
+};
+
+/**
+ * Signed-in monitoring experience for `/event/:slug/redemptions`.
+ *
+ * Rendered only while `sessionState.status === "signed_in"`, so signing out
+ * unmounts this component and discards its authorization cache. A fresh
+ * sign-in mounts a new instance, which guarantees a new
+ * `authorizeRedemptions` probe runs before any list fetch starts — even
+ * when the returning session has the same email on the same slug.
+ */
+function SignedInRedemptionsFlow({
+  email,
+  onNavigate,
+  slug,
+}: SignedInRedemptionsFlowProps) {
+  const [accessState, setAccessState] = useState<RedemptionsAccessState>({
+    status: "idle",
+  });
+  const [reloadToken, setReloadToken] = useState(0);
+  const [resolvedAccessKey, setResolvedAccessKey] = useState("");
+  const currentAccessKey = `${slug}:${email ?? ""}:${reloadToken}`;
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    void authorizeRedemptions(slug)
+      .then((result: RedemptionsAuthorizationResult) => {
+        if (isCancelled) {
+          return;
+        }
+
+        if (result.status === "authorized") {
+          setAccessState({
+            eventCode: result.eventCode,
+            eventId: result.eventId,
+            status: "authorized",
+          });
+          setResolvedAccessKey(currentAccessKey);
+          return;
+        }
+
+        if (result.status === "role_gate") {
+          setAccessState({
+            status: "role_gate",
+          });
+          setResolvedAccessKey(currentAccessKey);
+          return;
+        }
+
+        setAccessState({
+          message: result.message,
+          status: "transient_error",
+        });
+        setResolvedAccessKey(currentAccessKey);
+      })
+      .catch((error: unknown) => {
+        if (!isCancelled) {
+          setAccessState({
+            message:
+              error instanceof Error
+                ? error.message
+                : "Please retry once your connection is stable.",
+            status: "transient_error",
+          });
+          setResolvedAccessKey(currentAccessKey);
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [currentAccessKey, reloadToken, slug]);
+
+  if (resolvedAccessKey !== currentAccessKey || accessState.status === "idle") {
+    return (
+      <RedemptionsShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Loading redemption monitoring"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={email} />
+          <button className="secondary-button" disabled type="button">
+            Checking event access...
+          </button>
+        </div>
+      </RedemptionsShell>
+    );
+  }
+
+  if (accessState.status === "role_gate") {
+    return (
+      <RedemptionsShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Review redemptions"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={email} />
+          <div className="section-heading">
+            <h2>Not available for this event.</h2>
+          </div>
+          <p>
+            Your account is not set up to review redemptions here. If you think
+            this is a mistake, check with the event organizer.
+          </p>
+        </div>
+      </RedemptionsShell>
+    );
+  }
+
+  if (accessState.status === "transient_error") {
+    return (
+      <RedemptionsShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Review redemptions"
+      >
+        <div className="signin-stack">
+          <SignedInAs email={email} />
+          <div className="section-heading">
+            <h2>We couldn&apos;t verify monitoring access right now.</h2>
+          </div>
+          <p>{accessState.message}</p>
+          <button
+            className="primary-button"
+            onClick={() => setReloadToken((value) => value + 1)}
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      </RedemptionsShell>
+    );
+  }
+
+  const authorizedAccessState = accessState;
+
+  return (
+    <RedemptionsShell
+      onNavigateHome={() => onNavigate(routes.home)}
+      title="Review redemptions"
+    >
+      <div className="redemptions-layout">
+        <div className="redemptions-header">
+          <SignedInAs email={email} />
+          <span className="redemptions-event-badge">
+            {authorizedAccessState.eventCode}
+          </span>
+        </div>
+        <p className="redemptions-placeholder">
+          Monitoring list loads in the next commit.
+        </p>
+        <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
+      </div>
+    </RedemptionsShell>
+  );
+}
+
+/** Event-scoped monitoring route shell that gates `/event/:slug/redemptions` on sign-in. */
+export function EventRedemptionsPage(
+  { onNavigate, slug }: EventRedemptionsPageProps,
+) {
+  const sessionState = useAuthSession();
+  const [emailInput, setEmailInput] = useState("");
+  const [magicLinkState, setMagicLinkState] = useState<MagicLinkState>({
+    message: null,
+    status: "idle",
+  });
+
+  const requestRedemptionsMagicLink = async (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+
+    if (!emailInput.trim()) {
+      setMagicLinkState({
+        message: "Enter the email address that should receive the sign-in link.",
+        status: "error",
+      });
+      return;
+    }
+
+    setMagicLinkState({
+      message: null,
+      status: "pending",
+    });
+
+    try {
+      const nextPath = routes.eventRedemptions(slug) as AuthNextPath;
+
+      await requestMagicLink(emailInput, {
+        next: nextPath,
+      });
+      setMagicLinkState({
+        message: "Check your email for the monitoring sign-in link.",
+        status: "success",
+      });
+    } catch (error: unknown) {
+      setMagicLinkState({
+        message:
+          error instanceof Error
+            ? error.message
+            : "We couldn't send the sign-in link.",
+        status: "error",
+      });
+    }
+  };
+
+  if (sessionState.status === "missing_config") {
+    return (
+      <RedemptionsShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="This game isn't available right now."
+      >
+        <div className="signin-stack">
+          <p>{sessionState.message}</p>
+        </div>
+      </RedemptionsShell>
+    );
+  }
+
+  if (sessionState.status === "loading") {
+    return (
+      <RedemptionsShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Loading redemption monitoring"
+      >
+        <div className="signin-stack">
+          <button className="secondary-button" disabled type="button">
+            Restoring session...
+          </button>
+        </div>
+      </RedemptionsShell>
+    );
+  }
+
+  if (sessionState.status === "signed_out") {
+    return (
+      <RedemptionsShell
+        onNavigateHome={() => onNavigate(routes.home)}
+        title="Review redemptions"
+      >
+        <SignInForm
+          copy={REDEMPTIONS_SIGN_IN_COPY}
+          emailInput={emailInput}
+          magicLinkState={magicLinkState}
+          onEmailInputChange={setEmailInput}
+          onSubmit={requestRedemptionsMagicLink}
+        />
+      </RedemptionsShell>
+    );
+  }
+
+  return (
+    <SignedInRedemptionsFlow
+      email={sessionState.email}
+      onNavigate={onNavigate}
+      slug={slug}
+    />
+  );
+}
