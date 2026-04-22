@@ -1,7 +1,7 @@
 # Reward Redemption — Phase A.2a Execution Plan
 
 **Status:** Completed
-**Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
 **Predecessor:** [`reward-redemption-phase-a-1-plan.md`](./reward-redemption-phase-a-1-plan.md) — landed.
 **Successor:** [`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md).
 A.2b owns the Edge Function wrappers, the attendee redemption-status read path,
@@ -203,7 +203,7 @@ One concern per file so selective rollback is clean.
    follow-up in `docs/tracking/code-refactor-checklist.md` rather than
    widening this PR.
 7. **Documentation currency sync.** Single commit touching:
-   - `docs/plans/reward-redemption-phase-a-1-plan.md` — flip the
+   - `docs/plans/archive/reward-redemption-phase-a-1-plan.md` — flip the
      `**Status:**` field from `Not started` to `Completed` so the A.1
      plan doc reflects the landed state. This update was missed when
      A.1 merged and is caught up here.

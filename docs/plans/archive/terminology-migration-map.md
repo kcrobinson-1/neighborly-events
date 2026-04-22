@@ -7,7 +7,7 @@ and naming rules. See `terminology-migration-strategy.md` for the phased plan.
 ## Phase 0 decisions
 
 **Event-code sequencing**: Phase 2 (DB rename) runs first. The
-`event-code-prerequisite-plan.md` now uses target database names directly, so
+`archive/event-code-prerequisite-plan.md` now uses target database names directly, so
 the event-code prerequisite can be implemented against the renamed schema.
 
 **Top-level published entity table**: `game_events` (not `games`). The "event"
@@ -279,7 +279,7 @@ The following docs were confirmed clean across Phase 1 and Phase 5:
 - `docs/plans/security-and-abuse-plan.md`
 - `docs/plans/reward-redemption-mvp-design.md`
 - `docs/tracking/production-admin-smoke-tracking.md`
-- `docs/plans/event-code-prerequisite-plan.md` (rewrite to target names before implementation)
+- `docs/plans/archive/event-code-prerequisite-plan.md` (rewrite to target names before implementation)
 - `docs/tracking/code-documentation-audit.md`
 - `docs/tracking/code-refactor-checklist.md`
 - `docs/README.md`

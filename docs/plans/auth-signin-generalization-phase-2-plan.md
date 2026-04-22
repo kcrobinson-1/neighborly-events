@@ -2,7 +2,7 @@
 
 **Status:** Landed.
 **Parent overview:** [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
-**Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md).
+**Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./archive/auth-signin-generalization-phase-1-plan.md).
 Phase 1 is **fully landed**. Three commits on `main` satisfy the
 Phase 1 plan: `b16fa24` (role-neutral auth API helpers), `adc4f3f`
 (`validateNextPath` with bypass-vector tests), and `48b3167`
