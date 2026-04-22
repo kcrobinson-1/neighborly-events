@@ -15,6 +15,7 @@ import {
 } from "../redemptions/authorizeRedemptions";
 import { filterRedemptions } from "../redemptions/filterRedemptions";
 import { parseSearchInput } from "../redemptions/parseSearchInput";
+import { RedemptionDetailSheet } from "../redemptions/RedemptionDetailSheet";
 import { RedemptionRow } from "../redemptions/RedemptionRow";
 import { RedemptionsFilterBar } from "../redemptions/RedemptionsFilterBar";
 import {
@@ -22,6 +23,7 @@ import {
   useRedemptionsList,
 } from "../redemptions/useRedemptionsList";
 import { useRedemptionsFilters } from "../redemptions/useRedemptionsFilters";
+import type { RedemptionRow as RedemptionRowType } from "../redemptions/types";
 import { routes } from "../routes";
 
 type EventRedemptionsPageProps = {
@@ -293,6 +295,21 @@ function AuthorizedRedemptionsView({
     useRedemptionsFilters();
   const isOnline = useOnlineStatus();
   const wasOfflineRef = useRef(!isOnline);
+  const [selectedRow, setSelectedRow] = useState<RedemptionRowType | null>(
+    null,
+  );
+
+  const selectedRowButtonId = selectedRow
+    ? `redemption-view-button-${selectedRow.id}`
+    : null;
+
+  const handleViewDetails = (row: RedemptionRowType) => {
+    setSelectedRow(row);
+  };
+
+  const handleCloseDetails = () => {
+    setSelectedRow(null);
+  };
 
   useEffect(() => {
     if (!isOnline) {
@@ -392,9 +409,7 @@ function AuthorizedRedemptionsView({
                     key={row.id}
                     currentUserId={currentUserId}
                     eventCode={eventCode}
-                    onView={() => {
-                      // Detail sheet wires into this handler in Commit 6.
-                    }}
+                    onView={handleViewDetails}
                     row={row}
                   />
                 ))}
@@ -404,6 +419,13 @@ function AuthorizedRedemptionsView({
         ) : null}
         <p className="sr-only">Resolved event {eventId}</p>
       </div>
+      <RedemptionDetailSheet
+        currentUserId={currentUserId}
+        eventCode={eventCode}
+        onClose={handleCloseDetails}
+        returnFocusTargetId={selectedRowButtonId}
+        row={selectedRow}
+      />
     </RedemptionsShell>
   );
 }

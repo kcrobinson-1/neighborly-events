@@ -182,3 +182,61 @@
   color: var(--muted);
   font-size: 0.9rem;
 }
+
+.redemptions-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: $color-backdrop-mask;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.redemptions-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: $space-8 $space-7 $space-12;
+  border-top-left-radius: $radius-panel;
+  border-top-right-radius: $radius-panel;
+  background: $color-white-panel;
+  box-shadow: $shadow-panel;
+  z-index: 11;
+  @include stack($space-6);
+}
+
+.redemptions-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-5;
+}
+
+.redemptions-sheet-code {
+  margin: $space-2 0 0 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+}
+
+.redemptions-sheet-body {
+  @include stack($space-4);
+}
+
+.redemptions-sheet-row {
+  display: flex;
+  align-items: baseline;
+  gap: $space-4;
+}
+
+.redemptions-sheet-row-label {
+  min-width: 8.5rem;
+  color: var(--muted);
+  font-weight: $font-weight-semibold;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

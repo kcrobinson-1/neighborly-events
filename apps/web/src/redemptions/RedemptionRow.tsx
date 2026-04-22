@@ -93,6 +93,7 @@ export function RedemptionRow({
       </div>
       <button
         className="text-link"
+        id={`redemption-view-button-${row.id}`}
         onClick={() => onView(row)}
         type="button"
       >
