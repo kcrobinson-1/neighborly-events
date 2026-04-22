@@ -49,6 +49,14 @@ $color-success-surface: rgba(63, 143, 90, 0.16);
 $color-success-surface-muted: rgba(63, 143, 90, 0.12);
 $color-success-border: rgba(63, 143, 90, 0.18);
 
+// Status-badge palette for the redemption monitoring list and the B.2b
+// reversal confirmation. Introduced in B.2a with a B.2b reuse commitment so
+// the two surfaces share one treatment.
+$color-status-redeemed-surface: $color-success-surface;
+$color-status-redeemed-foreground: #2a6a40;
+$color-status-reversed-surface: $color-accent-surface-muted;
+$color-status-reversed-foreground: #8a6a1c;
+
 $space-1: 4px;
 $space-2: 6px;
 $space-3: 8px;

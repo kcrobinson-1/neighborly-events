@@ -13,10 +13,14 @@ import {
   authorizeRedemptions,
   type RedemptionsAuthorizationResult,
 } from "../redemptions/authorizeRedemptions";
+import { filterRedemptions } from "../redemptions/filterRedemptions";
+import { parseSearchInput } from "../redemptions/parseSearchInput";
+import { RedemptionsFilterBar } from "../redemptions/RedemptionsFilterBar";
 import {
   REDEMPTIONS_FETCH_LIMIT,
   useRedemptionsList,
 } from "../redemptions/useRedemptionsList";
+import { useRedemptionsFilters } from "../redemptions/useRedemptionsFilters";
 import { routes } from "../routes";
 
 type EventRedemptionsPageProps = {
@@ -89,6 +93,7 @@ type RedemptionsAccessState =
   | { message: string; status: "transient_error" };
 
 type SignedInRedemptionsFlowProps = {
+  currentUserId: string | null;
   email: string | null;
   onNavigate: (path: string) => void;
   slug: string;
@@ -104,6 +109,7 @@ type SignedInRedemptionsFlowProps = {
  * when the returning session has the same email on the same slug.
  */
 function SignedInRedemptionsFlow({
+  currentUserId,
   email,
   onNavigate,
   slug,
@@ -228,6 +234,7 @@ function SignedInRedemptionsFlow({
 
   return (
     <AuthorizedRedemptionsView
+      currentUserId={currentUserId}
       email={email}
       eventCode={accessState.eventCode}
       eventId={accessState.eventId}
@@ -237,6 +244,7 @@ function SignedInRedemptionsFlow({
 }
 
 type AuthorizedRedemptionsViewProps = {
+  currentUserId: string | null;
   email: string | null;
   eventCode: string;
   eventId: string;
@@ -273,12 +281,15 @@ function formatLastUpdated(fetchedAt: Date) {
 }
 
 function AuthorizedRedemptionsView({
+  currentUserId,
   email,
   eventCode,
   eventId,
   onNavigateHome,
 }: AuthorizedRedemptionsViewProps) {
   const { refresh, state: listState } = useRedemptionsList({ eventId });
+  const { chips, nowMs, refreshNowMs, searchInput, setSearchInput, toggleChip } =
+    useRedemptionsFilters();
   const isOnline = useOnlineStatus();
   const wasOfflineRef = useRef(!isOnline);
 
@@ -292,6 +303,23 @@ function AuthorizedRedemptionsView({
       refresh();
     }
   }, [isOnline, refresh]);
+
+  const handleRefresh = () => {
+    refreshNowMs();
+    refresh();
+  };
+
+  const searchResult = parseSearchInput(searchInput, eventCode);
+  const filteredRows =
+    listState.status === "success"
+      ? filterRedemptions({
+          chips,
+          currentUserId,
+          nowMs,
+          rows: listState.rows,
+          searchResult,
+        })
+      : [];
 
   return (
     <RedemptionsShell
@@ -312,7 +340,7 @@ function AuthorizedRedemptionsView({
           <button
             className="secondary-button"
             disabled={!isOnline || listState.status === "loading"}
-            onClick={() => refresh()}
+            onClick={handleRefresh}
             type="button"
           >
             {isOnline ? "Refresh" : "You are offline"}
@@ -326,7 +354,7 @@ function AuthorizedRedemptionsView({
             <p>{listState.message}</p>
             <button
               className="primary-button"
-              onClick={() => refresh()}
+              onClick={handleRefresh}
               type="button"
             >
               Retry
@@ -335,6 +363,12 @@ function AuthorizedRedemptionsView({
         ) : null}
         {listState.status === "success" ? (
           <>
+            <RedemptionsFilterBar
+              chips={chips}
+              onChipToggle={toggleChip}
+              onSearchInputChange={setSearchInput}
+              searchInput={searchInput}
+            />
             {listState.rows.length === REDEMPTIONS_FETCH_LIMIT ? (
               <p className="redemptions-cap-banner">
                 Showing the most recent {REDEMPTIONS_FETCH_LIMIT} redemption
@@ -346,9 +380,13 @@ function AuthorizedRedemptionsView({
               <p className="redemptions-placeholder">
                 No redemption activity yet for this event.
               </p>
+            ) : filteredRows.length === 0 ? (
+              <p className="redemptions-placeholder">
+                No redemptions match the current filters or search.
+              </p>
             ) : (
               <ul className="redemptions-list">
-                {listState.rows.map((row) => (
+                {filteredRows.map((row) => (
                   <li key={row.id} className="redemptions-row">
                     <span>{row.verification_code}</span>
                     <span>
@@ -465,6 +503,7 @@ export function EventRedemptionsPage(
 
   return (
     <SignedInRedemptionsFlow
+      currentUserId={sessionState.session.user.id ?? null}
       email={sessionState.email}
       onNavigate={onNavigate}
       slug={slug}

@@ -127,6 +127,7 @@ describe("EventRedemptionsPage", () => {
   it("renders the authorized loading state with the locked event code", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValue({
@@ -148,6 +149,7 @@ describe("EventRedemptionsPage", () => {
   it("renders the list and last-updated timestamp on a successful fetch", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValue({
@@ -190,6 +192,7 @@ describe("EventRedemptionsPage", () => {
   it("renders the 'showing most recent N' banner when the cached slice hits the cap", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValue({
@@ -234,6 +237,7 @@ describe("EventRedemptionsPage", () => {
   it("renders the fetch-error banner with Retry, not the role-gate copy", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValue({
@@ -278,6 +282,7 @@ describe("EventRedemptionsPage", () => {
 
       mockUseAuthSession.mockReturnValue({
         email: "organizer@example.com",
+        session: { user: { id: "user-organizer" } },
         status: "signed_in",
       });
       mockAuthorizeRedemptions.mockResolvedValue({
@@ -324,6 +329,7 @@ describe("EventRedemptionsPage", () => {
   it("calls refresh when the explicit refresh button is clicked", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValue({
@@ -355,6 +361,7 @@ describe("EventRedemptionsPage", () => {
   it("collapses slug-not-found and role-held-none branches into identical role-gate DOM", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValueOnce({
@@ -395,6 +402,7 @@ describe("EventRedemptionsPage", () => {
   it("renders the transient-error retry banner for a network/5xx resolver failure", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions.mockResolvedValueOnce({
@@ -427,6 +435,7 @@ describe("EventRedemptionsPage", () => {
   it("transitions from transient-error retry to authorized on a successful retry", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
       status: "signed_in",
     });
     mockAuthorizeRedemptions
