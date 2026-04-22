@@ -96,8 +96,9 @@ describe("EventRedeemPage", () => {
 
     render(<EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />);
 
-    expect(await screen.findByText("Event code MMF")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Loading redemption tools..." })).toBeTruthy();
+    expect(await screen.findByLabelText("Code preview")).toBeTruthy();
+    expect(screen.getByLabelText("Code preview").textContent).toBe("MMF••••");
+    expect(screen.getByRole("button", { name: "Redeem code" })).toBeTruthy();
   });
 
   it("renders the role-gate copy without revealing event existence", async () => {
@@ -153,6 +154,6 @@ describe("EventRedeemPage", () => {
     await waitFor(() => {
       expect(mockAuthorizeRedeem).toHaveBeenCalledTimes(2);
     });
-    expect(await screen.findByText("Event code MMF")).toBeTruthy();
+    expect(await screen.findByLabelText("Code preview")).toBeTruthy();
   });
 });

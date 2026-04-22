@@ -7,6 +7,8 @@ import {
   authorizeRedeem,
   type RedeemAuthorizationResult,
 } from "../redeem/authorizeRedeem";
+import { RedeemKeypad } from "../redeem/RedeemKeypad";
+import { useRedeemKeypadState } from "../redeem/useRedeemKeypadState";
 import { routes } from "../routes";
 
 type EventRedeemPageProps = {
@@ -95,6 +97,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     sessionState.status === "signed_in"
       ? `${slug}:${sessionState.email ?? ""}:${reloadToken}`
       : "";
+  const keypadState = useRedeemKeypadState();
   const activeAccessState =
     sessionState.status === "signed_in"
       ? accessState
@@ -158,6 +161,36 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
       isCancelled = true;
     };
   }, [currentAccessKey, reloadToken, sessionState, slug]);
+
+  useEffect(() => {
+    if (activeAccessState.status !== "authorized") {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (/^\d$/.test(event.key)) {
+        event.preventDefault();
+        keypadState.enterDigit(event.key);
+        return;
+      }
+
+      if (event.key === "Backspace") {
+        event.preventDefault();
+        keypadState.backspaceDigit();
+        return;
+      }
+
+      if (event.key === "Enter" && keypadState.isSubmitEnabled) {
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeAccessState.status, keypadState]);
 
   const requestRedeemMagicLink = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -308,12 +341,34 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
       onNavigateHome={() => onNavigate(routes.home)}
       title="Preparing redeem access"
     >
-      <div className="signin-stack">
-        <SignedInAs email={authorizedAccessState.email} />
-        <span className="chip">Event code {authorizedAccessState.eventCode}</span>
-        <button className="secondary-button" disabled type="button">
-          Loading redemption tools...
-        </button>
+      <div className="redeem-layout">
+        <div className="redeem-card-stack">
+          <SignedInAs email={authorizedAccessState.email} />
+          <span className="redeem-event-badge">{authorizedAccessState.eventCode}</span>
+          <div className="redeem-status-card">
+            <p className="redeem-code-preview-label">Enter the 4-digit code suffix.</p>
+            <p
+              aria-label="Code preview"
+              className="redeem-code-preview"
+            >
+              <span className="redeem-code-preview-prefix">
+                {authorizedAccessState.eventCode}
+              </span>
+              <strong className="redeem-code-preview-suffix">
+                {keypadState.displayCodeSuffix}
+              </strong>
+            </p>
+            <h2>Enter a 4-digit code</h2>
+            <p>The keypad stays on-screen so the next attendee is fast to process.</p>
+          </div>
+        </div>
+        <RedeemKeypad
+          isSubmitEnabled={keypadState.isSubmitEnabled}
+          onBackspace={keypadState.backspaceDigit}
+          onClear={keypadState.clearDigits}
+          onDigit={keypadState.enterDigit}
+          onSubmit={() => {}}
+        />
         <p className="sr-only">Resolved event {authorizedAccessState.eventId}</p>
       </div>
     </RedeemShell>
