@@ -65,7 +65,7 @@ export function RedeemKeypad({
           onClick={onBackspace}
           type="button"
         >
-          Delete
+          Backspace
         </button>
       </div>
       <button

@@ -159,7 +159,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
             message:
               error instanceof Error
                 ? error.message
-                : "We couldn't verify redeem access right now.",
+                : "Please retry once your connection is stable.",
             status: "transient_error",
           });
           setResolvedAccessKey(currentAccessKey);
@@ -377,7 +377,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
   return (
     <RedeemShell
       onNavigateHome={() => onNavigate(routes.home)}
-      title="Preparing redeem access"
+      title="Redeem event codes"
     >
       <div className="redeem-layout">
         <div className="redeem-card-stack">

@@ -42,7 +42,7 @@ type ParsedHttpError = {
   message: string;
 };
 
-const DEFAULT_TRANSIENT_MESSAGE = "We couldn't redeem this code right now.";
+const DEFAULT_TRANSIENT_MESSAGE = "Please retry once your connection is stable.";
 
 function createFunctionUrl(functionName: string) {
   return `${getSupabaseConfig().supabaseUrl}/functions/v1/${functionName}`;

@@ -138,6 +138,32 @@ describe("EventRedeemPage", () => {
     expect(screen.queryByText(/Event code/)).toBeNull();
   });
 
+  it("role-gate renders identical DOM for unknown-slug and no-role inputs", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "agent@example.com",
+      session: { access_token: "token" },
+      status: "signed_in",
+    });
+    mockAuthorizeRedeem.mockResolvedValue({ status: "role_gate" });
+
+    const unknownSlugRender = render(
+      <EventRedeemPage onNavigate={() => {}} slug="absent-event" />,
+    );
+    await screen.findByRole("heading", { name: "Not available for this event." });
+    const unknownSlugHtml = unknownSlugRender.container.innerHTML;
+    unknownSlugRender.unmount();
+
+    mockAuthorizeRedeem.mockResolvedValue({ status: "role_gate" });
+
+    const noRoleRender = render(
+      <EventRedeemPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+    await screen.findByRole("heading", { name: "Not available for this event." });
+    const noRoleHtml = noRoleRender.container.innerHTML;
+
+    expect(noRoleHtml).toBe(unknownSlugHtml);
+  });
+
   it("renders a retryable transient authorization error and retries on demand", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "agent@example.com",

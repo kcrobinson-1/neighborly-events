@@ -14,7 +14,7 @@ type AuthorizeRedeemOptions = {
   retryDelayMs?: number;
 };
 
-const DEFAULT_TRANSIENT_MESSAGE = "We couldn't verify redeem access right now.";
+const DEFAULT_TRANSIENT_MESSAGE = "Please retry once your connection is stable.";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : DEFAULT_TRANSIENT_MESSAGE;
