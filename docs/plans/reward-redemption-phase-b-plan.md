@@ -59,7 +59,7 @@ its own.
 
 | Sub-phase | Route | Primary users | Primary actions | Detail plan |
 |-----------|-------|---------------|-----------------|-------------|
-| **B.1** | `/event/:slug/redeem` | agents (+ root admin) | lookup, redeem | drafted before B.1 implementation as `reward-redemption-phase-b-1-plan.md` |
+| **B.1** | `/event/:slug/redeem` | agents (+ root admin) | lookup, redeem | [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md) (Proposed) |
 | **B.2** | `/event/:slug/redemptions` | organizers (+ root admin) | list, filter, search, view, reverse | drafted before B.2 implementation as `reward-redemption-phase-b-2-plan.md` |
 
 ## Prerequisites
