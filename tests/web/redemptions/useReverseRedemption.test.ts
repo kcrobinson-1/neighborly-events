@@ -402,6 +402,56 @@ describe("useReverseRedemption", () => {
     });
   });
 
+  it("discards a stale submission's result state when reset bumps the attempt id", async () => {
+    let resolveSubmit: (value: Response) => void = () => {};
+    fetchSpy.mockReturnValueOnce(
+      new Promise<Response>((resolve) => {
+        resolveSubmit = resolve;
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useReverseRedemption("event-1", { retryDelayMs: 0 })
+    );
+
+    let submitPromise: Promise<unknown> | undefined;
+    await act(async () => {
+      submitPromise = result.current.submitReversal({
+        codeSuffix: "0427",
+        reason: null,
+      });
+    });
+
+    expect(result.current.resultState).toEqual({ status: "pending" });
+
+    await act(async () => {
+      result.current.reset();
+    });
+    expect(result.current.resultState).toEqual({ status: "idle" });
+
+    await act(async () => {
+      resolveSubmit(
+        new Response(
+          JSON.stringify({
+            outcome: "success",
+            result: "reversed_now",
+            reversed_at: "2026-04-22T18:00:00.000Z",
+            reversed_by_role: "organizer",
+          }),
+          {
+            headers: { "Content-Type": "application/json" },
+            status: 200,
+          },
+        ),
+      );
+      await submitPromise;
+    });
+
+    // The reset bumped the attempt id, so the late success from the stale
+    // submission must not leak back into the shared resultState.
+    expect(result.current.resultState).toEqual({ status: "idle" });
+  });
+
   it("reset returns the hook to idle and clears the last-submission memory", async () => {
     fetchSpy.mockResolvedValueOnce(
       jsonResponse(200, {

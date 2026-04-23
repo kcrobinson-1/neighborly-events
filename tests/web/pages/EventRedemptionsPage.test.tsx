@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -899,6 +900,53 @@ describe("EventRedemptionsPage", () => {
         expect(mockFetchRedemptionRow).toHaveBeenCalledWith("event-1", "row-1");
       });
       expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not reconcile or re-read when a slow reversal resolves after the user closed the sheet", async () => {
+      authorizeOrganizerWithRedeemedRow();
+      let resolveSubmit: (value: unknown) => void = () => {};
+      mockSubmitReversal.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveSubmit = resolve;
+        }),
+      );
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm reversal" }),
+      );
+
+      // Close the sheet while the reversal is still in flight.
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+
+      // Now let the stale reversal resolve with success. The page must not
+      // call `fetchRedemptionRow` or `refresh` for a row the user has
+      // already closed, and must not flip the sheet back open.
+      await act(async () => {
+        resolveSubmit({
+          result: "reversed_now",
+          reversedAt: "2026-04-22T10:05:00Z",
+          reversedByRole: "organizer",
+          status: "success",
+        });
+      });
+
+      expect(mockFetchRedemptionRow).not.toHaveBeenCalled();
+      expect(mockRefreshRedemptions).not.toHaveBeenCalled();
+      expect(screen.queryByRole("dialog")).toBeNull();
     });
 
     it("Back clears the draft reason and mutation state for the same row", async () => {

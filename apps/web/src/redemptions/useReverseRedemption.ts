@@ -232,6 +232,14 @@ export function useReverseRedemption(
     status: "idle",
   });
   const lastSubmissionRef = useRef<ReverseRedemptionInput | null>(null);
+  // Monotonic submission id. Each submit captures its id before awaiting;
+  // `reset()` bumps the id to invalidate any in-flight attempt. On settle,
+  // a stale attempt still returns its real outcome to the caller (so the
+  // page can check whether to reconcile) but does not write into the
+  // shared `resultState`, because `resultState` belongs to whatever the
+  // sheet is currently showing — which may be a different row after the
+  // user switched or closed the sheet.
+  const attemptIdRef = useRef(0);
 
   const submitReversal = useCallback(
     async (input: ReverseRedemptionInput): Promise<ReverseResultState> => {
@@ -241,6 +249,7 @@ export function useReverseRedemption(
       };
 
       if (!eventId) {
+        attemptIdRef.current += 1;
         const transientResult: ReverseResultState = {
           isOffline: getOfflineStatus(),
           message: DEFAULT_TRANSIENT_MESSAGE,
@@ -251,6 +260,7 @@ export function useReverseRedemption(
       }
 
       lastSubmissionRef.current = normalized;
+      const myAttempt = ++attemptIdRef.current;
       setResultState({ status: "pending" });
 
       try {
@@ -260,29 +270,27 @@ export function useReverseRedemption(
           retryDelayMs,
         );
 
-        if (attempt.status === "success") {
-          const successResult: ReverseResultState =
-            attempt.result === "reversed_now"
-              ? {
-                result: "reversed_now",
-                reversedAt: attempt.reversedAt,
-                reversedByRole: attempt.reversedByRole,
-                status: "success",
-              }
-              : {
-                result: "already_unredeemed",
-                status: "success",
-              };
-          setResultState(successResult);
-          return successResult;
-        }
+        const outcome: ReverseResultState = attempt.status === "success"
+          ? attempt.result === "reversed_now"
+            ? {
+              result: "reversed_now",
+              reversedAt: attempt.reversedAt,
+              reversedByRole: attempt.reversedByRole,
+              status: "success",
+            }
+            : {
+              result: "already_unredeemed",
+              status: "success",
+            }
+          : {
+            result: attempt.result,
+            status: "failure",
+          };
 
-        const failureResult: ReverseResultState = {
-          result: attempt.result,
-          status: "failure",
-        };
-        setResultState(failureResult);
-        return failureResult;
+        if (attemptIdRef.current === myAttempt) {
+          setResultState(outcome);
+        }
+        return outcome;
       } catch (error: unknown) {
         const transientResult: ReverseResultState = {
           isOffline: getOfflineStatus(),
@@ -291,7 +299,9 @@ export function useReverseRedemption(
             : DEFAULT_TRANSIENT_MESSAGE,
           status: "transient_error",
         };
-        setResultState(transientResult);
+        if (attemptIdRef.current === myAttempt) {
+          setResultState(transientResult);
+        }
         return transientResult;
       }
     },
@@ -307,6 +317,11 @@ export function useReverseRedemption(
   }, [submitReversal]);
 
   const reset = useCallback(() => {
+    // Bumping the attempt id invalidates any in-flight submission: when
+    // its promise resolves, the stale-attempt guard above will drop the
+    // state write instead of leaking a success/failure banner into a
+    // different row's sheet.
+    attemptIdRef.current += 1;
     lastSubmissionRef.current = null;
     setResultState({ status: "idle" });
   }, []);

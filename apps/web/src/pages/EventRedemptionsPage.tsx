@@ -327,6 +327,12 @@ function AuthorizedRedemptionsView({
   const [detailRefreshError, setDetailRefreshError] = useState<string | null>(
     null,
   );
+  // Synchronous mirror of the currently selected row id. Updated inside the
+  // same event handler that changes `selectedRow`, so stale-submission guards
+  // (post-await checks in `handleConfirmReversal` / `handleRetryReversal`)
+  // cannot race a pending render/effect tick.
+  const selectedRowIdRef = useRef<string | null>(null);
+
   const resetSheetReversalState = useCallback(() => {
     resetReversal();
     setSheetStep("details");
@@ -343,11 +349,13 @@ function AuthorizedRedemptionsView({
       resetSheetReversalState();
     }
     setSelectedRow(row);
+    selectedRowIdRef.current = row.id;
   };
 
   const handleCloseDetails = () => {
     setSelectedRow(null);
     resetSheetReversalState();
+    selectedRowIdRef.current = null;
   };
 
   const returnFocusTargetId = lastSelectedRowId
@@ -447,6 +455,12 @@ function AuthorizedRedemptionsView({
       codeSuffix: selectedRow.verification_code.slice(-4),
       reason: reasonInput,
     });
+    // Guard against a slow reversal whose caller has since closed the sheet
+    // or switched rows — reconciling here would collapse the new row's
+    // confirmation flow and discard in-progress input.
+    if (selectedRowIdRef.current !== rowId) {
+      return;
+    }
     if (outcome.status === "success") {
       reconcileAfterReverseSuccess(rowId);
     }
@@ -458,6 +472,9 @@ function AuthorizedRedemptionsView({
     }
     const rowId = selectedRow.id;
     const outcome = await retryLastSubmission();
+    if (selectedRowIdRef.current !== rowId) {
+      return;
+    }
     if (outcome?.status === "success") {
       reconcileAfterReverseSuccess(rowId);
     }
