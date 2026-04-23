@@ -97,6 +97,33 @@ event.
 Planned capabilities intentionally deferred from the MVP scope. Require product
 prioritization before starting.
 
+- [ ] **`dev` Visibility-aware attendee redemption polling**
+  Pause the attendee completion-screen poll while the tab is hidden and force
+  one immediate refresh on resume so long-lived hidden tabs do not keep making
+  unnecessary requests.
+  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+
+- [ ] **`ux` Manual attendee redemption-status refresh**
+  Add a `Refresh status` affordance on the completion screen so an attendee can
+  trigger a re-read without waiting for the next polling tick.
+  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+
+- [ ] **`ux` Timestamped attendee redeemed-state copy**
+  Add redeemed-at time copy on the attendee completion screen, including the
+  locale/timezone handling needed to make that timestamp trustworthy.
+  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+
+- [ ] **`ux` Attendee completion freshness and transient-error state**
+  Surface lightweight freshness/error guidance on the completion screen so a
+  long backend outage does not leave attendees staring at stale status with no
+  explanation.
+  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+
+- [ ] **`ux` Reversal-aware attendee completion copy**
+  Distinguish a row that flipped from redeemed back to unredeemed mid-session
+  instead of falling back to the generic ready-for-check-in wording.
+  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+
 - [ ] **`dev` Admin draft preview** (Phase 4.5)
   Let an admin preview the attendee experience from the draft before publishing.
   Detail: [`docs/plans/archive/quiz-authoring-plan.md` — Phase 4.5](./plans/archive/quiz-authoring-plan.md)

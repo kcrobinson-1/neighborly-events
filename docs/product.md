@@ -38,6 +38,9 @@ Today the repo implements:
 - a demo-overview landing page at `/`
 - published attendee game routes at `/event/:slug/game`
 - backend-verified completion with one entitlement per event/session pair
+- attendee completion-screen polling that reflects redeemed vs
+  unredeemed state from the trusted backend while the completion result
+  stays open
 - shared game correctness, validation, and scoring logic
 - an organizer-facing admin workspace at `/admin` for drafting, editing, publishing, and unpublishing events
 - `game_starts` table and session-issuance write so analytics has the funnel denominator (starts → completions → entitlements) before the first live event

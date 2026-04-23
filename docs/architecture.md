@@ -395,6 +395,10 @@ Today:
 - question flow, progress, pending answers, retries, and retakes are managed locally in the browser
 - final verification is returned from Supabase
 - the completion screen displays backend-produced verification data rather than an entirely local success state
+- once completion succeeds, the attendee screen polls the session-bound
+  `get-redemption-status` endpoint every 5 seconds while the completion
+  result remains open, so operator redemption is reflected back without a
+  manual refresh
 
 ### Multiple game feedback modes
 
@@ -471,7 +475,8 @@ Today that route:
   (`redeemed_now` / `already_redeemed`), rejected (`not_authorized` /
   `not_found`), and transient retryable states
 - stays intentionally undiscoverable after merge: no nav link, no `/admin`
-  link, no role seeding, and no attendee polling or monitoring list behavior
+  link, and no role seeding. Attendee polling is now live on the
+  completion screen; monitoring list behavior remains direct-entry only
 
 ### Direct-entry operator monitoring + reversal route
 
@@ -547,6 +552,11 @@ The current system works like this:
 10. The RPC records the completion attempt, creates or reuses the game
     entitlement, and returns the official verification data.
 11. The frontend renders the completion screen using that trusted response.
+12. While the completion result remains in scope, the frontend polls
+    `get-redemption-status` every 5 seconds with the signed browser
+    session. The attendee screen keeps the last known good state across
+    transient failures and flips from ready-to-redeem to redeemed once
+    an operator action updates the entitlement row.
 
 This flow keeps question-to-question interaction fast while reserving the final trust decision for the backend.
 
@@ -562,6 +572,10 @@ The current implementation uses:
   session issuance is the trust boundary; analytics is observability.
 - `complete-game`
   Owns final validation, scoring, dedupe, and verification-code return.
+- `get-redemption-status`
+  Returns the current redeemed vs unredeemed state for the verified
+  attendee session and lets the completion screen reconcile operator
+  redemption without exposing any operator-only surface to the attendee.
 - direct PostgREST reads for published `game_events`, `game_questions`, and
   `game_question_options`
   The browser uses the publishable key plus RLS-filtered reads for public event

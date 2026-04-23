@@ -1,6 +1,10 @@
 # Reward Redemption — Phase C.1 Execution Plan
 
-**Status:** Proposed.
+**Status:** Landed — implemented in commits `f690524`
+(`feat(web): add attendee redemption status polling hook`), `c9dc424`
+(`feat(web): render redemption status on completion screen`), `a145a79`
+(`fix(web): preserve fallback completion copy`), and `6dfd5e2`
+(`test(e2e): cover attendee redemption status reflection`).
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
 **Predecessors:**
 [`reward-redemption-phase-a-2b-plan.md`](./archive/reward-redemption-phase-a-2b-plan.md),
@@ -11,7 +15,7 @@
 **Scope:** Phase C.1 only — the bare-bones attendee completion-screen
 status surface that consumes the landed `get-redemption-status` Edge
 Function and reflects redeemed vs unredeemed state via interval polling
-while the completion screen is mounted. No visibility-API lifecycle
+while a completion result is in scope. No visibility-API lifecycle
 work, no manual `Refresh status` affordance, no formatted-timestamp
 copy, no error UI beyond holding the last-known state, no realtime
 subscription.
