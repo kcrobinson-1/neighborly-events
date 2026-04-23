@@ -103,7 +103,13 @@ async function loadSavedDraftLiveStatus(
     return false;
   }
 
-  return await loadDraftEventLiveStatus(savedDraft.id);
+  try {
+    return await loadDraftEventLiveStatus(savedDraft.id);
+  } catch {
+    // The write already succeeded. If the follow-up live-status read fails,
+    // keep the pre-save value rather than surfacing a false save failure.
+    return currentDraft.isLive;
+  }
 }
 
 type UseSelectedDraftOptions = {

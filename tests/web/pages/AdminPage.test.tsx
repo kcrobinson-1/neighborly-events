@@ -849,6 +849,41 @@ describe("AdminPage", () => {
     ).toHaveProperty("disabled", false);
   });
 
+  it("keeps an event-details save successful when live-status refresh fails", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetGameAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Updated Madrona Event",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+    mockLoadDraftEventLiveStatus.mockRejectedValueOnce(
+      new Error("Transient live-status refresh failure."),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Event name");
+    fireEvent.change(screen.getByLabelText("Event name"), {
+      target: { value: " Updated Madrona Event " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(
+      await screen.findByText("Saved Updated Madrona Event."),
+    ).toBeTruthy();
+    expect(screen.queryByText("We couldn't save the event details right now.")).toBeNull();
+    expect(await screen.findByText(/Draft changes not published/)).toBeTruthy();
+  });
+
   it("saves existing question edits and preserves event details", async () => {
     const updatedQuestion = {
       ...sampleDraft.questions[0],
@@ -916,6 +951,40 @@ describe("AdminPage", () => {
     expect(savedContent.questions.slice(1)).toEqual(
       selectedDraftContent.questions.slice(1),
     );
+  });
+
+  it("keeps a question save successful when live-status refresh fails", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetGameAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      id: "madrona-music-2026",
+      liveVersionNumber: 1,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+    mockLoadDraftEventLiveStatus.mockRejectedValueOnce(
+      new Error("Transient live-status refresh failure."),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    fireEvent.change(await screen.findByLabelText("Question prompt"), {
+      target: { value: " Updated question prompt " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect(await screen.findByText("Saved question changes.")).toBeTruthy();
+    expect(
+      screen.queryByText("We couldn't save the question changes right now."),
+    ).toBeNull();
+    expect(await screen.findByText(/Draft changes not published/)).toBeTruthy();
   });
 
   it("adds a question and saves the updated draft structure", async () => {

@@ -76,8 +76,11 @@ count, or the `Open live game` button after a fresh reload.
   post-unpublish patch, initial load, create) sets `isLive` to match the
   publication-state truth at that moment: save re-reads the current live
   status from the backend after persistence, publish sets `true`, unpublish
-  sets `false`. In-session behavior after a mutation must match the
-  reload-after-mutation behavior on the same event.
+  sets `false`. The save-path re-read is best-effort: if the follow-up read
+  fails after persistence succeeds, the UI preserves the prior `isLive`
+  value instead of surfacing the save as failed. In-session behavior after a
+  mutation must match the reload-after-mutation behavior on the same event
+  whenever the refresh read succeeds.
 
 ## Per-Surface Contracts
 
@@ -133,7 +136,9 @@ count, or the `Open live game` button after a fresh reload.
   Save never changes publication state directly, but another admin can
   publish or unpublish the same event before the save returns. Do not treat a
   missing `isLive` on the save response as `false`; use a narrow follow-up
-  read so the save path converges on the same truth as reload.
+  read so the save path converges on the same truth as reload. If that
+  follow-up read fails after the write already succeeded, fall back to the
+  pre-save `isLive` value and keep the save in a success state.
 - **Post-publish reconciliation.** Every local-state patch that currently
   sets `liveVersionNumber` after a successful publish must also set
   `isLive = true` in the same update, for both the list row and the selected
