@@ -301,6 +301,27 @@ Before editing for any non-trivial task:
 
 If you discover that the current docs no longer describe the code accurately, fix the docs in the same change when practical.
 
+### Review-Fix Rigor
+
+Review-fix commits do not get a lighter diligence standard than the original
+implementation. Treat them as full-quality engineering work, not as quick
+patches.
+
+- run the same design and self-review depth on a review fix that you would run
+  on the original implementation for the same surface area
+- do not accept a review fix that introduces a new bug at a higher severity
+  than the issue being addressed; explicitly check for that before committing
+- when a fix adds a new async step, follow-up read, fallback path, or external
+  dependency, review the success path, the originally reported bug, the inverse
+  case, transient failure of the new dependency, and partial-success semantics
+- if a write already succeeded, do not let a best-effort follow-up read or
+  reconciliation step make the overall operation appear failed unless the plan
+  explicitly says the flow is atomic
+- add or update focused coverage for the new edge introduced by the fix, not
+  only for the reviewer's reported reproduction
+- before committing a review fix, answer: "What new bug could this fix create?"
+  and "Could this make a successful operation look failed?"
+
 ## Execution Rules
 
 Prefer constraint-driven execution over open-ended refactoring.
