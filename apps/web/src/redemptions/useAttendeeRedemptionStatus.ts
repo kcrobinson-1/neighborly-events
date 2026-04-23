@@ -106,6 +106,8 @@ export function useAttendeeRedemptionStatus(eventId: string | null) {
       return;
     }
 
+    setStatus(UNKNOWN_STATUS);
+
     let isCancelled = false;
     let timeoutId: number | null = null;
     let abortController: AbortController | null = null;

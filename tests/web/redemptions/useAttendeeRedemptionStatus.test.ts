@@ -217,6 +217,47 @@ describe("useAttendeeRedemptionStatus", () => {
     });
   });
 
+  it("resets to unknown when switching to a different event id before the new poll settles", async () => {
+    const secondRequest = createDeferredFetchResponse();
+
+    fetchSpy
+      .mockResolvedValueOnce(
+        createJsonResponse(200, {
+          redeemedAt: "2026-04-22T18:00:00.000Z",
+          redemptionReversedAt: null,
+          redemptionStatus: "redeemed",
+          verificationCode: "EVT-0427",
+        }),
+      )
+      .mockReturnValueOnce(secondRequest.promise);
+
+    const { result, rerender } = renderHook(
+      ({ eventId }) => useAttendeeRedemptionStatus(eventId),
+      {
+        initialProps: { eventId: "event-1" },
+      },
+    );
+
+    await flushAsyncWork();
+
+    expect(result.current).toEqual({
+      kind: "redeemed",
+      verificationCode: "EVT-0427",
+    });
+
+    rerender({ eventId: "event-2" });
+
+    expect(result.current).toEqual({ kind: "unknown" });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      secondRequest.reject(new Error("transient failure"));
+      await Promise.resolve();
+    });
+
+    expect(result.current).toEqual({ kind: "unknown" });
+  });
+
   it("holds the prior state across malformed responses, 500s, and re-bootstrap failure", async () => {
     fetchSpy
       .mockResolvedValueOnce(
