@@ -7,6 +7,7 @@ import { GameCompletionPanel } from "../game/components/GameCompletionPanel";
 import { GameIntroPanel } from "../game/components/GameIntroPanel";
 import { useGameSession } from "../game/useGameSession";
 import { ensureServerSession } from "../lib/gameApi";
+import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
 import { routes } from "../routes";
 
 /** Props for the top-level game route. */
@@ -47,6 +48,9 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
     start,
     submit,
   } = useGameSession(game);
+  const redemptionStatus = useAttendeeRedemptionStatus(
+    latestCompletion ? game.id : null,
+  );
 
   const questionCount = game.questions.length;
   const isGameActive = isStarted && !isComplete && !isSubmittingCompletion;
@@ -152,6 +156,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             onRetrySubmission={retryCompletionSubmission}
             score={score}
             showRetake={allowRetake}
+            status={redemptionStatus}
           />
         ) : null}
       </section>

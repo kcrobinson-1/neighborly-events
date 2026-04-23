@@ -4,13 +4,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
 import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
 
-const { mockEnsureServerSession, mockUseGameSession } = vi.hoisted(() => ({
+const {
+  mockEnsureServerSession,
+  mockUseAttendeeRedemptionStatus,
+  mockUseGameSession,
+} = vi.hoisted(() => ({
   mockEnsureServerSession: vi.fn(),
+  mockUseAttendeeRedemptionStatus: vi.fn(),
   mockUseGameSession: vi.fn(),
 }));
 
 vi.mock("../../../apps/web/src/lib/gameApi.ts", () => ({
   ensureServerSession: mockEnsureServerSession,
+}));
+
+vi.mock("../../../apps/web/src/redemptions/useAttendeeRedemptionStatus.ts", () => ({
+  useAttendeeRedemptionStatus: mockUseAttendeeRedemptionStatus,
 }));
 
 vi.mock("../../../apps/web/src/game/useGameSession.ts", () => ({
@@ -101,7 +110,9 @@ function createSessionState(game: GameConfig, overrides = {}) {
 describe("GamePage", () => {
   beforeEach(() => {
     mockEnsureServerSession.mockReset();
+    mockUseAttendeeRedemptionStatus.mockReset();
     mockUseGameSession.mockReset();
+    mockUseAttendeeRedemptionStatus.mockReturnValue({ kind: "unknown" });
   });
 
   afterEach(() => {
@@ -123,6 +134,7 @@ describe("GamePage", () => {
     await waitFor(() => {
       expect(mockEnsureServerSession).toHaveBeenCalledTimes(1);
     });
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(null);
     expect(sessionState.start).toHaveBeenCalledTimes(1);
   });
 
@@ -137,6 +149,7 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Start game" }));
 
     expect(await screen.findByText("Backend is unavailable.")).toBeTruthy();
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(null);
     expect(sessionState.start).not.toHaveBeenCalled();
   });
 
@@ -157,6 +170,7 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit answer" }));
 
     expect(screen.getAllByText("Question 1 of 1")).toHaveLength(2);
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(null);
     expect(
       screen.getByRole("heading", { name: game.questions[0].prompt }),
     ).toBeTruthy();
@@ -164,7 +178,25 @@ describe("GamePage", () => {
     expect(sessionState.submit).toHaveBeenCalledTimes(1);
   });
 
-  it("renders the completion state and forwards completion actions to the hook", () => {
+  it("keeps the attendee status hook inert during completion submission", () => {
+    const game = createGame();
+    const sessionState = createSessionState(game, {
+      currentQuestion: undefined,
+      isStarted: true,
+      isSubmittingCompletion: true,
+      latestCompletion: null,
+    });
+    mockUseGameSession.mockReturnValue(sessionState);
+
+    render(<GamePage game={game} onNavigate={() => {}} />);
+
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(null);
+    expect(
+      screen.getByRole("heading", { name: "Generating your check-in code" }),
+    ).toBeTruthy();
+  });
+
+  it("renders the completion state, activates polling with game.id, and forwards completion actions to the hook", () => {
     const game = createGame();
     const sessionState = createSessionState(game, {
       answers: { q1: ["a"] },
@@ -174,6 +206,10 @@ describe("GamePage", () => {
       latestCompletion: createCompletionResult(),
       score: 1,
     });
+    mockUseAttendeeRedemptionStatus.mockReturnValue({
+      kind: "redeemed",
+      verificationCode: "MMP-1234ABCD",
+    });
     mockUseGameSession.mockReturnValue(sessionState);
 
     render(<GamePage game={game} onNavigate={() => {}} />);
@@ -181,8 +217,36 @@ describe("GamePage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Play again" }));
     fireEvent.click(screen.getByRole("button", { name: "Start over" }));
 
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(game.id);
+    expect(screen.getByText("Volunteer check-in complete")).toBeTruthy();
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
     expect(sessionState.resetForRetake).toHaveBeenCalledTimes(1);
     expect(sessionState.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates the polling hook input when the active game changes after completion", () => {
+    const firstGame = createGame();
+    const secondGame = createGame({
+      id: "test-game-2",
+      name: "Second Game",
+      slug: "second-game",
+    });
+    const sessionState = createSessionState(firstGame, {
+      currentQuestion: undefined,
+      isComplete: true,
+      isStarted: true,
+      latestCompletion: createCompletionResult(),
+      score: 1,
+    });
+    mockUseGameSession.mockReturnValue(sessionState);
+
+    const { rerender } = render(
+      <GamePage game={firstGame} onNavigate={() => {}} />,
+    );
+
+    rerender(<GamePage game={secondGame} onNavigate={() => {}} />);
+
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenNthCalledWith(1, firstGame.id);
+    expect(mockUseAttendeeRedemptionStatus).toHaveBeenNthCalledWith(2, secondGame.id);
   });
 });

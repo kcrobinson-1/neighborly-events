@@ -15,6 +15,7 @@ type TrustedEntitlementRecord = {
   client_session_id: string;
   event_id: string;
   id: string;
+  redemption_status?: string;
   status: string;
   verification_code: string;
 };
@@ -123,6 +124,47 @@ export async function assertTrustedAttendeeCompletionPersisted(
   expect(startRow?.client_session_id).toBe(entitlement.client_session_id);
 }
 
+export async function markTrustedAttendeeEntitlementRedeemed(
+  verificationCode: string,
+  eventId = "madrona-music-2026",
+) {
+  const serviceRoleClient = createServiceRoleClient();
+  const redeemedAt = new Date().toISOString();
+
+  const { data: updatedRows, error: updateError } = await serviceRoleClient
+    .from("game_entitlements")
+    .update({
+      redeemed_at: redeemedAt,
+      redeemed_by: null,
+      redeemed_by_role: "agent",
+      redeemed_event_id: eventId,
+      redemption_note: null,
+      redemption_reversed_at: null,
+      redemption_reversed_by: null,
+      redemption_reversed_by_role: null,
+      redemption_status: "redeemed",
+    })
+    .eq("event_id", eventId)
+    .eq("verification_code", verificationCode)
+    .select("event_id,verification_code,redemption_status")
+    .returns<Array<{
+      event_id: string;
+      verification_code: string;
+      redemption_status: string;
+    }>>();
+
+  if (updateError) {
+    throw new Error(
+      `Failed to mark trusted attendee entitlement redeemed: ${updateError.message}`,
+    );
+  }
+
+  expect(updatedRows).toHaveLength(1);
+  expect(updatedRows[0]?.event_id).toBe(eventId);
+  expect(updatedRows[0]?.verification_code).toBe(verificationCode);
+  expect(updatedRows[0]?.redemption_status).toBe("redeemed");
+}
+
 export async function assertNoTrustedCompletionPersistedForRequest(
   eventId: string,
   requestId: string,
@@ -154,7 +196,11 @@ export async function installAttendeeFunctionProxy(
     tamperFirstCompletionPayload = false,
   } = options;
   const supabaseUrl = readRequiredEnv("TEST_SUPABASE_URL").replace(/\/$/, "");
-  const functionNames = new Set(["issue-session", "complete-game"]);
+  const functionNames = new Set([
+    "complete-game",
+    "get-redemption-status",
+    "issue-session",
+  ]);
   let hasFailedFirstIssueSessionRequest = false;
   let hasTamperedFirstCompletionPayload = false;
 

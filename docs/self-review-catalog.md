@@ -37,8 +37,8 @@ Drop an audit when:
   surface is unlikely to reintroduce it.
 
 Every entry must have **Trigger** (one-sentence diff pattern, not a
-vibe), **Check** (concrete walk-through), and **Example** (real past
-incident with a link).
+vibe), **Check** (concrete walk-through), and **Example**. Link the
+example when a durable incident, PR, or commit reference exists.
 
 Short triggers beat elaborate ones. A trigger like "any migration
 touches GRANT EXECUTE" is actionable; "think about authorization" is
@@ -279,6 +279,50 @@ failure (inline banner, toast, or field error) with a recovery path
 — `handleRegenerateEventCode` awaited `generateEventCode()` without a
 catch; the click handler used `void`, so 500s and auth failures were
 silent. Fix: catch, surface, and add a visible error state.
+
+---
+
+## Frontend lifecycle & async
+
+### Effect cleanup audit
+
+**Trigger.** A diff adds or modifies a React `useEffect` that schedules
+a recurring side effect — `setInterval`, chained `setTimeout`,
+`EventSource`, `WebSocket`, Supabase channel subscription, or any
+async resource whose lifetime must match the component's mount
+lifetime.
+
+**Check.** Walk every exit path against four guarantees:
+1. The cleanup function clears timers, aborts in-flight requests (via
+   `AbortController` or equivalent), and closes subscriptions.
+2. Post-unmount settlement of an in-flight async operation does not
+   call `setState`. Use the `isCancelled` flag pattern, an
+   `AbortController` whose signal the awaiter checks, or both.
+3. Effects keyed on a dependency (`useEffect(..., [eventId])`)
+   terminate the prior cycle before the new one begins. Two cycles
+   must never run concurrently for the same component instance.
+4. A scheduled callback that fires after a `clearTimeout` race must
+   itself observe the cancellation (re-check the cancel flag inside
+   the callback body), since `clearTimeout` does not stop a callback
+   already on the microtask/macrotask queue.
+
+The dangerous pattern is a "fire and forget" promise inside an effect
+with no cancellation signal — the cleanup function returns, the
+component unmounts, and a late-resolving fetch then calls `setState`
+on a dead tree. Tests must assert cleanup behavior, not only
+initial-render output.
+
+**Example.** Introduced alongside `useAttendeeRedemptionStatus` in
+Phase C.1
+([`reward-redemption-phase-c-1-plan.md`](plans/reward-redemption-phase-c-1-plan.md)),
+the first interval-based fetch in the web app. The closest prior art
+is the `isCancelled` pattern in
+[`apps/web/src/game/useGameSession.ts`](../apps/web/src/game/useGameSession.ts),
+which guards a single completion submit; the polling case generalizes
+the same discipline to a recurring loop. No production incident at
+audit creation time; the audit exists so future polling, subscription,
+and long-lived-async sites inherit the cleanup contract from day one
+rather than retrofitting after a leak surfaces.
 
 ---
 

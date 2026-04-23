@@ -38,6 +38,10 @@ This repository currently includes:
   detail sheet) with in-sheet reversal through the trusted reverse
   redemption Edge Function, still intentionally undiscoverable in app
   navigation
+- attendee completion-screen polling against the trusted
+  `get-redemption-status` endpoint, so the volunteer redeem action is
+  reflected back on the attendee screen within a few seconds while the
+  completion result remains open
 - one-question-at-a-time quiz flow with back navigation
 - multiple quiz feedback modes
 - shared quiz mapping, validation, and scoring logic
