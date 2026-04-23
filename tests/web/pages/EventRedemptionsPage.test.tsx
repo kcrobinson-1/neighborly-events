@@ -10,15 +10,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockAuthorizeRedemptions,
+  mockRefreshNowMs,
   mockRefreshRedemptions,
   mockRequestMagicLink,
+  mockSetSearchInput,
+  mockToggleChip,
   mockUseAuthSession,
+  mockUseRedemptionsFilters,
   mockUseRedemptionsList,
 } = vi.hoisted(() => ({
   mockAuthorizeRedemptions: vi.fn(),
+  mockRefreshNowMs: vi.fn(),
   mockRefreshRedemptions: vi.fn(),
   mockRequestMagicLink: vi.fn(),
+  mockSetSearchInput: vi.fn(),
+  mockToggleChip: vi.fn(),
   mockUseAuthSession: vi.fn(),
+  mockUseRedemptionsFilters: vi.fn(),
   mockUseRedemptionsList: vi.fn(),
 }));
 
@@ -39,18 +47,39 @@ vi.mock("../../../apps/web/src/redemptions/useRedemptionsList.ts", () => ({
   useRedemptionsList: mockUseRedemptionsList,
 }));
 
+vi.mock("../../../apps/web/src/redemptions/useRedemptionsFilters.ts", () => ({
+  useRedemptionsFilters: mockUseRedemptionsFilters,
+}));
+
 import { EventRedemptionsPage } from "../../../apps/web/src/pages/EventRedemptionsPage.tsx";
 
 describe("EventRedemptionsPage", () => {
   beforeEach(() => {
     mockAuthorizeRedemptions.mockReset();
+    mockRefreshNowMs.mockReset();
     mockRefreshRedemptions.mockReset();
     mockRequestMagicLink.mockReset();
+    mockSetSearchInput.mockReset();
+    mockToggleChip.mockReset();
     mockUseAuthSession.mockReset();
+    mockUseRedemptionsFilters.mockReset();
     mockUseRedemptionsList.mockReset();
     mockUseRedemptionsList.mockReturnValue({
       refresh: mockRefreshRedemptions,
       state: { status: "loading" },
+    });
+    mockUseRedemptionsFilters.mockReturnValue({
+      chips: {
+        byMe: false,
+        last15m: false,
+        redeemed: false,
+        reversed: false,
+      },
+      nowMs: 0,
+      refreshNowMs: mockRefreshNowMs,
+      searchInput: "",
+      setSearchInput: mockSetSearchInput,
+      toggleChip: mockToggleChip,
     });
   });
 
@@ -412,6 +441,75 @@ describe("EventRedemptionsPage", () => {
     fireEvent.click(refreshButton);
 
     expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
+    expect(mockRefreshNowMs).toHaveBeenCalledTimes(1);
+  });
+
+  it("advances the Last 15m cutoff alongside the refetch when the browser reconnects", async () => {
+    const onLineDescriptor = Object.getOwnPropertyDescriptor(
+      window.navigator,
+      "onLine",
+    );
+
+    try {
+      Object.defineProperty(window.navigator, "onLine", {
+        configurable: true,
+        value: false,
+      });
+
+      mockUseAuthSession.mockReturnValue({
+        email: "organizer@example.com",
+        session: { user: { id: "user-organizer" } },
+        status: "signed_in",
+      });
+      mockAuthorizeRedemptions.mockResolvedValue({
+        eventCode: "MAD",
+        eventId: "event-1",
+        status: "authorized",
+      });
+      mockUseRedemptionsList.mockReturnValue({
+        refresh: mockRefreshRedemptions,
+        state: {
+          fetchedAt: new Date(),
+          rows: [],
+          status: "success",
+        },
+      });
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await screen.findByRole("button", { name: "You are offline" });
+      expect(mockRefreshRedemptions).toHaveBeenCalledTimes(0);
+      expect(mockRefreshNowMs).toHaveBeenCalledTimes(0);
+
+      Object.defineProperty(window.navigator, "onLine", {
+        configurable: true,
+        value: true,
+      });
+      fireEvent(window, new Event("online"));
+
+      await waitFor(() => {
+        expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
+      });
+      expect(mockRefreshNowMs).toHaveBeenCalledTimes(1);
+    } finally {
+      if (onLineDescriptor) {
+        Object.defineProperty(
+          window.navigator,
+          "onLine",
+          onLineDescriptor,
+        );
+      } else {
+        Object.defineProperty(window.navigator, "onLine", {
+          configurable: true,
+          value: true,
+        });
+      }
+    }
   });
 
   it("collapses slug-not-found and role-held-none branches into identical role-gate DOM", async () => {

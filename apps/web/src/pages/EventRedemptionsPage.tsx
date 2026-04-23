@@ -325,9 +325,13 @@ function AuthorizedRedemptionsView({
     }
     if (wasOfflineRef.current) {
       wasOfflineRef.current = false;
+      // Advance the Last 15m cutoff alongside the refetch so the chip does
+      // not keep filtering against a pre-offline `nowMs` until the user
+      // touches a chip or the explicit refresh button.
+      refreshNowMs();
       refresh();
     }
-  }, [isOnline, refresh]);
+  }, [isOnline, refresh, refreshNowMs]);
 
   const handleRefresh = () => {
     refreshNowMs();
