@@ -72,6 +72,11 @@ count, or the `Open live game` button after a fresh reload.
   moment.
 - A reload-persisted admin view cannot show `Live` while the public route is
   unavailable — on the event list or on the workspace detail.
+- Every local admin state write (post-save merge, post-publish patch,
+  post-unpublish patch, initial load, create) sets `isLive` to match the
+  publication-state truth at that moment: save preserves the prior value,
+  publish sets `true`, unpublish sets `false`. In-session behavior after a
+  mutation must match the reload-after-mutation behavior on the same event.
 
 ## Per-Surface Contracts
 
@@ -89,6 +94,13 @@ count, or the `Open live game` button after a fresh reload.
   owns that.
 - `liveVersionNumber` remains unchanged in shape and value on the returned
   records.
+- The `saveDraftEvent()` response shape returned by
+  `supabase/functions/save-draft/index.ts` is intentionally out of scope and
+  does not gain `isLive`. Save never changes publication state, so the field
+  is not derivable on the server for this slice's contract and must not be
+  read from the save response. The client reconciliation contract in
+  `useSelectedDraft.ts` below is what keeps `isLive` consistent across the
+  save path.
 
 ### Admin event workspace — `apps/web/src/admin/AdminEventWorkspace.tsx`
 
@@ -114,6 +126,27 @@ count, or the `Open live game` button after a fresh reload.
   survey identified two sites around the post-save and post-publish branches.
   Confirm both and classify each as "live-gating" (switch to `isLive`) or
   "version-number display" (keep `liveVersionNumber`) before editing.
+- **Post-save reconciliation.** When merging the `saveDraftEvent()` response
+  into the list row and selected detail, the hook must preserve the existing
+  local `isLive` value for that event. Save never changes publication state,
+  so the prior `isLive` is the truth. Do not treat a missing `isLive` on the
+  save response as `false`; overlay the save-response fields onto the
+  existing record without overwriting `isLive`.
+- **Post-publish reconciliation.** Every local-state patch that currently
+  sets `liveVersionNumber` after a successful publish must also set
+  `isLive = true` in the same update, for both the list row and the selected
+  draft detail. Without this, the event-list badge, live count, and
+  `Open live game` button stay non-live between the publish action and the
+  next reload.
+- **Post-unpublish reconciliation.** Every local-state patch that currently
+  clears or updates `liveVersionNumber` after a successful unpublish must
+  also set `isLive = false` in the same update, for both the list row and
+  the selected draft detail. This is what closes the "hides the bug until
+  reload" behavior called out in the parent plan while leaving
+  `liveVersionNumber` semantics untouched at the data layer.
+- Every site that writes to local admin state (save, publish, unpublish,
+  event creation, initial load) must set `isLive` explicitly rather than
+  letting `undefined` bleed through the typed contract.
 
 ### Public route contract
 
@@ -130,9 +163,14 @@ Unchanged. This slice is admin-read only.
 2. **`fix(web): gate admin live decisions on isLive.`**
    Swap every consumer listed in Per-Surface Contracts. Update mocked
    fixtures in `tests/web/pages/AdminPage.test.tsx` and any supporting
-   fixture helpers so they return `isLive`. Add a unit test that proves the
-   `Open live game` button is rendered disabled when `isLive === false` and
-   `liveVersionNumber !== null`.
+   fixture helpers so they return `isLive`. Add targeted unit coverage for
+   the three reconciliation paths in `useSelectedDraft.ts`: (a) saving a
+   live event preserves `isLive === true` on the list row and selected
+   detail, (b) publishing sets `isLive === true` in the in-session patch,
+   (c) unpublishing sets `isLive === false` in the in-session patch without
+   requiring a reload. Add a unit test that proves the `Open live game`
+   button is rendered disabled when `isLive === false` and
+   `liveVersionNumber !== null` (the post-unpublish persisted-row shape).
 
 3. **`test(e2e): reload-aware publish→unpublish regression.`**
    Add a dedicated case in `tests/e2e/admin-workflow.admin.spec.ts` that
@@ -188,10 +226,15 @@ the commit boundary noted in parentheses:
 
 - **Frontend — Complete call-site coverage** (commit 2): walk every
   `liveVersionNumber` consumer in `apps/web/src/admin/` and
-  `apps/web/src/lib/adminGameApi.ts` and confirm each has been classified
-  as "gating decision → `isLive`" or "display string → `liveVersionNumber`".
-  Do not rely on typecheck alone — both fields are booleans/numbers, so the
-  compiler will not flag a misused site.
+  `apps/web/src/lib/adminGameApi.ts` and classify each as "gating decision
+  → `isLive`" or "display string → `liveVersionNumber`". Separately walk
+  every local-state write in `useSelectedDraft.ts` (post-save merge,
+  post-publish patch, post-unpublish patch, initial load, create) and
+  confirm each one sets `isLive` explicitly to the value named by the
+  cross-cutting invariant. Do not rely on typecheck alone — both fields are
+  booleans/numbers, so the compiler will not flag a misused site, and a
+  spread merge of the save response can silently drop `isLive` without
+  type errors.
 - **Frontend — Fixture parity** (commit 2): every test fixture that returns
   `DraftEventSummary` or `DraftEventDetail` now supplies `isLive`, and no
   test accidentally relies on the old `liveVersionNumber`-as-live proxy.
@@ -232,9 +275,10 @@ Slice 1 is `Landed` when all of the following hold:
   [docs/backlog.md](../backlog.md), and Slice 2 and Slice 3 have been added
   as correctly tiered follow-up items with detail links back to the parent
   plan.
-- All five handoff validation commands ran with the results recorded in the
-  PR body. Any step that could not run is called out explicitly with a
-  reason, per the Validation Honesty rule.
+- Every command listed in `Validation Commands Expected At Handoff` above
+  ran with its result recorded in the PR body. Any command that could not
+  run is called out explicitly with a reason, per the Validation Honesty
+  rule.
 
 ## Non-Goals
 
