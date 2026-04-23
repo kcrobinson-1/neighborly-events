@@ -3,6 +3,7 @@ import {
   assertNoTrustedCompletionPersistedForRequest,
   assertTrustedAttendeeCompletionPersisted,
   installAttendeeFunctionProxy,
+  markTrustedAttendeeEntitlementRedeemed,
   type TamperedCompletionRequestCapture,
 } from "./attendee-trusted-backend-fixture";
 
@@ -49,7 +50,12 @@ test("completes the attendee flow against trusted backend persistence", async ({
   await expect(
     page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
   ).toBeVisible();
-  await expect(page.getByText("You're checked in for the reward.")).toBeVisible();
+  await expect(page.getByText("Ready for volunteer check-in")).toBeVisible();
+  await expect(
+    page.getByText(
+      "Your reward entry is ready. Show this screen and code to the volunteer.",
+    ),
+  ).toBeVisible();
 
   const verificationCodeLocator = page.locator(".token-block strong");
   await expect(verificationCodeLocator).not.toHaveText("Loading...");
@@ -57,6 +63,15 @@ test("completes the attendee flow against trusted backend persistence", async ({
   await expect(verificationCode).toMatch(/^[A-Z0-9-]+$/);
 
   await assertTrustedAttendeeCompletionPersisted(verificationCode);
+  await markTrustedAttendeeEntitlementRedeemed(verificationCode);
+
+  await expect(
+    page.getByRole("heading", { name: "Your volunteer check-in is complete" }),
+  ).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Volunteer check-in complete")).toBeVisible();
+  await expect(
+    page.getByText("A volunteer has redeemed this code. You're all set."),
+  ).toBeVisible();
 });
 
 test("rejects malformed completion payload before persistence, then succeeds on retry", async ({
@@ -110,7 +125,7 @@ test("rejects malformed completion payload before persistence, then succeeds on 
   await expect(
     page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
   ).toBeVisible();
-  await expect(page.getByText("You're checked in for the reward.")).toBeVisible();
+  await expect(page.getByText("Ready for volunteer check-in")).toBeVisible();
 
   const verificationCodeLocator = page.locator(".token-block strong");
   await expect(verificationCodeLocator).not.toHaveText("Loading...");
