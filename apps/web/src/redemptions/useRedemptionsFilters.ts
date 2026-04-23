@@ -12,15 +12,17 @@ const INITIAL_CHIPS: RedemptionChipSelection = {
  * Client-side filter state for the monitoring page.
  *
  * Owns the four chip toggles, the search input, and the reference clock
- * snapshot used by the `Last 15m` chip. The clock snapshot is captured on
- * mount and refreshed whenever any chip toggles — matching the design doc
- * §5 contract ("reference clock refreshes on every page render" is
- * operationalized here as "on every filter-state change," which is the only
- * time the cutoff can meaningfully advance without an auto-ticking timer).
+ * snapshot used by the `Last 15m` chip. The clock advances on every
+ * filter-state change (chip toggle, search input edit, explicit refresh,
+ * or post-reconnect reconcile) — this is the load-bearing invariant that
+ * keeps `Last 15m` accurate without an auto-ticking timer. If a future
+ * caller bypasses the wrapped setter and exposes a raw `setSearchInput`,
+ * the cutoff will grow stale during normal typing and the chip contract
+ * breaks.
  */
 export function useRedemptionsFilters() {
   const [chips, setChips] = useState<RedemptionChipSelection>(INITIAL_CHIPS);
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInputState] = useState("");
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const toggleChip = useCallback(
@@ -33,6 +35,11 @@ export function useRedemptionsFilters() {
     },
     [],
   );
+
+  const setSearchInput = useCallback((value: string) => {
+    setSearchInputState(value);
+    setNowMs(Date.now());
+  }, []);
 
   const refreshNowMs = useCallback(() => {
     setNowMs(Date.now());
