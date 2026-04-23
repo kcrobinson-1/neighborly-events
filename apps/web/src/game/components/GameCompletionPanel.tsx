@@ -5,7 +5,14 @@ import type { GameConfig } from "../../data/games";
 import { getOptionLabels } from "../gameUtils";
 import type { Answers, GameCompletionResult } from "../../types/game";
 
-function getChipText(status: AttendeeRedemptionStatus["kind"]) {
+function getChipText(
+  status: AttendeeRedemptionStatus["kind"],
+  isEntitlementNew: boolean,
+) {
+  if (status === "unknown") {
+    return isEntitlementNew ? "Reward entry ready" : "Already checked in";
+  }
+
   return status === "redeemed"
     ? "Volunteer check-in complete"
     : "Ready for volunteer check-in";
@@ -17,7 +24,16 @@ function getHeadline(status: AttendeeRedemptionStatus["kind"]) {
     : "Show this screen at the volunteer table";
 }
 
-function getBodyCopy(status: AttendeeRedemptionStatus["kind"]) {
+function getBodyCopy(
+  status: AttendeeRedemptionStatus["kind"],
+  isEntitlementNew: boolean,
+) {
+  if (status === "unknown") {
+    return isEntitlementNew
+      ? "You're checked in for the reward."
+      : "You're still checked in for the reward. Playing again does not add another reward entry.";
+  }
+
   return status === "redeemed"
     ? "A volunteer has redeemed this code. You're all set."
     : "Your reward entry is ready. Show this screen and code to the volunteer.";
@@ -57,9 +73,9 @@ export function GameCompletionPanel({
   const shouldShowVerification = isSubmitting || Boolean(completion);
   const shouldShowAnswerReview =
     Boolean(completion) && game.feedbackMode === "final_score_reveal";
-  const completionChipText = getChipText(status.kind);
+  const completionChipText = getChipText(status.kind, Boolean(isEntitlementNew));
   const completionHeadline = getHeadline(status.kind);
-  const completionMessage = getBodyCopy(status.kind);
+  const completionMessage = getBodyCopy(status.kind, Boolean(isEntitlementNew));
 
   return (
     <section className="panel completion-panel">

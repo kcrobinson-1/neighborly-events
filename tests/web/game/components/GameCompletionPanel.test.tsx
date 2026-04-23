@@ -153,7 +153,7 @@ describe("GameCompletionPanel", () => {
         expect(
           screen.getByText("A volunteer has redeemed this code. You're all set."),
         ).toBeTruthy();
-      } else {
+      } else if (expectedStatusKind === "unredeemed") {
         expect(screen.getByText("Ready for volunteer check-in")).toBeTruthy();
         expect(
           screen.getByRole("heading", {
@@ -165,6 +165,24 @@ describe("GameCompletionPanel", () => {
             "Your reward entry is ready. Show this screen and code to the volunteer.",
           ),
         ).toBeTruthy();
+      } else {
+        expect(
+          screen.getByRole("heading", {
+            name: "Show this screen at the volunteer table",
+          }),
+        ).toBeTruthy();
+
+        if (completion.entitlement.status === "new") {
+          expect(screen.getByText("Reward entry ready")).toBeTruthy();
+          expect(screen.getByText("You're checked in for the reward.")).toBeTruthy();
+        } else {
+          expect(screen.getByText("Already checked in")).toBeTruthy();
+          expect(
+            screen.getByText(
+              "You're still checked in for the reward. Playing again does not add another reward entry.",
+            ),
+          ).toBeTruthy();
+        }
       }
     },
   );
