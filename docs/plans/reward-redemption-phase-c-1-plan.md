@@ -43,8 +43,8 @@ reopen and a stop-and-report moment, not scope for this plan.
 ## Summary
 
 Add an attendee-only redemption-status read path that polls the landed
-`get-redemption-status` Edge Function on a 5-second interval while the
-completion screen is mounted, and render the resulting status inside
+`get-redemption-status` Edge Function on a 5-second interval while a
+completion result is in scope, and render the resulting status inside
 the existing `GameCompletionPanel` so the attendee sees a visible
 difference between unredeemed and redeemed.
 
@@ -53,9 +53,18 @@ difference between unredeemed and redeemed.
   re-bootstrap of the signed session
 - the hook seeds with an "unknown" state on first mount and never
   blocks the existing completion-screen first paint
+- polling is gated on `complete-game` having returned successfully —
+  the hook does not fire during the `isSubmittingCompletion` phase,
+  because no entitlement row exists yet and `get-redemption-status`
+  would 404 on every pre-completion tick
 - the panel renders distinct copy for `unredeemed`, `redeemed`, and
   `unknown`; copy reuses the panel's existing typography and chip
   components
+- the panel keeps two orthogonal copy axes: redemption status drives
+  the chip, headline, and main body sentence; entitlement-status
+  (new vs existing replay) drives the verification-code sub-meta line
+  only — the "checked in" terminology that currently encodes
+  entitlement.status moves wholly to the redemption-status axis
 - when the Supabase backend is disabled and the prototype fallback is
   active, the hook does not poll and the panel renders the existing
   pre-C.1 unredeemed copy unchanged
@@ -64,8 +73,11 @@ difference between unredeemed and redeemed.
   attendee-facing error banner ships in C.1
 
 C.1 does not alter the completion-submit flow, the verification-code
-display, the answer-review section, the existing chip states tied to
-entitlement creation, or any operator-side surface.
+display, the answer-review section, or any operator-side surface. The
+existing entitlement-status copy is rephrased on the chip/headline/
+body axis to free the "checked in" wording for redemption status, but
+the entitlement-status distinction itself remains visible on the
+verification-code sub-meta line.
 
 ## Cross-Cutting Invariants
 
@@ -73,9 +85,17 @@ entitlement creation, or any operator-side surface.
   derives `redeemed` from local actions or from the verification code
   itself; it derives it exclusively from the latest successful
   `get-redemption-status` response.
-- Polling lifecycle is bound to the panel's mount, not to the page.
-  Unmounting the panel — including via game reset — must clear the
-  interval and any in-flight request before the next render commits.
+- Polling is gated on entitlement existence, not on panel mount. The
+  hook is inert until `complete-game` has returned a completion result
+  for the current attempt, because the panel mounts during
+  `isSubmittingCompletion` (before any entitlement row exists) and the
+  endpoint returns 404 in that window. Unmounting the panel — including
+  via game reset — must clear the interval and any in-flight request
+  before the next render commits.
+- Redemption status and entitlement.status are orthogonal axes on the
+  panel. The chip, headline, and main body sentence encode redemption
+  status only. The verification-code sub-meta line encodes
+  entitlement.status only. No element encodes both.
 - The hook is the single owner of the request/response envelope. The
   panel receives a discriminated status union, not raw response fields,
   so future envelope additions do not leak into presentational code.
@@ -91,12 +111,15 @@ entitlement creation, or any operator-side surface.
 ## Goals
 
 - A new `useAttendeeRedemptionStatus(eventId)` hook polls
-  `get-redemption-status` every 5 seconds while mounted and exposes a
-  discriminated `{ kind: "unknown" | "unredeemed" | "redeemed" }`
-  status state plus the latest server `verificationCode` for cross-
-  check.
+  `get-redemption-status` every 5 seconds while a non-null `eventId`
+  is supplied, and exposes a discriminated
+  `{ kind: "unknown" | "unredeemed" | "redeemed" }` status state plus
+  the latest server `verificationCode` for cross-check.
 - The hook does not fire when `eventId` is null/empty, when the
   Supabase backend is disabled, or when prototype fallback is active.
+- `GamePage` passes `eventId` as `latestCompletion ? game.id : null`,
+  so the hook is inert during `isSubmittingCompletion` and only begins
+  polling once `complete-game` has returned a completion result.
 - The hook performs an immediate fetch on mount, then schedules
   recurring fetches at 5-second intervals from the completion of the
   prior tick (not on a fixed wall-clock cadence), so a slow response
@@ -167,8 +190,11 @@ entitlement creation, or any operator-side surface.
 
 ### Polling lifecycle
 
-- The hook starts polling on mount when `eventId` is non-empty and the
-  Supabase backend is enabled.
+- The hook starts polling on mount when `eventId` is non-empty and
+  the Supabase backend is enabled. A null/empty `eventId` keeps the
+  hook inert; when `eventId` later transitions from null to non-null
+  (e.g., `complete-game` resolves), the hook starts the loop at that
+  point and not earlier.
 - The first fetch fires synchronously inside the mount effect; it is
   not delayed by 5 seconds.
 - Subsequent fetches are scheduled 5 seconds after the previous
@@ -244,15 +270,56 @@ entitlement creation, or any operator-side surface.
   Keeping the hook one level up preserves the panel's existing
   presentational posture and keeps the test seam stable.
 - The panel renders three branches:
-  - `unknown`: existing pre-C.1 unredeemed copy
-  - `unredeemed`: existing copy, optionally with a small wording tweak
-    that does not depend on freshness metadata
+  - `unknown`: copy matches today's pre-C.1 appearance for the
+    completion-arrived, no-redemption-yet case
+  - `unredeemed`: copy matches today's pre-C.1 appearance with the
+    "checked in" wording reworked per the copy axes contract below
   - `redeemed`: distinct headline copy and chip state indicating
     check-in is complete; verification code remains visible
 - The branch switch must not unmount or remount the verification-code
   block. Copy and chip state change in place.
 - The panel does not render a "checking..." spinner during in-flight
   requests in C.1.
+
+### Copy axes: redemption status vs entitlement.status
+
+Today's [`GameCompletionPanel`](../../apps/web/src/game/components/GameCompletionPanel.tsx)
+uses `completion.entitlement.status` (`"new"` vs `"existing"`) to drive
+the chip text (`"Reward entry ready"` vs `"Already checked in"`) and
+the main body sentence (`"You're checked in for the reward."` vs
+`"You're still checked in..."`). That `"checked in"` vocabulary is
+about whether the entitlement record was created or reused — not about
+operator redemption. C.1 introduces a real redemption-state axis, so
+the two concepts must stop sharing vocabulary on the same surface.
+
+C.1 locks the assignment of UI elements to axes:
+
+- **Chip text and chip variant** — encode redemption status only.
+  - `unknown` / `unredeemed`: a single chip variant indicating "ready
+    to be checked in by the volunteer." The current new-vs-existing
+    chip distinction collapses on this axis.
+  - `redeemed`: a chip variant indicating "checked in by the
+    volunteer."
+- **Headline (`<h2>`)** — encodes redemption status only.
+  - `unknown` / `unredeemed`: the existing
+    `"Show this screen at the volunteer table"` instruction.
+  - `redeemed`: a new headline indicating check-in is complete.
+- **Main body sentence (`<p>` directly under the headline)** —
+  encodes redemption status only. The current `"You're checked in..."`
+  / `"You're still checked in..."` strings are replaced with copy
+  that does not use the `"checked in"` metaphor for the unredeemed
+  state, freeing that wording for the redeemed state.
+- **Verification-code sub-meta line (the `.token-meta` span)** —
+  encodes entitlement.status only. The current new-vs-existing
+  distinction (`"Your reward entry is now recorded"` vs
+  `"Your earlier reward entry still counts. This replay does not add
+  another one."`) stays here verbatim. This element does not
+  branch on redemption status.
+- **Verification code itself, `.token-instruction`, answer-review
+  block, accessibility roles** — unchanged.
+
+Exact wording for the new chip / headline / body strings is a PR-time
+decision. The axes contract is what C.1 locks.
 
 ### Hook ownership boundary
 
@@ -290,11 +357,13 @@ does not dissolve into ad hoc edits across `game/` and `redemptions/`.
 
 ### `apps/web/src/pages/GamePage.tsx`
 
-- instantiate `useAttendeeRedemptionStatus(game.id)` while the
-  completion panel is mounted
+- call `useAttendeeRedemptionStatus(latestCompletion ? game.id : null)`
+  so the hook is inert during `isSubmittingCompletion` (panel is
+  mounted, but no entitlement row exists yet) and only begins polling
+  once `complete-game` has resolved with a completion result
 - pass the status into `GameCompletionPanel`
-- not introduce any new orchestration beyond the hook call and the
-  prop pass-through
+- not introduce any new orchestration beyond the gated hook call and
+  the prop pass-through
 
 ### `apps/web/src/types/game.ts`
 
@@ -385,10 +454,16 @@ does not dissolve into ad hoc edits across `game/` and `redemptions/`.
 10. **PR preparation.** Open a PR against `main` using the required
     template. The PR body must say that:
     - C.1 is the first attendee-facing redemption-status surface
-    - polling is unconditional while the panel is mounted; visibility
+    - polling is gated on `complete-game` having returned a
+      completion result; it does not fire during the
+      `isSubmittingCompletion` window
+    - polling runs unconditionally once gated on; visibility-API
       pause is deferred
     - no manual refresh, no timestamp formatting, no error UI ship
       in C.1
+    - the existing entitlement-status copy on the verification-code
+      sub-meta line is preserved verbatim; chip / headline / body
+      copy is reworked to encode redemption status only
     - the backend contract is unchanged from A.2b
 
 Intended commit boundary summary:
@@ -410,6 +485,10 @@ What the suite must prove:
 
 - the hook fires its first request synchronously on mount when
   `eventId` is non-empty and the backend is enabled
+- the hook does not fire any request when `eventId` is null/empty,
+  even after multiple re-renders
+- the hook starts the loop the first time `eventId` transitions from
+  null to non-null mid-mount (the entitlement-resolved transition)
 - subsequent requests are scheduled 5 seconds after the prior
   request settles, not on a fixed wall-clock cadence
 - a tick that would fire while a prior request is still pending is
@@ -433,14 +512,26 @@ What the suite must prove:
 
 ### `tests/web/game/components/GameCompletionPanel.test.tsx`
 
-What the updated suite must prove:
+What the updated suite must prove, walking the full
+redemption-status × entitlement.status matrix so the copy-axes
+contract is pinned and the existing new-vs-existing-replay distinction
+is not silently lost:
 
-- a `kind: "unknown"` status renders the existing pre-C.1 unredeemed
-  appearance
-- a `kind: "unredeemed"` status renders the unredeemed copy and chip
-  state and keeps the verification code visible
-- a `kind: "redeemed"` status renders the redeemed copy and chip
-  state and keeps the verification code visible
+- `unknown` × `new`: chip + headline + body show the unredeemed
+  variant; `.token-meta` shows the new-entry phrasing
+- `unknown` × `existing`: chip + headline + body show the unredeemed
+  variant; `.token-meta` shows the replay phrasing
+- `unredeemed` × `new`: same as `unknown × new` for chip + headline +
+  body; `.token-meta` shows the new-entry phrasing
+- `unredeemed` × `existing`: same as `unknown × existing` for chip +
+  headline + body; `.token-meta` shows the replay phrasing
+- `redeemed` × `new`: chip + headline + body show the redeemed
+  variant; `.token-meta` still shows the new-entry phrasing
+- `redeemed` × `existing`: chip + headline + body show the redeemed
+  variant; `.token-meta` still shows the replay phrasing
+- the chip and headline strings for the redeemed variant are
+  distinct from any unredeemed-variant string, so the test fails if
+  redeemed-state copy regresses to entitlement-status copy
 - transitioning from `unredeemed` to `redeemed` does not unmount or
   remount the verification-code block
 - transitioning from `redeemed` to `unredeemed` re-renders the
@@ -453,6 +544,12 @@ What the updated suite must prove:
 
 - the page mounts the polling hook with `game.id` while the
   completion panel is mounted
+- the page passes `null` as the hook's `eventId` while
+  `latestCompletion` is null (i.e., during `isSubmittingCompletion`),
+  so the hook fires no requests in the pre-completion window
+- the page passes `game.id` as the hook's `eventId` once
+  `latestCompletion` becomes non-null, and the hook begins its loop
+  at that transition rather than at panel mount
 - the page passes the hook's current status into the panel
 - changing the active game resets the polling loop
 
@@ -480,11 +577,30 @@ change the C.1 contract.
 Run the applicable named audits from
 [`docs/self-review-catalog.md`](../self-review-catalog.md):
 
-- **Frontend/lifecycle surface — `Effect cleanup audit`.** C.1
-  introduces the first interval-based fetch in the web app. Walk
-  every mount, unmount, and `eventId` change to confirm pending
-  timers are cleared, in-flight requests are aborted, and no
-  post-unmount `setState` is reachable.
+- **Plan-local — recurring-effect cleanup check.** Not in
+  [`docs/self-review-catalog.md`](../self-review-catalog.md); checked
+  here because C.1 introduces the first interval-based fetch in the
+  web app. The closest prior art is the `isCancelled` pattern in
+  [`apps/web/src/game/useGameSession.ts`](../../apps/web/src/game/useGameSession.ts),
+  which guards a single completion submit; the polling case
+  generalizes the same discipline to a recurring loop. Walk every
+  mount, unmount, and `eventId` transition against four guarantees:
+  1. The cleanup function clears any pending `setTimeout`, aborts
+     any in-flight `fetch` via `AbortController`, and signals the
+     `isCancelled` flag.
+  2. Post-unmount settlement of an in-flight request does not call
+     `setState`. The settle handler must re-check the cancel signal
+     after every `await`.
+  3. The effect keyed on `eventId` terminates the prior cycle before
+     the new one begins. Two polling loops must never run concurrently
+     for the same hook instance.
+  4. A scheduled callback that fires after `clearTimeout` due to the
+     macrotask race must itself observe the cancellation (re-check
+     the cancel flag inside the callback body), since `clearTimeout`
+     does not stop a callback already on the queue.
+
+  Promote this check to the catalog if a second interval/subscription
+  site appears or if a late-`setState` warning surfaces in production.
 - **Plan-local — retry boundedness check.** Not in
   [`docs/self-review-catalog.md`](../self-review-catalog.md); checked
   here because C.1 is the second site in the codebase to implement an
@@ -556,6 +672,14 @@ body.
 
 ## Risks and Mitigations
 
+- **Pre-completion poll noise.** The completion panel mounts during
+  `isSubmittingCompletion`, before any entitlement row exists. If the
+  hook polled on panel mount alone, every normal submit would generate
+  guaranteed 404s and possible 401 re-bootstrap churn before
+  `complete-game` returned. Mitigation: gate the hook's `eventId` on
+  `latestCompletion`, encoded as both a Cross-Cutting Invariant and a
+  page-level test that asserts no requests during the submitting
+  window.
 - **Background-tab poll volume.** Without visibility-API pause, a tab
   left open all day fires a request every 5 seconds. Mitigation:
   C.1's audience is the in-event completion screen, which is
@@ -600,6 +724,16 @@ because C.1 must not change those surfaces.
 
 - Polling cadence is 5 seconds, chained off the prior request settle,
   matching the design doc and avoiding overlapping requests.
+- Polling is gated on `complete-game` having returned a completion
+  result, not on completion-panel mount; `GamePage` passes
+  `latestCompletion ? game.id : null` so the hook is inert during
+  `isSubmittingCompletion` and the endpoint is never called before an
+  entitlement row exists.
+- The chip, headline, and main body sentence on `GameCompletionPanel`
+  encode redemption status only. The verification-code sub-meta line
+  encodes entitlement.status only. The current "checked in" wording
+  on the entitlement-status axis is reworked so the metaphor is free
+  to belong to redemption status.
 - The hook lives in `apps/web/src/redemptions/` and is consumed only
   by `GamePage`; `GameCompletionPanel` stays presentational.
 - 401 retry mirrors the landed `submitGameCompletionToSupabase`

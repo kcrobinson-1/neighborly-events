@@ -37,8 +37,8 @@ Drop an audit when:
   surface is unlikely to reintroduce it.
 
 Every entry must have **Trigger** (one-sentence diff pattern, not a
-vibe), **Check** (concrete walk-through), and **Example** (real past
-incident with a link).
+vibe), **Check** (concrete walk-through), and **Example**. Link the
+example when a durable incident, PR, or commit reference exists.
 
 Short triggers beat elaborate ones. A trigger like "any migration
 touches GRANT EXECUTE" is actionable; "think about authorization" is
