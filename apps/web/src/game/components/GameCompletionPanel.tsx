@@ -1,8 +1,27 @@
 /** Completion-state panel for verification, retries, retakes, and answer review. */
 import { answersMatch } from "../../../../../shared/game-config";
+import type { AttendeeRedemptionStatus } from "../../../../../shared/redemption";
 import type { GameConfig } from "../../data/games";
 import { getOptionLabels } from "../gameUtils";
 import type { Answers, GameCompletionResult } from "../../types/game";
+
+function getChipText(status: AttendeeRedemptionStatus["kind"]) {
+  return status === "redeemed"
+    ? "Volunteer check-in complete"
+    : "Ready for volunteer check-in";
+}
+
+function getHeadline(status: AttendeeRedemptionStatus["kind"]) {
+  return status === "redeemed"
+    ? "Your volunteer check-in is complete"
+    : "Show this screen at the volunteer table";
+}
+
+function getBodyCopy(status: AttendeeRedemptionStatus["kind"]) {
+  return status === "redeemed"
+    ? "A volunteer has redeemed this code. You're all set."
+    : "Your reward entry is ready. Show this screen and code to the volunteer.";
+}
 
 /** Props for the game completion screen. */
 type GameCompletionPanelProps = {
@@ -16,6 +35,7 @@ type GameCompletionPanelProps = {
   onRetrySubmission: () => void;
   score: number;
   showRetake: boolean;
+  status: AttendeeRedemptionStatus;
 };
 
 /** Completion screen that shows verification and optional answer review. */
@@ -30,34 +50,39 @@ export function GameCompletionPanel({
   onRetrySubmission,
   score,
   showRetake,
+  status,
 }: GameCompletionPanelProps) {
   const isEntitlementNew = completion?.entitlement.status === "new";
   const verificationCode = completion?.entitlement.verificationCode ?? null;
   const shouldShowVerification = isSubmitting || Boolean(completion);
   const shouldShowAnswerReview =
     Boolean(completion) && game.feedbackMode === "final_score_reveal";
-  const completionMessage = completion
-    ? isEntitlementNew
-      ? "You're checked in for the reward."
-      : "You're still checked in for the reward. Playing again does not add another reward entry."
-    : null;
+  const completionChipText = getChipText(status.kind);
+  const completionHeadline = getHeadline(status.kind);
+  const completionMessage = getBodyCopy(status.kind);
 
   return (
     <section className="panel completion-panel">
       <span
-        className={`chip${completion ? " chip-success" : completionError ? " chip-error" : ""}`}
+        className={`chip${
+          completion
+            ? status.kind === "redeemed"
+              ? " chip-success"
+              : ""
+            : completionError
+              ? " chip-error"
+              : ""
+        }`}
       >
         {completion
-          ? isEntitlementNew
-            ? "Reward entry ready"
-            : "Already checked in"
+          ? completionChipText
           : isSubmitting
             ? "Generating proof"
             : "Try again"}
       </span>
       <h2>
         {completion
-          ? "Show this screen at the volunteer table"
+          ? completionHeadline
           : isSubmitting
             ? "Generating your check-in code"
             : "We couldn't load your check-in code"}
