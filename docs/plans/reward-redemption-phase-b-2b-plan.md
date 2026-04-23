@@ -56,9 +56,10 @@ the single entry point:
 - submit calls the landed `reverse-entitlement-redemption` Edge
   Function with the caller's bearer token and maps the stable A.2b
   envelope to UI states
-- after a successful reverse response, the sheet re-reads that row by
-  `id` and `event_id`, then triggers the existing bounded list refetch
-  so the list and `Last updated` timestamp catch up
+- after a successful reverse response, the sheet fires the single-row
+  re-read and the existing bounded list refetch in parallel; the sheet
+  consumes the re-read while the list and `Last updated` timestamp
+  reconcile through the full refetch
 - the `By me` chip expands from `redeemed_by === currentUserId` to
   `redeemed_by === currentUserId OR redemption_reversed_by ===
   currentUserId`
@@ -66,6 +67,20 @@ the single entry point:
 B.2b does not alter route gating, list fetch shape, suffix search,
 filter chips, or B.2a's mobile information architecture beyond the new
 detail-sheet reversal states and the `By me` predicate expansion.
+
+## Cross-Cutting Invariants
+
+- Canonical display state comes from the server only: the reverse
+  success envelope plus the single-row re-read drive the sheet, never a
+  locally reconstructed row from `selectedRow` plus typed reason.
+- Reason-input and mutation-result lifecycle is scoped to the selected
+  row: row switch, sheet close, and `Back` all reset both.
+- Reversal eligibility is one rule across all call sites:
+  `currentRow.status === "redeemed"` plus already-authorized organizer /
+  root-admin page context; CTA render and submit guard must agree.
+- Every mutation click path (`Confirm reversal`, `Retry`) surfaces
+  failure with a visible recovery affordance; no unhandled or `void`
+  promise path is allowed.
 
 ## Goals
 
@@ -90,9 +105,10 @@ detail-sheet reversal states and the `By me` predicate expansion.
   - transient failure (network / 5xx / unexpected 401 / malformed 200)
   to explicit sheet states with recovery actions.
 - After a success response, the sheet re-reads the single row by `id`
-  before or while the full list refetch runs, so the selected-row badge,
+  in parallel with the full list refetch, so the selected-row badge,
   timestamps, actor, and optional note do not wait for the list refresh
-  to complete.
+  to complete while the list still reconciles through its canonical
+  bounded refetch path.
 - The existing list refresh remains the source of truth for the page's
   `Last updated` timestamp; the single-row re-read does not fake a list
   freshness change.
@@ -175,6 +191,13 @@ one sheet with two internal steps:
      - `Back`
      - `Confirm reversal`
      - pending label: `Reversing...`
+3. **Post-success refresh-warning sub-state**
+   - entered when the reverse mutation succeeds but the single-row
+     re-read fails
+   - preserves the success outcome from the mutation response
+   - adds a visible detail-refresh warning with a retry affordance for
+     the selected row
+   - does not suppress the parallel full-list refetch
 
 The confirmation step lives in the same sheet shell so close, scrim, and
 focus-return behavior stay under one accessibility contract rather than
@@ -229,6 +252,13 @@ Map the landed response contract as follows:
   - transient sheet error with `Retry`
   - one automatic retry at ~2s backoff, matching the B.1/B.2a operator
     error-handling posture
+- reverse success + single-row re-read failure
+  - keep the reversal success outcome visible in the sheet
+  - surface a distinct detail-refresh error with visible retry / refresh
+    affordance for the selected row
+  - still issue the full list refetch so page-level state and the
+    `Last updated` timestamp reconcile even if the sheet-specific
+    follow-up read fails
 
 ### Single-row re-read and list refetch
 
@@ -245,9 +275,11 @@ The re-read exists to update the open sheet immediately, especially for:
 - the newly visible `redemption_note`
 - any server-side timestamp normalization
 
-After the re-read is queued, trigger the existing full list refresh via
-`useRedemptionsList().refresh()` so the list ordering, chip results, and
-`Last updated` timestamp all reconcile to the canonical cached slice.
+After a successful reverse response, fire the single-row re-read and the
+existing full list refresh via `useRedemptionsList().refresh()` in
+parallel. The sheet consumes the single-row result; the list ordering,
+chip results, and `Last updated` timestamp reconcile through the full
+bounded refetch.
 
 No optimistic local list patch is allowed in place of the full refresh.
 The list remains owned by the landed B.2a bounded fetch model.
@@ -379,10 +411,12 @@ does not dissolve into ad hoc edits across the B.2a modules.
    implementation and rebase this plan branch after merge instead of
    forking B.2b code from a moving review target.
 3. **Commit 1 — shared row-read surface.** Add `redemptionsData.ts`,
-   move the shared select columns there, extend the row type with
-   `redemption_note`, and keep `useRedemptionsList` behavior-preserving
-   while it swaps to the shared helper. Validate with `npm run lint`,
-   `npm test`, and `npm run build:web`.
+   move the shared select columns there, and keep
+   `useRedemptionsList` runtime-rendered output unchanged while it swaps
+   to the shared helper. Do **not** add `redemption_note` to the shared
+   select columns yet; that column lands in Commit 3 when the detail
+   sheet first needs it. Validate with `npm run lint`, `npm test`, and
+   `npm run build:web`.
 4. **Commit 2 — reverse mutation hook.** Add
    `useReverseRedemption.ts` with focused tests for payload
    normalization, success mapping, stable-failure mapping, transient
@@ -390,7 +424,9 @@ does not dissolve into ad hoc edits across the B.2a modules.
    `npm test`, and `npm run build:web`.
 5. **Commit 3 — sheet state machine.** Expand
    `RedemptionDetailSheet.tsx` from view-only to details + confirmation
-   + mutation-feedback rendering, still driven entirely by props.
+   + mutation-feedback rendering, still driven entirely by props. Add
+   `redemption_note` to the shared row shape and shared select columns
+   in this commit, because this is the first commit that renders it.
    Update the sheet tests in the same commit. Validate with
    `npm run lint`, `npm test`, and `npm run build:web`.
 6. **Commit 4 — page orchestration + `By me`.** Wire the page to the
@@ -402,9 +438,12 @@ does not dissolve into ad hoc edits across the B.2a modules.
 7. **Commit 5 — Playwright extension.** Extend
    `tests/e2e/mobile-smoke.redemptions.spec.ts` and the supporting
    fixture so the same local redemptions runner proves a real organizer
-   reversal against local Supabase + local Edge Functions. Validate with
-   `npm run lint`, `npm test`, `npm run test:functions`, and
-   `npm run test:e2e:redemptions`.
+   reversal against local Supabase + local Edge Functions. This commit
+   also updates `scripts/testing/run-redemptions-e2e-tests.cjs` to boot
+   `supabase functions serve` and tightens its readiness probe so it
+   verifies the reverse-function path rather than only the B.2a
+   read-only surfaces. Validate with `npm run lint`, `npm test`,
+   `npm run test:functions`, and `npm run test:e2e:redemptions`.
 8. **Automated code-review feedback loop.** Review the branch from a
    senior-engineer/code-review stance, explicitly checking for:
    - reversal CTA visible on already-reversed rows
