@@ -327,14 +327,6 @@ function AuthorizedRedemptionsView({
   const [detailRefreshError, setDetailRefreshError] = useState<string | null>(
     null,
   );
-  // Tracks the currently selected row id for async guards so a re-read
-  // firing after the user switched rows cannot stomp on the new selection.
-  const selectedRowIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    selectedRowIdRef.current = selectedRow?.id ?? null;
-  }, [selectedRow]);
-
   const resetSheetReversalState = useCallback(() => {
     resetReversal();
     setSheetStep("details");
@@ -384,24 +376,38 @@ function AuthorizedRedemptionsView({
 
   const performDetailReread = useCallback(
     async (rowId: string) => {
+      // Async guards below use the state-setter form so a re-read that
+      // resolves after the user has switched rows cannot stomp on the new
+      // selection. The setter callback reads the latest state atomically,
+      // which is safer than a ref (which only updates on the next effect
+      // tick, leaving a microtask-order race window).
+      let stillOnRow = true;
       try {
         const fresh = await fetchRedemptionRow(eventId, rowId);
-        if (selectedRowIdRef.current !== rowId) {
-          return;
+        setSelectedRow((current) => {
+          if (current === null || current.id !== rowId) {
+            stillOnRow = false;
+            return current;
+          }
+          return fresh ?? current;
+        });
+        if (stillOnRow) {
+          setDetailRefreshError(null);
         }
-        if (fresh) {
-          setSelectedRow(fresh);
-        }
-        setDetailRefreshError(null);
       } catch (error: unknown) {
-        if (selectedRowIdRef.current !== rowId) {
-          return;
+        setSelectedRow((current) => {
+          if (current === null || current.id !== rowId) {
+            stillOnRow = false;
+          }
+          return current;
+        });
+        if (stillOnRow) {
+          setDetailRefreshError(
+            error instanceof Error
+              ? error.message || DEFAULT_DETAIL_REFRESH_ERROR
+              : DEFAULT_DETAIL_REFRESH_ERROR,
+          );
         }
-        setDetailRefreshError(
-          error instanceof Error
-            ? error.message || DEFAULT_DETAIL_REFRESH_ERROR
-            : DEFAULT_DETAIL_REFRESH_ERROR,
-        );
       }
     },
     [eventId],
@@ -424,7 +430,11 @@ function AuthorizedRedemptionsView({
   };
 
   const handleBack = () => {
+    // Cross-cutting invariant from reward-redemption-phase-b-2b-plan.md:
+    // Back resets both the draft reason and the mutation result so returning
+    // to the details step cannot leave either stuck on the previous attempt.
     setSheetStep("details");
+    setReasonInput("");
     resetReversal();
   };
 

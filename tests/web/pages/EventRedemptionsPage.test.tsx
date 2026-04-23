@@ -901,6 +901,37 @@ describe("EventRedemptionsPage", () => {
       expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
     });
 
+    it("Back clears the draft reason and mutation state for the same row", async () => {
+      authorizeOrganizerWithRedeemedRow();
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "draft reason" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Back" }));
+
+      // Back returns the sheet to the details step for the same row; the hook
+      // reset is what the page test can observe directly.
+      expect(mockResetReversal).toHaveBeenCalled();
+
+      // Re-entering confirmation for the same row starts from an empty reason,
+      // not from the prior draft.
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+    });
+
     it("row switch resets the prior row's draft reason and mutation state", async () => {
       mockUseAuthSession.mockReturnValue({
         email: "organizer@example.com",
