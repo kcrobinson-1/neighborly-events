@@ -77,12 +77,16 @@ grouped into a dedicated `apps/web/src/game/` module:
   role-neutral auth shell, resolves event authorization, and renders the
   keypad-driven redemption UI.
 - `apps/web/src/pages/EventRedemptionsPage.tsx`
-  Event-scoped operator route for `/event/:slug/redemptions` (B.2a,
-  read-only monitoring). Gates on `is_organizer_for_event` /
-  `is_root_admin`, reads `game_entitlements` directly through the
-  browser Supabase client (RLS-scoped, explicit event-id filter), and
-  renders the sticky filter bar, bounded list, and view-only bottom
-  sheet. No Edge Function call; the reversal CTA lands in B.2b.
+  Event-scoped operator route for `/event/:slug/redemptions` (monitoring
+  + reversal). Gates on `is_organizer_for_event` / `is_root_admin`,
+  reads `game_entitlements` directly through the browser Supabase client
+  (RLS-scoped, explicit event-id filter), and renders the sticky filter
+  bar, bounded list, and bottom-sheet detail view. The sheet's
+  confirmation step drives reversal through the
+  `reverse-entitlement-redemption` Edge Function; after a successful
+  reverse response the page fires a single-row re-read in parallel with
+  the full bounded list refetch so the open sheet reconciles without
+  waiting for the list refresh.
 - `apps/web/src/pages/GameRoutePage.tsx`
   Async route loader that resolves `/event/:slug/game` into published content
   before rendering the game shell.
@@ -124,11 +128,15 @@ grouped into a dedicated `apps/web/src/game/` module:
   authorization resolution, keypad state, keypad UI, trusted submit, and
   result-card rendering.
 - `apps/web/src/redemptions/`
-  Event monitoring modules for the dispute-resolution surface (B.2a):
-  organizer authorization resolver, two-query list fetch with
+  Event monitoring + reversal modules for the dispute-resolution
+  surface: organizer authorization resolver, shared row-read helpers
+  (two-query list fetch + single-row re-read) in `redemptionsData.ts`,
   client-side merge/dedupe/sort/truncate, filter state + pure search
-  parser + pure chip filter, sticky filter bar, list row, view-only
-  bottom sheet, and the shared actor-hint formatter.
+  parser + pure chip filter, sticky filter bar, list row, the
+  detail-sheet state machine (`details` + `confirmation` steps), the
+  reverse-mutation hook that wraps `reverse-entitlement-redemption`
+  (one automatic retry, stable/transient mapping, reason
+  normalization), and the shared actor-hint formatter.
 - `apps/web/src/lib/gameContentApi.ts`
   Browser reads for published event summaries and route content.
 - `apps/web/src/lib/supabaseBrowser.ts`
@@ -464,6 +472,56 @@ Today that route:
   `not_found`), and transient retryable states
 - stays intentionally undiscoverable after merge: no nav link, no `/admin`
   link, no role seeding, and no attendee polling or monitoring list behavior
+
+### Direct-entry operator monitoring + reversal route
+
+The web app also includes an inert direct-entry route at
+`/event/:slug/redemptions` for dispute handling.
+
+Today that route:
+
+- accepts magic-link sign-in through the same role-neutral auth shell used
+  by `/admin` and `/event/:slug/redeem`, with
+  `next=/event/:slug/redemptions` validated through `validateNextPath`
+- keeps signed-out, loading, missing-config, authorized, role-gated, and
+  transient-error states explicit in the page shell, reusing the
+  non-leaking role-gate copy the redeem route introduced
+- authorizes access with the readable surfaces only:
+  `is_organizer_for_event(...)` and `is_root_admin()` (agents have no
+  read access to this route in MVP, per the parent design's role model)
+- reads `game_entitlements` directly through the browser Supabase client
+  as two bounded slices (redeemed + reversed) merged, deduped, and sorted
+  client-side by `COALESCE(redemption_reversed_at, redeemed_at) DESC,
+  id DESC` into the cached slice capped at 500 rows, protected by the
+  A.2a RLS read policy and an explicit `.eq("event_id", ...)` scope
+- renders the mobile monitoring surface: locked event-context badge,
+  sticky filter bar (chips: `Last 15m`, `Redeemed`, `Reversed`,
+  `By me`), suffix-first search, newest-first list, and a detail
+  bottom sheet
+- surfaces reversal only from inside the detail sheet: a redeemed row
+  shows a `Reverse redemption` CTA for authorized callers; tapping it
+  transitions the same sheet into a confirmation step with an optional
+  single-line reason input (blank → `null`, mirroring the landed
+  backend normalization), a `Back` control, and a `Confirm reversal`
+  action whose pending label is `Reversing...`
+- submits exactly `{ eventId, codeSuffix, reason }` to the landed
+  `reverse-entitlement-redemption` Edge Function with the caller's
+  bearer token and maps the A.2b envelope to visible sheet states:
+  `reversed_now` / `already_unredeemed` successes, stable failures for
+  `not_authorized` / `not_found`, and a transient failure with one
+  automatic retry for network / 5xx / unexpected 401 / malformed 200
+- reconciles on success by firing a single-row re-read in parallel with
+  the full bounded list refetch so the open sheet reflects the
+  canonical server state (updated status badge, reversed-at, reversed-by,
+  stored reason) without waiting for the list refresh; the list-level
+  `Last updated` timestamp stays anchored to the canonical list fetch,
+  never to the single-row re-read
+- expands `By me` to match rows where the current user appears as
+  either the redeemer or the reverser, so a just-reversed row still
+  surfaces in that chip
+- stays intentionally undiscoverable after merge: no nav link, no
+  `/admin` link, no role seeding, and no realtime subscription or
+  auto-polling. Role seeding moves to a later phase
 
 ## Runtime Request Flow
 

@@ -1,6 +1,7 @@
 # Reward Redemption — Phase B.2b Execution Plan
 
-**Status:** Proposed — not started.
+**Status:** Landed in commits `68a73c8`, `8201d28`, `9332e2e`, `4b61cc5`,
+`6da7aa4`, `026f8b9`, plus the implementing merge commit.
 **Parent overview:** [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
 **Predecessors:**
@@ -10,8 +11,7 @@
 [`event-code-prerequisite-plan.md`](./archive/event-code-prerequisite-plan.md)
 — landed.
 [`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md)
-— implementation branch is in review now and must land before B.2b
-implementation starts.
+— landed.
 **Scope:** Phase B.2b only — add organizer/root-admin reversal to the
 existing `/event/:slug/redemptions` monitoring route. No new route, no
 new auth surface, no new Edge Function / RPC / migration, no attendee

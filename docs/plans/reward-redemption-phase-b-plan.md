@@ -1,14 +1,12 @@
 # Reward Redemption — Phase B Overview Plan
 
-**Status:** In progress — B.1 landed in
+**Status:** Complete — B.1 landed in
 [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md);
 B.2a landed in
 [`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md);
-B.2b implementation is not started; its execution plan is drafted in
+B.2b landed in
 [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md).
-This overview names the remaining sub-phase boundaries and the
-prerequisites each sub-phase inherits. Full
-execution plans for each sub-phase are drafted separately, close to
+Execution plans for each sub-phase were drafted separately, close to
 their implementation time, following the Phase A precedent
 ([A.1](./archive/reward-redemption-phase-a-1-plan.md),
 [A.2a](./archive/reward-redemption-phase-a-2-plan.md),
@@ -85,7 +83,7 @@ role-management posture.
 |-----------|-------|---------------|-----------------|-------------|
 | **B.1** | `/event/:slug/redeem` | agents (+ root admin) | lookup, redeem | [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md) (Landed) |
 | **B.2a** | `/event/:slug/redemptions` (read-only) | organizers (+ root admin) | list, filter, search, view | [`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md) (Landed) |
-| **B.2b** | `/event/:slug/redemptions` (reversal) | organizers (+ root admin) | reverse, confirm, optional reason | [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md) (Proposed) |
+| **B.2b** | `/event/:slug/redemptions` (reversal) | organizers (+ root admin) | reverse, confirm, optional reason | [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md) (Landed) |
 
 ## Prerequisites
 
