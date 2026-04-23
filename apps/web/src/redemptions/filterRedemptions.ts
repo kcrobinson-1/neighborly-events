@@ -1,3 +1,7 @@
+import {
+  computeActivityTimestamp,
+  isRowCurrentlyReversed,
+} from "./activityTimestamp";
 import type { SearchParseResult } from "./parseSearchInput";
 import type { RedemptionRow } from "./types";
 
@@ -20,7 +24,7 @@ type FilterRedemptionsOptions = {
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 
 function getActivityTimestampMs(row: RedemptionRow): number | null {
-  const candidate = row.redemption_reversed_at ?? row.redeemed_at;
+  const candidate = computeActivityTimestamp(row);
   if (candidate === null) {
     return null;
   }
@@ -63,7 +67,7 @@ export function filterRedemptions({
       return false;
     }
 
-    if (chips.reversed && row.redemption_reversed_at === null) {
+    if (chips.reversed && !isRowCurrentlyReversed(row)) {
       return false;
     }
 

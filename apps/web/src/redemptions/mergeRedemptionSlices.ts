@@ -1,10 +1,14 @@
+import { computeActivityTimestamp } from "./activityTimestamp";
 import type { RedemptionRow } from "./types";
 
-function computeActivityTimestamp(row: RedemptionRow) {
-  return row.redemption_reversed_at ?? row.redeemed_at;
-}
-
-/** Compare two rows by `COALESCE(redemption_reversed_at, redeemed_at) DESC, id DESC`. */
+/**
+ * Compare two rows by their latest activity timestamp, then by id (desc).
+ *
+ * "Latest activity" is the newer of `redeemed_at` and `redemption_reversed_at`
+ * — see `computeActivityTimestamp` for why the naive
+ * `COALESCE(redemption_reversed_at, redeemed_at)` is wrong for re-redeemed
+ * rows.
+ */
 export function compareRedemptionRowsByActivity(
   first: RedemptionRow,
   second: RedemptionRow,

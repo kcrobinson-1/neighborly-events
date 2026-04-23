@@ -104,6 +104,32 @@ describe("mergeRedemptionSlices", () => {
     expect(merged[0]).toBe(redeemedRow);
   });
 
+  it("sorts a re-redeemed row by the newer of redeemed_at and redemption_reversed_at", () => {
+    // The A.2a redeem RPC does not clear redemption_reversed_* on a re-redeem,
+    // so a row that was redeemed → reversed → redeemed again carries both a
+    // newer redeemed_at and an older redemption_reversed_at. Sorting by the
+    // reversal timestamp blindly would mis-order this row behind more recent
+    // activity.
+    const reRedeemedRow = makeRedeemed({
+      id: "re-redeemed",
+      redeemed_at: "2026-04-22T12:00:00Z",
+      redemption_reversed_at: "2026-04-22T09:00:00Z",
+      redemption_reversed_by: "user-b",
+      redemption_reversed_by_role: "organizer",
+    });
+    const recentRedeemedRow = makeRedeemed({
+      id: "recent",
+      redeemed_at: "2026-04-22T11:00:00Z",
+      redemption_reversed_at: null,
+    });
+
+    expect(
+      mergeRedemptionSlices([reRedeemedRow, recentRedeemedRow], [], 500).map(
+        (row) => row.id,
+      ),
+    ).toEqual(["re-redeemed", "recent"]);
+  });
+
   it("breaks timestamp ties using id desc", () => {
     const tiedTimestamp = "2026-04-22T10:00:00Z";
     const rows = [

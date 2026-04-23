@@ -76,7 +76,13 @@ describe("filterRedemptions", () => {
       makeRow({ id: "a" }),
       makeRow({
         id: "b",
+        redeemed_at: null,
+        redeemed_by: null,
+        redeemed_by_role: null,
         redemption_reversed_at: "2026-04-22T10:20:00Z",
+        redemption_reversed_by: "user-b",
+        redemption_reversed_by_role: "organizer",
+        redemption_status: "unredeemed",
       }),
     ];
 
@@ -96,10 +102,17 @@ describe("filterRedemptions", () => {
     expect(result.map((row) => row.id)).toEqual(["b"]);
   });
 
-  it("Reversed chip excludes a row whose reversal metadata was cleared by a subsequent redeem", () => {
-    const row = makeRow({
+  it("Reversed chip excludes a re-redeemed row whose status is now 'redeemed' even when reversal metadata persists", () => {
+    // The A.2a redeem RPC does not clear redemption_reversed_* on re-redeem,
+    // so a re-redeemed row carries both a newer redeemed_at and an older
+    // redemption_reversed_at. The Reversed chip reflects current state, not
+    // whether reversal has ever happened.
+    const reRedeemedRow = makeRow({
       id: "re-redeemed",
-      redemption_reversed_at: null,
+      redeemed_at: "2026-04-22T10:28:00Z",
+      redemption_reversed_at: "2026-04-22T09:00:00Z",
+      redemption_reversed_by: "user-b",
+      redemption_reversed_by_role: "organizer",
       redemption_status: "redeemed",
     });
 
@@ -112,11 +125,37 @@ describe("filterRedemptions", () => {
       },
       currentUserId: "user-a",
       nowMs: NOW_MS,
-      rows: [row],
+      rows: [reRedeemedRow],
       searchResult: { type: "no_filter" },
     });
 
     expect(result).toEqual([]);
+  });
+
+  it("Last 15m includes a re-redeemed row whose newer redeemed_at is within the window even when the prior reversal timestamp is outside", () => {
+    const reRedeemedRow = makeRow({
+      id: "re-redeemed",
+      redeemed_at: "2026-04-22T10:28:00Z",
+      redemption_reversed_at: "2026-04-22T09:00:00Z",
+      redemption_reversed_by: "user-b",
+      redemption_reversed_by_role: "organizer",
+      redemption_status: "redeemed",
+    });
+
+    const result = filterRedemptions({
+      chips: {
+        byMe: false,
+        last15m: true,
+        redeemed: false,
+        reversed: false,
+      },
+      currentUserId: "user-a",
+      nowMs: NOW_MS,
+      rows: [reRedeemedRow],
+      searchResult: { type: "no_filter" },
+    });
+
+    expect(result.map((row) => row.id)).toEqual(["re-redeemed"]);
   });
 
   it("By me matches redeemed_by === currentUserId and excludes null", () => {

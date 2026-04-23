@@ -1,3 +1,7 @@
+import {
+  computeActivityTimestamp,
+  isRowCurrentlyReversed,
+} from "./activityTimestamp";
 import { formatActor } from "./formatActor";
 import type { RedemptionRow as RedemptionRowType } from "./types";
 
@@ -9,7 +13,7 @@ type RedemptionRowProps = {
 };
 
 function formatActivityTimestamp(row: RedemptionRowType): string {
-  const candidate = row.redemption_reversed_at ?? row.redeemed_at;
+  const candidate = computeActivityTimestamp(row);
   if (candidate === null) {
     return "Unknown time";
   }
@@ -30,10 +34,7 @@ function resolveStatus(
   if (row.redemption_status === "redeemed") {
     return "redeemed";
   }
-  if (
-    row.redemption_status === "unredeemed" &&
-    row.redemption_reversed_at !== null
-  ) {
+  if (isRowCurrentlyReversed(row)) {
     return "reversed";
   }
   return "unknown";
