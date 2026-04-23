@@ -38,10 +38,11 @@ steps, and validation commands.
 Must be resolved before QR codes are printed or the first real event runs.
 
 - [ ] **`ux` Admin live status must match public route availability**
-  The deployed admin currently shows at least one event as `Live` while its
-  `Open live game` action lands on the public unavailable state. Fix the status
-  model and action behavior before operators trust the admin surface for live
-  event setup.
+  Slice 1 landed the immediate correctness fix, but the parent plan remains
+  open until the read-model cleanup and non-live action UX follow-up are
+  resolved. Keep this item in Tier 1 until the full
+  [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)
+  sequence reaches its terminal state.
   Detail: [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)
 
 ---

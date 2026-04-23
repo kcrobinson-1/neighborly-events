@@ -115,7 +115,10 @@ grouped into a dedicated `apps/web/src/game/` module:
   `/auth/callback?next=…`, sign-out, and access-token retrieval.
 - `apps/web/src/lib/adminGameApi.ts`
   Admin-status RPC, private draft reads, and authenticated authoring
-  function calls. Auth primitives live in `authApi.ts`;
+  function calls. Draft reads now derive a separate `isLive` signal by
+  cross-checking visible `game_events` rows so admin live badges and actions
+  match public-route availability without reinterpreting
+  `live_version_number`. Auth primitives live in `authApi.ts`;
   `callAuthoringFunction` reads the session access token through
   `getAccessToken()` there.
 - `apps/web/src/auth/`

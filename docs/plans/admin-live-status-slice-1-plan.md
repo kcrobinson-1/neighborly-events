@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 1 Execution Plan
 
-**Status:** Proposed
+**Status:** Landed in commit `b203514`
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 

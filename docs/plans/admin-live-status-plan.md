@@ -1,6 +1,6 @@
 # Admin Live Status Fix Plan
 
-**Status:** Proposed
+**Status:** In progress — Slice 1 landed in commit `b203514`; Slice 2 and Slice 3 remain proposed
 
 **Scope:** Resolve the Tier 1 backlog item
 `Admin live status must match public route availability`. The plan sequences
@@ -82,7 +82,7 @@ This should land as a short sequence, not as one large cleanup PR.
 
 ### Slice 1: Correctness Fix
 
-Status: Proposed
+Status: Landed in commit `b203514`
 
 Execution plan:
 [admin-live-status-slice-1-plan.md](./admin-live-status-slice-1-plan.md).
