@@ -326,6 +326,62 @@ describe("EventRedemptionsPage", () => {
     }
   });
 
+  it("returns focus to the row's View details button after the detail sheet closes", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "organizer@example.com",
+      session: { user: { id: "user-organizer" } },
+      status: "signed_in",
+    });
+    mockAuthorizeRedemptions.mockResolvedValue({
+      eventCode: "MAD",
+      eventId: "event-1",
+      status: "authorized",
+    });
+    mockUseRedemptionsList.mockReturnValue({
+      refresh: mockRefreshRedemptions,
+      state: {
+        fetchedAt: new Date("2026-04-22T10:00:00Z"),
+        rows: [
+          {
+            event_id: "event-1",
+            id: "row-focus-target",
+            redeemed_at: "2026-04-22T09:50:00Z",
+            redeemed_by: "user-organizer",
+            redeemed_by_role: "agent",
+            redemption_reversed_at: null,
+            redemption_reversed_by: null,
+            redemption_reversed_by_role: null,
+            redemption_status: "redeemed",
+            verification_code: "MAD-0001",
+          },
+        ],
+        status: "success",
+      },
+    });
+
+    render(
+      <EventRedemptionsPage onNavigate={() => {}} slug="madrona-music-2026" />,
+    );
+
+    const viewDetailsButton = await screen.findByRole("button", {
+      name: "View details",
+    });
+    expect(viewDetailsButton.id).toBe("redemption-view-button-row-focus-target");
+
+    fireEvent.click(viewDetailsButton);
+    await waitFor(() => {
+      expect(screen.getByRole("dialog")).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Close details" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    expect(document.activeElement).toBe(viewDetailsButton);
+  });
+
   it("calls refresh when the explicit refresh button is clicked", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "organizer@example.com",

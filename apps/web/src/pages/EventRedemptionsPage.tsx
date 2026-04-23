@@ -298,18 +298,25 @@ function AuthorizedRedemptionsView({
   const [selectedRow, setSelectedRow] = useState<RedemptionRowType | null>(
     null,
   );
-
-  const selectedRowButtonId = selectedRow
-    ? `redemption-view-button-${selectedRow.id}`
-    : null;
+  // Tracked separately from `selectedRow` and deliberately not cleared on
+  // close so the sheet's close-focus effect still has a target after
+  // setSelectedRow(null) runs in the same render that dismisses the sheet.
+  const [lastSelectedRowId, setLastSelectedRowId] = useState<string | null>(
+    null,
+  );
 
   const handleViewDetails = (row: RedemptionRowType) => {
+    setLastSelectedRowId(row.id);
     setSelectedRow(row);
   };
 
   const handleCloseDetails = () => {
     setSelectedRow(null);
   };
+
+  const returnFocusTargetId = lastSelectedRowId
+    ? `redemption-view-button-${lastSelectedRowId}`
+    : null;
 
   useEffect(() => {
     if (!isOnline) {
@@ -423,7 +430,7 @@ function AuthorizedRedemptionsView({
         currentUserId={currentUserId}
         eventCode={eventCode}
         onClose={handleCloseDetails}
-        returnFocusTargetId={selectedRowButtonId}
+        returnFocusTargetId={returnFocusTargetId}
         row={selectedRow}
       />
     </RedemptionsShell>
