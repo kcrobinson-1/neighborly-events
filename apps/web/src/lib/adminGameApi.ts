@@ -27,10 +27,15 @@ type DraftEventRow = {
   updated_at: string;
 };
 
+type PublishedGameEventRow = {
+  id: string;
+};
+
 export type DraftEventSummary = {
   eventCode: string | null;
   hasBeenPublished: boolean;
   id: string;
+  isLive: boolean;
   liveVersionNumber: number | null;
   name: string;
   slug: string;
@@ -55,16 +60,58 @@ export type UnpublishEventResult = {
   unpublishedAt: string;
 };
 
-function mapDraftSummary(row: DraftEventRow): DraftEventSummary {
+export type SaveDraftEventResult = Omit<DraftEventSummary, "isLive">;
+
+function mapDraftSummary(row: DraftEventRow, isLive: boolean): DraftEventSummary {
   return {
     eventCode: row.event_code ?? null,
     hasBeenPublished: row.live_version_number !== null,
     id: row.id,
+    isLive,
     liveVersionNumber: row.live_version_number,
     name: row.name,
     slug: row.slug,
     updatedAt: row.updated_at,
   };
+}
+
+async function listPublishedGameEventIds(
+  eventIds: string[],
+): Promise<Set<string>> {
+  if (eventIds.length === 0) {
+    return new Set();
+  }
+
+  const { data, error } = await getBrowserSupabaseClient()
+    .from("game_events")
+    .select("id")
+    .in("id", eventIds)
+    .not("published_at", "is", null);
+
+  if (error) {
+    throw new Error("We couldn't load the live event status right now.");
+  }
+
+  return new Set(
+    (data ?? []).map((row: PublishedGameEventRow) => row.id),
+  );
+}
+
+async function loadPublishedGameEvent(
+  eventId: string,
+): Promise<PublishedGameEventRow | null> {
+  const { data, error } = await getBrowserSupabaseClient()
+    .from("game_events")
+    .select("id")
+    .eq("id", eventId)
+    .not("published_at", "is", null)
+    .maybeSingle<PublishedGameEventRow>();
+
+  if (error) {
+    throw new Error("We couldn't load the live event status right now.");
+  }
+
+  return data ?? null;
 }
 
 function createFunctionUrl(functionName: string) {
@@ -125,7 +172,22 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
     throw new Error("We couldn't load the draft events right now.");
   }
 
-  return (data ?? []).map((row: DraftEventRow) => mapDraftSummary(row));
+  const draftRows = (data ?? []) as DraftEventRow[];
+  let publishedGameEventIds = new Set<string>();
+
+  try {
+    publishedGameEventIds = await listPublishedGameEventIds(
+      draftRows.map((row) => row.id),
+    );
+  } catch {
+    // Draft rows already loaded successfully. If the follow-up live-status read
+    // fails, keep the dashboard available and degrade `isLive` to false until
+    // the next successful refresh.
+  }
+
+  return draftRows.map((row) =>
+    mapDraftSummary(row, publishedGameEventIds.has(row.id)),
+  );
 }
 
 /** Loads one private draft event document for an authenticated game admin. */
@@ -144,20 +206,35 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
     return null;
   }
 
+  let publishedGameEvent: PublishedGameEventRow | null = null;
+
+  try {
+    publishedGameEvent = await loadPublishedGameEvent(eventId);
+  } catch {
+    // The draft row itself loaded successfully. Treat the live-status read as
+    // best-effort so the workspace still opens with a conservative non-live
+    // fallback instead of blocking editing on a transient status lookup error.
+  }
+
   return {
-    ...mapDraftSummary(data),
+    ...mapDraftSummary(data, publishedGameEvent !== null),
     content: parseAuthoringGameDraftContent(data.content),
     createdAt: data.created_at ?? data.updated_at,
     lastSavedBy: data.last_saved_by ?? null,
   };
 }
 
+/** Re-reads whether a draft currently has a published public game row. */
+export async function loadDraftEventLiveStatus(eventId: string): Promise<boolean> {
+  return (await loadPublishedGameEvent(eventId)) !== null;
+}
+
 /** Saves a private game draft through the authenticated authoring function. */
 export async function saveDraftEvent(
   content: AuthoringGameDraftContent,
   eventCode?: string | null,
-): Promise<DraftEventSummary> {
-  return await callAuthoringFunction<DraftEventSummary>(
+): Promise<SaveDraftEventResult> {
+  return await callAuthoringFunction<SaveDraftEventResult>(
     "save-draft",
     { content, eventCode: eventCode ?? null },
     "We couldn't save the draft right now.",

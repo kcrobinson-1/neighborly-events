@@ -97,7 +97,7 @@ export function AdminPublishPanel({
           {publishState.message}
         </p>
       ) : null}
-      {draft.liveVersionNumber !== null ? (
+      {draft.isLive ? (
         <div className="admin-unpublish-section">
           {unpublishState.status === "idle" ||
           unpublishState.status === "error" ? (

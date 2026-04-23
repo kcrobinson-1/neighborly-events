@@ -10,6 +10,7 @@ import {
   listDraftEventSummaries,
   loadDraftEvent,
   saveDraftEvent,
+  type SaveDraftEventResult,
   type DraftEventSummary,
 } from "../lib/adminGameApi";
 import { routes } from "../routes";
@@ -53,6 +54,16 @@ function mergeDraftSummary(
     savedDraft,
     ...drafts.filter((draft) => draft.id !== savedDraft.id),
   ];
+}
+
+function createLocalDraftSummary(
+  savedDraft: SaveDraftEventResult,
+  isLive: boolean,
+): DraftEventSummary {
+  return {
+    ...savedDraft,
+    isLive,
+  };
 }
 
 /** Coordinates /admin session auth, allowlist checks, and the draft list. Selected-draft editing and publish state are delegated to useSelectedDraft. */
@@ -165,7 +176,10 @@ export function useAdminDashboard(selectedEventId?: string) {
 
     try {
       const content = createStarterDraftContent(dashboardState.drafts);
-      const savedDraft = await saveDraftEvent(content);
+      const savedDraft = createLocalDraftSummary(
+        await saveDraftEvent(content),
+        false,
+      );
 
       setDashboardState((currentState: AdminDashboardState) =>
         currentState.status === "ready"
@@ -212,7 +226,10 @@ export function useAdminDashboard(selectedEventId?: string) {
         sourceDraft,
         dashboardState.drafts,
       );
-      const savedDraft = await saveDraftEvent(content);
+      const savedDraft = createLocalDraftSummary(
+        await saveDraftEvent(content),
+        false,
+      );
 
       setDashboardState((currentState: AdminDashboardState) =>
         currentState.status === "ready"

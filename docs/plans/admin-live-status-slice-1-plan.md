@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 1 Execution Plan
 
-**Status:** Proposed
+**Status:** Landed in commit `8374ac7`
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 
@@ -74,9 +74,13 @@ count, or the `Open live game` button after a fresh reload.
   unavailable — on the event list or on the workspace detail.
 - Every local admin state write (post-save merge, post-publish patch,
   post-unpublish patch, initial load, create) sets `isLive` to match the
-  publication-state truth at that moment: save preserves the prior value,
-  publish sets `true`, unpublish sets `false`. In-session behavior after a
-  mutation must match the reload-after-mutation behavior on the same event.
+  publication-state truth at that moment: save re-reads the current live
+  status from the backend after persistence, publish sets `true`, unpublish
+  sets `false`. The save-path re-read is best-effort: if the follow-up read
+  fails after persistence succeeds, the UI preserves the prior `isLive`
+  value instead of surfacing the save as failed. In-session behavior after a
+  mutation must match the reload-after-mutation behavior on the same event
+  whenever the refresh read succeeds.
 
 ## Per-Surface Contracts
 
@@ -92,6 +96,10 @@ count, or the `Open live game` button after a fresh reload.
      keyed by event id and merges `published_at` into the returned rows
 - Do not introduce a new Postgres view or server-owned status model — Slice 2
   owns that.
+- The follow-up live-status read is best-effort for the initial dashboard list
+  and draft-detail load. If the draft row(s) load successfully but the
+  `game_events` lookup fails, keep the admin surface available and fall back to
+  `isLive = false` until a later successful refresh.
 - `liveVersionNumber` remains unchanged in shape and value on the returned
   records.
 - The `saveDraftEvent()` response shape returned by
@@ -127,11 +135,14 @@ count, or the `Open live game` button after a fresh reload.
   Confirm both and classify each as "live-gating" (switch to `isLive`) or
   "version-number display" (keep `liveVersionNumber`) before editing.
 - **Post-save reconciliation.** When merging the `saveDraftEvent()` response
-  into the list row and selected detail, the hook must preserve the existing
-  local `isLive` value for that event. Save never changes publication state,
-  so the prior `isLive` is the truth. Do not treat a missing `isLive` on the
-  save response as `false`; overlay the save-response fields onto the
-  existing record without overwriting `isLive`.
+  into the list row and selected detail, the hook must re-read current live
+  status from the backend and apply that refreshed boolean to both records.
+  Save never changes publication state directly, but another admin can
+  publish or unpublish the same event before the save returns. Do not treat a
+  missing `isLive` on the save response as `false`; use a narrow follow-up
+  read so the save path converges on the same truth as reload. If that
+  follow-up read fails after the write already succeeded, fall back to the
+  pre-save `isLive` value and keep the save in a success state.
 - **Post-publish reconciliation.** Every local-state patch that currently
   sets `liveVersionNumber` after a successful publish must also set
   `isLive = true` in the same update, for both the list row and the selected
@@ -184,17 +195,16 @@ Unchanged. This slice is admin-read only.
    `tests/e2e/admin-production-smoke.spec.ts` so the production smoke fails
    loudly if the bug returns in deployed state.
 
-4. **`docs: mark slice 1 landed and close tier 1 backlog item.`**
+4. **`docs: mark slice 1 landed and reconcile the parent plan state.`**
    Flip the Slice 1 `Status:` line in
    [admin-live-status-plan.md](./admin-live-status-plan.md) and in this file
    from `Proposed` to `Landed`, with the implementing commit SHAs recorded
-   inline. Remove the Tier 1 item from
-   [docs/backlog.md](../backlog.md) because Slice 1 satisfies every row in
-   the parent plan's `Validation Required To Close The Tier 1 Item`
-   section. Add two new backlog items in their correct tiers:
-   Slice 2 (read-model cleanup) under Tier 5 `Code Health And Tooling`,
-   Slice 3 (non-live action UX) under Tier 3 `Admin Authoring Polish`.
-   Each new backlog entry links back to the parent plan as detail.
+   inline. Keep the parent plan marked `In progress` because Slice 2
+   (read-model cleanup) and Slice 3 (non-live action UX) remain proposed.
+   If `docs/backlog.md` still tracks the parent Tier 1 item, update its copy
+   only as needed so it reflects "Slice 1 landed, parent plan still open"
+   without inventing duplicate Tier 3 / Tier 5 items unless the parent plan
+   is explicitly split later.
    Update `docs/architecture.md` only if the new admin transport field
    warrants a named mention at the admin-read-path level; if the current
    architecture doc does not name admin read transport explicitly, leave
@@ -271,10 +281,10 @@ Slice 1 is `Landed` when all of the following hold:
 - The Slice 1 `Status:` line in this file and in the parent plan is flipped
   from `Proposed` to `Landed` with the implementing commit SHAs recorded
   inline.
-- The Tier 1 backlog item has been removed from
-  [docs/backlog.md](../backlog.md), and Slice 2 and Slice 3 have been added
-  as correctly tiered follow-up items with detail links back to the parent
-  plan.
+- The parent plan and `docs/backlog.md` now agree that Slice 1 landed while
+  the broader admin live-status plan remains open for Slice 2 / Slice 3, with
+  any deferral rationale written in the parent plan rather than implied by
+  backlog drift.
 - Every command listed in `Validation Commands Expected At Handoff` above
   ran with its result recorded in the PR body. Any command that could not
   run is called out explicitly with a reason, per the Validation Honesty

@@ -1,9 +1,28 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import {
   ensureAdminE2eFixture,
   installAuthoringFunctionProxy,
   readPublishedEventState,
 } from "./admin-auth-fixture";
+
+async function readLiveCount(page: Page) {
+  const liveSummary = page
+    .getByLabel("Event workspace summary")
+    .getByText(/^\d+ live$/);
+  const liveSummaryText = await liveSummary.textContent();
+
+  if (!liveSummaryText) {
+    throw new Error("Expected the admin workspace summary to expose a live count.");
+  }
+
+  const liveCountMatch = liveSummaryText.match(/^(\d+) live$/);
+
+  if (!liveCountMatch) {
+    throw new Error(`Unexpected live-count copy: ${liveSummaryText}`);
+  }
+
+  return Number(liveCountMatch[1]);
+}
 
 test.describe("admin authoring workflow", () => {
   test("covers save, publish, and unpublish on the shipped admin MVP path", async ({ page }) => {
@@ -15,6 +34,7 @@ test.describe("admin authoring workflow", () => {
     await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });
 
     await expect(page.getByRole("heading", { name: "Game draft access" })).toBeVisible();
+    const baselineLiveCount = await readLiveCount(page);
     const eventCard = page.getByLabel(`${fixture.eventName} event`);
     await expect(eventCard).toBeVisible();
 
@@ -53,6 +73,24 @@ test.describe("admin authoring workflow", () => {
     expect(unpublishedState).not.toBeNull();
     expect(unpublishedState?.publishedAt).toBeNull();
     expect(unpublishedState?.slug).toBe(fixture.eventSlug);
+
+    await page.goto("/admin", { waitUntil: "networkidle" });
+    await page.reload({ waitUntil: "networkidle" });
+
+    const reloadedEventCard = page.getByLabel(`${editedEventName} event`);
+    await expect(page.getByRole("heading", { name: "Game draft access" })).toBeVisible();
+    await expect(page.getByText(`${baselineLiveCount} live`)).toBeVisible();
+    await expect(reloadedEventCard).toBeVisible();
+    await expect(reloadedEventCard.getByText("Draft only")).toBeVisible();
+    await expect(reloadedEventCard.getByText(/^Live v/)).toHaveCount(0);
+    await expect(
+      reloadedEventCard.getByRole("button", { name: "Open live game" }),
+    ).toBeDisabled();
+
+    await reloadedEventCard.getByRole("button", { name: "Open workspace" }).click();
+    await expect(page).toHaveURL(new RegExp(`/admin/events/${fixture.eventId}$`));
+    await expect(page.getByText("Status: Draft only")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Open live game" })).toBeDisabled();
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(
