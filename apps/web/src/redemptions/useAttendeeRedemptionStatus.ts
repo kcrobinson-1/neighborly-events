@@ -63,7 +63,7 @@ async function fetchRedemptionStatus(
   );
 
   if (response.status === 401 && retryOnUnauthorized) {
-    await ensureServerSession(eventId);
+    await ensureServerSession();
     return fetchRedemptionStatus(eventId, signal, false);
   }
 

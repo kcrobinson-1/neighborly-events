@@ -210,7 +210,7 @@ describe("useAttendeeRedemptionStatus", () => {
 
     expect(fetchSpy).toHaveBeenCalledTimes(3);
     expect(mockEnsureServerSession).toHaveBeenCalledTimes(1);
-    expect(mockEnsureServerSession).toHaveBeenCalledWith("event-1");
+    expect(mockEnsureServerSession).toHaveBeenCalledWith();
     expect(result.current).toEqual({
       kind: "unredeemed",
       verificationCode: "EVT-0427",

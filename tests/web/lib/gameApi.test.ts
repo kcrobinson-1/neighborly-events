@@ -272,8 +272,10 @@ describe("gameApi", () => {
     });
 
     const firstPayload = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const bootstrapPayload = JSON.parse(String(fetchMock.mock.calls[1]?.[1]?.body));
     const secondPayload = JSON.parse(String(fetchMock.mock.calls[2]?.[1]?.body));
     expect(firstPayload).toMatchObject({ requestId: "req-123" });
+    expect(bootstrapPayload).toMatchObject({ event_id: sampleInput.eventId });
     expect(secondPayload).toMatchObject({ requestId: "req-123" });
   });
 });
