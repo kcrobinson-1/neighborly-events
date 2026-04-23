@@ -93,6 +93,18 @@ describe("validateNextPath", () => {
       ).toBe("/event/slug%20with%20spaces/redeem");
     });
 
+    it("accepts an organizer redemptions monitoring route", () => {
+      expect(validateNextPath("/event/some-slug/redemptions")).toBe(
+        "/event/some-slug/redemptions",
+      );
+    });
+
+    it("accepts a URL-encoded redemptions route", () => {
+      expect(
+        validateNextPath("/event/slug%20with%20spaces/redemptions"),
+      ).toBe("/event/slug%20with%20spaces/redemptions");
+    });
+
     it("drops the query string and round-trips the pathname", () => {
       expect(validateNextPath("/event/some-slug/game?foo=bar")).toBe(
         "/event/some-slug/game",

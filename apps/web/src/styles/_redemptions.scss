@@ -1,0 +1,242 @@
+@use "./mixins" as *;
+@use "./tokens" as *;
+
+.redemptions-layout {
+  @include stack($space-7);
+}
+
+.redemptions-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $space-5;
+}
+
+.redemptions-event-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 7px $space-5;
+  border-radius: $radius-pill;
+  background: $color-secondary-surface;
+  color: var(--secondary);
+  font-size: 0.88rem;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.redemptions-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-5;
+  flex-wrap: wrap;
+}
+
+.redemptions-updated {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.redemptions-placeholder {
+  margin: 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.redemptions-error {
+  @include stack($space-4);
+  padding: $space-8;
+  border: 1px solid $color-primary-border;
+  border-radius: $radius-card;
+  background: $color-primary-surface;
+}
+
+.redemptions-cap-banner {
+  margin: 0;
+  padding: $space-5 $space-7;
+  border: 1px solid $color-accent-border;
+  border-radius: $radius-card;
+  background: $color-accent-surface-muted;
+  color: $color-status-reversed-foreground;
+  font-size: 0.92rem;
+}
+
+.redemptions-filter-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  @include stack($space-4);
+  padding: $space-5 0;
+  background: $color-surface-card;
+}
+
+.redemptions-search-label {
+  display: block;
+}
+
+.redemptions-search-input {
+  width: 100%;
+  padding: $space-5 $space-7;
+  border: 1px solid $color-border-muted;
+  border-radius: $radius-control;
+  background: $color-admin-input-surface;
+  color: var(--text);
+  font-size: 1rem;
+
+  &:focus-visible {
+    outline: $focus-ring;
+    outline-offset: 2px;
+  }
+}
+
+.redemptions-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.redemptions-filter-chip {
+  padding: $space-3 $space-6;
+  border: 1px solid $color-secondary-border-subtle;
+  border-radius: $radius-pill;
+  background: $color-secondary-surface;
+  color: var(--secondary);
+  font-weight: $font-weight-semibold;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: $transition-interactive;
+
+  &:focus-visible {
+    outline: $focus-ring;
+    outline-offset: 2px;
+  }
+
+  &.is-active {
+    background: $color-secondary-surface-selected;
+    border-color: $color-secondary-border-selected;
+    box-shadow: $shadow-selected;
+  }
+}
+
+.redemptions-list {
+  @include stack($space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.redemptions-row {
+  @include stack($space-3);
+  padding: $space-6 $space-7;
+  border: 1px solid $color-border-muted;
+  border-radius: $radius-card;
+  background: $color-surface-card;
+}
+
+.redemptions-row-primary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-5;
+}
+
+.redemptions-row-code {
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.05em;
+  font-size: 1rem;
+}
+
+.redemptions-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px $space-4;
+  border-radius: $radius-pill;
+  font-size: 0.78rem;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.redemptions-status-badge-redeemed {
+  background: $color-status-redeemed-surface;
+  color: $color-status-redeemed-foreground;
+}
+
+.redemptions-status-badge-reversed {
+  background: $color-status-reversed-surface;
+  color: $color-status-reversed-foreground;
+}
+
+.redemptions-status-badge-unknown {
+  background: $color-secondary-surface;
+  color: var(--muted);
+}
+
+.redemptions-row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-5;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.redemptions-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: $color-backdrop-mask;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.redemptions-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: $space-8 $space-7 $space-12;
+  border-top-left-radius: $radius-panel;
+  border-top-right-radius: $radius-panel;
+  background: $color-white-panel;
+  box-shadow: $shadow-panel;
+  z-index: 11;
+  @include stack($space-6);
+}
+
+.redemptions-sheet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $space-5;
+}
+
+.redemptions-sheet-code {
+  margin: $space-2 0 0 0;
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+}
+
+.redemptions-sheet-body {
+  @include stack($space-4);
+}
+
+.redemptions-sheet-row {
+  display: flex;
+  align-items: baseline;
+  gap: $space-4;
+}
+
+.redemptions-sheet-row-label {
+  min-width: 8.5rem;
+  color: var(--muted);
+  font-weight: $font-weight-semibold;
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

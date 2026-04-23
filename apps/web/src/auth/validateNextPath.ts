@@ -1,6 +1,7 @@
 import {
   matchAdminEventPath,
   matchEventRedeemPath,
+  matchEventRedemptionsPath,
   matchGamePath,
   routes,
 } from "../routes";
@@ -53,6 +54,10 @@ export function validateNextPath(rawNext: string | null): AuthNextPath {
   }
 
   if (matchEventRedeemPath(pathname) !== null) {
+    return pathname as AuthNextPath;
+  }
+
+  if (matchEventRedemptionsPath(pathname) !== null) {
     return pathname as AuthNextPath;
   }
 

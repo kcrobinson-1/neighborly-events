@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:redeem": "node scripts/testing/run-redeem-e2e-tests.cjs",
+    "test:e2e:redemptions": "node scripts/testing/run-redemptions-e2e-tests.cjs",
     "test:e2e:attendee:trusted-backend": "node scripts/testing/run-attendee-trusted-backend-e2e-tests.cjs",
     "test:e2e:admin": "node scripts/testing/run-admin-e2e-tests.cjs",
     "test:e2e:admin:production-smoke": "node scripts/testing/run-production-admin-smoke.cjs",
