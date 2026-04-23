@@ -322,6 +322,19 @@ patches.
 - before committing a review fix, answer: "What new bug could this fix create?"
   and "Could this make a successful operation look failed?"
 
+When the user asks you to address pull-request review feedback, keep the GitHub
+thread state readable for humans:
+
+- after pushing a fix for a specific review thread, reply on that exact GitHub
+  thread with a short summary of what changed and the commit SHA that addressed
+  it
+- if a thread is pushback or defer rather than a code fix, reply on the thread
+  with the rationale instead of leaving the decision only in local handoff text
+- do not resolve threads, submit a review, or mark conversations resolved
+  unless the user explicitly asks for that write action
+- when summarizing PR review state to the user, distinguish clearly between
+  live GitHub review threads and pasted review text supplied in chat
+
 ## Execution Rules
 
 Prefer constraint-driven execution over open-ended refactoring.
