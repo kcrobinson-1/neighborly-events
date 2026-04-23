@@ -84,6 +84,9 @@ This should land as a short sequence, not as one large cleanup PR.
 
 Status: Proposed
 
+Execution plan:
+[admin-live-status-slice-1-plan.md](./admin-live-status-slice-1-plan.md).
+
 Goal:
 
 - stop the admin dashboard from showing `Live` or offering a working
