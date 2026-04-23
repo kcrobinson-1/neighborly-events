@@ -1,5 +1,6 @@
 const {
   ensureDockerRuntime,
+  fs,
   isSupabaseStackRunning,
   logStep,
   readSupabaseStatus,
@@ -7,18 +8,73 @@ const {
   run,
   startLocalSupabaseStack,
   stopLocalSupabaseStack,
+  tmpRoot,
 } = require("./utils.cjs");
+const {
+  startFunctionsServe,
+  stopFunctionsServe,
+  writeFunctionsServeEnvFile,
+} = require("./function-runtime.cjs");
 
-// B.2a's monitoring page makes no Edge Function calls — the authorization
-// probe uses PostgREST RPCs (is_organizer_for_event, is_root_admin), the
-// list fetch is a direct PostgREST .select(), and auth callback runs
-// through Supabase Auth directly. We deliberately do NOT boot
-// `functions serve` here. If a future change introduces an Edge Function
-// dependency in this flow, the B.2a plan names it as a stop-and-revisit
-// moment rather than silently re-adding the functions runtime.
+// B.2a shipped the monitoring page as read-only; its flows made no Edge
+// Function calls, so the runner ran without `functions serve`. B.2b adds
+// the reverse-entitlement-redemption call inside the detail sheet, which
+// means this runner now needs a local Edge Functions runtime and a
+// readiness probe that verifies the reversal endpoint — not just that
+// the local stack replies with any status code. If a future change
+// backs out the reversal path, flipping the runner back to read-only is
+// a stop-and-revisit moment, not a silent simplification.
+
+const functionsEnvPath = `${tmpRoot}/test-redemptions-e2e-functions.env`;
+const servePollIntervalMs = 250;
+const serveReadyTimeoutMs = 45_000;
+
+async function waitForReverseFunctionReady(status) {
+  const deadline = Date.now() + serveReadyTimeoutMs;
+  let lastFailure = "No response yet.";
+
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(
+        `${status.FUNCTIONS_URL}/reverse-entitlement-redemption`,
+        {
+          body: JSON.stringify({
+            codeSuffix: "0000",
+            eventId: "madrona-music-2026",
+          }),
+          headers: {
+            Authorization: `Bearer ${status.PUBLISHABLE_KEY}`,
+            "Content-Type": "application/json",
+            apikey: status.PUBLISHABLE_KEY,
+            origin: "http://127.0.0.1:4173",
+          },
+          method: "POST",
+        },
+      );
+
+      // 401/403 indicate the function is booted and enforcing auth — that
+      // is "ready" from the probe's perspective. Any other response means
+      // the route is not actually serving the B.2b function yet.
+      if ([401, 403].includes(response.status)) {
+        return;
+      }
+
+      lastFailure = `Unexpected status: ${response.status}`;
+    } catch (error) {
+      lastFailure = error instanceof Error ? error.message : String(error);
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, servePollIntervalMs));
+  }
+
+  throw new Error(
+    `Timed out waiting for reverse-entitlement-redemption to become ready in local functions runtime. Last failure: ${lastFailure}`,
+  );
+}
 
 async function main() {
   let startedLocalStack = false;
+  let functionsRuntime = null;
 
   try {
     logStep("Checking Docker runtime for local Supabase");
@@ -42,6 +98,17 @@ async function main() {
       );
     }
 
+    writeFunctionsServeEnvFile(functionsEnvPath, {
+      allowedOrigins: ["http://127.0.0.1:4173", "http://localhost:4173"],
+      sessionSigningSecret: "local-redemptions-e2e-session-secret",
+    });
+
+    logStep("Starting local Edge Functions runtime");
+    functionsRuntime = startFunctionsServe(functionsEnvPath);
+
+    logStep("Waiting for reverse-entitlement-redemption runtime");
+    await waitForReverseFunctionReady(status);
+
     logStep("Running redemptions Playwright e2e suite");
     run("npx", ["playwright", "test", "-c", "playwright.redemptions.config.ts"], {
       env: {
@@ -53,6 +120,12 @@ async function main() {
       },
     });
   } finally {
+    if (functionsRuntime) {
+      logStep("Stopping local Edge Functions runtime");
+      await stopFunctionsServe(functionsRuntime.child);
+      fs.rmSync(functionsEnvPath, { force: true });
+    }
+
     if (startedLocalStack) {
       stopLocalSupabaseStack();
     }

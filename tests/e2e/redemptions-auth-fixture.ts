@@ -1,3 +1,4 @@
+import type { Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
 type RedemptionsEnv = {
@@ -284,4 +285,82 @@ export async function ensureRedemptionsE2eFixture(): Promise<RedemptionsFixture>
       verificationCode: verificationCodes[2],
     },
   };
+}
+
+/**
+ * Installs a Playwright page-route proxy for the reversal Edge Function.
+ *
+ * The local Supabase stack's Kong gateway responds to OPTIONS preflights
+ * with `Access-Control-Allow-Origin: *` and no `Allow-Credentials: true`,
+ * which fails Chromium's credentialed-fetch CORS check before the function
+ * ever runs. The proxy fulfills the preflight locally with the correct
+ * credentialed headers and forwards the non-OPTIONS body through a Node
+ * `fetch` so the browser-facing semantics match the deployed environment.
+ * This mirrors the B.1 redeem-e2e workaround.
+ */
+export async function installRedemptionsFunctionProxy(page: Page) {
+  const env = readRedemptionsEnv();
+  const baseUrl = env.supabaseUrl.replace(/\/$/, "");
+  const functionNames = new Set(["reverse-entitlement-redemption"]);
+
+  await page.route(`${baseUrl}/functions/v1/**`, async (route) => {
+    const request = route.request();
+    const requestUrl = new URL(request.url());
+    const functionName = requestUrl.pathname.split("/").at(-1) ?? "";
+
+    if (!functionNames.has(functionName)) {
+      await route.continue();
+      return;
+    }
+
+    if (request.method() === "OPTIONS") {
+      const requestedHeaders = await request.headerValue(
+        "access-control-request-headers",
+      );
+      await route.fulfill({
+        headers: {
+          "access-control-allow-credentials": "true",
+          "access-control-allow-headers":
+            requestedHeaders ??
+            "authorization,apikey,content-type,x-client-info",
+          "access-control-allow-methods": "POST,OPTIONS",
+          "access-control-allow-origin": "http://127.0.0.1:4173",
+          vary: "Origin",
+        },
+        status: 200,
+      });
+      return;
+    }
+
+    const requestApikey = await request.headerValue("apikey");
+    const requestAuthorization = await request.headerValue("authorization");
+    const requestContentType = await request.headerValue("content-type");
+    const headers: Record<string, string> = {
+      origin: "http://127.0.0.1:4173",
+    };
+
+    if (requestApikey) {
+      headers.apikey = requestApikey;
+    }
+
+    if (requestAuthorization) {
+      headers.Authorization = requestAuthorization;
+    }
+
+    if (requestContentType) {
+      headers["Content-Type"] = requestContentType;
+    }
+
+    const response = await fetch(request.url(), {
+      body: request.postData() ?? undefined,
+      headers,
+      method: request.method(),
+    });
+
+    await route.fulfill({
+      body: await response.text(),
+      contentType: response.headers.get("content-type") ?? "application/json",
+      status: response.status,
+    });
+  });
 }
