@@ -1,25 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { getBrowserSupabaseClient } from "../lib/supabaseBrowser";
-import { mergeRedemptionSlices } from "./mergeRedemptionSlices";
+import {
+  DEFAULT_REDEMPTIONS_ERROR_MESSAGE,
+  fetchRedemptionSlices,
+} from "./redemptionsData";
 import type { RedemptionRow } from "./types";
 
-export const REDEMPTIONS_FETCH_LIMIT = 500;
+export { REDEMPTIONS_FETCH_LIMIT } from "./redemptionsData";
 
 const AUTO_RETRY_DELAY_MS = 2_000;
-const DEFAULT_ERROR_MESSAGE = "We couldn't load redemptions right now.";
-
-const SELECT_COLUMNS = [
-  "id",
-  "event_id",
-  "verification_code",
-  "redemption_status",
-  "redeemed_at",
-  "redeemed_by",
-  "redeemed_by_role",
-  "redemption_reversed_at",
-  "redemption_reversed_by",
-  "redemption_reversed_by_role",
-].join(",");
 
 export type RedemptionsListState =
   | { status: "loading" }
@@ -41,48 +29,14 @@ function wait(ms: number) {
   });
 }
 
-async function fetchRedemptionSlices(
-  eventId: string,
-): Promise<RedemptionRow[]> {
-  const client = getBrowserSupabaseClient();
-
-  const [redeemedResponse, reversedResponse] = await Promise.all([
-    client
-      .from("game_entitlements")
-      .select(SELECT_COLUMNS)
-      .eq("event_id", eventId)
-      .eq("redemption_status", "redeemed")
-      .order("redeemed_at", { ascending: false, nullsFirst: false })
-      .limit(REDEMPTIONS_FETCH_LIMIT),
-    client
-      .from("game_entitlements")
-      .select(SELECT_COLUMNS)
-      .eq("event_id", eventId)
-      .not("redemption_reversed_at", "is", null)
-      .order("redemption_reversed_at", { ascending: false, nullsFirst: false })
-      .limit(REDEMPTIONS_FETCH_LIMIT),
-  ]);
-
-  if (redeemedResponse.error) {
-    throw new Error(redeemedResponse.error.message || DEFAULT_ERROR_MESSAGE);
-  }
-  if (reversedResponse.error) {
-    throw new Error(reversedResponse.error.message || DEFAULT_ERROR_MESSAGE);
-  }
-
-  const redeemed = (redeemedResponse.data ?? []) as unknown as RedemptionRow[];
-  const reversed = (reversedResponse.data ?? []) as unknown as RedemptionRow[];
-
-  return mergeRedemptionSlices(redeemed, reversed, REDEMPTIONS_FETCH_LIMIT);
-}
-
 /**
  * Drives the monitoring list's bounded two-query fetch.
  *
- * Runs the redeemed and reversed slice queries in parallel, merges them
- * client-side via `mergeRedemptionSlices`, and owns the one-retry envelope
- * (2s backoff) plus the "last updated at" timestamp. Refreshing is explicit
- * — no auto-poll, per design doc §8.
+ * Runs the redeemed and reversed slice queries in parallel (via
+ * `fetchRedemptionSlices` in `redemptionsData.ts`), merges them client-side
+ * via `mergeRedemptionSlices`, and owns the one-retry envelope (2s backoff)
+ * plus the "last updated at" timestamp. Refreshing is explicit — no
+ * auto-poll, per design doc §8.
  */
 export function useRedemptionsList({
   eventId,
@@ -132,7 +86,7 @@ export function useRedemptionsList({
                 ? retryError.message
                 : initialError instanceof Error
                 ? initialError.message
-                : DEFAULT_ERROR_MESSAGE;
+                : DEFAULT_REDEMPTIONS_ERROR_MESSAGE;
             setState({
               message,
               status: "error",
