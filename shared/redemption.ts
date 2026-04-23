@@ -69,3 +69,17 @@ export type RedemptionStatusResponse = {
   redemptionStatus: RedemptionStatus;
   verificationCode: string;
 };
+
+export type AttendeeRedemptionStatus =
+  | {
+    kind: "unknown";
+    verificationCode?: string;
+  }
+  | {
+    kind: "unredeemed";
+    verificationCode: string;
+  }
+  | {
+    kind: "redeemed";
+    verificationCode: string;
+  };

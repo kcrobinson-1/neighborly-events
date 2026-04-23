@@ -239,7 +239,7 @@ async function handleCompletionResponse(response: Response) {
 }
 
 /** Builds the shared fetch headers for backend session-aware requests. */
-function createServerSessionHeaders(supabaseClientKey: string) {
+export function createServerSessionHeaders(supabaseClientKey: string) {
   const sessionToken = readStoredServerSessionToken();
 
   return {
