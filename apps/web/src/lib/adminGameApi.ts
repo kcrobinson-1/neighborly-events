@@ -208,6 +208,11 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
   };
 }
 
+/** Re-reads whether a draft currently has a published public game row. */
+export async function loadDraftEventLiveStatus(eventId: string): Promise<boolean> {
+  return (await loadPublishedGameEvent(eventId)) !== null;
+}
+
 /** Saves a private game draft through the authenticated authoring function. */
 export async function saveDraftEvent(
   content: AuthoringGameDraftContent,

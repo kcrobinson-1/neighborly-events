@@ -14,6 +14,7 @@ const {
   mockGetGameAdminStatus,
   mockListDraftEventSummaries,
   mockLoadDraftEvent,
+  mockLoadDraftEventLiveStatus,
   mockPublishDraftEvent,
   mockRequestMagicLink,
   mockSaveDraftEvent,
@@ -25,6 +26,7 @@ const {
   mockGetGameAdminStatus: vi.fn(),
   mockListDraftEventSummaries: vi.fn(),
   mockLoadDraftEvent: vi.fn(),
+  mockLoadDraftEventLiveStatus: vi.fn(),
   mockPublishDraftEvent: vi.fn(),
   mockRequestMagicLink: vi.fn(),
   mockSaveDraftEvent: vi.fn(),
@@ -47,6 +49,7 @@ vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
   getGameAdminStatus: mockGetGameAdminStatus,
   listDraftEventSummaries: mockListDraftEventSummaries,
   loadDraftEvent: mockLoadDraftEvent,
+  loadDraftEventLiveStatus: mockLoadDraftEventLiveStatus,
   publishDraftEvent: mockPublishDraftEvent,
   saveDraftEvent: mockSaveDraftEvent,
   unpublishEvent: mockUnpublishEvent,
@@ -176,12 +179,14 @@ describe("AdminPage", () => {
     mockGetGameAdminStatus.mockReset();
     mockListDraftEventSummaries.mockReset();
     mockLoadDraftEvent.mockReset();
+    mockLoadDraftEventLiveStatus.mockReset();
     mockPublishDraftEvent.mockReset();
     mockRequestMagicLink.mockReset();
     mockSaveDraftEvent.mockReset();
     mockSignOut.mockReset();
     mockUnpublishEvent.mockReset();
     mockUseAuthSession.mockReset();
+    mockLoadDraftEventLiveStatus.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -1776,6 +1781,101 @@ describe("AdminPage", () => {
         expect(mockSaveDraftEvent).toHaveBeenCalledTimes(2);
       });
       await expectDraftChangesNotPublishedVisible();
+    });
+
+    it("refreshes live state after save when another admin publishes the event", async () => {
+      mockUseAuthSession.mockReturnValue({
+        email: "admin@example.com",
+        session: { access_token: "admin-token" },
+        status: "signed_in",
+      });
+      mockGetGameAdminStatus.mockResolvedValue(true);
+      mockListDraftEventSummaries.mockResolvedValue([draftSummaries[1]]);
+      mockLoadDraftEvent.mockResolvedValue(
+        createDraftDetail(
+          {
+            ...selectedDraftContent,
+            id: "draft-market-2026",
+            name: "Draft Market Day",
+            slug: "draft-market",
+          },
+          null,
+          "ABC",
+          false,
+        ),
+      );
+      mockSaveDraftEvent.mockResolvedValue({
+        hasBeenPublished: true,
+        id: "draft-market-2026",
+        liveVersionNumber: 1,
+        name: "Draft Market Day Updated",
+        slug: "draft-market",
+        updatedAt: "2026-04-14T12:00:00.000Z",
+      });
+      mockLoadDraftEventLiveStatus.mockResolvedValue(true);
+
+      renderAdminRoute("draft-market-2026");
+
+      await screen.findByLabelText("Event name");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: "Draft Market Day Updated" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      expect(
+        await screen.findByText("Saved Draft Market Day Updated."),
+      ).toBeTruthy();
+      expect(mockLoadDraftEventLiveStatus).toHaveBeenCalledWith(
+        "draft-market-2026",
+      );
+      await expectDraftChangesNotPublishedVisible();
+      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
+        "disabled",
+        false,
+      );
+      expect(screen.getByRole("button", { name: "Unpublish" })).toBeTruthy();
+    });
+
+    it("refreshes live state after save when another admin unpublishes the event", async () => {
+      mockUseAuthSession.mockReturnValue({
+        email: "admin@example.com",
+        session: { access_token: "admin-token" },
+        status: "signed_in",
+      });
+      mockGetGameAdminStatus.mockResolvedValue(true);
+      mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+      mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+      mockSaveDraftEvent.mockResolvedValue({
+        hasBeenPublished: true,
+        id: "madrona-music-2026",
+        liveVersionNumber: 1,
+        name: "Madrona Music in the Playfield",
+        slug: "first-sample",
+        updatedAt: "2026-04-14T12:00:00.000Z",
+      });
+      mockLoadDraftEventLiveStatus.mockResolvedValue(false);
+
+      renderAdminRoute("madrona-music-2026");
+
+      await screen.findByLabelText("Event name");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: "Updated Name" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      expect(
+        await screen.findByText("Saved Madrona Music in the Playfield."),
+      ).toBeTruthy();
+      expect(mockLoadDraftEventLiveStatus).toHaveBeenCalledWith(
+        "madrona-music-2026",
+      );
+      await expectDraftChangesNotPublishedHidden();
+      expect(await screen.findByText("Status: Draft only")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+      expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull();
     });
   });
 

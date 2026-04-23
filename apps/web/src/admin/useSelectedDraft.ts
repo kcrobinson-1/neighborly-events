@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   loadDraftEvent,
+  loadDraftEventLiveStatus,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
@@ -84,13 +85,25 @@ function applySavedDraftToDetail(
   currentDraft: DraftEventDetail,
   savedDraft: SaveDraftEventResult,
   content: DraftEventDetail["content"],
+  isLive: boolean,
 ): DraftEventDetail {
   return {
     ...currentDraft,
     ...savedDraft,
     content,
-    isLive: currentDraft.isLive,
+    isLive,
   };
+}
+
+async function loadSavedDraftLiveStatus(
+  currentDraft: DraftEventDetail,
+  savedDraft: SaveDraftEventResult,
+): Promise<boolean> {
+  if (!currentDraft.isLive && !savedDraft.hasBeenPublished) {
+    return false;
+  }
+
+  return await loadDraftEventLiveStatus(savedDraft.id);
 }
 
 type UseSelectedDraftOptions = {
@@ -251,8 +264,17 @@ export function useSelectedDraft({
     try {
       const content = applyEventDetailsFormValues(currentDraft.content, values);
       const savedDraft = await saveDraftEvent(content, eventCode);
-      const nextDraft = applySavedDraftToDetail(currentDraft, savedDraft, content);
-      const nextSummary = applySavedDraftToSummary(currentDraft, savedDraft);
+      const isLive = await loadSavedDraftLiveStatus(currentDraft, savedDraft);
+      const nextDraft = applySavedDraftToDetail(
+        currentDraft,
+        savedDraft,
+        content,
+        isLive,
+      );
+      const nextSummary = {
+        ...applySavedDraftToSummary(currentDraft, savedDraft),
+        isLive,
+      };
 
       onUpdateDraftsList((drafts) => mergeDraftSummary(drafts, nextSummary));
       setSelectedDraftState({
@@ -261,7 +283,7 @@ export function useSelectedDraft({
         status: "success",
       });
 
-      if (currentDraft.isLive) {
+      if (isLive) {
         setHasDraftChanges(true);
       }
 
@@ -301,12 +323,17 @@ export function useSelectedDraft({
     try {
       const preparedContent = prepareQuestionContentForSave(content);
       const savedDraft = await saveDraftEvent(preparedContent);
+      const isLive = await loadSavedDraftLiveStatus(currentDraft, savedDraft);
       const nextDraft = applySavedDraftToDetail(
         currentDraft,
         savedDraft,
         preparedContent,
+        isLive,
       );
-      const nextSummary = applySavedDraftToSummary(currentDraft, savedDraft);
+      const nextSummary = {
+        ...applySavedDraftToSummary(currentDraft, savedDraft),
+        isLive,
+      };
 
       onUpdateDraftsList((drafts) => mergeDraftSummary(drafts, nextSummary));
       setSelectedDraftState({
@@ -320,7 +347,7 @@ export function useSelectedDraft({
         status: "success",
       });
 
-      if (currentDraft.isLive) {
+      if (isLive) {
         setHasDraftChanges(true);
       }
 

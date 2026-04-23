@@ -23,6 +23,7 @@ vi.mock("../../../apps/web/src/lib/supabaseBrowser.ts", () => ({
 import {
   listDraftEventSummaries,
   loadDraftEvent,
+  loadDraftEventLiveStatus,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
@@ -411,5 +412,27 @@ describe("adminGameApi", () => {
       "is",
       null,
     );
+  });
+
+  it("loads the current live status for one draft event", async () => {
+    const client = createSupabaseClientMock({
+      publishedRows: [{ id: sampleDraft.id }],
+    });
+    mockGetBrowserSupabaseClient.mockReturnValue(client);
+
+    await expect(loadDraftEventLiveStatus(sampleDraft.id)).resolves.toBe(true);
+    expect(client.publishedEq).toHaveBeenCalledWith("id", sampleDraft.id);
+    expect(client.publishedEqNot).toHaveBeenCalledWith(
+      "published_at",
+      "is",
+      null,
+    );
+
+    client.publishedMaybeSingle.mockResolvedValueOnce({
+      data: null,
+      error: null,
+    });
+
+    await expect(loadDraftEventLiveStatus(sampleDraft.id)).resolves.toBe(false);
   });
 });

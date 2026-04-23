@@ -74,9 +74,10 @@ count, or the `Open live game` button after a fresh reload.
   unavailable — on the event list or on the workspace detail.
 - Every local admin state write (post-save merge, post-publish patch,
   post-unpublish patch, initial load, create) sets `isLive` to match the
-  publication-state truth at that moment: save preserves the prior value,
-  publish sets `true`, unpublish sets `false`. In-session behavior after a
-  mutation must match the reload-after-mutation behavior on the same event.
+  publication-state truth at that moment: save re-reads the current live
+  status from the backend after persistence, publish sets `true`, unpublish
+  sets `false`. In-session behavior after a mutation must match the
+  reload-after-mutation behavior on the same event.
 
 ## Per-Surface Contracts
 
@@ -127,11 +128,12 @@ count, or the `Open live game` button after a fresh reload.
   Confirm both and classify each as "live-gating" (switch to `isLive`) or
   "version-number display" (keep `liveVersionNumber`) before editing.
 - **Post-save reconciliation.** When merging the `saveDraftEvent()` response
-  into the list row and selected detail, the hook must preserve the existing
-  local `isLive` value for that event. Save never changes publication state,
-  so the prior `isLive` is the truth. Do not treat a missing `isLive` on the
-  save response as `false`; overlay the save-response fields onto the
-  existing record without overwriting `isLive`.
+  into the list row and selected detail, the hook must re-read current live
+  status from the backend and apply that refreshed boolean to both records.
+  Save never changes publication state directly, but another admin can
+  publish or unpublish the same event before the save returns. Do not treat a
+  missing `isLive` on the save response as `false`; use a narrow follow-up
+  read so the save path converges on the same truth as reload.
 - **Post-publish reconciliation.** Every local-state patch that currently
   sets `liveVersionNumber` after a successful publish must also set
   `isLive = true` in the same update, for both the list row and the selected
