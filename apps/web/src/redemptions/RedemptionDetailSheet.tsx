@@ -173,6 +173,7 @@ export function RedemptionDetailSheet({
         type="button"
       />
       <div
+        aria-labelledby="redemption-detail-sheet-title"
         aria-modal="true"
         className="redemptions-sheet"
         role="dialog"
@@ -180,7 +181,12 @@ export function RedemptionDetailSheet({
         <header className="redemptions-sheet-header">
           <div>
             <p className="eyebrow">Redemption details</p>
-            <h2 className="redemptions-sheet-code">{prefixedCode}</h2>
+            <h2
+              className="redemptions-sheet-code"
+              id="redemption-detail-sheet-title"
+            >
+              {prefixedCode}
+            </h2>
           </div>
           <button
             className="secondary-button"

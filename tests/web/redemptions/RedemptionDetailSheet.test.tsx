@@ -62,6 +62,24 @@ describe("RedemptionDetailSheet", () => {
     expect(screen.getByText(/You \(agent\)/)).toBeTruthy();
   });
 
+  it("exposes the event-prefixed code as the dialog's accessible name", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        row={makeRow({})}
+      />,
+    );
+
+    // Screen readers announce the dialog by its accessible name. Without an
+    // aria-label or aria-labelledby binding, the dialog would be unnamed.
+    expect(
+      screen.getByRole("dialog", { name: "MAD-0001" }),
+    ).toBeTruthy();
+  });
+
   it("renders both redeemed and reversed sections when a prior reversal cycle exists", () => {
     render(
       <RedemptionDetailSheet
