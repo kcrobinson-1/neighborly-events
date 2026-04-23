@@ -113,6 +113,9 @@ Acceptance bar:
 
 Status: Proposed
 
+Execution plan:
+[admin-live-status-slice-2-plan.md](./admin-live-status-slice-2-plan.md).
+
 Goal:
 
 - remove the status-model ambiguity that made the bug possible
