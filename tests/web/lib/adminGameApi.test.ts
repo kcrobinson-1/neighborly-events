@@ -65,13 +65,19 @@ function createSupabaseClientMock(
   const draftEq = vi.fn(() => ({
     maybeSingle: draftMaybeSingle,
   }));
-  const publishedEq = vi.fn(() => ({
+  const publishedEqNot = vi.fn(() => ({
     maybeSingle: publishedMaybeSingle,
   }));
-  const publishedIn = vi.fn().mockResolvedValue({
+  const publishedEq = vi.fn(() => ({
+    not: publishedEqNot,
+  }));
+  const publishedInNot = vi.fn().mockResolvedValue({
     data: options.publishedRows ?? [],
     error: null,
   });
+  const publishedIn = vi.fn(() => ({
+    not: publishedInNot,
+  }));
   const draftOrder = vi.fn().mockResolvedValue({
     data: options.draftRows ?? [],
     error: null,
@@ -107,7 +113,9 @@ function createSupabaseClientMock(
     draftSelect,
     from,
     publishedEq,
+    publishedEqNot,
     publishedIn,
+    publishedInNot,
     publishedMaybeSingle,
     publishedSelect,
   };
@@ -236,6 +244,16 @@ describe("adminGameApi", () => {
     ]);
     expect(client.from).toHaveBeenCalledWith("game_event_drafts");
     expect(client.from).toHaveBeenCalledWith("game_events");
+    expect(client.publishedIn).toHaveBeenCalledWith("id", [
+      "live-event",
+      "paused-event",
+      "draft-only-event",
+    ]);
+    expect(client.publishedInNot).toHaveBeenCalledWith(
+      "published_at",
+      "is",
+      null,
+    );
   });
 
   it("saves drafts through the authenticated Edge Function with the user token", async () => {
@@ -387,5 +405,11 @@ describe("adminGameApi", () => {
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
+    expect(client.publishedEq).toHaveBeenCalledWith("id", sampleDraft.id);
+    expect(client.publishedEqNot).toHaveBeenCalledWith(
+      "published_at",
+      "is",
+      null,
+    );
   });
 });

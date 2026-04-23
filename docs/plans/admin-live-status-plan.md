@@ -1,6 +1,6 @@
 # Admin Live Status Fix Plan
 
-**Status:** In progress — Slice 1 landed in commit `b203514`; Slice 2 and Slice 3 remain proposed
+**Status:** In progress — Slice 1 landed in commit `8374ac7`; Slice 2 and Slice 3 remain proposed
 
 **Scope:** Resolve the Tier 1 backlog item
 `Admin live status must match public route availability`. The plan sequences
@@ -82,7 +82,7 @@ This should land as a short sequence, not as one large cleanup PR.
 
 ### Slice 1: Correctness Fix
 
-Status: Landed in commit `b203514`
+Status: Landed in commit `8374ac7`
 
 Execution plan:
 [admin-live-status-slice-1-plan.md](./admin-live-status-slice-1-plan.md).
@@ -146,6 +146,10 @@ Required work:
 
 - decide whether a non-live event should show disabled `Open live game`,
   alternate copy, or no action at all
+- distinguish "not live" from "workspace busy" when `Open live game` is
+  disabled, for example with helper copy, `aria-describedby`, or distinct
+  visual treatment so operators can tell whether the event is unavailable or
+  just mid-mutation
 
 This slice can follow the correctness fix unless the chosen action treatment is
 required for the first PR.
@@ -160,6 +164,10 @@ This plan does not change:
   elsewhere in the backlog
 
 ## Validation Required To Close The Tier 1 Item
+
+Slice 1 satisfied the immediate correctness fix, but the parent Tier 1 backlog
+item stays open until the remaining Slice 2 / Slice 3 decisions are either
+landed or explicitly deferred in this parent plan with written rationale.
 
 - browser check from `/admin` list and selected workspace through the public
   route before and after unpublish

@@ -85,7 +85,8 @@ async function listPublishedGameEventIds(
   const { data, error } = await getBrowserSupabaseClient()
     .from("game_events")
     .select("id")
-    .in("id", eventIds);
+    .in("id", eventIds)
+    .not("published_at", "is", null);
 
   if (error) {
     throw new Error("We couldn't load the live event status right now.");
@@ -103,6 +104,7 @@ async function loadPublishedGameEvent(
     .from("game_events")
     .select("id")
     .eq("id", eventId)
+    .not("published_at", "is", null)
     .maybeSingle<PublishedGameEventRow>();
 
   if (error) {

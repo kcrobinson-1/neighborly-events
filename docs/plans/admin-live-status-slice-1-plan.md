@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 1 Execution Plan
 
-**Status:** Landed in commit `b203514`
+**Status:** Landed in commit `8374ac7`
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 
@@ -184,17 +184,16 @@ Unchanged. This slice is admin-read only.
    `tests/e2e/admin-production-smoke.spec.ts` so the production smoke fails
    loudly if the bug returns in deployed state.
 
-4. **`docs: mark slice 1 landed and close tier 1 backlog item.`**
+4. **`docs: mark slice 1 landed and reconcile the parent plan state.`**
    Flip the Slice 1 `Status:` line in
    [admin-live-status-plan.md](./admin-live-status-plan.md) and in this file
    from `Proposed` to `Landed`, with the implementing commit SHAs recorded
-   inline. Remove the Tier 1 item from
-   [docs/backlog.md](../backlog.md) because Slice 1 satisfies every row in
-   the parent plan's `Validation Required To Close The Tier 1 Item`
-   section. Add two new backlog items in their correct tiers:
-   Slice 2 (read-model cleanup) under Tier 5 `Code Health And Tooling`,
-   Slice 3 (non-live action UX) under Tier 3 `Admin Authoring Polish`.
-   Each new backlog entry links back to the parent plan as detail.
+   inline. Keep the parent plan marked `In progress` because Slice 2
+   (read-model cleanup) and Slice 3 (non-live action UX) remain proposed.
+   If `docs/backlog.md` still tracks the parent Tier 1 item, update its copy
+   only as needed so it reflects "Slice 1 landed, parent plan still open"
+   without inventing duplicate Tier 3 / Tier 5 items unless the parent plan
+   is explicitly split later.
    Update `docs/architecture.md` only if the new admin transport field
    warrants a named mention at the admin-read-path level; if the current
    architecture doc does not name admin read transport explicitly, leave
@@ -271,10 +270,10 @@ Slice 1 is `Landed` when all of the following hold:
 - The Slice 1 `Status:` line in this file and in the parent plan is flipped
   from `Proposed` to `Landed` with the implementing commit SHAs recorded
   inline.
-- The Tier 1 backlog item has been removed from
-  [docs/backlog.md](../backlog.md), and Slice 2 and Slice 3 have been added
-  as correctly tiered follow-up items with detail links back to the parent
-  plan.
+- The parent plan and `docs/backlog.md` now agree that Slice 1 landed while
+  the broader admin live-status plan remains open for Slice 2 / Slice 3, with
+  any deferral rationale written in the parent plan rather than implied by
+  backlog drift.
 - Every command listed in `Validation Commands Expected At Handoff` above
   ran with its result recorded in the PR body. Any command that could not
   run is called out explicitly with a reason, per the Validation Honesty
