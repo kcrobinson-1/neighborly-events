@@ -128,6 +128,21 @@ step count.
   plan. Plans attract code review; every bug in a code snippet inside a
   plan costs a review round on the plan doc itself before the
   implementation even starts, which is pure churn
+- list the cross-cutting invariants that thread through multiple files
+  in their own `## Cross-Cutting Invariants` subsection, distinct from
+  per-file contracts. Per-file contracts describe what one module does;
+  cross-cutting invariants describe relationships that must hold
+  simultaneously at every call site and break silently when one site
+  drifts (examples: "a shared reference clock advances on every
+  user action that changes filtered output," "every dialog exposes
+  an accessible name via `aria-label` or `aria-labelledby`," "derived
+  state for modal return-focus must survive the close transition,
+  not null out with the trigger state"). Aim for 2–4 one-line
+  invariants. Without naming these, implementer self-review checks
+  each file in isolation and misses bugs that only appear when two
+  sites disagree about the same rule; reviewer rounds then rediscover
+  the gap one call site at a time. The plan's job is to name the rule
+  once so self-review can walk every site against it
 - when a reviewer comment targets a code snippet inside a plan, the
   correction is to **remove or summarize the snippet**, not to fix the
   code in place. Code-correctness iteration belongs in the PR that
@@ -755,9 +770,11 @@ This keeps the repo aligned with the rule that generated screenshots live under 
 
 Before finishing, walk the named audits from
 [`docs/self-review-catalog.md`](docs/self-review-catalog.md) that match
-the diff's surfaces — the plan step named them upfront. The general
-review items below are layered on top of those audits, not a substitute
-for them.
+the diff's surfaces — the plan step named them upfront. Then walk the
+plan's `Cross-Cutting Invariants` section (if the plan has one) against
+every call site the diff touches, not just the site the invariant was
+first triggered by. The general review items below are layered on top
+of both of those passes, not a substitute for them.
 
 Before finishing, review your own work for:
 

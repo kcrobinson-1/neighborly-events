@@ -41,6 +41,7 @@ Today the repo implements:
 - shared game correctness, validation, and scoring logic
 - an organizer-facing admin workspace at `/admin` for drafting, editing, publishing, and unpublishing events
 - `game_starts` table and session-issuance write so analytics has the funnel denominator (starts → completions → entitlements) before the first live event
+- an authenticated agent-facing redeem route at `/event/:slug/redeem` for fast booth-side code entry, and an authenticated organizer-facing monitoring + reversal route at `/event/:slug/redemptions` for dispute handling (list, filter, search, reverse with optional reason), both direct-URL only until role seeding
 
 What remains as future product work:
 

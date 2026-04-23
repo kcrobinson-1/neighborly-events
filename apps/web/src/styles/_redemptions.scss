@@ -240,3 +240,80 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.redemptions-sheet-banner {
+  margin: 0;
+  padding: $space-5 $space-7;
+  border-radius: $radius-card;
+  font-size: 0.95rem;
+  @include stack($space-3);
+}
+
+.redemptions-sheet-banner-success {
+  background: $color-status-reversed-surface;
+  color: $color-status-reversed-foreground;
+  border: 1px solid $color-accent-border;
+}
+
+.redemptions-sheet-banner-warning {
+  background: $color-accent-surface-muted;
+  color: $color-status-reversed-foreground;
+  border: 1px solid $color-accent-border;
+}
+
+.redemptions-sheet-banner-error {
+  background: $color-primary-surface;
+  color: var(--text);
+  border: 1px solid $color-primary-border;
+}
+
+.redemptions-sheet-reverse-cta {
+  align-self: flex-start;
+}
+
+.redemptions-sheet-confirmation {
+  @include stack($space-5);
+}
+
+.redemptions-sheet-confirmation-heading {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.redemptions-sheet-confirmation-summary {
+  @include stack($space-3);
+  padding: $space-5 $space-7;
+  border: 1px solid $color-border-muted;
+  border-radius: $radius-card;
+  background: $color-surface-card;
+}
+
+.redemptions-sheet-reason-label {
+  @include stack($space-3);
+}
+
+.redemptions-sheet-reason-input {
+  width: 100%;
+  padding: $space-5 $space-7;
+  border: 1px solid $color-border-muted;
+  border-radius: $radius-control;
+  background: $color-admin-input-surface;
+  color: var(--text);
+  font-size: 1rem;
+
+  &:focus-visible {
+    outline: $focus-ring;
+    outline-offset: 2px;
+  }
+
+  &[disabled] {
+    opacity: 0.6;
+  }
+}
+
+.redemptions-sheet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: $space-4;
+}

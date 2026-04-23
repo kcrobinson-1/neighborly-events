@@ -11,6 +11,7 @@ function makeRow(overrides: Partial<RedemptionRow>): RedemptionRow {
     redeemed_at: "2026-04-22T10:25:00Z",
     redeemed_by: "user-a",
     redeemed_by_role: "agent",
+    redemption_note: null,
     redemption_reversed_at: null,
     redemption_reversed_by: null,
     redemption_reversed_by_role: null,
@@ -158,15 +159,15 @@ describe("filterRedemptions", () => {
     expect(result.map((row) => row.id)).toEqual(["re-redeemed"]);
   });
 
-  it("By me matches redeemed_by === currentUserId and excludes null", () => {
+  it("By me matches rows redeemed or reversed by the current user", () => {
     const rows = [
-      makeRow({ id: "mine", redeemed_by: "user-a" }),
+      makeRow({ id: "mine-redeemed", redeemed_by: "user-a" }),
       makeRow({ id: "theirs", redeemed_by: "user-b" }),
       makeRow({
-        id: "null-redeemer",
-        redeemed_by: null,
-        redeemed_by_role: null,
+        id: "mine-reversed",
         redeemed_at: null,
+        redeemed_by: "user-b",
+        redeemed_by_role: "agent",
         redemption_reversed_at: "2026-04-22T10:20:00Z",
         redemption_reversed_by: "user-a",
         redemption_reversed_by_role: "organizer",
@@ -187,7 +188,62 @@ describe("filterRedemptions", () => {
       searchResult: { type: "no_filter" },
     });
 
-    expect(result.map((row) => row.id)).toEqual(["mine"]);
+    expect(result.map((row) => row.id).sort()).toEqual([
+      "mine-redeemed",
+      "mine-reversed",
+    ]);
+  });
+
+  it("By me keeps a row redeemed by another user when the current user reversed it", () => {
+    const row = makeRow({
+      id: "cross-actor",
+      redeemed_by: "user-b",
+      redeemed_by_role: "agent",
+      redemption_reversed_at: "2026-04-22T10:20:00Z",
+      redemption_reversed_by: "user-a",
+      redemption_reversed_by_role: "organizer",
+    });
+
+    const result = filterRedemptions({
+      chips: {
+        byMe: true,
+        last15m: false,
+        redeemed: false,
+        reversed: false,
+      },
+      currentUserId: "user-a",
+      nowMs: NOW_MS,
+      rows: [row],
+      searchResult: { type: "no_filter" },
+    });
+
+    expect(result.map((r) => r.id)).toEqual(["cross-actor"]);
+  });
+
+  it("By me excludes rows with both actor fields null", () => {
+    const rows = [
+      makeRow({
+        id: "anonymous",
+        redeemed_by: null,
+        redeemed_by_role: null,
+        redemption_reversed_by: null,
+      }),
+    ];
+
+    expect(
+      filterRedemptions({
+        chips: {
+          byMe: true,
+          last15m: false,
+          redeemed: false,
+          reversed: false,
+        },
+        currentUserId: "user-a",
+        nowMs: NOW_MS,
+        rows,
+        searchResult: { type: "no_filter" },
+      }),
+    ).toEqual([]);
   });
 
   it("By me returns zero rows when currentUserId is null", () => {

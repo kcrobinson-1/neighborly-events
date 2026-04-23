@@ -1,12 +1,12 @@
 # Reward Redemption — Phase B Overview Plan
 
-**Status:** In progress — B.1 landed in
+**Status:** Complete — B.1 landed in
 [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md);
 B.2a landed in
 [`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md);
-B.2b is not started. This overview names the remaining sub-phase
-boundaries and the prerequisites each sub-phase inherits. Full
-execution plans for each sub-phase are drafted separately, close to
+B.2b landed in
+[`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md).
+Execution plans for each sub-phase were drafted separately, close to
 their implementation time, following the Phase A precedent
 ([A.1](./archive/reward-redemption-phase-a-1-plan.md),
 [A.2a](./archive/reward-redemption-phase-a-2-plan.md),
@@ -83,7 +83,7 @@ role-management posture.
 |-----------|-------|---------------|-----------------|-------------|
 | **B.1** | `/event/:slug/redeem` | agents (+ root admin) | lookup, redeem | [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md) (Landed) |
 | **B.2a** | `/event/:slug/redemptions` (read-only) | organizers (+ root admin) | list, filter, search, view | [`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md) (Landed) |
-| **B.2b** | `/event/:slug/redemptions` (reversal) | organizers (+ root admin) | reverse, confirm, optional reason | drafted before B.2b implementation as `reward-redemption-phase-b-2b-plan.md` |
+| **B.2b** | `/event/:slug/redemptions` (reversal) | organizers (+ root admin) | reverse, confirm, optional reason | [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md) (Landed) |
 
 ## Prerequisites
 
@@ -230,12 +230,15 @@ Out of scope for B.2b:
 - Multi-row reversal, bulk operations, or undo of a reversal.
 - Changes to the read-only monitoring surface B.2a landed.
 
-Open items the B.2b detail plan must settle before implementation:
+Settled in the B.2b detail plan:
 
-- Exact reversal confirmation copy against the non-leakage contract.
-- Whether the reason input enforces a max length at the UI level.
-- Whether the post-action refetch reuses the same cached slice or
-  re-issues the full bounded fetch.
+- Reversal confirmation stays inside the existing detail sheet and uses
+  an explicit `Reverse redemption?` confirmation step.
+- The reason input is optional, single-line, blank-trimmed to `null`,
+  and does not invent a UI-only max length.
+- Post-action synchronization uses a single-row re-read plus the
+  existing full bounded list refetch; there is no optimistic local list
+  patch.
 
 ## Shared Concerns Across Sub-Phases
 
@@ -312,8 +315,10 @@ so each sub-phase plan can inherit them rather than re-deciding:
    is the terminal record for the read-only monitoring surface.
 5. **Implement B.2a.** Land `/event/:slug/redemptions` as a read-only
    monitoring surface behind an unadvertised entry.
-6. **Draft the B.2b detail plan.** Same template, scoped to the
-   reversal surface layered into the detail sheet B.2a shipped.
+6. **B.2b detail plan drafted.**
+   [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md)
+   is now the execution plan for the reversal surface layered into the
+   B.2a detail sheet.
 7. **Implement B.2b.** Land the reversal CTA + confirmation flow.
 8. **Update `docs/backlog.md` and `docs/architecture.md`** as each
    sub-phase lands, per
@@ -431,7 +436,6 @@ Each sub-phase plan is expected to resolve its own:
 
 - Smoke-test partitioning: per-sub-phase vs. combined Phase B (all).
 - Shared token additions vs. sub-phase-local styles (all).
-- Reversal reason input shape (single line vs. textarea) (B.2b).
 
 If any of these turns into a design-boundary change (for example,
 agents gaining write access in B.2b), stop and reopen the parent

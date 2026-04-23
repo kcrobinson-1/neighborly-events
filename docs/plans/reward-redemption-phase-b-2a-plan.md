@@ -9,9 +9,10 @@
 [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md),
 [`event-code-prerequisite-plan.md`](./archive/event-code-prerequisite-plan.md).
 **Successor (drafted separately before its implementation time):**
-`reward-redemption-phase-b-2b-plan.md` — layers the reverse CTA,
-confirmation flow, and `reverse-entitlement-redemption` invocation into
-the detail sheet this phase lands.
+[`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md)
+— layers the reverse CTA, confirmation flow, and
+`reverse-entitlement-redemption` invocation into the detail sheet this
+phase lands.
 **Scope:** Phase B.2a only — the `/event/:slug/redemptions` mobile
 monitoring route as a **read-only** dispute-verification surface. No
 reversal CTA, no reversal confirmation, no `reverse-entitlement-redemption`

@@ -1,6 +1,7 @@
 import {
   type FormEvent,
   type ReactNode,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -15,16 +16,25 @@ import {
 } from "../redemptions/authorizeRedemptions";
 import { filterRedemptions } from "../redemptions/filterRedemptions";
 import { parseSearchInput } from "../redemptions/parseSearchInput";
-import { RedemptionDetailSheet } from "../redemptions/RedemptionDetailSheet";
+import {
+  RedemptionDetailSheet,
+  type RedemptionDetailSheetReversalProps,
+  type RedemptionDetailSheetStep,
+} from "../redemptions/RedemptionDetailSheet";
 import { RedemptionRow } from "../redemptions/RedemptionRow";
 import { RedemptionsFilterBar } from "../redemptions/RedemptionsFilterBar";
+import { fetchRedemptionRow } from "../redemptions/redemptionsData";
 import {
   REDEMPTIONS_FETCH_LIMIT,
   useRedemptionsList,
 } from "../redemptions/useRedemptionsList";
 import { useRedemptionsFilters } from "../redemptions/useRedemptionsFilters";
+import { useReverseRedemption } from "../redemptions/useReverseRedemption";
 import type { RedemptionRow as RedemptionRowType } from "../redemptions/types";
 import { routes } from "../routes";
+
+const DEFAULT_DETAIL_REFRESH_ERROR =
+  "We couldn't refresh this redemption.";
 
 type EventRedemptionsPageProps = {
   onNavigate: (path: string) => void;
@@ -293,6 +303,12 @@ function AuthorizedRedemptionsView({
   const { refresh, state: listState } = useRedemptionsList({ eventId });
   const { chips, nowMs, refreshNowMs, searchInput, setSearchInput, toggleChip } =
     useRedemptionsFilters();
+  const {
+    reset: resetReversal,
+    resultState: reverseResultState,
+    retryLastSubmission,
+    submitReversal,
+  } = useReverseRedemption(eventId);
   const isOnline = useOnlineStatus();
   const wasOfflineRef = useRef(!isOnline);
   const [selectedRow, setSelectedRow] = useState<RedemptionRowType | null>(
@@ -304,14 +320,42 @@ function AuthorizedRedemptionsView({
   const [lastSelectedRowId, setLastSelectedRowId] = useState<string | null>(
     null,
   );
+  const [sheetStep, setSheetStep] = useState<RedemptionDetailSheetStep>(
+    "details",
+  );
+  const [reasonInput, setReasonInput] = useState("");
+  const [detailRefreshError, setDetailRefreshError] = useState<string | null>(
+    null,
+  );
+  // Synchronous mirror of the currently selected row id. Updated inside the
+  // same event handler that changes `selectedRow`, so stale-submission guards
+  // (post-await checks in `handleConfirmReversal` / `handleRetryReversal`)
+  // cannot race a pending render/effect tick.
+  const selectedRowIdRef = useRef<string | null>(null);
+
+  const resetSheetReversalState = useCallback(() => {
+    resetReversal();
+    setSheetStep("details");
+    setReasonInput("");
+    setDetailRefreshError(null);
+  }, [resetReversal]);
 
   const handleViewDetails = (row: RedemptionRowType) => {
     setLastSelectedRowId(row.id);
+    // Row-switch or first-select both clear any prior reversal state that
+    // was attached to the previous row; see the Dirty-state tracked-inputs
+    // audit in reward-redemption-phase-b-2b-plan.md.
+    if (selectedRow === null || selectedRow.id !== row.id) {
+      resetSheetReversalState();
+    }
     setSelectedRow(row);
+    selectedRowIdRef.current = row.id;
   };
 
   const handleCloseDetails = () => {
     setSelectedRow(null);
+    resetSheetReversalState();
+    selectedRowIdRef.current = null;
   };
 
   const returnFocusTargetId = lastSelectedRowId
@@ -336,6 +380,129 @@ function AuthorizedRedemptionsView({
   const handleRefresh = () => {
     refreshNowMs();
     refresh();
+  };
+
+  const performDetailReread = useCallback(
+    async (rowId: string) => {
+      // Async guards below use the state-setter form so a re-read that
+      // resolves after the user has switched rows cannot stomp on the new
+      // selection. The setter callback reads the latest state atomically,
+      // which is safer than a ref (which only updates on the next effect
+      // tick, leaving a microtask-order race window).
+      let stillOnRow = true;
+      try {
+        const fresh = await fetchRedemptionRow(eventId, rowId);
+        setSelectedRow((current) => {
+          if (current === null || current.id !== rowId) {
+            stillOnRow = false;
+            return current;
+          }
+          return fresh ?? current;
+        });
+        if (stillOnRow) {
+          setDetailRefreshError(null);
+        }
+      } catch (error: unknown) {
+        setSelectedRow((current) => {
+          if (current === null || current.id !== rowId) {
+            stillOnRow = false;
+          }
+          return current;
+        });
+        if (stillOnRow) {
+          setDetailRefreshError(
+            error instanceof Error
+              ? error.message || DEFAULT_DETAIL_REFRESH_ERROR
+              : DEFAULT_DETAIL_REFRESH_ERROR,
+          );
+        }
+      }
+    },
+    [eventId],
+  );
+
+  const reconcileAfterReverseSuccess = useCallback(
+    (rowId: string) => {
+      setSheetStep("details");
+      // Single-row re-read and the full list refetch run in parallel per
+      // the plan's "sheet does not wait for the list refresh" contract.
+      void performDetailReread(rowId);
+      refresh();
+    },
+    [performDetailReread, refresh],
+  );
+
+  const handleStartConfirmation = () => {
+    setDetailRefreshError(null);
+    setSheetStep("confirmation");
+  };
+
+  const handleBack = () => {
+    // Cross-cutting invariant from reward-redemption-phase-b-2b-plan.md:
+    // Back resets both the draft reason and the mutation result so returning
+    // to the details step cannot leave either stuck on the previous attempt.
+    setSheetStep("details");
+    setReasonInput("");
+    resetReversal();
+  };
+
+  const handleConfirmReversal = async () => {
+    if (!selectedRow) {
+      return;
+    }
+    const rowId = selectedRow.id;
+    const outcome = await submitReversal({
+      codeSuffix: selectedRow.verification_code.slice(-4),
+      reason: reasonInput,
+    });
+    // Guard against a slow reversal whose caller has since closed the sheet
+    // or switched rows — reconciling here would collapse the new row's
+    // confirmation flow and discard in-progress input.
+    if (selectedRowIdRef.current !== rowId) {
+      return;
+    }
+    if (outcome.status === "success") {
+      reconcileAfterReverseSuccess(rowId);
+    }
+  };
+
+  const handleRetryReversal = async () => {
+    if (!selectedRow) {
+      return;
+    }
+    const rowId = selectedRow.id;
+    const outcome = await retryLastSubmission();
+    if (selectedRowIdRef.current !== rowId) {
+      return;
+    }
+    if (outcome?.status === "success") {
+      reconcileAfterReverseSuccess(rowId);
+    }
+  };
+
+  const handleRetryDetailRefresh = () => {
+    if (!selectedRow) {
+      return;
+    }
+    setDetailRefreshError(null);
+    void performDetailReread(selectedRow.id);
+  };
+
+  const isReversible = selectedRow !== null &&
+    selectedRow.redemption_status === "redeemed";
+
+  const reversalProps: RedemptionDetailSheetReversalProps = {
+    detailRefreshError,
+    isReversible,
+    mutationState: reverseResultState,
+    onBack: handleBack,
+    onConfirmReversal: handleConfirmReversal,
+    onReasonInputChange: setReasonInput,
+    onRetryDetailRefresh: handleRetryDetailRefresh,
+    onRetryReversal: handleRetryReversal,
+    onStartConfirmation: handleStartConfirmation,
+    reasonInput,
+    step: sheetStep,
   };
 
   const searchResult = parseSearchInput(searchInput, eventCode);
@@ -435,6 +602,7 @@ function AuthorizedRedemptionsView({
         eventCode={eventCode}
         onClose={handleCloseDetails}
         returnFocusTargetId={returnFocusTargetId}
+        reversal={reversalProps}
         row={selectedRow}
       />
     </RedemptionsShell>

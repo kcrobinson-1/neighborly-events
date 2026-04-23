@@ -18,7 +18,7 @@ export default defineConfig({
   testMatch: "**/mobile-smoke.redemptions.spec.ts",
   use: {
     baseURL: baseUrl,
-    trace: "on-first-retry",
+    trace: "retain-on-failure",
   },
   webServer: {
     command: "npm run dev:web:test",
