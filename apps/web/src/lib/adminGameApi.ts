@@ -173,9 +173,17 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
   }
 
   const draftRows = (data ?? []) as DraftEventRow[];
-  const publishedGameEventIds = await listPublishedGameEventIds(
-    draftRows.map((row) => row.id),
-  );
+  let publishedGameEventIds = new Set<string>();
+
+  try {
+    publishedGameEventIds = await listPublishedGameEventIds(
+      draftRows.map((row) => row.id),
+    );
+  } catch {
+    // Draft rows already loaded successfully. If the follow-up live-status read
+    // fails, keep the dashboard available and degrade `isLive` to false until
+    // the next successful refresh.
+  }
 
   return draftRows.map((row) =>
     mapDraftSummary(row, publishedGameEventIds.has(row.id)),
@@ -198,7 +206,15 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
     return null;
   }
 
-  const publishedGameEvent = await loadPublishedGameEvent(eventId);
+  let publishedGameEvent: PublishedGameEventRow | null = null;
+
+  try {
+    publishedGameEvent = await loadPublishedGameEvent(eventId);
+  } catch {
+    // The draft row itself loaded successfully. Treat the live-status read as
+    // best-effort so the workspace still opens with a conservative non-live
+    // fallback instead of blocking editing on a transient status lookup error.
+  }
 
   return {
     ...mapDraftSummary(data, publishedGameEvent !== null),

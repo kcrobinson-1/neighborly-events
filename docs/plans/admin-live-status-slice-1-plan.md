@@ -96,6 +96,10 @@ count, or the `Open live game` button after a fresh reload.
      keyed by event id and merges `published_at` into the returned rows
 - Do not introduce a new Postgres view or server-owned status model — Slice 2
   owns that.
+- The follow-up live-status read is best-effort for the initial dashboard list
+  and draft-detail load. If the draft row(s) load successfully but the
+  `game_events` lookup fails, keep the admin surface available and fall back to
+  `isLive = false` until a later successful refresh.
 - `liveVersionNumber` remains unchanged in shape and value on the returned
   records.
 - The `saveDraftEvent()` response shape returned by
