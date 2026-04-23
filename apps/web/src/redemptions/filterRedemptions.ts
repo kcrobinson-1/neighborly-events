@@ -37,9 +37,10 @@ function getActivityTimestampMs(row: RedemptionRow): number | null {
  * cached slice. Pure — no network or clock access; `nowMs` is passed in so
  * callers control the reference clock.
  *
- * B.2a's "By me" matches `redeemed_by === currentUserId` only; B.2b will
- * expand the predicate to include `redemption_reversed_by` once the reversal
- * flow is live.
+ * "By me" matches rows where the current user appears as either the redeemer
+ * or the reverser, so a row an organizer just reversed still surfaces when
+ * they toggle the chip — even when it was originally redeemed by someone
+ * else.
  */
 export function filterRedemptions({
   chips,
@@ -75,7 +76,10 @@ export function filterRedemptions({
       if (currentUserId === null) {
         return false;
       }
-      if (row.redeemed_by !== currentUserId) {
+      if (
+        row.redeemed_by !== currentUserId &&
+        row.redemption_reversed_by !== currentUserId
+      ) {
         return false;
       }
     }

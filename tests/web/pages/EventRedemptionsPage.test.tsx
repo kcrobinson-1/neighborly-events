@@ -5,29 +5,40 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   mockAuthorizeRedemptions,
+  mockFetchRedemptionRow,
   mockRefreshNowMs,
   mockRefreshRedemptions,
   mockRequestMagicLink,
+  mockResetReversal,
+  mockRetryLastSubmission,
   mockSetSearchInput,
+  mockSubmitReversal,
   mockToggleChip,
   mockUseAuthSession,
   mockUseRedemptionsFilters,
   mockUseRedemptionsList,
+  mockUseReverseRedemption,
 } = vi.hoisted(() => ({
   mockAuthorizeRedemptions: vi.fn(),
+  mockFetchRedemptionRow: vi.fn(),
   mockRefreshNowMs: vi.fn(),
   mockRefreshRedemptions: vi.fn(),
   mockRequestMagicLink: vi.fn(),
+  mockResetReversal: vi.fn(),
+  mockRetryLastSubmission: vi.fn(),
   mockSetSearchInput: vi.fn(),
+  mockSubmitReversal: vi.fn(),
   mockToggleChip: vi.fn(),
   mockUseAuthSession: vi.fn(),
   mockUseRedemptionsFilters: vi.fn(),
   mockUseRedemptionsList: vi.fn(),
+  mockUseReverseRedemption: vi.fn(),
 }));
 
 vi.mock("../../../apps/web/src/auth/useAuthSession.ts", () => ({
@@ -51,19 +62,39 @@ vi.mock("../../../apps/web/src/redemptions/useRedemptionsFilters.ts", () => ({
   useRedemptionsFilters: mockUseRedemptionsFilters,
 }));
 
+vi.mock("../../../apps/web/src/redemptions/useReverseRedemption.ts", () => ({
+  useReverseRedemption: mockUseReverseRedemption,
+}));
+
+vi.mock("../../../apps/web/src/redemptions/redemptionsData.ts", () => ({
+  REDEMPTIONS_FETCH_LIMIT: 500,
+  DEFAULT_REDEMPTIONS_ERROR_MESSAGE: "We couldn't load redemptions right now.",
+  fetchRedemptionRow: mockFetchRedemptionRow,
+  fetchRedemptionSlices: vi.fn(),
+}));
+
 import { EventRedemptionsPage } from "../../../apps/web/src/pages/EventRedemptionsPage.tsx";
+import type { ReverseResultState } from "../../../apps/web/src/redemptions/useReverseRedemption";
+
+let reverseResultState: ReverseResultState = { status: "idle" };
 
 describe("EventRedemptionsPage", () => {
   beforeEach(() => {
     mockAuthorizeRedemptions.mockReset();
+    mockFetchRedemptionRow.mockReset();
     mockRefreshNowMs.mockReset();
     mockRefreshRedemptions.mockReset();
     mockRequestMagicLink.mockReset();
+    mockResetReversal.mockReset();
+    mockRetryLastSubmission.mockReset();
     mockSetSearchInput.mockReset();
+    mockSubmitReversal.mockReset();
     mockToggleChip.mockReset();
     mockUseAuthSession.mockReset();
     mockUseRedemptionsFilters.mockReset();
     mockUseRedemptionsList.mockReset();
+    mockUseReverseRedemption.mockReset();
+    reverseResultState = { status: "idle" };
     mockUseRedemptionsList.mockReturnValue({
       refresh: mockRefreshRedemptions,
       state: { status: "loading" },
@@ -81,6 +112,12 @@ describe("EventRedemptionsPage", () => {
       setSearchInput: mockSetSearchInput,
       toggleChip: mockToggleChip,
     });
+    mockUseReverseRedemption.mockImplementation(() => ({
+      reset: mockResetReversal,
+      resultState: reverseResultState,
+      retryLastSubmission: mockRetryLastSubmission,
+      submitReversal: mockSubmitReversal,
+    }));
   });
 
   afterEach(() => {
@@ -617,5 +654,340 @@ describe("EventRedemptionsPage", () => {
       expect(screen.getByText("MAD")).toBeTruthy();
     });
     expect(mockAuthorizeRedemptions).toHaveBeenCalledTimes(2);
+  });
+
+  describe("B.2b reversal wiring", () => {
+    function authorizeOrganizerWithRedeemedRow() {
+      mockUseAuthSession.mockReturnValue({
+        email: "organizer@example.com",
+        session: { user: { id: "user-organizer" } },
+        status: "signed_in",
+      });
+      mockAuthorizeRedemptions.mockResolvedValue({
+        eventCode: "MAD",
+        eventId: "event-1",
+        status: "authorized",
+      });
+      mockUseRedemptionsList.mockReturnValue({
+        refresh: mockRefreshRedemptions,
+        state: {
+          fetchedAt: new Date("2026-04-22T10:00:00Z"),
+          rows: [
+            {
+              event_id: "event-1",
+              id: "row-1",
+              redeemed_at: "2026-04-22T09:50:00Z",
+              redeemed_by: "user-b",
+              redeemed_by_role: "agent",
+              redemption_note: null,
+              redemption_reversed_at: null,
+              redemption_reversed_by: null,
+              redemption_reversed_by_role: null,
+              redemption_status: "redeemed",
+              verification_code: "MAD-0427",
+            },
+          ],
+          status: "success",
+        },
+      });
+    }
+
+    async function openDetailSheet() {
+      const viewButton = await screen.findByRole("button", {
+        name: "View details",
+      });
+      fireEvent.click(viewButton);
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeTruthy();
+      });
+    }
+
+    it("selecting a redeemed row shows the Reverse redemption CTA", async () => {
+      authorizeOrganizerWithRedeemedRow();
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+
+      expect(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      ).toBeTruthy();
+    });
+
+    it("confirm reversal calls submitReversal with the eventId, suffix, and trimmed reason", async () => {
+      authorizeOrganizerWithRedeemedRow();
+      mockSubmitReversal.mockResolvedValue({
+        isOffline: false,
+        message: "pending — will not resolve in this test",
+        status: "transient_error",
+      });
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "  disputed by attendee  " },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm reversal" }),
+      );
+
+      await waitFor(() => {
+        expect(mockSubmitReversal).toHaveBeenCalledTimes(1);
+      });
+      expect(mockSubmitReversal).toHaveBeenCalledWith({
+        codeSuffix: "0427",
+        reason: "  disputed by attendee  ",
+      });
+    });
+
+    it("on reverse success, runs the single-row re-read and list refetch in parallel", async () => {
+      authorizeOrganizerWithRedeemedRow();
+      mockSubmitReversal.mockResolvedValue({
+        result: "reversed_now",
+        reversedAt: "2026-04-22T10:05:00Z",
+        reversedByRole: "organizer",
+        status: "success",
+      });
+      mockFetchRedemptionRow.mockResolvedValue({
+        event_id: "event-1",
+        id: "row-1",
+        redeemed_at: null,
+        redeemed_by: null,
+        redeemed_by_role: null,
+        redemption_note: "disputed by attendee",
+        redemption_reversed_at: "2026-04-22T10:05:00Z",
+        redemption_reversed_by: "user-organizer",
+        redemption_reversed_by_role: "organizer",
+        redemption_status: "unredeemed",
+        verification_code: "MAD-0427",
+      });
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "disputed by attendee" },
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm reversal" }),
+      );
+
+      await waitFor(() => {
+        expect(mockFetchRedemptionRow).toHaveBeenCalledWith("event-1", "row-1");
+      });
+      expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
+
+      // The re-read overrides the selectedRow with the fresh reversed row, so
+      // the sheet reflects the reversed state even before the list refetch
+      // resolves. Scope the assertion inside the sheet to avoid matching the
+      // Reversed filter chip in the page toolbar.
+      await waitFor(() => {
+        expect(
+          within(screen.getByRole("dialog")).getByText("Reversed"),
+        ).toBeTruthy();
+      });
+      expect(
+        within(screen.getByRole("dialog")).getByText("disputed by attendee"),
+      ).toBeTruthy();
+    });
+
+    it("surfaces the detail-refresh error when the re-read fails after a successful reverse", async () => {
+      authorizeOrganizerWithRedeemedRow();
+      mockSubmitReversal.mockResolvedValue({
+        result: "reversed_now",
+        reversedAt: "2026-04-22T10:05:00Z",
+        reversedByRole: "organizer",
+        status: "success",
+      });
+      mockFetchRedemptionRow.mockRejectedValue(
+        new Error("row lookup failed"),
+      );
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm reversal" }),
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("row lookup failed")).toBeTruthy();
+      });
+      // The full list refetch still runs even when the single-row re-read
+      // fails, so the list-level `Last updated` timestamp can still catch up.
+      expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByRole("button", { name: "Refresh details" }),
+      ).toBeTruthy();
+    });
+
+    it("retry reversal calls retryLastSubmission and reconciles on a successful retry", async () => {
+      authorizeOrganizerWithRedeemedRow();
+      reverseResultState = {
+        isOffline: false,
+        message: "Please retry once your connection is stable.",
+        status: "transient_error",
+      };
+      mockRetryLastSubmission.mockResolvedValue({
+        result: "reversed_now",
+        reversedAt: "2026-04-22T10:05:00Z",
+        reversedByRole: "organizer",
+        status: "success",
+      });
+      mockFetchRedemptionRow.mockResolvedValue({
+        event_id: "event-1",
+        id: "row-1",
+        redeemed_at: null,
+        redeemed_by: null,
+        redeemed_by_role: null,
+        redemption_note: null,
+        redemption_reversed_at: "2026-04-22T10:05:00Z",
+        redemption_reversed_by: "user-organizer",
+        redemption_reversed_by_role: "organizer",
+        redemption_status: "unredeemed",
+        verification_code: "MAD-0427",
+      });
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      await openDetailSheet();
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+      await waitFor(() => {
+        expect(mockRetryLastSubmission).toHaveBeenCalledTimes(1);
+      });
+      await waitFor(() => {
+        expect(mockFetchRedemptionRow).toHaveBeenCalledWith("event-1", "row-1");
+      });
+      expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
+    });
+
+    it("row switch resets the prior row's draft reason and mutation state", async () => {
+      mockUseAuthSession.mockReturnValue({
+        email: "organizer@example.com",
+        session: { user: { id: "user-organizer" } },
+        status: "signed_in",
+      });
+      mockAuthorizeRedemptions.mockResolvedValue({
+        eventCode: "MAD",
+        eventId: "event-1",
+        status: "authorized",
+      });
+      mockUseRedemptionsList.mockReturnValue({
+        refresh: mockRefreshRedemptions,
+        state: {
+          fetchedAt: new Date("2026-04-22T10:00:00Z"),
+          rows: [
+            {
+              event_id: "event-1",
+              id: "row-a",
+              redeemed_at: "2026-04-22T09:50:00Z",
+              redeemed_by: "user-b",
+              redeemed_by_role: "agent",
+              redemption_note: null,
+              redemption_reversed_at: null,
+              redemption_reversed_by: null,
+              redemption_reversed_by_role: null,
+              redemption_status: "redeemed",
+              verification_code: "MAD-0427",
+            },
+            {
+              event_id: "event-1",
+              id: "row-b",
+              redeemed_at: "2026-04-22T09:51:00Z",
+              redeemed_by: "user-c",
+              redeemed_by_role: "agent",
+              redemption_note: null,
+              redemption_reversed_at: null,
+              redemption_reversed_by: null,
+              redemption_reversed_by_role: null,
+              redemption_status: "redeemed",
+              verification_code: "MAD-0428",
+            },
+          ],
+          status: "success",
+        },
+      });
+
+      render(
+        <EventRedemptionsPage
+          onNavigate={() => {}}
+          slug="madrona-music-2026"
+        />,
+      );
+
+      const viewButtons = await screen.findAllByRole("button", {
+        name: "View details",
+      });
+      fireEvent.click(viewButtons[0]);
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeTruthy();
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      fireEvent.change(screen.getByRole("textbox"), {
+        target: { value: "stale reason" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Close" }));
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog")).toBeNull();
+      });
+
+      // Close triggers a reset; opening row A again should not show the
+      // prior draft reason.
+      expect(mockResetReversal).toHaveBeenCalled();
+
+      const refreshedViewButtons = screen.getAllByRole("button", {
+        name: "View details",
+      });
+      fireEvent.click(refreshedViewButtons[1]);
+      await waitFor(() => {
+        expect(screen.getByRole("dialog")).toBeTruthy();
+      });
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reverse redemption" }),
+      );
+      expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("");
+    });
   });
 });
