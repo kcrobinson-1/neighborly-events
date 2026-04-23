@@ -11,6 +11,7 @@ function makeRow(overrides: Partial<RedemptionRow>): RedemptionRow {
     redeemed_at: "2026-04-22T10:25:00Z",
     redeemed_by: "user-a",
     redeemed_by_role: "agent",
+    redemption_note: null,
     redemption_reversed_at: null,
     redemption_reversed_by: null,
     redemption_reversed_by_role: null,

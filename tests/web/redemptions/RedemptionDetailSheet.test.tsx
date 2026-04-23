@@ -6,8 +6,12 @@ import {
   screen,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RedemptionDetailSheet } from "../../../apps/web/src/redemptions/RedemptionDetailSheet";
+import {
+  RedemptionDetailSheet,
+  type RedemptionDetailSheetReversalProps,
+} from "../../../apps/web/src/redemptions/RedemptionDetailSheet";
 import type { RedemptionRow } from "../../../apps/web/src/redemptions/types";
+import type { ReverseResultState } from "../../../apps/web/src/redemptions/useReverseRedemption";
 
 function makeRow(overrides: Partial<RedemptionRow> = {}): RedemptionRow {
   return {
@@ -16,11 +20,31 @@ function makeRow(overrides: Partial<RedemptionRow> = {}): RedemptionRow {
     redeemed_at: "2026-04-22T10:00:00Z",
     redeemed_by: "user-a",
     redeemed_by_role: "agent",
+    redemption_note: null,
     redemption_reversed_at: null,
     redemption_reversed_by: null,
     redemption_reversed_by_role: null,
     redemption_status: "redeemed",
     verification_code: "MAD-0001",
+    ...overrides,
+  };
+}
+
+function makeReversal(
+  overrides: Partial<RedemptionDetailSheetReversalProps> = {},
+): RedemptionDetailSheetReversalProps {
+  return {
+    detailRefreshError: null,
+    isReversible: true,
+    mutationState: { status: "idle" } satisfies ReverseResultState,
+    onBack: vi.fn(),
+    onConfirmReversal: vi.fn(),
+    onReasonInputChange: vi.fn(),
+    onRetryDetailRefresh: vi.fn(),
+    onRetryReversal: vi.fn(),
+    onStartConfirmation: vi.fn(),
+    reasonInput: "",
+    step: "details",
     ...overrides,
   };
 }
@@ -37,6 +61,7 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={null}
       />,
     );
@@ -51,6 +76,7 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
@@ -69,12 +95,11 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
 
-    // Screen readers announce the dialog by its accessible name. Without an
-    // aria-label or aria-labelledby binding, the dialog would be unnamed.
     expect(
       screen.getByRole("dialog", { name: "MAD-0001" }),
     ).toBeTruthy();
@@ -87,6 +112,7 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({
           redemption_reversed_at: "2026-04-22T09:30:00Z",
           redemption_reversed_by: "user-b",
@@ -101,18 +127,334 @@ describe("RedemptionDetailSheet", () => {
     expect(screen.getByText("Organizer")).toBeTruthy();
   });
 
-  it("never renders a Reverse button in B.2a (view-only contract)", () => {
+  it("renders the Reason row when the selected row carries a redemption_note", () => {
     render(
       <RedemptionDetailSheet
         currentUserId="user-a"
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
+        row={makeRow({
+          redemption_note: "disputed by attendee",
+          redemption_reversed_at: "2026-04-22T09:30:00Z",
+          redemption_reversed_by: "user-b",
+          redemption_reversed_by_role: "organizer",
+          redemption_status: "unredeemed",
+        })}
+      />,
+    );
+
+    expect(screen.getByText("Reason")).toBeTruthy();
+    expect(screen.getByText("disputed by attendee")).toBeTruthy();
+  });
+
+  it("does not render the Reason row when the redemption_note is null", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
 
-    expect(screen.queryByRole("button", { name: /reverse/i })).toBeNull();
+    expect(screen.queryByText("Reason")).toBeNull();
+  });
+
+  it("renders the Reverse redemption CTA for a reversible row in the details step", () => {
+    const onStartConfirmation = vi.fn();
+
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          isReversible: true,
+          onStartConfirmation,
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    const button = screen.getByRole("button", { name: "Reverse redemption" });
+    fireEvent.click(button);
+    expect(onStartConfirmation).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides the Reverse redemption CTA when the row is not reversible", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({ isReversible: false })}
+        row={makeRow({
+          redemption_reversed_at: "2026-04-22T09:30:00Z",
+          redemption_reversed_by: "user-b",
+          redemption_reversed_by_role: "organizer",
+          redemption_status: "unredeemed",
+        })}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Reverse redemption" }),
+    ).toBeNull();
+  });
+
+  it("hides the Reverse redemption CTA while a mutation is in a success state", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          isReversible: true,
+          mutationState: {
+            result: "reversed_now",
+            reversedAt: "2026-04-22T10:05:00Z",
+            reversedByRole: "organizer",
+            status: "success",
+          },
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Reverse redemption" }),
+    ).toBeNull();
+    expect(screen.getByText("Redemption reversed.")).toBeTruthy();
+  });
+
+  it("renders the idempotent success banner for already_unredeemed", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          mutationState: {
+            result: "already_unredeemed",
+            status: "success",
+          },
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(
+      screen.getByText("This redemption was already reversed."),
+    ).toBeTruthy();
+  });
+
+  it("renders the detail-refresh warning with a retry affordance when set", () => {
+    const onRetryDetailRefresh = vi.fn();
+
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          detailRefreshError: "We couldn't refresh this row.",
+          mutationState: {
+            result: "reversed_now",
+            reversedAt: "2026-04-22T10:05:00Z",
+            reversedByRole: "organizer",
+            status: "success",
+          },
+          onRetryDetailRefresh,
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(screen.getByText("We couldn't refresh this row.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Refresh details" }));
+    expect(onRetryDetailRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the confirmation step heading, summary, and reason input", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({ step: "confirmation" })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Reverse redemption?" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Reason (optional)")).toBeTruthy();
+    expect(screen.getByRole("textbox")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Back" })).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Confirm reversal" }),
+    ).toBeTruthy();
+    expect(screen.getByText("MAD")).toBeTruthy();
+    expect(screen.getByText("Prior status")).toBeTruthy();
+  });
+
+  it("confirm-reversal button calls the handler and forwards reason-input changes", () => {
+    const onConfirmReversal = vi.fn();
+    const onReasonInputChange = vi.fn();
+
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          onConfirmReversal,
+          onReasonInputChange,
+          reasonInput: "initial",
+          step: "confirmation",
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    fireEvent.change(screen.getByRole("textbox"), {
+      target: { value: "final note" },
+    });
+    expect(onReasonInputChange).toHaveBeenCalledWith("final note");
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm reversal" }));
+    expect(onConfirmReversal).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the confirmation actions and swaps the confirm label during pending", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          mutationState: { status: "pending" },
+          step: "confirmation",
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    const confirmButton = screen.getByRole("button", { name: "Reversing..." });
+    expect(confirmButton.hasAttribute("disabled")).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Back" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect((screen.getByRole("textbox") as HTMLInputElement).disabled).toBe(
+      true,
+    );
+  });
+
+  it("renders the stable failure copy and disables confirm when mutation fails", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          mutationState: { result: "not_authorized", status: "failure" },
+          step: "confirmation",
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "You aren't authorized to reverse this redemption.",
+      ),
+    ).toBeTruthy();
+    expect(
+      (screen.getByRole("button", { name: "Confirm reversal" }) as
+        HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
+  it("renders the not_found copy distinctly from not_authorized", () => {
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          mutationState: { result: "not_found", status: "failure" },
+          step: "confirmation",
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(
+      screen.getByText("This redemption could not be found."),
+    ).toBeTruthy();
+  });
+
+  it("renders a Retry button for a transient mutation failure that calls the handler", () => {
+    const onRetryReversal = vi.fn();
+
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({
+          mutationState: {
+            isOffline: false,
+            message: "Please retry once your connection is stable.",
+            status: "transient_error",
+          },
+          onRetryReversal,
+          step: "confirmation",
+        })}
+        row={makeRow({})}
+      />,
+    );
+
+    expect(
+      screen.getByText("Please retry once your connection is stable."),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(onRetryReversal).toHaveBeenCalledTimes(1);
+  });
+
+  it("calls onBack when Back is clicked from the confirmation step", () => {
+    const onBack = vi.fn();
+
+    render(
+      <RedemptionDetailSheet
+        currentUserId="user-a"
+        eventCode="MAD"
+        onClose={() => {}}
+        returnFocusTargetId={null}
+        reversal={makeReversal({ onBack, step: "confirmation" })}
+        row={makeRow({})}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("moves focus to the Close button when the sheet opens", () => {
@@ -122,6 +464,7 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
@@ -139,6 +482,7 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={onClose}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
@@ -157,6 +501,7 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={onClose}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
@@ -178,17 +523,18 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId="return-target"
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
 
-    // Simulate close by passing row={null}
     rerender(
       <RedemptionDetailSheet
         currentUserId="user-a"
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId="return-target"
+        reversal={makeReversal()}
         row={null}
       />,
     );
@@ -204,12 +550,12 @@ describe("RedemptionDetailSheet", () => {
         eventCode="MAD"
         onClose={() => {}}
         returnFocusTargetId={null}
+        reversal={makeReversal()}
         row={makeRow({})}
       />,
     );
 
     const focusableButtons = screen.getAllByRole("button");
-    // Expect at least the scrim ("Close details") and the Close header button.
     expect(focusableButtons.length).toBeGreaterThanOrEqual(2);
 
     const first = focusableButtons[0];

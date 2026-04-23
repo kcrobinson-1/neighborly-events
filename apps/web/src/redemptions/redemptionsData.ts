@@ -15,6 +15,7 @@ const REDEMPTION_ROW_COLUMNS = [
   "redeemed_at",
   "redeemed_by",
   "redeemed_by_role",
+  "redemption_note",
   "redemption_reversed_at",
   "redemption_reversed_by",
   "redemption_reversed_by_role",
