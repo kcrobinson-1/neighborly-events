@@ -25,12 +25,12 @@ Recent browser walkthrough notes from the deployed `/admin` surface
 
 ### Align admin live status with public-route availability
 
-Status: tracked in [`admin-live-status-tracking.md`](./admin-live-status-tracking.md)
+Status: tracked in [`../plans/admin-live-status-plan.md`](../plans/admin-live-status-plan.md)
 
-This item graduated from the general admin UX roadmap into its own live-event
-readiness tracker because it is no longer just a polish concern. Use
-[`admin-live-status-tracking.md`](./admin-live-status-tracking.md) as the
-source of truth for:
+This item graduated from the general admin UX roadmap into its own plan
+because it is no longer just a polish concern. Use
+[`../plans/admin-live-status-plan.md`](../plans/admin-live-status-plan.md) as
+the source of truth for:
 
 - the confirmed root cause
 - the long-term end state

@@ -1,17 +1,21 @@
-# Admin Live Status Tracking
+# Admin Live Status Fix Plan
 
-This file is the source of truth for the Tier 1 backlog item:
+**Status:** Proposed
 
-- `Admin live status must match public route availability`
+**Scope:** Resolve the Tier 1 backlog item
+`Admin live status must match public route availability`. The plan sequences
+a correctness fix, a read-model cleanup, and a non-live action UX follow-up as
+separate slices so each can land and be reviewed on its own.
 
-Use it to track the confirmed root cause, the intended end state, the bounded
-fix slice, and the follow-up cleanup needed so this mismatch does not return.
+## Purpose
 
-## Status
+This plan is the source of truth for the confirmed root cause, the intended
+end state, the bounded fix slice, and the follow-up cleanup needed so this
+mismatch does not return.
 
-Open
+## Current State
 
-Current confirmed state as of `2026-04-21`:
+As of `2026-04-21`:
 
 - deployed `/admin` can show an event as `Live` while `Open live game` lands on
   the public unavailable state
@@ -78,7 +82,7 @@ This should land as a short sequence, not as one large cleanup PR.
 
 ### Slice 1: Correctness Fix
 
-Status: Open
+Status: Proposed
 
 Goal:
 
@@ -104,7 +108,7 @@ Acceptance bar:
 
 ### Slice 2: Read-Model Cleanup
 
-Status: Open
+Status: Proposed
 
 Goal:
 
@@ -128,7 +132,7 @@ Acceptance bar:
 
 ### Slice 3: Non-Live Action UX Follow-Up
 
-Status: Open
+Status: Proposed
 
 Goal:
 
@@ -145,7 +149,7 @@ required for the first PR.
 
 ## Non-Goals
 
-This tracker does not change:
+This plan does not change:
 
 - public attendee routing contracts beyond making admin reflect them correctly
 - general runtime-health monitoring or transient outage detection
@@ -164,6 +168,6 @@ This tracker does not change:
 ## Related Docs
 
 - [docs/backlog.md](../backlog.md)
-- [docs/tracking/admin-ux-roadmap.md](./admin-ux-roadmap.md)
+- [docs/tracking/admin-ux-roadmap.md](../tracking/admin-ux-roadmap.md)
 - [docs/operations.md](../operations.md)
 - [docs/testing.md](../testing.md)
