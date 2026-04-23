@@ -65,6 +65,7 @@ const draftSummaries = [
   {
     hasBeenPublished: true,
     id: "madrona-music-2026",
+    isLive: true,
     liveVersionNumber: 1,
     name: "Madrona Music in the Playfield",
     slug: "first-sample",
@@ -73,6 +74,7 @@ const draftSummaries = [
   {
     hasBeenPublished: false,
     id: "draft-market-2026",
+    isLive: false,
     liveVersionNumber: null,
     name: "Draft Market Day",
     slug: "draft-market",
@@ -91,6 +93,7 @@ function createDraftDetail(
   content = selectedDraftContent,
   liveVersionNumber: number | null = 1,
   eventCode: string | null = "MMF",
+  isLive = liveVersionNumber !== null,
 ) {
   return {
     content,
@@ -98,6 +101,7 @@ function createDraftDetail(
     eventCode,
     hasBeenPublished: liveVersionNumber !== null,
     id: content.id,
+    isLive,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
     liveVersionNumber,
     name: content.name,
@@ -345,9 +349,37 @@ describe("AdminPage", () => {
       within(liveEventCard).getByRole("button", { name: "Open live game" }),
     );
 
+    const draftOnlyEventCard = screen.getByLabelText("Draft Market Day event");
+
     expect(navigate).toHaveBeenCalledWith("/admin/events/madrona-music-2026");
     expect(navigate).toHaveBeenCalledWith("/event/first-sample/game");
-    expect(screen.getAllByRole("button", { name: "Open live game" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Open live game" })).toHaveLength(2);
+    expect(
+      within(draftOnlyEventCard).getByRole("button", { name: "Open live game" }),
+    ).toHaveProperty("disabled", true);
+  });
+
+  it("uses isLive rather than liveVersionNumber for list badges and counts", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetGameAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue([
+      {
+        ...draftSummaries[0],
+        isLive: false,
+      },
+      draftSummaries[1],
+    ]);
+
+    render(<AdminPage onNavigate={() => {}} />);
+
+    expect(await screen.findByText("0 live")).toBeTruthy();
+    expect(screen.getByText("2 draft only")).toBeTruthy();
+    expect(screen.queryByText("Live v1")).toBeNull();
+    expect(screen.getAllByText("Draft only")).toHaveLength(2);
   });
 
   it("creates a starter draft, updates the list, and opens the new workspace", async () => {
@@ -806,6 +838,10 @@ describe("AdminPage", () => {
 
     expect(navigate).toHaveBeenCalledWith("/admin");
     expect(await screen.findByText("Updated Madrona Event")).toBeTruthy();
+    expect(screen.getByText("1 live")).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: "Open live game" })[0],
+    ).toHaveProperty("disabled", false);
   });
 
   it("saves existing question edits and preserves event details", async () => {
@@ -1469,6 +1505,10 @@ describe("AdminPage", () => {
 
       // Unpublish section must be visible now without a reload
       expect(screen.getByRole("button", { name: "Unpublish" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
+        "disabled",
+        false,
+      );
     });
 
     it("shows an error message when publish fails and re-enables the button", async () => {
@@ -1522,11 +1562,15 @@ describe("AdminPage", () => {
 
       fireEvent.click(screen.getByRole("button", { name: "Confirm unpublish" }));
 
-      // After unpublish the section disappears (liveVersionNumber → null) and
-      // state resets to idle — no separate success message is shown.
+      // After unpublish the event is no longer live without needing a reload.
       await waitFor(() => {
         expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull();
       });
+      expect(screen.getByText("Status: Draft only")).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
+        "disabled",
+        true,
+      );
     });
 
     it("cancels unpublish when Cancel is clicked and makes no API call", async () => {
@@ -1973,5 +2017,32 @@ describe("AdminPage", () => {
       // in the response so the client syncs to the canonical DB value.
       expect((screen.getByLabelText("Event code") as HTMLInputElement).value).toBe("ABC");
     });
+  });
+
+  it("disables Open live game for a previously published row when isLive is false", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetGameAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue([
+      {
+        ...draftSummaries[0],
+        isLive: false,
+      },
+    ]);
+    mockLoadDraftEvent.mockResolvedValue(
+      createDraftDetail(selectedDraftContent, 1, "MMF", false),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    expect(await screen.findByText("Status: Draft only")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
+      "disabled",
+      true,
+    );
+    expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull();
   });
 });

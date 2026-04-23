@@ -49,7 +49,7 @@ function formatSavedAt(timestamp: string) {
 }
 
 function getStatusLabel(draft: DraftEventSummary, hasDraftChanges = false) {
-  if (!draft.liveVersionNumber) {
+  if (!draft.isLive) {
     return "Draft only";
   }
 
@@ -61,7 +61,7 @@ function getStatusLabel(draft: DraftEventSummary, hasDraftChanges = false) {
 }
 
 function getEventCounts(drafts: DraftEventSummary[]) {
-  const liveCount = drafts.filter((draft) => draft.liveVersionNumber).length;
+  const liveCount = drafts.filter((draft) => draft.isLive).length;
 
   return {
     draftOnlyCount: drafts.length - liveCount,
@@ -220,16 +220,14 @@ export function AdminEventWorkspace({
           >
             Back to all events
           </button>
-          {selectedDraft.liveVersionNumber ? (
-            <button
-              className="secondary-button"
-              disabled={isWorkspaceBusy}
-              onClick={() => onNavigate(routes.game(selectedDraft.slug))}
-              type="button"
-            >
-              Open live game
-            </button>
-          ) : null}
+          <button
+            className="secondary-button"
+            disabled={isWorkspaceBusy || !selectedDraft.isLive}
+            onClick={() => onNavigate(routes.game(selectedDraft.slug))}
+            type="button"
+          >
+            Open live game
+          </button>
           <button
             className="secondary-button"
             disabled={isWorkspaceBusy}
@@ -365,16 +363,14 @@ export function AdminEventWorkspace({
                 >
                   Open workspace
                 </button>
-                {draft.liveVersionNumber ? (
-                  <button
-                    className="secondary-button"
-                    disabled={isWorkspaceBusy}
-                    onClick={() => onNavigate(routes.game(draft.slug))}
-                    type="button"
-                  >
-                    Open live game
-                  </button>
-                ) : null}
+                <button
+                  className="secondary-button"
+                  disabled={isWorkspaceBusy || !draft.isLive}
+                  onClick={() => onNavigate(routes.game(draft.slug))}
+                  type="button"
+                >
+                  Open live game
+                </button>
                 <button
                   className="secondary-button"
                   disabled={isWorkspaceBusy}

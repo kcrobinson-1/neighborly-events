@@ -27,10 +27,15 @@ type DraftEventRow = {
   updated_at: string;
 };
 
+type PublishedGameEventRow = {
+  id: string;
+};
+
 export type DraftEventSummary = {
   eventCode: string | null;
   hasBeenPublished: boolean;
   id: string;
+  isLive: boolean;
   liveVersionNumber: number | null;
   name: string;
   slug: string;
@@ -55,16 +60,56 @@ export type UnpublishEventResult = {
   unpublishedAt: string;
 };
 
-function mapDraftSummary(row: DraftEventRow): DraftEventSummary {
+export type SaveDraftEventResult = Omit<DraftEventSummary, "isLive">;
+
+function mapDraftSummary(row: DraftEventRow, isLive: boolean): DraftEventSummary {
   return {
     eventCode: row.event_code ?? null,
     hasBeenPublished: row.live_version_number !== null,
     id: row.id,
+    isLive,
     liveVersionNumber: row.live_version_number,
     name: row.name,
     slug: row.slug,
     updatedAt: row.updated_at,
   };
+}
+
+async function listPublishedGameEventIds(
+  eventIds: string[],
+): Promise<Set<string>> {
+  if (eventIds.length === 0) {
+    return new Set();
+  }
+
+  const { data, error } = await getBrowserSupabaseClient()
+    .from("game_events")
+    .select("id")
+    .in("id", eventIds);
+
+  if (error) {
+    throw new Error("We couldn't load the live event status right now.");
+  }
+
+  return new Set(
+    (data ?? []).map((row: PublishedGameEventRow) => row.id),
+  );
+}
+
+async function loadPublishedGameEvent(
+  eventId: string,
+): Promise<PublishedGameEventRow | null> {
+  const { data, error } = await getBrowserSupabaseClient()
+    .from("game_events")
+    .select("id")
+    .eq("id", eventId)
+    .maybeSingle<PublishedGameEventRow>();
+
+  if (error) {
+    throw new Error("We couldn't load the live event status right now.");
+  }
+
+  return data ?? null;
 }
 
 function createFunctionUrl(functionName: string) {
@@ -125,7 +170,14 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
     throw new Error("We couldn't load the draft events right now.");
   }
 
-  return (data ?? []).map((row: DraftEventRow) => mapDraftSummary(row));
+  const draftRows = (data ?? []) as DraftEventRow[];
+  const publishedGameEventIds = await listPublishedGameEventIds(
+    draftRows.map((row) => row.id),
+  );
+
+  return draftRows.map((row) =>
+    mapDraftSummary(row, publishedGameEventIds.has(row.id)),
+  );
 }
 
 /** Loads one private draft event document for an authenticated game admin. */
@@ -144,8 +196,10 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
     return null;
   }
 
+  const publishedGameEvent = await loadPublishedGameEvent(eventId);
+
   return {
-    ...mapDraftSummary(data),
+    ...mapDraftSummary(data, publishedGameEvent !== null),
     content: parseAuthoringGameDraftContent(data.content),
     createdAt: data.created_at ?? data.updated_at,
     lastSavedBy: data.last_saved_by ?? null,
@@ -156,8 +210,8 @@ export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail 
 export async function saveDraftEvent(
   content: AuthoringGameDraftContent,
   eventCode?: string | null,
-): Promise<DraftEventSummary> {
-  return await callAuthoringFunction<DraftEventSummary>(
+): Promise<SaveDraftEventResult> {
+  return await callAuthoringFunction<SaveDraftEventResult>(
     "save-draft",
     { content, eventCode: eventCode ?? null },
     "We couldn't save the draft right now.",

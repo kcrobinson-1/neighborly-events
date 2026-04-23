@@ -23,6 +23,7 @@ function createSourceDraft(
     content,
     createdAt: "2026-04-07T12:00:00.000Z",
     id: content.id,
+    isLive: true,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
     liveVersionNumber: 1,
     name: content.name,
@@ -45,6 +46,7 @@ describe("createStarterDraftContent", () => {
     const existingDrafts: DraftEventSummary[] = [
       {
         id: "untitled-event-abc123",
+        isLive: false,
         liveVersionNumber: null,
         name: "Untitled event abc123",
         slug: "untitled-event-abc123",
