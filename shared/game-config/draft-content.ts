@@ -22,7 +22,7 @@ export type AuthoringGameDraftRow = {
   created_at: string;
   id: string;
   last_saved_by: string | null;
-  live_version_number: number | null;
+  last_published_version_number: number | null;
   name: string;
   schema_version: number;
   slug: string;

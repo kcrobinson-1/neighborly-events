@@ -215,7 +215,7 @@ export async function ensureAdminE2eFixture(
         content: createDraftContent(config),
         event_code: eventCode,
         id: config.eventId,
-        live_version_number: null,
+        last_published_version_number: null,
         name: config.eventName,
         slug: config.eventSlug,
       },

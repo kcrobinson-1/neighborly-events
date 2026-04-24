@@ -1,6 +1,6 @@
 # Admin Live Status Fix Plan
 
-**Status:** In progress — Slice 1 landed in commit `8374ac7`; Slice 2 and Slice 3 remain proposed
+**Status:** In progress — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 remains proposed
 
 **Scope:** Resolve the Tier 1 backlog item
 `Admin live status must match public route availability`. The plan sequences
@@ -111,7 +111,10 @@ Acceptance bar:
 
 ### Slice 2: Read-Model Cleanup
 
-Status: Proposed
+Status: Landed in commits `ca62089`, `8f1cac8`, and `9480c4c`
+
+Execution plan:
+[admin-live-status-slice-2-plan.md](./admin-live-status-slice-2-plan.md).
 
 Goal:
 
@@ -165,9 +168,9 @@ This plan does not change:
 
 ## Validation Required To Close The Tier 1 Item
 
-Slice 1 satisfied the immediate correctness fix, but the parent Tier 1 backlog
-item stays open until the remaining Slice 2 / Slice 3 decisions are either
-landed or explicitly deferred in this parent plan with written rationale.
+Slices 1 and 2 satisfied the correctness fix and read-model cleanup. The
+parent Tier 1 backlog item stays open only for the remaining Slice 3 non-live
+action treatment.
 
 - browser check from `/admin` list and selected workspace through the public
   route before and after unpublish

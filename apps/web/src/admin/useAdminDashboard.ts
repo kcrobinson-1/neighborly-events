@@ -58,11 +58,11 @@ function mergeDraftSummary(
 
 function createLocalDraftSummary(
   savedDraft: SaveDraftEventResult,
-  isLive: boolean,
 ): DraftEventSummary {
   return {
     ...savedDraft,
-    isLive,
+    isLive: false,
+    status: "draft_only",
   };
 }
 
@@ -176,10 +176,7 @@ export function useAdminDashboard(selectedEventId?: string) {
 
     try {
       const content = createStarterDraftContent(dashboardState.drafts);
-      const savedDraft = createLocalDraftSummary(
-        await saveDraftEvent(content),
-        false,
-      );
+      const savedDraft = createLocalDraftSummary(await saveDraftEvent(content));
 
       setDashboardState((currentState: AdminDashboardState) =>
         currentState.status === "ready"
@@ -226,10 +223,7 @@ export function useAdminDashboard(selectedEventId?: string) {
         sourceDraft,
         dashboardState.drafts,
       );
-      const savedDraft = createLocalDraftSummary(
-        await saveDraftEvent(content),
-        false,
-      );
+      const savedDraft = createLocalDraftSummary(await saveDraftEvent(content));
 
       setDashboardState((currentState: AdminDashboardState) =>
         currentState.status === "ready"

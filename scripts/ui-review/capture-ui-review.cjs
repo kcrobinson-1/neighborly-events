@@ -337,28 +337,30 @@ async function installMockAdminSession(page, supabaseUrl) {
 
 const ADMIN_DRAFT_SUMMARY_FIXTURE = [
   {
-    id: "aaaaaaaa-0000-0000-0000-000000000001",
-    live_version_number: 3,
+    draft_updated_at: "2025-03-10T14:22:00.000Z",
+    event_code: "MSB",
+    event_id: "aaaaaaaa-0000-0000-0000-000000000001",
+    is_live: true,
+    last_published_version_number: 3,
     name: "Madrona Summer Block Party",
     slug: "madrona-summer",
-    updated_at: "2025-03-10T14:22:00.000Z",
+    status: "live",
   },
   {
-    id: "aaaaaaaa-0000-0000-0000-000000000002",
-    live_version_number: null,
+    draft_updated_at: "2025-03-08T09:05:00.000Z",
+    event_code: "GAW",
+    event_id: "aaaaaaaa-0000-0000-0000-000000000002",
+    is_live: false,
+    last_published_version_number: null,
     name: "Greenwood Arts Walk Draft",
     slug: "greenwood-arts-draft",
-    updated_at: "2025-03-08T09:05:00.000Z",
+    status: "draft_only",
   },
 ];
 
 const ADMIN_DRAFT_DETAIL_FIXTURE = [
   {
     id: "aaaaaaaa-0000-0000-0000-000000000001",
-    live_version_number: 3,
-    name: "Madrona Summer Block Party",
-    slug: "madrona-summer",
-    updated_at: "2025-03-10T14:22:00.000Z",
     created_at: "2025-01-15T08:00:00.000Z",
     last_saved_by: "admin@example.com",
     content: {
@@ -471,28 +473,25 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       });
     });
 
-    // game_event_drafts table reads (GET)
-    // Detail reads include content,created_at,last_saved_by in the select param.
-    // Summary reads include only id,live_version_number,name,slug,updated_at.
-    await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
+    // game_event_admin_status view reads (GET)
+    await page.route(`${supabaseUrl}/rest/v1/game_event_admin_status*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
         return;
       }
 
       const url = route.request().url();
-      const isDetailRead = url.includes("content") || url.includes("last_saved_by") || url.includes("created_at");
+      const isDetailRead = url.includes("event_id=eq.");
+      const detailRow = ADMIN_DRAFT_SUMMARY_FIXTURE[0];
 
       if (isDetailRead) {
-        // maybeSingle — Supabase returns the row directly when Accept: application/vnd.pgrst.object+json
-        // or as an array otherwise. The client uses .maybeSingle() so the JS client sets the Accept header.
         const acceptHeader = route.request().headers()["accept"] ?? "";
         const returnSingle = acceptHeader.includes("vnd.pgrst.object");
 
         void route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify(returnSingle ? ADMIN_DRAFT_DETAIL_FIXTURE[0] : ADMIN_DRAFT_DETAIL_FIXTURE),
+          body: JSON.stringify(returnSingle ? detailRow : [detailRow]),
         });
       } else {
         void route.fulfill({
@@ -503,13 +502,29 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       }
     });
 
+    // game_event_drafts detail content reads (GET)
+    await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
+      if (route.request().method() !== "GET") {
+        void route.continue();
+        return;
+      }
+      const acceptHeader = route.request().headers()["accept"] ?? "";
+      const returnSingle = acceptHeader.includes("vnd.pgrst.object");
+
+      void route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(returnSingle ? ADMIN_DRAFT_DETAIL_FIXTURE[0] : ADMIN_DRAFT_DETAIL_FIXTURE),
+      });
+    });
+
     // save-draft Edge Function (POST)
     const defaultSaveResponse = {
       hasBeenPublished: true,
       id: ADMIN_DRAFT_DETAIL_FIXTURE[0].id,
-      liveVersionNumber: ADMIN_DRAFT_DETAIL_FIXTURE[0].live_version_number,
-      name: ADMIN_DRAFT_DETAIL_FIXTURE[0].name,
-      slug: ADMIN_DRAFT_DETAIL_FIXTURE[0].slug,
+      lastPublishedVersionNumber: ADMIN_DRAFT_SUMMARY_FIXTURE[0].last_published_version_number,
+      name: ADMIN_DRAFT_DETAIL_FIXTURE[0].content.name,
+      slug: ADMIN_DRAFT_DETAIL_FIXTURE[0].content.slug,
       updatedAt: new Date().toISOString(),
     };
 

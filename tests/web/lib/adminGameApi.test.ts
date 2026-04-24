@@ -23,7 +23,7 @@ vi.mock("../../../apps/web/src/lib/supabaseBrowser.ts", () => ({
 import {
   listDraftEventSummaries,
   loadDraftEvent,
-  loadDraftEventLiveStatus,
+  loadDraftEventStatus,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
@@ -46,57 +46,47 @@ function createJsonResponse(body: unknown, status = 200) {
 
 function createSupabaseClientMock(
   options: {
-    draftRow?: unknown;
-    draftRows?: unknown[];
-    publishedMaybeSingleError?: { message: string } | null;
-    publishedRowsError?: { message: string } | null;
-    publishedRows?: unknown[];
+    draftContentRow?: unknown;
     session?: { access_token: string } | null;
+    statusMaybeSingleError?: { message: string } | null;
+    statusRow?: unknown;
+    statusRows?: unknown[];
   } = {},
 ) {
   const session = Object.hasOwn(options, "session")
     ? options.session
     : { access_token: "admin-token" };
-  const draftMaybeSingle = vi.fn().mockResolvedValue({
-    data: options.draftRow ?? null,
+  const statusMaybeSingle = vi.fn().mockResolvedValue({
+    data: options.statusRow ?? null,
+    error: options.statusMaybeSingleError ?? null,
+  });
+  const statusEq = vi.fn(() => ({
+    maybeSingle: statusMaybeSingle,
+  }));
+  const statusOrder = vi.fn().mockResolvedValue({
+    data: options.statusRows ?? [],
     error: null,
   });
-  const publishedMaybeSingle = vi.fn().mockResolvedValue({
-    data: options.publishedRows?.[0] ?? null,
-    error: options.publishedMaybeSingleError ?? null,
+  const statusSelect = vi.fn(() => ({
+    eq: statusEq,
+    order: statusOrder,
+    maybeSingle: statusMaybeSingle,
+  }));
+  const draftMaybeSingle = vi.fn().mockResolvedValue({
+    data: options.draftContentRow ?? null,
+    error: null,
   });
   const draftEq = vi.fn(() => ({
     maybeSingle: draftMaybeSingle,
   }));
-  const publishedEqNot = vi.fn(() => ({
-    maybeSingle: publishedMaybeSingle,
-  }));
-  const publishedEq = vi.fn(() => ({
-    not: publishedEqNot,
-  }));
-  const publishedInNot = vi.fn().mockResolvedValue({
-    data: options.publishedRows ?? [],
-    error: options.publishedRowsError ?? null,
-  });
-  const publishedIn = vi.fn(() => ({
-    not: publishedInNot,
-  }));
-  const draftOrder = vi.fn().mockResolvedValue({
-    data: options.draftRows ?? [],
-    error: null,
-  });
   const draftSelect = vi.fn(() => ({
     eq: draftEq,
-    order: draftOrder,
-  }));
-  const publishedSelect = vi.fn(() => ({
-    eq: publishedEq,
-    in: publishedIn,
+    maybeSingle: draftMaybeSingle,
   }));
   const from = vi.fn((table: string) => ({
     select:
-      table === "game_events"
-        ? publishedSelect
+      table === "game_event_admin_status"
+        ? statusSelect
         : draftSelect,
   }));
   const getSession = vi.fn().mockResolvedValue({
@@ -112,15 +102,28 @@ function createSupabaseClientMock(
     },
     draftEq,
     draftMaybeSingle,
-    draftOrder,
     draftSelect,
     from,
-    publishedEq,
-    publishedEqNot,
-    publishedIn,
-    publishedInNot,
-    publishedMaybeSingle,
-    publishedSelect,
+    statusEq,
+    statusMaybeSingle,
+    statusOrder,
+    statusSelect,
+  };
+}
+
+function createStatusRow(
+  overrides: Record<string, unknown> = {},
+) {
+  return {
+    draft_updated_at: "2026-04-08T12:00:00.000Z",
+    event_code: "MMF",
+    event_id: sampleDraft.id,
+    is_live: true,
+    last_published_version_number: 1,
+    name: sampleDraft.name,
+    slug: sampleDraft.slug,
+    status: "live",
+    ...overrides,
   };
 }
 
@@ -150,66 +153,69 @@ describe("adminGameApi", () => {
 
   it("loads and parses one live draft event through the authenticated Supabase client", async () => {
     const client = createSupabaseClientMock({
-      draftRow: {
+      draftContentRow: {
         content: sampleDraft,
         created_at: "2026-04-07T12:00:00.000Z",
         id: sampleDraft.id,
         last_saved_by: "22222222-2222-4222-8222-222222222222",
-        live_version_number: 1,
-        name: sampleDraft.name,
-        slug: sampleDraft.slug,
-        updated_at: "2026-04-08T12:00:00.000Z",
       },
-      publishedRows: [{ id: sampleDraft.id }],
+      statusRow: createStatusRow(),
     });
     mockGetBrowserSupabaseClient.mockReturnValue(client);
 
     await expect(loadDraftEvent(sampleDraft.id)).resolves.toEqual({
       content: sampleDraft,
       createdAt: "2026-04-07T12:00:00.000Z",
-      eventCode: null,
+      eventCode: "MMF",
       hasBeenPublished: true,
       id: sampleDraft.id,
       isLive: true,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
+      status: "live",
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
 
+    expect(client.from).toHaveBeenCalledWith("game_event_admin_status");
     expect(client.from).toHaveBeenCalledWith("game_event_drafts");
   });
 
-  it("lists draft summaries with isLive derived from visible published game rows", async () => {
+  it("lists draft summaries from the admin status view", async () => {
     const client = createSupabaseClientMock({
-      draftRows: [
-        {
+      statusRows: [
+        createStatusRow({
+          draft_updated_at: "2026-04-11T12:00:00.000Z",
           event_code: "LIV",
-          id: "live-event",
-          live_version_number: 2,
+          event_id: "live-event",
+          is_live: true,
+          last_published_version_number: 2,
           name: "Live Event",
           slug: "live-event",
-          updated_at: "2026-04-11T12:00:00.000Z",
-        },
-        {
+          status: "live",
+        }),
+        createStatusRow({
+          draft_updated_at: "2026-04-10T12:00:00.000Z",
           event_code: "PAU",
-          id: "paused-event",
-          live_version_number: 2,
+          event_id: "paused-event",
+          is_live: false,
+          last_published_version_number: 2,
           name: "Paused Event",
           slug: "paused-event",
-          updated_at: "2026-04-10T12:00:00.000Z",
-        },
-        {
+          status: "draft_only",
+        }),
+        createStatusRow({
+          draft_updated_at: "2026-04-09T12:00:00.000Z",
           event_code: "DRF",
-          id: "draft-only-event",
-          live_version_number: null,
+          event_id: "draft-only-event",
+          is_live: false,
+          last_published_version_number: null,
           name: "Draft Only Event",
           slug: "draft-only-event",
-          updated_at: "2026-04-09T12:00:00.000Z",
-        },
+          status: "draft_only",
+        }),
       ],
-      publishedRows: [{ id: "live-event" }],
     });
     mockGetBrowserSupabaseClient.mockReturnValue(client);
 
@@ -219,9 +225,10 @@ describe("adminGameApi", () => {
         hasBeenPublished: true,
         id: "live-event",
         isLive: true,
-        liveVersionNumber: 2,
+        lastPublishedVersionNumber: 2,
         name: "Live Event",
         slug: "live-event",
+        status: "live",
         updatedAt: "2026-04-11T12:00:00.000Z",
       },
       {
@@ -229,9 +236,10 @@ describe("adminGameApi", () => {
         hasBeenPublished: true,
         id: "paused-event",
         isLive: false,
-        liveVersionNumber: 2,
+        lastPublishedVersionNumber: 2,
         name: "Paused Event",
         slug: "paused-event",
+        status: "draft_only",
         updatedAt: "2026-04-10T12:00:00.000Z",
       },
       {
@@ -239,54 +247,14 @@ describe("adminGameApi", () => {
         hasBeenPublished: false,
         id: "draft-only-event",
         isLive: false,
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Only Event",
         slug: "draft-only-event",
+        status: "draft_only",
         updatedAt: "2026-04-09T12:00:00.000Z",
       },
     ]);
-    expect(client.from).toHaveBeenCalledWith("game_event_drafts");
-    expect(client.from).toHaveBeenCalledWith("game_events");
-    expect(client.publishedIn).toHaveBeenCalledWith("id", [
-      "live-event",
-      "paused-event",
-      "draft-only-event",
-    ]);
-    expect(client.publishedInNot).toHaveBeenCalledWith(
-      "published_at",
-      "is",
-      null,
-    );
-  });
-
-  it("keeps draft summaries loadable when the live-status query fails", async () => {
-    const client = createSupabaseClientMock({
-      draftRows: [
-        {
-          event_code: "LIV",
-          id: "live-event",
-          live_version_number: 2,
-          name: "Live Event",
-          slug: "live-event",
-          updated_at: "2026-04-11T12:00:00.000Z",
-        },
-      ],
-      publishedRowsError: { message: "temporary game_events failure" },
-    });
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
-
-    await expect(listDraftEventSummaries()).resolves.toEqual([
-      {
-        eventCode: "LIV",
-        hasBeenPublished: true,
-        id: "live-event",
-        isLive: false,
-        liveVersionNumber: 2,
-        name: "Live Event",
-        slug: "live-event",
-        updatedAt: "2026-04-11T12:00:00.000Z",
-      },
-    ]);
+    expect(client.from).toHaveBeenCalledWith("game_event_admin_status");
   });
 
   it("saves drafts through the authenticated Edge Function with the user token", async () => {
@@ -299,7 +267,7 @@ describe("adminGameApi", () => {
       createJsonResponse({
         hasBeenPublished: true,
         id: sampleDraft.id,
-        liveVersionNumber: 2,
+        lastPublishedVersionNumber: 2,
         name: sampleDraft.name,
         slug: sampleDraft.slug,
         updatedAt: "2026-04-11T12:00:00.000Z",
@@ -311,7 +279,7 @@ describe("adminGameApi", () => {
     await expect(saveDraftEvent(sampleDraft)).resolves.toEqual({
       hasBeenPublished: true,
       id: sampleDraft.id,
-      liveVersionNumber: 2,
+      lastPublishedVersionNumber: 2,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-11T12:00:00.000Z",
@@ -408,20 +376,18 @@ describe("adminGameApi", () => {
     );
   });
 
-  it("loads an unpublished previously-published draft with isLive set false", async () => {
+  it("loads an unpublished previously-published draft with draft_only status", async () => {
     const client = createSupabaseClientMock({
-      draftRow: {
+      draftContentRow: {
         content: sampleDraft,
         created_at: "2026-04-07T12:00:00.000Z",
-        event_code: "MMF",
         id: sampleDraft.id,
         last_saved_by: "22222222-2222-4222-8222-222222222222",
-        live_version_number: 1,
-        name: sampleDraft.name,
-        slug: sampleDraft.slug,
-        updated_at: "2026-04-08T12:00:00.000Z",
       },
-      publishedRows: [],
+      statusRow: createStatusRow({
+        is_live: false,
+        status: "draft_only",
+      }),
     });
     mockGetBrowserSupabaseClient.mockReturnValue(client);
 
@@ -433,70 +399,46 @@ describe("adminGameApi", () => {
       id: sampleDraft.id,
       isLive: false,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
-      updatedAt: "2026-04-08T12:00:00.000Z",
-    });
-    expect(client.publishedEq).toHaveBeenCalledWith("id", sampleDraft.id);
-    expect(client.publishedEqNot).toHaveBeenCalledWith(
-      "published_at",
-      "is",
-      null,
-    );
-  });
-
-  it("keeps draft detail loadable when the live-status query fails", async () => {
-    const client = createSupabaseClientMock({
-      draftRow: {
-        content: sampleDraft,
-        created_at: "2026-04-07T12:00:00.000Z",
-        event_code: "MMF",
-        id: sampleDraft.id,
-        last_saved_by: "22222222-2222-4222-8222-222222222222",
-        live_version_number: 1,
-        name: sampleDraft.name,
-        slug: sampleDraft.slug,
-        updated_at: "2026-04-08T12:00:00.000Z",
-      },
-      publishedMaybeSingleError: { message: "temporary game_events failure" },
-    });
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
-
-    await expect(loadDraftEvent(sampleDraft.id)).resolves.toEqual({
-      content: sampleDraft,
-      createdAt: "2026-04-07T12:00:00.000Z",
-      eventCode: "MMF",
-      hasBeenPublished: true,
-      id: sampleDraft.id,
-      isLive: false,
-      lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
-      name: sampleDraft.name,
-      slug: sampleDraft.slug,
+      status: "draft_only",
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
   });
 
-  it("loads the current live status for one draft event", async () => {
+  it("loads the current status tuple for one draft event", async () => {
     const client = createSupabaseClientMock({
-      publishedRows: [{ id: sampleDraft.id }],
+      statusRow: createStatusRow({
+        event_id: sampleDraft.id,
+        is_live: true,
+        last_published_version_number: 2,
+        status: "live_with_draft_changes",
+      }),
     });
     mockGetBrowserSupabaseClient.mockReturnValue(client);
 
-    await expect(loadDraftEventLiveStatus(sampleDraft.id)).resolves.toBe(true);
-    expect(client.publishedEq).toHaveBeenCalledWith("id", sampleDraft.id);
-    expect(client.publishedEqNot).toHaveBeenCalledWith(
-      "published_at",
-      "is",
-      null,
-    );
+    await expect(loadDraftEventStatus(sampleDraft.id)).resolves.toEqual({
+      isLive: true,
+      lastPublishedVersionNumber: 2,
+      status: "live_with_draft_changes",
+    });
+    expect(client.statusEq).toHaveBeenCalledWith("event_id", sampleDraft.id);
 
-    client.publishedMaybeSingle.mockResolvedValueOnce({
-      data: null,
+    client.statusMaybeSingle.mockResolvedValueOnce({
+      data: createStatusRow({
+        event_id: sampleDraft.id,
+        is_live: false,
+        last_published_version_number: 2,
+        status: "draft_only",
+      }),
       error: null,
     });
 
-    await expect(loadDraftEventLiveStatus(sampleDraft.id)).resolves.toBe(false);
+    await expect(loadDraftEventStatus(sampleDraft.id)).resolves.toEqual({
+      isLive: false,
+      lastPublishedVersionNumber: 2,
+      status: "draft_only",
+    });
   });
 });

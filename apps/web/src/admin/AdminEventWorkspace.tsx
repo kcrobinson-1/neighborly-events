@@ -49,19 +49,19 @@ function formatSavedAt(timestamp: string) {
 }
 
 function getStatusLabel(draft: DraftEventSummary, hasDraftChanges = false) {
-  if (!draft.isLive) {
+  if (draft.status === "draft_only") {
     return "Draft only";
   }
 
-  if (hasDraftChanges) {
+  if (draft.status === "live_with_draft_changes" || hasDraftChanges) {
     return "Draft changes not published";
   }
 
-  return `Live v${draft.liveVersionNumber}`;
+  return `Live v${draft.lastPublishedVersionNumber}`;
 }
 
 function getEventCounts(drafts: DraftEventSummary[]) {
-  const liveCount = drafts.filter((draft) => draft.isLive).length;
+  const liveCount = drafts.filter((draft) => draft.status !== "draft_only").length;
 
   return {
     draftOnlyCount: drafts.length - liveCount,

@@ -14,7 +14,7 @@ const {
   mockGetGameAdminStatus,
   mockListDraftEventSummaries,
   mockLoadDraftEvent,
-  mockLoadDraftEventLiveStatus,
+  mockLoadDraftEventStatus,
   mockPublishDraftEvent,
   mockRequestMagicLink,
   mockSaveDraftEvent,
@@ -26,7 +26,7 @@ const {
   mockGetGameAdminStatus: vi.fn(),
   mockListDraftEventSummaries: vi.fn(),
   mockLoadDraftEvent: vi.fn(),
-  mockLoadDraftEventLiveStatus: vi.fn(),
+  mockLoadDraftEventStatus: vi.fn(),
   mockPublishDraftEvent: vi.fn(),
   mockRequestMagicLink: vi.fn(),
   mockSaveDraftEvent: vi.fn(),
@@ -49,7 +49,7 @@ vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
   getGameAdminStatus: mockGetGameAdminStatus,
   listDraftEventSummaries: mockListDraftEventSummaries,
   loadDraftEvent: mockLoadDraftEvent,
-  loadDraftEventLiveStatus: mockLoadDraftEventLiveStatus,
+  loadDraftEventStatus: mockLoadDraftEventStatus,
   publishDraftEvent: mockPublishDraftEvent,
   saveDraftEvent: mockSaveDraftEvent,
   unpublishEvent: mockUnpublishEvent,
@@ -69,18 +69,20 @@ const draftSummaries = [
     hasBeenPublished: true,
     id: "madrona-music-2026",
     isLive: true,
-    liveVersionNumber: 1,
+    lastPublishedVersionNumber: 1,
     name: "Madrona Music in the Playfield",
     slug: "first-sample",
+    status: "live" as const,
     updatedAt: "2026-04-07T16:15:00.000Z",
   },
   {
     hasBeenPublished: false,
     id: "draft-market-2026",
     isLive: false,
-    liveVersionNumber: null,
+    lastPublishedVersionNumber: null,
     name: "Draft Market Day",
     slug: "draft-market",
+    status: "draft_only" as const,
     updatedAt: "2026-04-08T16:15:00.000Z",
   },
 ];
@@ -94,21 +96,23 @@ const selectedDraftContent = {
 
 function createDraftDetail(
   content = selectedDraftContent,
-  liveVersionNumber: number | null = 1,
+  lastPublishedVersionNumber: number | null = 1,
   eventCode: string | null = "MMF",
-  isLive = liveVersionNumber !== null,
+  isLive = lastPublishedVersionNumber !== null,
+  status = isLive ? "live" : "draft_only",
 ) {
   return {
     content,
     createdAt: "2026-04-07T12:00:00.000Z",
     eventCode,
-    hasBeenPublished: liveVersionNumber !== null,
+    hasBeenPublished: lastPublishedVersionNumber !== null,
     id: content.id,
     isLive,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
-    liveVersionNumber,
+    lastPublishedVersionNumber,
     name: content.name,
     slug: content.slug,
+    status,
     updatedAt: "2026-04-08T12:00:00.000Z",
   };
 }
@@ -159,6 +163,10 @@ function getCheckboxValue(label: string) {
   return (screen.getByLabelText(label) as HTMLInputElement).checked;
 }
 
+function getStatusLine(text: string) {
+  return screen.getByText((_, element) => element?.textContent === `Status: ${text}`);
+}
+
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: unknown) => void;
@@ -179,14 +187,18 @@ describe("AdminPage", () => {
     mockGetGameAdminStatus.mockReset();
     mockListDraftEventSummaries.mockReset();
     mockLoadDraftEvent.mockReset();
-    mockLoadDraftEventLiveStatus.mockReset();
+    mockLoadDraftEventStatus.mockReset();
     mockPublishDraftEvent.mockReset();
     mockRequestMagicLink.mockReset();
     mockSaveDraftEvent.mockReset();
     mockSignOut.mockReset();
     mockUnpublishEvent.mockReset();
     mockUseAuthSession.mockReset();
-    mockLoadDraftEventLiveStatus.mockResolvedValue(true);
+    mockLoadDraftEventStatus.mockResolvedValue({
+      isLive: true,
+      lastPublishedVersionNumber: 1,
+      status: "live",
+    });
   });
 
   afterEach(() => {
@@ -364,7 +376,7 @@ describe("AdminPage", () => {
     ).toHaveProperty("disabled", true);
   });
 
-  it("uses isLive rather than liveVersionNumber for list badges and counts", async () => {
+  it("uses status rather than lastPublishedVersionNumber for list badges and counts", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
@@ -375,6 +387,7 @@ describe("AdminPage", () => {
       {
         ...draftSummaries[0],
         isLive: false,
+        status: "draft_only",
       },
       draftSummaries[1],
     ]);
@@ -398,7 +411,7 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockSaveDraftEvent.mockResolvedValue({
       id: "untitled-event-created",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Untitled event created",
       slug: "untitled-event-created",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -473,7 +486,7 @@ describe("AdminPage", () => {
 
     saveDraft.resolve({
       id: "untitled-event-created",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Untitled event created",
       slug: "untitled-event-created",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -495,14 +508,14 @@ describe("AdminPage", () => {
       createdAt: "2026-04-07T12:00:00.000Z",
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-copy",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Madrona Music in the Playfield Copy",
       slug: "madrona-copy",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -570,7 +583,7 @@ describe("AdminPage", () => {
       createdAt: "2026-04-07T12:00:00.000Z",
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
@@ -605,7 +618,7 @@ describe("AdminPage", () => {
       createdAt: "2026-04-07T12:00:00.000Z",
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
@@ -632,7 +645,7 @@ describe("AdminPage", () => {
 
     saveDraft.resolve({
       id: "madrona-copy",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Madrona Music in the Playfield Copy",
       slug: "madrona-copy",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -803,8 +816,9 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Updated Madrona Event",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -859,13 +873,14 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Updated Madrona Event",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
     });
-    mockLoadDraftEventLiveStatus.mockRejectedValueOnce(
+    mockLoadDraftEventStatus.mockRejectedValueOnce(
       new Error("Transient live-status refresh failure."),
     );
 
@@ -881,7 +896,7 @@ describe("AdminPage", () => {
       await screen.findByText("Saved Updated Madrona Event."),
     ).toBeTruthy();
     expect(screen.queryByText("We couldn't save the event details right now.")).toBeNull();
-    expect(await screen.findByText(/Draft changes not published/)).toBeTruthy();
+    expect(getStatusLine("Draft changes not published")).toBeTruthy();
   });
 
   it("saves existing question edits and preserves event details", async () => {
@@ -907,8 +922,9 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -963,13 +979,14 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
     });
-    mockLoadDraftEventLiveStatus.mockRejectedValueOnce(
+    mockLoadDraftEventStatus.mockRejectedValueOnce(
       new Error("Transient live-status refresh failure."),
     );
 
@@ -984,7 +1001,43 @@ describe("AdminPage", () => {
     expect(
       screen.queryByText("We couldn't save the question changes right now."),
     ).toBeNull();
-    expect(await screen.findByText(/Draft changes not published/)).toBeTruthy();
+    expect(getStatusLine("Draft changes not published")).toBeTruthy();
+  });
+
+  it("keeps the live label after a no-op save when live-status refresh fails", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetGameAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
+      id: "madrona-music-2026",
+      lastPublishedVersionNumber: 2,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+    mockLoadDraftEventStatus.mockRejectedValueOnce(
+      new Error("Transient live-status refresh failure."),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Event name");
+    fireEvent.change(screen.getByLabelText("Event name"), {
+      target: { value: " Madrona Music in the Playfield " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(
+      await screen.findByText("Saved Madrona Music in the Playfield."),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Draft changes not published/)).toBeNull();
+    expect(getStatusLine("Live v2")).toBeTruthy();
   });
 
   it("adds a question and saves the updated draft structure", async () => {
@@ -998,7 +1051,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1037,7 +1090,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1075,7 +1128,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1134,7 +1187,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1197,7 +1250,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1549,7 +1602,7 @@ describe("AdminPage", () => {
     });
 
     it("shows Unpublish button immediately after publishing a draft-only event", async () => {
-      // Regression: publishEvent must update selectedDraftState.draft.liveVersionNumber
+      // Regression: publishEvent must update selectedDraftState.draft.lastPublishedVersionNumber
       // so the unpublish section appears without a page reload for first-time publishes.
       mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
@@ -1558,7 +1611,7 @@ describe("AdminPage", () => {
       });
       mockGetGameAdminStatus.mockResolvedValue(true);
       mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
-      // Draft-only event: liveVersionNumber starts as null
+      // Draft-only event: lastPublishedVersionNumber starts as null
       mockLoadDraftEvent.mockResolvedValue(
         createDraftDetail(selectedDraftContent, null),
       );
@@ -1766,10 +1819,15 @@ describe("AdminPage", () => {
       mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
       mockSaveDraftEvent.mockResolvedValue({
         id: "madrona-music-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Madrona Music in the Playfield",
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
+      });
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live_with_draft_changes",
       });
       mockPublishDraftEvent.mockResolvedValue({
         eventId: "madrona-music-2026",
@@ -1811,10 +1869,15 @@ describe("AdminPage", () => {
       mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
       mockSaveDraftEvent.mockResolvedValue({
         id: "madrona-music-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Madrona Music in the Playfield",
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
+      });
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live_with_draft_changes",
       });
       mockPublishDraftEvent.mockResolvedValue({
         eventId: "madrona-music-2026",
@@ -1852,6 +1915,43 @@ describe("AdminPage", () => {
       await expectDraftChangesNotPublishedVisible();
     });
 
+    it("keeps the live label after a no-op save when the server reports live", async () => {
+      mockUseAuthSession.mockReturnValue({
+        email: "admin@example.com",
+        session: { access_token: "admin-token" },
+        status: "signed_in",
+      });
+      mockGetGameAdminStatus.mockResolvedValue(true);
+      mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+      mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+      mockSaveDraftEvent.mockResolvedValue({
+        id: "madrona-music-2026",
+        lastPublishedVersionNumber: 1,
+        name: "Madrona Music in the Playfield",
+        slug: "first-sample",
+        updatedAt: "2026-04-14T12:00:00.000Z",
+      });
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live",
+      });
+
+      renderAdminRoute("madrona-music-2026");
+
+      await screen.findByLabelText("Event name");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: " Madrona Music in the Playfield " },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      expect(
+        await screen.findByText("Saved Madrona Music in the Playfield."),
+      ).toBeTruthy();
+      await expectDraftChangesNotPublishedHidden();
+      expect(getStatusLine("Live v1")).toBeTruthy();
+    });
+
     it("refreshes live state after save when another admin publishes the event", async () => {
       mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
@@ -1876,12 +1976,16 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         hasBeenPublished: true,
         id: "draft-market-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Draft Market Day Updated",
         slug: "draft-market",
         updatedAt: "2026-04-14T12:00:00.000Z",
       });
-      mockLoadDraftEventLiveStatus.mockResolvedValue(true);
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live_with_draft_changes",
+      });
 
       renderAdminRoute("draft-market-2026");
 
@@ -1894,7 +1998,7 @@ describe("AdminPage", () => {
       expect(
         await screen.findByText("Saved Draft Market Day Updated."),
       ).toBeTruthy();
-      expect(mockLoadDraftEventLiveStatus).toHaveBeenCalledWith(
+      expect(mockLoadDraftEventStatus).toHaveBeenCalledWith(
         "draft-market-2026",
       );
       await expectDraftChangesNotPublishedVisible();
@@ -1917,12 +2021,16 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         hasBeenPublished: true,
         id: "madrona-music-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Madrona Music in the Playfield",
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
       });
-      mockLoadDraftEventLiveStatus.mockResolvedValue(false);
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: false,
+        lastPublishedVersionNumber: 1,
+        status: "draft_only",
+      });
 
       renderAdminRoute("madrona-music-2026");
 
@@ -1935,7 +2043,7 @@ describe("AdminPage", () => {
       expect(
         await screen.findByText("Saved Madrona Music in the Playfield."),
       ).toBeTruthy();
-      expect(mockLoadDraftEventLiveStatus).toHaveBeenCalledWith(
+      expect(mockLoadDraftEventStatus).toHaveBeenCalledWith(
         "madrona-music-2026",
       );
       await expectDraftChangesNotPublishedHidden();
@@ -1979,7 +2087,7 @@ describe("AdminPage", () => {
   });
 
   describe("event-code field", () => {
-    function setupSignedInWithDraft(liveVersionNumber: number | null = null, eventCode: string | null = "ABC") {
+    function setupSignedInWithDraft(lastPublishedVersionNumber: number | null = null, eventCode: string | null = "ABC") {
       mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
@@ -1988,7 +2096,7 @@ describe("AdminPage", () => {
       mockGetGameAdminStatus.mockResolvedValue(true);
       mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
       mockLoadDraftEvent.mockResolvedValue(
-        createDraftDetail(selectedDraftContent, liveVersionNumber, eventCode),
+        createDraftDetail(selectedDraftContent, lastPublishedVersionNumber, eventCode),
       );
     }
 
@@ -2042,7 +2150,7 @@ describe("AdminPage", () => {
       setupSignedInWithDraft(null, "ABC");
       mockSaveDraftEvent.mockResolvedValue({
         id: "draft-market-2026",
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Market Day",
         slug: "draft-market",
         updatedAt: "2026-04-13T12:00:00.000Z",
@@ -2138,7 +2246,7 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         eventCode: "XYZ",
         id: "draft-market-2026",
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Market Day",
         slug: "draft-market",
         updatedAt: "2026-04-13T12:00:00.000Z",
@@ -2163,7 +2271,7 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         eventCode: "ABC",
         id: "draft-market-2026",
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Market Day",
         slug: "draft-market",
         updatedAt: "2026-04-13T12:00:00.000Z",
@@ -2199,6 +2307,7 @@ describe("AdminPage", () => {
       {
         ...draftSummaries[0],
         isLive: false,
+        status: "draft_only",
       },
     ]);
     mockLoadDraftEvent.mockResolvedValue(

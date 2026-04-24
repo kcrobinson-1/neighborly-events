@@ -23,7 +23,7 @@ type DraftSavePersistenceInput = {
 type DraftSaveRow = {
   event_code: string | null;
   id: string;
-  live_version_number: number | null;
+  last_published_version_number: number | null;
   name: string;
   slug: string;
   updated_at: string;
@@ -41,7 +41,7 @@ type EventCodeGenerationResult = {
 
 type ExistingDraftRow = {
   event_code: string | null;
-  live_version_number: number | null;
+  last_published_version_number: number | null;
   slug: string;
 };
 
@@ -77,13 +77,13 @@ async function saveDraft(
 
   const { data: existing } = await supabase
     .from("game_event_drafts")
-    .select("event_code,live_version_number,slug")
+    .select("event_code,last_published_version_number,slug")
     .eq("id", input.content.id)
     .maybeSingle<ExistingDraftRow>();
 
   if (
     existing !== null &&
-    existing.live_version_number !== null &&
+    existing.last_published_version_number !== null &&
     existing.slug !== input.content.slug
   ) {
     return {
@@ -97,7 +97,7 @@ async function saveDraft(
 
   if (
     existing !== null &&
-    existing.live_version_number !== null &&
+    existing.last_published_version_number !== null &&
     input.eventCode !== null &&
     input.eventCode !== existing.event_code
   ) {
@@ -192,7 +192,7 @@ async function upsertDraft(
         onConflict: "id",
       },
     )
-    .select("event_code,id,live_version_number,name,slug,updated_at")
+    .select("event_code,id,last_published_version_number,name,slug,updated_at")
     .single<DraftSaveRow>();
 }
 
@@ -380,9 +380,9 @@ export function createSaveDraftHandler(
         200,
         {
           eventCode: data.event_code,
-          hasBeenPublished: data.live_version_number !== null,
+          hasBeenPublished: data.last_published_version_number !== null,
           id: data.id,
-          liveVersionNumber: data.live_version_number,
+          lastPublishedVersionNumber: data.last_published_version_number,
           name: data.name,
           slug: data.slug,
           updatedAt: data.updated_at,
