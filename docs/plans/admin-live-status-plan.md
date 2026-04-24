@@ -1,6 +1,6 @@
 # Admin Live Status Fix Plan
 
-**Status:** In progress — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 remains proposed
+**Status:** In progress pending prod smoke — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 merge-phase implementation landed in commits `f750be2`, `7630d88`, and `bbc0c84`
 
 **Scope:** Resolve the Tier 1 backlog item
 `Admin live status must match public route availability`. The plan sequences
@@ -138,7 +138,10 @@ Acceptance bar:
 
 ### Slice 3: Non-Live Action UX Follow-Up
 
-Status: Proposed
+Status: In progress pending prod smoke (merge-phase implementation commits: `f750be2`, `7630d88`, `bbc0c84`)
+
+Execution plan:
+[admin-live-status-slice-3-plan.md](./admin-live-status-slice-3-plan.md).
 
 Goal:
 
@@ -157,6 +160,20 @@ Required work:
 This slice can follow the correctness fix unless the chosen action treatment is
 required for the first PR.
 
+Because Slice 3 extends production-smoke assertions, completion follows
+`docs/testing-tiers.md` "Plan-to-Landed Gate For Plans That Touch Production
+Smoke": the merge-phase PR sets plan state to
+`In progress pending prod smoke` (exact string), and the final `Landed` flip
+happens only in a post-release docs commit that records a passing production
+smoke workflow run URL.
+
+## Deferred Follow-Up
+
+- `paused` status is explicitly out of scope for this three-slice plan. It
+  requires a distinct operator action and audit semantics beyond the existing
+  publish/unpublish model. When prioritized, it lands as a separate product
+  plan/PR rather than holding this Tier 1 live-status correctness plan open.
+
 ## Non-Goals
 
 This plan does not change:
@@ -172,12 +189,21 @@ Slices 1 and 2 satisfied the correctness fix and read-model cleanup. The
 parent Tier 1 backlog item stays open only for the remaining Slice 3 non-live
 action treatment.
 
+Merge phase (Tiers 1-4, valid pre-merge gates):
+
 - browser check from `/admin` list and selected workspace through the public
   route before and after unpublish
 - `npm run test:e2e:admin`
-- production admin smoke rerun, or equivalent deployed verification, that
-  proves the persisted reloaded admin state matches the public route
 - regression coverage for the exact publish -> unpublish -> reload mismatch
+- production-smoke spec assertions are extended in the PR, but Tier 5 is not
+  run as a contributor merge gate
+
+Landed phase (Tier 5 post-release gate):
+
+- production admin smoke passes against deployed production with the Slice 3
+  assertions
+- the follow-up docs commit records the production-smoke workflow run URL and
+  flips plan status from `In progress pending prod smoke` to `Landed`
 
 ## Related Docs
 
@@ -185,3 +211,4 @@ action treatment.
 - [docs/tracking/admin-ux-roadmap.md](../tracking/admin-ux-roadmap.md)
 - [docs/operations.md](../operations.md)
 - [docs/testing.md](../testing.md)
+- [docs/testing-tiers.md](../testing-tiers.md)

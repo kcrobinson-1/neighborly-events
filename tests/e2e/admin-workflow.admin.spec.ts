@@ -1,9 +1,11 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   ensureAdminE2eFixture,
   installAuthoringFunctionProxy,
   readPublishedEventState,
 } from "./admin-auth-fixture";
+
+const openLiveGameNotLiveReason = "Publish this event to open the live game.";
 
 async function readLiveCount(page: Page) {
   const liveSummary = page
@@ -22,6 +24,27 @@ async function readLiveCount(page: Page) {
   }
 
   return Number(liveCountMatch[1]);
+}
+
+async function expectOpenLiveGameDisabledState(
+  page: Page,
+  button: Locator,
+  reason: string,
+) {
+  await expect(button).toBeDisabled();
+  await expect(button).toHaveAttribute("aria-disabled", "true");
+  const reasonId = await button.getAttribute("aria-describedby");
+
+  if (!reasonId) {
+    throw new Error("Expected Open live game to set aria-describedby when disabled.");
+  }
+
+  await expect(page.locator(`#${reasonId}`)).toHaveText(reason);
+}
+
+async function expectOpenLiveGameEnabledState(button: Locator) {
+  await expect(button).not.toHaveAttribute("aria-disabled", "true");
+  expect(await button.getAttribute("aria-describedby")).toBeNull();
 }
 
 test.describe("admin authoring workflow", () => {
@@ -52,6 +75,9 @@ test.describe("admin authoring workflow", () => {
 
     await page.getByRole("button", { name: "Publish draft" }).click();
     await expect(page.getByText(/Published as version/)).toBeVisible();
+    await expectOpenLiveGameEnabledState(
+      page.getByRole("button", { name: "Open live game" }),
+    );
 
     const publishedState = await readPublishedEventState(fixture.eventId);
     expect(publishedState).not.toBeNull();
@@ -83,14 +109,30 @@ test.describe("admin authoring workflow", () => {
     await expect(reloadedEventCard).toBeVisible();
     await expect(reloadedEventCard.getByText("Draft only")).toBeVisible();
     await expect(reloadedEventCard.getByText(/^Live v/)).toHaveCount(0);
-    await expect(
-      reloadedEventCard.getByRole("button", { name: "Open live game" }),
-    ).toBeDisabled();
+    const reloadedOpenLiveGameButton = reloadedEventCard.getByRole("button", {
+      name: "Open live game",
+    });
+    await expectOpenLiveGameDisabledState(
+      page,
+      reloadedOpenLiveGameButton,
+      openLiveGameNotLiveReason,
+    );
+    await reloadedEventCard.getByRole("button", { name: "Open workspace" }).focus();
+    await page.keyboard.press("Tab");
+    await expect(reloadedOpenLiveGameButton).toBeFocused();
 
     await reloadedEventCard.getByRole("button", { name: "Open workspace" }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${fixture.eventId}$`));
     await expect(page.getByText("Status: Draft only")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Open live game" })).toBeDisabled();
+    const workspaceOpenLiveGameButton = page.getByRole("button", { name: "Open live game" });
+    await expectOpenLiveGameDisabledState(
+      page,
+      workspaceOpenLiveGameButton,
+      openLiveGameNotLiveReason,
+    );
+    await page.getByRole("button", { name: "Back to all events" }).focus();
+    await page.keyboard.press("Tab");
+    await expect(workspaceOpenLiveGameButton).toBeFocused();
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(
