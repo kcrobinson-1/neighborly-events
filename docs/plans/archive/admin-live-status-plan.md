@@ -207,8 +207,8 @@ Landed phase (Tier 5 post-release gate):
 
 ## Related Docs
 
-- [docs/backlog.md](../backlog.md)
-- [docs/tracking/admin-ux-roadmap.md](../tracking/admin-ux-roadmap.md)
-- [docs/operations.md](../operations.md)
-- [docs/testing.md](../testing.md)
-- [docs/testing-tiers.md](../testing-tiers.md)
+- [docs/backlog.md](../../backlog.md)
+- [docs/tracking/admin-ux-roadmap.md](../../tracking/admin-ux-roadmap.md)
+- [docs/operations.md](../../operations.md)
+- [docs/testing.md](../../testing.md)
+- [docs/testing-tiers.md](../../testing-tiers.md)

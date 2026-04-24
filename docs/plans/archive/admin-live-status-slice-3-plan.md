@@ -21,7 +21,7 @@ separate from the live-status correctness the parent plan tracks.
 
 Because this slice extends Tier 5 production smoke assertions, status
 transitions follow the two-phase rule in
-[docs/testing-tiers.md](../testing-tiers.md): merge-phase docs use the
+[docs/testing-tiers.md](../../testing-tiers.md): merge-phase docs use the
 exact status `In progress pending prod smoke`, then a post-release docs
 commit flips to `Landed` only after production smoke passes and the run
 URL is recorded.
@@ -35,8 +35,8 @@ deliberately deferred the non-live action treatment:
 
 - today `Open live game` uses the native `disabled` attribute driven by
   `isWorkspaceBusy || !selectedDraft.isLive` at
-  [apps/web/src/admin/AdminEventWorkspace.tsx:225](../../apps/web/src/admin/AdminEventWorkspace.tsx)
-  and [apps/web/src/admin/AdminEventWorkspace.tsx:368](../../apps/web/src/admin/AdminEventWorkspace.tsx).
+  [apps/web/src/admin/AdminEventWorkspace.tsx:225](../../../apps/web/src/admin/AdminEventWorkspace.tsx)
+  and [apps/web/src/admin/AdminEventWorkspace.tsx:368](../../../apps/web/src/admin/AdminEventWorkspace.tsx).
   The same visual state is emitted for two very different operator
   situations ("event is not published" and "the workspace is mid-save"),
   and the only signal distinguishing them is the mutation message
@@ -44,7 +44,7 @@ deliberately deferred the non-live action treatment:
 - native `disabled` removes the button from the tab order, so AT users
   cannot reach any explanation of why the action is unavailable. The
   only `aria-describedby` precedent in the repo today is
-  [apps/web/src/game/components/CurrentQuestionPanel.tsx:110](../../apps/web/src/game/components/CurrentQuestionPanel.tsx);
+  [apps/web/src/game/components/CurrentQuestionPanel.tsx:110](../../../apps/web/src/game/components/CurrentQuestionPanel.tsx);
   admin has no equivalent pattern yet.
 - the parent plan's Slice 3 acceptance bar explicitly names this
   distinction as the remaining gap before the Tier 1 backlog item can
@@ -222,8 +222,8 @@ text pattern as a reusable admin convention.
 
 - The current spec uses `toBeDisabled()` at both `Open live game`
   call sites
-  ([line 100](../../tests/e2e/admin-production-smoke.spec.ts) on the
-  reloaded event-list card, [line 105](../../tests/e2e/admin-production-smoke.spec.ts)
+  ([line 100](../../../tests/e2e/admin-production-smoke.spec.ts) on the
+  reloaded event-list card, [line 105](../../../tests/e2e/admin-production-smoke.spec.ts)
   on the workspace detail). Playwright's `toBeDisabled()` is
   satisfied by either `disabled` or `aria-disabled="true"`, so the
   existing assertion would silently pass on the new UX without ever
@@ -334,7 +334,7 @@ Stop and report instead of editing if any baseline step fails.
 
 ## Named Self-Review Audits
 
-From [docs/self-review-catalog.md](../self-review-catalog.md), applied
+From [docs/self-review-catalog.md](../../self-review-catalog.md), applied
 at the commit boundary noted in parentheses:
 
 - **Frontend — Post-save reconciliation audit** (commit 1): the reason
@@ -372,8 +372,8 @@ commit boundary rather than rediscovering them at review time:
 - **Runbook — Production smoke actuation** (commit 2 + post-release
   landed commit): the existing
   smoke assertions at
-  [tests/e2e/admin-production-smoke.spec.ts:100](../../tests/e2e/admin-production-smoke.spec.ts)
-  and [tests/e2e/admin-production-smoke.spec.ts:105](../../tests/e2e/admin-production-smoke.spec.ts)
+  [tests/e2e/admin-production-smoke.spec.ts:100](../../../tests/e2e/admin-production-smoke.spec.ts)
+  and [tests/e2e/admin-production-smoke.spec.ts:105](../../../tests/e2e/admin-production-smoke.spec.ts)
   use Playwright's `toBeDisabled()` matcher, which is satisfied by
   both native `disabled` and `aria-disabled="true"`. That means the
   current assertion would silently continue passing against the new
@@ -525,7 +525,7 @@ cross-site drift the slice is designed to prevent.
 - [docs/plans/admin-live-status-plan.md](./admin-live-status-plan.md)
 - [docs/plans/admin-live-status-slice-1-plan.md](./admin-live-status-slice-1-plan.md)
 - [docs/plans/admin-live-status-slice-2-plan.md](./admin-live-status-slice-2-plan.md)
-- [docs/backlog.md](../backlog.md)
-- [docs/tracking/admin-ux-roadmap.md](../tracking/admin-ux-roadmap.md)
-- [docs/self-review-catalog.md](../self-review-catalog.md)
-- [docs/testing-tiers.md](../testing-tiers.md)
+- [docs/backlog.md](../../backlog.md)
+- [docs/tracking/admin-ux-roadmap.md](../../tracking/admin-ux-roadmap.md)
+- [docs/self-review-catalog.md](../../self-review-catalog.md)
+- [docs/testing-tiers.md](../../testing-tiers.md)

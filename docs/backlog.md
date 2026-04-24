@@ -21,7 +21,7 @@ steps, and validation commands.
 
 - Open questions and product decisions: [`docs/open-questions.md`](./open-questions.md)
 - Terminology migration planning: [`docs/plans/archive/terminology-migration-strategy.md`](./plans/archive/terminology-migration-strategy.md)
-- Admin live-status fix plan: [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)
+- Admin live-status fix plan: [`docs/plans/archive/admin-live-status-plan.md`](./plans/archive/admin-live-status-plan.md)
 - Admin UX polish: [`docs/tracking/admin-ux-roadmap.md`](./tracking/admin-ux-roadmap.md)
 - Contributor workflow tooling: [`docs/tracking/dev-workflow-improvements.md`](./tracking/dev-workflow-improvements.md)
 - Continuous deployment planning: [`docs/plans/continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md)
@@ -62,7 +62,7 @@ Reduce deployment risk and contributor friction before the live event.
   `game_event_drafts` RLS coverage for the “authenticated but not allowlisted
   sees zero rows” case. Add a direct view-level assertion so future view or
   policy changes cannot widen access silently.
-  Detail: [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)
+  Detail: [`docs/plans/archive/admin-live-status-plan.md`](./plans/archive/admin-live-status-plan.md)
 
 ---
 
@@ -101,28 +101,28 @@ prioritization before starting.
   Pause the attendee completion-screen poll while the tab is hidden and force
   one immediate refresh on resume so long-lived hidden tabs do not keep making
   unnecessary requests.
-  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+  Detail: [`docs/plans/archive/reward-redemption-phase-c-1-plan.md`](./plans/archive/reward-redemption-phase-c-1-plan.md)
 
 - [ ] **`ux` Manual attendee redemption-status refresh**
   Add a `Refresh status` affordance on the completion screen so an attendee can
   trigger a re-read without waiting for the next polling tick.
-  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+  Detail: [`docs/plans/archive/reward-redemption-phase-c-1-plan.md`](./plans/archive/reward-redemption-phase-c-1-plan.md)
 
 - [ ] **`ux` Timestamped attendee redeemed-state copy**
   Add redeemed-at time copy on the attendee completion screen, including the
   locale/timezone handling needed to make that timestamp trustworthy.
-  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+  Detail: [`docs/plans/archive/reward-redemption-phase-c-1-plan.md`](./plans/archive/reward-redemption-phase-c-1-plan.md)
 
 - [ ] **`ux` Attendee completion freshness and transient-error state**
   Surface lightweight freshness/error guidance on the completion screen so a
   long backend outage does not leave attendees staring at stale status with no
   explanation.
-  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+  Detail: [`docs/plans/archive/reward-redemption-phase-c-1-plan.md`](./plans/archive/reward-redemption-phase-c-1-plan.md)
 
 - [ ] **`ux` Reversal-aware attendee completion copy**
   Distinguish a row that flipped from redeemed back to unredeemed mid-session
   instead of falling back to the generic ready-for-check-in wording.
-  Detail: [`docs/plans/reward-redemption-phase-c-1-plan.md`](./plans/reward-redemption-phase-c-1-plan.md)
+  Detail: [`docs/plans/archive/reward-redemption-phase-c-1-plan.md`](./plans/archive/reward-redemption-phase-c-1-plan.md)
 
 - [ ] **`dev` Admin draft preview** (Phase 4.5)
   Let an admin preview the attendee experience from the draft before publishing.

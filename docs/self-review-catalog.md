@@ -314,7 +314,7 @@ initial-render output.
 
 **Example.** Introduced alongside `useAttendeeRedemptionStatus` in
 Phase C.1
-([`reward-redemption-phase-c-1-plan.md`](plans/reward-redemption-phase-c-1-plan.md)),
+([`reward-redemption-phase-c-1-plan.md`](plans/archive/reward-redemption-phase-c-1-plan.md)),
 the first interval-based fetch in the web app. The closest prior art
 is the `isCancelled` pattern in
 [`apps/web/src/game/useGameSession.ts`](../apps/web/src/game/useGameSession.ts),

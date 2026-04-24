@@ -8,11 +8,11 @@ B.2b landed in
 [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md).
 Execution plans for each sub-phase were drafted separately, close to
 their implementation time, following the Phase A precedent
-([A.1](./archive/reward-redemption-phase-a-1-plan.md),
-[A.2a](./archive/reward-redemption-phase-a-2-plan.md),
-[A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
+([A.1](./reward-redemption-phase-a-1-plan.md),
+[A.2a](./reward-redemption-phase-a-2-plan.md),
+[A.2b](./reward-redemption-phase-a-2b-plan.md)).
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
-**Predecessor:** [`reward-redemption-phase-a-2b-plan.md`](./archive/reward-redemption-phase-a-2b-plan.md)
+**Predecessor:** [`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md)
 — landed; the trusted backend endpoints (`redeem-entitlement`,
 `reverse-entitlement-redemption`, `get-redemption-status`) are callable.
 **Scope:** Phase B only — the mobile operator UI for the redemption MVP.
@@ -36,7 +36,7 @@ the two operator-facing routes called out in the parent design:
 These routes deploy inert at first: no nav entry, no `/admin` link, no
 role seeding. They become usable only after Phase D seeds the event's
 agent and organizer assignments through the reviewed
-[`supabase/role-management/`](../../supabase/role-management/README.md)
+[`supabase/role-management/`](../../../supabase/role-management/README.md)
 runbook.
 
 ## Why Phase B Splits Into Three Sub-Phases
@@ -94,7 +94,7 @@ Phase B does not start until all three prerequisites are in `main`:
    rather than the admin-labelled form. Landing the generalization
    first keeps each sub-phase's diff focused on its dominant behavior
    rather than auth plumbing.
-2. **[A.2b](./archive/reward-redemption-phase-a-2b-plan.md).** *Landed.* The
+2. **[A.2b](./reward-redemption-phase-a-2b-plan.md).** *Landed.* The
    three Edge Functions and `shared/redemption.ts` contracts are in
    place. B.1 and B.2b consume them unchanged (B.2a consumes only the
    A.2a RLS read surface, not an Edge Function). Any discovered need
@@ -252,7 +252,7 @@ so each sub-phase plan can inherit them rather than re-deciding:
   `/auth/callback?next=...`, which validates the `next` path through
   `validateNextPath` and client-routes to the requesting route. Each
   Phase B sub-phase extends `AppPath` in
-  [`apps/web/src/routes.ts`](../../apps/web/src/routes.ts) with its
+  [`apps/web/src/routes.ts`](../../../apps/web/src/routes.ts) with its
   new route literal, adds the route matcher to `validateNextPath`'s
   allow-list, and adds positive-case Vitest assertions for the new
   route. `AuthNextPath`'s `Exclude` narrowing is automatic, so
@@ -268,7 +268,7 @@ so each sub-phase plan can inherit them rather than re-deciding:
 - **Transport.** Mutation paths call the A.2b Edge Functions unchanged
   (`redeem-entitlement` in B.1; `reverse-entitlement-redemption` in
   B.2b), with request bodies and response envelopes coming from
-  [`shared/redemption.ts`](../../shared/redemption.ts). The
+  [`shared/redemption.ts`](../../../shared/redemption.ts). The
   monitoring list in B.2a reads `game_entitlements` directly through
   the browser Supabase client, protected by the A.2a RLS read policy
   and an explicit `.eq("event_id", eventId)` scope. No new Edge
@@ -279,7 +279,7 @@ so each sub-phase plan can inherit them rather than re-deciding:
   `Error-surfacing for user-initiated mutations` self-review audit
   applies to both sub-phase diffs.
 - **Styling tokens.** Prefer existing tokens from
-  [`apps/web/src/styles/_tokens.scss`](../../apps/web/src/styles/_tokens.scss).
+  [`apps/web/src/styles/_tokens.scss`](../../../apps/web/src/styles/_tokens.scss).
   Introduce new tokens only when a value is reused across sub-phases
   (e.g., status-badge palettes shared by the B.2a list and the B.2b
   detail-sheet confirmation). The first sub-phase to need a token
@@ -322,7 +322,7 @@ so each sub-phase plan can inherit them rather than re-deciding:
 7. **Implement B.2b.** Land the reversal CTA + confirmation flow.
 8. **Update `docs/backlog.md` and `docs/architecture.md`** as each
    sub-phase lands, per
-   [`AGENTS.md`](../../AGENTS.md) § "Doc Currency Is a PR Gate".
+   [`AGENTS.md`](../../../AGENTS.md) § "Doc Currency Is a PR Gate".
 9. **Hand off to Phase C.** Phase B does not block Phase C; the
    attendee status endpoint is already live and Phase C can run in
    parallel with B.2a/B.2b if operator scheduling allows.
