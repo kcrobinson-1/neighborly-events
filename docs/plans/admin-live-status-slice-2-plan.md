@@ -61,9 +61,12 @@ cleanup plus one additive read view, driven by the structural issues above.
    needs today. Grant read access to the roles that already read
    `game_event_drafts`.
 3. Switch `apps/web/src/lib/adminGameApi.ts` to source admin reads from
-   the view. Drop the separate `game_events` query added in Slice 1. Expose
-   a `status: AdminEventStatus` field through the transport alongside the
-   existing `isLive`, `liveVersionNumber`, and `hasBeenPublished` fields.
+   the view. Drop the separate `game_events` query added in Slice 1.
+   Expose a `status: AdminEventStatus` field through the transport
+   alongside the existing `isLive` and `hasBeenPublished` fields; the
+   `liveVersionNumber` TS field is renamed to `lastPublishedVersionNumber`
+   in commit 1 alongside the DB column rename (see Per-Surface
+   Contracts).
 4. Swap admin UI consumers that currently derive status from a combination
    of `isLive` + client-only `hasDraftChanges` over to read the server
    `status` value where the decision is a persistence-level question.
@@ -97,11 +100,15 @@ cleanup plus one additive read view, driven by the structural issues above.
   same moment — Slice 1's correctness invariant is preserved, not
   regressed. Any call site that previously read `isLive` still reads a
   value that equals `published_at is not null` for that event.
-- The view is additive. The existing `game_event_drafts` and `game_events`
-  tables, their RLS policies, the publish and unpublish RPCs, and the
-  save-draft Edge Function continue to work unchanged after Slice 2. If
-  the view is dropped, the previous admin reads would still be usable with
-  the Slice 1 code path; this is the rollback property called out below.
+- The view itself is additive — dropping it touches no table, RPC, or
+  trigger, and carries no persistence state. The existing
+  `game_event_drafts` and `game_events` tables, their RLS policies, the
+  publish and unpublish RPCs, and the save-draft Edge Function continue
+  to work unchanged after Slice 2. This is a property of the view object,
+  not a claim that dropping the view alone restores the Slice 1 admin
+  read path — the column rename in commit 1 also touches the frontend
+  transport, so restoring the Slice 1 shape requires reverting commit 3
+  first (see Rollback).
 
 ## Per-Surface Contracts
 
@@ -145,18 +152,50 @@ cleanup plus one additive read view, driven by the structural issues above.
     value, so the client can continue to render "last saved" without a
     second query
 - Status derivation rule, documented in the view comment:
-  - `draft_only` when `last_published_version_number is null`
-  - `live` when `game_events.published_at is not null`
-    and `game_event_drafts.updated_at <= game_event_drafts.last_published_at`
-  - `live_with_draft_changes` when `game_events.published_at is not null`
-    and `game_event_drafts.updated_at > game_event_drafts.last_published_at`
-  - The combination "`last_published_version_number is not null` and
-    `game_events.published_at is null`" (previously-published-then-
-    unpublished) returns `draft_only` under this slice. The parent plan's
-    `paused` state is the intended future label for this row; it is not
-    introduced here because distinguishing a "paused with intent to
-    restore" unpublish from a plain unpublish requires a new operator
-    action. See Non-Goals.
+  - `draft_only` when `last_published_version_number is null`, or when
+    `last_published_version_number is not null` and
+    `game_events.published_at is null` (previously-published-then-
+    unpublished rows collapse into `draft_only` under this slice — see
+    Non-Goals for the deferred `paused` label)
+  - Otherwise (`game_events.published_at is not null`), compare the
+    draft's current `content` (JSONB) against the row in
+    `game_event_versions` keyed by `(event_id = draft.id,
+    version_number = draft.last_published_version_number)`:
+    - `live` when the two JSONB values are equal
+    - `live_with_draft_changes` when they differ
+- Publish-stability note, included as a SQL comment on the view: the
+  derivation intentionally does **not** compare
+  `game_event_drafts.updated_at` against
+  `game_event_drafts.last_published_at`. The `set_game_event_draft_audit_fields()`
+  trigger on `game_event_drafts` sets `updated_at = clock_timestamp()`
+  on every row update, including the metadata update issued at the end
+  of the publish RPC. `last_published_at` is set to `now()` (transaction
+  start), so immediately after a publish
+  `updated_at > last_published_at` is always true. A timestamp-based rule
+  would therefore misclassify every freshly-published event as
+  `live_with_draft_changes`. A content-based rule is publish-stable
+  because publish writes the identical content into
+  `game_event_versions` and never mutates `game_event_drafts.content`,
+  while save-draft mutates only `game_event_drafts.content` and never
+  writes `game_event_versions`.
+- Join shape: the content comparison is a left join from
+  `game_event_drafts` onto `game_event_versions` on
+  `(game_event_versions.event_id = game_event_drafts.id and
+  game_event_versions.version_number = game_event_drafts.last_published_version_number)`.
+  When the draft is `draft_only`, the join produces a null version row
+  and the content comparison short-circuits. The
+  `(event_id, version_number)` primary key on `game_event_versions`
+  keeps the lookup to a single indexed probe per draft; for the
+  admin-dashboard row counts in scope this is not a hot path.
+- An edge case where `last_published_version_number is not null` but
+  the corresponding `game_event_versions` row is missing indicates a
+  data-integrity violation (the publish RPC always inserts the version
+  before setting `last_published_version_number`). The view returns
+  `draft_only` in that case — the same label the row would carry if it
+  had never been published — rather than raising, because a read-side
+  view should not crash the admin dashboard on a write-path invariant
+  failure. pgTAP covers the happy path; operational monitoring, not the
+  view, owns detecting the missing-row case.
 - Grants: the view is `security_invoker = on` (or the equivalent
   `with (security_invoker = true)` view option on PG ≥ 15) so row
   visibility honors the existing RLS on `game_event_drafts` and
@@ -175,23 +214,39 @@ cleanup plus one additive read view, driven by the structural issues above.
   `game_event_admin_status`. Remove `listPublishedGameEventIds` and
   `loadPublishedGameEvent` helpers; they are dead after the switch.
 - `DraftEventSummary` gains `status: AdminEventStatus` where
-  `AdminEventStatus = "draft_only" | "live" | "live_with_draft_changes"`.
-  `isLive`, `liveVersionNumber`, `hasBeenPublished` remain on the type
-  for now — Slice 2 does not drop them, so existing consumers that were
-  swapped in Slice 1 continue to compile.
-- `DraftEventDetail` gains the same `status` field. `content` still comes
-  from the `game_event_drafts.content` column; the view does not carry
-  the JSON payload because it is not needed for the status contract and
-  a detail read can select `content` from the underlying table via a
-  second query keyed on the event id, or the view can be extended later
-  to include it if measured to be cheaper. Prefer the current two-query
-  shape (one view read, one `content` read for the detail route) to keep
-  the view narrow.
+  `AdminEventStatus = "draft_only" | "live" | "live_with_draft_changes"`,
+  and renames `liveVersionNumber` to `lastPublishedVersionNumber` so the
+  TypeScript field name matches the renamed DB column. `isLive` and
+  `hasBeenPublished` remain on the type for now — Slice 2 does not drop
+  them, so existing consumers that were swapped in Slice 1 continue to
+  compile. The `liveVersionNumber` → `lastPublishedVersionNumber` TS
+  rename is part of commit 1 (atomic with the DB rename), not a later
+  transitional step: carrying the old TS name after the DB rename would
+  leave the transport reading a column that no longer exists.
+- `DraftEventDetail` gains the same `status` field and the same TS field
+  rename. `content` still comes from the `game_event_drafts.content`
+  column; the view does not carry the JSON payload because it is not
+  needed for the status contract and a detail read can select `content`
+  from the underlying table via a second query keyed on the event id, or
+  the view can be extended later to include it if measured to be
+  cheaper. Prefer the current two-query shape (one view read, one
+  `content` read for the detail route) to keep the view narrow.
 - `SaveDraftEventResult = Omit<DraftEventSummary, "isLive" | "status">`.
   The save-draft Edge Function does not change publication state and
-  cannot emit a server-derived status; the client reconciliation rule in
-  `useSelectedDraft.ts` preserves the prior `status` across a save, the
-  same way Slice 1 preserves `isLive`.
+  cannot emit a server-derived status, so the save response intentionally
+  does not carry `status` or `isLive`. The client reconciliation rule in
+  `useSelectedDraft.ts` below is what keeps status fresh across the save
+  path.
+- Post-save refresh helper: rename Slice 1's
+  `loadSavedDraftLiveStatus(currentDraft, savedDraft)` to
+  `loadSavedDraftStatus(currentDraft, savedDraft)` and extend it to
+  read the full status tuple
+  (`status`, `isLive`, `lastPublishedVersionNumber`) from
+  `game_event_admin_status` in a single probe. Behavior matches the
+  Slice 1 helper: best-effort, falls back to the caller's prior values
+  on read failure so a save never surfaces as a false failure. The
+  helper replaces the `game_events`-backed probe introduced in Slice 1
+  in the same commit that swaps the transport.
 
 ### Admin save-draft Edge Function — `supabase/functions/save-draft/index.ts`
 
@@ -225,16 +280,24 @@ cleanup plus one additive read view, driven by the structural issues above.
   one and the cross-cutting invariant above keeps them equivalent.
 - `useSelectedDraft.ts` reconciliation patches set `status` alongside
   `isLive` on every local-state write:
-  - post-save: preserve the prior `status` and prior
-    `lastPublishedVersionNumber` (save does not change publication state)
-  - post-publish: set `status = "live"` and
-    `lastPublishedVersionNumber = result.versionNumber`; `isLive = true`
-    is kept for the transition
+  - post-save: do not assume the prior `status` is still correct —
+    another admin may have published or unpublished while the save was in
+    flight. Read the refreshed tuple through
+    `loadSavedDraftStatus(currentDraft, savedDraft)` and apply
+    `status`, `isLive`, and `lastPublishedVersionNumber` to both the
+    list row and the selected detail. On read failure, fall back to the
+    caller's prior values (the save write already succeeded, so a
+    read-side failure must not surface as a save failure). This matches
+    the Slice 1 `loadSavedDraftLiveStatus` pattern, extended to cover
+    the renamed and newly-introduced fields.
+  - post-publish: set `status = "live"`,
+    `lastPublishedVersionNumber = result.versionNumber`,
+    `isLive = true` for the transition.
   - post-unpublish: set `status = "draft_only"` and `isLive = false`;
-    `lastPublishedVersionNumber` is preserved (historical)
+    `lastPublishedVersionNumber` is preserved (historical).
   - event creation: `status = "draft_only"`,
-    `lastPublishedVersionNumber = null`, `isLive = false`
-  - initial load: the value comes from the view, no client derivation
+    `lastPublishedVersionNumber = null`, `isLive = false`.
+  - initial load: the value comes from the view, no client derivation.
 
 ### Fixture surfaces
 
@@ -295,11 +358,16 @@ Unchanged. This slice is admin-owned.
 
 3. **`refactor(web): consume admin status contract from the view.`**
    Swap `adminGameApi.ts` reads to `game_event_admin_status`, add
-   `status` to the transport types, remove the
-   `listPublishedGameEventIds` / `loadPublishedGameEvent` helpers, and
-   wire `AdminEventWorkspace.tsx` and `useSelectedDraft.ts` to the
-   server status per the per-surface contracts above. Update unit
-   fixtures to carry `status`. Update
+   `status` to the transport types, and remove the
+   `listPublishedGameEventIds` / `loadPublishedGameEvent` transport
+   helpers. Rename the Slice 1 `loadSavedDraftLiveStatus` helper to
+   `loadSavedDraftStatus` and extend its return tuple to
+   `(status, isLive, lastPublishedVersionNumber)`, reading from the
+   view rather than `game_events` directly. Wire
+   `AdminEventWorkspace.tsx` and `useSelectedDraft.ts` to the server
+   `status` per the per-surface contracts above, preserving the
+   best-effort post-save refresh behavior Slice 1 established. Update
+   unit fixtures to carry `status`. Update
    `scripts/ui-review/capture-ui-review.cjs` to mock the view endpoint.
    Update `docs/architecture.md` to describe the view-backed admin read
    path.
@@ -365,10 +433,13 @@ the commit boundary noted in parentheses:
   review fixture returns `status` alongside `isLive`, and no test
   accidentally relies on the absence of the field.
 - **Frontend — Post-save reconciliation audit** (commit 3): the
-  save-draft response merge preserves `status` and
-  `lastPublishedVersionNumber` on both the list row and the selected
-  detail — a spread merge that drops either one silently regresses
-  Slice 1 and Slice 2 at once.
+  save-draft response merge routes through `loadSavedDraftStatus` and
+  applies the refreshed `status`, `isLive`, and
+  `lastPublishedVersionNumber` to both the list row and the selected
+  detail. A spread merge that drops any of these or skips the refresh
+  reopens the multi-admin race Slice 1 closed. Verify the helper's
+  read-failure branch falls back to the caller's prior values so save
+  success does not surface as a false failure.
 - **CI — E2E runner inclusion** (commit 3): the reload-aware cases
   added in Slice 1 still pass after the transport swap. The production
   smoke runner still exercises the same assertions.
@@ -423,10 +494,10 @@ Slice 2 is `Landed` when all of the following hold:
 - Creating RPCs, triggers, or Edge Functions around the status view.
   The view is a plain `create view` with grants; it does not introduce
   a new trust boundary.
-- Dropping the `isLive`, `liveVersionNumber`, or `hasBeenPublished`
-  fields from the admin transport. They are kept during the
-  transition. A later cleanup slice removes them once no consumer reads
-  them, outside this plan.
+- Dropping the `isLive` or `hasBeenPublished` fields from the admin
+  transport. They are kept during the transition alongside the new
+  `status` field. A later cleanup slice removes them once no consumer
+  reads them, outside this plan.
 - Changing public attendee routing, transient health monitoring,
   scheduled publish, expiry windows, or inactive-event behavior beyond
   what the read-model cleanup requires.
@@ -436,22 +507,40 @@ Slice 2 is `Landed` when all of the following hold:
 
 ## Rollback
 
-If Slice 2 introduces a regression after deploy, the three commits roll
-back independently:
+If Slice 2 introduces a regression after deploy, revert **the whole
+slice** as a bounded unit rather than cherry-picking the view drop. The
+three feature commits are revertable in reverse order (3 → 2 → 1), and
+each step leaves the repo in a working state only when applied in that
+order:
 
-- Revert commit 3 to restore the Slice 1 two-query admin transport; the
-  view still exists unused, which is safe.
-- Revert commit 2 to drop the view; no frontend references it after
-  commit 3 is reverted.
-- Revert commit 1 only if the column rename is implicated. A rename
-  revert is a second `alter table ... rename column` in the opposite
-  direction plus the mirrored redefinition of the affected RPCs and
-  triggers. Because the rename is pure metadata, there is no data loss
-  on either direction of the revert.
+- Revert commit 3 first. This restores a Slice-1-shape admin transport
+  (two queries: one against `game_event_drafts`, one against
+  `game_events` for `published_at`) that reads the renamed column. The
+  view still exists unused, which is safe but no longer necessary. The
+  Slice 1 `loadSavedDraftLiveStatus` helper, replaced by
+  `loadSavedDraftStatus` in commit 3, is restored with its original
+  behavior.
+- Revert commit 2 next. This drops the view. Nothing references it
+  after commit 3's revert, so the drop is a no-op for runtime behavior.
+- Revert commit 1 last, and only if the column rename itself is
+  implicated. A rename revert is a single migration that runs the
+  mirror of commit 1: a `rename column` in the opposite direction plus
+  the mirrored redefinition of the publish RPC, the unpublish RPC, the
+  slug-lock trigger, the event-code-lock trigger, the save-draft Edge
+  Function field references, and every frontend/fixture/doc reference
+  to the renamed column. Because the rename is pure metadata, there is
+  no data loss on either direction of the revert. Commit 1 is
+  all-or-nothing: it cannot be partially reverted without breaking the
+  triggers.
 
-The view is additive and carries no persistence state, so dropping it
-does not orphan data. The column rename is reversible with one mirrored
-migration.
+Dropping the view in isolation without first reverting commit 3 is
+**not** a valid rollback path — commit 3 swaps the transport to read
+from the view, so the frontend would lose its admin reads entirely.
+This is why the Rollback section prescribes the sequence above rather
+than treating the view as independently drop-safe at runtime. The view
+object itself is additive in the SQL sense (no table, trigger, or RPC
+depends on it), but the running system does depend on it once commit 3
+has shipped.
 
 ## Related Docs
 
