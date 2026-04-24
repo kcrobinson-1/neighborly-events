@@ -80,7 +80,9 @@ unit tests cannot see.
 
 Who runs it: the contributor, when the PR touches UX, layout, interaction,
 or user-facing copy in a meaningful way. What runs: `npm run ui:review:capture`
-via Playwright, mobile viewport first, against a local web app. Full
+via Playwright, mobile viewport first, against a local web app — or
+`npm run ui:review:capture:admin` for admin-facing PRs, which uses
+Playwright route mocks so no production data is read or written. Full
 workflow in `docs/dev.md` and AGENTS.md "UI Review Runs." Valid pre-merge
 gate: yes for UX-affecting PRs, with before/after screenshots linked in the
 PR body per AGENTS.md "Pull Request Screenshot Process."

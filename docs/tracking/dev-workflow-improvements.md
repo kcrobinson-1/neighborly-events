@@ -81,66 +81,60 @@ Minimum validation:
 
 ### Add an admin UI-review capture mode
 
-Status: open
+Status: landed (5df06c5 mock fix; this PR closes the item)
 
-Value:
+Implemented as `npm run ui:review:capture:admin` (also reachable as
+`npm run ui:review:capture -- --mode admin`). Captures 14 mocked
+states across mobile and desktop viewports: sign-in, all-events list,
+selected-event editor, client-side validation error, save success,
+save error, question editor, signed-in-but-not-allowlisted, and the
+draft-only workspace variant. Documented in
+[`docs/dev.md` "Admin UI review"](../dev.md). Referenced from the PR
+screenshot workflow in `AGENTS.md` "UI Review Runs" and from
+[`docs/testing-tiers.md`](../testing-tiers.md) Tier 4.
 
-- avoids one-off Playwright scripts for each admin UX PR
-- makes admin screenshots consistent across PRs
-- captures the selected-event editor, validation, save success, and save error
-  states without writing private draft rows
-- gives agents and contributors a documented path for UX evidence when real
-  Supabase admin access is unavailable or unsafe for write-path review
+Resolved decisions:
 
-Recommended shape:
+- The admin mode lives inside the existing
+  `scripts/ui-review/capture-ui-review.cjs` as `--mode admin` rather
+  than a sibling script. Splitting the file is tracked separately at
+  refactor-checklist score 7/10
+  ([`docs/tracking/code-refactor-checklist.md`](./code-refactor-checklist.md))
+  and is not blocking.
+- The mocked draft fixture is inline in the script. Sharing it with a
+  test fixture module is deferred — the admin capture and the test
+  suite have not yet drifted, and inline keeps the capture script
+  readable as a single artifact.
+- The capture is fully Playwright-mocked. Supporting a real disposable
+  Supabase admin environment is deferred — the existing local Supabase
+  CLI workflow already covers admin-write smoke testing for engineers
+  who need it, and the Tier 5 production smoke covers post-deploy
+  admin behavior. Adding a third capture mode would duplicate
+  responsibility without closing a gap that current admin UX PRs hit.
+- Phase 4.2 create + duplicate captures are deferred. The current 14
+  states cover the editor surfaces a UX PR typically needs to evidence;
+  the create/duplicate transitions land back on the workspace editor,
+  which is already captured. If a future Phase 4.2 PR needs the
+  in-flight create form or duplicate confirmation states, that PR can
+  extend the script's `captureAdminWorkspaceStates`.
+- Console-error capture and pre-screenshot selector waits together
+  satisfy the "console-error and blank-page checks" requirement.
+  Each capture function attaches a `page.on("console")` listener that
+  logs error-type messages, and each screenshot is gated on a
+  selector that only renders once the relevant state has actually
+  loaded (e.g. `.admin-details-form`, `.admin-message-success`,
+  `.admin-message-error`, "Event workspace" heading). A blank or
+  stuck page fails the `waitFor` instead of producing a misleading
+  screenshot.
 
-- extend `scripts/ui-review/capture-ui-review.cjs` with an admin-focused mode,
-  or add a sibling script under `scripts/ui-review/` if the admin mocking setup
-  would make the attendee capture script too broad
-- support a command such as:
-  `npm run ui:review:capture -- --mode admin`
-- start from the local app running at `http://127.0.0.1:4173`
-- use Playwright route mocks for Supabase admin session, allowlist, draft
-  summary, draft-detail, and `save-draft` responses
-- write screenshots to a timestamped directory under `tmp/ui-review/`
-- capture at least mobile selected editor, desktop selected editor, local
-  validation error, save success, and backend save error states
-- include console-error and blank-page checks so failures are actionable
-
-Open questions:
-
-- Should admin capture live inside the existing capture script as `--mode admin`
-  or in a dedicated script such as `capture-admin-ui-review.cjs`?
-- Should the mocked draft fixture be inline in the script or imported from a
-  shared test/admin fixture module?
-- Should the default admin capture avoid all remote requests, or should it
-  optionally support a real disposable Supabase admin environment?
-- Should the script also capture the all-events workspace, create, and duplicate
-  states from Phase 4.2?
-
-Steps to complete:
-
-1. Decide whether to extend the existing capture script or add a focused admin
-   capture script.
-2. Extract reusable Playwright helpers for opening routes, taking screenshots,
-   and installing admin Supabase mocks.
-3. Add stable mocked admin draft data that matches the canonical authoring draft
-   shape.
-4. Capture the required Phase 4.3 states across mobile-first and desktop
-   viewports.
-5. Add script logging that prints the output directory and the captured state
-   names.
-6. Document the admin capture command in `docs/dev.md` and reference it from the
-   PR screenshot process.
-7. Run the command from a clean dev-server start and verify the screenshots are
-   nonblank and show the intended states.
-
-Minimum validation:
-
-- start the app with `npm run dev:web:local`
-- run the admin capture command
-- inspect generated screenshots under `tmp/ui-review/<run>`
-- `npm run lint`
+Validation run on this branch: `npm run dev:web:local` +
+`npm run ui:review:capture:admin` produced all 14 screenshots from
+a clean dev-server start; `npm run lint` is green. The capture
+exposed and fixed a real bug in the admin mock (commit 5df06c5)
+where the `game_event_drafts*` route returned the entire fixture
+array on `.maybeSingle()` calls, tripping PGRST116 and rendering
+the workspace error state. Without this validation pass the bug
+would have shipped silently.
 
 ### Surface CI step logs in PR comments on failure
 

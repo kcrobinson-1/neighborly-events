@@ -777,6 +777,10 @@ Expected setup and execution:
 - make sure Playwright and its browser dependency are available
 - if Chromium has not been installed yet, run `npx playwright install chromium`
 - run `npm run ui:review:capture`
+- for admin-facing PRs, run `npm run ui:review:capture:admin` instead;
+  it intercepts Supabase requests with Playwright route mocks so no
+  production data is read or written. Setup and captured states are
+  documented in `docs/dev.md` "Admin UI review."
 
 Backend nuance:
 

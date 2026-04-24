@@ -513,7 +513,14 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       });
     });
 
-    // game_event_admin_status view reads (GET)
+    // PostgREST detail reads on `.eq(...).maybeSingle()` always return a 1-row
+    // array. supabase-js >=2.x parses .maybeSingle() client-side and errors with
+    // PGRST116 ("multiple rows returned") if the response contains more than one
+    // row, so the mocks below filter to the matching fixture row even when the
+    // dashboard list path is also exercised in the same session.
+
+    // game_event_admin_status view reads (GET): list when no event_id filter,
+    // otherwise the matching summary row.
     await page.route(`${supabaseUrl}/rest/v1/game_event_admin_status*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
@@ -523,27 +530,21 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       const url = route.request().url();
       const isDetailRead = url.includes("event_id=eq.");
       const eventId = readEqFilterValue(url, "event_id");
-      const detailRow = getDraftSummaryFixtureByEventId(eventId);
 
-      if (isDetailRead) {
-        const acceptHeader = route.request().headers()["accept"] ?? "";
-        const returnSingle = acceptHeader.includes("vnd.pgrst.object");
-
-        void route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(returnSingle ? detailRow : [detailRow]),
-        });
-      } else {
-        void route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify(ADMIN_DRAFT_SUMMARY_FIXTURE),
-        });
-      }
+      void route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(
+          isDetailRead
+            ? [getDraftSummaryFixtureByEventId(eventId)]
+            : ADMIN_DRAFT_SUMMARY_FIXTURE,
+        ),
+      });
     });
 
-    // game_event_drafts detail content reads (GET)
+    // game_event_drafts detail content reads (GET): the app only ever fetches
+    // with `.eq("id", eventId).maybeSingle()`, so always filter to the matching
+    // fixture row.
     await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
@@ -551,14 +552,11 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       }
       const url = route.request().url();
       const eventId = readEqFilterValue(url, "id");
-      const acceptHeader = route.request().headers()["accept"] ?? "";
-      const returnSingle = acceptHeader.includes("vnd.pgrst.object");
-      const detailRow = getDraftDetailFixtureByEventId(eventId);
 
       void route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(returnSingle ? detailRow : ADMIN_DRAFT_DETAIL_FIXTURE),
+        body: JSON.stringify([getDraftDetailFixtureByEventId(eventId)]),
       });
     });
 
