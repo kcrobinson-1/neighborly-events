@@ -55,10 +55,17 @@ a superset of Tier 2 — `npm run lint`, `npm test`,
 `npm run test:functions`, `npm run test:supabase` (local Supabase
 integration and database tests), `npm run test:e2e:attendee:trusted-backend`
 (Playwright smoke against a trusted backend), `npm run build:web`, and
-`deno check --no-lock` against each edge function in `supabase/functions/`.
-Docs-only changes (paths under `docs/` or any `*.md`) skip the entire
-validate job by design — the workflow detects scope upfront and gates
-every validation step on non-docs-only changes.
+`deno check --no-lock` against six named edge functions:
+`issue-session`, `complete-game`, `save-draft`, `generate-event-code`,
+`publish-draft`, and `unpublish-event`. The remaining edge functions in
+`supabase/functions/` (currently `redeem-entitlement`,
+`reverse-entitlement-redemption`, and `get-redemption-status`) do not
+have a Tier 3 `deno check` step today; plan authors touching those
+should not assume CI type-checks them and should run the relevant
+`deno check --no-lock` locally as part of Tier 1 or Tier 2. Docs-only
+changes (paths under `docs/` or any `*.md`) skip the entire validate
+job by design — the workflow detects scope upfront and gates every
+validation step on non-docs-only changes.
 
 What it catches: local-environment drift ("works on my machine"), missing
 lockfile updates, test files the contributor's runner missed, and
