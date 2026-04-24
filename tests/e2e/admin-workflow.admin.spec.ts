@@ -44,7 +44,7 @@ async function expectOpenLiveGameDisabledState(
 
 async function expectOpenLiveGameEnabledState(button: Locator) {
   await expect(button).not.toHaveAttribute("aria-disabled", "true");
-  await expect(button).not.toHaveAttribute("aria-describedby", /.+/);
+  expect(await button.getAttribute("aria-describedby")).toBeNull();
 }
 
 test.describe("admin authoring workflow", () => {
