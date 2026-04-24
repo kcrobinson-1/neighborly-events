@@ -9,13 +9,21 @@ now that the server-owned status contract from Slice 2 is trustworthy.
 Distinguish "not live" from "workspace busy" semantically and visually at
 every `Open live game` call site. No backend, migration, RPC, Edge
 Function, or transport change; no new operator action; no change to
-publish/unpublish behavior. The `paused` status value named in the
-parent plan's long-term end state is **deferred** — it requires a new
-operator action with its own audit semantics, which is product behavior
-distinct from the UX of the existing statuses. A later product slice
-introduces it by adding an operator action and extending the view's
-derivation; when it lands it adds one more reason string to this
-slice's pattern, not a restructuring of it.
+publish/unpublish behavior.
+
+The `paused` status value named in the parent plan's "Long-Term End
+State" is explicitly **split out** of the parent plan as part of this
+slice's landing work. The parent plan's three-slice work plan (Slice 1
+correctness, Slice 2 read-model cleanup, Slice 3 non-live action UX)
+does not cover `paused`; introducing it requires a new operator action
+with its own audit semantics, which is product behavior separate from
+the live-status correctness the parent plan tracks. Rather than hold
+the parent plan open indefinitely for an unscoped product feature,
+Slice 3's commit 3 adds an explicit written deferral for `paused` into
+the parent plan itself before flipping the parent plan to `Landed`. A
+future product PR (tracked separately if and when it is prioritized)
+is free to extend the view's derivation and this slice's reason-text
+pattern when `paused` is actually built.
 
 ## Why Slice 3 Exists
 
@@ -206,14 +214,57 @@ text pattern as a reusable admin convention.
   the existing reload-aware spec keeps coverage next to the behavior
   it regresses.
 
+### E2E — `tests/e2e/admin-production-smoke.spec.ts`
+
+- The current spec uses `toBeDisabled()` at both `Open live game`
+  call sites
+  ([line 100](../../tests/e2e/admin-production-smoke.spec.ts) on the
+  reloaded event-list card, [line 105](../../tests/e2e/admin-production-smoke.spec.ts)
+  on the workspace detail). Playwright's `toBeDisabled()` is
+  satisfied by either `disabled` or `aria-disabled="true"`, so the
+  existing assertion would silently pass on the new UX without ever
+  proving the slice-3 behavior reached production.
+- Extend both assertion sites so they explicitly check
+  `aria-disabled="true"` as an attribute (via
+  `expect(button).toHaveAttribute("aria-disabled", "true")`), check
+  that `aria-describedby` is present on the button, and assert the
+  helper text `Publish this event to open the live game.` is
+  present in the DOM and is the target of that `aria-describedby`.
+- Do not remove the existing `toBeDisabled()` assertion — keep it
+  alongside the new attribute check. That way a regression that
+  removes `aria-disabled` but leaves native `disabled` in place
+  still fails at least one matcher.
+- No new scenarios are added; only the assertions inside the
+  existing scenarios change.
+
 ### UI review — `scripts/ui-review/capture-ui-review.cjs`
 
-- If the existing capture already walks a `draft_only` admin state,
-  no change is required. If it only captures `live`, add one
-  `draft_only` capture so before/after screenshots for this PR show
-  the new helper text. Implementer verifies at commit time; if the
-  script needs a fixture change, that is an in-scope adjustment for
-  this slice.
+- The current script exclusively targets the live workspace fixture:
+  `captureAdminWorkspaceStates` resolves its `eventId` from
+  `ADMIN_DRAFT_DETAIL_FIXTURE[0]`, which is the live Madrona row.
+  No draft-only workspace capture exists today, so before/after
+  screenshots of the workspace-detail `Open live game` button on a
+  `draft_only` event are not reachable through the documented
+  tooling without a script update.
+- In-scope for this slice: extend the capture flow so a
+  `draft_only` workspace detail is captured alongside the existing
+  live workspace. Either point `captureAdminWorkspaceStates` at the
+  existing `ADMIN_DRAFT_SUMMARY_FIXTURE[1]` draft-only row (which
+  already exists in the list fixture) and add a matching draft-only
+  entry to `ADMIN_DRAFT_DETAIL_FIXTURE`, or add a second capture
+  pass that walks the draft-only event workspace using the same
+  route shape. Implementation chooses at commit time; the plan
+  commits to the requirement, not the mechanic.
+- The event-list (all-events) draft-only capture already exists via
+  `ADMIN_DRAFT_SUMMARY_FIXTURE[1]` and covers the second call site
+  (event-list row `Open live game`). No script change is required
+  for that surface — verify before commit that the existing capture
+  includes this row in frame.
+- This change is part of commit 1 (feature), not a separate commit,
+  because the script change and the UI change it screenshots must
+  land together — the plan gates PR handoff on both-call-site
+  screenshots, so a commit that ships the UI change without the
+  capture path is not a valid intermediate state.
 
 ### Public attendee route
 
@@ -228,21 +279,44 @@ Unchanged. This slice is admin-owned.
    click guard. Adds the `_admin.scss` rule for the class-driven
    disabled visual. Updates the unit-test fixtures in the same
    commit because the behavior and tests must stay synchronized.
-2. **`test(web): extend reload-aware admin e2e for non-live reason
-   text.`** Adds the e2e assertions in
+2. **`test(web): extend admin e2e and production smoke for non-live
+   reason text.`** Adds the e2e assertions in
    `tests/e2e/admin-workflow.admin.spec.ts` for tab-reachability,
-   `aria-disabled`, and the helper-text content. Kept separate from
-   commit 1 so the e2e extension can be reviewed on its own and so a
-   bisect can tell unit-level regressions apart from e2e-level
-   regressions.
+   `aria-disabled="true"` as an attribute, and the helper-text
+   content. In the same commit, extends
+   `tests/e2e/admin-production-smoke.spec.ts` so the existing
+   `toBeDisabled()` assertions at lines 100 and 105 are replaced or
+   paired with explicit checks that the button carries
+   `aria-disabled="true"` as an attribute (not satisfied by a native
+   `disabled` attribute alone), an `aria-describedby` attribute, and
+   a helper-text node containing
+   `Publish this event to open the live game.`. Kept separate from
+   commit 1 so the assertion extension can be reviewed on its own and
+   so a bisect can tell unit-level regressions apart from
+   e2e/smoke-level regressions.
 3. **`docs: land slice 3 and close the admin live-status plan.`**
    Flip this file's Status from `Proposed` to `Landed` with the
    implementing commit SHAs recorded inline. Flip the parent plan's
-   Slice 3 Status to `Landed` and flip the parent plan's overall
-   Status from `In progress` to `Landed` in the same commit. Remove
-   the Tier 1 backlog entry `Admin live status must match public
-   route availability` from `docs/backlog.md`. Update
-   `docs/tracking/admin-ux-roadmap.md` so the
+   Slice 3 Status to `Landed`. Before flipping the parent plan's
+   overall Status to `Landed`, add an explicit written deferral in
+   the parent plan itself for the `paused` status value that its
+   "Long-Term End State" section names — a new `## Deferred
+   Follow-Up` section (or equivalent renamed subsection) that states
+   `paused` is out of scope for the three-slice plan, requires a new
+   operator action with its own audit semantics distinct from
+   publish/unpublish, and will be tracked by a separate product PR.
+   Once that written deferral is in place, flip the parent plan's
+   overall Status from `In progress` to `Landed`; without the
+   deferral, do not flip it. This order preserves AGENTS.md's
+   Plan-to-PR Completion Gate rule that unsatisfied plan
+   requirements must be deferred in writing in the plan itself, not
+   tracked informally. Remove the Tier 1 backlog entry `Admin live
+   status must match public route availability` from
+   `docs/backlog.md` — that entry is scoped to live-status
+   correctness, which Slice 3 fully satisfies; the separate
+   `paused` follow-up is a product feature and opens (if needed)
+   as its own backlog entry rather than holding this one open.
+   Update `docs/tracking/admin-ux-roadmap.md` so the
    `Align admin live status with public-route availability` section
    points to the landed state rather than an in-progress plan. No
    code changes in this commit.
@@ -299,11 +373,23 @@ commit boundary rather than rediscovering them at review time:
   and the existing reload-aware assertions continue to pass after
   the additions.
 - **Runbook — Production smoke actuation** (commit 2): the existing
-  production admin smoke covers the status round-trip end to end. No
-  new smoke assertion is added — the helper-text UI is verified by
-  local unit tests and the local e2e extension. Naming this here
-  records the deferral so "smoke wasn't updated" is not a reviewer
-  finding.
+  smoke assertions at
+  [tests/e2e/admin-production-smoke.spec.ts:100](../../tests/e2e/admin-production-smoke.spec.ts)
+  and [tests/e2e/admin-production-smoke.spec.ts:105](../../tests/e2e/admin-production-smoke.spec.ts)
+  use Playwright's `toBeDisabled()` matcher, which is satisfied by
+  both native `disabled` and `aria-disabled="true"`. That means the
+  current assertion would silently continue passing against the new
+  UX without ever proving the `aria-disabled` + helper-text pattern
+  was actually deployed. Slice 3 extends the smoke spec in commit 2
+  so that, on the non-live workspace and event-list rows, the
+  `Open live game` button is asserted to carry
+  `aria-disabled="true"` as an attribute (distinct from native
+  `disabled`), carry an `aria-describedby` attribute, and have the
+  helper text `Publish this event to open the live game.` rendered
+  and referenced by that attribute. The production smoke run against
+  the deployed environment is required in the handoff validation
+  set; Slice 3 cannot land via local-only verification because the
+  visible change is only landed once deployed.
 
 ## Validation Commands Expected At Handoff
 
@@ -313,11 +399,20 @@ commit boundary rather than rediscovering them at review time:
 - `npm run build:web`
 - `npm run test:e2e:admin`
 - `npm run test:e2e:admin:production-smoke` against the deployed
-  environment, or equivalent deployed verification that exercises the
-  reload-aware assertions through the new reason-text UI
+  environment, with the extended smoke assertions from commit 2
+  actuated against the deployed UI (not only the local build). This
+  run is required for Slice 3 handoff — the production smoke is the
+  only deployed verification that proves the `aria-disabled` +
+  helper-text pattern landed in production, and the existing
+  `toBeDisabled()` assertion alone would silently pass on the
+  pre-slice behavior.
 
-If `test:e2e:admin:production-smoke` cannot be run locally, call out
-the exact blocker in the PR body per the Validation Honesty rule.
+If `test:e2e:admin:production-smoke` cannot be run against the
+deployed environment at handoff time, do not merge Slice 3. Name
+the blocker in the PR thread and resolve it (deploy access, smoke
+env config, etc.) before closing the Tier 1 backlog item. A local-
+only validation is not sufficient evidence that the final slice
+landed correctly on production.
 
 ## UX Review Screenshots
 
@@ -346,11 +441,23 @@ Slice 3 is `Landed` when all of the following hold:
 - This file's Status line is flipped from `Proposed` to `Landed`
   with the implementing commit SHAs recorded inline, and the parent
   plan's Slice 3 Status is flipped to `Landed` with the same SHAs.
+- The parent plan carries an explicit written deferral for the
+  `paused` status value named in its "Long-Term End State" section
+  — in a `## Deferred Follow-Up` section (or equivalent renamed
+  subsection) of the parent plan itself, with rationale, not in
+  this file, not in the PR body, not in an issue.
 - The parent plan's overall Status line is flipped from
-  `In progress` to `Landed`, since Slice 3 is the final slice.
+  `In progress` to `Landed` **only after** that written deferral is
+  in place. Flipping to `Landed` without the deferral violates
+  AGENTS.md's Plan-to-PR Completion Gate rule against informal
+  tracking; flipping with the deferral satisfies the rule because
+  the unsatisfied requirement is explicitly split from the landed
+  work.
 - The Tier 1 backlog entry `Admin live status must match public
   route availability` in `docs/backlog.md` is removed (or moved to a
-  landed-items section if one exists) in the same PR.
+  landed-items section if one exists) in the same PR. The Tier 1
+  entry is scoped to live-status correctness; `paused` is a
+  separate product feature and does not hold this entry open.
 - `docs/tracking/admin-ux-roadmap.md` reflects the landed state of
   the admin live-status alignment, not the in-progress plan link.
 - Every command listed in `Validation Commands Expected At Handoff`
@@ -364,12 +471,15 @@ Slice 3 is `Landed` when all of the following hold:
 - Introducing a `paused` status value, a pause operator action, or
   any new product behavior distinct from the existing publish/
   unpublish flow. `paused` is named in the parent plan's long-term
-  end state and is deferred here for the same reason Slice 2
-  deferred it: it requires a new operator action with its own audit
-  semantics, and a non-live UX slice alone cannot define the
+  end state and is split out of the parent plan via the explicit
+  written deferral commit 3 adds to the parent plan itself, not
+  just to this file. A non-live UX slice alone cannot define the
   "intent to restore" signal that separates paused from plain
-  unpublish. When a later slice adds it, this slice's reason-text
-  pattern is extended with one more string, not restructured.
+  unpublish; naming the split here keeps the parent plan's overall
+  Status flip honest under AGENTS.md's Plan-to-PR Completion Gate
+  rule. When a future product PR adds `paused`, this slice's
+  reason-text pattern is extended with one more string, not
+  restructured.
 - Migrating other admin buttons that use native `disabled` to the
   `aria-disabled` + helper-text pattern. Only the two `Open live
   game` sites are in scope. If the pattern proves useful elsewhere
