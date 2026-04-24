@@ -816,8 +816,9 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      lastPublishedVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Updated Madrona Event",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -872,8 +873,9 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      lastPublishedVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Updated Madrona Event",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -895,7 +897,7 @@ describe("AdminPage", () => {
     ).toBeTruthy();
     expect(screen.queryByText("We couldn't save the event details right now.")).toBeNull();
     expect(screen.queryByText(/Draft changes not published/)).toBeNull();
-    expect(getStatusLine("Live v1")).toBeTruthy();
+    expect(getStatusLine("Live v2")).toBeTruthy();
   });
 
   it("saves existing question edits and preserves event details", async () => {
@@ -921,8 +923,9 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      lastPublishedVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -977,8 +980,9 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
       id: "madrona-music-2026",
-      lastPublishedVersionNumber: 1,
+      lastPublishedVersionNumber: 2,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -999,7 +1003,7 @@ describe("AdminPage", () => {
       screen.queryByText("We couldn't save the question changes right now."),
     ).toBeNull();
     expect(screen.queryByText(/Draft changes not published/)).toBeNull();
-    expect(getStatusLine("Live v1")).toBeTruthy();
+    expect(getStatusLine("Live v2")).toBeTruthy();
   });
 
   it("adds a question and saves the updated draft structure", async () => {

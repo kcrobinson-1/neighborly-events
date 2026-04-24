@@ -101,7 +101,11 @@ async function loadSavedDraftStatus(
   currentDraft: DraftEventDetail,
   savedDraft: SaveDraftEventResult,
 ): Promise<DraftEventStatusSnapshot> {
-  if (currentDraft.status === "draft_only" && !savedDraft.hasBeenPublished) {
+  const hasBeenPublished =
+    savedDraft.hasBeenPublished ??
+    savedDraft.lastPublishedVersionNumber !== null;
+
+  if (currentDraft.status === "draft_only" && !hasBeenPublished) {
     return {
       isLive: false,
       lastPublishedVersionNumber: savedDraft.lastPublishedVersionNumber,
@@ -113,9 +117,9 @@ async function loadSavedDraftStatus(
     return await loadDraftEventStatus(savedDraft.id);
   } catch {
     return {
-      isLive: currentDraft.isLive,
-      lastPublishedVersionNumber: currentDraft.lastPublishedVersionNumber,
-      status: currentDraft.status,
+      isLive: hasBeenPublished ? currentDraft.isLive : false,
+      lastPublishedVersionNumber: savedDraft.lastPublishedVersionNumber,
+      status: hasBeenPublished ? currentDraft.status : "draft_only",
     };
   }
 }
