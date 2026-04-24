@@ -38,9 +38,9 @@ steps, and validation commands.
 Must be resolved before QR codes are printed or the first real event runs.
 
 - [ ] **`ux` Admin live status must match public route availability**
-  Slice 1 landed the immediate correctness fix, but the parent plan remains
-  open until the read-model cleanup and non-live action UX follow-up are
-  resolved. Keep this item in Tier 1 until the full
+  Slices 1 and 2 landed the correctness fix plus the admin read-model cleanup.
+  Keep this item in Tier 1 until the remaining Slice 3 non-live action follow-up
+  is resolved and the parent
   [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)
   sequence reaches its terminal state.
   Detail: [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)

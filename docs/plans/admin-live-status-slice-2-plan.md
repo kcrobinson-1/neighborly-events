@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 2 Execution Plan
 
-**Status:** Proposed
+**Status:** Landed in commits `ca62089`, `8f1cac8`, and `9480c4c`
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 
