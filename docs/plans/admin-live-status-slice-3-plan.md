@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 3 Execution Plan
 
-**Status:** Proposed
+**Status:** In progress pending prod smoke — merge-phase implementation commits `f750be2` and `7630d88`; docs closeout commit is the commit that introduces this status line
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 
@@ -12,18 +12,19 @@ Function, or transport change; no new operator action; no change to
 publish/unpublish behavior.
 
 The `paused` status value named in the parent plan's "Long-Term End
-State" is explicitly **split out** of the parent plan as part of this
-slice's landing work. The parent plan's three-slice work plan (Slice 1
-correctness, Slice 2 read-model cleanup, Slice 3 non-live action UX)
-does not cover `paused`; introducing it requires a new operator action
-with its own audit semantics, which is product behavior separate from
-the live-status correctness the parent plan tracks. Rather than hold
-the parent plan open indefinitely for an unscoped product feature,
-Slice 3's commit 3 adds an explicit written deferral for `paused` into
-the parent plan itself before flipping the parent plan to `Landed`. A
-future product PR (tracked separately if and when it is prioritized)
-is free to extend the view's derivation and this slice's reason-text
-pattern when `paused` is actually built.
+State" is explicitly **split out** in the parent plan's
+`## Deferred Follow-Up` section. The parent plan's three-slice work plan
+(Slice 1 correctness, Slice 2 read-model cleanup, Slice 3 non-live
+action UX) does not cover `paused`; introducing it requires a new
+operator action with its own audit semantics, which is product behavior
+separate from the live-status correctness the parent plan tracks.
+
+Because this slice extends Tier 5 production smoke assertions, status
+transitions follow the two-phase rule in
+[docs/testing-tiers.md](../testing-tiers.md): merge-phase docs use the
+exact status `In progress pending prod smoke`, then a post-release docs
+commit flips to `Landed` only after production smoke passes and the run
+URL is recorded.
 
 ## Why Slice 3 Exists
 
@@ -76,11 +77,14 @@ text pattern as a reusable admin convention.
    `aria-disabled="true"`, and the helper-text content on the
    `draft_only` path. Extend the unit-test fixtures so every disabled
    assertion is paired with its reason text.
-5. Flip this file's Status and the parent plan's Slice 3 Status to
-   `Landed` in the same PR that lands the code. Close the Tier 1
-   backlog entry for `Admin live status must match public route
-   availability` in the same PR, since Slice 3 is the final remaining
-   requirement.
+5. In the merge-phase docs commit, record implementing SHAs and set
+   this plan and the parent Slice 3 status to
+   `In progress pending prod smoke` while retaining the parent plan's
+   explicit `paused` deferral.
+6. After `Release` deploys the slice and production smoke passes, land a
+   follow-up docs commit that records the smoke run URL, flips plan
+   statuses to `Landed`, closes the Tier 1 backlog entry, and updates
+   the admin UX roadmap to the landed state.
 
 ## Cross-Cutting Invariants
 
@@ -294,32 +298,25 @@ Unchanged. This slice is admin-owned.
    commit 1 so the assertion extension can be reviewed on its own and
    so a bisect can tell unit-level regressions apart from
    e2e/smoke-level regressions.
-3. **`docs: land slice 3 and close the admin live-status plan.`**
-   Flip this file's Status from `Proposed` to `Landed` with the
-   implementing commit SHAs recorded inline. Flip the parent plan's
-   Slice 3 Status to `Landed`. Before flipping the parent plan's
-   overall Status to `Landed`, add an explicit written deferral in
-   the parent plan itself for the `paused` status value that its
-   "Long-Term End State" section names — a new `## Deferred
-   Follow-Up` section (or equivalent renamed subsection) that states
-   `paused` is out of scope for the three-slice plan, requires a new
-   operator action with its own audit semantics distinct from
-   publish/unpublish, and will be tracked by a separate product PR.
-   Once that written deferral is in place, flip the parent plan's
-   overall Status from `In progress` to `Landed`; without the
-   deferral, do not flip it. This order preserves AGENTS.md's
-   Plan-to-PR Completion Gate rule that unsatisfied plan
-   requirements must be deferred in writing in the plan itself, not
-   tracked informally. Remove the Tier 1 backlog entry `Admin live
-   status must match public route availability` from
-   `docs/backlog.md` — that entry is scoped to live-status
-   correctness, which Slice 3 fully satisfies; the separate
-   `paused` follow-up is a product feature and opens (if needed)
-   as its own backlog entry rather than holding this one open.
-   Update `docs/tracking/admin-ux-roadmap.md` so the
-   `Align admin live status with public-route availability` section
-   points to the landed state rather than an in-progress plan. No
-   code changes in this commit.
+3. **`docs: mark slice 3 pending prod smoke with paused deferred in parent plan.`**
+   In the same PR as commits 1 and 2, update this plan and the parent
+   plan to record implementing SHAs and set the merge-phase status to
+   `In progress pending prod smoke` (exact string). Keep explicit
+   parent-plan written deferral for `paused` in the parent plan itself
+   (`## Deferred Follow-Up` or equivalent) so unsatisfied parent-plan
+   scope stays split in writing before final landing. Do not flip either
+   plan to `Landed` in this commit, and do not remove the Tier 1 backlog
+   item yet.
+4. **`docs: flip admin live-status plans to landed after production smoke.`**
+   After the merge is deployed and `Production Admin Smoke` passes, land
+   a follow-up docs commit that records the production-smoke workflow run
+   URL and flips this plan, the parent Slice 3 status, and the parent
+   overall status to `Landed`. In the same follow-up docs commit, remove
+   the Tier 1 backlog entry `Admin live status must match public route
+   availability` and update
+   `docs/tracking/admin-ux-roadmap.md` to point at the landed state.
+   This commit is intentionally post-release because Tier 5 is a
+   Plan-to-Landed gate, not a pre-merge gate.
 
 Keep review-fix commits distinct from the feature commits above when
 reviewer feedback surfaces corrections.
@@ -372,7 +369,8 @@ commit boundary rather than rediscovering them at review time:
   picked up by the admin e2e runner without configuration changes,
   and the existing reload-aware assertions continue to pass after
   the additions.
-- **Runbook — Production smoke actuation** (commit 2): the existing
+- **Runbook — Production smoke actuation** (commit 2 + post-release
+  landed commit): the existing
   smoke assertions at
   [tests/e2e/admin-production-smoke.spec.ts:100](../../tests/e2e/admin-production-smoke.spec.ts)
   and [tests/e2e/admin-production-smoke.spec.ts:105](../../tests/e2e/admin-production-smoke.spec.ts)
@@ -386,10 +384,12 @@ commit boundary rather than rediscovering them at review time:
   `aria-disabled="true"` as an attribute (distinct from native
   `disabled`), carry an `aria-describedby` attribute, and have the
   helper text `Publish this event to open the live game.` rendered
-  and referenced by that attribute. The production smoke run against
-  the deployed environment is required in the handoff validation
-  set; Slice 3 cannot land via local-only verification because the
-  visible change is only landed once deployed.
+  and referenced by that attribute. Tier 5 does not run as a
+  contributor pre-merge command; it runs post-release in the GitHub
+  `production` environment. Merge-phase review verifies the assertion
+  upgrade is in the smoke spec. Final `Landed` status requires a
+  passing post-release smoke workflow run URL recorded in the follow-up
+  docs commit.
 
 ## Validation Commands Expected At Handoff
 
@@ -398,21 +398,22 @@ commit boundary rather than rediscovering them at review time:
 - `npm run test:functions`
 - `npm run build:web`
 - `npm run test:e2e:admin`
-- `npm run test:e2e:admin:production-smoke` against the deployed
-  environment, with the extended smoke assertions from commit 2
-  actuated against the deployed UI (not only the local build). This
-  run is required for Slice 3 handoff — the production smoke is the
-  only deployed verification that proves the `aria-disabled` +
-  helper-text pattern landed in production, and the existing
-  `toBeDisabled()` assertion alone would silently pass on the
-  pre-slice behavior.
 
-If `test:e2e:admin:production-smoke` cannot be run against the
-deployed environment at handoff time, do not merge Slice 3. Name
-the blocker in the PR thread and resolve it (deploy access, smoke
-env config, etc.) before closing the Tier 1 backlog item. A local-
-only validation is not sufficient evidence that the final slice
-landed correctly on production.
+Do not add `npm run test:e2e:admin:production-smoke` as a contributor
+handoff command. Tier 5 production smoke is owned by release/ops and
+runs post-release in the GitHub `production` environment per
+`docs/testing-tiers.md`.
+
+## Tier 5 Post-Release Verification (Plan-to-Landed Gate)
+
+- After merge and deploy, run or observe a passing `Production Admin
+  Smoke` workflow against production with the extended assertions from
+  commit 2.
+- Record the workflow run URL in the follow-up docs commit that flips
+  status to `Landed`.
+- If smoke fails, keep this plan and the parent plan at
+  `In progress pending prod smoke`, keep the Tier 1 backlog item open,
+  and track remediation in the PR/release thread before retrying smoke.
 
 ## UX Review Screenshots
 
@@ -431,40 +432,42 @@ Screenshots live under `tmp/ui-review/` per repo convention, are
 uploaded externally, and are referenced by URL in the PR body. No
 image files are committed.
 
-## Plan-to-PR Completion Gate
+## Plan-to-PR / Plan-to-Landed Completion Gate
+
+### Merge phase (PR can merge)
+
+The merge-phase PR is complete when all of the following hold:
+
+- Every Goal, Required work, and Acceptance bar item in the parent
+  plan's Slice 3 section is satisfied in the PR, or deferred in writing
+  in this file with rationale.
+- Every command listed in `Validation Commands Expected At Handoff`
+  above ran with its result recorded in the PR body. Any command that
+  could not run is called out explicitly with a reason.
+- Before/after UX screenshots for both call sites are linked in the PR
+  body.
+- This file's Status and the parent plan's Slice 3 Status are set to
+  `In progress pending prod smoke` (exact string), with implementing
+  commit SHAs recorded inline.
+- The parent plan includes explicit written deferral for `paused` in the
+  parent plan itself (not only in this file, not in PR-only text).
+- The Tier 1 backlog item and roadmap pointer stay open until the
+  post-release smoke pass is recorded.
+
+### Landed phase (post-release docs follow-up)
 
 Slice 3 is `Landed` when all of the following hold:
 
-- Every Goal, Required work, and Acceptance bar item in the parent
-  plan's Slice 3 section is satisfied in the PR, or deferred in
-  writing in this file with rationale.
-- This file's Status line is flipped from `Proposed` to `Landed`
-  with the implementing commit SHAs recorded inline, and the parent
-  plan's Slice 3 Status is flipped to `Landed` with the same SHAs.
-- The parent plan carries an explicit written deferral for the
-  `paused` status value named in its "Long-Term End State" section
-  — in a `## Deferred Follow-Up` section (or equivalent renamed
-  subsection) of the parent plan itself, with rationale, not in
-  this file, not in the PR body, not in an issue.
-- The parent plan's overall Status line is flipped from
-  `In progress` to `Landed` **only after** that written deferral is
-  in place. Flipping to `Landed` without the deferral violates
-  AGENTS.md's Plan-to-PR Completion Gate rule against informal
-  tracking; flipping with the deferral satisfies the rule because
-  the unsatisfied requirement is explicitly split from the landed
-  work.
-- The Tier 1 backlog entry `Admin live status must match public
-  route availability` in `docs/backlog.md` is removed (or moved to a
-  landed-items section if one exists) in the same PR. The Tier 1
-  entry is scoped to live-status correctness; `paused` is a
-  separate product feature and does not hold this entry open.
-- `docs/tracking/admin-ux-roadmap.md` reflects the landed state of
-  the admin live-status alignment, not the in-progress plan link.
-- Every command listed in `Validation Commands Expected At Handoff`
-  above ran with its result recorded in the PR body. Any command
-  that could not run is called out explicitly with a reason.
-- Before/after UX screenshots for both call sites are linked in the
-  PR body.
+- `Production Admin Smoke` passes against deployed production after this
+  slice is released.
+- A follow-up docs commit records the production smoke run URL and flips
+  this file, the parent Slice 3 section, and the parent plan overall
+  status from `In progress pending prod smoke` to `Landed`.
+- The Tier 1 backlog entry `Admin live status must match public route
+  availability` in `docs/backlog.md` is removed in that same follow-up
+  docs commit.
+- `docs/tracking/admin-ux-roadmap.md` is updated in that same follow-up
+  docs commit to the landed state.
 
 ## Non-Goals
 
@@ -472,13 +475,11 @@ Slice 3 is `Landed` when all of the following hold:
   any new product behavior distinct from the existing publish/
   unpublish flow. `paused` is named in the parent plan's long-term
   end state and is split out of the parent plan via the explicit
-  written deferral commit 3 adds to the parent plan itself, not
-  just to this file. A non-live UX slice alone cannot define the
-  "intent to restore" signal that separates paused from plain
-  unpublish; naming the split here keeps the parent plan's overall
-  Status flip honest under AGENTS.md's Plan-to-PR Completion Gate
-  rule. When a future product PR adds `paused`, this slice's
-  reason-text pattern is extended with one more string, not
+  written deferral in the merge-phase docs commit to the parent plan
+  itself, not just to this file. A non-live UX slice alone cannot
+  define the "intent to restore" signal that separates paused from
+  plain unpublish. When a future product PR adds `paused`, this
+  slice's reason-text pattern is extended with one more string, not
   restructured.
 - Migrating other admin buttons that use native `disabled` to the
   `aria-disabled` + helper-text pattern. Only the two `Open live
@@ -497,16 +498,17 @@ Slice 3 is `Landed` when all of the following hold:
 
 ## Rollback
 
-If Slice 3 introduces a regression after deploy, revert the three
-feature commits in reverse order (3 → 2 → 1). Each step leaves the
-repo in a working state:
+If Slice 3 introduces a regression after deploy, revert in reverse
+order:
 
-- Revert commit 3 first. This restores `Proposed` status on this
-  file and on the parent plan's Slice 3 entry, restores the parent
-  plan's overall `In progress` status, restores the Tier 1 backlog
-  entry, and restores the admin-ux-roadmap pointer. No code change.
-- Revert commit 2 next. This drops the extended e2e assertions. The
-  existing reload-aware coverage from Slice 1/Slice 2 still passes.
+- If the post-release landed docs commit exists (commit 4), revert it
+  first. This restores `In progress pending prod smoke` state while
+  preserving shipped code.
+- Revert the merge-phase docs commit (commit 3) next. This restores
+  `Proposed` status and removes the pending-smoke state bookkeeping.
+- Revert commit 2 next. This drops the extended e2e and production
+  smoke assertions. The existing reload-aware coverage from Slice 1/
+  Slice 2 still passes.
 - Revert commit 1 last. This restores the Slice 2 shape: native
   `disabled` on both `Open live game` sites driven by
   `isWorkspaceBusy || !selectedDraft.isLive`, no helper text, no
@@ -526,3 +528,4 @@ cross-site drift the slice is designed to prevent.
 - [docs/backlog.md](../backlog.md)
 - [docs/tracking/admin-ux-roadmap.md](../tracking/admin-ux-roadmap.md)
 - [docs/self-review-catalog.md](../self-review-catalog.md)
+- [docs/testing-tiers.md](../testing-tiers.md)
