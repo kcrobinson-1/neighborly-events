@@ -410,6 +410,46 @@ const ADMIN_DRAFT_DETAIL_FIXTURE = [
   },
 ];
 
+ADMIN_DRAFT_DETAIL_FIXTURE.push({
+  id: "aaaaaaaa-0000-0000-0000-000000000002",
+  created_at: "2025-01-18T08:00:00.000Z",
+  last_saved_by: "admin@example.com",
+  content: {
+    ...ADMIN_DRAFT_DETAIL_FIXTURE[0].content,
+    id: "aaaaaaaa-0000-0000-0000-000000000002",
+    name: "Greenwood Arts Walk Draft",
+    slug: "greenwood-arts-draft",
+  },
+});
+
+function readEqFilterValue(url, fieldName) {
+  const match = url.match(new RegExp(`${fieldName}=eq\\.([^&]+)`));
+
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+function getDraftSummaryFixtureByEventId(eventId) {
+  if (!eventId) {
+    return ADMIN_DRAFT_SUMMARY_FIXTURE[0];
+  }
+
+  return (
+    ADMIN_DRAFT_SUMMARY_FIXTURE.find((draft) => draft.event_id === eventId) ??
+    ADMIN_DRAFT_SUMMARY_FIXTURE[0]
+  );
+}
+
+function getDraftDetailFixtureByEventId(eventId) {
+  if (!eventId) {
+    return ADMIN_DRAFT_DETAIL_FIXTURE[0];
+  }
+
+  return (
+    ADMIN_DRAFT_DETAIL_FIXTURE.find((draft) => draft.id === eventId) ??
+    ADMIN_DRAFT_DETAIL_FIXTURE[0]
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Admin capture mode — mock installer factory
 // ---------------------------------------------------------------------------
@@ -482,7 +522,8 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
 
       const url = route.request().url();
       const isDetailRead = url.includes("event_id=eq.");
-      const detailRow = ADMIN_DRAFT_SUMMARY_FIXTURE[0];
+      const eventId = readEqFilterValue(url, "event_id");
+      const detailRow = getDraftSummaryFixtureByEventId(eventId);
 
       if (isDetailRead) {
         const acceptHeader = route.request().headers()["accept"] ?? "";
@@ -508,13 +549,16 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
         void route.continue();
         return;
       }
+      const url = route.request().url();
+      const eventId = readEqFilterValue(url, "id");
       const acceptHeader = route.request().headers()["accept"] ?? "";
       const returnSingle = acceptHeader.includes("vnd.pgrst.object");
+      const detailRow = getDraftDetailFixtureByEventId(eventId);
 
       void route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify(returnSingle ? ADMIN_DRAFT_DETAIL_FIXTURE[0] : ADMIN_DRAFT_DETAIL_FIXTURE),
+        body: JSON.stringify(returnSingle ? detailRow : ADMIN_DRAFT_DETAIL_FIXTURE),
       });
     });
 
@@ -635,8 +679,8 @@ async function captureAdminAllEventsStates(baseUrl, runDirectory, installMocks) 
 async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) {
   console.log("Capturing admin workspace states...");
 
-  const eventId = ADMIN_DRAFT_DETAIL_FIXTURE[0].id;
-  const workspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(eventId)}`;
+  const liveWorkspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[0].id)}`;
+  const draftOnlyWorkspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[1].id)}`;
 
   // 05 — mobile workspace (selected event editor)
   {
@@ -650,7 +694,7 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
     });
 
     await installMocks(page);
-    await page.goto(workspaceUrl, { waitUntil: "networkidle" });
+    await page.goto(liveWorkspaceUrl, { waitUntil: "networkidle" });
     // Wait for the event details form to appear (indicates authenticated + detail loaded)
     await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
     await capture(page, runDirectory, "05-admin-workspace-editor-mobile.png");
@@ -672,7 +716,7 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
     });
 
     await installMocks(page);
-    await page.goto(workspaceUrl, { waitUntil: "networkidle" });
+    await page.goto(liveWorkspaceUrl, { waitUntil: "networkidle" });
     await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
     await capture(page, runDirectory, "06-admin-workspace-editor-desktop.png");
     console.log("  06-admin-workspace-editor-desktop.png");
@@ -693,7 +737,7 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
     });
 
     await installMocks(page);
-    await page.goto(workspaceUrl, { waitUntil: "networkidle" });
+    await page.goto(liveWorkspaceUrl, { waitUntil: "networkidle" });
     await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
 
     // Clear the event name field — the form label is "Event name"
@@ -724,7 +768,7 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
     });
 
     await installMocks(page);
-    await page.goto(workspaceUrl, { waitUntil: "networkidle" });
+    await page.goto(liveWorkspaceUrl, { waitUntil: "networkidle" });
     await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
 
     // Make a small edit so Save changes becomes enabled
@@ -762,7 +806,7 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
       });
     });
 
-    await page.goto(workspaceUrl, { waitUntil: "networkidle" });
+    await page.goto(liveWorkspaceUrl, { waitUntil: "networkidle" });
     await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
 
     const nameInput = page.locator('.admin-details-form .admin-details-grid .admin-input').first();
@@ -773,6 +817,51 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
     console.log("  09-admin-workspace-save-error.png");
     if (consoleErrors.length > 0) {
       console.warn("  [workspace save error console errors]", consoleErrors);
+    }
+    await browser.close();
+  }
+
+  // 13 — mobile draft-only workspace (selected event editor)
+  {
+    const browser = await chromium.launch({ headless: true });
+    const context = await browser.newContext({ ...devices["iPhone 13"] });
+    const page = await context.newPage();
+    const consoleErrors = [];
+
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+
+    await installMocks(page);
+    await page.goto(draftOnlyWorkspaceUrl, { waitUntil: "networkidle" });
+    await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
+    await page.getByText("Status: Draft only").waitFor({ timeout: 10000 });
+    await capture(page, runDirectory, "13-admin-workspace-draft-only-mobile.png");
+    console.log("  13-admin-workspace-draft-only-mobile.png");
+    if (consoleErrors.length > 0) {
+      console.warn("  [workspace draft-only mobile console errors]", consoleErrors);
+    }
+    await browser.close();
+  }
+
+  // 14 — desktop draft-only workspace
+  {
+    const browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
+    const consoleErrors = [];
+
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
+
+    await installMocks(page);
+    await page.goto(draftOnlyWorkspaceUrl, { waitUntil: "networkidle" });
+    await page.locator(".admin-details-form").waitFor({ timeout: 15000 });
+    await page.getByText("Status: Draft only").waitFor({ timeout: 10000 });
+    await capture(page, runDirectory, "14-admin-workspace-draft-only-desktop.png");
+    console.log("  14-admin-workspace-draft-only-desktop.png");
+    if (consoleErrors.length > 0) {
+      console.warn("  [workspace draft-only desktop console errors]", consoleErrors);
     }
     await browser.close();
   }

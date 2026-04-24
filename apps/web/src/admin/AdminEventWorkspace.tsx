@@ -12,6 +12,9 @@ import type {
 } from "./useAdminDashboard";
 import type { AdminEventDetailsFormValues } from "./eventDetails";
 
+const openLiveGameNotLiveReason = "Publish this event to open the live game.";
+const openLiveGameBusyReason = "Working...";
+
 type AdminEventWorkspaceProps = {
   draftMutationState: AdminDraftMutationState;
   drafts: DraftEventSummary[];
@@ -122,6 +125,40 @@ function getQuestionMessageKind(
   return "info";
 }
 
+type OpenLiveGameState = {
+  disabled: boolean;
+  reason: string | null;
+  reasonId: string | null;
+};
+
+function getOpenLiveGameState(
+  draft: DraftEventSummary,
+  isWorkspaceBusy: boolean,
+  reasonId: string,
+): OpenLiveGameState {
+  if (isWorkspaceBusy) {
+    return {
+      disabled: true,
+      reason: openLiveGameBusyReason,
+      reasonId,
+    };
+  }
+
+  if (draft.status === "draft_only") {
+    return {
+      disabled: true,
+      reason: openLiveGameNotLiveReason,
+      reasonId,
+    };
+  }
+
+  return {
+    disabled: false,
+    reason: null,
+    reasonId: null,
+  };
+}
+
 /** Event workspace for draft orientation plus create and duplicate actions. */
 export function AdminEventWorkspace({
   draftMutationState,
@@ -199,6 +236,11 @@ export function AdminEventWorkspace({
     const isDuplicatingSelectedDraft =
       draftMutationState.status === "duplicating" &&
       draftMutationState.eventId === selectedDraft.id;
+    const workspaceOpenLiveGameState = getOpenLiveGameState(
+      selectedDraft,
+      isWorkspaceBusy,
+      "open-live-game-reason-workspace",
+    );
 
     return (
       <div className="admin-workspace-detail">
@@ -222,8 +264,15 @@ export function AdminEventWorkspace({
           </button>
           <button
             className="secondary-button"
-            disabled={isWorkspaceBusy || !selectedDraft.isLive}
-            onClick={() => onNavigate(routes.game(selectedDraft.slug))}
+            aria-describedby={workspaceOpenLiveGameState.reasonId ?? undefined}
+            aria-disabled={workspaceOpenLiveGameState.disabled ? "true" : undefined}
+            onClick={() => {
+              if (workspaceOpenLiveGameState.disabled) {
+                return;
+              }
+
+              onNavigate(routes.game(selectedDraft.slug));
+            }}
             type="button"
           >
             Open live game
@@ -237,6 +286,14 @@ export function AdminEventWorkspace({
             {isDuplicatingSelectedDraft ? "Duplicating..." : "Duplicate draft"}
           </button>
         </div>
+        {workspaceOpenLiveGameState.reason ? (
+          <span
+            className="admin-action-reason"
+            id={workspaceOpenLiveGameState.reasonId ?? undefined}
+          >
+            {workspaceOpenLiveGameState.reason}
+          </span>
+        ) : null}
         {selectedDraftState.status === "loading" ? (
           <p className="admin-message admin-message-info">
             Loading event details...
@@ -339,52 +396,75 @@ export function AdminEventWorkspace({
       ) : null}
       <div className="draft-list">
         {drafts.length ? (
-          drafts.map((draft) => (
-            <article
-              aria-label={`${draft.name} event`}
-              className="draft-row"
-              key={draft.id}
-            >
-              <div className="draft-row-copy">
-                <div className="draft-row-header">
-                  <h3>{draft.name}</h3>
-                  <span className="chip">{getStatusLabel(draft)}</span>
+          drafts.map((draft) => {
+            const rowOpenLiveGameState = getOpenLiveGameState(
+              draft,
+              isWorkspaceBusy,
+              `open-live-game-reason-${draft.id}`,
+            );
+
+            return (
+              <article
+                aria-label={`${draft.name} event`}
+                className="draft-row"
+                key={draft.id}
+              >
+                <div className="draft-row-copy">
+                  <div className="draft-row-header">
+                    <h3>{draft.name}</h3>
+                    <span className="chip">{getStatusLabel(draft)}</span>
+                  </div>
+                  <p className="draft-row-meta">Slug: {draft.slug}</p>
+                  <p className="draft-row-meta">
+                    Last saved: {formatSavedAt(draft.updatedAt)}
+                  </p>
                 </div>
-                <p className="draft-row-meta">Slug: {draft.slug}</p>
-                <p className="draft-row-meta">
-                  Last saved: {formatSavedAt(draft.updatedAt)}
-                </p>
-              </div>
-              <div className="admin-action-row">
-                <button
-                  className="secondary-button"
-                  onClick={() => onNavigate(routes.adminEvent(draft.id))}
-                  type="button"
-                >
-                  Open workspace
-                </button>
-                <button
-                  className="secondary-button"
-                  disabled={isWorkspaceBusy || !draft.isLive}
-                  onClick={() => onNavigate(routes.game(draft.slug))}
-                  type="button"
-                >
-                  Open live game
-                </button>
-                <button
-                  className="secondary-button"
-                  disabled={isWorkspaceBusy}
-                  onClick={() => void handleDuplicateDraft(draft.id)}
-                  type="button"
-                >
-                  {draftMutationState.status === "duplicating" &&
-                  draftMutationState.eventId === draft.id
-                    ? "Duplicating..."
-                    : "Duplicate draft"}
-                </button>
-              </div>
-            </article>
-          ))
+                <div className="admin-action-row">
+                  <button
+                    className="secondary-button"
+                    onClick={() => onNavigate(routes.adminEvent(draft.id))}
+                    type="button"
+                  >
+                    Open workspace
+                  </button>
+                  <button
+                    aria-describedby={rowOpenLiveGameState.reasonId ?? undefined}
+                    aria-disabled={rowOpenLiveGameState.disabled ? "true" : undefined}
+                    className="secondary-button"
+                    onClick={() => {
+                      if (rowOpenLiveGameState.disabled) {
+                        return;
+                      }
+
+                      onNavigate(routes.game(draft.slug));
+                    }}
+                    type="button"
+                  >
+                    Open live game
+                  </button>
+                  <button
+                    className="secondary-button"
+                    disabled={isWorkspaceBusy}
+                    onClick={() => void handleDuplicateDraft(draft.id)}
+                    type="button"
+                  >
+                    {draftMutationState.status === "duplicating" &&
+                    draftMutationState.eventId === draft.id
+                      ? "Duplicating..."
+                      : "Duplicate draft"}
+                  </button>
+                </div>
+                {rowOpenLiveGameState.reason ? (
+                  <span
+                    className="admin-action-reason"
+                    id={rowOpenLiveGameState.reasonId ?? undefined}
+                  >
+                    {rowOpenLiveGameState.reason}
+                  </span>
+                ) : null}
+              </article>
+            );
+          })
         ) : (
           <p className="draft-row-meta">No draft events are visible yet.</p>
         )}

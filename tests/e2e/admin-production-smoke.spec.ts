@@ -1,5 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { ensureAdminE2eFixture, readPublishedEventState } from "./admin-auth-fixture";
+
+const openLiveGameNotLiveReason = "Publish this event to open the live game.";
 
 async function readLiveCount(page: Page) {
   const liveSummary = page
@@ -18,6 +20,22 @@ async function readLiveCount(page: Page) {
   }
 
   return Number(liveCountMatch[1]);
+}
+
+async function expectOpenLiveGameDisabledState(
+  page: Page,
+  button: Locator,
+  reason: string,
+) {
+  await expect(button).toBeDisabled();
+  await expect(button).toHaveAttribute("aria-disabled", "true");
+  const reasonId = await button.getAttribute("aria-describedby");
+
+  if (!reasonId) {
+    throw new Error("Expected Open live game to set aria-describedby when disabled.");
+  }
+
+  await expect(page.locator(`#${reasonId}`)).toHaveText(reason);
 }
 
 test.describe("production admin smoke", () => {
@@ -95,14 +113,20 @@ test.describe("production admin smoke", () => {
     await expect(reloadedEventCard).toBeVisible();
     await expect(reloadedEventCard.getByText("Draft only")).toBeVisible();
     await expect(reloadedEventCard.getByText(/^Live v/)).toHaveCount(0);
-    await expect(
+    await expectOpenLiveGameDisabledState(
+      page,
       reloadedEventCard.getByRole("button", { name: "Open live game" }),
-    ).toBeDisabled();
+      openLiveGameNotLiveReason,
+    );
 
     await reloadedEventCard.getByRole("button", { name: "Open workspace" }).click();
     await expect(page).toHaveURL(new RegExp(`/admin/events/${fixture.eventId}$`));
     await expect(page.getByText("Status: Draft only")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Open live game" })).toBeDisabled();
+    await expectOpenLiveGameDisabledState(
+      page,
+      page.getByRole("button", { name: "Open live game" }),
+      openLiveGameNotLiveReason,
+    );
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(
