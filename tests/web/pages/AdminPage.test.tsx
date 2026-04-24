@@ -94,6 +94,9 @@ const selectedDraftContent = {
   slug: "first-sample",
 };
 
+const openLiveGameNotLiveReason = "Publish this event to open the live game.";
+const openLiveGameBusyReason = "Working...";
+
 function createDraftDetail(
   content = selectedDraftContent,
   lastPublishedVersionNumber: number | null = 1,
@@ -180,6 +183,30 @@ function createDeferred<T>() {
     reject,
     resolve,
   };
+}
+
+function expectOpenLiveGameEnabled(button: HTMLElement) {
+  expect(button.hasAttribute("aria-disabled")).toBe(false);
+  expect(button.hasAttribute("aria-describedby")).toBe(false);
+  expect(button.hasAttribute("disabled")).toBe(false);
+}
+
+function expectOpenLiveGameDisabledWithReason(button: HTMLElement, reason: string) {
+  expect(button.getAttribute("aria-disabled")).toBe("true");
+  expect(button.hasAttribute("disabled")).toBe(false);
+  const reasonId = button.getAttribute("aria-describedby");
+  expect(reasonId).toBeTruthy();
+
+  if (!reasonId) {
+    throw new Error("Expected aria-describedby to be set when Open live game is disabled.");
+  }
+
+  const reasonElement = document.getElementById(reasonId);
+  expect(reasonElement?.textContent).toBe(reason);
+
+  // aria-disabled keeps the button in the tab/focus order for assistive access.
+  (button as HTMLButtonElement).focus();
+  expect(document.activeElement).toBe(button);
 }
 
 describe("AdminPage", () => {
@@ -371,9 +398,15 @@ describe("AdminPage", () => {
     expect(navigate).toHaveBeenCalledWith("/admin/events/madrona-music-2026");
     expect(navigate).toHaveBeenCalledWith("/event/first-sample/game");
     expect(screen.getAllByRole("button", { name: "Open live game" })).toHaveLength(2);
-    expect(
-      within(draftOnlyEventCard).getByRole("button", { name: "Open live game" }),
-    ).toHaveProperty("disabled", true);
+    const draftOnlyOpenLiveGameButton = within(draftOnlyEventCard).getByRole("button", {
+      name: "Open live game",
+    });
+    expectOpenLiveGameDisabledWithReason(
+      draftOnlyOpenLiveGameButton,
+      openLiveGameNotLiveReason,
+    );
+    fireEvent.click(draftOnlyOpenLiveGameButton);
+    expect(navigate).toHaveBeenCalledTimes(2);
   });
 
   it("uses status rather than lastPublishedVersionNumber for list badges and counts", async () => {
@@ -483,6 +516,14 @@ describe("AdminPage", () => {
     for (const button of screen.getAllByRole("button", { name: "Duplicate draft" })) {
       expect(button.hasAttribute("disabled")).toBe(true);
     }
+    const draftOnlyEventCard = screen.getByLabelText("Draft Market Day event");
+    const busyOpenLiveGameButton = within(draftOnlyEventCard).getByRole("button", {
+      name: "Open live game",
+    });
+    expectOpenLiveGameDisabledWithReason(
+      busyOpenLiveGameButton,
+      openLiveGameBusyReason,
+    );
 
     saveDraft.resolve({
       id: "untitled-event-created",
@@ -642,6 +683,13 @@ describe("AdminPage", () => {
       .toBe(true);
     expect(screen.getByRole("button", { name: "Refresh events" }).hasAttribute("disabled"))
       .toBe(true);
+    const busyOpenLiveGameButton = within(liveEventCard).getByRole("button", {
+      name: "Open live game",
+    });
+    expectOpenLiveGameDisabledWithReason(
+      busyOpenLiveGameButton,
+      openLiveGameBusyReason,
+    );
 
     saveDraft.resolve({
       id: "madrona-copy",
@@ -858,9 +906,9 @@ describe("AdminPage", () => {
     expect(navigate).toHaveBeenCalledWith("/admin");
     expect(await screen.findByText("Updated Madrona Event")).toBeTruthy();
     expect(screen.getByText("1 live")).toBeTruthy();
-    expect(
+    expectOpenLiveGameEnabled(
       screen.getAllByRole("button", { name: "Open live game" })[0],
-    ).toHaveProperty("disabled", false);
+    );
   });
 
   it("keeps an event-details save successful when live-status refresh fails", async () => {
@@ -1632,9 +1680,8 @@ describe("AdminPage", () => {
 
       // Unpublish section must be visible now without a reload
       expect(screen.getByRole("button", { name: "Unpublish" })).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
-        "disabled",
-        false,
+      expectOpenLiveGameEnabled(
+        screen.getByRole("button", { name: "Open live game" }),
       );
     });
 
@@ -1694,9 +1741,9 @@ describe("AdminPage", () => {
         expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull();
       });
       expect(screen.getByText("Status: Draft only")).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
-        "disabled",
-        true,
+      expectOpenLiveGameDisabledWithReason(
+        screen.getByRole("button", { name: "Open live game" }),
+        openLiveGameNotLiveReason,
       );
     });
 
@@ -2002,9 +2049,8 @@ describe("AdminPage", () => {
         "draft-market-2026",
       );
       await expectDraftChangesNotPublishedVisible();
-      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
-        "disabled",
-        false,
+      expectOpenLiveGameEnabled(
+        screen.getByRole("button", { name: "Open live game" }),
       );
       expect(screen.getByRole("button", { name: "Unpublish" })).toBeTruthy();
     });
@@ -2048,9 +2094,9 @@ describe("AdminPage", () => {
       );
       await expectDraftChangesNotPublishedHidden();
       expect(await screen.findByText("Status: Draft only")).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
-        "disabled",
-        true,
+      expectOpenLiveGameDisabledWithReason(
+        screen.getByRole("button", { name: "Open live game" }),
+        openLiveGameNotLiveReason,
       );
       expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull();
     });
@@ -2296,7 +2342,7 @@ describe("AdminPage", () => {
     });
   });
 
-  it("disables Open live game for a previously published row when isLive is false", async () => {
+  it("uses aria-disabled Open live game for a previously published row when isLive is false", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
@@ -2317,9 +2363,9 @@ describe("AdminPage", () => {
     renderAdminRoute("madrona-music-2026");
 
     expect(await screen.findByText("Status: Draft only")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Open live game" })).toHaveProperty(
-      "disabled",
-      true,
+    expectOpenLiveGameDisabledWithReason(
+      screen.getByRole("button", { name: "Open live game" }),
+      openLiveGameNotLiveReason,
     );
     expect(screen.queryByRole("button", { name: "Unpublish" })).toBeNull();
   });

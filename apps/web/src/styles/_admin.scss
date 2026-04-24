@@ -127,6 +127,22 @@
   flex-wrap: wrap;
 }
 
+.admin-action-reason {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.secondary-button[aria-disabled="true"] {
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+.secondary-button[aria-disabled="true"]:hover {
+  transform: none;
+}
+
 .admin-details-form {
   padding-top: $space-4;
 }
