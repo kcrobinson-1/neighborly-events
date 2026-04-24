@@ -163,6 +163,10 @@ function getCheckboxValue(label: string) {
   return (screen.getByLabelText(label) as HTMLInputElement).checked;
 }
 
+function getStatusLine(text: string) {
+  return screen.getByText((_, element) => element?.textContent === `Status: ${text}`);
+}
+
 function createDeferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: unknown) => void;
@@ -890,7 +894,8 @@ describe("AdminPage", () => {
       await screen.findByText("Saved Updated Madrona Event."),
     ).toBeTruthy();
     expect(screen.queryByText("We couldn't save the event details right now.")).toBeNull();
-    expect(await screen.findByText(/Draft changes not published/)).toBeTruthy();
+    expect(screen.queryByText(/Draft changes not published/)).toBeNull();
+    expect(getStatusLine("Live v1")).toBeTruthy();
   });
 
   it("saves existing question edits and preserves event details", async () => {
@@ -993,7 +998,8 @@ describe("AdminPage", () => {
     expect(
       screen.queryByText("We couldn't save the question changes right now."),
     ).toBeNull();
-    expect(await screen.findByText(/Draft changes not published/)).toBeTruthy();
+    expect(screen.queryByText(/Draft changes not published/)).toBeNull();
+    expect(getStatusLine("Live v1")).toBeTruthy();
   });
 
   it("adds a question and saves the updated draft structure", async () => {
@@ -1780,6 +1786,11 @@ describe("AdminPage", () => {
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
       });
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live_with_draft_changes",
+      });
       mockPublishDraftEvent.mockResolvedValue({
         eventId: "madrona-music-2026",
         publishedAt: "2026-04-14T13:00:00.000Z",
@@ -1825,6 +1836,11 @@ describe("AdminPage", () => {
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
       });
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live_with_draft_changes",
+      });
       mockPublishDraftEvent.mockResolvedValue({
         eventId: "madrona-music-2026",
         publishedAt: "2026-04-14T13:00:00.000Z",
@@ -1859,6 +1875,43 @@ describe("AdminPage", () => {
         expect(mockSaveDraftEvent).toHaveBeenCalledTimes(2);
       });
       await expectDraftChangesNotPublishedVisible();
+    });
+
+    it("keeps the live label after a no-op save when the server reports live", async () => {
+      mockUseAuthSession.mockReturnValue({
+        email: "admin@example.com",
+        session: { access_token: "admin-token" },
+        status: "signed_in",
+      });
+      mockGetGameAdminStatus.mockResolvedValue(true);
+      mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+      mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+      mockSaveDraftEvent.mockResolvedValue({
+        id: "madrona-music-2026",
+        lastPublishedVersionNumber: 1,
+        name: "Madrona Music in the Playfield",
+        slug: "first-sample",
+        updatedAt: "2026-04-14T12:00:00.000Z",
+      });
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live",
+      });
+
+      renderAdminRoute("madrona-music-2026");
+
+      await screen.findByLabelText("Event name");
+      fireEvent.change(screen.getByLabelText("Event name"), {
+        target: { value: " Madrona Music in the Playfield " },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+      expect(
+        await screen.findByText("Saved Madrona Music in the Playfield."),
+      ).toBeTruthy();
+      await expectDraftChangesNotPublishedHidden();
+      expect(getStatusLine("Live v1")).toBeTruthy();
     });
 
     it("refreshes live state after save when another admin publishes the event", async () => {

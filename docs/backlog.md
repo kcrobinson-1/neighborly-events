@@ -65,6 +65,13 @@ Reduce deployment risk and contributor friction before the live event.
   relay the log back into the session automatically.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Surface CI step logs in PR comments on failure](./tracking/dev-workflow-improvements.md)
 
+- [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**
+  Slice 2 added view grant checks, but its pgTAP file still relies on underlying
+  `game_event_drafts` RLS coverage for the “authenticated but not allowlisted
+  sees zero rows” case. Add a direct view-level assertion so future view or
+  policy changes cannot widen access silently.
+  Detail: [`docs/plans/admin-live-status-plan.md`](./plans/admin-live-status-plan.md)
+
 ---
 
 ## Tier 3 — Admin Authoring Polish

@@ -298,10 +298,6 @@ export function useSelectedDraft({
         status: "success",
       });
 
-      if (nextStatus.status !== "draft_only") {
-        setHasDraftChanges(true);
-      }
-
       return nextSummary;
     } catch (error: unknown) {
       setSelectedDraftState({
@@ -362,10 +358,6 @@ export function useSelectedDraft({
         message: "Saved question changes.",
         status: "success",
       });
-
-      if (nextStatus.status !== "draft_only") {
-        setHasDraftChanges(true);
-      }
 
       return nextSummary;
     } catch (error: unknown) {
