@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 3 Execution Plan
 
-**Status:** In progress pending prod smoke — merge-phase implementation commits `f750be2`, `7630d88`, and `bbc0c84`
+**Status:** Landed — implementation commits `f750be2`, `7630d88`, and `bbc0c84` (merged via PR #80, merge commit `6bfab72`); production admin smoke verified at https://github.com/kcrobinson-1/neighborly-scavenger-game/actions/runs/24912902363/job/72961624016
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 

@@ -25,18 +25,15 @@ Recent browser walkthrough notes from the deployed `/admin` surface
 
 ### Align admin live status with public-route availability
 
-Status: tracked in [`../plans/admin-live-status-plan.md`](../plans/admin-live-status-plan.md)
+Status: Landed in [`../plans/admin-live-status-plan.md`](../plans/admin-live-status-plan.md)
 
 This item graduated from the general admin UX roadmap into its own plan
-because it is no longer just a polish concern. Use
-[`../plans/admin-live-status-plan.md`](../plans/admin-live-status-plan.md) as
-the source of truth for:
-
-- the confirmed root cause
-- the long-term end state
-- the bounded correctness-fix slice
-- the follow-up read-model and fixture cleanup work
-- the validation needed to close the Tier 1 backlog item
+and has now landed across three slices: the correctness fix, the admin
+read-model cleanup, and the non-live `Open live game` UX treatment.
+Production admin smoke confirms the deployed behavior matches the
+public-route availability contract. Refer to
+[`../plans/admin-live-status-plan.md`](../plans/admin-live-status-plan.md)
+for the historical decisions, slice boundaries, and shipped commits.
 
 ### Improve the mobile question editor layout
 
