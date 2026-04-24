@@ -97,9 +97,17 @@ function applySavedDraftToDetail(
   };
 }
 
+function didDraftContentChange(
+  currentContent: DraftEventDetail["content"],
+  nextContent: DraftEventDetail["content"],
+) {
+  return JSON.stringify(currentContent) !== JSON.stringify(nextContent);
+}
+
 async function loadSavedDraftStatus(
   currentDraft: DraftEventDetail,
   savedDraft: SaveDraftEventResult,
+  savedContentChanged: boolean,
 ): Promise<DraftEventStatusSnapshot> {
   const hasBeenPublished =
     savedDraft.hasBeenPublished ??
@@ -116,10 +124,20 @@ async function loadSavedDraftStatus(
   try {
     return await loadDraftEventStatus(savedDraft.id);
   } catch {
+    const fallbackStatus =
+      hasBeenPublished &&
+      currentDraft.isLive &&
+      currentDraft.status === "live" &&
+      savedContentChanged
+        ? "live_with_draft_changes"
+        : hasBeenPublished
+          ? currentDraft.status
+          : "draft_only";
+
     return {
       isLive: hasBeenPublished ? currentDraft.isLive : false,
       lastPublishedVersionNumber: savedDraft.lastPublishedVersionNumber,
-      status: hasBeenPublished ? currentDraft.status : "draft_only",
+      status: fallbackStatus,
     };
   }
 }
@@ -281,8 +299,16 @@ export function useSelectedDraft({
 
     try {
       const content = applyEventDetailsFormValues(currentDraft.content, values);
+      const savedContentChanged = didDraftContentChange(
+        currentDraft.content,
+        content,
+      );
       const savedDraft = await saveDraftEvent(content, eventCode);
-      const nextStatus = await loadSavedDraftStatus(currentDraft, savedDraft);
+      const nextStatus = await loadSavedDraftStatus(
+        currentDraft,
+        savedDraft,
+        savedContentChanged,
+      );
       const nextDraft = applySavedDraftToDetail(
         currentDraft,
         savedDraft,
@@ -337,8 +363,16 @@ export function useSelectedDraft({
 
     try {
       const preparedContent = prepareQuestionContentForSave(content);
+      const savedContentChanged = didDraftContentChange(
+        currentDraft.content,
+        preparedContent,
+      );
       const savedDraft = await saveDraftEvent(preparedContent);
-      const nextStatus = await loadSavedDraftStatus(currentDraft, savedDraft);
+      const nextStatus = await loadSavedDraftStatus(
+        currentDraft,
+        savedDraft,
+        savedContentChanged,
+      );
       const nextDraft = applySavedDraftToDetail(
         currentDraft,
         savedDraft,

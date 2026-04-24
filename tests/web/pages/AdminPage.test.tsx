@@ -896,8 +896,7 @@ describe("AdminPage", () => {
       await screen.findByText("Saved Updated Madrona Event."),
     ).toBeTruthy();
     expect(screen.queryByText("We couldn't save the event details right now.")).toBeNull();
-    expect(screen.queryByText(/Draft changes not published/)).toBeNull();
-    expect(getStatusLine("Live v2")).toBeTruthy();
+    expect(getStatusLine("Draft changes not published")).toBeTruthy();
   });
 
   it("saves existing question edits and preserves event details", async () => {
@@ -1002,6 +1001,41 @@ describe("AdminPage", () => {
     expect(
       screen.queryByText("We couldn't save the question changes right now."),
     ).toBeNull();
+    expect(getStatusLine("Draft changes not published")).toBeTruthy();
+  });
+
+  it("keeps the live label after a no-op save when live-status refresh fails", async () => {
+    mockUseAuthSession.mockReturnValue({
+      email: "admin@example.com",
+      session: { access_token: "admin-token" },
+      status: "signed_in",
+    });
+    mockGetGameAdminStatus.mockResolvedValue(true);
+    mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
+    mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
+    mockSaveDraftEvent.mockResolvedValue({
+      hasBeenPublished: true,
+      id: "madrona-music-2026",
+      lastPublishedVersionNumber: 2,
+      name: "Madrona Music in the Playfield",
+      slug: "first-sample",
+      updatedAt: "2026-04-13T12:00:00.000Z",
+    });
+    mockLoadDraftEventStatus.mockRejectedValueOnce(
+      new Error("Transient live-status refresh failure."),
+    );
+
+    renderAdminRoute("madrona-music-2026");
+
+    await screen.findByLabelText("Event name");
+    fireEvent.change(screen.getByLabelText("Event name"), {
+      target: { value: " Madrona Music in the Playfield " },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(
+      await screen.findByText("Saved Madrona Music in the Playfield."),
+    ).toBeTruthy();
     expect(screen.queryByText(/Draft changes not published/)).toBeNull();
     expect(getStatusLine("Live v2")).toBeTruthy();
   });
