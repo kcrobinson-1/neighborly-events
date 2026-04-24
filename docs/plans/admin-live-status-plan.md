@@ -140,6 +140,9 @@ Acceptance bar:
 
 Status: Proposed
 
+Execution plan:
+[admin-live-status-slice-3-plan.md](./admin-live-status-slice-3-plan.md).
+
 Goal:
 
 - settle the non-live `Open live game` treatment once the status model is
