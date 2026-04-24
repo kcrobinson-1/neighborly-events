@@ -43,12 +43,6 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
-- [ ] **`dev` Admin UI-review capture mode**
-  Add `npm run ui:review:capture -- --mode admin` (or a sibling script) so
-  admin UX PRs have a documented screenshot path that does not write production
-  data. Without this, each admin UX PR improvises its own screenshot approach.
-  Detail: [`docs/tracking/dev-workflow-improvements.md` — Add an admin UI-review capture mode](./tracking/dev-workflow-improvements.md)
-
 - [ ] **`infra` Surface CI step logs in PR comments on failure**
   AI coding agents working inside a session can't authenticate to the Actions
   logs API, so a failing PR CI run leaves the agent without the real
