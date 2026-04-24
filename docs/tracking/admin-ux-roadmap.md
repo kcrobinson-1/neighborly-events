@@ -37,52 +37,25 @@ for the historical decisions, slice boundaries, and shipped commits.
 
 ### Improve the mobile question editor layout
 
-Status: open
+Status: landed (`feat/mobile-question-editor-layout`, 2026-04-24)
 
-Value:
+This item now keeps the same single-column mobile hierarchy while improving the
+question editor readability on narrow viewports:
 
-- makes the question editor easier to use on the phone-sized viewport that most
-  reviewers will reach first
-- reduces clipped option labels and the feeling that the editor is fighting the
-  screen instead of fitting it
-- improves the crowded answer-option rows that already feel brittle in the
-  current desktop editor once labels and per-option actions compete for space
-- gives the admin workspace a clearer polish signal before preview and publish
-  phases land
+- answer-option rows switch to a mobile-only two-row layout so the option label
+  field gets full width and no longer competes inline with correctness and
+  delete controls
+- correctness and delete controls remain paired to the same option row while
+  avoiding clipped/truncated label editing
+- the admin screenshot-capture fixture now includes a long option label so
+  future `ui:review:capture:admin` runs reliably surface spacing regressions in
+  the mobile question editor
 
-Work required:
+Validation used for landing:
 
-- rework the question editor’s mobile stacking so the question list, focused
-  editor, and option controls do not crowd each other
-- tighten the spacing and width constraints around option labels and per-option
-  actions
-- verify that longer option labels still read cleanly without making the
-  correctness control and delete action feel detached from the edited option
-- verify the editor still keeps its explicit save and validation states visible
-  after the layout change
-
-Open questions:
-
-- should the mobile view keep the question list and editor in one column, or
-  collapse the list into a separate disclosure once a question is selected?
-- should option actions stay inline, or move into a lighter-weight row to reduce
-  vertical height?
-- is there a minimum viewport width where the current two-panel shape should
-  switch into a more compact single-panel editor?
-
-Steps to complete:
-
-1. Define the expected mobile hierarchy for the question list and focused
-   editor.
-2. Adjust the responsive SCSS so the chosen hierarchy reads clearly on a
-   narrow viewport.
-3. Capture before/after screenshots for the admin PR review path.
-4. Validate that save, validation, and selection states still work on mobile.
-
-Minimum validation:
-
-- `npm run ui:review:capture -- --mode admin`
-- browser check of the selected-workspace and question-editor mobile states
+- `npm run ui:review:capture:admin` (before/after mobile screenshot comparison)
+- browser check of question selection, save/validation messaging, and mobile
+  option-row readability
 
 ### Clarify the desktop admin workspace hierarchy
 
