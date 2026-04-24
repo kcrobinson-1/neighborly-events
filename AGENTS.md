@@ -168,7 +168,17 @@ decisions.
 - flip the plan's Status line from `Proposed` / `In progress` to
   `Landed` in the same PR that implements it, and include the
   implementing commit SHAs (or the merge-commit SHA) in the Status
-  block so future readers can navigate from plan to history
+  block so future readers can navigate from plan to history. Exception:
+  plans that extend Tier 5 production smoke assertions land in two
+  phases per
+  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed Gate
+  For Plans That Touch Production Smoke" — the implementing PR merges
+  with Status `In progress pending prod smoke` and the implementing
+  SHAs recorded; a follow-up doc-only commit flips Status to `Landed`
+  with the production smoke run URL once the post-release run passes.
+  This is the single authoritative status rule for that case; do not
+  invent additional states or leave the flip to an informal post-merge
+  promise
 - ban soft-commitment words in plans: "optional but recommended,"
   "consider adding," "nice to have," "probably should." A requirement
   is either in-scope or deferred — there is no third option. Soft

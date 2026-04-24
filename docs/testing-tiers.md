@@ -119,10 +119,14 @@ smoke as final verification, land in two phases:
    follow-up doc commit that records both the implementing commit SHAs and
    the production smoke run URL.
 
-This preserves AGENTS.md's Plan-to-PR Completion Gate rule — unsatisfied
-plan requirements are deferred in writing inside the plan itself — while
-recognizing that production verification is a release-owner activity
-downstream of the merge.
+This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to
+for plans that extend Tier 5 assertions. The implementing PR still leaves
+the plan in a named, non-drift state — `In progress pending prod smoke`
+with the implementing SHAs recorded — rather than a soft post-merge
+promise. The `Landed` flip lives in the follow-up doc commit that records
+the production smoke run URL, not in an issue or an unwritten agreement.
+Production verification is a release-owner activity downstream of the
+merge, so the status flip is too.
 
 Plans that do **not** touch production smoke do not need this two-phase
 structure. Tier 1–4 handoff validation is sufficient.
