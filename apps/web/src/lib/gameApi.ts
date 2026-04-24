@@ -5,6 +5,7 @@ import type {
   GameCompletionResult,
   SubmitGameCompletionInput,
 } from "../types/game";
+import { getLocalStorage } from "./browserStorage";
 import { createOpaqueId } from "./session";
 import {
   createSupabaseAuthHeaders,
@@ -53,19 +54,6 @@ type IssueSessionResponse = {
 /** Builds a stable storage key for a specific event/session pair. */
 function getStorageKey(eventId: string, prototypeSessionId: string) {
   return `${eventId}:${prototypeSessionId}`;
-}
-
-/** Safely exposes localStorage for environments where it may be unavailable. */
-function getLocalStorage() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
 }
 
 /** Creates the volunteer-facing verification code shown after completion. */
