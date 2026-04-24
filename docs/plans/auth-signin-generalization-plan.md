@@ -3,15 +3,15 @@
 **Status:** Landed. Both sub-phases are on `main`: Phase 1 delivered the
 role-neutral primitives inert, and Phase 2 wired them into the admin
 shell behind `/auth/callback`. See the sub-phase execution plans
-([Phase 1](./auth-signin-generalization-phase-1-plan.md),
-[Phase 2](./auth-signin-generalization-phase-2-plan.md)) for the
+([Phase 1](./archive/auth-signin-generalization-phase-1-plan.md),
+[Phase 2](./archive/auth-signin-generalization-phase-2-plan.md)) for the
 landed surface; this overview remains as the architectural reference
 for Phase B consumers. Sub-phase plans follow the Phase A precedent
-([A.1](./reward-redemption-phase-a-1-plan.md),
-[A.2a](./reward-redemption-phase-a-2-plan.md),
-[A.2b](./reward-redemption-phase-a-2b-plan.md)).
+([A.1](./archive/reward-redemption-phase-a-1-plan.md),
+[A.2a](./archive/reward-redemption-phase-a-2-plan.md),
+[A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
 **Parent context:** Prerequisite for
-[`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md).
+[`reward-redemption-phase-b-plan.md`](./archive/reward-redemption-phase-b-plan.md).
 Both sub-phases must land before Phase B starts.
 
 ## Why This Plan Exists
@@ -377,7 +377,7 @@ the `/auth/callback` allowlist entry in place for faster re-roll.
   primitives.
 - `/auth/callback` is a role-neutral magic-link return handler that
   consumes any validated `next: AuthNextPath`.
-- [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
+- [`reward-redemption-phase-b-plan.md`](./archive/reward-redemption-phase-b-plan.md)
   can schedule B.1 implementation against `SignInForm`,
   `useAuthSession`, `requestMagicLink({ next })`, `getAccessToken`,
   and `validateNextPath` — with zero Supabase Auth dashboard changes

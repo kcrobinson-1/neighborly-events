@@ -19,10 +19,10 @@ Today a reload of `/admin` can show an event as `Live` with a working
 the unavailable state. Admin and public use two different definitions of live:
 
 - admin reads derive live status from `game_event_drafts.live_version_number`
-  ([apps/web/src/lib/adminGameApi.ts](../../apps/web/src/lib/adminGameApi.ts)),
+  ([apps/web/src/lib/adminGameApi.ts](../../../apps/web/src/lib/adminGameApi.ts)),
   consumed across the workspace in
-  [apps/web/src/admin/AdminEventWorkspace.tsx](../../apps/web/src/admin/AdminEventWorkspace.tsx)
-  and [apps/web/src/admin/AdminPublishPanel.tsx](../../apps/web/src/admin/AdminPublishPanel.tsx)
+  [apps/web/src/admin/AdminEventWorkspace.tsx](../../../apps/web/src/admin/AdminEventWorkspace.tsx)
+  and [apps/web/src/admin/AdminPublishPanel.tsx](../../../apps/web/src/admin/AdminPublishPanel.tsx)
 - public routing derives availability from `game_events.published_at is not null`
 
 `public.unpublish_game_event` clears `game_events.published_at = null` but
@@ -35,7 +35,7 @@ read boundary without touching `live_version_number` semantics. Slice 2 will
 collapse the read model durably.
 
 The current admin in-memory state also manually clears `liveVersionNumber`
-after unpublish ([apps/web/src/admin/useSelectedDraft.ts](../../apps/web/src/admin/useSelectedDraft.ts)
+after unpublish ([apps/web/src/admin/useSelectedDraft.ts](../../../apps/web/src/admin/useSelectedDraft.ts)
 around the save-flow update), which hides the bug until reload. The admin e2e
 assertions today go directly to `/admin/events/{id}` and only check the
 workspace detail label; they do not cover the event-list badge, the live
@@ -231,7 +231,7 @@ moment.
 
 ## Named Self-Review Audits
 
-From [docs/self-review-catalog.md](../self-review-catalog.md), applied at
+From [docs/self-review-catalog.md](../../self-review-catalog.md), applied at
 the commit boundary noted in parentheses:
 
 - **Frontend — Complete call-site coverage** (commit 2): walk every

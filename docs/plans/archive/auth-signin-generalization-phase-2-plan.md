@@ -1,8 +1,8 @@
 # Auth Sign-In Generalization — Phase 2 Execution Plan
 
 **Status:** Landed.
-**Parent overview:** [`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md)
-**Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./archive/auth-signin-generalization-phase-1-plan.md).
+**Parent overview:** [`auth-signin-generalization-plan.md`](../auth-signin-generalization-plan.md)
+**Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](./auth-signin-generalization-phase-1-plan.md).
 Phase 1 is **fully landed**. Three commits on `main` satisfy the
 Phase 1 plan: `b16fa24` (role-neutral auth API helpers), `adc4f3f`
 (`validateNextPath` with bypass-vector tests), and `48b3167`
@@ -269,7 +269,7 @@ Locked session-establishment sequence (from the overview plan's
 3. Call `getAuthSession()` to force Supabase client instantiation
    and trigger hash-based session detection
    (`detectSessionInUrl: true` is set at
-   [`supabaseBrowser.ts:56`](../../apps/web/src/lib/supabaseBrowser.ts)
+   [`supabaseBrowser.ts:56`](../../../apps/web/src/lib/supabaseBrowser.ts)
    and stays there).
 4. Wait for the first **non-null session** signal from either
    source — a non-null return from `getAuthSession()` or a
@@ -287,7 +287,7 @@ Locked session-establishment sequence (from the overview plan's
    final
    transition through a **single navigation mechanism**. The current
    `usePathnameNavigation.navigate`
-   ([`usePathnameNavigation.ts:33-47`](../../apps/web/src/usePathnameNavigation.ts))
+   ([`usePathnameNavigation.ts:33-47`](../../../apps/web/src/usePathnameNavigation.ts))
    always calls `history.pushState`, which would leave
    `/auth/callback?next=…` in the back-stack; combining it with a
    pre-emptive `replaceState` would duplicate the destination entry
@@ -406,7 +406,7 @@ the SPA shell loads.
 
 ### `apps/web/src/admin/useSelectedDraft.ts` — migrated
 
-[`useSelectedDraft.ts:16`](../../apps/web/src/admin/useSelectedDraft.ts)
+[`useSelectedDraft.ts:16`](../../../apps/web/src/admin/useSelectedDraft.ts)
 currently imports `useAdminSession` as a type and types its
 `sessionState` parameter as
 `ReturnType<typeof useAdminSession>`. Deleting `useAdminSession.ts`
@@ -480,14 +480,14 @@ same tokens and mixins as `_admin.scss`:
 Duplication of admin form-primitive rules is intentional and accepted
 (overview plan § SCSS scope). The `_admin.scss` selectors that only
 `AdminSignInForm` used (`.admin-form` at
-[`_admin.scss:32`](../../apps/web/src/styles/_admin.scss) plus any
+[`_admin.scss:32`](../../../apps/web/src/styles/_admin.scss) plus any
 `.admin-state-stack`-only branches for the sign-in path) may be
 trimmed if no remaining admin view uses them — verify before deleting.
 
 ### `tests/web/pages/AdminPage.test.tsx` — mock migration
 
 Current mocks (from
-[`AdminPage.test.tsx:12-50`](../../tests/web/pages/AdminPage.test.tsx)):
+[`AdminPage.test.tsx:12-50`](../../../tests/web/pages/AdminPage.test.tsx)):
 
 - `mockUseAdminSession` mocking
   `apps/web/src/admin/useAdminSession.ts` →
@@ -504,7 +504,7 @@ Current mocks (from
   helpers.
 - The `mockRequestAdminMagicLink.toHaveBeenCalledWith(...)` assertion
   at
-  [`AdminPage.test.tsx:213`](../../tests/web/pages/AdminPage.test.tsx)
+  [`AdminPage.test.tsx:213`](../../../tests/web/pages/AdminPage.test.tsx)
   becomes `mockRequestMagicLink.toHaveBeenCalledWith(
     "admin@example.com", { next: "/admin" })` — the `{ next }`
   options argument is new per the Phase 1 contract.
@@ -515,7 +515,7 @@ Every other assertion in the file stays put. The test count stays at
 ### `tests/e2e/admin-auth-fixture.ts` — redirect migration
 
 At
-[`admin-auth-fixture.ts:37`](../../tests/e2e/admin-auth-fixture.ts):
+[`admin-auth-fixture.ts:37`](../../../tests/e2e/admin-auth-fixture.ts):
 
 ```ts
 const defaultAdminRedirectUrl =
@@ -523,7 +523,7 @@ const defaultAdminRedirectUrl =
 ```
 
 At
-[`admin-auth-fixture.ts:71-73`](../../tests/e2e/admin-auth-fixture.ts):
+[`admin-auth-fixture.ts:71-73`](../../../tests/e2e/admin-auth-fixture.ts):
 
 ```ts
 adminRedirectUrl:
@@ -833,10 +833,10 @@ the e2e suite validates end-to-end.
 ## Self-Review Audits
 
 Apply the named audits from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](../../self-review-catalog.md):
 
 - **§ Error-surfacing for user-initiated mutations
-  ([`self-review-catalog.md:266`](../self-review-catalog.md)).**
+  ([`self-review-catalog.md:266`](../../self-review-catalog.md)).**
   Walk every user-initiated mutation in the migrated admin shell:
   `requestMagicLink` submit, `signOut` click. Both must surface a
   visible failure banner on rejection. The admin shell already does;

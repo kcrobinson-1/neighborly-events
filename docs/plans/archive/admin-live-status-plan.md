@@ -1,6 +1,6 @@
 # Admin Live Status Fix Plan
 
-**Status:** In progress pending prod smoke — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 merge-phase implementation landed in commits `f750be2`, `7630d88`, and `bbc0c84`
+**Status:** Landed — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 landed in commits `f750be2`, `7630d88`, and `bbc0c84` (PR #80, merge commit `6bfab72`); production admin smoke verified at https://github.com/kcrobinson-1/neighborly-scavenger-game/actions/runs/24912902363/job/72961624016
 
 **Scope:** Resolve the Tier 1 backlog item
 `Admin live status must match public route availability`. The plan sequences
@@ -138,7 +138,7 @@ Acceptance bar:
 
 ### Slice 3: Non-Live Action UX Follow-Up
 
-Status: In progress pending prod smoke (merge-phase implementation commits: `f750be2`, `7630d88`, `bbc0c84`)
+Status: Landed (implementation commits: `f750be2`, `7630d88`, `bbc0c84`; production admin smoke verified at https://github.com/kcrobinson-1/neighborly-scavenger-game/actions/runs/24912902363/job/72961624016)
 
 Execution plan:
 [admin-live-status-slice-3-plan.md](./admin-live-status-slice-3-plan.md).
@@ -207,8 +207,8 @@ Landed phase (Tier 5 post-release gate):
 
 ## Related Docs
 
-- [docs/backlog.md](../backlog.md)
-- [docs/tracking/admin-ux-roadmap.md](../tracking/admin-ux-roadmap.md)
-- [docs/operations.md](../operations.md)
-- [docs/testing.md](../testing.md)
-- [docs/testing-tiers.md](../testing-tiers.md)
+- [docs/backlog.md](../../backlog.md)
+- [docs/tracking/admin-ux-roadmap.md](../../tracking/admin-ux-roadmap.md)
+- [docs/operations.md](../../operations.md)
+- [docs/testing.md](../../testing.md)
+- [docs/testing-tiers.md](../../testing-tiers.md)

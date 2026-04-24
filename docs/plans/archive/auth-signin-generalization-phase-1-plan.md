@@ -13,7 +13,7 @@
 Phase 2 is now unblocked; its detail plan's Rollout Sequence step 1
 prerequisite check against `main` will pass.
 **Parent overview:** [`auth-signin-generalization-plan.md`](../auth-signin-generalization-plan.md)
-**Successor:** [`auth-signin-generalization-phase-2-plan.md`](../auth-signin-generalization-phase-2-plan.md)
+**Successor:** [`auth-signin-generalization-phase-2-plan.md`](./auth-signin-generalization-phase-2-plan.md)
 lands the session hook, sign-in form, callback route, and admin-shell
 migration against the Phase 1 foundation.
 **Scope:** Phase 1 only — the inert auth primitive surface and the

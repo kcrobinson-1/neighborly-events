@@ -2,12 +2,12 @@
 
 **Status:** Landed in commits `c1b60a2`, `f6980fc`, `ff8dc65`, `9eb544c`, `19993fb`, `4accef3`, and `9b68f03`.
 **Parent overview:** [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
-**Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
 **Predecessors (all landed):**
-[`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md),
-[`reward-redemption-phase-a-2b-plan.md`](./archive/reward-redemption-phase-a-2b-plan.md),
+[`auth-signin-generalization-plan.md`](../auth-signin-generalization-plan.md),
+[`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md),
 [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md),
-[`event-code-prerequisite-plan.md`](./archive/event-code-prerequisite-plan.md).
+[`event-code-prerequisite-plan.md`](./event-code-prerequisite-plan.md).
 **Successor (drafted separately before its implementation time):**
 [`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md)
 — layers the reverse CTA, confirmation flow, and
@@ -229,7 +229,7 @@ file that mirrors `authorizeRedeem.ts` with the organizer RPC swapped
 in. The extraction becomes a bounded post-B.2b task once all three
 consumers (`authorizeRedeem`, `authorizeRedemptions`, and any B.2b
 reversal-side gate) exist; capturing it in
-[`docs/tracking/code-refactor-checklist.md`](../tracking/code-refactor-checklist.md)
+[`docs/tracking/code-refactor-checklist.md`](../../tracking/code-refactor-checklist.md)
 is part of B.2a's documentation step.
 
 ### List data source and fetch contract
@@ -334,10 +334,10 @@ Each row renders:
   - Role label map: `agent` → "Agent", `organizer` → "Organizer",
     `root_admin` → "Root admin", null / unknown role → "Unknown".
     Per the `RedeemedByRole` and `ReversedByRole` types in
-    [`shared/redemption.ts`](../../shared/redemption.ts) and the A.2a
+    [`shared/redemption.ts`](../../../shared/redemption.ts) and the A.2a
     RPC bodies
-    ([redeem](../../supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql),
-    [reverse](../../supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql)),
+    ([redeem](../../../supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql),
+    [reverse](../../../supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql)),
     redeems write `agent` or `root_admin` and reversals write
     `organizer` or `root_admin`. Agents never appear as reversers;
     organizers never appear as redeemers. `formatActor.ts` accepts
@@ -467,7 +467,7 @@ Per design doc §8:
 ### Styling tokens
 
 - Reuse existing tokens from
-  [`apps/web/src/styles/_tokens.scss`](../../apps/web/src/styles/_tokens.scss)
+  [`apps/web/src/styles/_tokens.scss`](../../../apps/web/src/styles/_tokens.scss)
   for colors, spacing, radii, and shadows wherever a token exists.
   B.1 did not promote redemption-specific palettes to tokens, so
   B.2a inherits the same token layer.
@@ -643,8 +643,8 @@ and the monitoring spec can be run independently:
 - `scripts/testing/run-redemptions-e2e-tests.cjs` (new) — follows
   the shape of `scripts/testing/run-redeem-e2e-tests.cjs` but omits
   `functions serve`. B.2a's flows make no Edge Function calls:
-  [`AuthCallbackPage.tsx`](../../apps/web/src/pages/AuthCallbackPage.tsx)
-  and [`authApi.ts`](../../apps/web/src/auth/authApi.ts) drive magic-link
+  [`AuthCallbackPage.tsx`](../../../apps/web/src/pages/AuthCallbackPage.tsx)
+  and [`authApi.ts`](../../../apps/web/src/auth/authApi.ts) drive magic-link
   exchange through Supabase Auth directly, the authorization probe
   uses PostgREST RPCs (`is_organizer_for_event`, `is_root_admin`),
   and the monitoring list is a direct PostgREST `.select()`. The
@@ -761,7 +761,7 @@ reopen the Phase A boundary rather than widening B.2a.
    Land review-fix commits separately when that makes the history
    easier to audit.
 10. **Self-review audits.** Walk the named audits from
-    [`docs/self-review-catalog.md`](../self-review-catalog.md) that
+    [`docs/self-review-catalog.md`](../../self-review-catalog.md) that
     apply to this diff's surfaces (see § "Self-Review Audits" below).
 11. **Documentation currency sync.** Update in-branch, not in a
     follow-up:
@@ -772,11 +772,11 @@ reopen the Phase A boundary rather than widening B.2a.
       sub-phase summary row for B.2a — flip the `(Proposed)`
       marker to `(Landed)` and verify no other prose in the
       overview still describes B.2a as "not started";
-    - [`docs/architecture.md`](../architecture.md) — add the new
+    - [`docs/architecture.md`](../../architecture.md) — add the new
       route under the runtime-flow section, document the direct-RLS
       read path for the monitoring list, and note the unadvertised
       entry posture;
-    - [`docs/tracking/code-refactor-checklist.md`](../tracking/code-refactor-checklist.md) —
+    - [`docs/tracking/code-refactor-checklist.md`](../../tracking/code-refactor-checklist.md) —
       add a `Candidate Tasks` entry for the deferred shared-resolver
       extraction (target: extract `resolveEventContext` from
       `apps/web/src/redeem/authorizeRedeem.ts` and
@@ -784,7 +784,7 @@ reopen the Phase A boundary rather than widening B.2a.
       lands and all three consumers exist); validation command and
       concrete responsibility problem stated per the checklist's
       rules;
-    - [`docs/product.md`](../product.md) — only if the implemented
+    - [`docs/product.md`](../../product.md) — only if the implemented
       capability set actually changed from the pre-branch narrative;
       otherwise leave unchanged and say so in the PR body.
 
@@ -809,7 +809,7 @@ reopen the Phase A boundary rather than widening B.2a.
     but recommended", "nice to have", "consider adding") remains in
     this plan by merge time.
 14. **PR preparation.** Open a PR against `main` using the template
-    in [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    in [`.github/pull_request_template.md`](../../../.github/pull_request_template.md).
     State explicitly that B.2a is read-only and inert: direct URL
     works, no nav link is added, root admin is the only caller who
     can reach the route until Phase D seeds an organizer.
@@ -995,7 +995,7 @@ Structure / Tests") with a seeded organizer fixture:
 ## Self-Review Audits
 
 Run the applicable named audits from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](../../self-review-catalog.md):
 
 - **Frontend/browser surface — `Error-surfacing for user-initiated
   mutations`.** B.2a has no mutations, but the authorization probe,
@@ -1093,7 +1093,7 @@ blocker in the PR's Validation section rather than claiming success.
   in `validateNextPath` is a security boundary change. Mitigation:
   the new branch goes through `matchEventRedemptionsPath` only; the
   full bypass-vector table from
-  [`validateNextPath.test.ts`](../../tests/web/auth/validateNextPath.test.ts)
+  [`validateNextPath.test.ts`](../../../tests/web/auth/validateNextPath.test.ts)
   is re-run unchanged with no new accepted input beyond the named
   route.
 - **Bottom-sheet focus leak.** A fresh bottom-sheet implementation

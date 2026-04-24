@@ -3,12 +3,12 @@
 **Status:** Landed in commits `68a73c8`, `8201d28`, `9332e2e`, `4b61cc5`,
 `6da7aa4`, `026f8b9`, plus the implementing merge commit.
 **Parent overview:** [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
-**Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
 **Predecessors:**
-[`auth-signin-generalization-plan.md`](./auth-signin-generalization-plan.md),
-[`reward-redemption-phase-a-2b-plan.md`](./archive/reward-redemption-phase-a-2b-plan.md),
+[`auth-signin-generalization-plan.md`](../auth-signin-generalization-plan.md),
+[`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md),
 [`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md),
-[`event-code-prerequisite-plan.md`](./archive/event-code-prerequisite-plan.md)
+[`event-code-prerequisite-plan.md`](./event-code-prerequisite-plan.md)
 — landed.
 [`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md)
 — landed.
@@ -466,15 +466,15 @@ does not dissolve into ad hoc edits across the B.2a modules.
     - [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
       — mark B.2b as landed in the sub-phase summary and remove any
       prose that still describes reversal as "not started"
-    - [`docs/architecture.md`](../architecture.md) — update the
+    - [`docs/architecture.md`](../../architecture.md) — update the
       `EventRedemptionsPage` description from read-only monitoring to
       monitoring + organizer/root-admin reversal via the landed Edge
       Function, including the detail-sheet mutation path and the
       single-row re-read + list-refetch synchronization model
-    - [`README.md`](../../README.md) — update the current milestone /
+    - [`README.md`](../../../README.md) — update the current milestone /
       capability summary so it no longer describes the operator
       monitoring route as read-only once B.2b lands
-    - [`docs/product.md`](../product.md) — update any current-state or
+    - [`docs/product.md`](../../product.md) — update any current-state or
       capability language that still treats organizer reversal as
       deferred once the feature has actually landed
 
@@ -602,7 +602,7 @@ identical entry points.
 ## Self-Review Audits
 
 Run the applicable named audits from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](../../self-review-catalog.md):
 
 - **Frontend/browser surface — `Error-surfacing for user-initiated
   mutations`.** B.2b introduces the highest-risk user-initiated mutation
