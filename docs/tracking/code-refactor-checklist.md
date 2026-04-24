@@ -136,6 +136,16 @@ Rules for this checklist:
   Score: 7/10.
   Validation: `npm run ui:review:capture:admin`.
 
+- [ ] Extract shared "Open live game" e2e assertions across admin workflow and production smoke specs.
+  `tests/e2e/admin-workflow.admin.spec.ts` and
+  `tests/e2e/admin-production-smoke.spec.ts` currently duplicate
+  `expectOpenLiveGameDisabledState(...)` logic (aria-disabled + describedby +
+  reason text). Move the shared assertion(s) into a focused helper module (for
+  example `tests/e2e/helpers/openLiveGame.ts`) so copy changes cannot drift
+  across tiers.
+  Score: 4/10.
+  Validation: `npm run test:e2e:admin`.
+
 - [ ] Rename phase-named pgTAP test files to describe their surface.
   `supabase/tests/database/game_authoring_phase2_auth.test.sql`,
   `game_authoring_phase3_publish_failure_permissions.test.sql`,
