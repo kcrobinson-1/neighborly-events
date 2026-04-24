@@ -1,6 +1,6 @@
 # Admin Live Status Fix Plan
 
-**Status:** In progress pending prod smoke — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 merge-phase implementation landed in commits `f750be2` and `7630d88`, plus the docs closeout commit that introduces this pending-smoke status
+**Status:** In progress pending prod smoke — Slice 1 landed in commit `8374ac7`; Slice 2 landed in commits `ca62089`, `8f1cac8`, and `9480c4c`; Slice 3 merge-phase implementation landed in commits `f750be2`, `7630d88`, and `bbc0c84`
 
 **Scope:** Resolve the Tier 1 backlog item
 `Admin live status must match public route availability`. The plan sequences
@@ -138,7 +138,7 @@ Acceptance bar:
 
 ### Slice 3: Non-Live Action UX Follow-Up
 
-Status: In progress pending prod smoke (merge-phase implementation commits: `f750be2`, `7630d88`, and the docs closeout commit that introduces this status)
+Status: In progress pending prod smoke (merge-phase implementation commits: `f750be2`, `7630d88`, `bbc0c84`)
 
 Execution plan:
 [admin-live-status-slice-3-plan.md](./admin-live-status-slice-3-plan.md).

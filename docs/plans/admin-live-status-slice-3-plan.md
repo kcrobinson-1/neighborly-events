@@ -1,6 +1,6 @@
 # Admin Live Status — Slice 3 Execution Plan
 
-**Status:** In progress pending prod smoke — merge-phase implementation commits `f750be2` and `7630d88`; docs closeout commit is the commit that introduces this status line
+**Status:** In progress pending prod smoke — merge-phase implementation commits `f750be2`, `7630d88`, and `bbc0c84`
 
 **Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
 
