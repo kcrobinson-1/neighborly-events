@@ -49,11 +49,11 @@ function formatSavedAt(timestamp: string) {
 }
 
 function getStatusLabel(draft: DraftEventSummary, hasDraftChanges = false) {
-  if (!draft.isLive) {
+  if (draft.status === "draft_only") {
     return "Draft only";
   }
 
-  if (hasDraftChanges) {
+  if (draft.status === "live_with_draft_changes" || hasDraftChanges) {
     return "Draft changes not published";
   }
 
@@ -61,7 +61,7 @@ function getStatusLabel(draft: DraftEventSummary, hasDraftChanges = false) {
 }
 
 function getEventCounts(drafts: DraftEventSummary[]) {
-  const liveCount = drafts.filter((draft) => draft.isLive).length;
+  const liveCount = drafts.filter((draft) => draft.status !== "draft_only").length;
 
   return {
     draftOnlyCount: drafts.length - liveCount,

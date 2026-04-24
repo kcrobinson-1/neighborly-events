@@ -14,7 +14,7 @@ const {
   mockGetGameAdminStatus,
   mockListDraftEventSummaries,
   mockLoadDraftEvent,
-  mockLoadDraftEventLiveStatus,
+  mockLoadDraftEventStatus,
   mockPublishDraftEvent,
   mockRequestMagicLink,
   mockSaveDraftEvent,
@@ -26,7 +26,7 @@ const {
   mockGetGameAdminStatus: vi.fn(),
   mockListDraftEventSummaries: vi.fn(),
   mockLoadDraftEvent: vi.fn(),
-  mockLoadDraftEventLiveStatus: vi.fn(),
+  mockLoadDraftEventStatus: vi.fn(),
   mockPublishDraftEvent: vi.fn(),
   mockRequestMagicLink: vi.fn(),
   mockSaveDraftEvent: vi.fn(),
@@ -49,7 +49,7 @@ vi.mock("../../../apps/web/src/lib/adminGameApi.ts", () => ({
   getGameAdminStatus: mockGetGameAdminStatus,
   listDraftEventSummaries: mockListDraftEventSummaries,
   loadDraftEvent: mockLoadDraftEvent,
-  loadDraftEventLiveStatus: mockLoadDraftEventLiveStatus,
+  loadDraftEventStatus: mockLoadDraftEventStatus,
   publishDraftEvent: mockPublishDraftEvent,
   saveDraftEvent: mockSaveDraftEvent,
   unpublishEvent: mockUnpublishEvent,
@@ -72,6 +72,7 @@ const draftSummaries = [
     lastPublishedVersionNumber: 1,
     name: "Madrona Music in the Playfield",
     slug: "first-sample",
+    status: "live" as const,
     updatedAt: "2026-04-07T16:15:00.000Z",
   },
   {
@@ -81,6 +82,7 @@ const draftSummaries = [
     lastPublishedVersionNumber: null,
     name: "Draft Market Day",
     slug: "draft-market",
+    status: "draft_only" as const,
     updatedAt: "2026-04-08T16:15:00.000Z",
   },
 ];
@@ -97,6 +99,7 @@ function createDraftDetail(
   lastPublishedVersionNumber: number | null = 1,
   eventCode: string | null = "MMF",
   isLive = lastPublishedVersionNumber !== null,
+  status = isLive ? "live" : "draft_only",
 ) {
   return {
     content,
@@ -109,6 +112,7 @@ function createDraftDetail(
     lastPublishedVersionNumber,
     name: content.name,
     slug: content.slug,
+    status,
     updatedAt: "2026-04-08T12:00:00.000Z",
   };
 }
@@ -179,14 +183,18 @@ describe("AdminPage", () => {
     mockGetGameAdminStatus.mockReset();
     mockListDraftEventSummaries.mockReset();
     mockLoadDraftEvent.mockReset();
-    mockLoadDraftEventLiveStatus.mockReset();
+    mockLoadDraftEventStatus.mockReset();
     mockPublishDraftEvent.mockReset();
     mockRequestMagicLink.mockReset();
     mockSaveDraftEvent.mockReset();
     mockSignOut.mockReset();
     mockUnpublishEvent.mockReset();
     mockUseAuthSession.mockReset();
-    mockLoadDraftEventLiveStatus.mockResolvedValue(true);
+    mockLoadDraftEventStatus.mockResolvedValue({
+      isLive: true,
+      lastPublishedVersionNumber: 1,
+      status: "live",
+    });
   });
 
   afterEach(() => {
@@ -364,7 +372,7 @@ describe("AdminPage", () => {
     ).toHaveProperty("disabled", true);
   });
 
-  it("uses isLive rather than lastPublishedVersionNumber for list badges and counts", async () => {
+  it("uses status rather than lastPublishedVersionNumber for list badges and counts", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
@@ -375,6 +383,7 @@ describe("AdminPage", () => {
       {
         ...draftSummaries[0],
         isLive: false,
+        status: "draft_only",
       },
       draftSummaries[1],
     ]);
@@ -865,7 +874,7 @@ describe("AdminPage", () => {
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
     });
-    mockLoadDraftEventLiveStatus.mockRejectedValueOnce(
+    mockLoadDraftEventStatus.mockRejectedValueOnce(
       new Error("Transient live-status refresh failure."),
     );
 
@@ -969,7 +978,7 @@ describe("AdminPage", () => {
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
     });
-    mockLoadDraftEventLiveStatus.mockRejectedValueOnce(
+    mockLoadDraftEventStatus.mockRejectedValueOnce(
       new Error("Transient live-status refresh failure."),
     );
 
@@ -1881,7 +1890,11 @@ describe("AdminPage", () => {
         slug: "draft-market",
         updatedAt: "2026-04-14T12:00:00.000Z",
       });
-      mockLoadDraftEventLiveStatus.mockResolvedValue(true);
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: true,
+        lastPublishedVersionNumber: 1,
+        status: "live_with_draft_changes",
+      });
 
       renderAdminRoute("draft-market-2026");
 
@@ -1894,7 +1907,7 @@ describe("AdminPage", () => {
       expect(
         await screen.findByText("Saved Draft Market Day Updated."),
       ).toBeTruthy();
-      expect(mockLoadDraftEventLiveStatus).toHaveBeenCalledWith(
+      expect(mockLoadDraftEventStatus).toHaveBeenCalledWith(
         "draft-market-2026",
       );
       await expectDraftChangesNotPublishedVisible();
@@ -1922,7 +1935,11 @@ describe("AdminPage", () => {
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
       });
-      mockLoadDraftEventLiveStatus.mockResolvedValue(false);
+      mockLoadDraftEventStatus.mockResolvedValue({
+        isLive: false,
+        lastPublishedVersionNumber: 1,
+        status: "draft_only",
+      });
 
       renderAdminRoute("madrona-music-2026");
 
@@ -1935,7 +1952,7 @@ describe("AdminPage", () => {
       expect(
         await screen.findByText("Saved Madrona Music in the Playfield."),
       ).toBeTruthy();
-      expect(mockLoadDraftEventLiveStatus).toHaveBeenCalledWith(
+      expect(mockLoadDraftEventStatus).toHaveBeenCalledWith(
         "madrona-music-2026",
       );
       await expectDraftChangesNotPublishedHidden();
@@ -2199,6 +2216,7 @@ describe("AdminPage", () => {
       {
         ...draftSummaries[0],
         isLive: false,
+        status: "draft_only",
       },
     ]);
     mockLoadDraftEvent.mockResolvedValue(

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import {
   loadDraftEvent,
-  loadDraftEventLiveStatus,
+  loadDraftEventStatus,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
+  type DraftEventStatusSnapshot,
   type DraftEventDetail,
   type SaveDraftEventResult,
   type DraftEventSummary,
@@ -73,11 +74,12 @@ function mergeDraftSummary(
 function applySavedDraftToSummary(
   currentDraft: DraftEventSummary,
   savedDraft: SaveDraftEventResult,
+  nextStatus: DraftEventStatusSnapshot,
 ): DraftEventSummary {
   return {
     ...currentDraft,
     ...savedDraft,
-    isLive: currentDraft.isLive,
+    ...nextStatus,
   };
 }
 
@@ -85,30 +87,36 @@ function applySavedDraftToDetail(
   currentDraft: DraftEventDetail,
   savedDraft: SaveDraftEventResult,
   content: DraftEventDetail["content"],
-  isLive: boolean,
+  nextStatus: DraftEventStatusSnapshot,
 ): DraftEventDetail {
   return {
     ...currentDraft,
     ...savedDraft,
     content,
-    isLive,
+    ...nextStatus,
   };
 }
 
-async function loadSavedDraftLiveStatus(
+async function loadSavedDraftStatus(
   currentDraft: DraftEventDetail,
   savedDraft: SaveDraftEventResult,
-): Promise<boolean> {
-  if (!currentDraft.isLive && !savedDraft.hasBeenPublished) {
-    return false;
+): Promise<DraftEventStatusSnapshot> {
+  if (currentDraft.status === "draft_only" && !savedDraft.hasBeenPublished) {
+    return {
+      isLive: false,
+      lastPublishedVersionNumber: savedDraft.lastPublishedVersionNumber,
+      status: "draft_only",
+    };
   }
 
   try {
-    return await loadDraftEventLiveStatus(savedDraft.id);
+    return await loadDraftEventStatus(savedDraft.id);
   } catch {
-    // The write already succeeded. If the follow-up live-status read fails,
-    // keep the pre-save value rather than surfacing a false save failure.
-    return currentDraft.isLive;
+    return {
+      isLive: currentDraft.isLive,
+      lastPublishedVersionNumber: currentDraft.lastPublishedVersionNumber,
+      status: currentDraft.status,
+    };
   }
 }
 
@@ -270,17 +278,18 @@ export function useSelectedDraft({
     try {
       const content = applyEventDetailsFormValues(currentDraft.content, values);
       const savedDraft = await saveDraftEvent(content, eventCode);
-      const isLive = await loadSavedDraftLiveStatus(currentDraft, savedDraft);
+      const nextStatus = await loadSavedDraftStatus(currentDraft, savedDraft);
       const nextDraft = applySavedDraftToDetail(
         currentDraft,
         savedDraft,
         content,
-        isLive,
+        nextStatus,
       );
-      const nextSummary = {
-        ...applySavedDraftToSummary(currentDraft, savedDraft),
-        isLive,
-      };
+      const nextSummary = applySavedDraftToSummary(
+        currentDraft,
+        savedDraft,
+        nextStatus,
+      );
 
       onUpdateDraftsList((drafts) => mergeDraftSummary(drafts, nextSummary));
       setSelectedDraftState({
@@ -289,7 +298,7 @@ export function useSelectedDraft({
         status: "success",
       });
 
-      if (isLive) {
+      if (nextStatus.status !== "draft_only") {
         setHasDraftChanges(true);
       }
 
@@ -329,17 +338,18 @@ export function useSelectedDraft({
     try {
       const preparedContent = prepareQuestionContentForSave(content);
       const savedDraft = await saveDraftEvent(preparedContent);
-      const isLive = await loadSavedDraftLiveStatus(currentDraft, savedDraft);
+      const nextStatus = await loadSavedDraftStatus(currentDraft, savedDraft);
       const nextDraft = applySavedDraftToDetail(
         currentDraft,
         savedDraft,
         preparedContent,
-        isLive,
+        nextStatus,
       );
-      const nextSummary = {
-        ...applySavedDraftToSummary(currentDraft, savedDraft),
-        isLive,
-      };
+      const nextSummary = applySavedDraftToSummary(
+        currentDraft,
+        savedDraft,
+        nextStatus,
+      );
 
       onUpdateDraftsList((drafts) => mergeDraftSummary(drafts, nextSummary));
       setSelectedDraftState({
@@ -353,7 +363,7 @@ export function useSelectedDraft({
         status: "success",
       });
 
-      if (isLive) {
+      if (nextStatus.status !== "draft_only") {
         setHasDraftChanges(true);
       }
 
@@ -394,6 +404,7 @@ export function useSelectedDraft({
                 hasBeenPublished: true,
                 isLive: true,
                 lastPublishedVersionNumber: result.versionNumber,
+                status: "live",
               }
             : draft,
         ),
@@ -412,6 +423,7 @@ export function useSelectedDraft({
                 hasBeenPublished: true,
                 isLive: true,
                 lastPublishedVersionNumber: result.versionNumber,
+                status: "live",
               },
             }
           : currentState,
@@ -449,7 +461,7 @@ export function useSelectedDraft({
       onUpdateDraftsList((drafts) =>
         drafts.map((draft) =>
           draft.id === currentDraft.id
-            ? { ...draft, isLive: false }
+            ? { ...draft, isLive: false, status: "draft_only" }
             : draft,
         ),
       );
@@ -461,7 +473,11 @@ export function useSelectedDraft({
         currentState.status === "success"
           ? {
               ...currentState,
-              draft: { ...currentState.draft, isLive: false },
+              draft: {
+                ...currentState.draft,
+                isLive: false,
+                status: "draft_only",
+              },
             }
           : currentState,
       );
