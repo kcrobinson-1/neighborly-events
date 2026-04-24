@@ -72,7 +72,7 @@ event.
   `game`/`entitlement` names per the migration policy.
   Detail: [`docs/plans/archive/terminology-migration-map.md` — Documentation](./plans/archive/terminology-migration-map.md)
 
-- [ ] **`ux` Mobile question editor layout**
+- [x] **`ux` Mobile question editor layout**
   Rework the question editor stacking on narrow viewports so the question list,
   focused editor, and option controls do not crowd each other. The highest-value
   admin UX refinement before real authoring use.

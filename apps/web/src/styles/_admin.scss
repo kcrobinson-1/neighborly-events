@@ -336,4 +336,29 @@
   .admin-workspace-heading {
     flex-direction: column;
   }
+
+  .admin-option-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "correct delete"
+      "field field";
+    align-items: start;
+    gap: $space-4;
+  }
+
+  .admin-correct-answer {
+    grid-area: correct;
+    min-width: 0;
+  }
+
+  .admin-option-row .admin-field {
+    grid-area: field;
+    width: 100%;
+  }
+
+  .admin-option-row > .secondary-button {
+    grid-area: delete;
+    justify-self: end;
+  }
 }

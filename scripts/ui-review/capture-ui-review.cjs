@@ -385,7 +385,10 @@ const ADMIN_DRAFT_DETAIL_FIXTURE = [
           explanation: "Hi Spot Cafe has been a Madrona neighborhood staple for years.",
           options: [
             { id: "opt-0001-a", label: "Hi Spot Cafe" },
-            { id: "opt-0001-b", label: "Bottlehouse" },
+            {
+              id: "opt-0001-b",
+              label: "Bottlehouse and Neighborhood Community Stage Sponsor",
+            },
             { id: "opt-0001-c", label: "Madrona Ale House" },
             { id: "opt-0001-d", label: "Cafe Soleil" },
           ],
