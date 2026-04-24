@@ -47,14 +47,24 @@ ship red and rely on CI to catch it.
 
 ## Tier 3 — CI On PR
 
-Reproduce the Tier 2 surface in a clean environment independent of
-contributor laptops.
+Run the merge-gate validation in a clean environment independent of
+contributor laptops, on every PR targeting `main`.
 
-Who runs it: GitHub Actions, via `.github/workflows/ci.yml`, on every PR
-targeting `main`. What runs: the same validation set as Tier 2. What it
-catches: local-environment drift ("works on my machine"), missing lockfile
-updates, test files the contributor's runner missed. Valid pre-merge gate:
-yes. Red CI is a merge blocker.
+Who runs it: GitHub Actions, via `.github/workflows/ci.yml`. What runs:
+a superset of Tier 2 — `npm run lint`, `npm test`,
+`npm run test:functions`, `npm run test:supabase` (local Supabase
+integration and database tests), `npm run test:e2e:attendee:trusted-backend`
+(Playwright smoke against a trusted backend), `npm run build:web`, and
+`deno check --no-lock` against each edge function in `supabase/functions/`.
+Docs-only changes (paths under `docs/` or any `*.md`) skip the entire
+validate job by design — the workflow detects scope upfront and gates
+every validation step on non-docs-only changes.
+
+What it catches: local-environment drift ("works on my machine"), missing
+lockfile updates, test files the contributor's runner missed, and
+integration regressions (Supabase DB tests, Playwright trusted-backend
+smoke) that the Tier 2 subset run on a contributor laptop does not always
+exercise. Valid pre-merge gate: yes. Red CI is a merge blocker.
 
 ## Tier 4 — UI Review
 
@@ -112,7 +122,9 @@ Plans that extend production smoke assertions, or that depend on production
 smoke as final verification, land in two phases:
 
 1. **Merge phase.** Tiers 1–4 pass. PR merges. The plan's Status is
-   `In progress pending prod smoke` (or equivalent), not `Landed`.
+   `In progress pending prod smoke` — this exact string, not `Landed`
+   and not a paraphrase. One authoritative label keeps the carve-out
+   deterministic and plan-state queryable.
 2. **Landed phase.** `Release` deploys the change. The post-release
    `Production Admin Smoke` run — automatic or release-owner-dispatched —
    passes against production. The plan's Status flips to `Landed` in a
