@@ -338,14 +338,14 @@ async function installMockAdminSession(page, supabaseUrl) {
 const ADMIN_DRAFT_SUMMARY_FIXTURE = [
   {
     id: "aaaaaaaa-0000-0000-0000-000000000001",
-    live_version_number: 3,
+    last_published_version_number: 3,
     name: "Madrona Summer Block Party",
     slug: "madrona-summer",
     updated_at: "2025-03-10T14:22:00.000Z",
   },
   {
     id: "aaaaaaaa-0000-0000-0000-000000000002",
-    live_version_number: null,
+    last_published_version_number: null,
     name: "Greenwood Arts Walk Draft",
     slug: "greenwood-arts-draft",
     updated_at: "2025-03-08T09:05:00.000Z",
@@ -355,7 +355,7 @@ const ADMIN_DRAFT_SUMMARY_FIXTURE = [
 const ADMIN_DRAFT_DETAIL_FIXTURE = [
   {
     id: "aaaaaaaa-0000-0000-0000-000000000001",
-    live_version_number: 3,
+    last_published_version_number: 3,
     name: "Madrona Summer Block Party",
     slug: "madrona-summer",
     updated_at: "2025-03-10T14:22:00.000Z",
@@ -473,7 +473,7 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
 
     // game_event_drafts table reads (GET)
     // Detail reads include content,created_at,last_saved_by in the select param.
-    // Summary reads include only id,live_version_number,name,slug,updated_at.
+    // Summary reads include only id,last_published_version_number,name,slug,updated_at.
     await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
@@ -507,7 +507,7 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
     const defaultSaveResponse = {
       hasBeenPublished: true,
       id: ADMIN_DRAFT_DETAIL_FIXTURE[0].id,
-      liveVersionNumber: ADMIN_DRAFT_DETAIL_FIXTURE[0].live_version_number,
+      lastPublishedVersionNumber: ADMIN_DRAFT_DETAIL_FIXTURE[0].last_published_version_number,
       name: ADMIN_DRAFT_DETAIL_FIXTURE[0].name,
       slug: ADMIN_DRAFT_DETAIL_FIXTURE[0].slug,
       updatedAt: new Date().toISOString(),

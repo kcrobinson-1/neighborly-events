@@ -69,7 +69,7 @@ const draftSummaries = [
     hasBeenPublished: true,
     id: "madrona-music-2026",
     isLive: true,
-    liveVersionNumber: 1,
+    lastPublishedVersionNumber: 1,
     name: "Madrona Music in the Playfield",
     slug: "first-sample",
     updatedAt: "2026-04-07T16:15:00.000Z",
@@ -78,7 +78,7 @@ const draftSummaries = [
     hasBeenPublished: false,
     id: "draft-market-2026",
     isLive: false,
-    liveVersionNumber: null,
+    lastPublishedVersionNumber: null,
     name: "Draft Market Day",
     slug: "draft-market",
     updatedAt: "2026-04-08T16:15:00.000Z",
@@ -94,19 +94,19 @@ const selectedDraftContent = {
 
 function createDraftDetail(
   content = selectedDraftContent,
-  liveVersionNumber: number | null = 1,
+  lastPublishedVersionNumber: number | null = 1,
   eventCode: string | null = "MMF",
-  isLive = liveVersionNumber !== null,
+  isLive = lastPublishedVersionNumber !== null,
 ) {
   return {
     content,
     createdAt: "2026-04-07T12:00:00.000Z",
     eventCode,
-    hasBeenPublished: liveVersionNumber !== null,
+    hasBeenPublished: lastPublishedVersionNumber !== null,
     id: content.id,
     isLive,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
-    liveVersionNumber,
+    lastPublishedVersionNumber,
     name: content.name,
     slug: content.slug,
     updatedAt: "2026-04-08T12:00:00.000Z",
@@ -364,7 +364,7 @@ describe("AdminPage", () => {
     ).toHaveProperty("disabled", true);
   });
 
-  it("uses isLive rather than liveVersionNumber for list badges and counts", async () => {
+  it("uses isLive rather than lastPublishedVersionNumber for list badges and counts", async () => {
     mockUseAuthSession.mockReturnValue({
       email: "admin@example.com",
       session: { access_token: "admin-token" },
@@ -398,7 +398,7 @@ describe("AdminPage", () => {
     mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
     mockSaveDraftEvent.mockResolvedValue({
       id: "untitled-event-created",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Untitled event created",
       slug: "untitled-event-created",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -473,7 +473,7 @@ describe("AdminPage", () => {
 
     saveDraft.resolve({
       id: "untitled-event-created",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Untitled event created",
       slug: "untitled-event-created",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -495,14 +495,14 @@ describe("AdminPage", () => {
       createdAt: "2026-04-07T12:00:00.000Z",
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-copy",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Madrona Music in the Playfield Copy",
       slug: "madrona-copy",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -570,7 +570,7 @@ describe("AdminPage", () => {
       createdAt: "2026-04-07T12:00:00.000Z",
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
@@ -605,7 +605,7 @@ describe("AdminPage", () => {
       createdAt: "2026-04-07T12:00:00.000Z",
       id: sampleDraft.id,
       lastSavedBy: "22222222-2222-4222-8222-222222222222",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: sampleDraft.name,
       slug: sampleDraft.slug,
       updatedAt: "2026-04-08T12:00:00.000Z",
@@ -632,7 +632,7 @@ describe("AdminPage", () => {
 
     saveDraft.resolve({
       id: "madrona-copy",
-      liveVersionNumber: null,
+      lastPublishedVersionNumber: null,
       name: "Madrona Music in the Playfield Copy",
       slug: "madrona-copy",
       updatedAt: "2026-04-12T12:00:00.000Z",
@@ -804,7 +804,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Updated Madrona Event",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -860,7 +860,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Updated Madrona Event",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -908,7 +908,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -964,7 +964,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -998,7 +998,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1037,7 +1037,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1075,7 +1075,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1134,7 +1134,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1197,7 +1197,7 @@ describe("AdminPage", () => {
     mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
     mockSaveDraftEvent.mockResolvedValue({
       id: "madrona-music-2026",
-      liveVersionNumber: 1,
+      lastPublishedVersionNumber: 1,
       name: "Madrona Music in the Playfield",
       slug: "first-sample",
       updatedAt: "2026-04-13T12:00:00.000Z",
@@ -1549,7 +1549,7 @@ describe("AdminPage", () => {
     });
 
     it("shows Unpublish button immediately after publishing a draft-only event", async () => {
-      // Regression: publishEvent must update selectedDraftState.draft.liveVersionNumber
+      // Regression: publishEvent must update selectedDraftState.draft.lastPublishedVersionNumber
       // so the unpublish section appears without a page reload for first-time publishes.
       mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
@@ -1558,7 +1558,7 @@ describe("AdminPage", () => {
       });
       mockGetGameAdminStatus.mockResolvedValue(true);
       mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
-      // Draft-only event: liveVersionNumber starts as null
+      // Draft-only event: lastPublishedVersionNumber starts as null
       mockLoadDraftEvent.mockResolvedValue(
         createDraftDetail(selectedDraftContent, null),
       );
@@ -1766,7 +1766,7 @@ describe("AdminPage", () => {
       mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
       mockSaveDraftEvent.mockResolvedValue({
         id: "madrona-music-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Madrona Music in the Playfield",
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
@@ -1811,7 +1811,7 @@ describe("AdminPage", () => {
       mockLoadDraftEvent.mockResolvedValue(createDraftDetail());
       mockSaveDraftEvent.mockResolvedValue({
         id: "madrona-music-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Madrona Music in the Playfield",
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
@@ -1876,7 +1876,7 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         hasBeenPublished: true,
         id: "draft-market-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Draft Market Day Updated",
         slug: "draft-market",
         updatedAt: "2026-04-14T12:00:00.000Z",
@@ -1917,7 +1917,7 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         hasBeenPublished: true,
         id: "madrona-music-2026",
-        liveVersionNumber: 1,
+        lastPublishedVersionNumber: 1,
         name: "Madrona Music in the Playfield",
         slug: "first-sample",
         updatedAt: "2026-04-14T12:00:00.000Z",
@@ -1979,7 +1979,7 @@ describe("AdminPage", () => {
   });
 
   describe("event-code field", () => {
-    function setupSignedInWithDraft(liveVersionNumber: number | null = null, eventCode: string | null = "ABC") {
+    function setupSignedInWithDraft(lastPublishedVersionNumber: number | null = null, eventCode: string | null = "ABC") {
       mockUseAuthSession.mockReturnValue({
         email: "admin@example.com",
         session: { access_token: "admin-token" },
@@ -1988,7 +1988,7 @@ describe("AdminPage", () => {
       mockGetGameAdminStatus.mockResolvedValue(true);
       mockListDraftEventSummaries.mockResolvedValue(draftSummaries);
       mockLoadDraftEvent.mockResolvedValue(
-        createDraftDetail(selectedDraftContent, liveVersionNumber, eventCode),
+        createDraftDetail(selectedDraftContent, lastPublishedVersionNumber, eventCode),
       );
     }
 
@@ -2042,7 +2042,7 @@ describe("AdminPage", () => {
       setupSignedInWithDraft(null, "ABC");
       mockSaveDraftEvent.mockResolvedValue({
         id: "draft-market-2026",
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Market Day",
         slug: "draft-market",
         updatedAt: "2026-04-13T12:00:00.000Z",
@@ -2138,7 +2138,7 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         eventCode: "XYZ",
         id: "draft-market-2026",
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Market Day",
         slug: "draft-market",
         updatedAt: "2026-04-13T12:00:00.000Z",
@@ -2163,7 +2163,7 @@ describe("AdminPage", () => {
       mockSaveDraftEvent.mockResolvedValue({
         eventCode: "ABC",
         id: "draft-market-2026",
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Draft Market Day",
         slug: "draft-market",
         updatedAt: "2026-04-13T12:00:00.000Z",

@@ -57,7 +57,7 @@ reset role;
 
 select is(
   (
-    select live_version_number
+    select last_published_version_number
     from public.game_event_drafts
     where id = 'phase3-publish-event'
   ),

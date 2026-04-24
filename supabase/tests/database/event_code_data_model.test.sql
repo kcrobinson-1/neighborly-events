@@ -284,7 +284,7 @@ select lives_ok(
 );
 
 update public.game_event_drafts
-set live_version_number = 1
+set last_published_version_number = 1
 where id = 'lock-test-draft';
 
 select throws_ok(

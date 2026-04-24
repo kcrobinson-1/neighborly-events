@@ -21,7 +21,7 @@ type DraftEventRow = {
   event_code?: string | null;
   id: string;
   last_saved_by?: string | null;
-  live_version_number: number | null;
+  last_published_version_number: number | null;
   name: string;
   slug: string;
   updated_at: string;
@@ -36,7 +36,7 @@ export type DraftEventSummary = {
   hasBeenPublished: boolean;
   id: string;
   isLive: boolean;
-  liveVersionNumber: number | null;
+  lastPublishedVersionNumber: number | null;
   name: string;
   slug: string;
   updatedAt: string;
@@ -65,10 +65,10 @@ export type SaveDraftEventResult = Omit<DraftEventSummary, "isLive">;
 function mapDraftSummary(row: DraftEventRow, isLive: boolean): DraftEventSummary {
   return {
     eventCode: row.event_code ?? null,
-    hasBeenPublished: row.live_version_number !== null,
+    hasBeenPublished: row.last_published_version_number !== null,
     id: row.id,
     isLive,
-    liveVersionNumber: row.live_version_number,
+    lastPublishedVersionNumber: row.last_published_version_number,
     name: row.name,
     slug: row.slug,
     updatedAt: row.updated_at,
@@ -165,7 +165,7 @@ export async function getGameAdminStatus() {
 export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
   const { data, error } = await getBrowserSupabaseClient()
     .from("game_event_drafts")
-    .select("id,live_version_number,name,slug,updated_at")
+    .select("id,last_published_version_number,name,slug,updated_at")
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -194,7 +194,7 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
 export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail | null> {
   const { data, error } = await getBrowserSupabaseClient()
     .from("game_event_drafts")
-    .select("content,created_at,event_code,id,last_saved_by,live_version_number,name,slug,updated_at")
+    .select("content,created_at,event_code,id,last_saved_by,last_published_version_number,name,slug,updated_at")
     .eq("id", eventId)
     .maybeSingle<DraftEventRow>();
 

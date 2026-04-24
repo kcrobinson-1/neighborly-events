@@ -25,7 +25,7 @@ function createSourceDraft(
     id: content.id,
     isLive: true,
     lastSavedBy: "22222222-2222-4222-8222-222222222222",
-    liveVersionNumber: 1,
+    lastPublishedVersionNumber: 1,
     name: content.name,
     slug: content.slug,
     updatedAt: "2026-04-08T12:00:00.000Z",
@@ -47,7 +47,7 @@ describe("createStarterDraftContent", () => {
       {
         id: "untitled-event-abc123",
         isLive: false,
-        liveVersionNumber: null,
+        lastPublishedVersionNumber: null,
         name: "Untitled event abc123",
         slug: "untitled-event-abc123",
         updatedAt: "2026-04-08T12:00:00.000Z",

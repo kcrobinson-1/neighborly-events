@@ -57,7 +57,7 @@ function getStatusLabel(draft: DraftEventSummary, hasDraftChanges = false) {
     return "Draft changes not published";
   }
 
-  return `Live v${draft.liveVersionNumber}`;
+  return `Live v${draft.lastPublishedVersionNumber}`;
 }
 
 function getEventCounts(drafts: DraftEventSummary[]) {

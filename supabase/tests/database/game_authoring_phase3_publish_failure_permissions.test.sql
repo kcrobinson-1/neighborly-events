@@ -51,7 +51,7 @@ insert into public.game_event_drafts (
   event_code,
   name,
   content,
-  live_version_number
+  last_published_version_number
 )
 values (
   'phase3-failed-publish',

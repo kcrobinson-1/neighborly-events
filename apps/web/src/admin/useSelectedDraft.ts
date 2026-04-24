@@ -393,14 +393,14 @@ export function useSelectedDraft({
                 ...draft,
                 hasBeenPublished: true,
                 isLive: true,
-                liveVersionNumber: result.versionNumber,
+                lastPublishedVersionNumber: result.versionNumber,
               }
             : draft,
         ),
       );
       // Also update the loaded draft detail so the unpublish section appears
       // immediately and hasDraftChanges tracking works for first-time
-      // publishes where liveVersionNumber starts as null.
+      // publishes where lastPublishedVersionNumber starts as null.
       setSelectedDraftState((currentState: AdminSelectedDraftState) =>
         currentState.status === "ready" ||
         currentState.status === "save_error" ||
@@ -411,7 +411,7 @@ export function useSelectedDraft({
                 ...currentState.draft,
                 hasBeenPublished: true,
                 isLive: true,
-                liveVersionNumber: result.versionNumber,
+                lastPublishedVersionNumber: result.versionNumber,
               },
             }
           : currentState,
