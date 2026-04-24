@@ -168,7 +168,17 @@ decisions.
 - flip the plan's Status line from `Proposed` / `In progress` to
   `Landed` in the same PR that implements it, and include the
   implementing commit SHAs (or the merge-commit SHA) in the Status
-  block so future readers can navigate from plan to history
+  block so future readers can navigate from plan to history. Exception:
+  plans that extend Tier 5 production smoke assertions land in two
+  phases per
+  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed Gate
+  For Plans That Touch Production Smoke" — the implementing PR merges
+  with Status `In progress pending prod smoke` and the implementing
+  SHAs recorded; a follow-up doc-only commit flips Status to `Landed`
+  with the production smoke run URL once the post-release run passes.
+  This is the single authoritative status rule for that case; do not
+  invent additional states or leave the flip to an informal post-merge
+  promise
 - ban soft-commitment words in plans: "optional but recommended,"
   "consider adding," "nice to have," "probably should." A requirement
   is either in-scope or deferred — there is no third option. Soft
@@ -708,6 +718,34 @@ When a change touches testing infrastructure, validation commands, CI, or local 
 - make sure helper scripts emit enough progress logging and bounded timeouts to debug CI stalls
 - make sure CI does not pay heavyweight setup costs earlier than necessary
 - make sure local validation steps do not mutate workspace state in ways that break later commands
+
+### Testing Tiers Discipline
+
+Plan authors and reviewers must distinguish tiers that are valid pre-merge
+gates from tiers that are not. The full tier map lives in
+[`docs/testing-tiers.md`](docs/testing-tiers.md).
+
+The two rules that trip up plan authors most often:
+
+- **Plans may gate merge only on tiers the implementer can actually execute
+  against the pre-merge state of the code.** Production smoke (Tier 5) runs
+  against the deployed origin. Any new smoke assertion a plan adds cannot
+  pass against production until the plan's code is deployed. Plans that
+  extend production smoke assertions land in two phases: code merged with
+  plan `In progress pending prod smoke`, then plan flipped to `Landed`
+  after the post-release smoke run is green. Do not gate the merge on a
+  check that can only pass post-deploy. See
+  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed Gate For
+  Plans That Touch Production Smoke."
+- **Plans must not require contributors to configure production credentials
+  on local laptops.** `PRODUCTION_SMOKE_*` env vars, production admin
+  fixture emails, and production service-role keys live in the GitHub
+  `production` environment per
+  [`docs/tracking/production-admin-smoke-tracking.md`](docs/tracking/production-admin-smoke-tracking.md).
+  They are owned by the release/ops owner. A plan that implicitly requires
+  them on the implementer's laptop is misrouting validation — the fix is
+  to adjust the plan's validation section, not to provision production
+  secrets to developers.
 
 ## UI Review Runs
 
