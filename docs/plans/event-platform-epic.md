@@ -8,16 +8,17 @@ Proposed.
 
 Update each row when the implementing PR for that milestone merges. Per
 AGENTS.md "Plan-to-PR Completion Gate," every implementing PR is responsible
-for flipping the corresponding row's status and recording the implementing
-commit SHAs in the same change.
+for flipping the corresponding row's status in the same change. Commit
+SHAs are not recorded — `git log` is authoritative for navigating from
+plan to history.
 
-| Milestone | Status | Implementing SHAs |
-| --- | --- | --- |
-| M0 — Framework decision and platform skeleton | Proposed | — |
-| M1 — Foundation extraction | Proposed | — |
-| M2 — Admin restructuring and authorization broadening | Proposed | — |
-| M3 — Site rendering infrastructure with test events | Proposed | — |
-| M4 — Madrona launch | Proposed | — |
+| Milestone | Status |
+| --- | --- |
+| M0 — Framework decision and platform skeleton | Proposed |
+| M1 — Foundation extraction | Proposed |
+| M2 — Admin restructuring and authorization broadening | Proposed |
+| M3 — Site rendering infrastructure with test events | Proposed |
+| M4 — Madrona launch | Proposed |
 
 When all five rows show `Landed`, the top-level Status above flips from
 `Proposed` to `Landed` in the same PR that lands M4.
@@ -434,9 +435,9 @@ least one client.
 **Documentation.** `docs/product.md` updated to reflect Madrona launched.
 `docs/backlog.md` closes "Event landing page for `/event/:slug`".
 `README.md` updated. This plan flipped from `Proposed` to `Landed` in the
-final PR with implementing commit SHAs in the Status block. M4 follows the
-two-phase Plan-to-Landed pattern from `docs/testing-tiers.md` if the
-production smoke assertions added in M4 must run post-deploy.
+final PR. M4 follows the two-phase Plan-to-Landed pattern from
+`docs/testing-tiers.md` if the production smoke assertions added in M4
+must run post-deploy.
 
 **Self-review audits.** From `docs/self-review-catalog.md`:
 Readiness-gate truthfulness audit (production smoke claims for the

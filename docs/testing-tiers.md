@@ -137,17 +137,18 @@ smoke as final verification, land in two phases:
 2. **Landed phase.** `Release` deploys the change. The post-release
    `Production Admin Smoke` run — automatic or release-owner-dispatched —
    passes against production. The plan's Status flips to `Landed` in a
-   follow-up doc commit that records both the implementing commit SHAs and
-   the production smoke run URL.
+   follow-up doc commit that records the production smoke run URL.
+   The run URL is durable external evidence; commit SHAs are not
+   recorded because `git log` is authoritative for that.
 
 This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to
 for plans that extend Tier 5 assertions. The implementing PR still leaves
-the plan in a named, non-drift state — `In progress pending prod smoke`
-with the implementing SHAs recorded — rather than a soft post-merge
-promise. The `Landed` flip lives in the follow-up doc commit that records
-the production smoke run URL, not in an issue or an unwritten agreement.
-Production verification is a release-owner activity downstream of the
-merge, so the status flip is too.
+the plan in a named, non-drift state — `In progress pending prod smoke` —
+rather than a soft post-merge promise. The `Landed` flip lives in the
+follow-up doc commit that records the production smoke run URL, not in
+an issue or an unwritten agreement. Production verification is a
+release-owner activity downstream of the merge, so the status flip is
+too.
 
 Plans that do **not** touch production smoke do not need this two-phase
 structure. Tier 1–4 handoff validation is sufficient.

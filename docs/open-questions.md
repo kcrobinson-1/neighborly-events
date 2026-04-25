@@ -91,12 +91,19 @@ interaction with Vercel's rewrite/Microfrontends header rewriting is
 unverified. Phase 0.3 verifies end-to-end that a session cookie set in
 `apps/web` is readable by `apps/site` on the production domain.
 
-### Supabase Proxy interaction with Vercel rewrites
+### Cross-app token-refresh visibility
 
-If the Vercel-level rewrite happens before the Next.js Proxy (middleware)
-runs, the Proxy's cookie-refresh behavior on `apps/web` paths may not be
-observable from `apps/site` reads. Phase 0.3 verifies that token refresh
-in `apps/web` is reflected in `apps/site` server-rendered responses.
+`apps/web` (Vite SPA) refreshes Supabase JWTs via the browser-side
+`@supabase/supabase-js` auto-refresh, with no server middleware.
+`apps/site` (Next.js) refreshes JWTs via a `@supabase/ssr` Next.js
+middleware that runs on every request to `apps/site`. Each refresh path
+writes the auth cookie independently. The risk is that one app's
+refresh is not observable by the other on the next cross-app
+navigation — for example, a token refreshed by `apps/site`'s
+middleware is not picked up by the next `apps/web` browser request, or
+vice versa. Phase 0.3 verifies end-to-end that a token refreshed in
+either app is observable by a subsequent server-rendered or
+browser-side read in the other app.
 
 ### Streaming-metadata behavior for HTML-limited bots
 

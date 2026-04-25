@@ -2,13 +2,11 @@
 
 ## Status
 
-Proposed.
-
-**Implementing SHAs:** flipped to `Landed in commit <SHA>` in the same PR
-that merges this doc, per AGENTS.md plan-to-PR-completion gate.
+Landed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
-Milestone M0, Phase 0.2.
+Milestone M0, Phase 0.2. M0's milestone Status remains `Proposed` until
+phase 0.3 lands.
 
 ## Decision
 
@@ -41,10 +39,11 @@ integration guides (Supabase, Vercel), and framework-team
 changelogs/blog posts symmetrically across ten dimensions.
 
 Production-reality verification — cookie boundary across path-routed
-apps on the production domain, Supabase Proxy interaction with Vercel
-rewrites, and unfurl-preview behavior end-to-end — is owned by **M0
-phase 0.3**, which is the first phase that runs the chosen framework
-against the production domain. Claims in this doc that depend on
+apps on the production domain, cross-app token-refresh visibility
+between `apps/web`'s browser-side auto-refresh and `apps/site`'s
+middleware-driven refresh, and unfurl-preview behavior end-to-end — is
+owned by **M0 phase 0.3**, which is the first phase that runs the
+chosen framework against the production domain. Claims in this doc that depend on
 runtime behavior are therefore **hypotheses for phase 0.3 to confirm**,
 not facts. Open questions surfaced during research that the docs could
 not close are listed below.
@@ -436,11 +435,14 @@ same PR that lands this decision.
   which project handles a path, but the interaction with Vercel's
   rewrite/Microfrontends header rewriting is unverified. M0 phase 0.3
   owns end-to-end verification.
-- **Supabase Proxy interaction with Vercel rewrites.** If the
-  platform-level rewrite happens before the Next.js Proxy
-  (middleware) runs, the Proxy's cookie-refresh behavior on
-  `apps/web` paths may not be observable from `apps/site` reads.
-  Phase 0.3 owns verification.
+- **Cross-app token-refresh visibility.** `apps/web` (Vite SPA)
+  refreshes Supabase JWTs via the browser-side `@supabase/supabase-js`
+  auto-refresh; `apps/site` (Next.js) refreshes JWTs via a
+  `@supabase/ssr` Next.js middleware on each request to `apps/site`.
+  Each refresh path writes the auth cookie independently. The risk is
+  that one app's refresh is not observable by the other on the next
+  cross-app navigation. Phase 0.3 verifies that a token refreshed in
+  either app is observable by a subsequent read in the other.
 - **Streaming-metadata behavior for HTML-limited bots in production.**
   Next.js auto-detects `facebookexternalhit` and similar; the
   behavioral envelope (which bots, which fields) is not exhaustively

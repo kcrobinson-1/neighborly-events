@@ -318,8 +318,8 @@ The PR lands `docs/plans/framework-decision.md` with this exact section
 structure. The doc is the durable artifact; this plan is discarded
 after the PR merges.
 
-1. **Status.** `Landed in commit <SHA>` flipped per AGENTS.md
-   plan-to-PR-completion gate.
+1. **Status.** `Landed`, flipped per AGENTS.md plan-to-PR-completion
+   gate. Commit SHAs are not recorded in the Status block.
 2. **Decision.** One paragraph: chosen framework, headline rationale.
 3. **Candidates evaluated.** Versioned list of the two candidates and
    the explicit choice not to evaluate others, with the epic's
