@@ -1,6 +1,6 @@
 # Reward Redemption — Phase C-Visibility Execution Plan
 
-**Status:** Proposed
+**Status:** Landed in commits `991c66c`, `ede58f7`.
 **Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
 **Predecessors:**
 [`reward-redemption-phase-c-1-plan.md`](./archive/reward-redemption-phase-c-1-plan.md)

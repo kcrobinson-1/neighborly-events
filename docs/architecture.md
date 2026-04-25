@@ -402,8 +402,9 @@ Today:
 - the completion screen displays backend-produced verification data rather than an entirely local success state
 - once completion succeeds, the attendee screen polls the session-bound
   `get-redemption-status` endpoint every 5 seconds while the completion
-  result remains open, so operator redemption is reflected back without a
-  manual refresh
+  result remains open and the tab is visible; polling pauses while hidden
+  and runs one immediate refresh when visibility returns, so operator
+  redemption is reflected back without a manual refresh
 
 ### Multiple game feedback modes
 
@@ -559,9 +560,11 @@ The current system works like this:
 11. The frontend renders the completion screen using that trusted response.
 12. While the completion result remains in scope, the frontend polls
     `get-redemption-status` every 5 seconds with the signed browser
-    session. The attendee screen keeps the last known good state across
-    transient failures and flips from ready-to-redeem to redeemed once
-    an operator action updates the entitlement row.
+    session while the tab is visible, pauses while hidden, and performs
+    one immediate refresh on hidden→visible. The attendee screen keeps
+    the last known good state across transient failures and flips from
+    ready-to-redeem to redeemed once an operator action updates the
+    entitlement row.
 
 This flow keeps question-to-question interaction fast while reserving the final trust decision for the backend.
 

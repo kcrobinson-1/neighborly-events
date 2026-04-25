@@ -91,12 +91,6 @@ event.
 Planned capabilities intentionally deferred from the MVP scope. Require product
 prioritization before starting.
 
-- [ ] **`dev` Visibility-aware attendee redemption polling**
-  Pause the attendee completion-screen poll while the tab is hidden and force
-  one immediate refresh on resume so long-lived hidden tabs do not keep making
-  unnecessary requests.
-  Detail: [`docs/plans/archive/reward-redemption-phase-c-1-plan.md`](./plans/archive/reward-redemption-phase-c-1-plan.md)
-
 - [ ] **`ux` Manual attendee redemption-status refresh**
   Add a `Refresh status` affordance on the completion screen so an attendee can
   trigger a re-read without waiting for the next polling tick.

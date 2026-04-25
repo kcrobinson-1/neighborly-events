@@ -488,7 +488,8 @@ with DB-level enforcement and deterministic response shape.
 
 Complexity: **low to medium**.
 
-- implementation: completion page requests status every N seconds while visible
+- implementation: completion page requests status every N seconds while
+  visible, pauses while hidden, and runs one immediate refresh on resume
 - backend load: predictable repeated reads
 - operational fit: simple and robust during event Wi-Fi variance
 
