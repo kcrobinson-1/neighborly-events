@@ -102,11 +102,23 @@ app instantiates its own Supabase client and no app duplicates role-resolution
 logic.
 
 **URL contract.** Within `/event/:slug/`, the `game/*` and `admin/*`
-namespaces route to `apps/web`; all other paths under `/event/:slug/` route to
-`apps/site`. Outside `/event/:slug/`, `/admin*` and `/auth/callback` route to
-`apps/web`; `/` routes to `apps/web` through this epic. Operator URLs migrating
-into the `/game/*` namespace are listed in M2 with explicit before/after
-pairs; no other URL contracts change in this epic.
+namespaces route to `apps/web`; all other paths under `/event/:slug/` route
+to `apps/site`. Outside `/event/:slug/`, `apps/site` owns all top-level
+surfaces — `/`, `/admin*`, `/auth/callback`, and any future top-level
+routes. `apps/web`'s URL footprint is purely event-scoped; it owns no
+non-event-scoped URLs. The transition between today's state (where
+`apps/web` owns `/`, `/admin*`, and `/auth/callback`) and the final
+contract is staged across M0 (transitional Vercel routing) and M2 (final
+migration). Operator URLs migrating into the `/game/*` namespace are
+listed in M2 with explicit before/after pairs; no other URL contracts
+change in this epic.
+
+**Per-event customization.** Events are configured through data and theme,
+not code. Per-event content lives in the shared `EventContent` model and
+the theme registry. Per-event custom code is reserved for cases the
+content model genuinely cannot express, and requires written justification
+before being added. Route templates in `apps/site` render any event from
+data; per-event-coded folders are an explicit exception, not the default.
 
 **Theme token discipline.** Themable visual tokens (colors, typography family,
 accent radius, hero gradient stops) are exposed as CSS custom properties and
@@ -198,14 +210,18 @@ production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
 Stand up `apps/site` as an empty deployable app in the chosen framework.
-Configure Vercel as a monorepo project with the path-based rewrite rules
-locked in this plan: `/event/:slug/game/*` routes to `apps/web`,
-`/event/:slug/admin/*` routes to `apps/web`, `/event/:slug` and other
-`/event/:slug/*` paths route to `apps/site`, `/admin*` routes to `apps/web`,
-`/auth/callback` routes to `apps/web`, `/` routes to `apps/web`. The skeleton
-renders a placeholder page at `/event/:slug` for any slug. Cookie boundary
-verified by confirming a session set in `apps/web` is readable by code
-running in `apps/site` on the production domain. One PR.
+Configure Vercel as a monorepo project with transitional path-based
+rewrite rules: `/event/:slug` and `/event/:slug/*` paths (excluding the
+existing `/event/:slug/game`, `/event/:slug/redeem`, and
+`/event/:slug/redemptions`, plus the future `/event/:slug/admin/*`
+carve-out) route to `apps/site`; everything else continues routing to
+`apps/web` exactly as today, including `/`, `/admin*`, `/auth/callback`,
+and the existing operator URLs. The final routing topology in which
+`apps/site` also owns `/`, `/admin*`, and `/auth/callback` is reached in
+M2 as those surfaces migrate. The skeleton renders a placeholder page at
+`/event/:slug` for any slug. Cookie boundary verified by confirming a
+session set in `apps/web` is readable by code running in `apps/site` on
+the production domain. One PR.
 
 **Validation gate.** `npm run lint`, `npm run build:web`, `npm run build:site`,
 framework-specific checks. Manual verification that the placeholder renders
@@ -316,39 +332,66 @@ elsewhere, and that root-admin retains all powers. Edge function
 authorization extended to accept organizer writes in the same surfaces. One
 PR.
 
-**Phase 2.2 — `/admin` URL split and per-event admin route shell.**
-Existing `/admin` becomes the platform-admin: event list with deep-links into
-per-event admin, plus existing event-lifecycle controls. The deep editor
-moves to `/event/:slug/admin`. New route shell at `/event/:slug/admin`
-resolves authorization via `is_organizer_for_event(slug)` OR
-`is_root_admin()` and renders the existing game-content authoring UI inside
-the event's themed shell. The platform-admin renders against neutral `:root`
-defaults. Hard cutover: existing deep editor URLs are not redirected. One PR.
+**Phase 2.2 — Per-event admin route shell in apps/web at `/event/:slug/admin`.**
+New route shell at `/event/:slug/admin` in apps/web. Authorization resolved
+via `is_organizer_for_event(slug)` OR `is_root_admin()`. Renders the
+existing game-content authoring UI (question editor, draft management,
+publish/unpublish for the event's draft) inside the event's themed shell
+wrapped in `<ThemeScope theme={getThemeForSlug(slug)}>`. Authorization-gated
+states render inside the themed shell, preserving in-place auth behavior.
+The existing apps/web `/admin` deep-editor experience remains accessible
+during this phase as a redundant entry point, and is removed in phase 2.4
+when `/admin` migrates to apps/site. One PR.
 
-**Phase 2.3 — `/game/*` URL migration for operator routes.**
+**Phase 2.3 — `/auth/callback` and `/` migration to apps/site.**
+Migrate `/auth/callback` from apps/web to apps/site as the auth flow
+handler in the new framework, validating tokens and redirecting via
+`validateNextPath` from `shared/auth/`. Migrate `/` from apps/web to
+apps/site, preserving the demo-overview content (or a small platform
+landing page that subsumes it). Both run against neutral `:root` defaults;
+neither is event-scoped so neither wraps in `<ThemeScope>`. Vercel routing
+updated to send these paths to apps/site. The corresponding apps/web routes
+are removed. Hard cutover. One PR.
+
+**Phase 2.4 — Platform admin migration to apps/site at `/admin`.**
+Migrate `/admin` from apps/web to apps/site. The new platform admin in
+apps/site is the root-admin surface for event lifecycle: inline event list
+as one section of the landing page, event creation form, publish/unpublish
+controls, and any other platform-level controls currently exposed under
+apps/web's `/admin`. Built in the chosen Next.js or Remix conventions
+(server/client component split or loader/action model), consuming
+`shared/auth/` for authentication and `shared/db/` for event data. Renders
+against neutral `:root` defaults. Vercel routing updated to send `/admin*`
+to apps/site. The apps/web `/admin` route is removed in this phase,
+completing the platform-admin migration. Deep-editor functionality is no
+longer at `/admin`; it lives only at `/event/:slug/admin` in apps/web (from
+phase 2.2). Hard cutover. One PR.
+
+**Phase 2.5 — `/game/*` URL migration for operator routes.**
 `/event/:slug/redeem` moves to `/event/:slug/game/redeem`.
-`/event/:slug/redemptions` moves to `/event/:slug/game/redemptions`.
+`/event/:slug/redemptions` moves to `/event/:slug/game/redemptions`. The
+migrated route shells are confirmed wrapping in
+`<ThemeScope theme={getThemeForSlug(slug)}>` as part of this phase.
 `validateNextPath` patterns updated. Documentation references updated. Hard
 cutover: no backward-compat redirects. One PR.
 
-**Phase 2.4 — Theme scope wired into per-event admin and migrated operator routes.**
-The new `/event/:slug/admin` route shell wraps in
-`<ThemeScope theme={getThemeForSlug(slug)}>`. The migrated
-`/event/:slug/game/redeem` and `/event/:slug/game/redemptions` route shells
-confirmed wrapping in `<ThemeScope>`. Authorization-gated states render inside
-the themed shell, preserving in-place auth behavior. One PR.
+**Validation gate.** `npm run lint`, `npm run build:web`,
+`npm run build:site`, full pgTAP suite, `deno check` on edge functions,
+Playwright captures covering organizer authentication and authorization on
+the new per-event admin route, Playwright captures covering root-admin
+authentication and the platform admin's event-list/create/lifecycle flows
+in apps/site, screenshot validation that all event-scoped routes render in
+the event's theme, manual verification that magic-link sign-in flows
+through `/auth/callback` in apps/site and lands on the requested
+destination across both apps.
 
-**Validation gate.** `npm run lint`, `npm run build:web`, full pgTAP suite,
-`deno check` on edge functions, Playwright captures covering organizer
-authentication and authorization on the new per-event admin route, screenshot
-validation that all event-scoped routes render in the event's theme.
-
-**Documentation.** `docs/architecture.md` updated for new trust boundary and
-route family. `docs/operations.md` updated for the new admin URL contract.
-`docs/open-questions.md` closes the post-MVP authoring ownership entry.
-`docs/backlog.md` marks "Organizer-managed agent assignment" unblocked.
-`docs/product.md` updates the implemented capability set. This plan with M2
-status flipped on completion.
+**Documentation.** `docs/architecture.md` updated for new trust boundary,
+two-app URL ownership shape, and route family.
+`docs/operations.md` updated for the new admin URL contract and the final
+Vercel routing topology. `docs/open-questions.md` closes the post-MVP
+authoring ownership entry. `docs/backlog.md` marks "Organizer-managed
+agent assignment" unblocked. `docs/product.md` updates the implemented
+capability set. This plan with M2 status flipped on completion.
 
 **Self-review audits.** From `docs/self-review-catalog.md`:
 Grant/body contract audit (M2 phase 2.1 RLS changes must align grants and
@@ -357,15 +400,19 @@ in 2.1 must split per-privilege so "all of these are granted" intent is
 honestly tested), Legacy-data precheck for constraint tightening (apply if
 2.1 tightens any existing CHECK or FK), pgTAP output-format stability audit
 (if 2.1 alters pgTAP output formatting), Platform-auth-gate config audit
-(2.2 introduces the new per-event admin auth gate; the route's allowlist
-and redirect targets must match the production auth-gate config),
-Silent-no-op on missing lookup audit (event lookup in 2.2's per-event admin
-must surface "event not found" rather than silently rendering an empty
-shell), Error-surfacing for user-initiated mutations (admin write paths
-exposed under the broadened authorization must surface errors honestly),
-Rename-aware diff classification (2.3 migrates URLs and renames route
-files; the diff must classify rename-vs-edit so reviewers see content
-changes, not move noise).
+(applies to phase 2.2's new per-event admin auth gate and phase 2.4's
+new platform admin auth gate; each route's allowlist and redirect targets
+must match the production auth-gate config), Silent-no-op on missing
+lookup audit (event lookup in phase 2.2's per-event admin and phase 2.4's
+platform admin event list must surface "event not found" rather than
+silently rendering empty shells), Error-surfacing for user-initiated
+mutations (admin write paths exposed under the broadened authorization in
+phases 2.2 and 2.4 must surface errors honestly), Rename-aware diff
+classification (phases 2.3, 2.4, and 2.5 each migrate URLs and rename or
+remove route files; the diffs must classify rename-vs-edit so reviewers
+see content changes, not move noise), CLI / tooling pinning audit (phase
+2.4 introduces apps/site dependencies for the platform admin surface;
+those dependencies are pinned).
 
 ### M3 — Site Rendering Infrastructure With Test Events
 
@@ -524,11 +571,11 @@ Phases per milestone, with PR counts:
 
 - M0 — 3 phases, 3 PRs
 - M1 — 5 phases (phase 1.5 contains 2 subphases as separate PRs), 6 PRs
-- M2 — 4 phases, 4 PRs
+- M2 — 5 phases, 5 PRs
 - M3 — 4 phases, 4 PRs
 - M4 — 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR)
 
-Epic total: 19 phases, 19 PRs.
+Epic total: 20 phases, 20 PRs.
 
 The above is written under the assumption "one engineer focused on the epic
 with no parallel tracks." Reader scales relative weight from the phase and
@@ -559,7 +606,22 @@ small even if content polish iterates.
 
 **M2 RLS edge cases.** Trust-boundary work tends to surface unanticipated
 cases during pgTAP authoring. Mitigation: M2 phase 2.1 lands as its own PR
-distinct from the URL split work so RLS review attention is not diluted.
+distinct from the URL migration work so RLS review attention is not
+diluted.
+
+**Platform admin framework migration.** Phase 2.4 rebuilds the existing
+apps/web `/admin` event list, event creation, and lifecycle controls in
+the chosen Next.js or Remix conventions. Subtle behavior differences
+(form submission patterns, auth gating semantics, server vs. client
+component split, route guard timing) may surface during the migration.
+Mitigation: phase 2.4 lands as its own PR distinct from the simpler
+`/auth/callback` and `/` migration in phase 2.3 so review attention is
+focused on the substantive surface; phase 2.2 (per-event admin in
+apps/web) lands first so deep-editor functionality is preserved at
+`/event/:slug/admin` before apps/web `/admin` is removed; Playwright
+captures cover root-admin flows in the new app before merging; the
+in-place auth pattern from `shared/auth/` is verified working on the new
+surface during phase 2.4's validation.
 
 ## Related Docs
 
