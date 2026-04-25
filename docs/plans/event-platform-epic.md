@@ -211,7 +211,7 @@ rationale. Production-reality verification (cookie boundary on the
 production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
-**Status:** Proposed. **Plan:** [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md).
+**Status:** Landed. **Plan:** [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md).
 Stand up `apps/site` as an empty deployable app in the chosen framework.
 Configure Vercel as a monorepo project with transitional path-based
 rewrite rules. The `apps/web` carve-outs under `/event/:slug/` are full
@@ -227,9 +227,14 @@ them. `/event/:slug` and all other paths under `/event/:slug/` route to
 today, including `/`, `/admin*`, and `/auth/callback`. The final routing
 topology in which `apps/site` also owns `/`, `/admin*`, and `/auth/callback`
 is reached in M2 as those surfaces migrate. The skeleton renders a
-placeholder page at `/event/:slug` for any slug. Cookie boundary verified
-by confirming a session set in `apps/web` is readable by code running in
-`apps/site` on the production domain. One PR.
+placeholder page at `/event/:slug` for any slug. **Cookie-boundary
+verification originally scoped to this phase was deferred to M1 phase
+1.3** — the `neighborly_session` cookie chosen for the gate is set on
+the Supabase Edge Function origin, not the apps/web frontend domain,
+so the gate cannot pass against the existing code. The verification
+inherits into M1 phase 1.3 alongside the Supabase Auth cookie-adapter
+migration that introduces a real frontend-origin cookie. See the
+plan's "Verification Evidence" subsection. One PR.
 
 **Validation gate.** `npm run lint`, `npm run build:web`, `npm run build:site`,
 framework-specific checks. Manual verification that the placeholder renders
