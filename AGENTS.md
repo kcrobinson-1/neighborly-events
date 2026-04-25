@@ -166,19 +166,22 @@ decisions.
   itself** with written rationale. Deferrals live in the plan, not in
   the PR body, not in an issue, not as an unwritten promise
 - flip the plan's Status line from `Proposed` / `In progress` to
-  `Landed` in the same PR that implements it, and include the
-  implementing commit SHAs (or the merge-commit SHA) in the Status
-  block so future readers can navigate from plan to history. Exception:
-  plans that extend Tier 5 production smoke assertions land in two
-  phases per
+  `Landed` in the same PR that implements it. Do not record commit
+  SHAs in the Status block — `git log` and `git blame` are
+  authoritative for navigating from plan to history, and recording
+  SHAs creates a chicken-and-egg problem (the SHA isn't known until
+  after merge, which forces a follow-up commit whose only purpose is
+  to record the previous commit's SHA). Exception: plans that extend
+  Tier 5 production smoke assertions land in two phases per
   [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed Gate
   For Plans That Touch Production Smoke" — the implementing PR merges
-  with Status `In progress pending prod smoke` and the implementing
-  SHAs recorded; a follow-up doc-only commit flips Status to `Landed`
-  with the production smoke run URL once the post-release run passes.
-  This is the single authoritative status rule for that case; do not
-  invent additional states or leave the flip to an informal post-merge
-  promise
+  with Status `In progress pending prod smoke`; a follow-up doc-only
+  commit flips Status to `Landed` and records the production smoke
+  run URL once the post-release run passes. The smoke run URL is
+  durable external evidence, unlike a commit SHA which is already in
+  git. This is the single authoritative status rule for that case; do
+  not invent additional states or leave the flip to an informal
+  post-merge promise
 - ban soft-commitment words in plans: "optional but recommended,"
   "consider adding," "nice to have," "probably should." A requirement
   is either in-scope or deferred — there is no third option. Soft

@@ -8,16 +8,17 @@ Proposed.
 
 Update each row when the implementing PR for that milestone merges. Per
 AGENTS.md "Plan-to-PR Completion Gate," every implementing PR is responsible
-for flipping the corresponding row's status and recording the implementing
-commit SHAs in the same change.
+for flipping the corresponding row's status in the same change. Commit
+SHAs are not recorded — `git log` is authoritative for navigating from
+plan to history.
 
-| Milestone | Status | Implementing SHAs |
-| --- | --- | --- |
-| M0 — Framework decision and platform skeleton | Proposed | — |
-| M1 — Foundation extraction | Proposed | — |
-| M2 — Admin restructuring and authorization broadening | Proposed | — |
-| M3 — Site rendering infrastructure with test events | Proposed | — |
-| M4 — Madrona launch | Proposed | — |
+| Milestone | Status |
+| --- | --- |
+| M0 — Framework decision and platform skeleton | Proposed |
+| M1 — Foundation extraction | Proposed |
+| M2 — Admin restructuring and authorization broadening | Proposed |
+| M3 — Site rendering infrastructure with test events | Proposed |
+| M4 — Madrona launch | Proposed |
 
 When all five rows show `Landed`, the top-level Status above flips from
 `Proposed` to `Landed` in the same PR that lands M4.
@@ -163,14 +164,18 @@ chosen at execution time. PR scope: `package.json`, all package manifests in
 workspaces, CI workflow files, `README.md`, `AGENTS.md` references, doc
 references, GitHub repo URL settings. No code logic changes. One PR.
 
-**Phase 0.2 — Framework spike and decision.**
-A bounded two-day spike comparing Next.js App Router and Remix (React Router 7
-framework mode) for the `apps/site` use case. Spike work happens on a
-throwaway branch and is not merged. The deliverable is a decision doc landed
-in `docs/plans/framework-decision.md` covering the candidate frameworks
-evaluated, the evaluation criteria (auth integration, Supabase data loading,
-SSR/SSG ergonomics, deploy cost, team familiarity), the chosen framework, and
-the rationale. One PR (the decision doc).
+**Phase 0.2 — Framework research and decision.**
+A bounded two-day documentation- and consensus-based research pass comparing
+Next.js App Router and Remix (React Router 7 framework mode) for the
+`apps/site` use case. No spike code is built; the investigation relies on
+official framework docs, vendor (Supabase, Vercel) integration guides, and
+framework-team changelogs/blog posts. The deliverable is a decision doc
+landed in `docs/plans/framework-decision.md` covering the candidate
+frameworks evaluated, the evaluation criteria (auth integration, Supabase
+data loading, SSR/SSG ergonomics, deploy cost, team familiarity, and
+secondary dimensions named in the doc), the chosen framework, and the
+rationale. Production-reality verification (cookie boundary on the
+production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
 Stand up `apps/site` as an empty deployable app in the chosen framework.
@@ -430,9 +435,9 @@ least one client.
 **Documentation.** `docs/product.md` updated to reflect Madrona launched.
 `docs/backlog.md` closes "Event landing page for `/event/:slug`".
 `README.md` updated. This plan flipped from `Proposed` to `Landed` in the
-final PR with implementing commit SHAs in the Status block. M4 follows the
-two-phase Plan-to-Landed pattern from `docs/testing-tiers.md` if the
-production smoke assertions added in M4 must run post-deploy.
+final PR. M4 follows the two-phase Plan-to-Landed pattern from
+`docs/testing-tiers.md` if the production smoke assertions added in M4
+must run post-deploy.
 
 **Self-review audits.** From `docs/self-review-catalog.md`:
 Readiness-gate truthfulness audit (production smoke claims for the
@@ -486,8 +491,8 @@ epic completion:
 - `docs/styling.md` — new doc; themable vs. structural tokens, theme
   registry, how to add a theme
 - `docs/plans/framework-decision.md` — new doc; M0 spike outcome
-- This plan — flipped from `Proposed` to `Landed` with implementing commit
-  SHAs in the Status block, in the same PR that lands M4
+- This plan — flipped from `Proposed` to `Landed` in the same PR that
+  lands M4
 
 ## Sizing Summary
 
