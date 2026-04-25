@@ -1,6 +1,38 @@
 {
   "rewrites": [
     {
+      "source": "/event/:slug/game",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event/:slug/game/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event/:slug/admin",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event/:slug/admin/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event/:slug/redeem",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event/:slug/redemptions",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/event/:slug",
+      "destination": "https://neighborly-events-site.vercel.app/event/:slug"
+    },
+    {
+      "source": "/event/:slug/:path*",
+      "destination": "https://neighborly-events-site.vercel.app/event/:slug/:path*"
+    },
+    {
       "source": "/admin/:path*",
       "destination": "/index.html"
     },

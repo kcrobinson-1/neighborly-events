@@ -61,7 +61,15 @@ Initial validation target:
 The codebase is intentionally small and split by responsibility:
 
 - `apps/web`
-  React attendee experience built with Vite
+  React attendee experience built with Vite. Owns `/`, `/admin*`,
+  `/auth/callback`, the event-scoped `/event/:slug/game` and
+  `/event/:slug/admin` namespaces, and the transitional bare-path operator
+  routes `/event/:slug/redeem` and `/event/:slug/redemptions`.
+- `apps/site`
+  Public event landing pages built with Next.js 16 (App Router, server
+  rendered). Owns `/event/:slug` and any other event-scoped path not carved
+  out for `apps/web`. Currently a placeholder; the real landing page lands in
+  M3 of [the Event Platform Epic](./docs/plans/event-platform-epic.md).
 - `shared`
   shared `game-config.ts` entrypoint plus `shared/game-config/` modules for DB mapping, quiz runtime shape, validation, scoring, and explicit sample fixtures
 - `supabase/functions`
@@ -73,7 +81,12 @@ The codebase is intentionally small and split by responsibility:
 
 Runtime responsibilities are:
 
-- `Vercel` serves the web app
+- `Vercel` serves both apps as separate projects: `apps/web` is the primary
+  project owning the production custom domain, and its `vercel.json`
+  proxy-rewrites event-scoped non-game/admin URLs to the `apps/site` Vercel
+  project. Routing is **transitional** — `/`, `/admin*`, and `/auth/callback`
+  migrate to `apps/site` in M2 of the Event Platform Epic, and the bare-path
+  operator routes retire in M2 phase 2.5.
 - the browser runs the quiz flow locally during play
 - `Supabase` handles the trusted completion step at the end
 
@@ -172,6 +185,7 @@ npm test
 npm run test:functions
 npm run test:supabase
 npm run build:web
+npm run build:site
 deno check --no-lock supabase/functions/issue-session/index.ts
 deno check --no-lock supabase/functions/complete-game/index.ts
 deno check --no-lock supabase/functions/save-draft/index.ts
