@@ -430,15 +430,12 @@ assertion.
 - a `visibilitychange` to `"hidden"` after the initial request settles
   clears the pending 5-second timer; no request fires for the
   duration of hidden state, even after the would-be 5-second mark
-- a hidden transition that arrives between the timer scheduling and
-  the timer callback's execution does not produce a request. The
-  contract is behavioral: `fetch` is not called, regardless of whether
-  the test exercises this via fake timers, manual callback invocation,
-  spying on the timer callback directly, or another deterministic
-  mechanism. The implementer chooses the reproduction technique; the
-  plan does not lock one. What the plan locks is that the test must
-  exercise the *post-clearTimeout / pre-execution* window, not only
-  the simpler "hidden transition before timer fires at all" path
+- a hidden transition that arrives after the next poll is scheduled but
+  before that scheduled execution path finishes does not produce a
+  request. The contract is behavioral: `fetch` is not called. The test
+  may use any deterministic harness method (fake timers, callback
+  capture/manual invoke, or equivalent) and the plan does not prescribe
+  one specific reproduction mechanism
 - a `visibilitychange` to `"hidden"` while a request is in flight does
   not abort the request; the response settles and updates state, and
   the settle handler does not schedule the next timer
