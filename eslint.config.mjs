@@ -13,6 +13,7 @@ export default [
       "tmp/",
       "apps/web/dist/",
       "apps/web/src/vite-env.d.ts",
+      "apps/site/",
     ],
   },
   js.configs.recommended,
