@@ -259,10 +259,19 @@ so both apps consume the same primitives. Behavior preserving for `apps/web`;
 `apps/site` becomes capable of consuming the foundation.
 
 **Phase 1.1 — `shared/db/`.**
-Extract Supabase client factory, generated TypeScript types, and Zod schemas
-for shared domain shapes (event, draft, organizer/agent role records).
-`apps/web` migrated to import from `shared/db/`. No app holds a duplicate
-Supabase client or duplicate type definitions. One PR.
+**Plan:** [`shared-db-foundation.md`](./shared-db-foundation.md).
+Extract the Supabase client factory, generated TypeScript types for shared
+domain shapes (event, draft, organizer/agent role records), and any
+existing typed query helpers. `apps/web` migrated to import from
+`shared/db/`. No app holds a duplicate Supabase client or duplicate type
+definitions. Runtime validation schemas (Zod or equivalent) are not
+introduced in this phase; they are a separate decision motivated by
+specific runtime-validation gaps (e.g., edge function input validation),
+landed as a focused follow-up if and when the need is concrete. Two PRs:
+subphase 1.1.1 extracts the env-agnostic client factory into
+`shared/db/` and narrows the apps/web adapter to Vite-coupled state
+only; subphase 1.1.2 generates the canonical Supabase TypeScript types
+and threads them through the existing call sites.
 
 **Phase 1.2 — `shared/urls/`.**
 Extract URL builders for every cross-app route family
@@ -610,12 +619,12 @@ X.N.M`) contribute to the PR count but not the phase count.
 Phases per milestone, with PR counts:
 
 - M0 — 3 phases, 3 PRs
-- M1 — 5 phases (phase 1.5 contains 2 subphases as separate PRs), 6 PRs
+- M1 — 5 phases (phase 1.1 and phase 1.5 each contain 2 subphases as separate PRs), 7 PRs
 - M2 — 5 phases, 5 PRs
 - M3 — 4 phases, 4 PRs
 - M4 — 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR)
 
-Epic total: 20 phases, 20 PRs.
+Epic total: 20 phases, 21 PRs.
 
 The above is written under the assumption "one engineer focused on the epic
 with no parallel tracks." Reader scales relative weight from the phase and

@@ -194,6 +194,18 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   Transport contracts for the reward-redemption Edge Functions and their future
   callers. Owns request/response shapes for redeem, reverse, and attendee
   status without pulling fetch or UI concerns into the shared layer.
+- `shared/db/`
+  Env-agnostic Supabase wiring shared across `apps/web` and (after M1
+  phase 1.3) `apps/site`. Owns the browser client factory
+  (`createBrowserSupabaseClient`), the auth-header helper
+  (`createSupabaseAuthHeaders`), the response error-message reader
+  (`readSupabaseErrorMessage`), and the `SupabaseConfig` shape every
+  per-app adapter passes in. Holds no env access and no singleton
+  state — those stay in per-app adapters
+  ([`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts)
+  today; the apps/site adapter lands in M1 phase 1.3) so each app
+  can choose its own lifecycle (browser singleton vs. per-request
+  SSR client).
 
 Together they contain:
 

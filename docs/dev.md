@@ -126,6 +126,25 @@ The shared `game-config` module still matters because:
 - explicit sample fixtures remain available for tests and the local-only
   prototype fallback without becoming the standard runtime source
 
+### Supabase client wiring
+
+Browser-side Supabase code goes through the per-app adapter, not through
+`shared/db/` directly. The adapter owns env reading
+(`import.meta.env.*` for Vite in `apps/web`; `process.env.*` for Next.js
+in `apps/site` once M1 phase 1.3 lands), the singleton lifecycle, and
+any framework-coupled gates (the prototype-fallback flag and the
+missing-config copy keyed off `import.meta.env.DEV`). `shared/db/`
+itself is env-agnostic and exposes only the SDK-level wiring
+(`createBrowserSupabaseClient`, `createSupabaseAuthHeaders`,
+`readSupabaseErrorMessage`) plus the `SupabaseConfig` shape adapters
+pass in.
+
+In `apps/web` the adapter is
+[`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts);
+import `getBrowserSupabaseClient`, `getSupabaseConfig`,
+`isPrototypeFallbackEnabled`, etc. from there. Reach into
+`shared/db/` directly only when adding a new per-app adapter.
+
 ### Reducer-based game session
 
 The game flow is modeled as a reducer-backed session rather than scattered component state.
