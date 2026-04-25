@@ -211,17 +211,22 @@ production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
 Stand up `apps/site` as an empty deployable app in the chosen framework.
 Configure Vercel as a monorepo project with transitional path-based
-rewrite rules: `/event/:slug` and `/event/:slug/*` paths (excluding the
-existing `/event/:slug/game`, `/event/:slug/redeem`, and
-`/event/:slug/redemptions`, plus the future `/event/:slug/admin/*`
-carve-out) route to `apps/site`; everything else continues routing to
-`apps/web` exactly as today, including `/`, `/admin*`, `/auth/callback`,
-and the existing operator URLs. The final routing topology in which
-`apps/site` also owns `/`, `/admin*`, and `/auth/callback` is reached in
-M2 as those surfaces migrate. The skeleton renders a placeholder page at
-`/event/:slug` for any slug. Cookie boundary verified by confirming a
-session set in `apps/web` is readable by code running in `apps/site` on
-the production domain. One PR.
+rewrite rules. The `apps/web` carve-outs under `/event/:slug/` are full
+namespaces, not bare paths: `/event/:slug/game` and `/event/:slug/game/*`
+route to `apps/web` (covers the existing bare game route and reserves the
+sub-paths the operator URLs migrate into during M2 phase 2.5);
+`/event/:slug/admin` and `/event/:slug/admin/*` reserve the future
+per-event admin namespace for `apps/web` (route added in M2 phase 2.2).
+The existing bare-path operator routes `/event/:slug/redeem` and
+`/event/:slug/redemptions` route to `apps/web` until M2 phase 2.5 retires
+them. `/event/:slug` and all other paths under `/event/:slug/` route to
+`apps/site`. Everything else continues routing to `apps/web` exactly as
+today, including `/`, `/admin*`, and `/auth/callback`. The final routing
+topology in which `apps/site` also owns `/`, `/admin*`, and `/auth/callback`
+is reached in M2 as those surfaces migrate. The skeleton renders a
+placeholder page at `/event/:slug` for any slug. Cookie boundary verified
+by confirming a session set in `apps/web` is readable by code running in
+`apps/site` on the production domain. One PR.
 
 **Validation gate.** `npm run lint`, `npm run build:web`, `npm run build:site`,
 framework-specific checks. Manual verification that the placeholder renders
@@ -345,13 +350,14 @@ when `/admin` migrates to apps/site. One PR.
 
 **Phase 2.3 — `/auth/callback` and `/` migration to apps/site.**
 Migrate `/auth/callback` from apps/web to apps/site as the auth flow
-handler in the new framework, validating tokens and redirecting via
-`validateNextPath` from `shared/auth/`. Migrate `/` from apps/web to
-apps/site, preserving the demo-overview content (or a small platform
-landing page that subsumes it). Both run against neutral `:root` defaults;
-neither is event-scoped so neither wraps in `<ThemeScope>`. Vercel routing
-updated to send these paths to apps/site. The corresponding apps/web routes
-are removed. Hard cutover. One PR.
+handler in the new framework, validating tokens via `shared/auth/` and
+validating the `next=` redirect target via `validateNextPath` from
+`shared/urls/`. Migrate `/` from apps/web to apps/site, preserving the
+demo-overview content (or a small platform landing page that subsumes
+it). Both run against neutral `:root` defaults; neither is event-scoped so
+neither wraps in `<ThemeScope>`. Vercel routing updated to send these
+paths to apps/site. The corresponding apps/web routes are removed. Hard
+cutover. One PR.
 
 **Phase 2.4 — Platform admin migration to apps/site at `/admin`.**
 Migrate `/admin` from apps/web to apps/site. The new platform admin in
@@ -372,7 +378,11 @@ phase 2.2). Hard cutover. One PR.
 `/event/:slug/redemptions` moves to `/event/:slug/game/redemptions`. The
 migrated route shells are confirmed wrapping in
 `<ThemeScope theme={getThemeForSlug(slug)}>` as part of this phase.
-`validateNextPath` patterns updated. Documentation references updated. Hard
+`validateNextPath` patterns updated. Documentation references updated.
+Vercel rules updated: the now-defunct `/event/:slug/redeem` and
+`/event/:slug/redemptions` carve-outs are removed (the migrated URLs are
+already covered by the `/event/:slug/game/*` namespace carve-out
+established in M0 phase 0.3, so no new namespace rule is needed). Hard
 cutover: no backward-compat redirects. One PR.
 
 **Validation gate.** `npm run lint`, `npm run build:web`,
