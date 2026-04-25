@@ -172,6 +172,7 @@ with Vercel routing wired for the long-term URL contract. No product
 behavior changes during M0.
 
 **Phase 0.1 — Repo rename.**
+**Status:** Landed. **Plan:** [`repo-rename.md`](./repo-rename.md).
 Rename the GitHub repo from `neighborly-scavenger-game` to
 `neighborly-events` and update every current-state textual reference
 inside the codebase. PR scope (current-state references actually
@@ -196,6 +197,7 @@ No code logic changes. One PR. Executed contract:
 [`repo-rename.md`](./repo-rename.md).
 
 **Phase 0.2 — Framework research and decision.**
+**Status:** Landed. **Plan:** [`framework-decision.md`](./framework-decision.md).
 A bounded two-day documentation- and consensus-based research pass comparing
 Next.js App Router and Remix (React Router 7 framework mode) for the
 `apps/site` use case. No spike code is built; the investigation relies on
@@ -209,6 +211,7 @@ rationale. Production-reality verification (cookie boundary on the
 production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
+**Status:** Proposed. **Plan:** [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md).
 Stand up `apps/site` as an empty deployable app in the chosen framework.
 Configure Vercel as a monorepo project with transitional path-based
 rewrite rules. The `apps/web` carve-outs under `/event/:slug/` are full
