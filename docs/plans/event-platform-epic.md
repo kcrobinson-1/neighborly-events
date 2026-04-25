@@ -14,7 +14,7 @@ plan to history.
 
 | Milestone | Status |
 | --- | --- |
-| M0 — Framework decision and platform skeleton | Proposed |
+| M0 — Framework decision and platform skeleton | Landed |
 | M1 — Foundation extraction | Proposed |
 | M2 — Admin restructuring and authorization broadening | Proposed |
 | M3 — Site rendering infrastructure with test events | Proposed |
@@ -272,7 +272,25 @@ primitives, role-resolution hooks (`useOrganizerForEvent`, `useIsRootAdmin`,
 and equivalents), magic-link request and callback flow, and the in-place
 auth shell components used by protected routes. `apps/web` migrated to
 import from `shared/auth/`. Sign-in for existing routes verified end-to-end.
-One PR.
+
+**Inherited from M0 phase 0.3:** owns the cross-app cookie-boundary
+verification deferred from
+[`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md). Phase
+0.3's chosen verification cookie (the `neighborly_session` cookie set
+by `issue-session`) lives on the Supabase Edge Function origin
+(`*.supabase.co`), not the apps/web frontend domain, so the gate could
+not pass against the existing code. M1 phase 1.3 migrates Supabase
+Auth from `localStorage` to a cookie-based adapter that explicitly
+sets cookies on the apps/web frontend origin; the verification
+procedure (game/sign-in session set on apps/web → navigate to a
+apps/site route → confirm Next.js `cookies()` reads the cookie via
+the proxy-rewrite) must run against that real frontend-origin auth
+cookie before this phase flips Landed. The procedure documented in
+`docs/dev.md` is updated in this phase to point at the new auth
+cookie name. The apps/site placeholder's deferral notice (added when
+M0 flipped Landed) is replaced with a working readout or removed
+entirely depending on whether the placeholder is still load-bearing
+by then. One PR.
 
 **Phase 1.4 — `shared/events/`.**
 Extract event lookup by slug, event status helpers, slug validation, and
@@ -303,7 +321,11 @@ themable/structural rule. One PR.
 **Validation gate.** `npm run lint`, `npm run build:web`,
 `npm run build:site`, full existing test suite passes, no visual diff on
 existing routes verified via UI review capture before/after, component tests
-covering theme variation pass.
+covering theme variation pass. **Production cookie-boundary verification
+inherited from M0 phase 0.3** — must pass against the real
+frontend-origin auth cookie introduced by phase 1.3 before this
+milestone's status flips Landed (procedure in `docs/dev.md`, updated
+in this milestone to point at the new cookie name).
 
 **Documentation.** `docs/architecture.md` describes the shared layer and each
 package's responsibilities. `docs/styling.md` (new) documents themable vs.

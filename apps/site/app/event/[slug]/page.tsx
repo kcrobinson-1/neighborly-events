@@ -6,8 +6,9 @@ export default async function EventPlaceholderPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const cookieStore = await cookies();
-  const sessionCookiePresent = cookieStore.has("neighborly_session");
+  // Kept wired so M1 phase 1.3 can re-point this at the real
+  // frontend-origin auth cookie without re-introducing the import.
+  await cookies();
 
   return (
     <main>
@@ -19,17 +20,15 @@ export default async function EventPlaceholderPage({
         Served by <code>apps/site</code> (Next.js 16). The real event landing
         page lands in M3 of the Event Platform Epic.
       </p>
-      <h2>Cookie boundary readout</h2>
+      <h2>Cookie-boundary verification</h2>
       <p>
-        <code>neighborly_session</code> cookie visible to <code>apps/site</code>:{" "}
-        <strong>
-          {sessionCookiePresent ? "YES — present" : "NO — not visible"}
-        </strong>
-      </p>
-      <p>
-        This readout reports presence only and never echoes the cookie value. It
-        is the verification artifact for M0 phase 0.3; the procedure to
-        re-confirm it is documented in <code>docs/dev.md</code>.
+        Deferred to M1 phase 1.3. The cookie originally chosen for this
+        readout (<code>neighborly_session</code>) is set on the Supabase
+        Edge Function origin, not the apps/web frontend domain, so it is
+        structurally invisible to <code>apps/site</code> regardless of
+        the rewrite topology. See{" "}
+        <code>docs/plans/site-scaffold-and-routing.md</code> &quot;Verification
+        Evidence&quot; for the full analysis.
       </p>
     </main>
   );

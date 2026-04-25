@@ -624,30 +624,31 @@ Most-specific rules must come first. The bare-path operator carve-outs
 fallback are explicitly transitional. M2 plan authors are responsible
 for narrowing them as routes migrate.
 
-### Cookie-boundary verification (M0 phase 0.3 readiness gate)
+### Cookie-boundary verification (deferred to M1 phase 1.3)
 
-The `/event/:slug` placeholder served by `apps/site` includes a
-presence-only readout for the `neighborly_session` cookie. The readout
-exists to prove that an HTTP cookie set on path=`/` by `apps/web` (via
-the `issue-session` Edge Function) is visible to Next.js's
-`cookies()` API in `apps/site` server-rendered routes when the
-production domain proxy-rewrites the request from `apps/web` to
-`apps/site`.
+The cross-app cookie-boundary verification originally scoped to M0
+phase 0.3 was **deferred to M1 phase 1.3** when implementation
+surfaced a planning-time bug: the `neighborly_session` cookie set by
+`issue-session` lives on the Supabase Edge Function origin
+(`*.supabase.co`), not on the apps/web frontend domain, so it is
+never readable by Next.js `cookies()` in apps/site routes regardless
+of the rewrite topology. See
+[`docs/plans/site-scaffold-and-routing.md`](./plans/site-scaffold-and-routing.md)
+"Verification Evidence" for the full analysis.
 
-To re-confirm the gate against production:
+M1 phase 1.3 (`shared/auth/` extraction) introduces a Supabase Auth
+cookie adapter that sets a real frontend-origin cookie. The
+verification procedure (game/sign-in session set on apps/web →
+navigate to a apps/site route → confirm Next.js `cookies()` reads
+the cookie via the proxy-rewrite) is updated in that phase to point
+at the new auth cookie name and runs as a pre-Landed gate for M1
+phase 1.3.
 
-1. Open `/event/madrona/game` on the production domain in a fresh
-   browser session. Press start so the browser POSTs `issue-session`
-   and the Edge Function sets the `neighborly_session` cookie.
-2. Without clearing cookies, navigate to `/event/test-slug` (or any
-   slug that does not match a `apps/web` carve-out).
-3. Confirm the placeholder reports the cookie as `YES — present`.
-
-A `NO — not visible` readout means the cross-project rewrite stripped
-the cookie, the cookie domain is wrong, or the request never reached
-`apps/site`. Open a new plan rather than papering over the failure.
-
-The readout reports presence only and never echoes the cookie value.
+Until M1 phase 1.3 lands, the apps/site placeholder at `/event/:slug`
+displays a deferral notice rather than a meaningful readout. Do not
+use the placeholder to "verify" the cookie boundary in the
+meantime — the answer is structurally `NO` until M1 phase 1.3
+introduces the right cookie.
 
 ## Release Flow
 

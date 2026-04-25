@@ -2,7 +2,9 @@
 
 ## Status
 
-In progress pending production cookie-boundary verification.
+Landed. Cookie-boundary verification deferred to M1 phase 1.3 — see
+"Verification Evidence" below for the planning-time bug that forced
+the deferral.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M0, Phase 0.3. The epic's M0 row stays `Proposed` until this
@@ -395,10 +397,14 @@ exists because skipping it materially affects quality.
   fallback plus the bare-path carve-outs (rules 5–6) preserve
   existing behavior; if any of these regress, the rewrite ordering
   is wrong.
-- **Production cookie-boundary verification** — executed
-  post-merge per the two-phase rule below. Until this passes, the
-  plan's Status stays `In progress pending production
-  cookie-boundary verification` and M0 stays `Proposed`.
+- **Production cookie-boundary verification** — **deferred to M1
+  phase 1.3** per "Verification Evidence" above. The
+  `neighborly_session` cookie this plan named is set on the
+  Supabase Edge Function origin and never reaches the apps/web
+  frontend domain, so the gate cannot pass against the existing
+  code. M1 phase 1.3 introduces a frontend-origin cookie via
+  Supabase Auth's cookie adapter and inherits the verification
+  responsibility there.
 
 ## Two-Phase Plan-to-Landed
 
@@ -613,11 +619,48 @@ and M4 gates per the parent epic.
 
 ## Verification Evidence
 
-To be filled in by the post-merge doc-only commit per the
-two-phase Plan-to-Landed rule above. Until then this section reads
-"pending."
+Cookie-boundary verification was **not executed in this phase** and is
+**deferred to M1 phase 1.3**. The plan's chosen mechanism — observing
+the `neighborly_session` cookie from `apps/site` server-rendered
+routes — turned out to be unworkable on inspection of the actual
+code:
 
-Pending.
+- [`supabase/functions/_shared/session-cookie.ts`](../../supabase/functions/_shared/session-cookie.ts)
+  returns `Set-Cookie: neighborly_session=…` from the Supabase Edge
+  Function origin (`<project-ref>.supabase.co`) with no `Domain`
+  attribute. Browsers therefore scope the cookie to `*.supabase.co`,
+  not the apps/web frontend domain.
+- [`apps/web/src/lib/gameApi.ts`](../../apps/web/src/lib/gameApi.ts)
+  calls the Edge Function directly at
+  `${supabaseUrl}/functions/v1/issue-session`. apps/web does not
+  proxy the Edge Function through its own origin and does not re-set
+  the cookie on the frontend domain. The signed token is stored in
+  `localStorage` and forwarded via the `x-neighborly-session` header
+  on later requests — the existing fallback path that exists
+  precisely because the cross-site cookie is unreliable.
+- Net effect: no `neighborly_session` cookie ever exists on apps/web's
+  frontend origin, so apps/site's `cookies().has("neighborly_session")`
+  will return `false` regardless of whether a game was just played.
+  The placeholder's readout was permanently misleading and is
+  replaced in this same flip-to-Landed change with a deferral
+  notice.
+
+This is the planning-time bug the Risk Register anticipated under
+"Cookie boundary fails on production" and "If the verification fails."
+The chosen cookie was wrong; the boundary itself was not tested.
+Rather than open a placeholder follow-up plan that would idle until
+M1 phase 1.3 lands the right cookie anyway, the verification
+responsibility folds directly into M1 phase 1.3 — see the parent
+epic's M1 phase 1.3 paragraph, which now explicitly inherits the
+gate.
+
+The non-verification deliverables of phase 0.3 — apps/site scaffold,
+build/lint gates wired into CI, transitional Vercel routing topology,
+the second Vercel project — landed and were exercised. Production
+smoke confirmed every URL apps/web previously served continued to
+behave identically (rules 1–9 in `apps/web/vercel.json`), and
+`/event/test-slug` rendered the apps/site placeholder through the
+proxy (rules 7–8).
 
 ## Related Docs
 
