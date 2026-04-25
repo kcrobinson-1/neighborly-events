@@ -1,19 +1,26 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  createBrowserSupabaseClient,
+  createSupabaseAuthHeaders,
+  readSupabaseErrorMessage,
+  type SupabaseConfig,
+} from "../../../../shared/db";
 
-/** Minimal error payload shape returned by Supabase-backed browser requests. */
-type SupabaseBrowserErrorPayload = {
-  error?: string;
-  message?: string;
+/**
+ * Vite-coupled adapter over `shared/db/`. Owns the singleton lifecycle,
+ * env reading via `import.meta.env`, and the prototype-fallback gate.
+ * The SDK-level wiring (factory + auth-header helper + error-message
+ * reader) lives in `shared/db/` so `apps/site` can reuse it through
+ * its own Next.js-coupled adapter in M1 phase 1.3.
+ */
+
+export {
+  createSupabaseAuthHeaders,
+  readSupabaseErrorMessage,
+  type SupabaseConfig,
 };
 
 let browserSupabaseClient: SupabaseClient | null = null;
-
-/** Runtime Supabase configuration read from Vite environment variables. */
-export type SupabaseConfig = {
-  enabled: boolean;
-  supabaseClientKey: string;
-  supabaseUrl: string;
-};
 
 /** Returns true when a Vite env flag explicitly enables a behavior. */
 export function isEnabledFlag(value: string | undefined) {
@@ -43,20 +50,14 @@ export function getSupabaseConfig(): SupabaseConfig {
 
 /** Returns the shared browser Supabase client used by admin auth and data reads. */
 export function getBrowserSupabaseClient() {
-  const { enabled, supabaseClientKey, supabaseUrl } = getSupabaseConfig();
+  const config = getSupabaseConfig();
 
-  if (!enabled) {
+  if (!config.enabled) {
     throw new Error(getMissingSupabaseConfigMessage());
   }
 
   if (!browserSupabaseClient) {
-    browserSupabaseClient = createClient(supabaseUrl, supabaseClientKey, {
-      auth: {
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        persistSession: true,
-      },
-    });
+    browserSupabaseClient = createBrowserSupabaseClient(config);
   }
 
   return browserSupabaseClient;
@@ -83,22 +84,4 @@ export function getMissingSupabaseConfigMessage() {
     "`VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`, or set",
     "`VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK=true` to run the local-only prototype flow.",
   ].join(" ");
-}
-
-/** Builds the shared auth headers for browser reads and function calls. */
-export function createSupabaseAuthHeaders(supabaseClientKey: string) {
-  return {
-    apikey: supabaseClientKey,
-    Authorization: `Bearer ${supabaseClientKey}`,
-  };
-}
-
-/** Extracts a useful error message from a Supabase-backed browser response. */
-export async function readSupabaseErrorMessage(response: Response, fallback: string) {
-  try {
-    const payload = (await response.json()) as SupabaseBrowserErrorPayload;
-    return payload.error ?? payload.message ?? fallback;
-  } catch {
-    return fallback;
-  }
 }
