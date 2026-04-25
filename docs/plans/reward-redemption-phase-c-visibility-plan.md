@@ -93,6 +93,13 @@ all.
   the timer, abort the in-flight controller, and signal the cancel
   flag. No exit path leaves a listener on `document` after the hook
   is gone.
+- **Hidden gate is layered, not point-in-time.** No fire-eligible
+  site may rely on a single hidden check upstream. The hidden flag is
+  re-read at the settle handler (skip scheduling), inside the timer
+  callback (skip execution — `clearTimeout` cannot evict a callback
+  already queued on the macrotask), and at `runPoll` entry
+  (idempotent late check). Any future call site that can lead to a
+  request must add the same re-check or be routed through `runPoll`.
 
 ## Goals
 
@@ -208,10 +215,22 @@ all.
   if the hidden flag is set at settle time, no timer is scheduled.
 - The hidden→visible handler itself takes responsibility for
   restarting the loop via `runPoll()`. It does not schedule a timer.
-- A pending `setTimeout` set before a hidden transition must be
-  cleared by the visibility handler so a callback already on the
-  macrotask queue cannot fire and start a request after hidden took
-  effect.
+- The hidden flag is re-checked at three layers, in order:
+  1. **At settle.** Skip scheduling the next timer if hidden.
+  2. **Inside the timer callback.** Re-read the hidden flag (alongside
+     the existing cancel and in-flight checks) before calling
+     `runPoll`. This is the canonical correctness guarantee, because
+     `clearTimeout` does not remove a callback that has already been
+     placed on the macrotask queue — a hidden transition that fires
+     between the queue placement and the callback execution must not
+     produce a request.
+  3. **At `runPoll` entry.** Idempotent late check so any future call
+     site that bypasses the timer cannot leak a hidden-state request.
+- The visibility handler still calls `clearTimeout` on the pending
+  timer as defensive cleanup, but the contract does not depend on
+  `clearTimeout` removing a queued callback. Correctness comes from
+  the hidden re-check inside the callback body, not from the timer
+  cancellation succeeding.
 
 ### Re-fire boundedness
 
@@ -245,10 +264,20 @@ all.
 
 ### Hook ownership boundary
 
-- All visibility logic lives inside
+- All visibility *runtime behavior* lives inside
   [`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](../../apps/web/src/redemptions/useAttendeeRedemptionStatus.ts).
-  No new file is added under `apps/web/src/redemptions/` and no
-  existing file outside that hook changes.
+  No other runtime/source file under `apps/web/src/`,
+  `supabase/functions/`, `supabase/migrations/`, or `shared/` changes
+  in this phase, and no new file is added under
+  `apps/web/src/redemptions/`.
+- This boundary is about runtime behavior, not the diff envelope. The
+  PR is still expected to update the test file
+  ([`tests/web/redemptions/useAttendeeRedemptionStatus.test.ts`](../../tests/web/redemptions/useAttendeeRedemptionStatus.test.ts))
+  and the durable docs named in § "Rollout Sequence" step 5
+  (`docs/architecture.md`,
+  [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md),
+  [`docs/backlog.md`](../backlog.md), and this plan doc itself). Those
+  test and doc edits are required deliverables, not scope drift.
 
 ## Target Structure
 
@@ -322,8 +351,12 @@ all.
    - silent `void` promises in the new handler bodies
    - any change to the hook's transport contract, response mapping,
      401 retry, or discriminated status union (scope alarm)
-   - any change outside `apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`
-     and its test file (scope alarm)
+   - any runtime/source file edit outside
+     `apps/web/src/redemptions/useAttendeeRedemptionStatus.ts` (scope
+     alarm). Test edits in
+     `tests/web/redemptions/useAttendeeRedemptionStatus.test.ts` and
+     doc edits in the named docs from § "Rollout Sequence" step 5 are
+     expected and not alarms.
    - any backend file edit (scope alarm — stop and report)
 
    Land review-fix commits separately if that makes the history easier
@@ -397,6 +430,15 @@ assertion.
 - a `visibilitychange` to `"hidden"` after the initial request settles
   clears the pending 5-second timer; no request fires for the
   duration of hidden state, even after the would-be 5-second mark
+- a hidden transition that arrives between the timer scheduling and
+  the timer callback's execution does not produce a request. The
+  contract is behavioral: `fetch` is not called, regardless of whether
+  the test exercises this via fake timers, manual callback invocation,
+  spying on the timer callback directly, or another deterministic
+  mechanism. The implementer chooses the reproduction technique; the
+  plan does not lock one. What the plan locks is that the test must
+  exercise the *post-clearTimeout / pre-execution* window, not only
+  the simpler "hidden transition before timer fires at all" path
 - a `visibilitychange` to `"hidden"` while a request is in flight does
   not abort the request; the response settles and updates state, and
   the settle handler does not schedule the next timer
@@ -464,7 +506,10 @@ this phase's surfaces, plus the plan-local audits listed below.
   flag; post-unmount settle does not call `setState`; effect re-run
   on `eventId` change tears down the prior listener before the new
   one attaches; a callback already on the macrotask queue when
-  `clearTimeout` fires must observe the cancel flag inside its body.
+  `clearTimeout` fires must observe **both** the cancel flag and the
+  hidden flag inside its body, since `clearTimeout` cannot evict a
+  queued callback and the hidden case is just as much a "must not
+  fire" condition as the cancelled case.
 - **Plan-local — visibility-listener leak audit.** Walk every
   early-return inside the effect (null `eventId`, backend disabled,
   prototype fallback, `document` undefined) and confirm one of two
@@ -551,11 +596,16 @@ body.
   hidden, and the attendee cannot read a status they are not looking
   at. The next visible event becomes the first request.
 - **Macrotask race on hidden transition.** A `setTimeout` callback
-  already on the queue when hidden takes effect could fire and start
-  a request after hidden has been observed. Mitigation: the
-  visibility handler clears the pending timer synchronously, and the
-  in-flight settle handler re-checks the hidden flag before
-  scheduling the next timer.
+  already on the queue when hidden takes effect cannot be removed by
+  `clearTimeout` and will fire. The contract therefore does not
+  depend on `clearTimeout` succeeding. Mitigation: the timer callback
+  body re-reads the hidden flag (alongside the existing cancel and
+  in-flight checks) before calling `runPoll` and returns early if
+  hidden, the in-flight settle handler re-checks the hidden flag
+  before scheduling the next timer, and `runPoll` re-checks at entry.
+  `clearTimeout` is retained as a defensive cleanup that avoids the
+  cost of an enqueued no-op callback when the cancellation wins the
+  race, not as the correctness guarantee.
 - **Test-environment visibility quirks.** JSDOM's
   `document.visibilityState` is mutable but not driven by real tab
   focus. Mitigation: tests stub `visibilityState` via
