@@ -163,14 +163,18 @@ chosen at execution time. PR scope: `package.json`, all package manifests in
 workspaces, CI workflow files, `README.md`, `AGENTS.md` references, doc
 references, GitHub repo URL settings. No code logic changes. One PR.
 
-**Phase 0.2 — Framework spike and decision.**
-A bounded two-day spike comparing Next.js App Router and Remix (React Router 7
-framework mode) for the `apps/site` use case. Spike work happens on a
-throwaway branch and is not merged. The deliverable is a decision doc landed
-in `docs/plans/framework-decision.md` covering the candidate frameworks
-evaluated, the evaluation criteria (auth integration, Supabase data loading,
-SSR/SSG ergonomics, deploy cost, team familiarity), the chosen framework, and
-the rationale. One PR (the decision doc).
+**Phase 0.2 — Framework research and decision.**
+A bounded two-day documentation- and consensus-based research pass comparing
+Next.js App Router and Remix (React Router 7 framework mode) for the
+`apps/site` use case. No spike code is built; the investigation relies on
+official framework docs, vendor (Supabase, Vercel) integration guides, and
+framework-team changelogs/blog posts. The deliverable is a decision doc
+landed in `docs/plans/framework-decision.md` covering the candidate
+frameworks evaluated, the evaluation criteria (auth integration, Supabase
+data loading, SSR/SSG ergonomics, deploy cost, team familiarity, and
+secondary dimensions named in the doc), the chosen framework, and the
+rationale. Production-reality verification (cookie boundary on the
+production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
 Stand up `apps/site` as an empty deployable app in the chosen framework.

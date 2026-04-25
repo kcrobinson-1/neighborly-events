@@ -73,3 +73,45 @@ No currently open questions in this section under the current tracking rule.
 Trust-boundary and abuse-control planning now lives in
 [`security-and-abuse-plan.md`](./plans/security-and-abuse-plan.md), and concrete
 hardening work should be tracked via [`backlog.md`](./backlog.md).
+
+## Event Platform Epic — Phase 0.3 Verification
+
+Surfaced by [`framework-decision.md`](./plans/framework-decision.md) (Event
+Platform Epic, M0 phase 0.2). Each item is a hypothesis from the
+documentation that M0 phase 0.3 must verify on the production domain
+before subsequent milestones depend on it.
+
+### Cookie boundary across path-routed Vercel projects
+
+Vercel's knowledge base does not document cookie behavior across multi-
+project rewrites under one domain. Web-platform fundamentals say a
+cookie set on `example.com/` (path=`/`) is sent to every request under
+that domain regardless of which Vercel project handles a path, but the
+interaction with Vercel's rewrite/Microfrontends header rewriting is
+unverified. Phase 0.3 verifies end-to-end that a session cookie set in
+`apps/web` is readable by `apps/site` on the production domain.
+
+### Supabase Proxy interaction with Vercel rewrites
+
+If the Vercel-level rewrite happens before the Next.js Proxy (middleware)
+runs, the Proxy's cookie-refresh behavior on `apps/web` paths may not be
+observable from `apps/site` reads. Phase 0.3 verifies that token refresh
+in `apps/web` is reflected in `apps/site` server-rendered responses.
+
+### Streaming-metadata behavior for HTML-limited bots
+
+Next.js auto-detects `facebookexternalhit` and similar HTML-limited bots
+and serves them full `<head>` metadata at the cost of TTFB. The
+behavioral envelope (which bots, which fields) is not exhaustively
+documented. M3 phase 3.4 validates against at least one real unfurl
+client.
+
+### Proxy-rewrite project vs. Vercel Microfrontends
+
+Two documented routing models for path-routed multi-project deploys
+under one domain. The proxy-rewrite path is lower-cost and simpler; the
+Microfrontends path adds CDN-level routing observability and per-project
+deploy independence (with dedicated pricing). M0 phase 0.3 chooses
+between them based on routing-feature needs surfaced during the
+scaffold, and updates [`docs/operations.md`](./operations.md) with the
+chosen topology.
