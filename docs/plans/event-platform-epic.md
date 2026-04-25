@@ -491,8 +491,8 @@ epic completion:
 - `docs/styling.md` — new doc; themable vs. structural tokens, theme
   registry, how to add a theme
 - `docs/plans/framework-decision.md` — new doc; M0 spike outcome
-- This plan — flipped from `Proposed` to `Landed` with implementing commit
-  SHAs in the Status block, in the same PR that lands M4
+- This plan — flipped from `Proposed` to `Landed` in the same PR that
+  lands M4
 
 ## Sizing Summary
 
