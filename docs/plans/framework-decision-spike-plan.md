@@ -1,56 +1,101 @@
-# Framework Decision Spike — Execution Plan
+# Framework Decision Research — Execution Plan
 
 ## Status
 
 Proposed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md), Milestone
-M0, Phase 0.2.
+M0, Phase 0.2. The parent epic uses the word "spike" for this phase, which
+historically implies a hands-on side-by-side build. This plan deliberately
+narrows that to **documentation and consensus research only** — no code is
+written, no throwaway branches are created, no `tmp/` artifacts are produced.
+The PR that lands the decision doc also tightens phase 0.2's wording in the
+parent epic so the two are aligned.
 
 **Deliverable:** `docs/plans/framework-decision.md` landed on `main` via a
-single PR. Spike code itself is built on a throwaway branch and is not merged.
+single PR. The PR adds the decision doc and updates the parent epic's
+phase 0.2 wording; it adds no other files and changes no production surface.
 
 ## Purpose
 
 Phase 0.2 of the Event Platform Epic locks the framework choice for
 `apps/site` — the SSR/SSG-capable second app that will serve `/event/:slug`
 landing pages. The epic names two candidates, **Next.js App Router** and
-**Remix / React Router 7 framework mode**, and bounds the investigation to a
-two-day spike whose only durable artifact is a decision doc.
+**Remix / React Router 7 framework mode**.
 
-This plan governs the spike. It defines what must be learned, how to learn it
-under the time budget, what dimensions the decision must address, and the
-exact shape of the decision doc the PR lands. It does not pre-commit to a
-choice; both candidates are treated as live until the spike concludes.
+This plan governs the research. It defines what must be learned, how to
+learn it from documentation and accepted community consensus, what
+dimensions the decision must address, and the exact shape of the decision
+doc the PR lands. It does not pre-commit to a choice; both candidates are
+treated as live until the research concludes.
+
+## Research Posture
+
+The research is purely literature- and consensus-based. Authoritative
+sources, in order of preference:
+
+1. **Official framework documentation** for the pinned version under
+   evaluation, including production-deploy guides, server-rendering guides,
+   metadata APIs, and any official Supabase or Vercel integration pages.
+2. **Official Supabase and Vercel docs** for each framework, when those
+   vendors publish framework-specific guides.
+3. **Framework changelogs and release notes** for the version pinned in
+   the decision doc, to capture recent posture changes.
+4. **Accepted community consensus** — RFC threads, well-known maintainer
+   posts, framework-team blog posts. Treated as evidence, but lower
+   confidence than official docs and tagged accordingly.
+5. **Existing repo state** for the team-familiarity dimension and for
+   anything about how `shared/` will be consumed.
+
+Where two sources conflict, the research prefers the more recent official
+doc, and notes the conflict explicitly in the decision doc.
+
+The research does **not**:
+
+- build, run, or import either framework
+- create throwaway branches, scratch directories, or `tmp/` artifacts
+- claim to have verified anything that would require running code
+- run `npm run lint`, `build:web`, or any other repo validation surface
+  beyond what the doc-only PR exercises
+
+This posture trades concrete observation for speed and review surface area.
+The accepted residual risk — that a framework's docs over-promise or
+under-warn relative to production reality — is owned by **M0 phase 0.3**,
+which is the first phase that runs the chosen framework against the
+production domain and the cookie boundary. The decision doc names this
+handoff explicitly.
 
 ## Scope
 
 In scope:
 
-- desk research on each candidate against the epic's named criteria
-- a minimal, throwaway side-by-side build of the same target page in each
-  candidate, scoped tightly enough to finish inside the two-day budget
-- a decision doc capturing candidates, criteria, evidence, choice, and
-  rationale, plus any open questions surfaced for later milestones
+- documentation- and consensus-based research on each candidate against
+  the criteria below
+- a decision doc capturing candidates, criteria, evidence sources, choice,
+  and rationale, plus any open questions surfaced for later milestones
+- a small wording update to phase 0.2 in
+  [`event-platform-epic.md`](./event-platform-epic.md) so the epic
+  reflects the research-only posture
 
 Out of scope:
 
-- merging any spike code (the only merged artifact is the decision doc)
+- any hands-on framework build, even minimal or scratch
+- throwaway branches, `tmp/spike/` directories, scratch notes committed
+  to the repo
 - evaluating frameworks outside the epic's named candidate list. If both
-  candidates feel non-viable, the spike escalates to a stop-and-report per
-  the epic's risk register entry "Framework spike outcome," not a unilateral
-  introduction of a third option
-- the `apps/site` scaffold proper. That is M0 phase 0.3 and lands in its own
-  PR after this decision merges
-- production cookie-boundary verification across `apps/web` and `apps/site`.
-  That is also M0 phase 0.3 and is not a spike concern; the spike only
-  surfaces the *expected* cookie story per framework, not a verified one
+  candidates appear non-viable from the documentation, the research
+  escalates to a stop-and-report per the epic's risk-register entry
+  "Framework spike outcome," not a unilateral introduction of a third
+  option
+- the `apps/site` scaffold proper. That is M0 phase 0.3 and lands in its
+  own PR after this decision merges
+- production cookie-boundary verification across `apps/web` and
+  `apps/site`. That is also M0 phase 0.3
 - per-event theme content authoring; themes remain TypeScript modules per
   the epic's Out Of Scope list
 - any change to `apps/web`, `shared/`, `supabase/`, `docs/architecture.md`,
-  or any other production surface during the spike
-- any commitment of `tmp/`, screenshots, throwaway branches, or scratch
-  artifacts to `main`
+  or any other production surface during the research
+- any commitment of screenshots, scratch files, or local notes to `main`
 
 ## Why Now
 
@@ -68,40 +113,48 @@ milestone:
 - M4's Madrona launch rides on whatever the chosen framework enables for
   performance and SEO posture
 
-Resolving the choice with evidence rather than instinct unblocks all four
-later milestones simultaneously and keeps the per-PR review cost on M1–M4
-focused on extraction and feature work rather than re-litigating the
-framework.
+Resolving the choice with documented evidence rather than instinct
+unblocks all four later milestones simultaneously and keeps the per-PR
+review cost on M1–M4 focused on extraction and feature work rather than
+re-litigating the framework.
 
 ## Cross-Cutting Invariants
 
-These invariants hold across the spike, the decision doc, and any
+These invariants hold across the research, the decision doc, and any
 subsequent epic work the decision touches.
 
-- **Spike code is throwaway.** No spike code, dependency, or config lands
-  on `main`. The only PR merged from this phase is the decision doc.
-  Reviewer should be able to confirm by inspecting the PR's file list.
+- **No code lands and no code is written.** The PR's file list is the
+  decision doc plus the parent-epic wording tweak. No package, lockfile,
+  config, or scratch artifact is touched. Reviewer should be able to
+  confirm by inspecting the PR diff.
 - **Both candidates are evaluated against the same evidence shape.** Every
-  criterion has the same depth of investigation for each candidate. A
-  one-sided evaluation (deep on the favored option, shallow on the other)
-  is a stop-and-report condition.
-- **Criteria are named before evidence is gathered.** The criteria list in
-  the decision doc is fixed up front (this plan + the epic). New criteria
-  surfaced mid-spike are added with explicit rationale, not inserted
-  silently to favor one option.
+  criterion has the same depth of investigation for each candidate, drawn
+  from the same source-quality tier where possible. A one-sided
+  evaluation (deep on the favored option, shallow on the other) is a
+  stop-and-report condition.
+- **Criteria are named before evidence is gathered.** The criteria list
+  in the decision doc is fixed up front (this plan + the epic). New
+  criteria surfaced mid-research are added with explicit rationale, not
+  inserted silently to favor one option.
+- **Every evidence claim names its source and confidence tag.** Each
+  per-dimension observation in the decision doc points at a specific
+  doc URL, changelog entry, or community thread, with a confidence tag
+  (`from docs`, `from changelog`, `from consensus`, `from repo state`,
+  `unknown`). Claims with no source, or claims tagged `verified` without
+  a documented run, are forbidden — verification belongs to phase 0.3.
 - **Decision is decision-complete.** The decision doc names the chosen
   framework, the rationale, and at minimum one rejected-but-reasonable
   alternative path so future readers can reconstruct the call. Soft
   language ("probably," "leaning toward," "either could work") is banned
   per the AGENTS.md plan-soft-commitment rule.
 - **The two-day budget is the budget.** If at the end of day two the
-  evidence is not conclusive enough to call, the spike stops and the
+  evidence is not conclusive enough to call, the research stops and the
   epic's risk-register "framework spike outcome" path is followed
   (escalate to broader re-evaluation), not extended unilaterally.
 
-## Background The Spike Author Should Read First
+## Background The Researcher Should Read First
 
-Before opening either framework's docs, the spike author reads:
+Before opening either framework's docs, the researcher reads:
 
 - `docs/plans/event-platform-epic.md` — full epic, with attention to
   M0/M1/M3 dependencies on the framework choice and the URL contract
@@ -118,80 +171,81 @@ Before opening either framework's docs, the spike author reads:
   framework integrates with Vercel monorepo routing
 - `docs/dev.md` validation commands and the existing Vite + React 19
   posture — the team's current familiarity baseline
-- the open-questions doc (`docs/open-questions.md`) for any prior
-  framework-shaped questions that may pre-bias the call
+- `docs/open-questions.md` for any prior framework-shaped questions that
+  may pre-bias the call
 
-The author should be able to summarize, in two paragraphs, the current
-SPA architecture and the specific gaps that motivate `apps/site` before
-opening any framework docs. If they cannot, the desk research starts
-inside the repo, not on the web.
+The researcher should be able to summarize, in two paragraphs, the
+current SPA architecture and the specific gaps that motivate `apps/site`
+before opening any framework docs. If they cannot, the desk research
+starts inside the repo, not on the web.
 
 ## Dimensions The Decision Must Address
 
-The epic names five criteria. The spike treats each as a first-class
-section in the decision doc, with evidence per candidate. The list below
-is the canonical set; the spike does not silently expand or contract it.
+The epic names five criteria. The research treats each as a first-class
+section in the decision doc, with documented evidence per candidate. The
+list below is the canonical set; the research does not silently expand
+or contract it.
 
-1. **Auth integration.** How does each framework integrate with Supabase
-   Auth such that the cookie set in `apps/web` is readable from
-   `apps/site` on the production domain? What server-side helpers exist
-   per framework? What does `shared/auth/` need to expose to satisfy
-   both app consumers? Identify the seam shape the framework imposes
-   (RSC + Server Actions vs. route loader + action) and how it
-   constrains `shared/auth/`'s public API in M1.
-2. **Supabase data loading.** How does each framework call Supabase from
-   server context? Where do generated TypeScript types live and how are
-   they imported? How does `shared/db/` (M1.1) shape its export surface
-   to feed both frameworks' idioms cleanly? Are there caching or
-   revalidation primitives the candidate exposes that affect the
-   `EventContent` lookup in M3?
-3. **SSR/SSG ergonomics.** How does each framework render dynamic
-   `/event/:slug` pages with full HTML at request time, including
-   `<meta>` tags for unfurl previews? Static-at-build vs.
-   render-at-request defaults? Per-route metadata APIs? How is
-   `<ThemeScope>`, which the epic mandates wrap event-route content,
-   server-rendered to avoid FOUC of CSS custom properties?
-4. **Deploy cost.** How does each framework integrate with Vercel
-   monorepo deploys and the path-based rewrite topology in M0 phase
-   0.3? Cold-start expectations, build-time expectations, function
-   count, edge vs. node defaults. Does the deploy model match the
-   epic's "no remote staging Supabase" constraint? Any cost surprise
-   that future M3/M4 traffic would amplify?
-5. **Team familiarity.** The team currently ships a Vite + React 19
-   SPA. How close is each candidate's idiom to that baseline? What
-   ramp does each impose on the implementer? Is the ramp front-loaded
-   (one-time per-framework learning) or recurring (every PR pays cost)?
+1. **Auth integration.** What server-side Supabase Auth helpers does each
+   framework's documented integration provide? What seam shape does the
+   framework impose on `shared/auth/` (RSC + Server Actions vs. route
+   loader + action)? Documented session-cookie behavior across same-
+   domain path-routed apps. Source priority: official Supabase
+   framework-specific guide, then the framework's own auth docs, then
+   community consensus on the cookie-boundary pattern.
+2. **Supabase data loading.** Documented pattern for calling Supabase
+   from server context per framework. Where generated TypeScript types
+   are imported and how. Caching, revalidation, or streaming primitives
+   exposed by the framework that affect the M3 `EventContent` lookup.
+3. **SSR/SSG ergonomics.** Documented support for request-time HTML on
+   dynamic `/event/:slug`, per-route metadata APIs (Next.js `metadata`
+   export vs. Remix/RR7 `meta` function), static-at-build vs. render-at-
+   request defaults. Documented approach to server-rendering a
+   `<ThemeScope>` equivalent that injects CSS custom properties without
+   FOUC.
+4. **Deploy cost.** Vercel's documented integration model for each
+   framework in a monorepo with path-based rewrites. Function-count and
+   cold-start posture per framework's defaults. Edge vs. node runtime
+   defaults. Whether the deploy model is consistent with the epic's "no
+   remote staging Supabase" constraint.
+5. **Team familiarity.** The team currently ships a Vite + React 19 SPA.
+   Distance from that baseline per candidate, drawn from public learning
+   resources and the framework's own "migrating from SPA" or "for React
+   developers" docs. Whether ramp is one-time per-framework learning or
+   recurring per-PR cost.
 
-The spike also addresses these secondary dimensions explicitly, because
-each shapes the rest of the epic even if it is not on the epic's named
-list:
+The research also addresses these secondary dimensions explicitly,
+because each shapes the rest of the epic even if it is not on the
+epic's named list:
 
 6. **Theme rendering posture.** Per the epic's "Theme route scoping"
    invariant, `<ThemeScope>` (or framework equivalent) wraps event
-   routes and CSS custom properties carry themable tokens. The spike
-   identifies how each framework renders the wrapper server-side and
-   what FOUC mitigations are available. This is the single biggest
-   hidden-cost surface, because a framework that requires client-only
-   theming forces a follow-up redesign in M1.5.2.
-7. **Cross-app navigation and cookie domain.** The spike documents the
-   *expected* cookie story across `apps/web` and `apps/site` per
-   candidate (production verification is M0 phase 0.3, not the spike).
-   Specifically: same-domain path-routed apps, session token cookie
-   scope, any framework default that fights the architecture.
-8. **Test story.** Existing Playwright tiers (`playwright.*.config.ts`)
-   stay; the spike confirms each candidate plays nicely with the
-   existing test runners and that unit/integration tests for
-   server-rendered routes have a documented path.
-9. **Migration and consumption shape for `shared/`.** The spike
-   identifies which idioms the framework expects `shared/auth/`,
+   routes and CSS custom properties carry themable tokens. The research
+   identifies, from each framework's docs, how the wrapper renders
+   server-side and what FOUC mitigations are documented. This is the
+   single biggest hidden-cost surface, because a framework whose docs
+   only describe client-only theming forces a follow-up redesign in
+   M1.5.2.
+7. **Cross-app navigation and cookie domain.** The research documents
+   the *expected* cookie story across `apps/web` and `apps/site` per
+   candidate based on each framework's auth-helper docs and Supabase's
+   framework-specific guidance. Production verification is M0 phase
+   0.3.
+8. **Test story.** Existing Playwright tiers
+   (`playwright.*.config.ts`) stay; the research confirms from each
+   framework's testing-docs page that the candidate has documented
+   support for the existing test runners and that unit/integration
+   tests for server-rendered routes have a documented path.
+9. **Consumption shape for `shared/`.** From each framework's docs, the
+   research identifies the idioms it expects `shared/auth/`,
    `shared/db/`, `shared/urls/`, `shared/events/`, `shared/styles/` to
    ship — RSC-friendly server modules vs. universal-runtime modules vs.
    route-loader-shaped helpers — and which one minimizes adapter code
    in `apps/web` (which stays Vite + React) and `apps/site`.
-10. **Future flexibility.** Does the framework choice lock the epic into
-    one runtime model for `apps/web` later? The epic does not migrate
-    `apps/web` off Vite, but a framework whose `shared/` idioms actively
-    fight Vite consumption is a hidden tax on every M1 phase.
+10. **Future flexibility.** Whether the framework choice would lock the
+    epic into one runtime model for `apps/web` later. The epic does not
+    migrate `apps/web` off Vite, but a framework whose `shared/` idioms
+    actively fight Vite consumption is a hidden tax on every M1 phase.
 
 The decision doc lists all ten dimensions even when one candidate
 dominates; "no contest on this axis" is itself useful evidence and helps
@@ -199,100 +253,67 @@ future readers understand the call.
 
 ## Phases
 
-The spike is two days. The phases below are bounded by deliverable, not
-strictly by clock; the budget is enforced at the spike level, not per
-phase. Each phase is a commit on the throwaway spike branch except the
-final phase, which is the decision doc PR against `main`.
+The research is two days. The phases below are bounded by deliverable,
+not strictly by clock; the budget is enforced at the research level, not
+per phase. Each phase is a working session by the researcher; only the
+final phase opens a PR.
 
-### Phase 0.2.A — Desk research and dimension snapshot
+### Phase 0.2.A — Per-candidate documentation pass
 
-Before any code is written, produce a written snapshot, on the spike
-branch under `tmp/spike-notes/desk-research.md` (untracked, scratch
-only), that for each candidate covers each of the ten dimensions with
-linked-source evidence. The snapshot is the input to the head-to-head
-spike build; if a dimension cannot be answered from docs alone, it is
-flagged for the build phase to exercise concretely.
+For each candidate, working from the pinned major/minor version, walk
+the framework's documentation and capture per-dimension observations in
+local working notes (the researcher's environment, not the repo).
+Sources are linked by URL, changelog reference, or doc anchor.
 
-The desk-research snapshot includes:
+Output of this phase is a per-candidate evidence table covering all ten
+dimensions, with each entry tagged by source and confidence. Time
+budget: most of day one.
 
-- candidate version under evaluation (pin specific major/minor to keep
-  the comparison reproducible)
-- per-dimension summary, evidence link(s), and a confidence tag
-  (`from docs`, `from changelog`, `from blog`, `unknown`)
-- explicit list of dimensions the build phase must verify because docs
-  alone are insufficient
+This phase is symmetric across the two candidates; the researcher does
+not deeply investigate one and shallowly survey the other.
 
-Output is a scratch file. Time budget: one work session of day one.
+### Phase 0.2.B — Cross-candidate consolidation and verdicts
 
-### Phase 0.2.B — Head-to-head minimal build
+Working from the two per-candidate evidence tables, produce, per
+dimension:
 
-On a throwaway branch, build the same target deliverable in each
-candidate, in parallel sibling directories under `tmp/spike/` (e.g.
-`tmp/spike/next/`, `tmp/spike/remix/`). Both directories are scratch and
-never merged.
-
-The target deliverable, identical for both candidates:
-
-- a single dynamic route at `/event/:slug` rendering server-side
-- a hardcoded `EventContent`-shaped object with title, two schedule
-  items, two sponsor records, theme slug
-- per-event `<meta>` tags (title, description, og:image, twitter:card)
-  populated from the content object
-- a `<ThemeScope>` equivalent that injects three CSS custom properties
-  on the route shell from a static theme module, server-rendered
-- a hardcoded read of one `events` row from a local Supabase using the
-  generated types from `supabase/` to validate the data-loading path
-  from server context (no auth required for this read; auth flow is
-  documented from docs only inside the spike, not exercised here, since
-  cookie-boundary verification is M0 phase 0.3's job)
-- a Vercel build that resolves locally via `vercel build` or framework
-  equivalent, not necessarily a deployed preview
-
-Each candidate's build is time-boxed to the back half of day one plus
-the morning of day two. If either candidate cannot reach the target
-deliverable inside its time box, that fact is itself the evidence —
-documented in the decision doc as a friction signal, not papered over.
-
-The build phase is deliberately small. The temptation to "just add
-this one more thing" is the failure mode; the spike answers the named
-dimensions, not every possible question.
-
-### Phase 0.2.C — Evidence consolidation
-
-Working from the desk-research snapshot and the head-to-head build,
-produce the decision doc's per-dimension evidence section. For each
-dimension and each candidate, capture:
-
-- the concrete observation (file, command, behavior, or doc reference)
+- the concrete observation per candidate, with source link
 - the implication for `apps/site` and for `shared/`
 - a relative comparison verdict (`A better`, `B better`, `tie`, or
-  `not differentiating`) with a one-sentence justification
+  `not differentiating`) with a one-sentence justification rooted in
+  the cited evidence
 
-The consolidation step happens in the decision doc draft itself, not
-in a separate scratch file. Time budget: afternoon of day two.
+Conflicts between sources are noted explicitly with the conflict and
+the resolution rule applied (most recent official doc wins, with the
+older source listed for traceability). Time budget: morning of day
+two.
 
-### Phase 0.2.D — Decision and PR
+### Phase 0.2.C — Decision and PR
 
 Land the decision doc at `docs/plans/framework-decision.md` via a
-single PR against `main`. The PR contains exactly that one new file,
-plus any cross-references touched in `docs/architecture.md` or
-`docs/dev.md` if the decision doc refers to them and they need to
-exist (typically not at this milestone — the doc references-but-does-
-not-update them).
+single PR against `main`. The PR contains exactly:
+
+- the new decision doc
+- a small wording update to phase 0.2 in
+  `docs/plans/event-platform-epic.md` reflecting research-only posture
+  (replacing the "throwaway branch" language)
+- this plan doc itself, deleted in the same PR per AGENTS.md "delete
+  temporary execution-plan/checklist docs," unless the team explicitly
+  decides to archive it under `docs/plans/archive/` for methodology
+  reuse
+
+Time budget: afternoon of day two.
 
 The PR body uses the standard PR template. The Validation section
-checks `npm run lint` (touched only the docs tree, but lint runs across
-the repo) and explicitly notes that no build-touching files changed.
-
-Throwaway branches and `tmp/spike/` directories are deleted from the
-local environment after the PR opens. The PR does not include them.
+checks `npm run lint` (the repo lint covers the doc tree's referenced
+file paths and confirms no incidental edits) and explicitly notes that
+no build-touching files changed.
 
 ## Decision Doc Structure
 
-The PR lands `docs/plans/framework-decision.md` with this exact
-section structure. The doc is the durable artifact; this plan is
-discarded after the PR merges per AGENTS.md "delete temporary
-execution-plan/checklist docs."
+The PR lands `docs/plans/framework-decision.md` with this exact section
+structure. The doc is the durable artifact; this plan is discarded
+after the PR merges.
 
 1. **Status.** `Landed in commit <SHA>` flipped per AGENTS.md
    plan-to-PR-completion gate.
@@ -300,33 +321,40 @@ execution-plan/checklist docs."
 3. **Candidates evaluated.** Versioned list of the two candidates and
    the explicit choice not to evaluate others, with the epic's
    risk-register escalation path noted.
-4. **Criteria.** The ten dimensions enumerated above, in order,
+4. **Research posture.** One paragraph stating that the decision is
+   based on documentation and accepted consensus, that no code was
+   built, and that production verification is M0 phase 0.3's
+   responsibility.
+5. **Criteria.** The ten dimensions enumerated above, in order,
    verbatim.
-5. **Evidence per dimension.** For each of the ten dimensions, a
-   subsection with per-candidate observations and a relative verdict
-   from phase 0.2.C.
-6. **Rationale.** Why the chosen framework wins on the dimensions that
+6. **Evidence per dimension.** For each of the ten dimensions, a
+   subsection with per-candidate observations (each with source URL
+   and confidence tag) and a relative verdict from phase 0.2.B.
+7. **Rationale.** Why the chosen framework wins on the dimensions that
    matter most for this epic, and why the dimensions where the other
    candidate was stronger do not change the call.
-7. **Implications for downstream milestones.** Concrete callouts for
+8. **Implications for downstream milestones.** Concrete callouts for
    M0 phase 0.3, M1 (every subphase), M3, and M4 about decisions the
    framework choice enables or constrains. This is the section that
    later milestone PRs cite when justifying their structure.
-8. **Open questions opened.** Any decision the spike could not close
-   (e.g., a sub-choice between two adapter packages) is logged here
+9. **Open questions opened.** Any decision the research could not close
+   from the documentation (e.g., a sub-choice between two adapter
+   packages, or a doc gap that phase 0.3 must verify) is logged here
    and mirrored into `docs/open-questions.md` per the epic's "Open
    Questions Newly Opened" rule.
-9. **Risks accepted.** Anything the spike chose to defer rather than
-   answer (e.g., "framework version X is one minor behind latest; we
-   accept the risk of upgrading in M0.3"), with rationale.
+10. **Risks accepted.** Anything the research chose to defer rather
+    than answer (e.g., "framework version X is one minor behind
+    latest; we accept the risk of upgrading in M0.3"; "the cookie
+    boundary is documented but not exercised; phase 0.3 owns that
+    verification"), with rationale.
 
 ## Validation Gate
 
 - `npm run lint` (the PR adds a doc; lint covers the repo and confirms
   no incidental edits)
-- visual confirmation that the PR's file list is exactly the decision
-  doc plus, if applicable, doc cross-references — no spike code, no
-  `tmp/` artifacts, no `package.json` changes
+- visual confirmation that the PR's file list is the decision doc, the
+  parent-epic wording update, and (if not archived) the deletion of
+  this plan — no other files
 - self-review walk against this plan's Cross-Cutting Invariants section,
   applied to both the decision doc and the PR diff
 
@@ -337,36 +365,41 @@ PR. `npm run build:site` does not yet exist; it lands in M0 phase 0.3.
 ## Documentation
 
 This phase's only durable doc is `docs/plans/framework-decision.md`
-itself. The epic doc is not flipped by this phase; M0 status flips when
-phase 0.3 lands. The decision doc cross-references but does not modify:
+itself, plus the parent-epic wording tweak. The epic's M0 row is not
+flipped by this phase; M0 status flips when phase 0.3 lands. The
+decision doc cross-references but does not modify:
 
-- `docs/plans/event-platform-epic.md` — referenced as parent
+- `docs/plans/event-platform-epic.md` — referenced as parent; only the
+  phase 0.2 wording is touched
 - `docs/architecture.md` — referenced for current SPA shape; updated in
   later milestones, not this PR
 - `docs/dev.md` — referenced for current Vite/React baseline; updated
   in M0 phase 0.3 when `npm run build:site` is added
 
-If the spike opens a new question, `docs/open-questions.md` is updated
-in the same PR per the epic's open-questions rule.
+If the research opens a new question, `docs/open-questions.md` is
+updated in the same PR per the epic's open-questions rule.
 
 This plan doc itself is removed from `docs/plans/` once the decision PR
 merges, per AGENTS.md "delete temporary execution-plan/checklist docs
 or convert them into durable reference docs." It can be archived to
 `docs/plans/archive/` if a future reader would benefit from
-reconstructing the spike methodology, otherwise it is deleted.
+reconstructing the research methodology, otherwise it is deleted.
 
 ## Self-Review Audits
 
 From `docs/self-review-catalog.md`, applied at the decision-doc PR's
 commit boundary:
 
-- **Readiness-gate truthfulness audit.** Any claim in the decision doc
-  about cookie behavior, deploy cost, or framework capability that
-  reads as "verified" must point to a phase 0.2.B observation; claims
-  derived from docs alone must say so. The audit is what stops the doc
-  from over-stating evidence the spike did not actually exercise.
-- **Rename-aware diff classification.** N/A for this PR (single new
-  doc), but the auditor confirms no incidental file renames slipped in.
+- **Readiness-gate truthfulness audit.** This is the most important
+  audit for a research-only PR. Every claim in the decision doc must
+  carry a source and confidence tag. Claims that read as "verified"
+  or "confirmed" without a documented run are rewritten to reflect
+  their actual basis (`from docs`, `from consensus`). The audit is
+  what stops the doc from over-stating evidence the research did not
+  actually exercise.
+- **Rename-aware diff classification.** N/A for this PR (decision doc
+  added, epic wording tweaked), but the auditor confirms no incidental
+  file renames slipped in.
 - **CLI / tooling pinning audit.** N/A in this PR (no dependency
   changes), but the decision doc's "candidate version under
   evaluation" entries are pinned to specific majors/minors, so M0
@@ -374,25 +407,30 @@ commit boundary:
 
 ## Risks
 
-- **Confirmation bias.** The spike author may arrive with a preference.
+- **Documentation gap.** A framework's docs may not cover a dimension
+  the research must address (especially the cookie-boundary or theme-
+  FOUC dimensions). Mitigation: the relevant dimension's entry in the
+  decision doc tags the gap as `unknown` and routes the verification
+  to phase 0.3's open-questions list rather than guessing.
+- **Docs over-promise relative to production reality.** The accepted
+  residual risk of research-only posture. Mitigation: phase 0.3 owns
+  end-to-end verification on the production domain. The decision doc
+  states this handoff explicitly so the M0.3 implementer treats the
+  framework-doc claims as hypotheses to confirm, not as facts.
+- **Confirmation bias.** The researcher may arrive with a preference.
   Mitigation: the criteria list is locked in this plan before evidence
-  gathering, and the decision doc requires per-candidate evidence on
-  every dimension — including ones where the favored candidate is
-  weaker.
-- **Two-day budget overrun.** Mitigation: the budget is enforced at the
-  spike level, the head-to-head build is deliberately tiny, and the
-  epic's risk register escalation path is invoked rather than the
-  spike unilaterally extending.
+  gathering, the per-candidate doc-pass is symmetric (phase 0.2.A),
+  and the decision doc requires per-candidate evidence on every
+  dimension — including ones where the favored candidate is weaker.
+- **Two-day budget overrun.** Mitigation: the budget is enforced at
+  the research level, the doc-pass is structured to surface "decisive
+  enough" or "not decisive" by end of day one, and the epic's
+  risk-register escalation path is invoked rather than the research
+  unilaterally extending.
 - **Framework changelogs drifting.** Both candidates ship frequently.
   Mitigation: pin versions in the decision doc and accept a stated
   risk that the M0 phase 0.3 implementation may bump within the same
   major.
-- **Spike code leaking to `main`.** Mitigation: the throwaway branch is
-  never targeted by a PR; the decision-doc PR is opened from a
-  separate branch with only the doc change.
-- **Cookie-boundary surprise found later.** The spike documents
-  expected behavior; M0 phase 0.3 verifies actual behavior on
-  production domain. The risk is owned by phase 0.3, not by this PR.
 
 ## Related Docs
 
@@ -400,6 +438,6 @@ commit boundary:
 - [`docs/architecture.md`](../architecture.md) — current SPA shape
 - [`docs/dev.md`](../dev.md) — current contributor workflow baseline
 - [`docs/open-questions.md`](../open-questions.md) — log destination for
-  any new question the spike opens
+  any new question the research opens
 - [`docs/self-review-catalog.md`](../self-review-catalog.md) — audits
   named above
