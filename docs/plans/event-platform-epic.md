@@ -4,6 +4,24 @@
 
 Proposed.
 
+## Milestone Status
+
+Update each row when the implementing PR for that milestone merges. Per
+AGENTS.md "Plan-to-PR Completion Gate," every implementing PR is responsible
+for flipping the corresponding row's status and recording the implementing
+commit SHAs in the same change.
+
+| Milestone | Status | Implementing SHAs |
+| --- | --- | --- |
+| M0 — Framework decision and platform skeleton | Proposed | — |
+| M1 — Foundation extraction | Proposed | — |
+| M2 — Admin restructuring and authorization broadening | Proposed | — |
+| M3 — Site rendering infrastructure with test events | Proposed | — |
+| M4 — Madrona launch | Proposed | — |
+
+When all five rows show `Landed`, the top-level Status above flips from
+`Proposed` to `Landed` in the same PR that lands M4.
+
 ## Purpose
 
 This document is the canonical plan for migrating the repo from a single-app
@@ -175,8 +193,11 @@ still work, and that sign-in still works end-to-end.
 topology), `docs/architecture.md` (top-level summary noting two apps and
 shared layer), this plan with M0 status flipped on completion.
 
-**Self-review audits.** CI surface, frontend build surface, routing surface,
-runbook surface from `docs/self-review-catalog.md`.
+**Self-review audits.** From `docs/self-review-catalog.md`:
+Rename-aware diff classification (M0 phase 0.1 is a repo rename),
+CLI / tooling pinning audit (new framework dependencies introduced in
+phase 0.3), Readiness-gate truthfulness audit (cookie-boundary verification
+claims in phase 0.3 must match what was actually exercised).
 
 ### M1 — Foundation Extraction
 
@@ -241,9 +262,14 @@ package's responsibilities. `docs/styling.md` (new) documents themable vs.
 structural tokens and how to add a theme. `AGENTS.md` "Styling Token
 Discipline" updated. This plan with M1 status flipped on completion.
 
-**Self-review audits.** Frontend surface, theme/styling surface, type-safety
-surface, accessibility regression surface (token migration must preserve
-color contrast).
+**Self-review audits.** From `docs/self-review-catalog.md`:
+Rename-aware diff classification (file moves from `apps/web/src/lib/` into
+`shared/`), Effect cleanup audit (auth subscription and theme component
+effects relocated into `shared/auth/` and `shared/styles/` must keep their
+cleanup paths intact), Error-surfacing for user-initiated mutations
+(magic-link request paths in `shared/auth/` retain their error-surfacing
+behavior across the move), CLI / tooling pinning audit (any new shared-
+package dependencies are pinned).
 
 ### M2 — Admin Restructuring And Authorization Broadening
 
@@ -254,11 +280,15 @@ event, and migrate operator URLs into the `/game/*` namespace.
 **Phase 2.1 — RLS broadening with pgTAP coverage.**
 Migration extends RLS policies on every event-scoped table so that organizers
 can perform the same writes root-admin can perform on events for which
-`is_organizer_for_event(event_id)` returns true. pgTAP suite extended to
-prove that organizers can write all event-scoped tables for their own event,
-cannot write to other events' tables, cannot write to platform-level tables,
-that agents have read-only access where required for redemption and no
-writes elsewhere, and that root-admin retains all powers. Edge function
+`is_organizer_for_event(event_id)` returns true. This explicitly includes
+writes to `event_role_assignments` (or the equivalent table backing
+organizer/agent staffing for the event) — the broadening is the deliberate
+resolution of the post-MVP authoring-ownership question, not a drift past
+it. pgTAP suite extended to prove that organizers can write all
+event-scoped tables for their own event including role assignments, cannot
+write to other events' tables, cannot write to platform-level tables, that
+agents have read-only access where required for redemption and no writes
+elsewhere, and that root-admin retains all powers. Edge function
 authorization extended to accept organizer writes in the same surfaces. One
 PR.
 
@@ -296,8 +326,22 @@ route family. `docs/operations.md` updated for the new admin URL contract.
 `docs/product.md` updates the implemented capability set. This plan with M2
 status flipped on completion.
 
-**Self-review audits.** SQL/RLS surface, auth/trust-boundary surface,
-frontend surface, runbook surface.
+**Self-review audits.** From `docs/self-review-catalog.md`:
+Grant/body contract audit (M2 phase 2.1 RLS changes must align grants and
+function-body guards), Privilege-test vacuous-pass audit (pgTAP assertions
+in 2.1 must split per-privilege so "all of these are granted" intent is
+honestly tested), Legacy-data precheck for constraint tightening (apply if
+2.1 tightens any existing CHECK or FK), pgTAP output-format stability audit
+(if 2.1 alters pgTAP output formatting), Platform-auth-gate config audit
+(2.2 introduces the new per-event admin auth gate; the route's allowlist
+and redirect targets must match the production auth-gate config),
+Silent-no-op on missing lookup audit (event lookup in 2.2's per-event admin
+must surface "event not found" rather than silently rendering an empty
+shell), Error-surfacing for user-initiated mutations (admin write paths
+exposed under the broadened authorization must surface errors honestly),
+Rename-aware diff classification (2.3 migrates URLs and renames route
+files; the diff must classify rename-vs-edit so reviewers see content
+changes, not move noise).
 
 ### M3 — Site Rendering Infrastructure With Test Events
 
@@ -344,9 +388,13 @@ and `apps/site` responsibilities. `README.md` updated for current capabilities
 (multi-event rendering, test events as platform validation). This plan with
 M3 status flipped on completion.
 
-**Self-review audits.** Frontend surface, SSR/SSG correctness surface,
-accessibility surface (test events are public and must remain accessible),
-SEO/meta surface.
+**Self-review audits.** From `docs/self-review-catalog.md`:
+Effect cleanup audit (any effects added in `apps/site` rendering components
+must clean up correctly across SSR and client hydration boundaries),
+Readiness-gate truthfulness audit (claims in M3's validation gate about
+SSR/SSG output and unfurl previews must match what was actually exercised
+end-to-end), CLI / tooling pinning audit (any new dependencies introduced
+by `apps/site` page rendering or meta-tag handling are pinned).
 
 ### M4 — Madrona Launch
 
@@ -386,9 +434,14 @@ final PR with implementing commit SHAs in the Status block. M4 follows the
 two-phase Plan-to-Landed pattern from `docs/testing-tiers.md` if the
 production smoke assertions added in M4 must run post-deploy.
 
-**Self-review audits.** Frontend surface, content surface, runbook surface,
-production smoke surface per `docs/testing-tiers.md` Plan-to-Landed Gate For
-Plans That Touch Production Smoke.
+**Self-review audits.** From `docs/self-review-catalog.md`:
+Readiness-gate truthfulness audit (production smoke claims for the
+Madrona path must reflect runs actually executed against production after
+deploy), Effect cleanup audit (any new content components added for
+Madrona-specific rendering must clean up correctly). M4 also follows the
+Plan-to-Landed Gate For Plans That Touch Production Smoke from
+`docs/testing-tiers.md` if the production smoke assertions added in M4
+must run post-deploy.
 
 ## Backlog Impact
 
@@ -438,10 +491,15 @@ epic completion:
 
 ## Sizing Summary
 
+Counting rule: phases are counted at the top level only. Subphases are PR
+boundaries inside a parent phase, not separate phases. A milestone's phase
+count is the count of `Phase X.N` entries in its body; subphases (`Phase
+X.N.M`) contribute to the PR count but not the phase count.
+
 Phases per milestone, with PR counts:
 
 - M0 — 3 phases, 3 PRs
-- M1 — 5 phases (one with 2 subphases), 6 PRs
+- M1 — 5 phases (phase 1.5 contains 2 subphases as separate PRs), 6 PRs
 - M2 — 4 phases, 4 PRs
 - M3 — 4 phases, 4 PRs
 - M4 — 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR)
