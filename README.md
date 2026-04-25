@@ -1,6 +1,6 @@
-# Neighborly Scavenger Game
+# Neighborly Events
 
-`Neighborly Scavenger Game` is a mobile-first neighborhood event quiz designed to help local organizers raise sponsor revenue and drive attendee engagement through a short, game-like experience.
+`Neighborly Events` is a mobile-first community event platform whose first product surface is a neighborhood event quiz designed to help local organizers raise sponsor revenue and drive attendee engagement through a short, game-like experience.
 
 The current product shape is:
 

@@ -2,7 +2,7 @@
 
 ## Document Role
 
-This document plans the analytics approach for the Neighborly Scavenger Game. It covers the end goal of analytics in this project, the approaches to consider, how to evaluate them, best practices at this scale, guidance on third-party tools versus custom solutions, and the goal of an analytics dashboard.
+This document plans the analytics approach for Neighborly Events. It covers the end goal of analytics in this project, the approaches to consider, how to evaluate them, best practices at this scale, guidance on third-party tools versus custom solutions, and the goal of an analytics dashboard.
 
 Related docs:
 
@@ -16,7 +16,7 @@ Related docs:
 
 ## End Goal of Analytics in This Project
 
-Analytics in Neighborly Scavenger Game exists to answer three distinct questions for three distinct audiences.
+Analytics in Neighborly Events exists to answer three distinct questions for three distinct audiences.
 
 **For organizers:** Did the event succeed, and is the product worth using again? Organizers need to know how many attendees participated, whether the quiz ran smoothly without technical issues, and whether their setup investment paid off. After Madrona Music in the Playfield, the first concrete deliverable is a simple post-event summary they can share internally or with their board.
 

@@ -2,7 +2,7 @@
 
 ## Document Role
 
-This is the living release readiness document for the Neighborly Scavenger Game
+This is the living release readiness document for the Neighborly Events
 repo. It defines how to perform a senior-engineer-grade quality check before a
 release candidate is considered ready to run a real event against real
 attendees, and it tracks the running state of each quality dimension across

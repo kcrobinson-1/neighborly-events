@@ -39,9 +39,10 @@ The epic produces:
 - a theme injection seam supporting per-event styling
 - Madrona Music in the Playfield as the first public event on the platform
 
-The repo currently named `neighborly-scavenger-game` becomes the platform repo
-for events whose first surface is a quiz game. The repo is renamed in M0 to
-reflect the platform scope.
+The repo, `neighborly-events`, is the platform repo for events whose first
+surface is a quiz game. M0 phase 0.1 renamed the repo from
+`neighborly-scavenger-game` to its current name to reflect the platform
+scope; see [`repo-rename.md`](./repo-rename.md) for the executed contract.
 
 ## Why This Epic
 
@@ -159,10 +160,28 @@ with Vercel routing wired for the long-term URL contract. No product
 behavior changes during M0.
 
 **Phase 0.1 — Repo rename.**
-Rename the repo from `neighborly-scavenger-game` to a platform-scoped name
-chosen at execution time. PR scope: `package.json`, all package manifests in
-workspaces, CI workflow files, `README.md`, `AGENTS.md` references, doc
-references, GitHub repo URL settings. No code logic changes. One PR.
+Rename the GitHub repo from `neighborly-scavenger-game` to
+`neighborly-events` and update every current-state textual reference
+inside the codebase. PR scope (current-state references actually
+present in the repo): root `package.json` `name`, `package-lock.json`
+regenerated, `apps/web/index.html` `<title>` and meta description,
+`README.md` title and lead paragraph, `supabase/config.toml`
+`project_id`, the platform-repo intro line in this plan, this phase's
+own paragraph, `docs/plans/release-readiness.md` first paragraph, and
+`docs/plans/analytics-strategy.md` Document Role plus End Goal
+paragraphs. The GitHub repo rename itself is a `gh repo rename`
+operator step executed post-merge. Deliberately preserved with rationale
+in [`repo-rename.md`](./repo-rename.md): the `@neighborly/web` workspace
+package name (brand prefix kept), the `neighborly` runtime identifier
+prefix on cookies, headers, storage keys, env vars, and the
+`generate_neighborly_verification_code` DB function (preserving these
+keeps the rename behavior-preserving — renaming any of them would be a
+session-invalidating migration). No CI workflow file or `AGENTS.md`
+change was required (neither file referenced the old repo name).
+Historical commit and PR URLs in `docs/self-review-catalog.md` and
+`docs/plans/archive/*.md` are out of scope; GitHub auto-redirects them.
+No code logic changes. One PR. Executed contract:
+[`repo-rename.md`](./repo-rename.md).
 
 **Phase 0.2 — Framework research and decision.**
 A bounded two-day documentation- and consensus-based research pass comparing
