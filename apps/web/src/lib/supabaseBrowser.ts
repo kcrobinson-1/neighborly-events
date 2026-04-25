@@ -3,6 +3,7 @@ import {
   createBrowserSupabaseClient,
   createSupabaseAuthHeaders,
   readSupabaseErrorMessage,
+  type Database,
   type SupabaseConfig,
 } from "../../../../shared/db";
 
@@ -20,7 +21,7 @@ export {
   type SupabaseConfig,
 };
 
-let browserSupabaseClient: SupabaseClient | null = null;
+let browserSupabaseClient: SupabaseClient<Database> | null = null;
 
 /** Returns true when a Vite env flag explicitly enables a behavior. */
 export function isEnabledFlag(value: string | undefined) {

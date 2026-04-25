@@ -2,6 +2,7 @@ import {
   parseAuthoringGameDraftContent,
   type AuthoringGameDraftContent,
 } from "../../../../shared/game-config";
+import type { Tables } from "../../../../shared/db";
 import { getAccessToken } from "./authApi";
 import {
   createSupabaseAuthHeaders,
@@ -15,21 +16,36 @@ import {
  * Owns auth session restoration, allowlist checks, draft reads, and authenticated
  * authoring function calls using the signed-in admin JWT.
  */
-type DraftEventRow = {
-  created_at?: string;
-  content?: AuthoringGameDraftContent;
-  id: string;
-  last_saved_by?: string | null;
-};
 
+/**
+ * Projection of `game_event_drafts` for the admin draft-detail read path.
+ * Picks only the columns the read selects; the inner content shape is
+ * validated separately by `parseAuthoringGameDraftContent`.
+ */
+type DraftEventRow = Pick<
+  Tables<"game_event_drafts">,
+  "content" | "created_at" | "id" | "last_saved_by"
+>;
+
+/**
+ * Projection of `game_event_admin_status` for the admin status read path.
+ *
+ * The `game_event_admin_status` view is typed nullable across every column
+ * by the generated types because PostgREST cannot guarantee non-null on
+ * view outputs. In practice the view never returns null for the columns
+ * listed below for any draft that exists, so this type narrows them to
+ * non-null at the consumer boundary. `status` is also tightened from the
+ * generated `string | null` to the `AdminEventStatus` literal union the
+ * UI consumes.
+ */
 type DraftEventStatusRow = {
-  draft_updated_at: string;
-  event_code: string | null;
-  event_id: string;
-  is_live: boolean;
-  last_published_version_number: number | null;
-  name: string;
-  slug: string;
+  draft_updated_at: NonNullable<Tables<"game_event_admin_status">["draft_updated_at"]>;
+  event_code: Tables<"game_event_admin_status">["event_code"];
+  event_id: NonNullable<Tables<"game_event_admin_status">["event_id"]>;
+  is_live: NonNullable<Tables<"game_event_admin_status">["is_live"]>;
+  last_published_version_number: Tables<"game_event_admin_status">["last_published_version_number"];
+  name: NonNullable<Tables<"game_event_admin_status">["name"]>;
+  slug: NonNullable<Tables<"game_event_admin_status">["slug"]>;
   status: AdminEventStatus;
 };
 

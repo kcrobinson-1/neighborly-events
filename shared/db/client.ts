@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "./types.ts";
 
 /** Minimal error payload shape returned by Supabase-backed browser requests. */
 type SupabaseBrowserErrorPayload = {
@@ -20,11 +21,15 @@ export type SupabaseConfig = {
  * env-source reading. This factory is env-agnostic so the same wiring
  * is reusable from a Vite (apps/web) adapter and a Next.js (apps/site)
  * adapter without leaking framework-specific globals into shared code.
+ *
+ * The returned client is parameterized on the generated `Database` type
+ * so PostgREST builders, RPC calls, and row results are typed at every
+ * consumer.
  */
 export function createBrowserSupabaseClient(
   config: SupabaseConfig,
-): SupabaseClient {
-  return createClient(config.supabaseUrl, config.supabaseClientKey, {
+): SupabaseClient<Database> {
+  return createClient<Database>(config.supabaseUrl, config.supabaseClientKey, {
     auth: {
       autoRefreshToken: true,
       detectSessionInUrl: true,

@@ -199,13 +199,24 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   phase 1.3) `apps/site`. Owns the browser client factory
   (`createBrowserSupabaseClient`), the auth-header helper
   (`createSupabaseAuthHeaders`), the response error-message reader
-  (`readSupabaseErrorMessage`), and the `SupabaseConfig` shape every
-  per-app adapter passes in. Holds no env access and no singleton
-  state — those stay in per-app adapters
+  (`readSupabaseErrorMessage`), the `SupabaseConfig` shape every
+  per-app adapter passes in, and the generated `Database` type plus
+  its `Tables`, `TablesInsert`, `TablesUpdate`, `Enums`, `Json`, and
+  `CompositeTypes` derivation helpers. The `Database` type lives in
+  `shared/db/types.ts` as the verbatim output of
+  `supabase gen types typescript --local --schema public` (see
+  `npm run db:gen-types`); it is the source of truth for DB row
+  shapes and is not edited by hand. The browser client factory is
+  parameterized on `Database`, so PostgREST builders, RPC calls, and
+  row results are typed at every consumer. Holds no env access and
+  no singleton state — those stay in per-app adapters
   ([`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts)
   today; the apps/site adapter lands in M1 phase 1.3) so each app
   can choose its own lifecycle (browser singleton vs. per-request
-  SSR client).
+  SSR client). The `PublishedGame*Row` types in
+  `shared/game-config/db-content.ts` remain authoritative for the
+  published-content surface during this phase; aligning them with
+  the generated `Database` type is out of scope for M1 phase 1.1.
 
 Together they contain:
 

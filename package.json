@@ -32,6 +32,7 @@
     "validate:local": "node scripts/testing/run-local-validation.cjs",
     "ui:review:capture": "node scripts/ui-review/capture-ui-review.cjs",
     "ui:review:capture:admin": "node scripts/ui-review/capture-ui-review.cjs --mode admin",
+    "db:gen-types": "supabase gen types typescript --local --schema public > shared/db/types.ts",
     "doctor": "bash scripts/doctor.sh"
   },
   "devDependencies": {
