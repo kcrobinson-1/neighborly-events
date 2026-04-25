@@ -147,6 +147,10 @@ jobs:
         if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run build:web
 
+      - name: Build site app
+        if: needs.detect-scope.outputs.docs_only != 'true'
+        run: npm run build:site
+
       - name: Check issue-session function
         if: needs.detect-scope.outputs.docs_only != 'true'
         run: deno check --no-lock supabase/functions/issue-session/index.ts
