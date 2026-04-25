@@ -112,6 +112,13 @@ export function useAttendeeRedemptionStatus(eventId: string | null) {
     let timeoutId: number | null = null;
     let abortController: AbortController | null = null;
     let isInFlight = false;
+    const visibilitySupported =
+      typeof document !== "undefined" &&
+      typeof document.visibilityState !== "undefined";
+    let previousVisibilityState: DocumentVisibilityState = visibilitySupported
+      ? document.visibilityState
+      : "visible";
+    let isHidden = visibilitySupported && previousVisibilityState === "hidden";
 
     const clearPendingTimeout = () => {
       if (timeoutId !== null) {
@@ -121,10 +128,14 @@ export function useAttendeeRedemptionStatus(eventId: string | null) {
     };
 
     const scheduleNextPoll = () => {
+      if (isHidden) {
+        return;
+      }
+
       clearPendingTimeout();
 
       timeoutId = window.setTimeout(() => {
-        if (isCancelled || isInFlight) {
+        if (isCancelled || isInFlight || isHidden) {
           return;
         }
 
@@ -133,7 +144,7 @@ export function useAttendeeRedemptionStatus(eventId: string | null) {
     };
 
     const runPoll = async () => {
-      if (isCancelled || isInFlight) {
+      if (isCancelled || isInFlight || isHidden) {
         return;
       }
 
@@ -166,10 +177,44 @@ export function useAttendeeRedemptionStatus(eventId: string | null) {
       }
     };
 
-    void runPoll();
+    const handleVisibilityChange = () => {
+      if (!visibilitySupported) {
+        return;
+      }
+
+      const nextVisibilityState = document.visibilityState;
+
+      if (nextVisibilityState === previousVisibilityState) {
+        return;
+      }
+
+      const wasHidden = previousVisibilityState === "hidden";
+      previousVisibilityState = nextVisibilityState;
+      isHidden = nextVisibilityState === "hidden";
+
+      if (isHidden) {
+        clearPendingTimeout();
+        return;
+      }
+
+      if (wasHidden && !isInFlight) {
+        void runPoll();
+      }
+    };
+
+    if (visibilitySupported) {
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+
+    if (!isHidden) {
+      void runPoll();
+    }
 
     return () => {
       isCancelled = true;
+      if (visibilitySupported) {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
       clearPendingTimeout();
       abortController?.abort();
       abortController = null;
