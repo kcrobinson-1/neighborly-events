@@ -10,11 +10,20 @@ lands; this plan governs phase 0.1 only.
 
 ## Goal
 
-Rename the GitHub repo and every textual reference to the old repo or
-product name inside the codebase. The internal product identity is
-**Neighborly Events** and the GitHub repo becomes
+Rename the GitHub repo and every **current-state** textual reference to
+the old repo or product name inside the codebase. The internal product
+identity is **Neighborly Events** and the GitHub repo becomes
 **`neighborly-events`**. No code logic changes. No runtime identifier
 changes. One PR.
+
+Historical references that point to specific git history — commit and
+PR URLs embedded in [`docs/self-review-catalog.md`](../self-review-catalog.md)
+and `docs/plans/archive/*.md` — are explicitly **out of scope**. Those
+URLs anchor frozen evidence (specific commits, specific PR
+conversations); GitHub auto-redirects them and rewriting them would
+mix textual cleanup of the historical record with the current-state
+rename. They are listed under "Files Intentionally Not Touched" below
+so the boundary is named, not implied.
 
 ## Approach
 
@@ -78,12 +87,31 @@ renamed in this PR.
   product description.
 
 **Docs that reference the product or repo by name.**
-- `docs/plans/event-platform-epic.md` lines naming
-  `neighborly-scavenger-game` (currently lines 42 and 162 — phase 0.1's
-  description and the platform-repo intro line).
-- `docs/plans/release-readiness.md` — first paragraph product reference.
-- `docs/plans/analytics-strategy.md` — Document Role and End Goal
-  product references.
+- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) — two
+  surfaces, both rewritten in this PR per the AGENTS.md Plan-to-PR
+  Completion Gate (when reality diverges from a plan's predicted
+  scope, the plan is updated, not silently exceeded):
+  1. The platform-repo intro line (currently line 42, "The repo
+     currently named `neighborly-scavenger-game` becomes the platform
+     repo…") rewritten to past-tense, post-rename phrasing.
+  2. The entire **Phase 0.1 — Repo rename** paragraph (currently
+     lines 161–166) rewritten to describe what phase 0.1 actually
+     executed, not what it predicted. The current paragraph names
+     "all package manifests in workspaces, CI workflow files,
+     `AGENTS.md` references" as in-scope; investigation showed
+     `apps/web/package.json` keeps `@neighborly/web` as a deliberately
+     preserved brand prefix, no CI workflow file references the old
+     name, and `AGENTS.md` does not reference the old name. The
+     rewritten paragraph names the actual touched surfaces (root
+     `package.json`, `package-lock.json`, `apps/web/index.html`,
+     `README.md`, `supabase/config.toml`, three doc files, this
+     plan), names the deliberately preserved prefixes, and references
+     this plan as the executed contract. M0's Status row stays
+     `Proposed`; only the phase 0.1 paragraph and intro line change.
+- [`docs/plans/release-readiness.md`](./release-readiness.md) — first
+  paragraph product reference.
+- [`docs/plans/analytics-strategy.md`](./analytics-strategy.md) —
+  Document Role and End Goal product references.
 
 **This plan.**
 - `docs/plans/repo-rename.md` — Status flipped from `Proposed` to
@@ -180,12 +208,32 @@ present because skipping it has burned this repo before.
 3. **Source-file rename.** Apply the textual replacements enumerated in
    the "Files To Touch — In-repo identity" and "User-visible product
    copy" sections. No other edits.
-4. **Doc reference rename.** Apply textual replacements in the three
-   plan docs enumerated above. Walk
-   [`docs/plans/event-platform-epic.md`](./event-platform-epic.md)
-   carefully — the line about phase 0.1 itself must read coherently
-   after the rename (the phase still describes "rename from
-   `neighborly-scavenger-game`" as historical context).
+4. **Doc reference rename, with parent-epic phase 0.1 paragraph
+   rewrite.** Apply textual replacements in
+   `docs/plans/release-readiness.md` and `docs/plans/analytics-strategy.md`
+   per the "Files To Touch" enumeration. Then handle
+   [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) as
+   two distinct edits, not a textual replace:
+   - Rewrite the platform-repo intro line (currently line 42) from
+     "The repo currently named `neighborly-scavenger-game` becomes the
+     platform repo…" to past-tense, post-rename phrasing that reads
+     coherently as the durable narrative of the platform.
+   - **Rewrite the entire Phase 0.1 paragraph (currently lines 161–166)
+     in place.** The current paragraph names predicted scope; the
+     rewritten paragraph names *executed* scope. New paragraph must:
+     name the actual touched surfaces (root `package.json`,
+     `package-lock.json`, `apps/web/index.html`, `README.md`,
+     `supabase/config.toml`, the three doc files, this plan); name
+     the deliberately preserved prefixes (`@neighborly/web` workspace
+     scope, all `neighborly` runtime identifiers) with one-line
+     rationale; reference this plan
+     ([`repo-rename.md`](./repo-rename.md)) as the executed contract;
+     keep the "No code logic changes. One PR." closer. The paragraph
+     stays present-tense in the same way phase 0.2's already-landed
+     paragraph stays present-tense — past-tense conversion is not the
+     goal; matching reality is.
+   M0's milestone Status row stays `Proposed` per the parent epic's
+   own rule (M0 only flips when phase 0.3 lands).
 5. **Lockfile regeneration.** Run `npm install` to regenerate
    `package-lock.json` so the lockfile's root `name` field matches the
    new `package.json` name. Stage the diff.
@@ -197,12 +245,25 @@ present because skipping it has burned this repo before.
    No new test runs are introduced; existing tests should be unaffected
    because no runtime identifier changed.
 8. **Automated code-review feedback loop.** Walk the diff from a
-   senior-reviewer stance. Specifically check: every diff line is a
-   textual rename and nothing else; no runtime identifier accidentally
-   moved; the M0 milestone row in the parent epic was **not** flipped
-   (only this plan was); no archived-plan GitHub URL was changed; no
-   `apps/web/src/lib/*` storage key or DB migration was touched. Apply
-   any review fixes, rerun lint+build, and commit review fixes
+   senior-reviewer stance. Specifically check:
+   - every source-file diff line is a textual rename and nothing else;
+     no runtime identifier accidentally moved; no
+     `apps/web/src/lib/*` storage key or DB migration touched;
+   - the parent epic's M0 milestone Status row was **not** flipped
+     (only this plan was);
+   - the parent epic's Phase 0.1 paragraph was rewritten to describe
+     executed scope, not pre-execution scope — the words
+     "all package manifests in workspaces," "CI workflow files," and
+     "AGENTS.md references" no longer appear in the paragraph if they
+     do not match what was actually changed;
+   - the rewritten paragraph names the deliberately preserved
+     `@neighborly/web` scope and the `neighborly` runtime-identifier
+     prefix with rationale, so a future reader does not re-litigate
+     them;
+   - no archived-plan GitHub URL was changed; the
+     [`docs/self-review-catalog.md`](../self-review-catalog.md)
+     example anchors are byte-identical to baseline.
+   Apply any review fixes, rerun lint+build, and commit review fixes
    separately if a separate commit improves the history.
 9. **Documentation currency check.** Walk the AGENTS.md "Doc Currency
    Is a PR Gate" trigger list. For phase 0.1: `README.md` (yes —
