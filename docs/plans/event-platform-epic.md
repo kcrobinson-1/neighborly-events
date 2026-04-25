@@ -259,10 +259,14 @@ so both apps consume the same primitives. Behavior preserving for `apps/web`;
 `apps/site` becomes capable of consuming the foundation.
 
 **Phase 1.1 — `shared/db/`.**
-Extract Supabase client factory, generated TypeScript types, and Zod schemas
-for shared domain shapes (event, draft, organizer/agent role records).
-`apps/web` migrated to import from `shared/db/`. No app holds a duplicate
-Supabase client or duplicate type definitions. One PR.
+Extract the Supabase client factory, generated TypeScript types for shared
+domain shapes (event, draft, organizer/agent role records), and any
+existing typed query helpers. `apps/web` migrated to import from
+`shared/db/`. No app holds a duplicate Supabase client or duplicate type
+definitions. Runtime validation schemas (Zod or equivalent) are not
+introduced in this phase; they are a separate decision motivated by
+specific runtime-validation gaps (e.g., edge function input validation),
+landed as a focused follow-up if and when the need is concrete. One PR.
 
 **Phase 1.2 — `shared/urls/`.**
 Extract URL builders for every cross-app route family
