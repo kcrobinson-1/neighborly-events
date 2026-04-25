@@ -2,7 +2,9 @@
 
 ## Status
 
-In progress pending production cookie-boundary verification.
+Landed. Cookie-boundary verification deferred to M1 phase 1.3 — see
+"Verification Evidence" below for the planning-time bug that forced
+the deferral.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M0, Phase 0.3. The epic's M0 row stays `Proposed` until this
@@ -229,12 +231,15 @@ the PR adds:
   Routing-topology table cross-referencing this plan, with the
   transitional/permanent column.
 - [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
-  M0 row Status flipped from `Proposed` to `Landed` **only after**
-  cookie-boundary verification passes (see "Two-Phase
-  Plan-to-Landed" below). The Phase 0.3 paragraph itself is not
-  rewritten — the paragraph already describes the transitional
-  shape this PR executes.
-- This plan — Status flipped per the two-phase rule below.
+  M0 row Status flipped from `Proposed` to `Landed`, and Phase 0.3
+  paragraph Status flipped to `Landed` with a deferral note pointing
+  at this plan's "Verification Evidence." Original intent was to
+  flip M0 only after cookie-boundary verification passed; the
+  verification was deferred to M1 phase 1.3 (see "Two-Phase
+  Plan-to-Landed" below for the deferral path actually taken),
+  so M0 flipped Landed without that gate.
+- This plan — Status flipped to `Landed` with deferral rationale
+  (see "Two-Phase Plan-to-Landed" below).
 
 ## Files Intentionally Not Touched
 
@@ -325,7 +330,7 @@ exists because skipping it materially affects quality.
    `Proposed` to `In progress pending production cookie-boundary
    verification`. Leave the parent epic's M0 row as `Proposed`
    pending the post-merge verification. See "Two-Phase
-   Plan-to-Landed" below.
+   Plan-to-Landed" below. _(Executed as planned in PR #91.)_
 10. **Repeat baseline validation.** `npm run lint`,
     `npm run build:web`, `npm run build:site`. All three must
     pass.
@@ -366,14 +371,22 @@ exists because skipping it materially affects quality.
     confirm the placeholder reports the cookie as present.
     Capture the verification evidence (screenshot or
     curl-with-cookie-jar transcript) in the follow-up commit
-    body.
+    body. _(Superseded: discovered post-deploy that the chosen
+    cookie lives on `*.supabase.co`, not the apps/web frontend
+    domain, so the gate could not pass against the existing code.
+    Deferred to M1 phase 1.3 — see "Verification Evidence" above
+    and the parent epic's M1 phase 1.3 paragraph.)_
 15. **Plan Status flip — Stage 2.** Doc-only follow-up commit
     directly to `main`: flip this plan's Status from
     `In progress pending production cookie-boundary verification`
     to `Landed`, flip the parent epic's M0 row from `Proposed`
     to `Landed`, and paste the verification evidence
     link/transcript into the "Verification Evidence" subsection
-    of this plan. No code change.
+    of this plan. No code change. _(Superseded by the deferral
+    path in step 14. The actual Stage 2 was a tiny PR that
+    flipped both Status lines to `Landed` with deferral rationale
+    in place of verification evidence, also replacing the
+    apps/site placeholder's misleading readout.)_
 
 ## Validation Gate
 
@@ -395,41 +408,58 @@ exists because skipping it materially affects quality.
   fallback plus the bare-path carve-outs (rules 5–6) preserve
   existing behavior; if any of these regress, the rewrite ordering
   is wrong.
-- **Production cookie-boundary verification** — executed
-  post-merge per the two-phase rule below. Until this passes, the
-  plan's Status stays `In progress pending production
-  cookie-boundary verification` and M0 stays `Proposed`.
+- **Production cookie-boundary verification** — **deferred to M1
+  phase 1.3** per "Verification Evidence" above. The
+  `neighborly_session` cookie this plan named is set on the
+  Supabase Edge Function origin and never reaches the apps/web
+  frontend domain, so the gate cannot pass against the existing
+  code. M1 phase 1.3 introduces a frontend-origin cookie via
+  Supabase Auth's cookie adapter and inherits the verification
+  responsibility there.
 
-## Two-Phase Plan-to-Landed
+## Two-Phase Plan-to-Landed (Outcome: Deferral)
 
-The cookie-boundary verification can only be executed against
-production because cross-project cookie behavior under Vercel's
-path-based rewrites cannot be reliably reproduced in preview deploys
-(preview URLs live on per-project subdomains, not on the shared
-production domain). This is exactly the kind of "the gate cannot
-pass pre-merge" situation AGENTS.md and `docs/testing-tiers.md`
-describe.
+**Stage 1 (executed as planned).** The implementing PR (#91) merged
+with this plan's Status set to `In progress pending production
+cookie-boundary verification` and the parent epic's M0 row left at
+`Proposed`. apps/site scaffold, build/lint gates wired into CI,
+transitional Vercel routing topology, and the second Vercel project
+all landed and were exercised in production smoke (rules 1–9 in
+`apps/web/vercel.json` behaved identically to before merge for every
+URL apps/web previously served; `/event/test-slug` rendered the
+apps/site placeholder through the proxy).
 
-Following the AGENTS.md "Plan-to-PR Completion Gate" exception
-pattern (originally written for production-smoke assertions but
-identical in shape):
+**Stage 2 (deferred path taken instead of original verification
+procedure).** Post-deploy investigation surfaced that the
+`neighborly_session` cookie chosen for the verification gate is set
+by `issue-session` on the Supabase Edge Function origin
+(`*.supabase.co`) with no `Domain=` attribute, and apps/web calls the
+Edge Function directly without re-setting the cookie on its own
+origin. The cookie is structurally invisible to apps/site's
+`cookies()` regardless of any rewrite topology, so the verification
+could not pass against the existing code. See "Verification
+Evidence" above for the full analysis.
 
-- The implementing PR merges with this plan's Status set to
-  `In progress pending production cookie-boundary verification`. The
-  parent epic's M0 row stays `Proposed`.
-- After Vercel auto-deploys to production, execute the verification
-  procedure documented in `docs/dev.md`.
-- A doc-only follow-up commit (directly on `main`, no second PR
-  needed for a doc-only edit) flips this plan to `Landed`, flips
-  the parent epic's M0 row to `Landed`, and records the
-  verification evidence in this plan's "Verification Evidence"
-  subsection.
+Rather than open a placeholder follow-up plan that would idle until
+M1 phase 1.3 lands the right cookie anyway, the verification
+responsibility folded into M1 phase 1.3 — see the parent epic's M1
+phase 1.3 paragraph, which now explicitly inherits the gate. The
+actual Stage 2 was therefore a tiny PR (not a doc-only direct push
+to `main`) that flipped both Status lines to `Landed`, recorded the
+deferral rationale in "Verification Evidence," and replaced the
+apps/site placeholder's misleading readout with a deferral notice.
 
-If the verification fails, the follow-up commit instead documents
-the failure mode, this plan stays `In progress`, and a new plan is
-opened to address the routing-model issue (proxy-rewrite limitation,
-unexpected cookie-domain behavior, or whatever the failure
-surfaces).
+**For future contributors:** the original two-phase rule (Stage 1
+flip on merge, Stage 2 flip after post-deploy verification) is the
+default pattern documented here for plans whose readiness gate can
+only run against production. This plan's Stage 2 deviated because
+the gate's underlying assumption was wrong, not because the
+production environment was unreachable. If a future plan hits the
+"Stage 2 verification cannot pass" path, the right call is again to
+either (a) defer to a later phase that fixes the assumption, or (b)
+open a new plan addressing the failure mode — both are valid; the
+right one depends on whether a later phase already has the fix in
+scope.
 
 ## Self-Review Audits
 
@@ -477,11 +507,13 @@ state by the time this PR opens:
   routing topology summary, M2 migration pointer).
 - `docs/plans/site-scaffold-and-routing.md` — Status flipped to
   `In progress pending production cookie-boundary verification`
-  in this PR; flipped to `Landed` in the post-merge doc-only
-  commit.
-- `docs/plans/event-platform-epic.md` — M0 row stays `Proposed`
-  in this PR; flipped to `Landed` in the post-merge doc-only
-  commit.
+  in PR #91; flipped to `Landed` (with deferral rationale instead
+  of verification evidence) in the Stage 2 follow-up PR.
+- `docs/plans/event-platform-epic.md` — M0 row stayed `Proposed`
+  through PR #91; flipped to `Landed` (with the cookie-boundary
+  gate deferred into M1 phase 1.3) in the Stage 2 follow-up PR,
+  which also flipped the Phase 0.3 paragraph's `**Status:**` to
+  `Landed`.
 
 The other docs the parent epic enumerates
 (`docs/operations.md`, `docs/product.md`, `docs/styling.md`,
@@ -556,6 +588,13 @@ Captured here so reviewer attention does not relitigate them.
   staying `In progress`, not silently as a merged plan that
   pretends to pass. Recovery path: open a new plan that adopts
   Vercel Microfrontends or restructures the routing model.
+  _(Outcome: triggered. The mitigation worked — the failure was
+  surfaced honestly via the Stage 1 `In progress` status rather
+  than being silently merged. Recovery taken was deferral to M1
+  phase 1.3 instead of a new routing-model plan, because the
+  failure mode was a wrong-cookie-choice, not a routing-model
+  limitation. See "Verification Evidence" and "Two-Phase
+  Plan-to-Landed (Outcome: Deferral)" above.)_
 - **Vercel rewrite rule precedence misordered.** With eight new
   rules plus the existing fallbacks, ordering bugs become
   more likely. A catch-all event rule ordered before the more
@@ -613,11 +652,48 @@ and M4 gates per the parent epic.
 
 ## Verification Evidence
 
-To be filled in by the post-merge doc-only commit per the
-two-phase Plan-to-Landed rule above. Until then this section reads
-"pending."
+Cookie-boundary verification was **not executed in this phase** and is
+**deferred to M1 phase 1.3**. The plan's chosen mechanism — observing
+the `neighborly_session` cookie from `apps/site` server-rendered
+routes — turned out to be unworkable on inspection of the actual
+code:
 
-Pending.
+- [`supabase/functions/_shared/session-cookie.ts`](../../supabase/functions/_shared/session-cookie.ts)
+  returns `Set-Cookie: neighborly_session=…` from the Supabase Edge
+  Function origin (`<project-ref>.supabase.co`) with no `Domain`
+  attribute. Browsers therefore scope the cookie to `*.supabase.co`,
+  not the apps/web frontend domain.
+- [`apps/web/src/lib/gameApi.ts`](../../apps/web/src/lib/gameApi.ts)
+  calls the Edge Function directly at
+  `${supabaseUrl}/functions/v1/issue-session`. apps/web does not
+  proxy the Edge Function through its own origin and does not re-set
+  the cookie on the frontend domain. The signed token is stored in
+  `localStorage` and forwarded via the `x-neighborly-session` header
+  on later requests — the existing fallback path that exists
+  precisely because the cross-site cookie is unreliable.
+- Net effect: no `neighborly_session` cookie ever exists on apps/web's
+  frontend origin, so apps/site's `cookies().has("neighborly_session")`
+  will return `false` regardless of whether a game was just played.
+  The placeholder's readout was permanently misleading and is
+  replaced in this same flip-to-Landed change with a deferral
+  notice.
+
+This is the planning-time bug the Risk Register anticipated under
+"Cookie boundary fails on production" and "If the verification fails."
+The chosen cookie was wrong; the boundary itself was not tested.
+Rather than open a placeholder follow-up plan that would idle until
+M1 phase 1.3 lands the right cookie anyway, the verification
+responsibility folds directly into M1 phase 1.3 — see the parent
+epic's M1 phase 1.3 paragraph, which now explicitly inherits the
+gate.
+
+The non-verification deliverables of phase 0.3 — apps/site scaffold,
+build/lint gates wired into CI, transitional Vercel routing topology,
+the second Vercel project — landed and were exercised. Production
+smoke confirmed every URL apps/web previously served continued to
+behave identically (rules 1–9 in `apps/web/vercel.json`), and
+`/event/test-slug` rendered the apps/site placeholder through the
+proxy (rules 7–8).
 
 ## Related Docs
 
