@@ -24,7 +24,7 @@ surfaces with different attention; bundling them dilutes both.
 
 | Subphase | Scope | Status |
 | --- | --- | --- |
-| 1.1.1 | Supabase client factory extraction | Proposed |
+| 1.1.1 | Supabase client factory extraction | Landed |
 | 1.1.2 | Generated TypeScript types from Supabase schema | Proposed |
 
 ## Goal
@@ -78,7 +78,7 @@ file that first triggered the rule.
 
 ## Subphase 1.1.1 — Supabase Client Factory Extraction
 
-**Status:** Proposed.
+**Status:** Landed.
 
 ### Subphase goal
 
@@ -107,12 +107,16 @@ split is below). Behavior-preserving.
   (`isPrototypeFallbackEnabled`, `getMissingSupabaseConfigMessage`,
   `isEnabledFlag`, `getEnvironmentValue`) which are intrinsically
   Vite-coupled and stay in `apps/web`.
-- **Call sites** keep importing from `apps/web/src/lib/supabaseBrowser.ts`
-  for the singleton accessor and config getter; they switch to
-  `shared/db/` only for the helpers `shared/db/` now owns
-  (`createSupabaseAuthHeaders`, `readSupabaseErrorMessage`). No call
-  site reaches into `shared/db/client.ts` for the factory directly —
-  the factory is an apps-side concern.
+- **Call sites** are not touched in this subphase. The apps/web
+  adapter re-exports `createSupabaseAuthHeaders` and
+  `readSupabaseErrorMessage` from `shared/db/`, so every existing
+  import line continues to resolve unchanged. No call site reaches
+  into `shared/db/client.ts` for the factory directly — the factory
+  is an apps-side concern. Migrating call sites to import the
+  helpers from `shared/db/` directly is a separate cleanup that can
+  ride along with subphase 1.1.2 if its diff stays small, or live
+  as a future low-risk PR; it is not required by this subphase's
+  behavior-preserving goal.
 
 ### Files to touch — new
 
