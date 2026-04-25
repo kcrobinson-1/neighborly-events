@@ -1,4 +1,4 @@
-project_id = "neighborly-scavenger-game"
+project_id = "neighborly-events"
 
 [functions.complete-game]
 verify_jwt = false

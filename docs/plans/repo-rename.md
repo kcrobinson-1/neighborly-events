@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M0, Phase 0.1. The epic's M0 row stays `Proposed` until phase 0.3
