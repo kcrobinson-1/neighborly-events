@@ -143,7 +143,45 @@ In `apps/web` the adapter is
 [`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts);
 import `getBrowserSupabaseClient`, `getSupabaseConfig`,
 `isPrototypeFallbackEnabled`, etc. from there. Reach into
-`shared/db/` directly only when adding a new per-app adapter.
+`shared/db/` directly only when adding a new per-app adapter or
+when consuming the generated DB row types described next.
+
+### Generated Supabase TypeScript types
+
+The canonical `Database` type lives at `shared/db/types.ts` and is
+generated verbatim from the local Supabase schema. Regenerate it
+after applying any new migration:
+
+```bash
+supabase start          # bring up the local stack if it isn't already running
+supabase db reset       # apply every migration cleanly (no seed needed)
+npm run db:gen-types    # regenerate shared/db/types.ts from the live schema
+```
+
+`npm run db:gen-types` invokes
+`supabase gen types typescript --local --schema public > shared/db/types.ts`.
+Never edit `shared/db/types.ts` by hand — schema changes flow through
+migrations, not through the generated artifact. The Supabase CLI
+version is pinned via `mise.toml`'s `SUPABASE_CLI_VERSION`; running
+`bash scripts/doctor.sh` confirms the pin matches your installed CLI.
+
+Consume the generated types via the `shared/db/` barrel:
+
+- `Database` — the full schema type
+- `Tables<"name">` — a table or view's `Row` shape (the generated
+  helper unifies tables and views)
+- `TablesInsert<"name">`, `TablesUpdate<"name">` — write-side shapes
+- `Enums<"name">`, `Json`, `CompositeTypes<"name">` — supporting types
+
+Where a hand-written row type would shadow a generated derivation,
+prefer the derivation. Where the runtime shape is narrower than the
+generated type (for example, a view whose columns are typed
+nullable but never return null in practice), declare the narrowing
+locally with a `NonNullable<>` mapped type or a tightened literal
+union, and document why the narrowing is safe. The convention is
+to consolidate byte-identical hand-written duplicates as a single
+derived type in `shared/db/`; current example:
+`EventCodeLookupRow`.
 
 ### Reducer-based game session
 

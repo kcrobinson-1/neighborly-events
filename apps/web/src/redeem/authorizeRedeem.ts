@@ -1,9 +1,5 @@
+import type { EventCodeLookupRow } from "../../../../shared/db";
 import { getBrowserSupabaseClient } from "../lib/supabaseBrowser";
-
-type RedeemEventRow = {
-  event_code: string | null;
-  id: string;
-};
 
 export type RedeemAuthorizationResult =
   | { eventCode: string; eventId: string; status: "authorized" }
@@ -20,8 +16,8 @@ function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : DEFAULT_TRANSIENT_MESSAGE;
 }
 
-function isEventCode(value: string | null): value is string {
-  return typeof value === "string" && /^[A-Z]{3}$/.test(value);
+function isEventCode(value: string): boolean {
+  return /^[A-Z]{3}$/.test(value);
 }
 
 function wait(ms: number) {
@@ -36,7 +32,7 @@ async function attemptAuthorizeRedeem(slug: string) {
     .from("game_events")
     .select("id,event_code")
     .eq("slug", slug)
-    .maybeSingle<RedeemEventRow>();
+    .maybeSingle<EventCodeLookupRow>();
 
   if (eventResponse.error) {
     throw new Error(DEFAULT_TRANSIENT_MESSAGE);
