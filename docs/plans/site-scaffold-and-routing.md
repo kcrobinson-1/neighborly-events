@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+In progress pending production cookie-boundary verification.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M0, Phase 0.3. The epic's M0 row stays `Proposed` until this

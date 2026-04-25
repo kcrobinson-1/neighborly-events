@@ -25,7 +25,16 @@ Tooling and local workflow live in `dev.md`. Product intent lives in `product.md
 
 The current implementation is:
 
-- a React single-page app for the attendee experience
+- two frontend apps deployed as separate Vercel projects from one
+  monorepo: `apps/web` (Vite + React SPA, attendee game + admin + auth +
+  transitional ownership of `/`, `/admin*`, `/auth/callback`, and the
+  bare-path operator routes), and `apps/site` (Next.js 16 App Router,
+  SSR/SSG public event landing pages — currently a placeholder, with the
+  real landing page landing in M3 of the Event Platform Epic). `apps/web`
+  is the primary Vercel project owning the production custom domain;
+  cross-app routing is implemented as proxy-rewrites in
+  `apps/web/vercel.json` and is **transitional** until M2 inverts the
+  URL ownership balance
 - a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
 - private authoring draft and admin-allowlist tables protected by RLS
@@ -44,7 +53,15 @@ Keep the game interaction local and fast, but make the completion state backend-
 ### Top-Level Layout
 
 - `apps/web`
-  The attendee-facing single-page application.
+  The attendee-facing Vite + React single-page application. Owns `/`,
+  `/admin*`, `/auth/callback`, the `/event/:slug/game` and
+  `/event/:slug/admin` namespaces, and the transitional bare-path
+  operator routes `/event/:slug/redeem` and `/event/:slug/redemptions`.
+- `apps/site`
+  The Next.js 16 App Router app for public event landing pages. Owns
+  `/event/:slug` and any other event-scoped path not carved out for
+  `apps/web`. Currently a placeholder; the real landing page lands in
+  M3 of [the Event Platform Epic](./plans/event-platform-epic.md).
 - `shared`
   Shared TypeScript domain logic used by both the browser and Supabase functions.
 - `supabase/functions`
@@ -654,10 +671,42 @@ Those services have distinct roles:
 - `Vercel` is not the backend of record. It serves the built SPA and handles route rewrites for browser navigation.
 - `Supabase` is not rendering the game UI. It stores data and runs the trusted completion/session logic.
 
-In this repo, [apps/web/vercel.json](../apps/web/vercel.json) rewrites
-`/admin/:path*`, `/event/:path*`, and `/auth/:path*` to `index.html`
-so the SPA can resolve those URLs — including the magic-link return
-handler at `/auth/callback` — in the browser after deployment.
+In this repo, [apps/web/vercel.json](../apps/web/vercel.json) hosts both
+the SPA route rewrites and the cross-app proxy rewrites that route
+`apps/site`-owned URLs to the second Vercel project. See
+"Vercel routing topology" below.
+
+### Vercel routing topology
+
+Routing is **transitional** through M2 of the
+[Event Platform Epic](./plans/event-platform-epic.md). Today,
+`apps/web` is the primary Vercel project owning the production custom
+domain; its `vercel.json` proxy-rewrites event-scoped non-game/admin
+URLs to the `apps/site` Vercel project. Vercel applies rewrites in
+file order ("first match wins"), so most-specific rules must come
+first.
+
+| # | Path pattern | Destination | Lifetime |
+| --- | --- | --- | --- |
+| 1 | `/event/:slug/game` | `apps/web` SPA | Permanent (event-scoped) |
+| 2 | `/event/:slug/game/:path*` | `apps/web` SPA | Permanent (event-scoped) |
+| 3 | `/event/:slug/admin` | `apps/web` SPA | Permanent; route shell added in M2 phase 2.2 |
+| 4 | `/event/:slug/admin/:path*` | `apps/web` SPA | Permanent (event-scoped) |
+| 5 | `/event/:slug/redeem` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redeem`) |
+| 6 | `/event/:slug/redemptions` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redemptions`) |
+| 7 | `/event/:slug` | `apps/site` Vercel project | Permanent (placeholder in 0.3; real landing page in M3) |
+| 8 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
+| 9 | `/admin/:path*`, `/event/:path*`, `/auth/:path*` (existing SPA fallbacks) | `apps/web` SPA | Transitional; `/auth/callback` and `/` migrate to `apps/site` in M2 phase 2.3, `/admin*` migrates in M2 phase 2.4 |
+
+The cross-app destinations (rules 7 and 8) point at the production
+alias of the `apps/site` Vercel project via Vercel's path-rewrite-to-URL
+syntax. Whether `apps/site` later becomes the primary Vercel project
+(owning the custom domain) is a routing-config decision belonging to
+M2 plan authors.
+
+The bare-path operator carve-outs (rules 5–6) and the rule 9
+fallbacks are explicitly transitional. M2 plan authors are responsible
+for narrowing them as routes migrate.
 
 The current deployment discipline is simpler:
 

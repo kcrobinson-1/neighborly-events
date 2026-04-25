@@ -28,7 +28,11 @@ This repo currently uses:
 - `TypeScript`
   shared language across frontend code, shared domain logic, and Edge Functions
 - `Vite`
-  frontend dev server and production build tool
+  `apps/web` dev server and production build tool
+- `Next.js 16` (App Router) with `Turbopack`
+  `apps/site` dev server and production build tool. The bundler split is
+  intentional: `apps/web` keeps Vite for SPA iteration speed; `apps/site`
+  uses Next.js's default Turbopack for SSR/SSG.
 - `Sass`
   styling organization for the web app
 - `ESLint`
@@ -38,14 +42,21 @@ This repo currently uses:
 - `Deno`
   runtime for the Supabase Edge Functions
 - `Vercel`
-  frontend hosting target
+  frontend hosting target — see "Vercel two-project monorepo layout" below
 
 ## Repository Shape
 
 The main working areas are:
 
 - `apps/web`
-  frontend app
+  Vite + React SPA. Owns `/`, `/admin*`, `/auth/callback`, the
+  `/event/:slug/game` and `/event/:slug/admin` namespaces, and the
+  transitional bare-path operator routes `/event/:slug/redeem` and
+  `/event/:slug/redemptions`.
+- `apps/site`
+  Next.js 16 (App Router) public-event surface. Owns `/event/:slug` and any
+  other event-scoped path not carved out for `apps/web`. Currently a
+  placeholder; the real landing page lands in M3 of the Event Platform Epic.
 - `shared`
   shared game definitions, validation, and scoring
 - `supabase/functions`
@@ -290,6 +301,7 @@ npm run test:functions
 npm run test:supabase
 npm run test:e2e:attendee:trusted-backend
 npm run build:web
+npm run build:site
 deno check --no-lock supabase/functions/issue-session/index.ts
 deno check --no-lock supabase/functions/complete-game/index.ts
 deno check --no-lock supabase/functions/save-draft/index.ts
@@ -297,6 +309,13 @@ deno check --no-lock supabase/functions/generate-event-code/index.ts
 deno check --no-lock supabase/functions/publish-draft/index.ts
 deno check --no-lock supabase/functions/unpublish-event/index.ts
 ```
+
+`npm run lint` runs ESLint over `apps/web shared supabase scripts tests`
+against the root `eslint.config.mjs`, then delegates to `npm --workspace
+@neighborly/site run lint` so `apps/site` lints under its own Next.js
+flat config (`apps/site/eslint.config.mjs`). The Next.js plugin and
+parser are kept inside `apps/site`'s workspace so the root devDeps stay
+framework-agnostic.
 
 Those commands are also reflected in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
 
@@ -561,9 +580,74 @@ historical row, set `active = false` for that email.
 
 ### Vercel
 
-- create your own Vercel project for `apps/web`
-- keep the SPA route rewrite in `apps/web/vercel.json`
+The repo deploys two Vercel projects from one monorepo, with `apps/web`
+as the primary project that owns the production custom domain and
+proxy-rewrites event-scoped non-game/admin URLs to `apps/site`.
+
+- create the primary Vercel project for `apps/web` (Root Directory `apps/web`)
+- create the second Vercel project for `apps/site` (Root Directory `apps/site`)
+- keep the rewrites in `apps/web/vercel.json` — they implement the
+  transitional cross-app routing topology (see "Vercel two-project
+  monorepo layout" below)
+- update the absolute destination URL for `/event/:slug` and
+  `/event/:slug/:path*` rewrites to match the production alias of the
+  `apps/site` Vercel project
 - create your own local `.vercel/` link metadata after checkout; the folder is git-ignored on purpose
+
+### Vercel two-project monorepo layout
+
+`apps/web` and `apps/site` are deployed as separate Vercel projects from
+the same git repository. `apps/web` is the primary project: it owns the
+production custom domain and its `vercel.json` hosts the cross-app
+rewrites that proxy event-scoped non-game/admin URLs to `apps/site`.
+
+The transitional routing contract is documented in
+[`docs/architecture.md`](./architecture.md#vercel-routing-topology) and
+the implementing plan is
+[`docs/plans/site-scaffold-and-routing.md`](./plans/site-scaffold-and-routing.md).
+
+In short, the rule precedence inside `apps/web/vercel.json` is:
+
+1. `/event/:slug/game` and `/event/:slug/game/:path*` → `apps/web` SPA
+2. `/event/:slug/admin` and `/event/:slug/admin/:path*` → `apps/web` SPA
+   (route shell lands in M2 phase 2.2)
+3. `/event/:slug/redeem` and `/event/:slug/redemptions` → `apps/web` SPA
+   (transitional; retired by M2 phase 2.5 when these URLs migrate into
+   `/event/:slug/game/*`)
+4. `/event/:slug` and `/event/:slug/:path*` → `apps/site`
+5. Existing `/admin/:path*`, `/event/:path*`, `/auth/:path*` SPA
+   rewrites → `apps/web` (lowest precedence; `/admin*` and
+   `/auth/callback` migrate to `apps/site` in M2 phases 2.3 and 2.4)
+
+Most-specific rules must come first. The bare-path operator carve-outs
+(`/event/:slug/redeem` and `/event/:slug/redemptions`) and the rule 5
+fallback are explicitly transitional. M2 plan authors are responsible
+for narrowing them as routes migrate.
+
+### Cookie-boundary verification (M0 phase 0.3 readiness gate)
+
+The `/event/:slug` placeholder served by `apps/site` includes a
+presence-only readout for the `neighborly_session` cookie. The readout
+exists to prove that an HTTP cookie set on path=`/` by `apps/web` (via
+the `issue-session` Edge Function) is visible to Next.js's
+`cookies()` API in `apps/site` server-rendered routes when the
+production domain proxy-rewrites the request from `apps/web` to
+`apps/site`.
+
+To re-confirm the gate against production:
+
+1. Open `/event/madrona/game` on the production domain in a fresh
+   browser session. Press start so the browser POSTs `issue-session`
+   and the Edge Function sets the `neighborly_session` cookie.
+2. Without clearing cookies, navigate to `/event/test-slug` (or any
+   slug that does not match a `apps/web` carve-out).
+3. Confirm the placeholder reports the cookie as `YES — present`.
+
+A `NO — not visible` readout means the cross-project rewrite stripped
+the cookie, the cookie domain is wrong, or the request never reached
+`apps/site`. Open a new plan rather than papering over the failure.
+
+The readout reports presence only and never echoes the cookie value.
 
 ## Release Flow
 
