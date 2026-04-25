@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M1, Phase 1.1. The epic's M1 row stays `Proposed` until every
@@ -25,7 +25,7 @@ surfaces with different attention; bundling them dilutes both.
 | Subphase | Scope | Status |
 | --- | --- | --- |
 | 1.1.1 | Supabase client factory extraction | Landed |
-| 1.1.2 | Generated TypeScript types from Supabase schema | Proposed |
+| 1.1.2 | Generated TypeScript types from Supabase schema | Landed |
 
 ## Goal
 
@@ -297,7 +297,7 @@ Named in the parent epic for phase 1.1, drawn from
 
 ## Subphase 1.1.2 — Generated TypeScript Types
 
-**Status:** Proposed.
+**Status:** Landed.
 
 ### Subphase goal
 
