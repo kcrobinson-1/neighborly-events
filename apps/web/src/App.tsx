@@ -12,7 +12,7 @@ import {
   matchEventRedemptionsPath,
   matchGamePath,
   routes,
-} from "./routes";
+} from "../../../shared/urls";
 import { usePathnameNavigation } from "./usePathnameNavigation";
 
 /** Resolves the pathname to the page component that should be rendered. */

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { validateNextPath } from "../../../apps/web/src/auth/validateNextPath.ts";
-import { routes } from "../../../apps/web/src/routes.ts";
+import { routes, validateNextPath } from "../../../shared/urls/index.ts";
 
 const TEST_ORIGIN = "https://example.test";
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { normalizePathname } from "./routes";
+import { normalizePathname } from "../../../shared/urls";
 
 /** Reads the browser pathname while staying safe in non-browser environments. */
 function getCurrentPathname() {

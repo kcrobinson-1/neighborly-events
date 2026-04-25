@@ -1,7 +1,7 @@
 import { AdminDashboardContent } from "../admin/AdminDashboardContent";
 import { AdminPageShell } from "../admin/AdminPageShell";
 import { useAdminDashboard } from "../admin/useAdminDashboard";
-import { routes } from "../routes";
+import { routes } from "../../../../shared/urls";
 
 type AdminPageProps = {
   onNavigate: (path: string) => void;

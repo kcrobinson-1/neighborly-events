@@ -4,8 +4,8 @@ import {
   matchEventRedemptionsPath,
   matchGamePath,
   routes,
-} from "../routes";
-import type { AuthNextPath } from "./types";
+  type AuthNextPath,
+} from "./routes.ts";
 
 /**
  * Validates a raw `next` query parameter against the allow-list of
@@ -16,7 +16,9 @@ import type { AuthNextPath } from "./types";
  * Open-redirect defense lives here end-to-end. The function is pure
  * and side-effect free; the only browser API it touches is the URL
  * constructor (and `window.location.origin` for the same-origin
- * check).
+ * check). It is therefore browser-only — server-side callers must
+ * supply their own origin parameter, which is a separate seam not
+ * implemented in this module.
  */
 export function validateNextPath(rawNext: string | null): AuthNextPath {
   if (rawNext === null || rawNext.trim() === "") {
