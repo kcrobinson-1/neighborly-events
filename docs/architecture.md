@@ -263,16 +263,21 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   stable apps/web path, and `apps/web/src/auth/index.ts` re-exports
   the components, hook, and types for the same reason. The apps/site
   adapter lands in M2 phase 2.3. Session storage uses
-  `@supabase/ssr`'s frontend-origin cookie adapter via
+  `@supabase/ssr`'s frontend-origin chunked cookie storage paired
+  with `@supabase/supabase-js`'s `createClient` in
   [`shared/db/client.ts`](../shared/db/client.ts)'s
   `createBrowserSupabaseClient` (cookie name
   `sb-<project-ref>-auth-token`, chunked as `.0`/`.1` siblings when
   the JWT exceeds the per-cookie size limit; `Path=/`, `SameSite=Lax`,
   `Secure` on https, no `Domain=` so the cookie is host-only on the
-  apps/web frontend domain). The cookie is visible to apps/site
-  server-rendered routes through Vercel's proxy-rewrite — apps/site's
-  placeholder at `/event/:slug` reads it via Next.js `cookies()` and
-  renders a presence-only readout for verification.
+  apps/web frontend domain). `flowType` is `"implicit"` because the
+  production admin smoke fixture uses
+  `auth.admin.generateLink({ type: "magiclink" })`, which is
+  PKCE-incompatible (no client-side code-verifier). The cookie is
+  visible to apps/site server-rendered routes through Vercel's
+  proxy-rewrite — apps/site's placeholder at `/event/:slug` reads it
+  via Next.js `cookies()` and renders a presence-only readout for
+  verification.
 
 Together they contain:
 

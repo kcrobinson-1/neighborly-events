@@ -617,11 +617,40 @@ contract above. The contract is otherwise honored verbatim.
   createBrowserClient docstring, "in most cases you should not
   configure the `options.cookies` object, as this is automatically
   handled for you."
-- **Auth-options block dropped.** The prior `createClient` call
-  passed `auth: { autoRefreshToken: true, detectSessionInUrl: true,
-  persistSession: true }`. `createBrowserClient` handles all three
-  internally; explicit overrides would be a no-op against the
-  package's intended behavior.
+- **`createClient` from `@supabase/supabase-js` paired with
+  `@supabase/ssr`'s deep-imported chunked cookie storage, NOT
+  `createBrowserClient`.** The plan's original shape called for
+  `createBrowserClient` from `@supabase/ssr` directly. Post-merge
+  production smoke surfaced that
+  [`createBrowserClient`](../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js)
+  hardcodes `flowType: "pkce"` **after** spreading user
+  `options.auth` (the option is unoverridable through the public
+  API). PKCE is incompatible with the production admin smoke
+  fixture, which uses
+  `auth.admin.generateLink({ type: "magiclink" })` — admin-generated
+  links have no client-side PKCE code-verifier, so when the user
+  visits the action URL, Supabase's verify endpoint redirects with
+  an implicit-style hash fragment and auth-js throws
+  `AuthPKCEGrantCodeExchangeError("Not a valid PKCE flow url.")`.
+  Both production smoke tests (denies-non-allowlisted and
+  covers-save-publish-unpublish) failed at the post-magic-link
+  navigation gate.
+
+  The forward fix uses `@supabase/supabase-js`'s `createClient` with
+  `flowType: "implicit"` explicitly, paired with `@supabase/ssr`'s
+  internal `createStorageFromOptions` (deep imported from
+  `@supabase/ssr/dist/module/cookies`) to keep the chunked-cookie
+  format intact. The deep import is supported by `@supabase/ssr`'s
+  package layout (no `exports` field gate) and the exact-pin on
+  0.10.0 means the path is stable for this repo. The auth options
+  the original shape implicitly inherited
+  (`autoRefreshToken: true`, `detectSessionInUrl: true`,
+  `persistSession: true`) are now passed explicitly because
+  `createClient` does not set them by default the way
+  `createBrowserClient` did. M2 phase 2.3 (auth-callback in
+  apps/site) may revisit the flow choice if it adopts server-side
+  PKCE exchange; the cookie format is independent of `flowType` so
+  the storage stays compatible either way.
 - **e2e fixtures unchanged.** A grep for `auth-token`,
   `localStorage`, and `persistSession` against `tests/e2e/` showed
   the only matches are service-role fixture clients with
