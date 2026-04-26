@@ -297,30 +297,54 @@ Playwright fixtures retain their literal URL strings as test data
 expressing the contract under test. One PR.
 
 **Phase 1.3 — `shared/auth/`.**
-Extract Supabase Auth client wiring, session restore and subscribe
-primitives, role-resolution hooks (`useOrganizerForEvent`, `useIsRootAdmin`,
-and equivalents), magic-link request and callback flow, and the in-place
-auth shell components used by protected routes. `apps/web` migrated to
-import from `shared/auth/`. Sign-in for existing routes verified end-to-end.
+**Plan:** [`shared-auth-foundation.md`](./shared-auth-foundation.md).
+Two subphases with different risk profiles, each its own PR.
 
-**Inherited from M0 phase 0.3:** owns the cross-app cookie-boundary
-verification deferred from
+*Subphase 1.3.1 — `shared/auth/` extraction.* Extract the role-neutral
+Supabase Auth client wiring (`getAuthSession`, `subscribeToAuthState`,
+`requestMagicLink`, `signOut`, `getAccessToken`), the
+`useAuthSession` hook, the `AuthCallbackPage` magic-link return
+handler, the `SignInForm`, and the associated types from
+`apps/web/src/auth/` and `apps/web/src/lib/authApi.ts` into
+`shared/auth/`. apps/web migrated to import from `shared/auth/` via
+the binding modules at
+[`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts) and
+[`apps/web/src/auth/index.ts`](../../apps/web/src/auth/index.ts).
+Behavior-preserving for apps/web; storage stays as `localStorage` in
+this subphase. Role-resolution hooks (`useOrganizerForEvent`,
+`useIsRootAdmin`) named in earlier drafts of this paragraph **do not
+exist as hooks** in apps/web today — role resolution lives inline in
+[`apps/web/src/redemptions/authorizeRedemptions.ts`](../../apps/web/src/redemptions/authorizeRedemptions.ts)
+and
+[`apps/web/src/redeem/authorizeRedeem.ts`](../../apps/web/src/redeem/authorizeRedeem.ts) —
+so 1.3.1 does not create them. M2 phase 2.2 (per-event admin) is the
+natural home for `useOrganizerForEvent` when it has a real consumer.
+
+*Subphase 1.3.2 — Cookie adapter, apps/site readout, production
+verification.* Adopt `@supabase/ssr`'s `createBrowserClient` inside
+`shared/db/client.ts` to migrate Supabase Auth from `localStorage` to
+a frontend-origin cookie. Replace the apps/site placeholder's
+deferral notice with a native Next.js `cookies()` presence check.
+Verify the cookie boundary against production via Tier 5 production
+smoke (two-phase Plan-to-Landed per
+[`docs/testing-tiers.md`](../testing-tiers.md)).
+
+**Inherited from M0 phase 0.3 (subphase 1.3.2 only):** owns the
+cross-app cookie-boundary verification deferred from
 [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md). Phase
 0.3's chosen verification cookie (the `neighborly_session` cookie set
 by `issue-session`) lives on the Supabase Edge Function origin
 (`*.supabase.co`), not the apps/web frontend domain, so the gate could
-not pass against the existing code. M1 phase 1.3 migrates Supabase
-Auth from `localStorage` to a cookie-based adapter that explicitly
-sets cookies on the apps/web frontend origin; the verification
-procedure (game/sign-in session set on apps/web → navigate to a
-apps/site route → confirm Next.js `cookies()` reads the cookie via
-the proxy-rewrite) must run against that real frontend-origin auth
-cookie before this phase flips Landed. The procedure documented in
-`docs/dev.md` is updated in this phase to point at the new auth
-cookie name. The apps/site placeholder's deferral notice (added when
-M0 flipped Landed) is replaced with a working readout or removed
-entirely depending on whether the placeholder is still load-bearing
-by then. One PR.
+not pass against the existing code. Subphase 1.3.2 introduces the
+`@supabase/ssr` cookie adapter that sets a real frontend-origin
+cookie; the verification procedure (game/sign-in session set on
+apps/web → navigate to a apps/site route → confirm Next.js `cookies()`
+reads the cookie via the proxy-rewrite) must run against that real
+frontend-origin auth cookie before subphase 1.3.2 flips Landed. The
+procedure documented in `docs/dev.md` is updated in 1.3.2 to point at
+the new auth cookie name. The apps/site placeholder's deferral notice
+(added when M0 flipped Landed) is replaced with the presence-check
+readout in 1.3.2.
 
 **Phase 1.4 — `shared/events/`.**
 Extract event lookup by slug, event status helpers, slug validation, and
@@ -635,12 +659,12 @@ X.N.M`) contribute to the PR count but not the phase count.
 Phases per milestone, with PR counts:
 
 - M0 — 3 phases, 3 PRs
-- M1 — 5 phases (phase 1.1 and phase 1.5 each contain 2 subphases as separate PRs), 7 PRs
+- M1 — 5 phases (phase 1.1, phase 1.3, and phase 1.5 each contain 2 subphases as separate PRs), 8 PRs
 - M2 — 5 phases, 5 PRs
 - M3 — 4 phases, 4 PRs
 - M4 — 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR)
 
-Epic total: 20 phases, 21 PRs.
+Epic total: 20 phases, 22 PRs.
 
 The above is written under the assumption "one engineer focused on the epic
 with no parallel tracks." Reader scales relative weight from the phase and

@@ -1,19 +1,17 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-const { mockGetBrowserSupabaseClient } = vi.hoisted(() => ({
-  mockGetBrowserSupabaseClient: vi.fn(),
-}));
-
-vi.mock("../../../apps/web/src/lib/supabaseBrowser.ts", () => ({
-  getBrowserSupabaseClient: mockGetBrowserSupabaseClient,
-}));
 
 import {
   getAccessToken,
   getAuthSession,
   requestMagicLink,
   signOut,
-} from "../../../apps/web/src/lib/authApi.ts";
+} from "../../../shared/auth/api.ts";
+import {
+  _resetSharedAuthForTests,
+  configureSharedAuth,
+} from "../../../shared/auth/configure.ts";
+import type { Database } from "../../../shared/db";
 
 const TEST_ORIGIN = "https://example.test";
 
@@ -37,11 +35,17 @@ function createAuthClientMock(overrides: {
   };
 }
 
-describe("authApi", () => {
+function configureWith(client: ReturnType<typeof createAuthClientMock>) {
+  configureSharedAuth({
+    getClient: () => client as unknown as SupabaseClient<Database>,
+    getConfigStatus: () => ({ enabled: true }),
+  });
+}
+
+describe("shared/auth api", () => {
   const originalLocation = Object.getOwnPropertyDescriptor(window, "location");
 
   beforeEach(() => {
-    mockGetBrowserSupabaseClient.mockReset();
     Object.defineProperty(window, "location", {
       configurable: true,
       value: new URL(TEST_ORIGIN),
@@ -50,6 +54,7 @@ describe("authApi", () => {
   });
 
   afterEach(() => {
+    _resetSharedAuthForTests();
     if (originalLocation) {
       Object.defineProperty(window, "location", originalLocation);
     }
@@ -58,9 +63,7 @@ describe("authApi", () => {
   describe("requestMagicLink URL composition", () => {
     it("composes emailRedirectTo as /auth/callback?next=<encoded> against the current origin", async () => {
       const signInWithOtp = vi.fn().mockResolvedValue({ error: null });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ signInWithOtp }),
-      );
+      configureWith(createAuthClientMock({ signInWithOtp }));
 
       await requestMagicLink("admin@example.com", { next: "/admin" });
 
@@ -77,9 +80,7 @@ describe("authApi", () => {
 
     it("URL-encodes slashes in next so round-trip decoding is unambiguous", async () => {
       const signInWithOtp = vi.fn().mockResolvedValue({ error: null });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ signInWithOtp }),
-      );
+      configureWith(createAuthClientMock({ signInWithOtp }));
 
       await requestMagicLink("admin@example.com", {
         next: "/admin/events/id-with-dashes",
@@ -100,9 +101,7 @@ describe("authApi", () => {
 
     it("trims whitespace from the email before calling Supabase", async () => {
       const signInWithOtp = vi.fn().mockResolvedValue({ error: null });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ signInWithOtp }),
-      );
+      configureWith(createAuthClientMock({ signInWithOtp }));
 
       await requestMagicLink("  admin@example.com\n", { next: "/admin" });
 
@@ -115,9 +114,7 @@ describe("authApi", () => {
       const signInWithOtp = vi
         .fn()
         .mockResolvedValue({ error: { message: "Rate limit exceeded." } });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ signInWithOtp }),
-      );
+      configureWith(createAuthClientMock({ signInWithOtp }));
 
       await expect(
         requestMagicLink("admin@example.com", { next: "/admin" }),
@@ -128,9 +125,7 @@ describe("authApi", () => {
       const signInWithOtp = vi
         .fn()
         .mockResolvedValue({ error: { message: "" } });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ signInWithOtp }),
-      );
+      configureWith(createAuthClientMock({ signInWithOtp }));
 
       await expect(
         requestMagicLink("admin@example.com", { next: "/admin" }),
@@ -144,9 +139,7 @@ describe("authApi", () => {
       const getSession = vi
         .fn()
         .mockResolvedValue({ data: { session }, error: null });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ getSession }),
-      );
+      configureWith(createAuthClientMock({ getSession }));
 
       await expect(getAuthSession()).resolves.toBe(session);
     });
@@ -156,9 +149,7 @@ describe("authApi", () => {
         data: { session: null },
         error: { message: "Underlying detail." },
       });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ getSession }),
-      );
+      configureWith(createAuthClientMock({ getSession }));
 
       await expect(getAuthSession()).rejects.toThrow(
         "We couldn't restore your session right now.",
@@ -171,9 +162,7 @@ describe("authApi", () => {
       const supabaseSignOut = vi
         .fn()
         .mockResolvedValue({ error: { message: "Network failure." } });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ signOut: supabaseSignOut }),
-      );
+      configureWith(createAuthClientMock({ signOut: supabaseSignOut }));
 
       await expect(signOut()).rejects.toThrow(
         "We couldn't sign out right now.",
@@ -187,9 +176,7 @@ describe("authApi", () => {
         data: { session: { access_token: "token-abc" } },
         error: null,
       });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ getSession }),
-      );
+      configureWith(createAuthClientMock({ getSession }));
 
       await expect(getAccessToken()).resolves.toBe("token-abc");
     });
@@ -198,11 +185,19 @@ describe("authApi", () => {
       const getSession = vi
         .fn()
         .mockResolvedValue({ data: { session: null }, error: null });
-      mockGetBrowserSupabaseClient.mockReturnValue(
-        createAuthClientMock({ getSession }),
-      );
+      configureWith(createAuthClientMock({ getSession }));
 
       await expect(getAccessToken()).rejects.toThrow("Sign-in is required.");
+    });
+  });
+
+  describe("configure guardrail", () => {
+    it("throws a clear error when the auth API is consumed before configureSharedAuth runs", async () => {
+      _resetSharedAuthForTests();
+
+      await expect(getAuthSession()).rejects.toThrow(
+        /shared\/auth\/ used before configureSharedAuth/,
+      );
     });
   });
 });

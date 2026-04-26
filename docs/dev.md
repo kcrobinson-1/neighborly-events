@@ -209,6 +209,44 @@ forward-compatibility with M2 phase 2.2 and M3; their pathname
 matchers and their `validateNextPath` allow-list entries land with
 the consumers in the phases that mount those routes.
 
+### Supabase Auth surface
+
+The role-neutral Supabase Auth surface — `getAuthSession`,
+`subscribeToAuthState`, `requestMagicLink`, `signOut`,
+`getAccessToken`, the `useAuthSession` hook, the `AuthCallbackPage`
+magic-link return handler, and the `SignInForm` — lives in
+[`shared/auth/`](../shared/auth/). apps/web call sites continue to
+import from
+[`apps/web/src/lib/authApi`](../apps/web/src/lib/authApi.ts) (a pure
+re-export) and
+[`apps/web/src/auth`](../apps/web/src/auth/index.ts) (a pure
+re-export barrel for the components, hook, and types) so existing
+import paths do not change.
+
+`shared/auth/` is env-agnostic. Each app calls
+`configureSharedAuth({ getClient, getConfigStatus })` exactly once
+at startup with its env-derived providers. apps/web's setup lives
+in
+[`apps/web/src/lib/setupAuth.ts`](../apps/web/src/lib/setupAuth.ts),
+imported for side-effect by `apps/web/src/main.tsx`. The apps/site
+adapter lands in M2 phase 2.3.
+
+When writing a test that exercises code transitively calling
+`shared/auth/`, choose one of two patterns:
+
+- mock the relevant `shared/auth/` symbol directly via
+  `vi.mock("../../../shared/auth/api", …)` or
+  `vi.mock("../../../shared/auth/useAuthSession", …)` — this is the
+  pattern most apps/web component tests use
+- call `configureSharedAuth` in the test's `beforeEach` with mock
+  providers, optionally calling `_resetSharedAuthForTests()` in
+  `afterEach` to leave a clean slate — this is the pattern
+  `tests/shared/auth/api.test.ts` uses
+
+Session storage today is Supabase's default browser `localStorage`
+adapter; the migration to a frontend-origin cookie via
+`@supabase/ssr` is M1 phase 1.3.2.
+
 ### Reducer-based game session
 
 The game flow is modeled as a reducer-backed session rather than scattered component state.
@@ -707,10 +745,10 @@ Most-specific rules must come first. The bare-path operator carve-outs
 fallback are explicitly transitional. M2 plan authors are responsible
 for narrowing them as routes migrate.
 
-### Cookie-boundary verification (deferred to M1 phase 1.3)
+### Cookie-boundary verification (deferred to M1 phase 1.3.2)
 
 The cross-app cookie-boundary verification originally scoped to M0
-phase 0.3 was **deferred to M1 phase 1.3** when implementation
+phase 0.3 was **deferred to M1 phase 1.3.2** when implementation
 surfaced a planning-time bug: the `neighborly_session` cookie set by
 `issue-session` lives on the Supabase Edge Function origin
 (`*.supabase.co`), not on the apps/web frontend domain, so it is
@@ -719,16 +757,19 @@ of the rewrite topology. See
 [`docs/plans/site-scaffold-and-routing.md`](./plans/site-scaffold-and-routing.md)
 "Verification Evidence" for the full analysis.
 
-M1 phase 1.3 (`shared/auth/` extraction) introduces a Supabase Auth
-cookie adapter that sets a real frontend-origin cookie. The
+M1 phase 1.3.2 introduces a Supabase Auth cookie adapter via
+`@supabase/ssr` that sets a real frontend-origin cookie. The
 verification procedure (game/sign-in session set on apps/web →
 navigate to a apps/site route → confirm Next.js `cookies()` reads
-the cookie via the proxy-rewrite) is updated in that phase to point
-at the new auth cookie name and runs as a pre-Landed gate for M1
-phase 1.3.
+the cookie via the proxy-rewrite) is updated in that subphase to
+point at the new auth cookie name and runs as a pre-Landed gate for
+1.3.2 (subphase 1.3.1 is the behavior-preserving extraction and has
+no cookie dependency). See
+[`docs/plans/shared-auth-foundation.md`](./plans/shared-auth-foundation.md).
 
-Until M1 phase 1.3 lands, the apps/site placeholder at `/event/:slug`
-displays a deferral notice rather than a meaningful readout. Do not
+Until M1 phase 1.3.2 lands, the apps/site placeholder at
+`/event/:slug` displays a deferral notice rather than a meaningful
+readout. Do not
 use the placeholder to "verify" the cookie boundary in the
 meantime — the answer is structurally `NO` until M1 phase 1.3
 introduces the right cookie.

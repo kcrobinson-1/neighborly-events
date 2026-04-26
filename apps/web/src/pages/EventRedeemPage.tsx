@@ -5,9 +5,12 @@ import {
   useEffectEvent,
   useState,
 } from "react";
-import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
-import type { MagicLinkState } from "../auth/types";
-import { useAuthSession } from "../auth/useAuthSession";
+import {
+  SignInForm,
+  useAuthSession,
+  type MagicLinkState,
+  type SignInFormCopy,
+} from "../auth";
 import { requestMagicLink } from "../lib/authApi";
 import {
   authorizeRedeem,

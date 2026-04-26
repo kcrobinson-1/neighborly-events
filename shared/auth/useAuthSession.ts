@@ -1,10 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
-import { getAuthSession, subscribeToAuthState } from "../lib/authApi";
-import {
-  getMissingSupabaseConfigMessage,
-  getSupabaseConfig,
-} from "../lib/supabaseBrowser";
+import { getAuthSession, subscribeToAuthState } from "./api";
+import { readSharedAuthProviders } from "./configure";
 import type { AuthSessionState } from "./types";
 
 function mapSessionState(session: Session | null): AuthSessionState {
@@ -22,9 +19,10 @@ function mapSessionState(session: Session | null): AuthSessionState {
 /** Restores and subscribes to the browser auth session for any role-neutral surface. */
 export function useAuthSession(): AuthSessionState {
   const [state, setState] = useState<AuthSessionState>(() => {
-    if (!getSupabaseConfig().enabled) {
+    const status = readSharedAuthProviders().getConfigStatus();
+    if (!status.enabled) {
       return {
-        message: getMissingSupabaseConfigMessage(),
+        message: status.message,
         status: "missing_config",
       };
     }
@@ -33,7 +31,8 @@ export function useAuthSession(): AuthSessionState {
   });
 
   useEffect(() => {
-    if (!getSupabaseConfig().enabled) {
+    const status = readSharedAuthProviders().getConfigStatus();
+    if (!status.enabled) {
       return;
     }
 

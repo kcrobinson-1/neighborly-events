@@ -240,6 +240,31 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   strings inline; the single remaining hardcoded URL family lives in
   the e2e Playwright fixtures, where the literal expresses the
   contract being tested.
+- `shared/auth/`
+  Env-agnostic Supabase Auth surface shared across `apps/web` and
+  (after M2 phase 2.3) `apps/site`. Owns the role-neutral auth API
+  (`getAuthSession`, `subscribeToAuthState`, `requestMagicLink`,
+  `signOut`, `getAccessToken`), the role-neutral `useAuthSession`
+  hook, the magic-link return handler `AuthCallbackPage` (with its
+  load-bearing subscribe-before-getSession ordering and 10s timeout
+  guard), the role-neutral `SignInForm`, and the associated
+  `AuthSessionState`, `MagicLinkState`, `AuthCallbackPageProps`,
+  `SignInFormCopy`, and `SignInFormProps` types. Per the parent
+  epic's "Env access stays at the app boundary" invariant, this
+  module never reads `import.meta.env.*` or `process.env.*`; each
+  app calls `configureSharedAuth({ getClient, getConfigStatus })`
+  exactly once at startup with its env-derived providers. apps/web
+  registers them from
+  [`apps/web/src/lib/setupAuth.ts`](../apps/web/src/lib/setupAuth.ts)
+  (imported for side-effect by `apps/web/src/main.tsx`); the apps/web
+  adapter at
+  [`apps/web/src/lib/authApi.ts`](../apps/web/src/lib/authApi.ts) is
+  a pure re-export so existing call sites keep importing from a
+  stable apps/web path, and `apps/web/src/auth/index.ts` re-exports
+  the components, hook, and types for the same reason. The apps/site
+  adapter lands in M2 phase 2.3. Session storage stays as Supabase's
+  default `localStorage` adapter in this phase; the cookie-based
+  migration via `@supabase/ssr` is M1 phase 1.3.2.
 
 Together they contain:
 

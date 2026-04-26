@@ -1,5 +1,6 @@
 import React from "react";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import type { Session } from "@supabase/supabase-js";
 import {
   afterEach,
   beforeEach,
@@ -8,19 +9,18 @@ import {
   it,
   vi,
 } from "vitest";
-import type { Session } from "@supabase/supabase-js";
 
 const { mockGetAuthSession, mockSubscribeToAuthState } = vi.hoisted(() => ({
   mockGetAuthSession: vi.fn(),
   mockSubscribeToAuthState: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/lib/authApi.ts", () => ({
+vi.mock("../../../shared/auth/api.ts", () => ({
   getAuthSession: mockGetAuthSession,
   subscribeToAuthState: mockSubscribeToAuthState,
 }));
 
-import { AuthCallbackPage } from "../../../apps/web/src/auth/AuthCallbackPage";
+import { AuthCallbackPage } from "../../../shared/auth/AuthCallbackPage.tsx";
 import { routes } from "../../../shared/urls";
 
 const TEST_ORIGIN = "https://example.test";

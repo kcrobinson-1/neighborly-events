@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { getAuthSession, subscribeToAuthState } from "../lib/authApi";
-import {
-  routes,
-  validateNextPath,
-  type AuthNextPath,
-} from "../../../../shared/urls";
+import { routes, validateNextPath, type AuthNextPath } from "../urls";
+import { getAuthSession, subscribeToAuthState } from "./api";
 
 export type AuthCallbackPageProps = {
   onNavigate: (
