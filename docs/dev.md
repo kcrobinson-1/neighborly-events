@@ -243,24 +243,42 @@ When writing a test that exercises code transitively calling
   `afterEach` to leave a clean slate — this is the pattern
   `tests/shared/auth/api.test.ts` uses
 
-Session storage uses `@supabase/ssr`'s frontend-origin cookie
-adapter via
+Session storage uses `@supabase/ssr`'s frontend-origin chunked
+cookie storage paired with `@supabase/supabase-js`'s `createClient`,
+both wired in
 [`shared/db/client.ts`](../shared/db/client.ts)'s
 `createBrowserSupabaseClient`. The cookie is named
 `sb-<project-ref>-auth-token` (chunked into `.0`/`.1` siblings when
-the JWT exceeds the per-cookie size limit). Attributes pinned in the
-factory: `Path=/`, `SameSite=Lax`, `Secure` set explicitly to
-`window.location.protocol === "https:"` (set on https, omitted on
-http://localhost). `@supabase/ssr` 0.10.x does **not** auto-detect
-`Secure` — its `DEFAULT_COOKIE_OPTIONS` ship `path` / `sameSite` /
-`httpOnly` / `maxAge` only — so the factory passes `secure`
-explicitly via `cookieOptions`. Do not remove the explicit flag
-under the assumption the package handles it; auth cookies would
-ship without `Secure` on production HTTPS. No `Domain=` attribute
-means the cookie is host-only on the apps/web frontend domain.
-`HttpOnly` is impossible because apps/web is a SPA writing the
-cookie from JS — same exposure surface as the prior `localStorage`
-path.
+the JWT exceeds the per-cookie size limit; encoding is `base64url`).
+Attributes pinned in the factory: `Path=/`, `SameSite=Lax`, `Secure`
+set explicitly to `window.location.protocol === "https:"` (set on
+https, omitted on http://localhost). `@supabase/ssr` 0.10.x does
+**not** auto-detect `Secure` — its `DEFAULT_COOKIE_OPTIONS` ship
+`path` / `sameSite` / `httpOnly` / `maxAge` only — so the factory
+passes `secure` explicitly via `cookieOptions`. Do not remove the
+explicit flag under the assumption the package handles it; auth
+cookies would ship without `Secure` on production HTTPS. No
+`Domain=` attribute means the cookie is host-only on the apps/web
+frontend domain. `HttpOnly` is impossible because apps/web is a SPA
+writing the cookie from JS — same exposure surface as the prior
+`localStorage` path.
+
+The factory uses `@supabase/ssr`'s internal
+[`createStorageFromOptions`](../node_modules/@supabase/ssr/dist/module/cookies.d.ts)
+deep import rather than its public `createBrowserClient` because
+`createBrowserClient` hardcodes `flowType: "pkce"` after spreading
+user options (the option is unoverridable through the public API).
+PKCE is incompatible with the production admin smoke fixture, which
+uses `auth.admin.generateLink({ type: "magiclink" })` — admin-generated
+links have no client-side PKCE code-verifier, so auth-js throws
+`AuthPKCEGrantCodeExchangeError("Not a valid PKCE flow url.")` on
+the resulting hash-fragment redirect. Pairing `createClient` with
+`@supabase/ssr`'s chunked cookie storage and `flowType: "implicit"`
+keeps both real magic-link sign-ins and the production smoke
+fixture working while preserving the chunked-cookie format
+apps/site's future `createServerClient` (M2 phase 2.3) will read.
+`@supabase/ssr` is exact-pinned at `0.10.0` in
+`apps/web/package.json` so the deep import path is stable.
 
 The localStorage → cookie migration that landed in M1 phase 1.3.2
 forced a one-time re-sign-in for every previously-signed-in admin:
