@@ -249,12 +249,18 @@ adapter via
 `createBrowserSupabaseClient`. The cookie is named
 `sb-<project-ref>-auth-token` (chunked into `.0`/`.1` siblings when
 the JWT exceeds the per-cookie size limit). Attributes pinned in the
-factory: `Path=/`, `SameSite=Lax`. `Secure` is auto-detected from the
-request scheme by `@supabase/ssr` (set on https, omitted on
-http://localhost). No `Domain=` attribute means the cookie is
-host-only on the apps/web frontend domain. `HttpOnly` is impossible
-because apps/web is a SPA writing the cookie from JS — same exposure
-surface as the prior `localStorage` path.
+factory: `Path=/`, `SameSite=Lax`, `Secure` set explicitly to
+`window.location.protocol === "https:"` (set on https, omitted on
+http://localhost). `@supabase/ssr` 0.10.x does **not** auto-detect
+`Secure` — its `DEFAULT_COOKIE_OPTIONS` ship `path` / `sameSite` /
+`httpOnly` / `maxAge` only — so the factory passes `secure`
+explicitly via `cookieOptions`. Do not remove the explicit flag
+under the assumption the package handles it; auth cookies would
+ship without `Secure` on production HTTPS. No `Domain=` attribute
+means the cookie is host-only on the apps/web frontend domain.
+`HttpOnly` is impossible because apps/web is a SPA writing the
+cookie from JS — same exposure surface as the prior `localStorage`
+path.
 
 The localStorage → cookie migration that landed in M1 phase 1.3.2
 forced a one-time re-sign-in for every previously-signed-in admin:
