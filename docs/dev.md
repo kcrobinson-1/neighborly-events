@@ -243,9 +243,25 @@ When writing a test that exercises code transitively calling
   `afterEach` to leave a clean slate — this is the pattern
   `tests/shared/auth/api.test.ts` uses
 
-Session storage today is Supabase's default browser `localStorage`
-adapter; the migration to a frontend-origin cookie via
-`@supabase/ssr` is M1 phase 1.3.2.
+Session storage uses `@supabase/ssr`'s frontend-origin cookie
+adapter via
+[`shared/db/client.ts`](../shared/db/client.ts)'s
+`createBrowserSupabaseClient`. The cookie is named
+`sb-<project-ref>-auth-token` (chunked into `.0`/`.1` siblings when
+the JWT exceeds the per-cookie size limit). Attributes pinned in the
+factory: `Path=/`, `SameSite=Lax`. `Secure` is auto-detected from the
+request scheme by `@supabase/ssr` (set on https, omitted on
+http://localhost). No `Domain=` attribute means the cookie is
+host-only on the apps/web frontend domain. `HttpOnly` is impossible
+because apps/web is a SPA writing the cookie from JS — same exposure
+surface as the prior `localStorage` path.
+
+The localStorage → cookie migration that landed in M1 phase 1.3.2
+forced a one-time re-sign-in for every previously-signed-in admin:
+the prior session's token in `localStorage` is unreadable to
+`@supabase/ssr`'s cookie adapter and is not migrated by a shim. The
+in-place magic-link shell at `/admin` and `/event/:slug/admin`
+handles re-sign-in cleanly.
 
 ### Reducer-based game session
 
@@ -745,34 +761,47 @@ Most-specific rules must come first. The bare-path operator carve-outs
 fallback are explicitly transitional. M2 plan authors are responsible
 for narrowing them as routes migrate.
 
-### Cookie-boundary verification (deferred to M1 phase 1.3.2)
+### Cookie-boundary verification
 
-The cross-app cookie-boundary verification originally scoped to M0
-phase 0.3 was **deferred to M1 phase 1.3.2** when implementation
-surfaced a planning-time bug: the `neighborly_session` cookie set by
-`issue-session` lives on the Supabase Edge Function origin
+M0 phase 0.3 stood up the apps/site Vercel project with a
+proxy-rewrite from apps/web's frontend domain. Verifying that
+cookies set on apps/web's origin are visible to apps/site through
+the rewrite was originally scoped to phase 0.3 but **deferred to M1
+phase 1.3.2** when implementation surfaced a planning-time bug: the
+`neighborly_session` cookie phase 0.3 chose for the gate is set by
+`issue-session` on the Supabase Edge Function origin
 (`*.supabase.co`), not on the apps/web frontend domain, so it is
 never readable by Next.js `cookies()` in apps/site routes regardless
 of the rewrite topology. See
 [`docs/plans/site-scaffold-and-routing.md`](./plans/site-scaffold-and-routing.md)
 "Verification Evidence" for the full analysis.
 
-M1 phase 1.3.2 introduces a Supabase Auth cookie adapter via
-`@supabase/ssr` that sets a real frontend-origin cookie. The
-verification procedure (game/sign-in session set on apps/web →
-navigate to a apps/site route → confirm Next.js `cookies()` reads
-the cookie via the proxy-rewrite) is updated in that subphase to
-point at the new auth cookie name and runs as a pre-Landed gate for
-1.3.2 (subphase 1.3.1 is the behavior-preserving extraction and has
-no cookie dependency). See
-[`docs/plans/shared-auth-foundation.md`](./plans/shared-auth-foundation.md).
+M1 phase 1.3.2 introduced `@supabase/ssr`'s frontend-origin cookie
+adapter (cookie name `sb-<project-ref>-auth-token`, see "Supabase
+Auth surface" above). apps/site's placeholder at `/event/:slug`
+reads the cookie via Next.js `cookies()` and renders a presence-only
+readout (`Auth cookie: present` / `Auth cookie: not present`) — it
+never echoes the cookie value.
 
-Until M1 phase 1.3.2 lands, the apps/site placeholder at
-`/event/:slug` displays a deferral notice rather than a meaningful
-readout. Do not
-use the placeholder to "verify" the cookie boundary in the
-meantime — the answer is structurally `NO` until M1 phase 1.3
-introduces the right cookie.
+To re-verify the boundary on the production domain at any time:
+
+1. Open the production apps/web frontend domain and sign in via the
+   admin shell at `/admin` (or `/event/:slug/admin` for any event
+   the admin authors). Complete the magic-link round-trip.
+2. In browser DevTools → Application → Cookies, confirm a cookie
+   named `sb-<project-ref>-auth-token` (or chunked siblings
+   `.0`/`.1`) is present on the apps/web frontend origin with
+   `Path=/` and `SameSite=Lax`.
+3. In the same browser session, navigate to `/event/<any-slug>` —
+   any slug works because the placeholder is a fallback for any
+   `[slug]`. The proxy-rewrite forwards to apps/site.
+4. Confirm the placeholder reads `Auth cookie: present`. A `not
+   present` readout means either the cookie was not set on the
+   right origin in step 2 or the proxy-rewrite is not forwarding
+   cookies — either case fails the gate.
+
+The placeholder is intentionally fail-closed: missing cookie ⇒
+loud `not present` rather than a vacuous pass.
 
 ## Release Flow
 
