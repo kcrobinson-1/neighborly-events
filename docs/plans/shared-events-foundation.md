@@ -348,9 +348,13 @@ relitigate them.
    `_resetSharedEventsForTests` in `afterEach`. Add focused
    coverage for the moved read surface in
    `tests/shared/events/published.test.ts`.
-10. **Run focused validation.** `npm test -- shared/events`,
-    `npm test -- gameContentApi`, `npm test -- adminGameApi`.
-    All must pass.
+10. **Run focused validation.** `npm test -- tests/shared/events/published.test.ts`
+    and `npm test -- tests/shared/events/admin.test.ts`. Both files
+    are guaranteed to exist post-move; targeting them by path avoids
+    a zero-match failure if the now-trimmed
+    `tests/web/lib/adminGameApi.test.ts` is deleted entirely (allowed
+    by "Files to touch — modify"). Any apps/web binding-module tests
+    that remain are exercised by the full `npm test` run in step 12.
 11. **Documentation update.** Update
     [`docs/architecture.md`](../architecture.md), the parent
     epic's milestone-status row if it should change (M1 stays

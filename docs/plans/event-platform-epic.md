@@ -370,8 +370,9 @@ homes of the code being moved:
   and `DraftEventStatusSnapshot` types
 
 `GameRoutePage` is a consumer of `loadPublishedGameBySlug`, not an owner;
-no extraction work happens there beyond updating the import path. The
-`featuredGameSlug` and prototype-fallback usages of
+no extraction work happens there. It keeps importing from
+`apps/web/src/lib/gameContentApi.ts` per the binding-module pattern.
+The `featuredGameSlug` and prototype-fallback usages of
 `shared/game-config/sample-fixtures.ts` stay where they are — those are
 fixture concerns, not event-domain logic.
 
