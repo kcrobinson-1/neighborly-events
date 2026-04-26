@@ -278,6 +278,26 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   proxy-rewrite — apps/site's placeholder at `/event/:slug` reads it
   via Next.js `cookies()` and renders a presence-only readout for
   verification.
+- `shared/events/`
+  Env-agnostic event-domain surface shared across `apps/web` and later
+  `apps/site` consumers. Owns published event reads
+  (`loadPublishedGameBySlug`, `listPublishedGameSummaries`), admin
+  status/draft reads, authenticated authoring writes, and the
+  projection types those flows return. It reads Supabase config, the
+  typed browser client, the missing-config copy, and the featured
+  published-event sort key through `configureSharedEvents(...)`.
+  apps/web registers those providers from
+  [`apps/web/src/lib/setupEvents.ts`](../apps/web/src/lib/setupEvents.ts),
+  imported for side-effect by `apps/web/src/main.tsx`. The apps/web
+  adapters at
+  [`apps/web/src/lib/gameContentApi.ts`](../apps/web/src/lib/gameContentApi.ts)
+  and
+  [`apps/web/src/lib/adminGameApi.ts`](../apps/web/src/lib/adminGameApi.ts)
+  preserve stable app import paths; `gameContentApi.ts` owns only the
+  Vite-only prototype fixture fallback before delegating remote reads,
+  and `adminGameApi.ts` is a pure re-export shim. `shared/events/`
+  never reads `import.meta.env.*` or `process.env.*`, does not access
+  `window`, holds no Supabase singleton, and imports no apps/web code.
 
 Together they contain:
 
