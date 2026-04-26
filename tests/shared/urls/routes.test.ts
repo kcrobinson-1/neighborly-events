@@ -5,7 +5,7 @@ import {
   matchEventRedemptionsPath,
   matchGamePath,
   routes,
-} from "../../apps/web/src/routes";
+} from "../../../shared/urls";
 
 describe("admin event routes", () => {
   it("builds and parses one selected admin event path", () => {

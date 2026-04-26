@@ -7,7 +7,7 @@ import {
   useState,
 } from "react";
 import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
-import type { AuthNextPath, MagicLinkState } from "../auth/types";
+import type { MagicLinkState } from "../auth/types";
 import { useAuthSession } from "../auth/useAuthSession";
 import { requestMagicLink } from "../lib/authApi";
 import {
@@ -31,7 +31,7 @@ import {
 import { useRedemptionsFilters } from "../redemptions/useRedemptionsFilters";
 import { useReverseRedemption } from "../redemptions/useReverseRedemption";
 import type { RedemptionRow as RedemptionRowType } from "../redemptions/types";
-import { routes } from "../routes";
+import { routes, type AuthNextPath } from "../../../../shared/urls";
 
 const DEFAULT_DETAIL_REFRESH_ERROR =
   "We couldn't refresh this redemption.";

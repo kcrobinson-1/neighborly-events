@@ -8,7 +8,7 @@ import { GameIntroPanel } from "../game/components/GameIntroPanel";
 import { useGameSession } from "../game/useGameSession";
 import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
-import { routes } from "../routes";
+import { routes } from "../../../../shared/urls";
 
 /** Props for the top-level game route. */
 type GamePageProps = {

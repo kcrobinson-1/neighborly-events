@@ -1,5 +1,5 @@
 import { featuredGameSlug } from "../data/games";
-import { routes } from "../routes";
+import { routes } from "../../../../shared/urls";
 
 /** Props for the not-found fallback route. */
 type NotFoundPageProps = {

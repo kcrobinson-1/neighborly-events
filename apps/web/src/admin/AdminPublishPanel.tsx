@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { DraftEventDetail } from "../lib/adminGameApi";
-import { routes } from "../routes";
+import { routes } from "../../../../shared/urls";
 import { computePublishChecklist, isPublishReady } from "./publishChecklist";
 import type { AdminPublishState, AdminUnpublishState } from "./useAdminDashboard";
 

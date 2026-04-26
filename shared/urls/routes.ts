@@ -3,10 +3,24 @@ export type AppPath =
   | "/"
   | "/admin"
   | `/admin/events/${string}`
+  | `/event/${string}`
+  | `/event/${string}/admin`
   | `/event/${string}/game`
   | `/event/${string}/redeem`
   | `/event/${string}/redemptions`
   | "/auth/callback";
+
+/**
+ * A subset of `AppPath` that is valid as a post-sign-in destination.
+ * Transport-only routes like `/auth/callback` are excluded so the type
+ * system prevents callback self-loops in `requestMagicLink` and
+ * `validateNextPath`.
+ *
+ * Each phase that adds a new authenticated destination must extend
+ * `AppPath` (for the router) and leave `AuthNextPath` unchanged; the
+ * `Exclude` keeps the narrowing automatic.
+ */
+export type AuthNextPath = Exclude<AppPath, "/auth/callback">;
 
 /** Central route definitions used by the pathname-based client router. */
 export const routes = {
@@ -16,6 +30,10 @@ export const routes = {
   adminEvent: (eventId: string): AppPath =>
     `/admin/events/${encodeURIComponent(eventId)}`,
   gamePrefix: "/event",
+  eventLanding: (slug: string): AppPath =>
+    `/event/${encodeURIComponent(slug)}`,
+  eventAdmin: (slug: string): AppPath =>
+    `/event/${encodeURIComponent(slug)}/admin`,
   game: (slug: string): AppPath =>
     `/event/${encodeURIComponent(slug)}/game`,
   eventRedeem: (slug: string): AppPath =>

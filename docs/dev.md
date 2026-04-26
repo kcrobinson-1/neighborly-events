@@ -183,6 +183,32 @@ to consolidate byte-identical hand-written duplicates as a single
 derived type in `shared/db/`; current example:
 `EventCodeLookupRow`.
 
+### Route table and post-auth `next=` validation
+
+Every cross-app URL family is built through `shared/urls/`. The
+`routes` object exposes one builder or constant per family
+(`home`, `admin`, `adminEvent(id)`, `eventLanding(slug)`,
+`eventAdmin(slug)`, `game(slug)`, `eventRedeem(slug)`,
+`eventRedemptions(slug)`, `authCallback`); each builder returns an
+`AppPath` literal so navigation calls type-check at the call site.
+Per-app code never composes route strings inline — the only
+hardcoded URL strings that remain in the repo are in the
+[`tests/e2e/`](../tests/e2e) Playwright fixtures, where the literal
+expresses the contract under test.
+
+The same module owns `validateNextPath`, the open-redirect defense
+for the raw `next` query parameter received at `/auth/callback`. It
+is **browser-only**: the same-origin check reads
+`window.location.origin`, which is unavailable in Next.js server
+components and RSC contexts. Server-side `next` validation lands as
+a separate seam if and when M2 phase 2.3's `/auth/callback`
+migration to apps/site needs it.
+
+The `eventLanding` and `eventAdmin` builder entries are present for
+forward-compatibility with M2 phase 2.2 and M3; their pathname
+matchers and their `validateNextPath` allow-list entries land with
+the consumers in the phases that mount those routes.
+
 ### Reducer-based game session
 
 The game flow is modeled as a reducer-backed session rather than scattered component state.

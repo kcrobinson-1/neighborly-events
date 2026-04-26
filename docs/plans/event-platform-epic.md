@@ -274,11 +274,27 @@ only; subphase 1.1.2 generates the canonical Supabase TypeScript types
 and threads them through the existing call sites.
 
 **Phase 1.2 — `shared/urls/`.**
-Extract URL builders for every cross-app route family
-(`urls.eventLanding(slug)`, `urls.game(slug)`, `urls.gameRedeem(slug)`,
-`urls.gameRedemptions(slug)`, `urls.eventAdmin(slug)`,
-`urls.platformAdmin()`, `urls.authCallback()`) and `validateNextPath`. All
-hardcoded URL strings in `apps/web` migrated. One PR.
+**Status:** Landed. **Plan:** [`shared-urls-foundation.md`](./shared-urls-foundation.md).
+Extract the route table, route matchers, and post-auth `next=`
+validation into `shared/urls/`. The exported builder object is named
+`routes` (the `urls.*` shorthand in earlier drafts of this paragraph
+was illustrative, not a contract). The phase ships builder entries
+for `routes.home`, `routes.admin`, `routes.adminEvent(id)`,
+`routes.eventLanding(slug)`, `routes.eventAdmin(slug)`,
+`routes.game(slug)`, `routes.eventRedeem(slug)`,
+`routes.eventRedemptions(slug)`, and `routes.authCallback`, plus the
+matchers and `normalizePathname` consumed by the apps/web router and
+by `validateNextPath`. The operator-route builders keep their
+today-shape names (`eventRedeem`/`eventRedemptions`) and today-shape
+URLs in this phase; the rename to `gameRedeem`/`gameRedemptions`
+lands with the URL change in M2 phase 2.5 so builder name and URL
+stay aligned at every gate. The `eventLanding` and `eventAdmin`
+builder entries are present for forward-compatibility; their
+matchers and `validateNextPath` allow-list entries land with their
+consumers (M3 for `eventLanding`, M2 phase 2.2 for `eventAdmin`).
+All hardcoded URL strings in `apps/web` source migrated; the e2e
+Playwright fixtures retain their literal URL strings as test data
+expressing the contract under test. One PR.
 
 **Phase 1.3 — `shared/auth/`.**
 Extract Supabase Auth client wiring, session restore and subscribe

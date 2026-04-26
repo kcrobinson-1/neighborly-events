@@ -21,7 +21,7 @@ vi.mock("../../../apps/web/src/lib/authApi.ts", () => ({
 }));
 
 import { AuthCallbackPage } from "../../../apps/web/src/auth/AuthCallbackPage";
-import { routes } from "../../../apps/web/src/routes";
+import { routes } from "../../../shared/urls";
 
 const TEST_ORIGIN = "https://example.test";
 

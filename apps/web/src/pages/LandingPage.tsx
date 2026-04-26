@@ -4,7 +4,7 @@ import {
   listPublishedGameSummaries,
   type PublishedGameSummary,
 } from "../lib/gameContentApi";
-import { routes } from "../routes";
+import { routes } from "../../../../shared/urls";
 
 /** Props for the landing page route. */
 type LandingPageProps = {

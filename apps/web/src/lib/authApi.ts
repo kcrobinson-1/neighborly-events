@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import type { AuthNextPath } from "../auth/types";
+import { routes, type AuthNextPath } from "../../../../shared/urls";
 import { getBrowserSupabaseClient } from "./supabaseBrowser";
 
 /**
@@ -41,7 +41,7 @@ export async function requestMagicLink(
   options: { next: AuthNextPath },
 ): Promise<void> {
   const emailRedirectTo = new URL(
-    `/auth/callback?next=${encodeURIComponent(options.next)}`,
+    `${routes.authCallback}?next=${encodeURIComponent(options.next)}`,
     window.location.origin,
   ).toString();
 

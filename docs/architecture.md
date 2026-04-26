@@ -217,6 +217,29 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   `shared/game-config/db-content.ts` remain authoritative for the
   published-content surface during this phase; aligning them with
   the generated `Database` type is out of scope for M1 phase 1.1.
+- `shared/urls/`
+  Canonical route table, route matchers, and post-auth `next=`
+  validation shared across `apps/web` and (later) `apps/site`. Owns
+  the `AppPath` literal-union type, the `routes` builder object
+  (`home`, `admin`, `adminEvent(id)`, `eventLanding(slug)`,
+  `eventAdmin(slug)`, `game(slug)`, `eventRedeem(slug)`,
+  `eventRedemptions(slug)`, `authCallback`), the four pathname
+  matchers consumed by the apps/web router and by `validateNextPath`
+  (`matchAdminEventPath`, `matchGamePath`, `matchEventRedeemPath`,
+  `matchEventRedemptionsPath`) plus the `normalizePathname` helper,
+  the `AuthNextPath` type that excludes the transport-only callback
+  route, and `validateNextPath` itself — the open-redirect defense
+  for the raw `next` query parameter received at `/auth/callback`.
+  The `eventLanding` and `eventAdmin` builder entries are present
+  for forward-compatibility with M2 phase 2.2 and M3; their matchers
+  and `validateNextPath` allow-list entries land with the consumers.
+  `validateNextPath` reads `window.location.origin` and is therefore
+  browser-only — server-side `next` validation (when M2 phase 2.3
+  migrates `/auth/callback` to apps/site) is a separate seam not
+  implemented in this module. Per-app code never composes route
+  strings inline; the single remaining hardcoded URL family lives in
+  the e2e Playwright fixtures, where the literal expresses the
+  contract being tested.
 
 Together they contain:
 

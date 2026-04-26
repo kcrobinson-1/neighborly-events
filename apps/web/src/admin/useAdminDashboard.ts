@@ -13,7 +13,7 @@ import {
   type SaveDraftEventResult,
   type DraftEventSummary,
 } from "../lib/adminGameApi";
-import { routes } from "../routes";
+import { routes } from "../../../../shared/urls";
 import {
   createDuplicatedDraftContent,
   createStarterDraftContent,

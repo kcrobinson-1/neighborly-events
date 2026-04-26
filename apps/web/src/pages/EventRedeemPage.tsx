@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
-import type { AuthNextPath, MagicLinkState } from "../auth/types";
+import type { MagicLinkState } from "../auth/types";
 import { useAuthSession } from "../auth/useAuthSession";
 import { requestMagicLink } from "../lib/authApi";
 import {
@@ -17,7 +17,7 @@ import { RedeemKeypad } from "../redeem/RedeemKeypad";
 import { RedeemResultCard } from "../redeem/RedeemResultCard";
 import { useRedeemSubmit } from "../redeem/useRedeemSubmit";
 import { useRedeemKeypadState } from "../redeem/useRedeemKeypadState";
-import { routes } from "../routes";
+import { routes, type AuthNextPath } from "../../../../shared/urls";
 
 type EventRedeemPageProps = {
   onNavigate: (path: string) => void;
