@@ -329,22 +329,24 @@ Verify the cookie boundary against production via Tier 5 production
 smoke (two-phase Plan-to-Landed per
 [`docs/testing-tiers.md`](../testing-tiers.md)).
 
-**Inherited from M0 phase 0.3 (subphase 1.3.2 only):** owns the
-cross-app cookie-boundary verification deferred from
-[`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md). Phase
-0.3's chosen verification cookie (the `neighborly_session` cookie set
-by `issue-session`) lives on the Supabase Edge Function origin
-(`*.supabase.co`), not the apps/web frontend domain, so the gate could
-not pass against the existing code. Subphase 1.3.2 introduces the
-`@supabase/ssr` cookie adapter that sets a real frontend-origin
-cookie; the verification procedure (game/sign-in session set on
-apps/web → navigate to a apps/site route → confirm Next.js `cookies()`
-reads the cookie via the proxy-rewrite) must run against that real
-frontend-origin auth cookie before subphase 1.3.2 flips Landed. The
-procedure documented in `docs/dev.md` is updated in 1.3.2 to point at
-the new auth cookie name. The apps/site placeholder's deferral notice
-(added when M0 flipped Landed) is replaced with the presence-check
-readout in 1.3.2.
+**Inherited from M0 phase 0.3 (subphase 1.3.2): satisfied.** The
+cross-app cookie-boundary verification gate originally scoped to
+[`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md)
+was deferred when implementation surfaced that phase 0.3's chosen
+`neighborly_session` cookie lives on the Supabase Edge Function
+origin, not the apps/web frontend domain. Subphase 1.3.2 introduced
+the `@supabase/ssr` cookie adapter that sets a real frontend-origin
+cookie; the post-deploy production admin smoke run on
+[`5af99f4`](https://github.com/kcrobinson-1/neighborly-events/commit/5af99f4)
+([run 24949203798](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24949203798))
+exercised the magic-link auth round-trip end-to-end on the
+production origin and passed, verifying the cookie path. See
+[`shared-auth-foundation.md`](./shared-auth-foundation.md)
+"Verification Evidence" for the full record. The apps/site
+placeholder's deferral notice (added when M0 flipped Landed) was
+replaced with the presence-check readout in 1.3.2; the
+`docs/dev.md` cookie-boundary verification procedure documents the
+on-demand re-run path against any production origin.
 
 **Phase 1.4 — `shared/events/`.**
 Extract event lookup by slug, event status helpers, slug validation, and

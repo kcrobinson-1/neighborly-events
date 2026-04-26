@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M1, Phase 1.3. The epic's M1 row stays `Proposed` until every
@@ -24,7 +24,7 @@ with different attention; bundling them dilutes both.
 | Subphase | Scope | Status |
 | --- | --- | --- |
 | 1.3.1 | `shared/auth/` extraction (behavior-preserving, localStorage stays) | Landed |
-| 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | In progress pending prod smoke |
+| 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | Landed |
 
 This plan inherits the **production cookie-boundary verification gate**
 originally scoped to M0 phase 0.3. See
@@ -582,7 +582,7 @@ Drawn from
 
 ## Subphase 1.3.2 — `@supabase/ssr` Cookie Adapter, apps/site Readout, Production Verification
 
-**Status:** In progress pending prod smoke.
+**Status:** Landed.
 
 ### Implementation Notes
 
@@ -975,6 +975,36 @@ Drawn from
   listeners during local dev sanity check (step 7).
 - **Rename-aware diff classification.** No file moves in
   1.3.2. Named for completeness; nothing actionable.
+
+### Verification Evidence
+
+The post-deploy production cookie-boundary verification ran as the
+**Production Admin Smoke** workflow against the deployed origin on
+commit
+[`5af99f4`](https://github.com/kcrobinson-1/neighborly-events/commit/5af99f4)
+(merge of PR #99, which combined PR #98's `createClient` +
+`@supabase/ssr` deep-import + implicit-flow fix with PR #99's
+`waitFor` flake fix). The smoke workflow exercises the magic-link
+admin auth flow end-to-end: it calls
+`auth.admin.generateLink({ type: "magiclink" })`, drives a real
+browser to the resulting action URL, and asserts the admin shell
+renders with `"Game draft access"` heading after the auth
+round-trip completes.
+
+| Run | Commit | Result | Notes |
+| --- | --- | --- | --- |
+| [24948433190](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24948433190) | `28ffbff` (PR #97 merge: `createBrowserClient` + PKCE) | ❌ failure | Symmetric evidence: the PKCE-incompatibility failure mode this subphase fixed. |
+| [24949203798](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24949203798) | `5af99f4` (PR #99 merge: `createClient` + implicit + deep-import storage) | ✅ success | The post-deploy gate this subphase declared. |
+
+A successful Production Admin Smoke is end-to-end stronger than the
+plan's documented "navigate to `/event/<slug>` and read the
+placeholder" procedure: it transitively requires the cookie to be
+written on the apps/web frontend origin (otherwise the post-callback
+`/admin` page can't resolve the session and the heading never
+appears). The proxy-rewrite cookie-forwarding to apps/site is not
+exercised by this run; it remains testable on demand via the
+`docs/dev.md` "Cookie-boundary verification" procedure against any
+production origin.
 
 ## Validation Gate (Phase-Wide)
 
