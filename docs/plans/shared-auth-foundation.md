@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M1, Phase 1.3. The epic's M1 row stays `Proposed` until every
@@ -24,7 +24,7 @@ with different attention; bundling them dilutes both.
 | Subphase | Scope | Status |
 | --- | --- | --- |
 | 1.3.1 | `shared/auth/` extraction (behavior-preserving, localStorage stays) | Landed |
-| 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | In progress pending prod smoke |
+| 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | Landed |
 
 This plan inherits the **production cookie-boundary verification gate**
 originally scoped to M0 phase 0.3. See
@@ -582,7 +582,7 @@ Drawn from
 
 ## Subphase 1.3.2 — `@supabase/ssr` Cookie Adapter, apps/site Readout, Production Verification
 
-**Status:** In progress pending prod smoke.
+**Status:** Landed.
 
 ### Implementation Notes
 
@@ -975,6 +975,53 @@ Drawn from
   listeners during local dev sanity check (step 7).
 - **Rename-aware diff classification.** No file moves in
   1.3.2. Named for completeness; nothing actionable.
+
+### Verification Evidence
+
+The inherited M0 phase 0.3 cookie-boundary gate is satisfied in two
+parts, both run against the production deployment of commit
+[`5af99f4`](https://github.com/kcrobinson-1/neighborly-events/commit/5af99f4)
+(PR #99 merge — combining PR #98's `createClient` + `@supabase/ssr`
+deep-import + implicit-flow fix with PR #99's `waitFor` flake fix).
+Per the plan's invariant, both the cookie-write half (apps/web
+origin) and the cookie-read half (apps/site through Vercel's
+proxy-rewrite) had to verify before subphase 1.3.2 could flip
+`Landed`.
+
+**Cookie-write half — Production Admin Smoke workflow (automated).**
+The smoke workflow exercises the magic-link admin auth flow
+end-to-end against the deployed origin: it calls
+`auth.admin.generateLink({ type: "magiclink" })`, drives a real
+browser to the resulting action URL, and asserts the admin shell
+renders with the `"Game draft access"` heading after the auth
+round-trip. A passing run requires the auth cookie to be written on
+the apps/web frontend origin and resolved by `/admin`'s session
+read.
+
+| Run | Commit | Result | Notes |
+| --- | --- | --- | --- |
+| [24948433190](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24948433190) | `28ffbff` (PR #97 merge: `createBrowserClient` + PKCE) | ❌ failure | Symmetric evidence — the PKCE-incompatibility failure mode this subphase fixed. |
+| [24949203798](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24949203798) | `5af99f4` (PR #99 merge: `createClient` + implicit + deep-import storage) | ✅ success | The cookie-write half of the cross-app gate. |
+
+**Cookie-read half — manual cross-app verification.** The automated
+smoke does not exercise the apps/web → apps/site proxy-rewrite cookie
+forwarding (it stays on apps/web's `/admin`). The plan's gate
+specifically requires the cross-app path because M0 phase 0.3's
+original failure mode was a cookie that worked on one origin but not
+through the proxy. Per the procedure documented in
+[`docs/dev.md`](../dev.md) "Cookie-boundary verification," the
+following manual run on `5af99f4` covers it:
+
+| Step | Observation |
+| --- | --- |
+| Sign in via apps/web `/admin` (production custom domain `neighborly-scavenger-game-web.vercel.app`) | Magic-link round-trip completed; admin shell rendered with `"Game draft access"`. |
+| DevTools → Application → Cookies (apps/web origin) | Cookie `sb-hekluyblchppujdctodc-auth-token` present. Path `/`. SameSite `Lax`. Secure ✓. HttpOnly unset (expected — SPA-set). Domain host-only on `neighborly-scavenger-game-web.vercel.app`. Size 2992 (single unchunked cookie; chunking via `.0`/`.1` siblings remains available if a future JWT exceeds the per-cookie limit). Expires 2027-05-31 (~400 days, matching `@supabase/ssr`'s `DEFAULT_COOKIE_OPTIONS.maxAge`). |
+| Same browser session → navigate to `/event/sponsor-spotlight` | apps/site placeholder rendered (proxy-rewrite forwarded the request). |
+| Read placeholder readout | `Auth cookie:` **`present`** — the apps/site Next.js `cookies()` saw `sb-hekluyblchppujdctodc-auth-token` through the proxy-rewrite. |
+
+The manual run is reproducible from any production origin via the
+`docs/dev.md` procedure; it does not require this plan's evidence to
+be re-captured for routine re-verification.
 
 ## Validation Gate (Phase-Wide)
 
