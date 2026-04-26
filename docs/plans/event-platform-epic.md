@@ -394,10 +394,14 @@ warrants — for example `tests/shared/events/admin.test.ts` for the
 admin write surface and `tests/shared/events/published.test.ts` for the
 public read surface). Whatever stays in `apps/web/src/lib/` keeps a
 correspondingly-trimmed test file or the file is removed if nothing
-remains. `vitest.config.ts` is widened to include `tests/shared/events/**`
-following the same precedent as phase 1.2's widening for
-`tests/shared/urls/`. `apps/web` call sites migrated to import from
-`shared/events/`. Behavior preserving. One PR.
+remains. The existing `vitest.config.ts` include glob
+(`tests/**/*.test.{ts,tsx}`) already covers `tests/shared/events/`, so
+no config change is required. `apps/web` call sites keep their
+existing import paths; `apps/web/src/lib/gameContentApi.ts` and
+`apps/web/src/lib/adminGameApi.ts` become thin binding modules that
+delegate to `shared/events/`, following the
+`apps/web/src/lib/authApi.ts` precedent from phase 1.3.1. Behavior
+preserving. One PR.
 
 **Phase 1.5 — `shared/styles/` and theme groundwork.**
 Two subphases.
