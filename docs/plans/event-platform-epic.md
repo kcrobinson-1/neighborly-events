@@ -353,10 +353,56 @@ replaced with the presence-check readout in 1.3.2; the
 on-demand re-run path against any production origin.
 
 **Phase 1.4 — `shared/events/`.**
-Extract event lookup by slug, event status helpers, slug validation, and
-publish-window logic. Currently scattered across `gameApi.ts`,
-`adminGameApi.ts`, and the `GameRoutePage` route loader. `apps/web` migrated.
-One PR.
+**Plan:** [`shared-events-foundation.md`](./shared-events-foundation.md).
+Extract event-domain operations into `shared/events/` so both apps consume
+the same event-scoped reads, writes, and projections. The actual current
+homes of the code being moved:
+
+- read-side projections from `apps/web/src/lib/gameContentApi.ts`:
+  `loadPublishedGameBySlug`, `listPublishedGameSummaries`, and the
+  associated `PublishedGameSummary` type
+- admin reads and writes from `apps/web/src/lib/adminGameApi.ts`:
+  `getGameAdminStatus`, `listDraftEventSummaries`, `loadDraftEvent`,
+  `loadDraftEventStatus`, `saveDraftEvent`, `generateEventCode`,
+  `publishDraftEvent`, `unpublishEvent`, plus the related
+  `AdminEventStatus`, `DraftEventSummary`, `DraftEventDetail`,
+  `PublishDraftResult`, `UnpublishEventResult`, `SaveDraftEventResult`,
+  and `DraftEventStatusSnapshot` types
+
+`GameRoutePage` is a consumer of `loadPublishedGameBySlug`, not an owner;
+no extraction work happens there. It keeps importing from
+`apps/web/src/lib/gameContentApi.ts` per the binding-module pattern.
+The `featuredGameSlug` and prototype-fallback usages of
+`shared/game-config/sample-fixtures.ts` stay where they are — those are
+fixture concerns, not event-domain logic.
+
+What is **not** extracted in this phase, because the code does not exist
+today:
+
+- slug-format validation (no `validateSlug` / `isValidSlug` exists in
+  `apps/web/src` or `shared/`; format is enforced by convention and the
+  DB column's uniqueness). If a future phase needs a client-side
+  validator (M3 phase 3.1 is the most likely caller), it is defined
+  there with a real consumer to shape the contract.
+- publish-window logic (no scheduled-publish or expiry feature exists in
+  code; the only "is published" gate is `published_at IS NOT NULL` on
+  PostgREST reads). Scheduled-publish remains post-epic.
+
+Test layout follows the code: the portions of
+`tests/web/lib/adminGameApi.test.ts` covering moved reads and writes
+relocate to `tests/shared/events/` (split into focused files as the diff
+warrants — for example `tests/shared/events/admin.test.ts` for the
+admin write surface and `tests/shared/events/published.test.ts` for the
+public read surface). Whatever stays in `apps/web/src/lib/` keeps a
+correspondingly-trimmed test file or the file is removed if nothing
+remains. The existing `vitest.config.ts` include glob
+(`tests/**/*.test.{ts,tsx}`) already covers `tests/shared/events/`, so
+no config change is required. `apps/web` call sites keep their
+existing import paths; `apps/web/src/lib/gameContentApi.ts` and
+`apps/web/src/lib/adminGameApi.ts` become thin binding modules that
+delegate to `shared/events/`, following the
+`apps/web/src/lib/authApi.ts` precedent from phase 1.3.1. Behavior
+preserving. One PR.
 
 **Phase 1.5 — `shared/styles/` and theme groundwork.**
 Two subphases.
@@ -451,7 +497,10 @@ as one section of the landing page, event creation form, publish/unpublish
 controls, and any other platform-level controls currently exposed under
 apps/web's `/admin`. Built in the chosen Next.js or Remix conventions
 (server/client component split or loader/action model), consuming
-`shared/auth/` for authentication and `shared/db/` for event data. Renders
+`shared/auth/` for authentication, `shared/events/` for event-domain
+reads and lifecycle writes (event list, create, publish, unpublish,
+status), and `shared/db/` for the underlying Supabase client and
+generated types. Renders
 against neutral `:root` defaults. Vercel routing updated to send `/admin*`
 to apps/site. The apps/web `/admin` route is removed in this phase,
 completing the platform-admin migration. Deep-editor functionality is no
