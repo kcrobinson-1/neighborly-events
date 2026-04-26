@@ -1,36 +1,25 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { configureSharedAuth } from "../../../shared/auth";
-import type { Database } from "../../../shared/db";
-import { getGameById } from "../../../shared/game-config/sample-fixtures.ts";
-
-const {
-  mockCreateSupabaseAuthHeaders,
-  mockGetBrowserSupabaseClient,
-  mockGetSupabaseConfig,
-  mockReadSupabaseErrorMessage,
-} = vi.hoisted(() => ({
-  mockCreateSupabaseAuthHeaders: vi.fn(),
-  mockGetBrowserSupabaseClient: vi.fn(),
-  mockGetSupabaseConfig: vi.fn(),
-  mockReadSupabaseErrorMessage: vi.fn(),
-}));
-
-vi.mock("../../../apps/web/src/lib/supabaseBrowser.ts", () => ({
-  createSupabaseAuthHeaders: mockCreateSupabaseAuthHeaders,
-  getBrowserSupabaseClient: mockGetBrowserSupabaseClient,
-  getSupabaseConfig: mockGetSupabaseConfig,
-  readSupabaseErrorMessage: mockReadSupabaseErrorMessage,
-}));
-
 import {
+  configureSharedAuth,
+  _resetSharedAuthForTests,
+} from "../../../shared/auth/configure.ts";
+import type { Database } from "../../../shared/db";
+import {
+  configureSharedEvents,
+  _resetSharedEventsForTests,
+} from "../../../shared/events";
+import { getGameById } from "../../../shared/game-config/sample-fixtures.ts";
+import {
+  generateEventCode,
+  getGameAdminStatus,
   listDraftEventSummaries,
   loadDraftEvent,
   loadDraftEventStatus,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
-} from "../../../apps/web/src/lib/adminGameApi.ts";
+} from "../../../shared/events";
 
 const sampleDraft = getGameById("madrona-music-2026");
 
@@ -50,6 +39,8 @@ function createJsonResponse(body: unknown, status = 200) {
 function createSupabaseClientMock(
   options: {
     draftContentRow?: unknown;
+    isAdminData?: boolean;
+    isAdminError?: { message: string } | null;
     session?: { access_token: string } | null;
     statusMaybeSingleError?: { message: string } | null;
     statusRow?: unknown;
@@ -98,6 +89,10 @@ function createSupabaseClientMock(
     },
     error: null,
   });
+  const rpc = vi.fn().mockResolvedValue({
+    data: options.isAdminData ?? true,
+    error: options.isAdminError ?? null,
+  });
 
   return {
     auth: {
@@ -107,6 +102,7 @@ function createSupabaseClientMock(
     draftMaybeSingle,
     draftSelect,
     from,
+    rpc,
     statusEq,
     statusMaybeSingle,
     statusOrder,
@@ -114,9 +110,7 @@ function createSupabaseClientMock(
   };
 }
 
-function createStatusRow(
-  overrides: Record<string, unknown> = {},
-) {
+function createStatusRow(overrides: Record<string, unknown> = {}) {
   return {
     draft_updated_at: "2026-04-08T12:00:00.000Z",
     event_code: "MMF",
@@ -130,41 +124,50 @@ function createStatusRow(
   };
 }
 
-describe("adminGameApi", () => {
+describe("shared/events admin API", () => {
+  let client: ReturnType<typeof createSupabaseClientMock>;
+
   beforeEach(() => {
     vi.unstubAllGlobals();
-    mockCreateSupabaseAuthHeaders.mockReset();
-    mockGetBrowserSupabaseClient.mockReset();
-    mockGetSupabaseConfig.mockReset();
-    mockReadSupabaseErrorMessage.mockReset();
+    client = createSupabaseClientMock();
 
-    mockGetSupabaseConfig.mockReturnValue({
-      enabled: true,
-      supabaseClientKey: "publishable-key",
-      supabaseUrl: "https://example.supabase.co",
+    configureSharedEvents({
+      getClient: () => client as unknown as SupabaseClient<Database>,
+      getConfig: () => ({
+        enabled: true,
+        supabaseClientKey: "publishable-key",
+        supabaseUrl: "https://example.supabase.co",
+      }),
+      getFeaturedGameSlug: () => sampleDraft.slug,
+      getMissingConfigMessage: () => "Missing Supabase config.",
     });
-    mockCreateSupabaseAuthHeaders.mockReturnValue({
-      apikey: "publishable-key",
-      Authorization: "Bearer publishable-key",
-    });
-    mockReadSupabaseErrorMessage.mockResolvedValue("Function failed.");
-
-    // Wire shared/auth's client-getter to the same mocked supabase client
-    // adminGameApi calls — the apps/web binding does this at startup, but
-    // tests do not import setupAuth so they configure explicitly here.
     configureSharedAuth({
-      getClient: () =>
-        mockGetBrowserSupabaseClient() as unknown as SupabaseClient<Database>,
+      getClient: () => client as unknown as SupabaseClient<Database>,
       getConfigStatus: () => ({ enabled: true }),
     });
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    _resetSharedAuthForTests();
+    _resetSharedEventsForTests();
+  });
+
+  it("checks admin access through the configured Supabase client", async () => {
+    client = createSupabaseClientMock({ isAdminData: true });
+
+    await expect(getGameAdminStatus()).resolves.toBe(true);
+    expect(client.rpc).toHaveBeenCalledWith("is_admin");
+
+    client = createSupabaseClientMock({ isAdminError: { message: "Nope" } });
+
+    await expect(getGameAdminStatus()).rejects.toThrow(
+      "We couldn't verify admin access right now.",
+    );
   });
 
   it("loads and parses one live draft event through the authenticated Supabase client", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       draftContentRow: {
         content: sampleDraft,
         created_at: "2026-04-07T12:00:00.000Z",
@@ -173,7 +176,6 @@ describe("adminGameApi", () => {
       },
       statusRow: createStatusRow(),
     });
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
 
     await expect(loadDraftEvent(sampleDraft.id)).resolves.toEqual({
       content: sampleDraft,
@@ -195,7 +197,7 @@ describe("adminGameApi", () => {
   });
 
   it("lists draft summaries from the admin status view", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       statusRows: [
         createStatusRow({
           draft_updated_at: "2026-04-11T12:00:00.000Z",
@@ -229,7 +231,6 @@ describe("adminGameApi", () => {
         }),
       ],
     });
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
 
     await expect(listDraftEventSummaries()).resolves.toEqual([
       {
@@ -270,7 +271,7 @@ describe("adminGameApi", () => {
   });
 
   it("saves drafts through the authenticated Edge Function with the user token", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       session: {
         access_token: "admin-access-token",
       },
@@ -285,7 +286,6 @@ describe("adminGameApi", () => {
         updatedAt: "2026-04-11T12:00:00.000Z",
       }),
     );
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(saveDraftEvent(sampleDraft)).resolves.toEqual({
@@ -312,8 +312,33 @@ describe("adminGameApi", () => {
     });
   });
 
+  it("generates event codes through the dedicated authoring function", async () => {
+    client = createSupabaseClientMock({
+      session: {
+        access_token: "admin-access-token",
+      },
+    });
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({
+        eventCode: "ABC",
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(generateEventCode()).resolves.toBe("ABC");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.supabase.co/functions/v1/generate-event-code",
+      expect.objectContaining({
+        body: JSON.stringify({}),
+        credentials: "include",
+        method: "POST",
+      }),
+    );
+  });
+
   it("publishes and unpublishes through the dedicated authoring functions", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       session: {
         access_token: "admin-access-token",
       },
@@ -334,7 +359,6 @@ describe("adminGameApi", () => {
           unpublishedAt: "2026-04-11T12:05:00.000Z",
         }),
       );
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(publishDraftEvent(sampleDraft.id)).resolves.toEqual({
@@ -359,11 +383,10 @@ describe("adminGameApi", () => {
   });
 
   it("fails authoring function calls when no admin session is present", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       session: null,
     });
     const fetchMock = vi.fn();
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(publishDraftEvent(sampleDraft.id)).rejects.toThrow(
@@ -373,14 +396,14 @@ describe("adminGameApi", () => {
   });
 
   it("surfaces function error messages", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       session: {
         access_token: "admin-access-token",
       },
     });
-    const fetchMock = vi.fn().mockResolvedValue(createJsonResponse({ error: "Nope" }, 409));
-    mockReadSupabaseErrorMessage.mockResolvedValue("A game event already uses that slug.");
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
+    const fetchMock = vi.fn().mockResolvedValue(
+      createJsonResponse({ error: "A game event already uses that slug." }, 409),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await expect(saveDraftEvent(sampleDraft)).rejects.toThrow(
@@ -389,7 +412,7 @@ describe("adminGameApi", () => {
   });
 
   it("loads an unpublished previously-published draft with draft_only status", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       draftContentRow: {
         content: sampleDraft,
         created_at: "2026-04-07T12:00:00.000Z",
@@ -401,7 +424,6 @@ describe("adminGameApi", () => {
         status: "draft_only",
       }),
     });
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
 
     await expect(loadDraftEvent(sampleDraft.id)).resolves.toEqual({
       content: sampleDraft,
@@ -420,7 +442,7 @@ describe("adminGameApi", () => {
   });
 
   it("loads the current status tuple for one draft event", async () => {
-    const client = createSupabaseClientMock({
+    client = createSupabaseClientMock({
       statusRow: createStatusRow({
         event_id: sampleDraft.id,
         is_live: true,
@@ -428,7 +450,6 @@ describe("adminGameApi", () => {
         status: "live_with_draft_changes",
       }),
     });
-    mockGetBrowserSupabaseClient.mockReturnValue(client);
 
     await expect(loadDraftEventStatus(sampleDraft.id)).resolves.toEqual({
       isLive: true,
