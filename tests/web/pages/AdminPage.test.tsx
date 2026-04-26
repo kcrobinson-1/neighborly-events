@@ -2177,7 +2177,15 @@ describe("AdminPage", () => {
 
       const input = await screen.findByLabelText("Event code");
       fireEvent.change(input, { target: { value: "xyz" } });
-      expect((input as HTMLInputElement).value).toBe("XYZ");
+      // Wait for the controlled input's onChange-driven setState to flush
+      // before reading `.value`. A synchronous read races React's batched
+      // state update under the slower CI runner and reliably reads the
+      // pre-change value (`"ABC"`) on commits where module-load timing
+      // shifts the schedule. See the run that failed both attempts on
+      // f6c5704: AssertionError: expected 'ABC' to be 'XYZ'.
+      await waitFor(() =>
+        expect((input as HTMLInputElement).value).toBe("XYZ"),
+      );
     });
 
     it("fills the event-code field with the server-generated code when Regenerate is clicked", async () => {
