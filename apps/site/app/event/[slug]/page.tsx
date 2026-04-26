@@ -1,14 +1,25 @@
 import { cookies } from "next/headers";
 
+/**
+ * `@supabase/ssr`'s `createBrowserClient` writes the auth session as a
+ * cookie named `sb-<project-ref>-auth-token` on the apps/web frontend
+ * origin (and chunks the JWT into `auth-token.0`/`auth-token.1`/...
+ * siblings when it exceeds the per-cookie size limit). The strict
+ * pattern matches the unchunked form and any chunked sibling. No other
+ * cookie family in this repo collides with the `sb-*-auth-token` shape.
+ */
+const AUTH_COOKIE_PATTERN = /^sb-[^-]+-auth-token(\.\d+)?$/;
+
 export default async function EventPlaceholderPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  // Kept wired so M1 phase 1.3 can re-point this at the real
-  // frontend-origin auth cookie without re-introducing the import.
-  await cookies();
+  const cookieStore = await cookies();
+  const authCookiePresent = cookieStore
+    .getAll()
+    .some((cookie) => AUTH_COOKIE_PATTERN.test(cookie.name));
 
   return (
     <main>
@@ -22,13 +33,18 @@ export default async function EventPlaceholderPage({
       </p>
       <h2>Cookie-boundary verification</h2>
       <p>
-        Deferred to M1 phase 1.3. The cookie originally chosen for this
-        readout (<code>neighborly_session</code>) is set on the Supabase
-        Edge Function origin, not the apps/web frontend domain, so it is
-        structurally invisible to <code>apps/site</code> regardless of
-        the rewrite topology. See{" "}
-        <code>docs/plans/site-scaffold-and-routing.md</code> &quot;Verification
-        Evidence&quot; for the full analysis.
+        Looking for any cookie matching{" "}
+        <code>sb-&lt;project-ref&gt;-auth-token</code> (or chunked siblings
+        like <code>.0</code>, <code>.1</code>) on this origin.
+      </p>
+      <p>
+        Auth cookie:{" "}
+        <strong>{authCookiePresent ? "present" : "not present"}</strong>
+      </p>
+      <p>
+        See{" "}
+        <code>docs/plans/shared-auth-foundation.md</code> subphase 1.3.2 for
+        the full verification procedure.
       </p>
     </main>
   );

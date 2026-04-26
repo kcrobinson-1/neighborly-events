@@ -24,7 +24,7 @@ with different attention; bundling them dilutes both.
 | Subphase | Scope | Status |
 | --- | --- | --- |
 | 1.3.1 | `shared/auth/` extraction (behavior-preserving, localStorage stays) | Landed |
-| 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | Proposed |
+| 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | In progress pending prod smoke |
 
 This plan inherits the **production cookie-boundary verification gate**
 originally scoped to M0 phase 0.3. See
@@ -582,7 +582,58 @@ Drawn from
 
 ## Subphase 1.3.2 — `@supabase/ssr` Cookie Adapter, apps/site Readout, Production Verification
 
-**Status:** Proposed.
+**Status:** In progress pending prod smoke.
+
+### Implementation Notes
+
+These record where the as-built shape differs from or extends the
+contract above. The contract is otherwise honored verbatim.
+
+- **`@supabase/ssr` pinned at `0.10.0`, not `0.10.2`.** The plan
+  said the version "is picked at write-time for compatibility with
+  `@supabase/supabase-js` `^2.101.1` already in the repo." The
+  current `0.10.2` patch declares peer `@supabase/supabase-js`
+  `^2.102.1`, which would force a transitive bump of supabase-js
+  (the existing caret pin already in the repo allows it but the
+  resolved version would silently shift). `0.10.0` declares peer
+  `^2.100.1`, satisfied by the existing 2.101.1 resolution with no
+  lockfile drift. Per AGENTS.md "Versioning And Dependency
+  Discipline" — make sure resolved versions do not drift silently
+  across environments — `0.10.0` was chosen.
+- **Cookie attributes set explicitly: `path: "/"`, `sameSite: "lax"`,
+  `secure: <protocol-derived>`.** Inspection of
+  `@supabase/ssr@0.10.0`'s `DEFAULT_COOKIE_OPTIONS`
+  ([`node_modules/@supabase/ssr/dist/module/utils/constants.js`](../../node_modules/@supabase/ssr/dist/module/utils/constants.js))
+  surfaced that the package does **not** auto-detect `Secure` — its
+  defaults are `path: "/"`, `sameSite: "lax"`, `httpOnly: false`,
+  `maxAge: 400 days` only. The plan invariant called for `Secure` in
+  production. The factory therefore sets `secure` explicitly to
+  `window.location.protocol === "https:"` (with a `typeof window`
+  guard for non-browser contexts) so production https serves
+  `Secure` cookies and local http dev does not silently refuse the
+  write. `Domain=` is omitted so the cookie is host-only.
+  `HttpOnly` is impossible from JS so it is not set. The `cookies`
+  accessor parameter is left to the package default — per the
+  createBrowserClient docstring, "in most cases you should not
+  configure the `options.cookies` object, as this is automatically
+  handled for you."
+- **Auth-options block dropped.** The prior `createClient` call
+  passed `auth: { autoRefreshToken: true, detectSessionInUrl: true,
+  persistSession: true }`. `createBrowserClient` handles all three
+  internally; explicit overrides would be a no-op against the
+  package's intended behavior.
+- **e2e fixtures unchanged.** A grep for `auth-token`,
+  `localStorage`, and `persistSession` against `tests/e2e/` showed
+  the only matches are service-role fixture clients with
+  `persistSession: false` — they don't depend on the SPA's auth
+  storage shape and need no update.
+- **Stage 1 status flip recorded here.** Per the two-phase
+  Plan-to-Landed pattern, the implementing PR merges with subphase
+  1.3.2's row at `In progress pending prod smoke`. Stage 2 (a tiny
+  doc-only follow-up after the post-deploy verification run) flips
+  the row to `Landed` and the plan-level Status to `Landed`, and
+  pastes the verification evidence into a `## Verification
+  Evidence` subsection.
 
 ### Subphase goal
 
