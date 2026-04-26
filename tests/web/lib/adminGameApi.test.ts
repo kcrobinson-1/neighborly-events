@@ -1,4 +1,7 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { configureSharedAuth } from "../../../shared/auth";
+import type { Database } from "../../../shared/db";
 import { getGameById } from "../../../shared/game-config/sample-fixtures.ts";
 
 const {
@@ -145,6 +148,15 @@ describe("adminGameApi", () => {
       Authorization: "Bearer publishable-key",
     });
     mockReadSupabaseErrorMessage.mockResolvedValue("Function failed.");
+
+    // Wire shared/auth's client-getter to the same mocked supabase client
+    // adminGameApi calls — the apps/web binding does this at startup, but
+    // tests do not import setupAuth so they configure explicitly here.
+    configureSharedAuth({
+      getClient: () =>
+        mockGetBrowserSupabaseClient() as unknown as SupabaseClient<Database>,
+      getConfigStatus: () => ({ enabled: true }),
+    });
   });
 
   afterEach(() => {

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AuthCallbackPage } from "./auth/AuthCallbackPage";
+import { AuthCallbackPage } from "./auth";
 import { AdminPage } from "./pages/AdminPage";
 import { EventRedeemPage } from "./pages/EventRedeemPage";
 import { EventRedemptionsPage } from "./pages/EventRedemptionsPage";

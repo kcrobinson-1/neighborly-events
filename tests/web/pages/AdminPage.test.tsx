@@ -35,11 +35,11 @@ const {
   mockUseAuthSession: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/auth/useAuthSession.ts", () => ({
+vi.mock("../../../shared/auth/useAuthSession.ts", () => ({
   useAuthSession: mockUseAuthSession,
 }));
 
-vi.mock("../../../apps/web/src/lib/authApi.ts", () => ({
+vi.mock("../../../shared/auth/api.ts", () => ({
   requestMagicLink: mockRequestMagicLink,
   signOut: mockSignOut,
 }));

@@ -23,7 +23,7 @@ with different attention; bundling them dilutes both.
 
 | Subphase | Scope | Status |
 | --- | --- | --- |
-| 1.3.1 | `shared/auth/` extraction (behavior-preserving, localStorage stays) | Proposed |
+| 1.3.1 | `shared/auth/` extraction (behavior-preserving, localStorage stays) | Landed |
 | 1.3.2 | `@supabase/ssr` cookie adapter, apps/site presence-check readout, production cookie-boundary verification | Proposed |
 
 This plan inherits the **production cookie-boundary verification gate**
@@ -172,7 +172,67 @@ recorded here so reviewer attention does not relitigate them.
 
 ## Subphase 1.3.1 — `shared/auth/` Extraction
 
-**Status:** Proposed.
+**Status:** Landed.
+
+### Implementation Notes
+
+These record where the as-built shape differs from or extends the
+contract above. The contract is otherwise honored verbatim.
+
+- **`configureSharedAuth` lives in a dedicated startup module, not
+  inside the apps/web binding.** apps/web's `configureSharedAuth`
+  side-effect lives in
+  [`apps/web/src/lib/setupAuth.ts`](../../apps/web/src/lib/setupAuth.ts),
+  imported once for side-effect by
+  [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx). The plan's
+  Responsibility Split named eager configuration inside
+  [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+  as the recommended starting point but explicitly allowed a
+  dedicated startup module. The dedicated module was chosen because
+  the eager-inside-authApi shape made authApi.ts import
+  `getBrowserSupabaseClient` from `supabaseBrowser`, which broke
+  vitest tests that partially mock `supabaseBrowser` (mock-export
+  validation rejected the unmocked imports). With configure isolated
+  in `setupAuth.ts`, `apps/web/src/lib/authApi.ts` becomes a pure
+  re-export module with no `supabaseBrowser` import, and tests that
+  don't load `setupAuth.ts` simply don't trigger the configure side
+  effect — they either mock `shared/auth/api` directly or call
+  `configureSharedAuth` themselves with mock providers.
+- **Vitest gains `esbuild: { jsx: "automatic" }`.**
+  [`vitest.config.ts`](../../vitest.config.ts) gains an explicit
+  esbuild JSX option so `.tsx` files in `shared/auth/` transform
+  with the automatic JSX runtime, matching the `jsx: "react-jsx"`
+  setting apps/web's tsconfig already declares. apps/web's tsconfig
+  include glob covers only `shared/**/*.ts` (not `.tsx`), so
+  shared-side React components were transforming with the classic
+  runtime under vitest before this change.
+- **Test mock-path updates extend beyond the two named files.** In
+  addition to moving
+  [`tests/web/lib/authApi.test.ts`](../../tests/web/lib/) and
+  [`tests/web/auth/AuthCallbackPage.test.tsx`](../../tests/web/auth/) to
+  [`tests/shared/auth/`](../../tests/shared/auth/), four additional
+  test files were updated to point their `vi.mock` paths at the new
+  `shared/auth/` modules:
+  [`tests/web/pages/AdminPage.test.tsx`](../../tests/web/pages/AdminPage.test.tsx),
+  [`tests/web/pages/EventRedemptionsPage.test.tsx`](../../tests/web/pages/EventRedemptionsPage.test.tsx),
+  [`tests/web/pages/EventRedeemPage.test.tsx`](../../tests/web/pages/EventRedeemPage.test.tsx),
+  and
+  [`tests/web/redemptions/useReverseRedemption.test.ts`](../../tests/web/redemptions/useReverseRedemption.test.ts) —
+  each moved its mock from `apps/web/src/auth/useAuthSession.ts`
+  and/or `apps/web/src/lib/authApi.ts` to the corresponding
+  `shared/auth/` path.
+  [`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts)
+  was tightened to call `configureSharedAuth` in its `beforeEach`,
+  wiring the existing `mockGetBrowserSupabaseClient` as the shared
+  client-getter so adminGameApi's `getAccessToken` calls resolve
+  through the same mock the test already controlled. None of these
+  changes alter assertion bodies; only mock paths and one
+  setup-block addition.
+- **`shared/auth/configure.ts` exports `_resetSharedAuthForTests`.**
+  A test-only helper that clears the configured providers, used by
+  `tests/shared/auth/api.test.ts` to test the
+  "thrown-when-not-configured" guardrail. Not part of the public
+  surface; named with the `_` prefix to flag intent.
 
 ### Subphase goal
 

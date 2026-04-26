@@ -16,7 +16,7 @@ import {
   type AdminEventDetailsFormValues,
 } from "./eventDetails";
 import { prepareQuestionContentForSave } from "./questionFormMapping";
-import type { AuthSessionState } from "../auth/types";
+import type { AuthSessionState } from "../auth";
 
 // Structural subset of AdminDashboardState — only the fields useSelectedDraft
 // needs, so this file does not create a circular import with useAdminDashboard.

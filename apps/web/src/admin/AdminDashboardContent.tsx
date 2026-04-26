@@ -1,6 +1,10 @@
 import type { FormEvent } from "react";
-import type { AuthSessionState, MagicLinkState } from "../auth/types";
-import { SignInForm, type SignInFormCopy } from "../auth/SignInForm";
+import {
+  SignInForm,
+  type AuthSessionState,
+  type MagicLinkState,
+  type SignInFormCopy,
+} from "../auth";
 import type {
   AdminDashboardState,
   AdminDraftMutationState,

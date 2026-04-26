@@ -1,6 +1,5 @@
 import { type FormEvent, useEffect, useState } from "react";
-import { useAuthSession } from "../auth/useAuthSession";
-import type { MagicLinkState } from "../auth/types";
+import { useAuthSession, type MagicLinkState } from "../auth";
 import {
   requestMagicLink as requestMagicLinkAuth,
   signOut as signOutAuth,

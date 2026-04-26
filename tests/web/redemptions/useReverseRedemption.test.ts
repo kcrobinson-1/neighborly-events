@@ -6,7 +6,7 @@ const { mockGetAccessToken, mockGetSupabaseConfig } = vi.hoisted(() => ({
   mockGetSupabaseConfig: vi.fn(),
 }));
 
-vi.mock("../../../apps/web/src/lib/authApi", () => ({
+vi.mock("../../../shared/auth/api", () => ({
   getAccessToken: mockGetAccessToken,
 }));
 
