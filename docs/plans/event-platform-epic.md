@@ -336,11 +336,15 @@ was deferred when implementation surfaced that phase 0.3's chosen
 `neighborly_session` cookie lives on the Supabase Edge Function
 origin, not the apps/web frontend domain. Subphase 1.3.2 introduced
 the `@supabase/ssr` cookie adapter that sets a real frontend-origin
-cookie; the post-deploy production admin smoke run on
-[`5af99f4`](https://github.com/kcrobinson-1/neighborly-events/commit/5af99f4)
-([run 24949203798](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24949203798))
-exercised the magic-link auth round-trip end-to-end on the
-production origin and passed, verifying the cookie path. See
+cookie. The gate verified in two parts on commit
+[`5af99f4`](https://github.com/kcrobinson-1/neighborly-events/commit/5af99f4):
+the **cookie-write half** via the post-deploy Production Admin Smoke
+run ([24949203798](https://github.com/kcrobinson-1/neighborly-events/actions/runs/24949203798))
+exercising the magic-link auth round-trip on apps/web's origin, and
+the **cookie-read half** via a manual cross-app run that signed in
+on apps/web, navigated to `/event/sponsor-spotlight`, and confirmed
+apps/site's `cookies()` read the auth cookie through the
+proxy-rewrite ("Auth cookie: present"). See
 [`shared-auth-foundation.md`](./shared-auth-foundation.md)
 "Verification Evidence" for the full record. The apps/site
 placeholder's deferral notice (added when M0 flipped Landed) was
