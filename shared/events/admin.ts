@@ -2,10 +2,10 @@ import {
   parseAuthoringGameDraftContent,
   type AuthoringGameDraftContent,
 } from "../game-config";
-import type { Tables } from "../db";
 import {
   createSupabaseAuthHeaders,
   readSupabaseErrorMessage,
+  type Tables,
 } from "../db";
 import { getAccessToken } from "../auth";
 import { readSharedEventsProviders } from "./configure.ts";

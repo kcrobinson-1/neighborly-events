@@ -5,12 +5,9 @@ import {
   _resetSharedAuthForTests,
 } from "../../../shared/auth/configure.ts";
 import type { Database } from "../../../shared/db";
+import { _resetSharedEventsForTests } from "../../../shared/events/configure.ts";
 import {
   configureSharedEvents,
-  _resetSharedEventsForTests,
-} from "../../../shared/events";
-import { getGameById } from "../../../shared/game-config/sample-fixtures.ts";
-import {
   generateEventCode,
   getGameAdminStatus,
   listDraftEventSummaries,
@@ -20,6 +17,7 @@ import {
   saveDraftEvent,
   unpublishEvent,
 } from "../../../shared/events";
+import { getGameById } from "../../../shared/game-config/sample-fixtures.ts";
 
 const sampleDraft = getGameById("madrona-music-2026");
 

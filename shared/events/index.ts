@@ -9,7 +9,6 @@
 export {
   configureSharedEvents,
   readSharedEventsProviders,
-  _resetSharedEventsForTests,
   type SharedEventsProviders,
 } from "./configure.ts";
 export {

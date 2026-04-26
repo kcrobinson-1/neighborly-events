@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  configureSharedEvents,
   _resetSharedEventsForTests,
-} from "../../../shared/events";
+} from "../../../shared/events/configure.ts";
 import {
+  configureSharedEvents,
   listPublishedGameSummaries,
   loadPublishedGameBySlug,
 } from "../../../shared/events";
