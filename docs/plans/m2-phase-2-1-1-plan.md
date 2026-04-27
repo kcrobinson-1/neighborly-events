@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 **Parent phase:** [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
 Milestone M2, Phase 2.1. Sibling sub-phase: 2.1.2 Edge Function

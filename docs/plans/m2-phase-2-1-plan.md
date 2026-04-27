@@ -11,16 +11,21 @@ platform admin migration — Proposed; 2.5 `/game/*` URL migration —
 Proposed. The epic's M2 row stays `Proposed` until 2.5 also lands.
 
 **Sub-phases:** this plan ships across two sub-phase PRs. 2.1.1
-([`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md)) — Proposed —
-ships the SQL migration (RLS broadening only — the publish/unpublish
-RPC bodies stay unchanged; see Contracts) and the pgTAP suite. 2.1.2
-(plan TBD) — Proposed — ships the new
-`authenticateEventOrganizerOrAdmin` shared helper, the four authoring-
-function caller swaps, the `docs/architecture.md` updates, and the
-parent Status flip. The Files-to-touch, Execution steps, Commit
-boundaries, and Validation Gate sections below describe the union of
-both sub-phases; each sub-phase plan owns per-PR slicing, commit
-boundaries, and the deferred / not-touched record for its own diff.
+([`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md)) — Landed —
+ships RLS read-broadening on the authoring surface (`game_event_drafts`
+and `game_event_versions` SELECT replaced) plus the
+`event_role_assignments` staffing-table RLS (3-branch SELECT plus
+INSERT/DELETE), with two new pgTAP test files. The publish/unpublish
+RPC bodies are unchanged; direct-PostgREST INSERT/UPDATE/DELETE on
+authoring tables is intentionally not broadened (those writes flow
+through Edge Functions under service_role). 2.1.2 (plan TBD) —
+Proposed — ships the new `authenticateEventOrganizerOrAdmin` shared
+helper, the four authoring-function caller swaps, the
+`docs/architecture.md` updates, and the parent Status flip. The
+Files-to-touch, Execution steps, Commit boundaries, and Validation
+Gate sections below describe the union of both sub-phases; each
+sub-phase plan owns per-PR slicing, commit boundaries, and the
+deferred / not-touched record for its own diff.
 
 This plan flips to `Landed` when 2.1.2 (the terminal sub-phase under
 the current sequencing) merges. The epic's M2 row flip is owned by the
