@@ -405,33 +405,102 @@ delegate to `shared/events/`, following the
 preserving. One PR.
 
 **Phase 1.5 — `shared/styles/` and theme groundwork.**
-Two subphases.
+**Plan:** [`shared-styles-foundation.md`](./shared-styles-foundation.md).
+Two subphases. The earlier draft of this paragraph put Madrona's
+placeholder `Theme` and the apps/web event-route `<ThemeScope>` wiring
+in 1.5.2; both were deferred to M4 phase 4.1 during scoping to avoid a
+"placeholder Madrona = today's values" double pass. 1.5.2 ships pure
+infrastructure plus apps/site's platform identity; M4 phase 4.1 lands
+Madrona's real `Theme` and wires `<ThemeScope>` into apps/web event
+routes as the intentional brand-launch visual transition. Per-event
+admin in M2 phase 2.2 and operator-route renames in M2 phase 2.5
+inherit the deferred wiring rule and are updated below to match.
 
 *Subphase 1.5.1 — Token audit.* Walk
-`apps/web/src/styles/_tokens.scss` and classify every token as themable or
-structural. Land a new `docs/styling.md` documenting the classification, the
-theme model, and the procedure for adding a new theme. One PR (doc only).
+[`apps/web/src/styles/_tokens.scss`](../../apps/web/src/styles/_tokens.scss)
+and classify every token as **per-event brand themable** (overridable by a
+`Theme` object) or **platform-shared structural** (stays as a SCSS
+variable). The brand-only skin model is the framing: events configure
+brand colors, body and heading font families, accent radii, and hero
+gradient stops; status colors, neutral shadows, structural spacing,
+motion, and z-index stay platform-shared. Audit also lands the
+color-derivation policy — whether `Theme` exposes only brand bases (and
+CSS derives tints via `color-mix()`) or enumerates every shade as its
+own field. Land a new `docs/styling.md` documenting the classification
+table, the derivation policy, the `Theme` model, and the procedure for
+adding a new theme. One PR (doc only).
 
-*Subphase 1.5.2 — Theme implementation.* Migrate themable tokens from SCSS
-variables to CSS custom properties whose default values come from a `Theme`
-TypeScript object. Define the `Theme` type in `shared/styles/`, the theme
-registry at `shared/styles/themes/` with `madrona.ts` as the only entry
-(placeholder values; the real palette is decided in M4), `getThemeForSlug`
-returning the Madrona theme for any slug, the `<ThemeScope>` component, and
-neutral `:root` fallbacks for non-event surfaces. Wire `<ThemeScope>` into
-every existing `apps/web` event-route shell. Component tests added that pass
-synthetic test themes and verify rendered styles change accordingly.
-`AGENTS.md` "Styling Token Discipline" section updated to reflect the new
-themable/structural rule. One PR.
+*Subphase 1.5.2 — `shared/styles/` infrastructure and Sage Civic
+platform palette.* Migrate themable tokens from SCSS variables to CSS
+custom properties on apps/web's `:root`, with default values encoded
+byte-identically to today's warm-cream values so apps/web routes render
+unchanged. Define the `Theme` type in `shared/styles/`, the platform
+`Theme` at `shared/styles/themes/platform.ts` carrying the Sage Civic
+values below, an empty per-event registry at `shared/styles/themes/`
+(no `madrona.ts` yet — that lands in M4), `getThemeForSlug` returning
+the platform Theme for any unregistered slug, and the universal
+`<ThemeScope>` React component (no `'use client'`; inline-style
+emission of CSS custom properties on a wrapper element, SSR-safe).
+Adopt the platform palette as apps/site's root layout visual identity
+via `next/font` (Inter body + Fraunces heading) and inline-style
+emission on the root element — this is the first apps/site surface
+with real visual identity. **Do not wire `<ThemeScope>` into any
+apps/web route in this phase**; M2 phase 2.2 is the first apps/web
+consumer (per-event admin), M3 phase 3.1 is the first apps/site
+consumer (event landing), M4 phase 4.1 wires the existing apps/web
+event-route shells. ThemeScope placement in apps/web is centralized in
+the [`App.tsx`](../../apps/web/src/App.tsx) routing dispatcher — not
+per-page — so the M2/M4 wiring sites are symmetric. Component tests at
+`tests/shared/styles/` pass synthetic test themes and verify rendered
+CSS custom properties change accordingly. `AGENTS.md` "Styling Token
+Discipline" section reorganized to introduce themable/structural
+classification before the existing "use a token" guidance, pointing at
+`docs/styling.md` for the binding table. One PR.
+
+*Sage Civic platform palette (1.5.2 ships these values in
+`shared/styles/themes/platform.ts` and apps/site's root layout).*
+
+```
+Colors
+  bg          #f3f4ee   warm pale sage
+  surface     #ffffff   panels
+  text        #232a26   charcoal-green
+  muted       #5d6862
+  primary     #2c5e4f   deep forest
+  accent      #c46f3e   rust
+  success     #3a7d4d
+  border      rgba(35,42,38,0.10)
+  hero-start  rgba(243,244,238,1)
+  hero-end    rgba(232,236,228,0.96)
+
+Typography (apps/site, via next/font)
+  body        Inter (variable)
+  heading     Fraunces (variable)
+
+Radii (themable subset)
+  panel       16px
+  card        12px
+  control     10px
+  pill        999px (structural — stays as SCSS, not in Theme)
+```
+
+apps/web keeps today's `$font-stack` (Avenir Next system stack) and
+today's chunky panel/card/control radii through 1.5.2 — they are part
+of today's warm-cream apps/web visual that the no-visual-diff gate
+preserves. Madrona's M4 `Theme` decides whether to keep or replace
+those.
 
 **Validation gate.** `npm run lint`, `npm run build:web`,
-`npm run build:site`, full existing test suite passes, no visual diff on
-existing routes verified via UI review capture before/after, component tests
-covering theme variation pass. **Production cookie-boundary verification
-inherited from M0 phase 0.3** — must pass against the real
-frontend-origin auth cookie introduced by phase 1.3 before this
-milestone's status flips Landed (procedure in `docs/dev.md`, updated
-in this milestone to point at the new cookie name).
+`npm run build:site`, full existing test suite passes, no visual diff
+on existing apps/web routes verified via UI review capture before/after
+in 1.5.2, component tests covering ThemeScope CSS-variable emission
+pass. **Production cookie-boundary verification inherited from M0
+phase 0.3** was already satisfied in phase 1.3 subphase 1.3.2 against
+the real frontend-origin auth cookie (see
+[`shared-auth-foundation.md`](./shared-auth-foundation.md) "Verification
+Evidence"). The 1.5.2 PR cites that evidence when flipping the M1 row
+to `Landed` — no additional cookie-boundary run required because no
+1.5 change touches authentication.
 
 **Documentation.** `docs/architecture.md` describes the shared layer and each
 package's responsibilities. `docs/styling.md` (new) documents themable vs.
@@ -439,13 +508,19 @@ structural tokens and how to add a theme. `AGENTS.md` "Styling Token
 Discipline" updated. This plan with M1 status flipped on completion.
 
 **Self-review audits.** From `docs/self-review-catalog.md`:
-Rename-aware diff classification (file moves from `apps/web/src/lib/` into
-`shared/`), Effect cleanup audit (auth subscription and theme component
-effects relocated into `shared/auth/` and `shared/styles/` must keep their
-cleanup paths intact), Error-surfacing for user-initiated mutations
-(magic-link request paths in `shared/auth/` retain their error-surfacing
-behavior across the move), CLI / tooling pinning audit (any new shared-
-package dependencies are pinned).
+Rename-aware diff classification (1.5.2 introduces bulk renames from
+`$color-…` to `var(--…)` across 13 apps/web SCSS partials; reviewer
+attention should land on the small content diffs — the new shared
+module, the `:root` block, the apps/site root layout — not on the bulk
+renames), Effect cleanup audit (`<ThemeScope>` ships with no effects
+in the inline-style approach; if the implementation introduces React
+state or effects, cleanup paths must be verified), Readiness-gate
+truthfulness audit (the "no visual diff" gate claim must reflect actual
+UI-review captures; the inherited cookie-boundary gate citation must
+reference 1.3.2's actual evidence run), CLI / tooling pinning audit
+(`next/font` is part of `next` but Inter and Fraunces resolve through
+`next/font/google` — verify deterministic version pinning per Next.js
+16's behavior; any new shared-package dependency introduced is pinned).
 
 ### M2 — Admin Restructuring And Authorization Broadening
 
@@ -475,9 +550,15 @@ existing game-content authoring UI (question editor, draft management,
 publish/unpublish for the event's draft) inside the event's themed shell
 wrapped in `<ThemeScope theme={getThemeForSlug(slug)}>`. Authorization-gated
 states render inside the themed shell, preserving in-place auth behavior.
-The existing apps/web `/admin` deep-editor experience remains accessible
-during this phase as a redundant entry point, and is removed in phase 2.4
-when `/admin` migrates to apps/site. One PR.
+Until M4 phase 4.1 registers Madrona's `Theme` in
+`shared/styles/themes/`, `getThemeForSlug` returns the platform Sage
+Civic Theme for any slug, so per-event admin renders Sage Civic-themed
+for all events through M2 and M3 — this is intentional, not a bug.
+M4's PR registers Madrona's Theme and the visual transition to
+Madrona's brand for `slug=madrona` happens at that PR's merge. The
+existing apps/web `/admin` deep-editor experience remains accessible
+during this phase as a redundant entry point, and is removed in phase
+2.4 when `/admin` migrates to apps/site. One PR.
 
 **Phase 2.3 — `/auth/callback` and `/` migration to apps/site.**
 Migrate `/auth/callback` from apps/web to apps/site as the auth flow
@@ -509,15 +590,18 @@ phase 2.2). Hard cutover. One PR.
 
 **Phase 2.5 — `/game/*` URL migration for operator routes.**
 `/event/:slug/redeem` moves to `/event/:slug/game/redeem`.
-`/event/:slug/redemptions` moves to `/event/:slug/game/redemptions`. The
-migrated route shells are confirmed wrapping in
-`<ThemeScope theme={getThemeForSlug(slug)}>` as part of this phase.
-`validateNextPath` patterns updated. Documentation references updated.
-Vercel rules updated: the now-defunct `/event/:slug/redeem` and
-`/event/:slug/redemptions` carve-outs are removed (the migrated URLs are
-already covered by the `/event/:slug/game/*` namespace carve-out
-established in M0 phase 0.3, so no new namespace rule is needed). Hard
-cutover: no backward-compat redirects. One PR.
+`/event/:slug/redemptions` moves to `/event/:slug/game/redemptions`.
+The migrated route shells are **not** wrapped in `<ThemeScope>` in
+this phase — that wrapping was deferred from M1 phase 1.5.2 to M4
+phase 4.1 alongside Madrona's `Theme` registration. Phase 2.5 stays a
+pure URL migration: file moves, matcher updates, `validateNextPath`
+patterns, documentation references. No visual change to the operator
+routes; they continue to consume apps/web's `:root` warm-cream values
+directly. Vercel rules updated: the now-defunct `/event/:slug/redeem`
+and `/event/:slug/redemptions` carve-outs are removed (the migrated
+URLs are already covered by the `/event/:slug/game/*` namespace
+carve-out established in M0 phase 0.3, so no new namespace rule is
+needed). Hard cutover: no backward-compat redirects. One PR.
 
 **Validation gate.** `npm run lint`, `npm run build:web`,
 `npm run build:site`, full pgTAP suite, `deno check` on edge functions,
@@ -616,11 +700,31 @@ by `apps/site` page rendering or meta-tag handling are pinned).
 **Goal.** Madrona Music in the Playfield goes live as the first public event
 on the platform.
 
-**Phase 4.1 — Madrona theme palette discussion and definition.**
-Hold the Madrona theme discussion as its own task at the start of M4: pick
-approximately ten color values, the typography choice, and the accent
-treatment for Madrona's brand. Define the palette in
-`shared/styles/themes/madrona.ts` replacing the M1 placeholder values. One PR.
+**Phase 4.1 — Madrona theme palette definition and apps/web event-route
+ThemeScope wiring.**
+Hold the Madrona theme discussion as its own task at the start of M4:
+pick approximately ten color values, the typography choice, and the
+accent treatment for Madrona's brand. Create
+`shared/styles/themes/madrona.ts` (the file does not exist before M4 —
+M1 phase 1.5.2 deliberately deferred Madrona's `Theme` to this phase to
+avoid a placeholder-Madrona double pass) and register it in the
+`shared/styles/themes/` registry. In the same PR, wire
+`<ThemeScope theme={getThemeForSlug(slug)}>` into apps/web's
+event-route shells in the central
+[`App.tsx`](../../apps/web/src/App.tsx) routing dispatcher
+(`GameRoutePage`, `EventRedeemPage` at its `/game/redeem` URL,
+`EventRedemptionsPage` at its `/game/redemptions` URL — both renamed
+in M2 phase 2.5). The placement is centralized per the M1 phase 1.5
+invariant; no per-page wrapping. **This is the brand-launch visual
+transition**: apps/web event routes shift from today's warm-cream
+values to Madrona's real palette at this PR's merge. The
+`<ThemeScope>` already-present on apps/web's per-event admin route
+from M2 phase 2.2, and on apps/site event routes from M3 phase 3.1,
+automatically pick up Madrona's `Theme` for `slug=madrona` once the
+registry entry lands — no per-consumer change required. UI-review
+captures cover the warm-cream → Madrona transition explicitly so the
+launch visual is signed off intentionally rather than landing as
+review surprise. One PR.
 
 **Phase 4.2 — Madrona event content authoring.**
 Author Madrona's event content as a TypeScript module at
@@ -651,9 +755,15 @@ must run post-deploy.
 
 **Self-review audits.** From `docs/self-review-catalog.md`:
 Readiness-gate truthfulness audit (production smoke claims for the
-Madrona path must reflect runs actually executed against production after
-deploy), Effect cleanup audit (any new content components added for
-Madrona-specific rendering must clean up correctly). M4 also follows the
+Madrona path must reflect runs actually executed against production
+after deploy; the warm-cream → Madrona visual transition must be
+verified against captured before/after UI-review evidence, not
+asserted by code reasoning), Rename-aware diff classification (phase
+4.1 wraps existing event-route shells in `<ThemeScope>` in the central
+[`App.tsx`](../../apps/web/src/App.tsx) dispatcher — the wrap is a
+content addition around an unchanged child, not a move), Effect
+cleanup audit (any new content components added for Madrona-specific
+rendering must clean up correctly). M4 also follows the
 Plan-to-Landed Gate For Plans That Touch Production Smoke from
 `docs/testing-tiers.md` if the production smoke assertions added in M4
 must run post-deploy.
