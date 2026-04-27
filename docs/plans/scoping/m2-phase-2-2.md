@@ -23,13 +23,17 @@ retires it; phase 2.2 does not change `/admin*` behavior.
     `event_role_assignments`, and the other event-scoped tables
     enumerated in 2.1's Outputs: predicate is
     `is_organizer_for_event(event_id) OR is_root_admin()`.
-  - **RPC-mediated** for `game_event_audit_log` and
-    `game_event_versions`: direct INSERT stays service-role-only;
-    `publish_game_event_draft()` and `unpublish_game_event()` widen
-    their internal `is_admin()` gate to
-    `is_admin() OR is_organizer_for_event(...)` so organizer publishes
-    transitively write the audit-log / version rows the same way root
-    admin does.
+  - **RPC-mediated via the Edge Function gate** for
+    `game_event_audit_log` and `game_event_versions`: direct INSERT
+    stays service-role-only. The audit-log/version rows are written
+    only by `publish_game_event_draft()` / `unpublish_game_event()`,
+    which are reachable only via `GRANT EXECUTE → service_role`. The
+    broadened Edge Function gate (2.1.2) accepts organizer callers
+    and invokes those RPCs under service_role exactly as root-admin
+    does today. The RPC bodies themselves are unchanged — an earlier
+    draft of this scoping said the RPCs widened their internal
+    `is_admin()` gate, which was a misreading (no internal predicate
+    exists; user JWT is not propagated to the RPC).
   From 2.2's UI perspective the effect is the same — organizer
   publish/unpublish succeeds — but the plan author should not assume
   direct INSERT works against the audit-log or versions tables. Phase
@@ -317,11 +321,13 @@ records the resolutions and the rejected alternatives.
   no organizer-redeem capability lands during M2.
   *Rejected: broaden in 2.1 — adds mass-redeem attack surface for
   zero in-epic feature value.*
-- **Audit-log + versions writes via broadened RPCs.** 2.1's resolution
-  changes the operational shape 2.2 inherits: writes flow through
-  `publish_game_event_draft()` / `unpublish_game_event()` rather than
-  direct INSERT. The "Inputs From Siblings" section above carries the
-  updated wording; no 2.2 contract changes.
+- **Audit-log + versions writes via the broadened Edge Function
+  path.** 2.1's resolution changes the operational shape 2.2
+  inherits: writes flow through `publish_game_event_draft()` /
+  `unpublish_game_event()` (invoked under service_role by the
+  broadened Edge Function gate) rather than direct INSERT. The RPC
+  bodies are unchanged. The "Inputs From Siblings" section above
+  carries the updated wording; no 2.2 contract changes.
   *Rejected: direct organizer INSERT on audit-log + versions —
   invariant-breaking.*
 

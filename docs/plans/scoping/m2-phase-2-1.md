@@ -73,11 +73,10 @@ phases. From M1 / pre-M2 work already in `main` it consumes:
 **SQL** (`supabase/migrations/`):
 - create — `supabase/migrations/<YYYYMMDDHHMMSS>_broaden_event_scoped_rls.sql`
   (one migration; broadens write policies on every event-scoped table
-  enumerated under "Contracts" below, AND widens the
-  `publish_game_event_draft()` and `unpublish_game_event()` RPC
-  authorization predicates to accept organizer callers per the
-  audit-log/versions write-policy resolution). Date prefix advances
-  from `20260423020000_…` per existing convention.
+  enumerated under "Contracts" below). The `publish_game_event_draft()`
+  and `unpublish_game_event()` RPC bodies are **not** modified — see
+  the audit-log/versions resolution note in Contracts. Date prefix
+  advances from `20260423020000_…` per existing convention.
 
 **pgTAP** (`supabase/tests/database/`):
 - create — `supabase/tests/database/event_scoped_writes_rls.test.sql`
@@ -146,15 +145,18 @@ broadening (see Resolved Decisions).
 
 **SQL — audit-log + versions writes.** Direct INSERT on
 `game_event_audit_log` and `game_event_versions` stays
-service-role-only. The publish/unpublish path is broadened by widening
-the authorization predicates inside
-`public.publish_game_event_draft()` and `public.unpublish_game_event()`
-from `is_admin()` to `is_admin() OR is_organizer_for_event(...)`.
-Audit-log and version rows continue to be written exclusively by those
-RPCs, preserving the "rows reflect real state transitions" invariant.
-Both RPCs already receive the event identifier as a parameter, so the
-predicate widening is a one-line change in each function body; no new
-SQL helper is introduced.
+service-role-only. The publish/unpublish path is broadened at the
+Edge Function gate (see "Edge Function — caller migration" below);
+the RPC bodies are not modified. Earlier drafts of this scoping
+described "widening internal `is_admin()` gates" in
+`publish_game_event_draft` / `unpublish_game_event`; that was a
+misreading. Neither RPC has an internal authorization predicate
+today, `GRANT EXECUTE` is to `service_role` only, and the Edge
+Functions invoke the RPCs under the service-role key (no user-JWT
+propagation). The audit-log "rows reflect real state transitions"
+invariant is preserved by the existing `GRANT EXECUTE → service_role`
+constraint plus direct-INSERT denied via RLS, with the broadened
+Edge Function gate as the load-bearing authorization point.
 
 **SQL — `event_role_assignments` writes.** The broadening grants
 organizers INSERT and DELETE (no UPDATE — UPDATE remains revoked at
@@ -277,11 +279,16 @@ records the resolutions and the rejected alternatives so the plan
 author has a single source of truth.
 
 - **Audit-log + versions write policy → broaden via the
-  publish/unpublish RPCs; direct INSERT stays service-role-only.**
-  In addition to the Edge Function widening, 2.1 widens
-  `publish_game_event_draft()` and `unpublish_game_event()` to accept
-  organizer callers. Direct-INSERT policies on `game_event_audit_log`
-  and `game_event_versions` are **not** added.
+  publish/unpublish path; direct INSERT stays service-role-only.**
+  Mechanism: the broadened Edge Function gate (2.1.2) accepts
+  organizer callers and invokes `publish_game_event_draft()` /
+  `unpublish_game_event()` under service_role exactly as root-admin
+  does today. The RPC bodies are unchanged; an earlier draft said
+  the RPCs would have an internal `is_admin()` gate widened, which
+  was a misreading (the RPCs have no internal predicate and run
+  under service_role with no user-JWT propagation). Direct-INSERT
+  policies on `game_event_audit_log` and `game_event_versions` are
+  **not** added.
   *Rejected: option 1 (direct organizer INSERT) — preserves a
   permissive RLS shape but breaks the audit log's "rows reflect real
   state transitions" invariant. Option 2 (read-only broaden) —

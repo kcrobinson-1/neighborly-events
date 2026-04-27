@@ -12,8 +12,9 @@ Proposed. The epic's M2 row stays `Proposed` until 2.5 also lands.
 
 **Sub-phases:** this plan ships across two sub-phase PRs. 2.1.1
 ([`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md)) — Proposed —
-ships the SQL migration (RLS broadening + RPC widening) and the pgTAP
-suite. 2.1.2 (plan TBD) — Proposed — ships the new
+ships the SQL migration (RLS broadening only — the publish/unpublish
+RPC bodies stay unchanged; see Contracts) and the pgTAP suite. 2.1.2
+(plan TBD) — Proposed — ships the new
 `authenticateEventOrganizerOrAdmin` shared helper, the four authoring-
 function caller swaps, the `docs/architecture.md` updates, and the
 parent Status flip. The Files-to-touch, Execution steps, Commit
@@ -41,11 +42,11 @@ to `event_role_assignments` itself. Extend pgTAP coverage so each
 privilege is asserted independently per role (organizer, agent,
 root-admin, unrelated-authenticated, anon) per event. Migrate the
 four authoring Edge Functions plus a new shared helper to accept
-organizer callers in addition to root-admin. Widen the
-`publish_game_event_draft()` and `unpublish_game_event()` RPC
-authorization predicates so audit-log and version rows continue to
-flow exclusively through their owning RPCs while organizers gain the
-ability to publish and unpublish.
+organizer callers in addition to root-admin. Audit-log and version
+rows continue to flow exclusively through `publish_game_event_draft()`
+/ `unpublish_game_event()`; organizers gain the ability to publish and
+unpublish via the broadened Edge Function gate, which calls those
+RPCs under service_role exactly as the root-admin path does today.
 
 The phase is the deliberate resolution of the
 "Post-MVP authoring ownership" open question and the precondition for
@@ -70,8 +71,14 @@ each one against every changed file.
   `game_event_audit_log` and `game_event_versions` keep direct
   INSERT denied to non-service-role callers. Organizer publish and
   unpublish writes those rows transitively through
-  `publish_game_event_draft()` / `unpublish_game_event()`, whose
-  authorization predicates widen in this phase. Direct-INSERT
+  `publish_game_event_draft()` / `unpublish_game_event()` exactly
+  as root-admin writes do today: the broadened Edge Function gate
+  authorizes the caller, then invokes the RPC under service_role.
+  The existing `GRANT EXECUTE → service_role` constraint is the
+  load-bearing guard that keeps direct PostgREST callers off the
+  RPC; no internal RPC authorization predicate is added or
+  modified, because the RPCs do not (and have never) inspected
+  user claims — they trust their service_role caller. Direct-INSERT
   policies for these two tables are deliberately not added.
 - **pgTAP per-privilege split.** `has_table_privilege(role, table,
   '<priv>')` is called once per privilege; comma-separated lists
@@ -149,13 +156,19 @@ policies use the broadening predicate. UPDATE stays revoked at the
 privilege layer; the original migration deliberately omits the UPDATE
 grant.
 
-**`publish_game_event_draft` / `unpublish_game_event` RPC widening.**
-Each function's internal `is_admin()` gate is replaced with
-`is_admin() OR is_organizer_for_event(p_event_id)` (the parameter
-both functions already receive). Their `SECURITY DEFINER`,
-`search_path`, and grant lists are unchanged. The audit-log and
-version rows they write continue to flow through the function bodies
-exclusively.
+**`publish_game_event_draft` / `unpublish_game_event` RPCs are
+unchanged.** Earlier drafts of this plan said these RPCs would have
+their internal `is_admin()` gate widened. That was a misreading of
+the existing security model: neither RPC has an internal `is_admin()`
+gate today, `GRANT EXECUTE` is to `service_role` only, and the Edge
+Functions invoke the RPCs under the service-role key (the user JWT
+is not propagated, so an internal claims check would not see the
+caller). The audit-log/versions invariant is preserved by the
+existing privilege-layer setup — `GRANT EXECUTE → service_role` plus
+direct-INSERT denied via RLS — combined with the Edge Function gate
+becoming the load-bearing authorization point. The RPC bodies, their
+`SECURITY DEFINER`, `search_path`, and grant lists stay exactly as
+they are today.
 
 **Edge Function shared helper.**
 `authenticateEventOrganizerOrAdmin(request, eventId, supabaseUrl, serviceRoleKey, supabaseClientKey) → Promise<AdminAuthResult>`.
@@ -190,10 +203,12 @@ this phase consumes them and adds no new helper variant.
 - `supabase/migrations/20260427010000_broaden_event_scoped_rls.sql`
   — single migration. Adds the eight tables' direct-write policies
   per the table above; replaces the `event_role_assignments` SELECT
-  policy with the three-branch version; widens
-  `publish_game_event_draft` and `unpublish_game_event` bodies.
-  Migration's leading comment enumerates the table set 1:1 with the
-  pgTAP coverage so reviewers can walk one against the other.
+  policy with the three-branch version. Does **not** modify
+  `publish_game_event_draft` or `unpublish_game_event` bodies (see
+  Contracts: those RPCs stay unchanged because they have no
+  internal authorization predicate to widen). Migration's leading
+  comment enumerates the table set 1:1 with the pgTAP coverage so
+  reviewers can walk one against the other.
 - `supabase/tests/database/event_scoped_writes_rls.test.sql` —
   per-table, per-privilege, per-role assertions for every direct-write
   policy this phase adds. Reuses the role-switching pattern from
@@ -269,13 +284,13 @@ this phase consumes them and adds no new helper variant.
 3. **Write the migration.** Create
    `supabase/migrations/20260427010000_broaden_event_scoped_rls.sql`.
    Migration body order: (a) leading comment enumerating the table
-   set, (b) per-table direct-write policies in the order from the
-   "Tables in scope" section, (c) `event_role_assignments` SELECT
-   policy replacement, (d) `publish_game_event_draft` and
-   `unpublish_game_event` body widening via
-   `create or replace function`. Each policy carries an inline
-   comment naming the broadening predicate so reviewer attention
-   reads the predicate once per policy.
+   set and noting the deliberate non-touches (`game_event_audit_log`
+   and `game_event_versions` direct-INSERT, the publish/unpublish
+   RPC bodies), (b) per-table direct-write policies in the order
+   from the "Tables in scope" section, (c) `event_role_assignments`
+   SELECT policy replacement. Each policy carries an inline comment
+   naming the broadening predicate so reviewer attention reads the
+   predicate once per policy.
 4. **Apply locally.** `supabase db reset` (or the repo's
    reset-then-replay command). The new migration must apply cleanly
    against the full local migration history.
@@ -353,15 +368,19 @@ this phase consumes them and adds no new helper variant.
     set the migration broadens against the table set the pgTAP
     suite asserts (1:1 mapping). UX Review: `N/A` (no user-visible
     behavior). Remaining Risk: organizer-redeem deferral; audit-log
-    invariant preserved by RPC widening rather than direct-INSERT.
+    invariant preserved by `GRANT EXECUTE → service_role` plus
+    direct-INSERT denied via RLS, with the broadened Edge Function
+    gate as the load-bearing authorization point.
 
 ## Commit boundaries
 
 Per [`AGENTS.md`](../../AGENTS.md) "Planning Depth," commit slices
 named upfront:
 
-1. **Migration + RPC widening.** The single SQL migration (steps
-   3–4). Single commit, no other touch.
+1. **Migration.** The single SQL migration (steps 3–4) — RLS
+   broadening on the eight tables plus the `event_role_assignments`
+   SELECT-policy extension. No RPC body changes. Single commit, no
+   other touch.
 2. **pgTAP suite.** The two new test files (steps 5–7). Single
    commit; running tests is part of the validation gate, not a
    commit boundary.

@@ -105,12 +105,17 @@ phase's actual changes.
   `is_agent_for_event OR is_root_admin` gate is unchanged across all
   five phases. (See Cross-Phase Decision §2 for the deferred
   organizer-redeem broadening.)
-- **Audit-log + versions invariant via RPC widening.**
-  `game_event_audit_log` and `game_event_versions` keep direct
-  INSERT denied to non-service-role callers. Organizer publish and
-  unpublish writes those rows transitively through
-  `publish_game_event_draft()` / `unpublish_game_event()`, which
-  widen their authorization predicates in 2.1. (See §1 below.)
+- **Audit-log + versions invariant preserved via the existing
+  privilege-layer setup.** `game_event_audit_log` and
+  `game_event_versions` keep direct INSERT denied to non-service-role
+  callers. Organizer publish and unpublish writes those rows
+  transitively through `publish_game_event_draft()` /
+  `unpublish_game_event()` exactly as root-admin writes do today —
+  the broadened Edge Function gate authorizes the caller, then
+  invokes the RPC under service_role. The RPC bodies are not
+  modified in 2.1; the load-bearing guard is `GRANT EXECUTE →
+  service_role` plus the Edge Function authorization, not an
+  in-RPC predicate. (See §1 below.)
 - **Edge Function authorization centralized.** The four authoring
   functions (`save-draft`, `publish-draft`, `unpublish-event`,
   `generate-event-code`) consume the new shared helper
@@ -173,8 +178,15 @@ each other.
 1. **Broaden direct INSERT** to match 2.2's expectation verbatim.
 2. **Broaden read only, keep INSERT service-role** and update 2.2's
    expectation language.
-3. **Broaden via the publish/unpublish RPCs**: those RPCs accept
-   organizer callers, direct INSERT stays denied.
+3. **Broaden via the publish/unpublish path** (the resolved
+   option, with mechanism corrected): the broadened Edge Function
+   gate accepts organizer callers and invokes the publish/unpublish
+   RPCs under service_role exactly as root-admin does today. Direct
+   INSERT stays denied. Audit/version rows write transitively via
+   the unchanged RPC bodies. The earlier "widen the RPC's
+   authorization predicates" framing was a misreading — the RPCs
+   have no internal predicate to widen and run under service_role
+   without user-claim visibility.
 
 **Pros / cons.**
 
@@ -189,9 +201,12 @@ each other.
 - *Option 3.* Pro: preserves the invariant **and** satisfies 2.2's
   effective need (organizers publish/unpublish, which writes the
   audit/version rows transitively). RLS shape is uniform at the
-  table level (direct INSERT denied for both); only the RPC's gate
-  changes. Con: two surfaces touched in 2.1 (RLS migrations + RPC
-  body widening) for the same logical broadening.
+  table level (direct INSERT denied for both). The mechanism turned
+  out to be even cleaner than originally framed: only the Edge
+  Function gate changes (one surface in 2.1.2), because the RPCs
+  already trust their service_role caller and have no internal
+  predicate. The "two surfaces" con in earlier deliberation was
+  based on a misreading of the existing security model.
 
 **Came down to.** Whether the audit-log invariant ("rows reflect
 real state transitions") is load-bearing. It is — reviewers and
@@ -199,10 +214,19 @@ post-incident investigators trust the audit log to be RPC-written.
 Option 2 was dominated (option 3 minus the broadening organizers
 need).
 
-**Resolution.** **Option 3.** 2.1's plan adds the publish/unpublish
-RPC widening alongside the RLS migration; 2.2's "Inputs From
-Siblings" describes the dual-shape (direct RLS for most tables,
-RPC-mediated for audit-log + versions).
+**Resolution.** **Option 3.** The audit-log invariant matters more
+than direct-write symmetry. After post-resolution implementation
+investigation surfaced that neither RPC has an internal `is_admin()`
+gate today (`GRANT EXECUTE` is to `service_role` only; the Edge
+Functions invoke under the service-role key with no user-JWT
+propagation), the corrected mechanism is lighter than the original
+framing: the broadened Edge Function gate (2.1.2) is the single
+load-bearing change, and the RPC bodies stay unchanged. 2.1.1's
+migration ships RLS broadening only; 2.1.2's Edge Function helper
+migration is what enables organizer publish/unpublish. 2.2's
+"Inputs From Siblings" describes the dual-shape (direct RLS for
+most tables, RPC-mediated via the Edge Function gate for audit-log
++ versions).
 
 ### 2. `redeem_entitlement_by_code` RPC organizer broadening [Resolved → Defer]
 
