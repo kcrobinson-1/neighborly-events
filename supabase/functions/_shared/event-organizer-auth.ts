@@ -66,38 +66,36 @@ export async function authenticateEventOrganizerOrAdmin(
     },
   });
 
-  const { data: isOrganizer, error: organizerError } = await userClient.rpc(
+  // Evaluate both branches of the organizer-or-admin predicate before
+  // rejecting. Treat an RPC error on either branch as a non-positive signal
+  // for that branch only — never as a hard deny — so a transient or
+  // configuration error specific to is_organizer_for_event cannot incorrectly
+  // forbid a root admin (and vice versa). The caller is admitted as soon as
+  // either branch returns true; forbidden is returned only when both branches
+  // return a definitive false or error without a positive signal.
+  const { data: isOrganizer } = await userClient.rpc(
     "is_organizer_for_event",
     { target_event_id: eventId },
   );
 
-  if (organizerError) {
-    return {
-      error: "This account is not authorized to author this event.",
-      status: "forbidden",
-    };
-  }
-
-  if (isOrganizer) {
+  if (isOrganizer === true) {
     return {
       status: "ok",
       userId: userData.user.id,
     };
   }
 
-  const { data: isRootAdmin, error: rootAdminError } = await userClient.rpc(
-    "is_root_admin",
-  );
+  const { data: isRootAdmin } = await userClient.rpc("is_root_admin");
 
-  if (rootAdminError || !isRootAdmin) {
+  if (isRootAdmin === true) {
     return {
-      error: "This account is not authorized to author this event.",
-      status: "forbidden",
+      status: "ok",
+      userId: userData.user.id,
     };
   }
 
   return {
-    status: "ok",
-    userId: userData.user.id,
+    error: "This account is not authorized to author this event.",
+    status: "forbidden",
   };
 }
