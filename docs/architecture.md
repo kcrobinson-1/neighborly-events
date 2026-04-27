@@ -299,6 +299,30 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   never reads `import.meta.env.*` or `process.env.*`, does not access
   `window`, holds no Supabase singleton, and imports no apps/web code.
 
+- `shared/styles/`
+  Platform theme model shared across `apps/web` and `apps/site`.
+  Owns the `Theme` TypeScript type (binding output of the M1 phase
+  1.5.1 token audit at [`docs/styling.md`](styling.md)), the
+  universal `<ThemeScope>` React component (no `'use client'`, no
+  effects, no state — SSR-safe), the `getThemeForSlug(slug)` resolver
+  that returns the registered `Theme` for an event slug or the
+  platform Sage Civic Theme as fallback, the platform Theme at
+  [`shared/styles/themes/platform.ts`](../shared/styles/themes/platform.ts),
+  and the per-event registry at
+  [`shared/styles/themes/index.ts`](../shared/styles/themes/index.ts)
+  (empty in M1 phase 1.5.2; M3 phase 3.2 adds test events; M4 phase
+  4.1 adds Madrona). apps/site's root layout consumes the platform
+  Theme via inline-style emission of CSS custom properties on
+  `<html>` plus `next/font` for Inter (body) and Fraunces (heading);
+  apps/web's `:root` block in
+  [`apps/web/src/styles/_tokens.scss`](../apps/web/src/styles/_tokens.scss)
+  carries today's warm-cream values byte-identically until M4 phase
+  4.1 wires `<ThemeScope>` into apps/web event routes. Brand-tied
+  derived shades (`--primary-surface`, etc.) are computed in each
+  app's `:root` via `color-mix()` from the brand bases — they are
+  not Theme fields. `shared/styles/` reads no env, holds no
+  module-level singleton, and imports nothing app-specific.
+
 Together they contain:
 
 - shared game domain types
