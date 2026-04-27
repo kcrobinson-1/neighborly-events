@@ -7,19 +7,19 @@
   min-height: $token-block-min-height;
   margin: 8px 0 18px;
   @include surface-card(
-    $background: $color-white-tint,
+    $background: var(--white-tint),
     $border: $color-success-border
   );
   background:
-    linear-gradient(135deg, $color-success-surface, $color-secondary-surface),
-    $color-white-tint;
+    linear-gradient(135deg, $color-success-surface, var(--secondary-surface)),
+    var(--white-tint);
 }
 
 .token-block-pending {
-  border-color: $color-secondary-border-pending;
+  border-color: var(--secondary-border-pending);
   background:
-    linear-gradient(135deg, $color-secondary-surface-pending, $color-accent-surface-pending),
-    $color-white-tint;
+    linear-gradient(135deg, var(--secondary-surface-pending), var(--accent-surface-pending)),
+    var(--white-tint);
 }
 
 .token-status {
@@ -31,7 +31,7 @@
 .token-spinner {
   width: $token-spinner-size;
   height: $token-spinner-size;
-  border: 2px solid $color-secondary-border-subtle;
+  border: 2px solid var(--secondary-border-subtle);
   border-top-color: var(--secondary);
   border-radius: 50%;
   animation: token-spin 0.9s linear infinite;

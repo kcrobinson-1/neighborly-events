@@ -6,7 +6,7 @@
   &:disabled {
     cursor: not-allowed;
     transform: none;
-    background: $color-text-disabled-surface;
+    background: var(--text-disabled-surface);
     box-shadow: none;
   }
 }

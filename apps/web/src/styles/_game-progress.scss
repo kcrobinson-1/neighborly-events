@@ -4,7 +4,7 @@
   overflow: hidden;
   height: $progress-track-height;
   border-radius: $radius-pill;
-  background: $color-border-muted;
+  background: var(--border-muted);
 }
 
 .progress-fill {

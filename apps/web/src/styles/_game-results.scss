@@ -8,8 +8,8 @@
 .score-card {
   @include stack($space-3);
   @include surface-card(
-    $background: $color-accent-surface-muted,
-    $border: $color-accent-border
+    $background: var(--accent-surface-muted),
+    $border: var(--accent-border)
   );
 }
 

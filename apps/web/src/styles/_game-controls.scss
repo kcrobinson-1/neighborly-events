@@ -6,7 +6,7 @@
 .option-button {
   width: 100%;
   border: none;
-  border-radius: $radius-control;
+  border-radius: var(--radius-control);
   @include interactive-control;
 }
 
@@ -18,12 +18,12 @@
 
 .primary-button {
   background: var(--primary);
-  color: $color-white-warm;
+  color: var(--white-warm);
   box-shadow: $shadow-primary;
 }
 
 .secondary-button {
-  background: $color-secondary-surface-strong;
+  background: var(--secondary-surface-strong);
   color: var(--secondary);
 }
 

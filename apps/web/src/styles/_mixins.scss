@@ -12,9 +12,9 @@
 
 @mixin surface-card(
   $padding: 18px,
-  $radius: $radius-card,
-  $background: $color-surface-card,
-  $border: $color-border-soft
+  $radius: var(--radius-card),
+  $background: var(--surface-card),
+  $border: var(--border-soft)
 ) {
   padding: $padding;
   border-radius: $radius;

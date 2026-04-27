@@ -17,7 +17,7 @@
   width: fit-content;
   padding: 7px $space-5;
   border-radius: $radius-pill;
-  background: $color-secondary-surface;
+  background: var(--secondary-surface);
   color: var(--secondary);
   font-size: 0.88rem;
   font-weight: $font-weight-bold;
@@ -51,9 +51,9 @@
 
 .redeem-status-card {
   padding: $space-8;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-card;
-  background: $color-surface-card;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
 }
 
 .redeem-status-card h2 {
@@ -66,8 +66,8 @@
 }
 
 .redeem-status-card-error {
-  background: $color-primary-surface;
-  border-color: $color-primary-border;
+  background: var(--primary-surface);
+  border-color: var(--primary-border);
 }
 
 .redeem-status-meta {
@@ -92,9 +92,9 @@
 
 .redeem-keypad-button {
   min-height: 72px;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-control;
-  background: $color-white-tint;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-control);
+  background: var(--white-tint);
   color: var(--text);
   font-size: 1.35rem;
   font-weight: $font-weight-bold;
@@ -104,7 +104,7 @@
 .redeem-keypad-button-secondary {
   font-size: 1rem;
   color: var(--secondary);
-  background: $color-secondary-surface;
+  background: var(--secondary-surface);
 }
 
 .redeem-keypad-button:focus-visible,

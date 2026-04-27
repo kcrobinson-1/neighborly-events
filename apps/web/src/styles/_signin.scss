@@ -32,9 +32,9 @@
 .signin-input {
   width: 100%;
   padding: 15px 16px;
-  border: 1px solid var(--surface-border);
-  border-radius: $radius-control;
-  background: $color-admin-input-surface;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--admin-input-surface);
   color: var(--text);
 }
 
@@ -46,12 +46,12 @@
 .signin-message {
   margin: 0;
   padding: $space-6 $space-7;
-  border-radius: $radius-control;
+  border-radius: var(--radius-control);
   font-weight: $font-weight-semibold;
 }
 
 .signin-message-error {
-  background: $color-primary-surface;
+  background: var(--primary-surface);
   color: var(--primary);
 }
 

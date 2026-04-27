@@ -99,7 +99,7 @@
 }
 
 .flow-step {
-  @include surface-card($background: $color-surface-card-muted, $border: $color-border-muted);
+  @include surface-card($background: var(--surface-card-muted), $border: var(--border-muted));
 }
 
 .flow-step strong {
