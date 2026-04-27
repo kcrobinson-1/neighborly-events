@@ -329,6 +329,37 @@ export function createSaveDraftHandler(
         );
       }
 
+      // The draft id doubles as the event id (game_event_drafts.id =
+      // game_events.id = event_role_assignments.event_id), so the
+      // organizer-or-admin gate keys on content.id directly. Extract it
+      // with a lightweight shape check before the expensive
+      // parseAuthoringGameDraftContent so unauthenticated callers cannot
+      // trigger full draft validation work — the four authoring functions
+      // run with verify_jwt = false, so this manual auth gate is the
+      // CPU-amplification boundary.
+      const rawContentId = (payload.content as { id?: unknown }).id;
+      if (typeof rawContentId !== "string" || rawContentId === "") {
+        return context.jsonResponse(
+          400,
+          {
+            details: 'Draft content "id" must be a non-empty string.',
+            error: "Draft content is invalid.",
+          },
+        );
+      }
+
+      const auth = await dependencies.authenticateEventOrganizerOrAdmin(
+        request,
+        rawContentId,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+        context.supabaseClientKey,
+      );
+
+      if (auth.status !== "ok") {
+        return createAuthErrorResponse(auth, context);
+      }
+
       let content: AuthoringGameDraftContent;
 
       try {
@@ -354,21 +385,6 @@ export function createSaveDraftHandler(
             error: "Event codes are exactly 3 uppercase letters.",
           },
         );
-      }
-
-      // The draft id doubles as the event id (game_event_drafts.id =
-      // game_events.id = event_role_assignments.event_id), so the
-      // organizer-or-admin gate keys on content.id directly.
-      const auth = await dependencies.authenticateEventOrganizerOrAdmin(
-        request,
-        content.id,
-        context.supabaseUrl,
-        context.serviceRoleKey,
-        context.supabaseClientKey,
-      );
-
-      if (auth.status !== "ok") {
-        return createAuthErrorResponse(auth, context);
       }
 
       const { data, error } = await dependencies.saveDraft(

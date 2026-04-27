@@ -75,6 +75,43 @@ Deno.test("save-draft rejects authenticated callers who are neither organizer no
   });
 });
 
+Deno.test("save-draft rejects payloads without content.id before authentication", async () => {
+  let authCalls = 0;
+  let parseCalls = 0;
+  const handler = createSaveDraftHandler({
+    ...defaultSaveDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => {
+      authCalls += 1;
+      throw new Error(
+        "authenticateEventOrganizerOrAdmin should not be called for payloads " +
+          "without content.id (auth gate must precede deep draft parsing)",
+      );
+    },
+    authoringHttp: createAuthoringHttpDependencies(),
+    parseAuthoringGameDraftContent: () => {
+      parseCalls += 1;
+      throw new Error(
+        "parseAuthoringGameDraftContent should not be called for payloads " +
+          "without content.id (deep parse must follow successful auth)",
+      );
+    },
+    saveDraft: async () => {
+      throw new Error("saveDraft should not be called");
+    },
+  });
+
+  const response = await handler(
+    createAuthoringRequest({
+      content: { name: "no id here" },
+    }),
+  );
+
+  assertEquals(response.status, 400);
+  assertEquals(authCalls, 0);
+  assertEquals(parseCalls, 0);
+  assertExists((await response.json()).details);
+});
+
 Deno.test("save-draft rejects malformed draft content before persistence", async () => {
   let saveCalls = 0;
   const handler = createSaveDraftHandler({
