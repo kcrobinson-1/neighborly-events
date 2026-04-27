@@ -226,6 +226,146 @@ decisions.
   each phase's Status can flip independently, rather than merging a
   partially-satisfied plan and tracking the remainder informally
 
+### Milestone Planning Sessions
+
+A milestone planning session establishes durable cross-phase
+coordination for a multi-phase milestone (M2, M3, M4 in the Event
+Platform Epic). Run this session once at the start of a milestone,
+before any per-phase planning.
+
+- **Goal.** Produce the milestone doc
+  (`docs/plans/m<N>-<short-slug>.md`): restated milestone goal, phase
+  sequencing with dependency rationale, cross-phase invariants that
+  thread multiple phases, cross-phase decisions that lock contracts
+  between phases, milestone-level risks, doc-currency map across the
+  milestone set
+- **Anti-goal: do not pre-scope every phase in batch.** Batch scoping
+  cross-pollinates wrong assumptions across docs and produces
+  confident-feeling artifacts that may or may not be grounded in code.
+  When phase A's scoping cites phase B's "Inputs From Siblings"
+  section, both docs feel verified; neither is. The first phase scopes
+  in this session (so the milestone doc has at least one grounded
+  scoping reference); subsequent phases scope just-in-time before
+  their implementation, against actually-merged earlier phases
+- **Output set.** Milestone doc — durable; survives all phase work.
+  First phase's scoping doc — transient. Phase scoping docs delete
+  in batch when the milestone's full set of plans exists, not when
+  each individual plan lands. The reason: sibling scoping docs
+  reference each other, so deleting one early creates link rot
+  elsewhere; batch-deletion as part of the milestone's terminal PR
+  (or a focused cleanup PR) avoids that. The milestone doc may
+  override this rule for an unusual lifecycle, but should record the
+  override explicitly. Cross-phase decision record lives inside the
+  milestone doc, not as a separate file
+- **Cap.** ~15-20% of estimated total milestone implementation time.
+  Fallback when no credible implementation estimate exists yet
+  (typical at milestone-start): cap milestone planning at ~4 hours
+  of session time end-to-end, and stop when scoping starts producing
+  iteration without ending — repeated rewrites of the same section,
+  cross-phase decisions that re-open after being marked resolved,
+  or new docs spawning without resolving existing ones. That
+  iteration signal is the real diminishing-returns indicator;
+  remaining value comes from doing the work, not from more planning
+  content
+- **Verify before recording any cross-phase decision.** For each
+  cross-phase decision, read the actual code that would be affected
+  by each option, not summaries from a research subagent. A decision
+  recorded with options/pros/cons but without code-grounded option
+  generation is a guess dressed as rigor — the option set itself can
+  be wrong if the underlying mental model is wrong
+- **Defer rather than over-resolve.** If a cross-phase decision can
+  be made later by the affected phase's planner without blocking
+  earlier phases, mark it deferred with a clear "decide when phase N
+  drafts" note. Premature resolution of deferrable decisions is a
+  major source of wrong premises that propagate through the doc set
+- **PR-count predictions are not contracts.** Per-phase PR counts
+  named in the milestone doc are estimates. The phase planning
+  session re-derives the actual PR count using the rule below;
+  splitting a phase into sub-phases at plan time is normal, not a
+  process failure
+
+### Phase Planning Sessions
+
+A phase planning session produces the per-phase plan that an
+implementing PR consumes. Run this session just-in-time before a
+phase's implementation starts, **after** prior phases have shipped
+(not in batch alongside their planning).
+
+- **Goal.** Produce two artifacts: a phase scoping doc
+  (`docs/plans/scoping/m<N>-phase-<X>-<Y>.md`, transient) covering
+  file inventory, contracts, cross-cutting invariants the phase
+  touches, validation gate, self-review audits, and risks; then a
+  phase plan doc (`docs/plans/m<N>-phase-<X>-<Y>-plan.md`, durable)
+  matching the structure of existing landed plans (Status, Goal,
+  Cross-Cutting Invariants, Files-to-touch, Execution steps, Commit
+  boundaries, Validation Gate, Self-Review Audits, Documentation
+  Currency, Out Of Scope, Risk Register)
+- **Reality-check gate between scoping and plan.** Before promoting
+  the scoping doc to plan-drafting, do a forced reality-check pass on
+  every load-bearing technical claim. For SQL contracts: read the
+  actual migration files for named tables, policies, RPCs; confirm
+  the predicates, grants, and constraints exist as scoped. For RPC
+  behavior claims: read the function body — if the scoping says
+  "widen the X gate," confirm the gate exists. For PostgreSQL
+  semantics claims: write one sentence that would falsify the claim
+  and check whether it falsifies (recurring trap: PostgreSQL applies
+  SELECT during UPDATE/DELETE, so write policies don't fire if the
+  row isn't SELECT-visible). For TypeScript / Edge Function
+  contracts: read the function signature and at least one real call
+  site. If the reality-check finds a discrepancy, fix the scoping
+  before drafting the plan; do not carry wrong premises into plan
+  time
+- **Spike before plan for novel mechanisms.** When the phase
+  introduces a new mechanism (a new authorization shape, a new
+  cross-app boundary, a new SECURITY DEFINER pattern, a new
+  framework idiom), build a 30-minute throwaway spike that exercises
+  the mechanism end-to-end before writing the plan. The spike's job
+  is to find dealbreakers — wrong assumptions about runtime
+  semantics, missing constraints, hidden coupling. **Worktree
+  handling for spikes** (resolves the conflict with the Pre-Edit
+  Gate's clean-worktree rule): create a throwaway branch named
+  `spike/<phase-or-mechanism>` off the planning branch; commit
+  freely on the spike branch; do not merge it. When the spike
+  concludes, either delete the branch (`git branch -D spike/...`)
+  or leave it dangling for reference and continue plan-drafting on
+  the original branch with a clean worktree. Spike code is never
+  promoted into the implementation PR — the plan describes the
+  contract, the implementation PR builds it from scratch. If a
+  scratch script or non-code artifact would help, write it under
+  `tmp/spikes/<phase>/` (already git-ignored under `tmp/`)
+- **PR-count predictions need a branch test.** Before declaring "1
+  PR" in the plan's Status block, create the branch and sketch the
+  file list. If the diff would touch >5 distinct subsystems or >300
+  LOC of substantive logic, split. Either ship as sub-phases
+  (`m<N>-phase-<X>-<Y>-<Z>-plan.md`) or justify the size with
+  concrete review-coherence reasoning. The milestone doc's PR-count
+  estimate does not bind the phase plan
+- **"Verified by:" annotations on technical claims.** Load-bearing
+  technical claims in the plan **must** carry an inline "Verified
+  by:" reference to the code citation that proves them — file path
+  and line number, not "per scoping doc" or "per epic." Claims that
+  cannot carry a verification reference are re-phrased as assumptions
+  (clearly tagged as such) or removed. This is not formatting
+  preference — it is the protective check this section exists to
+  enforce, so the reality-check gate above does not get rolled back
+  during plan-drafting
+- **Cap.** ~90 minutes for scope + plan combined for a typical
+  phase. If you're at 3+ hours and still drafting, diminishing
+  returns have hit — stop, reality-check the actual scope size, and
+  either ship what's clearly right or escalate
+- **Cross-phase coordination is thin.** When this phase's plan needs
+  something from a sibling phase that hasn't shipped yet, write down
+  the assumption and tag it for verification at sibling-merge time.
+  Don't wait for the sibling phase to catch up; don't pre-coordinate
+  every detail. Recording assumptions to verify-on-merge is more
+  honest than committing to a contract neither side has built yet
+- **Anti-pattern: planning artifacts that only cite each other.** If
+  the plan, scoping doc, and milestone doc all cite each other for
+  the same technical claim, the claim is unverified. Fluent
+  cross-doc citation is not verification. Each load-bearing claim
+  needs at least one citation to actual code, generated test
+  output, or already-merged sibling artifact
+
 ### Scope Guardrails
 
 Treat broad checklist, cleanup, or refactor requests as a queue of PR-sized tasks, not as permission to work through everything in one thread.

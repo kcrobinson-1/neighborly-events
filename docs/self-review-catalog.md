@@ -473,3 +473,40 @@ handler ran. Fix
 added `verify_jwt = false` for all three new redemption functions to
 restore the session-auth path and match the `save-draft` /
 `complete-game` convention.
+
+### Composed-predicate error-treatment audit
+
+**Trigger.** An Edge Function helper composes two or more async
+authorization checks (RPC calls, role probes, JWT lookups) under OR or
+AND semantics — e.g., "admit if organizer OR root admin," "admit if A
+AND B."
+
+**Check.** Walk per-branch error treatment, not just success/false.
+- **OR semantics.** An RPC error on one branch must NOT preempt the
+  others. Treat the error as "non-positive for this branch only" and
+  fall through. Forbidden only when every branch returns a definitive
+  false or errors without any branch yielding a positive signal.
+- **AND semantics.** An error on either branch can short-circuit (any
+  false → overall false; the unknown is conservatively treated as
+  false).
+
+For each independent async call, mentally inject a transient error and
+confirm the OR/AND truth table survives. The dangerous pattern is a
+copy-pasted single-RPC guard (`if (error || !ok) return forbidden`)
+lifted into a multi-branch helper — it collapses OR the moment the
+first branch errors. The plan's Contracts section should also name the
+per-branch error rule explicitly ("RPC error on branch X is treated as
+non-positive for branch X only"), not just success/false.
+
+**Example.** [PR #109](https://github.com/kcrobinson-1/neighborly-events/pull/109)
+— Codex P1 on `authenticateEventOrganizerOrAdmin` (M2 phase 2.1.2): the
+helper short-circuited to `forbidden` the moment
+`is_organizer_for_event` returned an RPC error, never invoking
+`is_root_admin`. A transient or config-specific failure on the
+organizer branch would have denied a root admin across save / publish /
+unpublish / generate-event-code with a 403. Fix
+[`db7e0c0`](https://github.com/kcrobinson-1/neighborly-events/commit/db7e0c0):
+restructured so an error on either branch counts as a non-positive
+signal for that branch only; the caller is admitted as soon as either
+branch returns true, and forbidden only when neither branch yields a
+positive signal.
