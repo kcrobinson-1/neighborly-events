@@ -37,10 +37,14 @@ The current implementation is:
   URL ownership balance
 - a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
-- private authoring draft and admin-allowlist tables protected by RLS
+- private authoring draft, version, and event-role-assignment tables
+  protected by RLS — root admins read everything; per-event organizers
+  read drafts/versions for events they organize and can manage
+  `event_role_assignments` for those events; the four authoring Edge
+  Functions accept either organizer-for-event or root-admin JWTs
 - a shared TypeScript domain module for game runtime shape, mapping, validation, and scoring
 - Supabase edge functions for session bootstrap, trusted completion, and
-  authenticated authoring transitions
+  organizer-or-admin authoring transitions
 - Supabase SQL migrations that store published content, record completion attempts, and award one game entitlement per event/session pair
 - local browser state during game play, with the backend owning the final verification result
 
@@ -366,26 +370,39 @@ The Supabase side is intentionally small:
   signed browser session, and reads the current entitlement state by
   `(event_id, client_session_id)`.
 - `supabase/functions/save-draft/index.ts`
-  Authenticated admin endpoint that validates canonical draft content and saves
-  it to the private draft table. It also accepts an optional top-level
-  `eventCode`, generates one server-side when needed, and preserves the
-  database-owned event-code lock after publish.
+  Authoring endpoint that validates canonical draft content and saves it to
+  the private draft table. It also accepts an optional top-level `eventCode`,
+  generates one server-side when needed, and preserves the database-owned
+  event-code lock after publish. Authorizes the caller as either an organizer
+  for the draft's event id or a root admin.
 - `supabase/functions/generate-event-code/index.ts`
-  Authenticated admin endpoint that returns a non-persisted random 3-letter
-  event-code suggestion for future admin regenerate controls. Save still happens
-  through `save-draft`, which remains the persistence authority.
+  Authoring endpoint that returns a non-persisted random 3-letter event-code
+  suggestion for the named event. Save still happens through `save-draft`,
+  which remains the persistence authority. Authorizes the caller as either
+  an organizer for `eventId` or a root admin.
 - `supabase/functions/publish-draft/index.ts`
-  Authenticated admin endpoint that validates a draft and calls the
-  service-role publish RPC.
+  Authoring endpoint that validates a draft and calls the service-role
+  publish RPC. Authorizes the caller as either an organizer for `eventId`
+  or a root admin.
 - `supabase/functions/unpublish-event/index.ts`
-  Authenticated admin endpoint that hides a live event without deleting draft or
-  version history.
+  Authoring endpoint that hides a live event without deleting draft or
+  version history. Authorizes the caller as either an organizer for
+  `eventId` or a root admin.
 - `supabase/functions/_shared/admin-auth.ts`
-  Shared Supabase Auth JWT and admin allowlist verification for authoring
-  endpoints.
+  Shared Supabase Auth JWT and root-admin allowlist verification. Reserved
+  for any future root-only authoring path; the four authoring endpoints
+  above migrated to `event-organizer-auth.ts` in M2 phase 2.1.2.
+- `supabase/functions/_shared/event-organizer-auth.ts`
+  Shared Supabase Auth JWT verification plus per-event organizer-or-admin
+  authorization for the four authoring endpoints. Calls
+  `is_organizer_for_event(eventId)` and `is_root_admin()` and admits the
+  caller on either OR-branch.
 - `supabase/functions/_shared/authoring-http.ts`
-  Shared CORS, method, configuration, admin-auth, and JSON response handling
-  for authenticated authoring endpoints.
+  Shared CORS, method, configuration, and JSON response handling for
+  authoring endpoints. Per-event authorization is the per-function
+  handler's responsibility — each authoring function parses its payload,
+  extracts the target eventId, and calls
+  `authenticateEventOrganizerOrAdmin` directly.
 - `supabase/functions/_shared/cors.ts`
   Shared CORS helpers.
 - `supabase/functions/_shared/redemption-operator-auth.ts`
@@ -737,19 +754,33 @@ The current implementation uses:
   The admin shell loads draft summaries through the authenticated browser
   session plus RLS.
 - `save-draft`
-  Authenticates the Supabase user, checks the admin allowlist, validates
-  canonical draft content, and writes private draft rows with service-role
-  privileges.
+  Authenticates the Supabase user, authorizes them as either an organizer for
+  the draft's event id or a root admin via
+  `authenticateEventOrganizerOrAdmin`, validates canonical draft content, and
+  writes private draft rows with service-role privileges.
 - `publish-draft`
-  Authenticates an admin, revalidates the draft through shared game logic, and
-  calls `public.publish_game_event_draft(...)` to update live public content in
-  one transaction.
+  Same authorization as `save-draft` (organizer for `eventId` or root admin).
+  Revalidates the draft through shared game logic and calls
+  `public.publish_game_event_draft(...)` to update live public content in one
+  transaction.
 - `unpublish-event`
-  Authenticates an admin and calls `public.unpublish_game_event(...)` to hide a
-  live event without deleting authoring history.
-- `public.is_admin()`
-  Security-definer SQL helper that turns the current authenticated email/user
-  context into one shared allowlist decision for both the admin UI and RLS.
+  Same authorization as `save-draft`. Calls `public.unpublish_game_event(...)`
+  to hide a live event without deleting authoring history.
+- `generate-event-code`
+  Same authorization as `save-draft`. Returns a non-persisted random 3-letter
+  event-code suggestion for the named event; persistence still flows through
+  `save-draft`.
+- `public.is_admin()` / `public.is_root_admin()`
+  Security-definer SQL helpers that turn the current authenticated
+  email/user context into one root-admin allowlist decision; `is_root_admin`
+  is the alias the broadened authoring helper consumes alongside
+  `is_organizer_for_event(text)`.
+- `public.is_organizer_for_event(text)`
+  Security-definer SQL helper that returns true when the current
+  authenticated user holds an `organizer` row in
+  `public.event_role_assignments` for the given event id. Consumed by
+  `authenticateEventOrganizerOrAdmin` and by the broadened RLS policies
+  installed in M2 phase 2.1.1.
 
 There is still no custom general-purpose application API beyond those bounded
 surfaces, and that is intentional. The system exposes only the reads and

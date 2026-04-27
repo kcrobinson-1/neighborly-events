@@ -13,12 +13,11 @@ import {
 Deno.test("publish-draft rejects missing drafts", async () => {
   const handler = createPublishDraftHandler({
     ...defaultPublishDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     loadDraft: async () => ({ data: null, error: null }),
     publishDraft: async () => {
       throw new Error("publishDraft should not be called");
@@ -40,12 +39,11 @@ Deno.test("publish-draft rejects invalid draft content before publishing", async
   let publishCalls = 0;
   const handler = createPublishDraftHandler({
     ...defaultPublishDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     loadDraft: async () => ({
       data: {
         content: {
@@ -73,7 +71,7 @@ Deno.test("publish-draft rejects invalid draft content before publishing", async
   assertEquals(publishCalls, 0);
 });
 
-Deno.test("publish-draft calls the transactional RPC after admin and shared validation pass", async () => {
+Deno.test("publish-draft calls the transactional RPC after authorization and shared validation pass", async () => {
   let capturedInput:
     | {
       actorUserId: string;
@@ -82,12 +80,11 @@ Deno.test("publish-draft calls the transactional RPC after admin and shared vali
     | null = null;
   const handler = createPublishDraftHandler({
     ...defaultPublishDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     loadDraft: async () => ({
       data: {
         content: sampleDraft,
@@ -135,12 +132,11 @@ Deno.test("publish-draft calls the transactional RPC after admin and shared vali
 Deno.test("publish-draft reports slug collisions as 409", async () => {
   const handler = createPublishDraftHandler({
     ...defaultPublishDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     loadDraft: async () => ({
       data: {
         content: sampleDraft,

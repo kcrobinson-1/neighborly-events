@@ -78,7 +78,7 @@ export function AdminEventDetailsForm({
     setIsRegenerating(true);
     setRegenerateError(null);
     try {
-      const newCode = await generateEventCode();
+      const newCode = await generateEventCode(draft.id);
       setLocalEventCode(newCode);
     } catch {
       setRegenerateError("We couldn't generate an event code right now.");

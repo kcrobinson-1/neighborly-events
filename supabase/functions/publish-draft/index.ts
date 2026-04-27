@@ -5,9 +5,11 @@ import {
 } from "../../../shared/game-config.ts";
 import {
   type AuthoringHttpDependencies,
+  createAuthErrorResponse,
   createAuthoringPostHandler,
   defaultAuthoringHttpDependencies,
 } from "../_shared/authoring-http.ts";
+import { authenticateEventOrganizerOrAdmin } from "../_shared/event-organizer-auth.ts";
 
 type PublishDraftRequestBody = {
   eventId: string;
@@ -33,6 +35,7 @@ type SupabasePersistenceResult<T> = {
 };
 
 export type PublishDraftHandlerDependencies = {
+  authenticateEventOrganizerOrAdmin: typeof authenticateEventOrganizerOrAdmin;
   authoringHttp: AuthoringHttpDependencies;
   loadDraft: (
     eventId: string,
@@ -88,6 +91,7 @@ async function publishDraft(
 
 export const defaultPublishDraftHandlerDependencies:
   PublishDraftHandlerDependencies = {
+    authenticateEventOrganizerOrAdmin,
     authoringHttp: defaultAuthoringHttpDependencies,
     loadDraft,
     parseAuthoringGameDraftContent,
@@ -166,6 +170,18 @@ export function createPublishDraftHandler(
         );
       }
 
+      const auth = await dependencies.authenticateEventOrganizerOrAdmin(
+        request,
+        payload.eventId,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+        context.supabaseClientKey,
+      );
+
+      if (auth.status !== "ok") {
+        return createAuthErrorResponse(auth, context);
+      }
+
       const draft = await dependencies.loadDraft(
         payload.eventId,
         context.supabaseUrl,
@@ -223,7 +239,7 @@ export function createPublishDraftHandler(
       // drafts fail before the live projection transaction starts.
       const publish = await dependencies.publishDraft(
         payload.eventId,
-        context.admin.userId,
+        auth.userId,
         context.supabaseUrl,
         context.serviceRoleKey,
       );

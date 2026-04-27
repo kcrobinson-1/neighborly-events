@@ -1,9 +1,11 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.101.1";
 import {
   type AuthoringHttpDependencies,
+  createAuthErrorResponse,
   createAuthoringPostHandler,
   defaultAuthoringHttpDependencies,
 } from "../_shared/authoring-http.ts";
+import { authenticateEventOrganizerOrAdmin } from "../_shared/event-organizer-auth.ts";
 
 type UnpublishEventRequestBody = {
   eventId: string;
@@ -20,6 +22,7 @@ type SupabasePersistenceResult<T> = {
 };
 
 export type UnpublishEventHandlerDependencies = {
+  authenticateEventOrganizerOrAdmin: typeof authenticateEventOrganizerOrAdmin;
   authoringHttp: AuthoringHttpDependencies;
   unpublishEvent: (
     eventId: string,
@@ -51,6 +54,7 @@ async function unpublishEvent(
 
 export const defaultUnpublishEventHandlerDependencies:
   UnpublishEventHandlerDependencies = {
+    authenticateEventOrganizerOrAdmin,
     authoringHttp: defaultAuthoringHttpDependencies,
     unpublishEvent,
   };
@@ -117,9 +121,21 @@ export function createUnpublishEventHandler(
         );
       }
 
+      const auth = await dependencies.authenticateEventOrganizerOrAdmin(
+        request,
+        payload.eventId,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+        context.supabaseClientKey,
+      );
+
+      if (auth.status !== "ok") {
+        return createAuthErrorResponse(auth, context);
+      }
+
       const { data, error } = await dependencies.unpublishEvent(
         payload.eventId,
-        context.admin.userId,
+        auth.userId,
         context.supabaseUrl,
         context.serviceRoleKey,
       );

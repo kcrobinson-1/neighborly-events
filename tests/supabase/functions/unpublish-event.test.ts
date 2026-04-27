@@ -10,16 +10,15 @@ import {
   sampleDraft,
 } from "./authoring-helpers.ts";
 
-Deno.test("unpublish-event rejects authenticated non-admin users before persistence", async () => {
+Deno.test("unpublish-event rejects authenticated callers who are neither organizer nor root-admin before persistence", async () => {
   let unpublishCalls = 0;
   const handler = createUnpublishEventHandler({
     ...defaultUnpublishEventHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        error: "This account is not allowlisted for game authoring.",
-        status: "forbidden",
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      error: "This account is not authorized to author this event.",
+      status: "forbidden",
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     unpublishEvent: async () => {
       unpublishCalls += 1;
       return { data: null, error: null };
@@ -32,12 +31,12 @@ Deno.test("unpublish-event rejects authenticated non-admin users before persiste
 
   assertEquals(response.status, 403);
   assertEquals(await response.json(), {
-    error: "This account is not allowlisted for game authoring.",
+    error: "This account is not authorized to author this event.",
   });
   assertEquals(unpublishCalls, 0);
 });
 
-Deno.test("unpublish-event calls only the unpublish RPC for admin users", async () => {
+Deno.test("unpublish-event calls only the unpublish RPC for authorized callers", async () => {
   let capturedInput:
     | {
       actorUserId: string;
@@ -46,12 +45,11 @@ Deno.test("unpublish-event calls only the unpublish RPC for admin users", async 
     | null = null;
   const handler = createUnpublishEventHandler({
     ...defaultUnpublishEventHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     unpublishEvent: async (eventId, actorUserId) => {
       capturedInput = {
         actorUserId,
