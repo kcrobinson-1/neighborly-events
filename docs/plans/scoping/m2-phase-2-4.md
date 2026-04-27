@@ -27,12 +27,15 @@ SPA fallback are removed in this phase.
   `is_admin()` per
   [supabase/migrations/20260421000200_add_event_role_helpers.sql](../../../supabase/migrations/20260421000200_add_event_role_helpers.sql),
   so observable behavior for the root-admin caller is preserved — but
-  the on-disk gate has shifted shape, and 2.4 must pass `eventId` in
-  every payload because the broadened helper requires it. Of the four
-  functions, only `generate-event-code` lacked an `eventId` field
-  before 2.1.2; the shared `generateEventCode(eventId)` signature has
-  already moved with 2.1.2's merge (see Resolved Decisions for the
-  follow-up disposition).
+  the on-disk gate has shifted shape, and the broadened helper
+  requires the caller to supply the event id. Each function reads it
+  from its existing payload shape — `save-draft` from
+  `payload.content.id`; `publish-draft`, `unpublish-event`, and
+  `generate-event-code` from a top-level `eventId` field — so no
+  payload-contract changes are required for 2.4's apps/site `/admin`
+  call sites; the only mechanical change is the shared
+  `generateEventCode(eventId)` client signature, which already shipped
+  with 2.1.2 (see Resolved Decisions for the follow-up disposition).
 - **Phase 2.2 (per-event admin).** The deep-editor surface must be
   reachable at `/event/:slug/admin` before 2.4 removes apps/web
   `/admin`. Per [m2-phase-2-2.md](m2-phase-2-2.md), 2.2's
