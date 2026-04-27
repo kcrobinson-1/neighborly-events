@@ -30,10 +30,11 @@ select ok(
     select 1 from pg_policies
     where schemaname = 'public'
       and tablename = 'event_role_assignments'
-      and policyname = 'users can read their own role assignments'
+      and policyname = 'users, organizers, and admins can read role assignments'
       and cmd = 'SELECT'
   ),
-  'event_role_assignments has the self-read SELECT policy'
+  'event_role_assignments has the three-branch SELECT policy '
+  '(self / organizer / root-admin) installed by M2 phase 2.1.1'
 );
 
 select ok(
@@ -282,15 +283,26 @@ select throws_ok(
   'no INSERT grant)'
 );
 
-select throws_ok(
-  $$
-    update public.game_entitlements
-       set redemption_status = 'redeemed'
+-- M2 phase 2.1.1 broadened UPDATE/DELETE on game_entitlements and DELETE on
+-- event_role_assignments to authenticated organizers and root-admins. The
+-- agent JWT context here satisfies neither branch, so the broadened policies
+-- evaluate to false and RLS filters the row out — UPDATE / DELETE no longer
+-- raises 42501; instead they affect zero rows. Verify the row state is
+-- unchanged after the attempt to assert the security outcome (rather than
+-- the error code that previously fired at the privilege layer).
+update public.game_entitlements
+   set redemption_status = 'redeemed'
+ where verification_code = 'RLA-1111';
+
+select is(
+  (
+    select redemption_status
+      from public.game_entitlements
      where verification_code = 'RLA-1111'
-  $$,
-  '42501',
-  null,
-  'authenticated cannot UPDATE game_entitlements'
+  ),
+  'unredeemed'::text,
+  'agent UPDATE on game_entitlements affects zero rows under broadened RLS '
+  '(row state unchanged)'
 );
 
 select throws_ok(
@@ -304,17 +316,22 @@ select throws_ok(
   $$,
   '42501',
   null,
-  'authenticated cannot INSERT into event_role_assignments'
+  'agent cannot INSERT into event_role_assignments under broadened RLS '
+  '(WITH CHECK denial fires because agent is not organizer for event 1)'
 );
 
-select throws_ok(
-  $$
-    delete from public.event_role_assignments
+delete from public.event_role_assignments
+ where user_id = '10000000-1000-4000-8000-000000000001'::uuid;
+
+select is(
+  (
+    select count(*)::int
+      from public.event_role_assignments
      where user_id = '10000000-1000-4000-8000-000000000001'::uuid
-  $$,
-  '42501',
-  null,
-  'authenticated cannot DELETE from event_role_assignments'
+  ),
+  1,
+  'agent DELETE on event_role_assignments affects zero rows under '
+  'broadened RLS (row still present)'
 );
 
 reset role;
