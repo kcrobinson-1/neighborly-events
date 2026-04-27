@@ -129,10 +129,29 @@ TypeScript type. New visual properties added during the epic are classified
 into one or the other; no token is split across both.
 
 **Theme route scoping.** A `<ThemeScope>` wrapper (or framework-equivalent
-server-side wrapper) wraps content only on routes under `/event/:slug/*`.
-Routes outside that namespace render against neutral `:root` defaults. The
-platform-admin at `/admin` and the existing demo-overview landing at `/` are
-not themed.
+server-side wrapper) wraps content only on routes under `/event/:slug/*`,
+and not on every such route until M4 — see "Deferred ThemeScope wiring"
+below. Routes outside the `/event/:slug/*` namespace render against the
+host app's `:root` defaults, not against any per-event Theme: apps/site's
+`:root` carries the Sage Civic platform palette (M1 phase 1.5.2);
+apps/web's `:root` carries today's warm-cream legacy values until M4
+phase 4.1. The platform-admin at `/admin` and the demo-overview landing
+at `/` are not per-event themed.
+
+**Deferred ThemeScope wiring.** During scoping the apps/web event-route
+`<ThemeScope>` wiring and Madrona's `Theme` registration both moved
+from M1 phase 1.5.2 to M4 phase 4.1, to avoid a placeholder-Madrona
+double pass and align the warm-cream → Madrona visual transition with
+the brand launch. As a consequence, between M1 phase 1.5.2 and M4
+phase 4.1, apps/web event routes (game, redeem after 2.5's rename,
+redemptions after 2.5's rename) render against apps/web's warm-cream
+`:root` defaults rather than inside `<ThemeScope>`; per-event admin
+from M2 phase 2.2 wraps in `<ThemeScope>` but resolves to the platform
+Sage Civic `Theme` for any slug because no per-event `Theme` is
+registered until M4. M3 phase 3.2's per-event test Themes therefore
+apply only on apps/site, not on apps/web, until M4 lands. This is an
+intentional interim state called out in M2 phase 2.2, M2 phase 2.5,
+M3 phase 3.3, and M4 phase 4.1.
 
 **Trust boundary.** Every backend write reachable from a public or
 origin-gated endpoint enforces authorization at the database layer (RLS or
@@ -566,8 +585,8 @@ handler in the new framework, validating tokens via `shared/auth/` and
 validating the `next=` redirect target via `validateNextPath` from
 `shared/urls/`. Migrate `/` from apps/web to apps/site, preserving the
 demo-overview content (or a small platform landing page that subsumes
-it). Both run against neutral `:root` defaults; neither is event-scoped so
-neither wraps in `<ThemeScope>`. Vercel routing updated to send these
+it). Both run against apps/site's Sage Civic `:root` defaults; neither
+is event-scoped so neither wraps in `<ThemeScope>`. Vercel routing updated to send these
 paths to apps/site. The corresponding apps/web routes are removed. Hard
 cutover. One PR.
 
@@ -582,7 +601,7 @@ apps/web's `/admin`. Built in the chosen Next.js or Remix conventions
 reads and lifecycle writes (event list, create, publish, unpublish,
 status), and `shared/db/` for the underlying Supabase client and
 generated types. Renders
-against neutral `:root` defaults. Vercel routing updated to send `/admin*`
+against apps/site's Sage Civic `:root` defaults. Vercel routing updated to send `/admin*`
 to apps/site. The apps/web `/admin` route is removed in this phase,
 completing the platform-admin migration. Deep-editor functionality is no
 longer at `/admin`; it lives only at `/event/:slug/admin` in apps/web (from
@@ -674,10 +693,18 @@ One PR.
 
 **Phase 3.3 — Cross-app navigation polish.**
 Verify and polish cross-app navigation: site CTA buttons that link into
-`/event/:slug/game` work without flash or auth disruption; game routes back
-to the site's event page work correctly; auth cookie state preserved across
-the boundary; theme continuity preserved (the same event's theme renders
-identically on both apps). One PR.
+`/event/:slug/game` work without flash or auth disruption; game routes
+back to the site's event page work correctly; auth cookie state
+preserved across the boundary. **Cross-app theme continuity is not a
+phase 3.3 gate** — apps/site routes resolve their per-event Theme via
+ThemeScope (registered in M3 phase 3.2's test events), while apps/web
+event routes remain on warm-cream `:root` defaults until M4 phase 4.1
+wires their ThemeScope per the deferred-Madrona rollout (see the
+"Deferred ThemeScope wiring" cross-cutting invariant). The interim
+cross-app visual jump on test events is acceptable because test events
+are noindex'd with the "demo event for platform testing" disclaimer
+banner from phase 3.2; cross-app continuity verification lands at M4
+alongside Madrona. One PR.
 
 **Phase 3.4 — SSR/SSG meta tags and unfurl validation.**
 Implement per-event meta tags (title, description, og:image, twitter:card)
@@ -731,7 +758,11 @@ automatically pick up Madrona's `Theme` for `slug=madrona` once the
 registry entry lands — no per-consumer change required. UI-review
 captures cover the warm-cream → Madrona transition explicitly so the
 launch visual is signed off intentionally rather than landing as
-review surprise. One PR.
+review surprise. The cross-app theme-continuity check deferred from
+M3 phase 3.3 lands here: a UI-review pair confirms that
+`/event/madrona` (apps/site) and `/event/madrona/game` (apps/web)
+render the same Madrona `Theme` once apps/web's `<ThemeScope>` is
+wired and the registry entry resolves for `slug=madrona`. One PR.
 
 **Phase 4.2 — Madrona event content authoring.**
 Author Madrona's event content as a TypeScript module at
