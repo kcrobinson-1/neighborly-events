@@ -1,219 +1,105 @@
 -- M2 phase 2.1.1: Broaden event-scoped RLS so an authenticated user with an
--- `organizer` row in public.event_role_assignments for an event can perform
--- the direct-table writes root-admin can perform on that event's data.
--- Replace the event_role_assignments SELECT policy with a three-branch
--- version that admits organizer reads for events they organize.
+-- `organizer` row in public.event_role_assignments for an event can reach
+-- the surfaces M2 phase 2.2 and the post-epic organizer-managed agent
+-- assignment feature consume.
 --
--- Broadening predicate (uniform across every direct-write policy added or
--- replaced below):
+-- Scope is **read-broadening on authoring tables plus the event_role_assignments
+-- staffing surface**, not "every direct-table write root-admin can perform."
+-- Earlier drafts of this migration broadened INSERT/UPDATE/DELETE on most
+-- event-scoped tables; that scope was wrong on two counts:
+--
+--   1. Organizer authoring writes flow through the four authoring Edge
+--      Functions (save-draft / publish-draft / unpublish-event /
+--      generate-event-code), which execute as service_role and bypass RLS
+--      entirely. The Edge Function gate widening in M2 phase 2.1.2 is the
+--      load-bearing authorization point. RLS write broadening on those
+--      tables had no consumer.
+--   2. PostgreSQL applies the SELECT policy during UPDATE and DELETE — rows
+--      must be SELECT-visible to be modifiable. Most authoring tables today
+--      have SELECT policies that exclude organizers (is_admin only on
+--      drafts/versions; published_at IS NOT NULL on game_events/_questions/
+--      _options; no policy at all on game_completions/_starts). UPDATE and
+--      DELETE broadening on those tables would silently no-op for
+--      organizers under direct PostgREST.
+--
+-- The corrected scope addresses what M2 phase 2.2's per-event admin UI
+-- actually needs (organizer reads of draft/version content via PostgREST
+-- and the security_invoker game_event_admin_status view) plus the
+-- post-epic agent-assignment surface (organizer-driven role assignment
+-- via PostgREST).
+--
+-- Broadening predicate (uniform across every policy added or replaced):
 --   public.is_organizer_for_event(<event-id-column>) OR public.is_root_admin()
--- For tables whose event_id lives as the `id` column (game_events,
--- game_event_drafts), the predicate substitutes `id` for `event_id` directly.
 --
--- Table set (1:1 with supabase/tests/database/event_scoped_writes_rls.test.sql
--- and supabase/tests/database/event_role_assignments_rls.test.sql):
---   game_events             — UPDATE, DELETE
---   game_questions          — INSERT, UPDATE, DELETE
---   game_question_options   — INSERT, UPDATE, DELETE
---   game_event_drafts       — INSERT, UPDATE, DELETE (replaces existing root-only)
---   game_completions        — INSERT, UPDATE, DELETE
---   game_entitlements       — UPDATE, DELETE
---   game_starts             — INSERT, UPDATE, DELETE
---   event_role_assignments  — INSERT, DELETE; SELECT replaced with 3-branch
+-- Tables in scope (1:1 with the pgTAP coverage):
+--   game_event_drafts       — SELECT replaced; INSERT/UPDATE/DELETE unchanged
+--   game_event_versions     — SELECT replaced
+--   event_role_assignments  — SELECT replaced (3-branch); INSERT, DELETE added
 --
 -- Deliberate non-touches:
---   * game_event_audit_log / game_event_versions: direct INSERT stays
---     service-role-only. Audit-log and version rows continue to flow
---     exclusively through public.publish_game_event_draft() and
---     public.unpublish_game_event(); GRANT EXECUTE → service_role plus
+--   * game_events / game_questions / game_question_options: SELECT stays
+--     gated on published_at IS NOT NULL (anon + authenticated). Organizers
+--     read their unpublished events from game_event_drafts.content (JSONB);
+--     published events are already readable. No write policies are added —
+--     authoring writes flow through save-draft / publish-draft /
+--     unpublish-event / generate-event-code under service_role.
+--   * game_completions / game_starts / game_entitlements: SELECT and write
+--     policies stay as today. Completion + entitlement creation runs in
+--     complete_game_and_award_entitlement under service_role; redemption
+--     runs in redeem_entitlement_by_code under SECURITY DEFINER. The
+--     existing "assigned operators can read event entitlements" policy
+--     (migration 20260421000500) already admits agents/organizers/root.
+--   * game_event_audit_log: direct INSERT stays service-role-only. Audit
+--     rows continue to flow exclusively through publish_game_event_draft()
+--     / unpublish_game_event(); GRANT EXECUTE → service_role plus
 --     direct-INSERT denied via RLS is the load-bearing guard.
---   * public.publish_game_event_draft() / public.unpublish_game_event()
---     bodies, SECURITY DEFINER attribute, search_path, and grant lists
---     stay unchanged. Neither has an internal user-claims gate today and
---     could not have a meaningful one added — the Edge Functions invoke
---     the RPCs under the service-role key, so an in-RPC claims check
---     would not see the caller. The broadened Edge Function gate in
---     M2 phase 2.1.2 is the load-bearing authorization point.
---   * public.admin_users: platform-level, unchanged.
---   * public.event_role_assignments UPDATE: stays revoked at the
---     privilege layer for both authenticated and service_role per the
---     original migration's "role changes are insert + delete, never
---     in-place mutation" intent.
+--   * publish_game_event_draft / unpublish_game_event RPC bodies stay
+--     unchanged. Neither has an internal user-claims gate today and could
+--     not have a meaningful one added — the Edge Functions invoke the RPCs
+--     under the service-role key, so an in-RPC claims check would not see
+--     the caller. The broadened Edge Function gate in M2 phase 2.1.2 is
+--     the load-bearing authorization point.
+--   * admin_users: platform-level, unchanged.
+--   * event_role_assignments UPDATE: stays revoked at the privilege layer
+--     for both authenticated and service_role per the original migration's
+--     "role changes are insert + delete, never in-place mutation" intent.
 
--- ─── game_events: UPDATE, DELETE ────────────────────────────────────────
--- game_events.id is the event identifier (text PK; equals
--- event_role_assignments.event_id), so the predicate substitutes `id`
--- for `event_id`. INSERT remains service-role-only — event creation
--- is platform-admin (out of M2 phase 2.1 scope). Authenticated already
--- holds INSERT/UPDATE/DELETE privileges on game_events; the absence of
--- an INSERT policy keeps inserts denied at the RLS layer.
-create policy "organizers and admins can update events"
-  on public.game_events
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(id) or public.is_root_admin());
+-- ─── game_event_drafts: SELECT replacement ─────────────────────────────
+-- Replace the existing root-only "admins can read drafts" SELECT policy
+-- with a two-branch version that admits organizers for events they
+-- organize. The id column is the event identifier (text PK; equals
+-- game_events.id and event_role_assignments.event_id), so the predicate
+-- substitutes `id` for `event_id` directly. INSERT/UPDATE/DELETE policies
+-- on this table stay root-only — authoring writes flow through save-draft
+-- under service_role, not direct PostgREST.
+drop policy "admins can read drafts" on public.game_event_drafts;
 
-create policy "organizers and admins can delete events"
-  on public.game_events
-  for delete
+create policy "organizers and admins can read drafts"
+  on public.game_event_drafts
+  for select
   to authenticated
   using (public.is_organizer_for_event(id) or public.is_root_admin());
 
--- ─── game_questions: INSERT, UPDATE, DELETE ─────────────────────────────
--- event_id is a direct column. Authenticated already holds the three
--- write privileges; only RLS policies are added.
-create policy "organizers and admins can insert questions"
-  on public.game_questions
-  for insert
-  to authenticated
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
+-- ─── game_event_versions: SELECT replacement ───────────────────────────
+-- Replace the existing root-only "admins can read versions" SELECT policy
+-- with a two-branch version. The game_event_admin_status view
+-- (security_invoker = true) joins game_event_versions; without this
+-- broadening, organizers reading the view would see "draft_only" status
+-- on their published events because the version-row join would silently
+-- return zero rows. event_id is a direct column on this table.
+drop policy "admins can read versions" on public.game_event_versions;
 
-create policy "organizers and admins can update questions"
-  on public.game_questions
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can delete questions"
-  on public.game_questions
-  for delete
+create policy "organizers and admins can read versions"
+  on public.game_event_versions
+  for select
   to authenticated
   using (public.is_organizer_for_event(event_id) or public.is_root_admin());
 
--- ─── game_question_options: INSERT, UPDATE, DELETE ──────────────────────
--- event_id is a direct column. Authenticated already holds the three
--- write privileges; only RLS policies are added.
-create policy "organizers and admins can insert question options"
-  on public.game_question_options
-  for insert
-  to authenticated
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can update question options"
-  on public.game_question_options
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can delete question options"
-  on public.game_question_options
-  for delete
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
--- ─── game_event_drafts: INSERT, UPDATE, DELETE ──────────────────────────
--- Replace the existing root-only "admins can …" write policies with the
--- broadened predicate. game_event_drafts.id is the event identifier
--- (text PK; equals game_events.id), so the predicate substitutes `id`
--- for `event_id`. The "admins can read drafts" SELECT policy stays
--- root-only — SELECT broadening is consumer surface (M2 phase 2.2) and
--- out of scope here. Authenticated has SELECT only today; grant the
--- three write privileges before the broadened policies become
--- reachable.
-grant insert, update, delete on table public.game_event_drafts to authenticated;
-
-drop policy "admins can insert drafts" on public.game_event_drafts;
-drop policy "admins can update drafts" on public.game_event_drafts;
-drop policy "admins can delete drafts" on public.game_event_drafts;
-
-create policy "organizers and admins can insert drafts"
-  on public.game_event_drafts
-  for insert
-  to authenticated
-  with check (public.is_organizer_for_event(id) or public.is_root_admin());
-
-create policy "organizers and admins can update drafts"
-  on public.game_event_drafts
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(id) or public.is_root_admin());
-
-create policy "organizers and admins can delete drafts"
-  on public.game_event_drafts
-  for delete
-  to authenticated
-  using (public.is_organizer_for_event(id) or public.is_root_admin());
-
--- ─── game_completions: INSERT, UPDATE, DELETE ───────────────────────────
--- Reachable today only via the complete_game_and_award_entitlement
--- service-role RPC; broadening is symmetric with the rest of the
--- event-scoped write surface. Authenticated has no privileges on this
--- table today; grant the three write privileges before policies. SELECT
--- stays unchanged (out of scope for 2.1.1).
-grant insert, update, delete on table public.game_completions to authenticated;
-
-create policy "organizers and admins can insert completions"
-  on public.game_completions
-  for insert
-  to authenticated
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can update completions"
-  on public.game_completions
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can delete completions"
-  on public.game_completions
-  for delete
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
--- ─── game_entitlements: UPDATE, DELETE ──────────────────────────────────
--- INSERT remains service-role-only — entitlements are RPC-created via
--- public.complete_game_and_award_entitlement. Authenticated has SELECT
--- today via the existing "assigned operators can read event
--- entitlements" policy (untouched by this migration); grant UPDATE and
--- DELETE before the broadened policies become reachable.
-grant update, delete on table public.game_entitlements to authenticated;
-
-create policy "organizers and admins can update entitlements"
-  on public.game_entitlements
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can delete entitlements"
-  on public.game_entitlements
-  for delete
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
--- ─── game_starts: INSERT, UPDATE, DELETE ────────────────────────────────
--- Analytics surface; broadening is symmetric with the rest of the
--- event-scoped write surface. event_id is a direct column.
--- Authenticated already holds the three write privileges; only RLS
--- policies are added.
-create policy "organizers and admins can insert starts"
-  on public.game_starts
-  for insert
-  to authenticated
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can update starts"
-  on public.game_starts
-  for update
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin())
-  with check (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
-create policy "organizers and admins can delete starts"
-  on public.game_starts
-  for delete
-  to authenticated
-  using (public.is_organizer_for_event(event_id) or public.is_root_admin());
-
--- ─── event_role_assignments: INSERT, DELETE + SELECT replacement ────────
+-- ─── event_role_assignments: SELECT replacement + INSERT, DELETE ───────
 -- The staffing table. UPDATE stays revoked at the privilege layer for
 -- both authenticated and service_role (already enforced by migration
--- 20260421000100); this migration does not grant UPDATE to anyone.
+-- 20260421000100's "role changes are insert + delete, never in-place
+-- mutation" intent); this migration does not grant UPDATE to anyone.
 -- Authenticated has SELECT today via the self-or-root-admin policy
 -- below; grant INSERT and DELETE before the broadened write policies
 -- become reachable. UPDATE is deliberately omitted from the GRANT.

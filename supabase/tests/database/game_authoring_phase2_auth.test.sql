@@ -67,23 +67,19 @@ select ok(
   'authenticated can read authoring drafts through admin RLS'
 );
 
--- M2 phase 2.1.1 grants INSERT / UPDATE / DELETE on game_event_drafts to
--- authenticated so the broadened RLS policies become reachable; per-row
--- gating moves to the WITH CHECK / USING predicate
--- (is_organizer_for_event(id) OR is_root_admin()).
 select ok(
-  has_table_privilege('authenticated', 'public.game_event_drafts', 'INSERT'),
-  'authenticated has INSERT privilege on game_event_drafts (RLS gates writes)'
+  not has_table_privilege('authenticated', 'public.game_event_drafts', 'INSERT'),
+  'authenticated cannot insert drafts directly'
 );
 
 select ok(
-  has_table_privilege('authenticated', 'public.game_event_drafts', 'UPDATE'),
-  'authenticated has UPDATE privilege on game_event_drafts (RLS gates writes)'
+  not has_table_privilege('authenticated', 'public.game_event_drafts', 'UPDATE'),
+  'authenticated cannot update drafts directly'
 );
 
 select ok(
-  has_table_privilege('authenticated', 'public.game_event_drafts', 'DELETE'),
-  'authenticated has DELETE privilege on game_event_drafts (RLS gates writes)'
+  not has_table_privilege('authenticated', 'public.game_event_drafts', 'DELETE'),
+  'authenticated cannot delete drafts directly'
 );
 
 select ok(
@@ -133,17 +129,12 @@ select is(
   'authenticated non-admin cannot read any versions through RLS'
 );
 
--- The non-admin viewer is neither organizer for 'viewer-test-event' nor a
--- root-admin, so the broadened "organizers and admins can insert drafts"
--- policy's WITH CHECK denies the row at RLS evaluation. event_code is
--- supplied so the NOT NULL check passes and RLS is the actual denier.
 select throws_ok(
   $$
-    insert into public.game_event_drafts (id, slug, event_code, name, content)
+    insert into public.game_event_drafts (id, slug, name, content)
     values (
       'viewer-test-event',
       'viewer-test-event',
-      'VTE',
       'Viewer Test Event',
       jsonb_build_object(
         'id', 'viewer-test-event',
@@ -161,8 +152,7 @@ select throws_ok(
   $$,
   '42501',
   null,
-  'authenticated non-admin cannot insert drafts (RLS WITH CHECK denial under '
-  'broadened "organizers and admins can insert drafts" policy)'
+  'authenticated non-admin cannot insert drafts'
 );
 
 reset role;
@@ -190,53 +180,41 @@ select is(
   'authenticated admin can read all draft versions'
 );
 
--- M2 phase 2.1.1 broadens game_event_drafts INSERT to organizers and
--- root-admins via RLS. Root-admin satisfies is_root_admin() and the WITH
--- CHECK predicate evaluates to true, so the direct INSERT now succeeds —
--- a deliberate model change in 2.1.1 (preserved invariant: only the
--- publish/unpublish RPCs write game_event_audit_log + game_event_versions,
--- not draft creation). Edge Function `save-draft` remains the canonical
--- ingress for payload validation.
-insert into public.game_event_drafts (id, slug, event_code, name, content)
-values (
-  'admin-test-event',
-  'admin-test-event',
-  'ATE',
-  'Admin Test Event',
-  jsonb_build_object(
-    'id', 'admin-test-event',
-    'slug', 'admin-test-event',
-    'name', 'Admin Test Event',
-    'location', 'Seattle',
-    'estimatedMinutes', 2,
-    'entitlementLabel', 'raffle ticket',
-    'intro', 'Intro',
-    'summary', 'Summary',
-    'feedbackMode', 'final_score_reveal',
-    'questions', jsonb_build_array(
+select throws_ok(
+  $$
+    insert into public.game_event_drafts (id, slug, name, content)
+    values (
+      'admin-test-event',
+      'admin-test-event',
+      'Admin Test Event',
       jsonb_build_object(
-        'id', 'q1',
-        'sponsor', 'Sponsor',
-        'prompt', 'Prompt?',
-        'selectionMode', 'single',
-        'correctAnswerIds', jsonb_build_array('a'),
-        'options', jsonb_build_array(
-          jsonb_build_object('id', 'a', 'label', 'Option A')
+        'id', 'admin-test-event',
+        'slug', 'admin-test-event',
+        'name', 'Admin Test Event',
+        'location', 'Seattle',
+        'estimatedMinutes', 2,
+        'entitlementLabel', 'raffle ticket',
+        'intro', 'Intro',
+        'summary', 'Summary',
+        'feedbackMode', 'final_score_reveal',
+        'questions', jsonb_build_array(
+          jsonb_build_object(
+            'id', 'q1',
+            'sponsor', 'Sponsor',
+            'prompt', 'Prompt?',
+            'selectionMode', 'single',
+            'correctAnswerIds', jsonb_build_array('a'),
+            'options', jsonb_build_array(
+              jsonb_build_object('id', 'a', 'label', 'Option A')
+            )
+          )
         )
       )
     )
-  )
-);
-
-select is(
-  (
-    select count(*)::int
-      from public.game_event_drafts
-     where id = 'admin-test-event'
-  ),
-  1,
-  'authenticated admin can insert drafts directly under broadened RLS '
-  '(M2 phase 2.1.1)'
+  $$,
+  '42501',
+  null,
+  'authenticated admin cannot insert drafts directly'
 );
 
 select throws_ok(

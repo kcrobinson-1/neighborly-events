@@ -283,26 +283,15 @@ select throws_ok(
   'no INSERT grant)'
 );
 
--- M2 phase 2.1.1 broadened UPDATE/DELETE on game_entitlements and DELETE on
--- event_role_assignments to authenticated organizers and root-admins. The
--- agent JWT context here satisfies neither branch, so the broadened policies
--- evaluate to false and RLS filters the row out — UPDATE / DELETE no longer
--- raises 42501; instead they affect zero rows. Verify the row state is
--- unchanged after the attempt to assert the security outcome (rather than
--- the error code that previously fired at the privilege layer).
-update public.game_entitlements
-   set redemption_status = 'redeemed'
- where verification_code = 'RLA-1111';
-
-select is(
-  (
-    select redemption_status
-      from public.game_entitlements
+select throws_ok(
+  $$
+    update public.game_entitlements
+       set redemption_status = 'redeemed'
      where verification_code = 'RLA-1111'
-  ),
-  'unredeemed'::text,
-  'agent UPDATE on game_entitlements affects zero rows under broadened RLS '
-  '(row state unchanged)'
+  $$,
+  '42501',
+  null,
+  'authenticated cannot UPDATE game_entitlements'
 );
 
 select throws_ok(

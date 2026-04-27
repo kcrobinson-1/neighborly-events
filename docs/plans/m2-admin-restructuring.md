@@ -92,15 +92,17 @@ These rules thread through multiple phase diffs and break silently
 when one phase drifts. Self-review walks each one against every
 phase's actual changes.
 
-- **Broadening predicate uniformity.** Every event-scoped write
-  policy added or replaced uses
-  `is_organizer_for_event(event_id) OR is_root_admin()` — same
-  helper signatures (both take `event_id text`, the `game_events.id`
-  PK), same OR-shape, same case ordering. No table, helper, or RPC
-  invents its own variant. Phase 2.1 ships this; no other M2 phase
-  changes it.
-- **Agent write posture preserved.** Agents do not gain direct table
-  writes during M2. The only agent-reachable write path stays the
+- **Broadening predicate uniformity.** Every policy added or
+  replaced in 2.1 uses
+  `is_organizer_for_event(<event-id-column>) OR is_root_admin()`
+  (the `event_role_assignments` SELECT policy keeps its self-read
+  branch alongside). Same helper signatures (both take
+  `event_id text`, the `game_events.id` PK), same OR-shape, same
+  case ordering. No table, helper, or RPC invents its own variant.
+  Phase 2.1 ships this; no other M2 phase changes it.
+- **Agent posture preserved.** Agents do not gain direct table
+  writes during M2 and do not gain authoring-table reads
+  (drafts/versions). The only agent-reachable write path stays the
   existing `redeem_entitlement_by_code` SECURITY DEFINER RPC; its
   `is_agent_for_event OR is_root_admin` gate is unchanged across all
   five phases. (See Cross-Phase Decision §2 for the deferred
@@ -214,19 +216,45 @@ post-incident investigators trust the audit log to be RPC-written.
 Option 2 was dominated (option 3 minus the broadening organizers
 need).
 
-**Resolution.** **Option 3.** The audit-log invariant matters more
-than direct-write symmetry. After post-resolution implementation
-investigation surfaced that neither RPC has an internal `is_admin()`
-gate today (`GRANT EXECUTE` is to `service_role` only; the Edge
-Functions invoke under the service-role key with no user-JWT
-propagation), the corrected mechanism is lighter than the original
-framing: the broadened Edge Function gate (2.1.2) is the single
-load-bearing change, and the RPC bodies stay unchanged. 2.1.1's
-migration ships RLS broadening only; 2.1.2's Edge Function helper
-migration is what enables organizer publish/unpublish. 2.2's
-"Inputs From Siblings" describes the dual-shape (direct RLS for
-most tables, RPC-mediated via the Edge Function gate for audit-log
-+ versions).
+**Resolution.** **Option 3, with the scope significantly narrowed
+during implementation.** The audit-log invariant matters more than
+direct-write symmetry. Post-resolution implementation investigation
+surfaced two facts that further narrowed the scope:
+
+1. Neither `publish_game_event_draft()` nor `unpublish_game_event()`
+   has an internal `is_admin()` gate today; `GRANT EXECUTE` is to
+   `service_role` only; the Edge Functions invoke them under the
+   service-role key with no user-JWT propagation. The "RPC widening"
+   step in earlier drafts had nothing to widen.
+2. PostgreSQL applies the SELECT policy during UPDATE and DELETE.
+   The affected tables' existing SELECT policies exclude organizers
+   (e.g., `game_event_drafts.SELECT = is_admin()`;
+   `game_events.SELECT = published_at IS NOT NULL`), so direct
+   UPDATE/DELETE broadening would have silently no-op'd for
+   organizers. INSERT broadening had no UI consumer because writes
+   flow through Edge Functions under `service_role`.
+
+The corrected scope ships **read-broadening on the authoring surface
+plus the staffing table's RLS**, not "every direct-table write
+root-admin can perform." The actually-needed changes:
+
+- Replace `game_event_drafts.SELECT` with a two-branch policy
+  (organizer-or-root) so 2.2's per-event admin can read drafts
+  via PostgREST.
+- Replace `game_event_versions.SELECT` similarly so the
+  `game_event_admin_status` security_invoker view computes correct
+  status (`'live'` vs. `'live_with_draft_changes'` vs.
+  `'draft_only'`) for organizer callers.
+- Replace `event_role_assignments.SELECT` with a three-branch
+  policy (self / organizer / root) and add INSERT/DELETE policies
+  for the post-epic agent-assignment feature.
+
+2.2's "Inputs From Siblings" describes the dual shape: organizer
+authoring writes flow through Edge Functions (service_role bypasses
+RLS); organizer authoring reads flow through PostgREST under
+broadened SELECT. 2.1.1's migration ships only those changes;
+2.1.2's Edge Function helper migration is the load-bearing change
+for organizer write capability.
 
 ### 2. `redeem_entitlement_by_code` RPC organizer broadening [Resolved → Defer]
 

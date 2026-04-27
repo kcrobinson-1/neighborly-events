@@ -15,32 +15,33 @@ retires it; phase 2.2 does not change `/admin*` behavior.
 
 ## Inputs From Siblings
 
-- **From phase 2.1 — broadened authorization on event-scoped writes.**
-  Per the audit-log/versions write-policy resolution recorded in
-  [m2-phase-2-1.md](m2-phase-2-1.md) "Resolved Decisions", organizer
-  writes flow in two shapes:
-  - **Direct RLS** on `game_event_drafts`, `game_events`,
-    `event_role_assignments`, and the other event-scoped tables
-    enumerated in 2.1's Outputs: predicate is
-    `is_organizer_for_event(event_id) OR is_root_admin()`.
-  - **RPC-mediated via the Edge Function gate** for
-    `game_event_audit_log` and `game_event_versions`: direct INSERT
-    stays service-role-only. The audit-log/version rows are written
-    only by `publish_game_event_draft()` / `unpublish_game_event()`,
-    which are reachable only via `GRANT EXECUTE → service_role`. The
-    broadened Edge Function gate (2.1.2) accepts organizer callers
-    and invokes those RPCs under service_role exactly as root-admin
-    does today. The RPC bodies themselves are unchanged — an earlier
-    draft of this scoping said the RPCs widened their internal
-    `is_admin()` gate, which was a misreading (no internal predicate
-    exists; user JWT is not propagated to the RPC).
-  From 2.2's UI perspective the effect is the same — organizer
-  publish/unpublish succeeds — but the plan author should not assume
-  direct INSERT works against the audit-log or versions tables. Phase
-  2.2 ships a UI that *appears* authorized for organizers; without 2.1
-  in place, organizer save/publish round-trips return 401/403 from the
-  function layer and 0-row writes from RLS. Phase 2.2 must merge after
-  2.1; the dependency is hard.
+- **From phase 2.1 — broadened authorization on the authoring
+  surface.** Per the resolution recorded in
+  [m2-admin-restructuring.md](../m2-admin-restructuring.md)
+  "Cross-Phase Decisions" §1 (corrected during 2.1.1 implementation),
+  organizer authoring authorization flows in two shapes:
+  - **Reads** flow through PostgREST under broadened RLS. Phase 2.1.1
+    replaces the SELECT policies on `game_event_drafts` and
+    `game_event_versions` with two-branch versions
+    (`is_organizer_for_event(<id>) OR is_root_admin()`) so 2.2's
+    per-event admin can `loadDraftEvent` / `loadDraftEventStatus`
+    via the existing PostgREST paths. The
+    `game_event_admin_status` security_invoker view inherits the
+    broadened underlying-table reads automatically.
+  - **Writes** flow through the four authoring Edge Functions
+    (`save-draft`, `publish-draft`, `unpublish-event`,
+    `generate-event-code`) under `service_role`, which bypasses RLS
+    entirely. Phase 2.1.2 widens the in-handler authorization gate
+    to accept organizer callers. The Edge Function gate is the
+    load-bearing authorization point for organizer authoring writes
+    — direct-PostgREST writes against authoring tables stay
+    root-only because their existing INSERT/UPDATE/DELETE policies
+    are unchanged.
+  Phase 2.2 ships a UI that *appears* authorized for organizers;
+  without 2.1.1 + 2.1.2 in place, organizer reads return zero rows
+  (RLS filters drafts and versions) and organizer save/publish
+  round-trips return 401/403 from the function layer. Phase 2.2 must
+  merge after both 2.1.1 and 2.1.2; the dependency is hard.
 - **From phase 2.1 — `authenticateEventOrganizerOrAdmin` Edge Function
   helper.** 2.1 lands a shared helper at
   `supabase/functions/_shared/event-organizer-auth.ts`
@@ -322,14 +323,25 @@ records the resolutions and the rejected alternatives.
   *Rejected: broaden in 2.1 — adds mass-redeem attack surface for
   zero in-epic feature value.*
 - **Audit-log + versions writes via the broadened Edge Function
-  path.** 2.1's resolution changes the operational shape 2.2
-  inherits: writes flow through `publish_game_event_draft()` /
-  `unpublish_game_event()` (invoked under service_role by the
-  broadened Edge Function gate) rather than direct INSERT. The RPC
-  bodies are unchanged. The "Inputs From Siblings" section above
-  carries the updated wording; no 2.2 contract changes.
+  path.** 2.1's resolution: writes flow through
+  `publish_game_event_draft()` / `unpublish_game_event()` (invoked
+  under service_role by the broadened Edge Function gate) rather
+  than direct INSERT. The RPC bodies are unchanged. The "Inputs
+  From Siblings" section above carries the updated wording; no 2.2
+  contract changes.
   *Rejected: direct organizer INSERT on audit-log + versions —
   invariant-breaking.*
+- **2.1's RLS scope narrowed to reads.** 2.1.1 ships SELECT
+  broadening on `game_event_drafts` / `game_event_versions` plus
+  `event_role_assignments` SELECT/INSERT/DELETE. 2.2's UI relies on
+  this for the existing PostgREST read paths
+  (`loadDraftEvent`, `loadDraftEventStatus`, `getGameAdminStatus`)
+  to work for organizers. The plan author should not assume direct
+  PostgREST writes against authoring tables are reachable for
+  organizers — they go through Edge Functions.
+  *Rejected: direct-PostgREST INSERT/UPDATE/DELETE broadening on
+  authoring tables — silent no-op for UPDATE/DELETE due to
+  SELECT-visibility coupling; no consumer for INSERT.*
 
 Other previously-open questions on helper signature (slug vs
 event-id), edge-function authorization shape, hook home
