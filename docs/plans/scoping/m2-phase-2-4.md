@@ -16,13 +16,26 @@ SPA fallback are removed in this phase.
 
 ## Inputs From Siblings
 
-- **Phase 2.1 (RLS broadening).** No direct dependency. Phase 2.4
-  calls the same authoring edge functions
+- **Phase 2.1 (RLS broadening).** Soft dependency on 2.1.2 (Landed).
+  After 2.1.2's helper swap, the four authoring edge functions
   (`save-draft`, `publish-draft`, `unpublish-event`,
-  `generate-event-code`) that already gate on `public.is_admin()` via
-  [supabase/functions/_shared/admin-auth.ts](supabase/functions/_shared/admin-auth.ts).
-  The platform admin is root-only, so 2.1's organizer broadening does
-  not change the auth surface 2.4 consumes.
+  `generate-event-code`) gate on
+  `is_organizer_for_event(eventId) OR is_root_admin()` via
+  [supabase/functions/_shared/event-organizer-auth.ts](../../../supabase/functions/_shared/event-organizer-auth.ts),
+  not on `public.is_admin()` via the legacy `admin-auth.ts`. The
+  platform admin is root-only, and `is_root_admin()` aliases
+  `is_admin()` per
+  [supabase/migrations/20260421000200_add_event_role_helpers.sql](../../../supabase/migrations/20260421000200_add_event_role_helpers.sql),
+  so observable behavior for the root-admin caller is preserved — but
+  the on-disk gate has shifted shape, and the broadened helper
+  requires the caller to supply the event id. Each function reads it
+  from its existing payload shape — `save-draft` from
+  `payload.content.id`; `publish-draft`, `unpublish-event`, and
+  `generate-event-code` from a top-level `eventId` field — so no
+  payload-contract changes are required for 2.4's apps/site `/admin`
+  call sites; the only mechanical change is the shared
+  `generateEventCode(eventId)` client signature, which already shipped
+  with 2.1.2 (see Resolved Decisions for the follow-up disposition).
 - **Phase 2.2 (per-event admin).** The deep-editor surface must be
   reachable at `/event/:slug/admin` before 2.4 removes apps/web
   `/admin`. Per [m2-phase-2-2.md](m2-phase-2-2.md), 2.2's
@@ -236,8 +249,13 @@ the four authoring functions re-confirmed for the audit only.
   wrap anywhere in the admin tree.
 - **Deferred ThemeScope wiring.** Not exercised.
 - **Trust boundary.** Every write flows through an authoring edge
-  function that re-verifies the JWT against `public.is_admin()`;
-  unchanged trust boundary, new client.
+  function that re-verifies the JWT against
+  `is_organizer_for_event(eventId) OR is_root_admin()` via
+  [supabase/functions/_shared/event-organizer-auth.ts](../../../supabase/functions/_shared/event-organizer-auth.ts)
+  (post-2.1.2). The platform admin is a root-admin caller, so it
+  passes through the `is_root_admin()` branch — observable behavior
+  preserved, gate broader than 2.4 strictly needs. New client, same
+  trust boundary.
 - **In-place auth.** Signed-out `/admin` renders `SignInForm` inline;
   no `/signin` page.
 
@@ -310,14 +328,17 @@ All open questions for 2.4 are settled. See
 "Cross-Phase Decisions" for the full deliberation; this section
 records the resolutions and the rejected alternatives.
 
-- **`generate-event-code` payload contract → `eventId` in payload.**
-  The shared `generateEventCode()` signature gains an `eventId`
-  parameter when 2.1 lands the helper swap; 2.4's "regenerate event
-  code" call site already has the id in scope, so the change is
-  mechanical. Plan-drafting confirms the resolved signature against
-  2.1's merged migration during the contract walk.
-  *No alternative considered — payload field follows from 2.1's
-  helper signature.*
+- **`generate-event-code` payload contract → `eventId` in payload
+  (already shipped by 2.1.2).** The shared `generateEventCode(eventId)`
+  signature already takes `eventId` per
+  [shared/events/admin.ts](../../../shared/events/admin.ts); the Edge
+  Function validates it server-side per
+  [supabase/functions/generate-event-code/index.ts](../../../supabase/functions/generate-event-code/index.ts).
+  2.4's "regenerate event code" call site already has the id in scope,
+  so the change is fully mechanical at the call site — no signature
+  work remains.
+  *No alternative considered — payload field followed from 2.1's
+  helper signature; resolution recorded retrospectively.*
 - **`createStarterDraftContent` home → `shared/events/`.** The helper
   moves from
   [apps/web/src/admin/draftCreation.ts](../../../apps/web/src/admin/draftCreation.ts)
