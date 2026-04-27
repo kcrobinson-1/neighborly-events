@@ -212,10 +212,21 @@ Docs-only trigger policy:
 
 Release target integrity:
 
-- require production release workflow runs to resolve an explicit target SHA and
-  confirm that SHA already has a successful `CI` push run on `main`
-- keep production deploy pinned to the validated target SHA rather than a moving
-  branch head
+- require production release workflow runs to resolve an explicit target SHA
+  from `workflow_run.head_sha` (CI-completion trigger) or `github.sha`
+  (manual `workflow_dispatch`) and confirm that SHA was tested by a
+  successful `CI` push run on `main`
+- on the `workflow_run` trigger the confirmation is structural: the job's
+  `if:` condition admits only `conclusion == 'success' && event == 'push'`,
+  so the triggering CI run is by construction a successful main CI push
+  run; an additional API re-query for the same fact is redundant and was
+  removed after it flaked (eventual-consistency lag returned an empty
+  result set for a CI run that demonstrably existed within minutes of CI
+  completion)
+- on the `workflow_dispatch` trigger the workflow runs an explicit
+  `actions/runs?head_sha=...` API check, since dispatch can pick any SHA
+- keep production deploy pinned to the validated target SHA rather than a
+  moving branch head
 
 ### Phase 1 completion checklist
 
