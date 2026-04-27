@@ -605,13 +605,20 @@ needed). Hard cutover: no backward-compat redirects. One PR.
 
 **Validation gate.** `npm run lint`, `npm run build:web`,
 `npm run build:site`, full pgTAP suite, `deno check` on edge functions,
-Playwright captures covering organizer authentication and authorization on
-the new per-event admin route, Playwright captures covering root-admin
-authentication and the platform admin's event-list/create/lifecycle flows
-in apps/site, screenshot validation that all event-scoped routes render in
-the event's theme, manual verification that magic-link sign-in flows
-through `/auth/callback` in apps/site and lands on the requested
-destination across both apps.
+Playwright captures covering organizer authentication and authorization
+on the new per-event admin route, Playwright captures covering
+root-admin authentication and the platform admin's
+event-list/create/lifecycle flows in apps/site, screenshot validation
+of routes consistent with the deferred-Madrona rollout: per-event
+admin from phase 2.2 wraps in `<ThemeScope>` and renders against the
+platform Sage Civic Theme (per-event Themes apply after M4 phase 4.1
+registers them); operator routes from phase 2.5 render against
+apps/web's `:root` warm-cream defaults (their `<ThemeScope>` wiring is
+deferred to M4); the platform admin from phase 2.4 and the migrated
+`/` and `/auth/callback` from phase 2.3 render against apps/site's
+Sage Civic `:root` defaults. Manual verification that magic-link
+sign-in flows through `/auth/callback` in apps/site and lands on the
+requested destination across both apps.
 
 **Documentation.** `docs/architecture.md` updated for new trust boundary,
 two-app URL ownership shape, and route family.
