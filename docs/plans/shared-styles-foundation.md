@@ -23,7 +23,7 @@ those surfaces with different attention; bundling them dilutes both.
 
 | Subphase | Scope | Status |
 | --- | --- | --- |
-| 1.5.1 | Token audit + new `docs/styling.md` (doc-only) | Proposed |
+| 1.5.1 | Token audit + new `docs/styling.md` (doc-only) | Landed |
 | 1.5.2 | `shared/styles/` scaffolding, Sage Civic platform palette, apps/web SCSS migration, apps/site root layout | Proposed |
 
 This plan inherits the **production cookie-boundary verification gate**
