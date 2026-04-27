@@ -553,20 +553,35 @@ below remain the canonical phase descriptions inside the epic.
 admin, broaden RLS so organizers can write any event-scoped data for their
 event, and migrate operator URLs into the `/game/*` namespace.
 
-**Phase 2.1 — RLS broadening with pgTAP coverage.**
-Migration extends RLS policies on every event-scoped table so that organizers
-can perform the same writes root-admin can perform on events for which
-`is_organizer_for_event(event_id)` returns true. This explicitly includes
-writes to `event_role_assignments` (or the equivalent table backing
-organizer/agent staffing for the event) — the broadening is the deliberate
-resolution of the post-MVP authoring-ownership question, not a drift past
-it. pgTAP suite extended to prove that organizers can write all
-event-scoped tables for their own event including role assignments, cannot
-write to other events' tables, cannot write to platform-level tables, that
-agents have read-only access where required for redemption and no writes
-elsewhere, and that root-admin retains all powers. Edge function
-authorization extended to accept organizer writes in the same surfaces. One
-PR.
+**Phase 2.1 — Authorization broadening for organizers.**
+Resolves the post-MVP authoring-ownership question by broadening
+authorization so an organizer (a row in `event_role_assignments` with
+`role = 'organizer'` for the event) can read draft and version content
+via PostgREST, can save / publish / unpublish / regenerate event codes
+for their event via the four authoring Edge Functions, and can insert
+and delete assignments for their event via PostgREST (supporting the
+post-epic agent-assignment feature). Splits across two sub-phase PRs
+to isolate review surfaces: 2.1.1 lands the SQL migration (SELECT
+broadening on `game_event_drafts` and `game_event_versions`; SELECT
+replacement plus INSERT and DELETE on `event_role_assignments`) and
+the pgTAP coverage; 2.1.2 lands the new
+`authenticateEventOrganizerOrAdmin` shared helper, the four
+authoring-function caller swaps, and the `docs/architecture.md`
+update. The mechanism settled during scoping: authoring writes flow
+through Edge Functions executing as `service_role` (which bypasses
+RLS), so the load-bearing change is the Edge Function gate widening
+in 2.1.2; RLS write broadening on the authoring tables is
+deliberately not added because PostgreSQL's SELECT-visibility
+coupling would silently no-op UPDATE/DELETE for organizers. The
+audit-log "rows reflect real state transitions" invariant is
+preserved by `GRANT EXECUTE → service_role` on
+`publish_game_event_draft()` / `unpublish_game_event()` plus
+direct-INSERT denied via RLS — no RPC body changes. pgTAP coverage
+proves organizer reads succeed for their event and return zero rows
+for other events; agent and unrelated-authenticated reads stay
+denied; root-admin retains all powers. See
+[m2-admin-restructuring.md](./m2-admin-restructuring.md) "Cross-Phase
+Decisions" §1 for the full deliberation. Two PRs.
 
 **Phase 2.2 — Per-event admin route shell in apps/web at `/event/:slug/admin`.**
 New route shell at `/event/:slug/admin` in apps/web. Authorization resolved
