@@ -353,7 +353,7 @@ replaced with the presence-check readout in 1.3.2; the
 on-demand re-run path against any production origin.
 
 **Phase 1.4 — `shared/events/`.**
-**Plan:** [`shared-events-foundation.md`](./shared-events-foundation.md).
+**Status:** Landed. **Plan:** [`shared-events-foundation.md`](./shared-events-foundation.md).
 Extract event-domain operations into `shared/events/` so both apps consume
 the same event-scoped reads, writes, and projections. The actual current
 homes of the code being moved:

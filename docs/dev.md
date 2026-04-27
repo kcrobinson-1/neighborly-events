@@ -146,6 +146,27 @@ import `getBrowserSupabaseClient`, `getSupabaseConfig`,
 `shared/db/` directly only when adding a new per-app adapter or
 when consuming the generated DB row types described next.
 
+### Shared event-domain API
+
+Event-domain reads and admin writes live in
+[`shared/events/`](../shared/events/). It owns public published-content
+reads, admin status/draft reads, authenticated authoring function calls,
+and the projection types those flows return. It is env-agnostic: each app
+calls `configureSharedEvents(...)` once at startup with its Supabase
+config/client providers.
+
+In `apps/web`, provider registration lives in
+[`apps/web/src/lib/setupEvents.ts`](../apps/web/src/lib/setupEvents.ts),
+imported for side-effect by `apps/web/src/main.tsx`. Existing apps/web
+call sites keep importing from
+[`apps/web/src/lib/gameContentApi.ts`](../apps/web/src/lib/gameContentApi.ts)
+and
+[`apps/web/src/lib/adminGameApi.ts`](../apps/web/src/lib/adminGameApi.ts).
+`gameContentApi.ts` owns only the local prototype fallback gate and fixture
+lookup; `adminGameApi.ts` is a pure re-export shim. Do not add
+`import.meta.env.*`, `process.env.*`, `window`, app imports, or singleton
+client state inside `shared/events/`.
+
 ### Generated Supabase TypeScript types
 
 The canonical `Database` type lives at `shared/db/types.ts` and is
