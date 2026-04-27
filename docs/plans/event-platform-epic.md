@@ -543,6 +543,12 @@ reference 1.3.2's actual evidence run), CLI / tooling pinning audit
 
 ### M2 — Admin Restructuring And Authorization Broadening
 
+**Milestone doc.** [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+holds the M2 sequencing, cross-phase invariants, cross-phase
+decisions with rejected alternatives, and milestone-level risks.
+Per-phase plans live alongside it as they draft. The paragraphs
+below remain the canonical phase descriptions inside the epic.
+
 **Goal.** Split the existing `/admin` into platform-admin and per-event
 admin, broaden RLS so organizers can write any event-scoped data for their
 event, and migrate operator URLs into the `/game/*` namespace.
