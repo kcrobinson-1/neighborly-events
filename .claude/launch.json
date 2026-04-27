@@ -20,6 +20,12 @@
       "port": 4173
     },
     {
+      "name": "site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--workspace", "@neighborly/site", "run", "dev"],
+      "port": 3000
+    },
+    {
       "name": "supabase",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["supabase", "start"],

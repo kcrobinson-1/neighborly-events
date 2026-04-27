@@ -29,7 +29,7 @@
 
   .panel {
     padding: $space-8;
-    border-radius: $radius-panel-mobile;
+    border-radius: var(--radius-panel-mobile);
   }
 
   .sample-game-row {

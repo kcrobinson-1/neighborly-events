@@ -18,7 +18,7 @@
   width: fit-content;
   padding: 7px $space-5;
   border-radius: $radius-pill;
-  background: $color-secondary-surface;
+  background: var(--secondary-surface);
   color: var(--secondary);
   font-size: 0.88rem;
   font-weight: $font-weight-bold;
@@ -49,17 +49,17 @@
 .redemptions-error {
   @include stack($space-4);
   padding: $space-8;
-  border: 1px solid $color-primary-border;
-  border-radius: $radius-card;
-  background: $color-primary-surface;
+  border: 1px solid var(--primary-border);
+  border-radius: var(--radius-card);
+  background: var(--primary-surface);
 }
 
 .redemptions-cap-banner {
   margin: 0;
   padding: $space-5 $space-7;
-  border: 1px solid $color-accent-border;
-  border-radius: $radius-card;
-  background: $color-accent-surface-muted;
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-card);
+  background: var(--accent-surface-muted);
   color: $color-status-reversed-foreground;
   font-size: 0.92rem;
 }
@@ -70,7 +70,7 @@
   z-index: 1;
   @include stack($space-4);
   padding: $space-5 0;
-  background: $color-surface-card;
+  background: var(--surface-card);
 }
 
 .redemptions-search-label {
@@ -80,9 +80,9 @@
 .redemptions-search-input {
   width: 100%;
   padding: $space-5 $space-7;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-control;
-  background: $color-admin-input-surface;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-control);
+  background: var(--admin-input-surface);
   color: var(--text);
   font-size: 1rem;
 
@@ -100,9 +100,9 @@
 
 .redemptions-filter-chip {
   padding: $space-3 $space-6;
-  border: 1px solid $color-secondary-border-subtle;
+  border: 1px solid var(--secondary-border-subtle);
   border-radius: $radius-pill;
-  background: $color-secondary-surface;
+  background: var(--secondary-surface);
   color: var(--secondary);
   font-weight: $font-weight-semibold;
   font-size: 0.88rem;
@@ -115,8 +115,8 @@
   }
 
   &.is-active {
-    background: $color-secondary-surface-selected;
-    border-color: $color-secondary-border-selected;
+    background: var(--secondary-surface-selected);
+    border-color: var(--secondary-border-selected);
     box-shadow: $shadow-selected;
   }
 }
@@ -131,9 +131,9 @@
 .redemptions-row {
   @include stack($space-3);
   padding: $space-6 $space-7;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-card;
-  background: $color-surface-card;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
 }
 
 .redemptions-row-primary {
@@ -171,7 +171,7 @@
 }
 
 .redemptions-status-badge-unknown {
-  background: $color-secondary-surface;
+  background: var(--secondary-surface);
   color: var(--muted);
 }
 
@@ -201,9 +201,9 @@
   max-height: 80vh;
   overflow-y: auto;
   padding: $space-8 $space-7 $space-12;
-  border-top-left-radius: $radius-panel;
-  border-top-right-radius: $radius-panel;
-  background: $color-white-panel;
+  border-top-left-radius: var(--radius-panel);
+  border-top-right-radius: var(--radius-panel);
+  background: var(--white-panel);
   box-shadow: $shadow-panel;
   z-index: 11;
   @include stack($space-6);
@@ -244,7 +244,7 @@
 .redemptions-sheet-banner {
   margin: 0;
   padding: $space-5 $space-7;
-  border-radius: $radius-card;
+  border-radius: var(--radius-card);
   font-size: 0.95rem;
   @include stack($space-3);
 }
@@ -252,19 +252,19 @@
 .redemptions-sheet-banner-success {
   background: $color-status-reversed-surface;
   color: $color-status-reversed-foreground;
-  border: 1px solid $color-accent-border;
+  border: 1px solid var(--accent-border);
 }
 
 .redemptions-sheet-banner-warning {
-  background: $color-accent-surface-muted;
+  background: var(--accent-surface-muted);
   color: $color-status-reversed-foreground;
-  border: 1px solid $color-accent-border;
+  border: 1px solid var(--accent-border);
 }
 
 .redemptions-sheet-banner-error {
-  background: $color-primary-surface;
+  background: var(--primary-surface);
   color: var(--text);
-  border: 1px solid $color-primary-border;
+  border: 1px solid var(--primary-border);
 }
 
 .redemptions-sheet-reverse-cta {
@@ -283,9 +283,9 @@
 .redemptions-sheet-confirmation-summary {
   @include stack($space-3);
   padding: $space-5 $space-7;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-card;
-  background: $color-surface-card;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
 }
 
 .redemptions-sheet-reason-label {
@@ -295,9 +295,9 @@
 .redemptions-sheet-reason-input {
   width: 100%;
   padding: $space-5 $space-7;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-control;
-  background: $color-admin-input-surface;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-control);
+  background: var(--admin-input-surface);
   color: var(--text);
   font-size: 1rem;
 

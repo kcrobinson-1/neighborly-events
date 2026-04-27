@@ -1,0 +1,41 @@
+/*
+ * apps/site global styles. The CSS custom properties this file
+ * consumes (--bg, --text, --font-body, --font-heading) are set as
+ * inline style on the <html> element by app/layout.tsx via
+ * `themeToStyle(platformTheme)` from shared/styles/. Adding a route
+ * outside the platform Theme (M3 wraps event landing in
+ * <ThemeScope>) overrides them on the wrapped subtree.
+ *
+ * Brand-tied derived shades (--primary-surface, etc.) are not
+ * declared here yet — apps/site's placeholder routes do not consume
+ * them. M3 phase 3.1 lands a derivation block in :root when real
+ * event-landing routes need it.
+ */
+
+html {
+  color-scheme: light;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+}

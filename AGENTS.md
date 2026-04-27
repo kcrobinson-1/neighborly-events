@@ -64,22 +64,52 @@ Do not default to the local browser-only completion fallback when a remote Supab
 
 ### Styling Token Discipline
 
-Use the SCSS token layer before adding new hard-coded visual values.
+Every styling token belongs to one of two buckets: **per-event brand
+themable** (CSS custom property; overridable by a per-event `Theme`)
+or **platform-shared structural** (SCSS variable; constant across
+events). [`docs/styling.md`](docs/styling.md) is the binding
+classification — use it before adding or moving a token.
 
-- prefer existing tokens from `apps/web/src/styles/_tokens.scss` for colors,
-  spacing, radii, shadows, font weights, and shared component dimensions
-- add a new semantic token when a value is repeated, represents a reusable
-  surface, state, interaction, or layout role, or should change consistently
-  across multiple components
-- name tokens by UI role or intent, such as `$color-success-surface` or
-  `$space-7`, rather than by vague appearance names
-- keep one-off layout values local when a token would add indirection without
-  improving readability or future change cost
-- do not introduce broad token rewrites inside unrelated feature work; add a
-  bounded checklist item when token cleanup is useful but not required for the
-  feature
-- for behavior-preserving token refactors, compare compiled CSS before and
-  after when practical, in addition to running `npm run build:web`
+- **Themable.** Brand bases, brand-tied gradient stops and admin
+  surfaces, brand typography, themable radii, and the brand-tied
+  derived shades that follow them. Defined as CSS custom properties
+  in `apps/web/src/styles/_tokens.scss`'s `:root` block (apps/web
+  defaults), in `shared/styles/themes/platform.ts` (Sage Civic
+  defaults consumed by apps/site's root layout), and overridable
+  per-event via `<ThemeScope theme={…}>`. Consumed in SCSS as
+  `var(--…)`. Brand-tied derived shades (`--primary-surface`,
+  `--secondary-focus`, etc.) are computed in `:root` via
+  `color-mix()` from the brand bases — they are not Theme fields and
+  per-event themes do not override them directly; see `docs/styling.md`.
+- **Structural.** Status palette (`$color-success`, `$color-status-*`),
+  neutral drop-shadow color, modal scrim, spacing scale, font
+  weights, control sizes, motion timing, focus-ring metrics, pill
+  radius, and composite shadow / focus recipes that combine
+  structural metrics with themable color slots via `var(--…)`.
+  Defined as `$…` SCSS variables in `apps/web/src/styles/_tokens.scss`.
+  Consumed in SCSS as `$…`.
+
+When you add or move a token:
+
+- decide its bucket against the binding classification in
+  `docs/styling.md`; classifying a token wrong silently weakens the
+  brand-only skin model (themable status) or pulls platform contracts
+  into the per-event surface (structural brand bases)
+- add a new semantic token when a value is repeated, represents a
+  reusable surface, state, interaction, or layout role, or should
+  change consistently across multiple components
+- name tokens by UI role or intent, such as `--primary-surface` or
+  `$space-7`, rather than by vague appearance names; themable
+  tokens use the flat `--token-name` convention (no `--theme-`
+  prefix), structural tokens use `$token-name`
+- keep one-off layout values local when a token would add indirection
+  without improving readability or future change cost
+- do not introduce broad token rewrites inside unrelated feature
+  work; add a bounded checklist item when token cleanup is useful
+  but not required for the feature
+- for behavior-preserving token refactors, compare compiled CSS
+  before and after when practical, in addition to running
+  `npm run build:web`
 
 ## Expected Workflow
 

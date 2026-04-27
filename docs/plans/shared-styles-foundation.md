@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M1, Phase 1.5. The epic's M1 row stays `Proposed` until every
@@ -24,7 +24,7 @@ those surfaces with different attention; bundling them dilutes both.
 | Subphase | Scope | Status |
 | --- | --- | --- |
 | 1.5.1 | Token audit + new `docs/styling.md` (doc-only) | Landed |
-| 1.5.2 | `shared/styles/` scaffolding, Sage Civic platform palette, apps/web SCSS migration, apps/site root layout | Proposed |
+| 1.5.2 | `shared/styles/` scaffolding, Sage Civic platform palette, apps/web SCSS migration, apps/site root layout | Landed |
 
 This plan inherits the **production cookie-boundary verification gate**
 named in the epic's M1 validation section. That gate was already

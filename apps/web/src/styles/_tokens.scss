@@ -1,62 +1,46 @@
+// Per the M1 phase 1.5.1 token audit (`docs/styling.md`), this file
+// is split into two halves:
+//
+// 1. **Structural — platform-shared SCSS variables.** Status palette,
+//    neutral drop-shadow, modal scrim, spacing, motion, font weights,
+//    control sizes, pill radius, composite shadow / focus recipes.
+//    Stay as `$…` and are not Theme fields.
+// 2. **Themable — apps/web `:root` defaults.** Brand bases, brand-tied
+//    gradient stops and admin surfaces, typography, themable radii,
+//    plus brand-tied derived shades computed via `color-mix()` from
+//    the brand bases. Consumed in SCSS as `var(--…)`. Per the parent
+//    epic's deferred-ThemeScope-wiring invariant, apps/web routes
+//    render against these `:root` values until M4 phase 4.1; the
+//    block here is the source-of-truth for apps/web's defaults,
+//    deliberately independent of `shared/styles/themes/platform.ts`
+//    (apps/site's source-of-truth).
+
+// === 1. Structural — platform-shared SCSS variables ===
+
 $font-stack: "Avenir Next", "Segoe UI", sans-serif;
 
-$color-bg: #f6f1e7;
-$color-surface: rgba(255, 252, 245, 0.92);
-$color-surface-strong: rgba(255, 249, 239, 0.98);
-$color-surface-card: rgba(255, 250, 243, 0.9);
-$color-surface-card-muted: rgba(255, 250, 243, 0.88);
-$color-border: rgba(31, 58, 50, 0.12);
-$color-border-soft: rgba(31, 58, 50, 0.09);
-$color-border-muted: rgba(31, 58, 50, 0.1);
-$color-text: #1f3a32;
-$color-muted: #53645e;
-$color-primary: #d96b2b;
-$color-secondary: #2f6f8f;
-$color-accent: #e3b23c;
+// Status palette (semantic; not brand)
 $color-success: #3f8f5a;
-$color-shadow: rgba(42, 42, 42, 0.12);
-$color-white-warm: #fff8f1;
-$color-white-panel: #fffaf3;
-$color-white-tint: #fffef9;
-$color-page-gradient-start: #fbf7ef;
-$color-page-gradient-end: #efe4cf;
-$color-hero-surface-start: rgba(255, 250, 242, 0.98);
-$color-hero-surface-end: rgba(247, 241, 231, 0.95);
-$color-admin-input-surface: rgba(255, 252, 245, 0.98);
-$color-draft-row-surface: rgba(255, 250, 243, 0.82);
-$color-grid-line: rgba(31, 58, 50, 0.04);
-$color-backdrop-mask: rgba(0, 0, 0, 0.35);
-$color-text-disabled-surface: rgba(31, 58, 50, 0.18);
-$color-secondary-surface: rgba(47, 111, 143, 0.1);
-$color-secondary-surface-strong: rgba(47, 111, 143, 0.14);
-$color-secondary-surface-selected: rgba(47, 111, 143, 0.18);
-$color-secondary-surface-pending: rgba(47, 111, 143, 0.12);
-$color-secondary-border-subtle: rgba(47, 111, 143, 0.18);
-$color-secondary-border-pending: rgba(47, 111, 143, 0.24);
-$color-secondary-border-selected: rgba(47, 111, 143, 0.56);
-$color-secondary-focus: rgba(47, 111, 143, 0.42);
-$color-secondary-glow: rgba(47, 111, 143, 0.22);
-$color-primary-surface: rgba(217, 107, 43, 0.12);
-$color-primary-surface-strong: rgba(217, 107, 43, 0.14);
-$color-primary-border: rgba(217, 107, 43, 0.24);
-$color-primary-shadow: rgba(217, 107, 43, 0.24);
-$color-accent-surface: rgba(227, 178, 60, 0.18);
-$color-accent-surface-muted: rgba(227, 178, 60, 0.14);
-$color-accent-surface-pending: rgba(227, 178, 60, 0.12);
-$color-accent-border: rgba(227, 178, 60, 0.26);
-$color-accent-glow: rgba(227, 178, 60, 0.28);
 $color-success-surface: rgba(63, 143, 90, 0.16);
 $color-success-surface-muted: rgba(63, 143, 90, 0.12);
 $color-success-border: rgba(63, 143, 90, 0.18);
 
-// Status-badge palette for the redemption monitoring list and the B.2b
-// reversal confirmation. Introduced in B.2a with a B.2b reuse commitment so
-// the two surfaces share one treatment.
+// Status badge palette (B.2a redemption monitoring + B.2b reversal).
+// Reversed-surface was previously aliased to `$color-accent-surface-muted`;
+// decoupled to a literal in M1 phase 1.5.2 so reversed-status meaning
+// stays cross-theme stable when a per-event Theme overrides accent.
+// See `docs/styling.md` "Structural — platform-shared" row for
+// `$color-status-reversed-surface`.
 $color-status-redeemed-surface: $color-success-surface;
 $color-status-redeemed-foreground: #2a6a40;
-$color-status-reversed-surface: $color-accent-surface-muted;
+$color-status-reversed-surface: rgba(227, 178, 60, 0.14);
 $color-status-reversed-foreground: #8a6a1c;
 
+// Neutral structural colors
+$color-shadow: rgba(42, 42, 42, 0.12);
+$color-backdrop-mask: rgba(0, 0, 0, 0.35);
+
+// Spacing scale
 $space-1: 4px;
 $space-2: 6px;
 $space-3: 8px;
@@ -80,42 +64,104 @@ $token-block-min-height: 184px;
 $token-spinner-size: 16px;
 
 $radius-pill: 999px;
-$radius-panel: 28px;
-$radius-panel-mobile: 24px;
-$radius-card: 22px;
-$radius-control: 18px;
 
+// Composite recipes — structural metrics + themable color slots via
+// `var(--…)`. Per the audit's "third pattern": the composite is
+// classified structural (not a Theme field) and stays SCSS, but its
+// color components remain themable through the brand bases the
+// `var(--…)` references resolve from.
 $shadow-panel: 0 24px 60px $color-shadow;
-$shadow-primary: 0 16px 28px $color-primary-shadow;
+$shadow-primary: 0 16px 28px var(--primary-shadow);
 $shadow-selected:
-  inset 0 0 0 1px $color-secondary-border-subtle,
-  0 10px 18px $color-secondary-surface;
+  inset 0 0 0 1px var(--secondary-border-subtle),
+  0 10px 18px var(--secondary-surface);
 
 $transition-interactive:
   transform 120ms ease,
   box-shadow 120ms ease,
   background-color 120ms ease;
 
-$focus-ring: 3px solid $color-secondary-focus;
+$focus-ring: 3px solid var(--secondary-focus);
+
+// === 2. apps/web `:root` defaults — themable values ===
 
 :root {
   color-scheme: light;
-  font-family: $font-stack;
-  background: $color-bg;
-  color: $color-text;
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  --bg: #{$color-bg};
-  --surface: #{$color-surface};
-  --surface-strong: #{$color-surface-strong};
-  --surface-border: #{$color-border};
-  --text: #{$color-text};
-  --muted: #{$color-muted};
-  --primary: #{$color-primary};
-  --secondary: #{$color-secondary};
-  --accent: #{$color-accent};
-  --success: #{$color-success};
+
+  // --- Brand bases ---
+  --bg: #f6f1e7;
+  --surface: rgba(255, 252, 245, 0.92);
+  --surface-strong: rgba(255, 249, 239, 0.98);
+  --surface-card: rgba(255, 250, 243, 0.9);
+  --surface-card-muted: rgba(255, 250, 243, 0.88);
+  --text: #1f3a32;
+  --muted: #53645e;
+  --border: rgba(31, 58, 50, 0.12);
+  --border-soft: rgba(31, 58, 50, 0.09);
+  --border-muted: rgba(31, 58, 50, 0.1);
+  --primary: #d96b2b;
+  --secondary: #2f6f8f;
+  --accent: #e3b23c;
+  --white-warm: #fff8f1;
+  --white-panel: #fffaf3;
+  --white-tint: #fffef9;
+
+  // --- Brand-tied gradient stops and admin surfaces ---
+  --page-gradient-start: #fbf7ef;
+  --page-gradient-end: #efe4cf;
+  --hero-start: rgba(255, 250, 242, 0.98);
+  --hero-end: rgba(247, 241, 231, 0.95);
+  --admin-input-surface: rgba(255, 252, 245, 0.98);
+  --draft-row-surface: rgba(255, 250, 243, 0.82);
+
+  // --- Typography ---
+  --font-body: #{$font-stack};
+  --font-heading: #{$font-stack};
+
+  // --- Themable radii ---
+  --radius-panel: 28px;
+  --radius-panel-mobile: 24px;
+  --radius-card: 22px;
+  --radius-control: 18px;
+
+  // --- Brand-tied derived shades — computed via color-mix() per
+  // option (a) with centralized derivation. Theme authors do not
+  // override these directly; they follow from the brand bases by
+  // construction. See `docs/styling.md`. ---
+  --primary-surface: color-mix(in srgb, var(--primary) 12%, transparent);
+  --primary-surface-strong: color-mix(in srgb, var(--primary) 14%, transparent);
+  --primary-border: color-mix(in srgb, var(--primary) 24%, transparent);
+  --primary-shadow: color-mix(in srgb, var(--primary) 24%, transparent);
+
+  --secondary-surface: color-mix(in srgb, var(--secondary) 10%, transparent);
+  --secondary-surface-strong: color-mix(in srgb, var(--secondary) 14%, transparent);
+  --secondary-surface-selected: color-mix(in srgb, var(--secondary) 18%, transparent);
+  --secondary-surface-pending: color-mix(in srgb, var(--secondary) 12%, transparent);
+  --secondary-border-subtle: color-mix(in srgb, var(--secondary) 18%, transparent);
+  --secondary-border-pending: color-mix(in srgb, var(--secondary) 24%, transparent);
+  --secondary-border-selected: color-mix(in srgb, var(--secondary) 56%, transparent);
+  --secondary-focus: color-mix(in srgb, var(--secondary) 42%, transparent);
+  --secondary-glow: color-mix(in srgb, var(--secondary) 22%, transparent);
+
+  --accent-surface: color-mix(in srgb, var(--accent) 18%, transparent);
+  --accent-surface-muted: color-mix(in srgb, var(--accent) 14%, transparent);
+  --accent-surface-pending: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-border: color-mix(in srgb, var(--accent) 26%, transparent);
+  --accent-glow: color-mix(in srgb, var(--accent) 28%, transparent);
+
+  --text-disabled-surface: color-mix(in srgb, var(--text) 18%, transparent);
+  --grid-line: color-mix(in srgb, var(--text) 4%, transparent);
+
+  // --- Structural composite bridge for ergonomic consumer use.
+  // Not themable — defined in `:root` from the structural
+  // `$shadow-panel` SCSS composite. Consumers continue to read
+  // `var(--shadow)`. ---
   --shadow: #{$shadow-panel};
 }

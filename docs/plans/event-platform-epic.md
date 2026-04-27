@@ -15,7 +15,7 @@ plan to history.
 | Milestone | Status |
 | --- | --- |
 | M0 — Framework decision and platform skeleton | Landed |
-| M1 — Foundation extraction | Proposed |
+| M1 — Foundation extraction | Landed |
 | M2 — Admin restructuring and authorization broadening | Proposed |
 | M3 — Site rendering infrastructure with test events | Proposed |
 | M4 — Madrona launch | Proposed |

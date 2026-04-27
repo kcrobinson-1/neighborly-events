@@ -45,9 +45,9 @@
 .admin-input {
   width: 100%;
   padding: 15px 16px;
-  border: 1px solid var(--surface-border);
-  border-radius: $radius-control;
-  background: $color-admin-input-surface;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--admin-input-surface);
   color: var(--text);
 }
 
@@ -64,12 +64,12 @@
 .admin-message {
   margin: 0;
   padding: $space-6 $space-7;
-  border-radius: $radius-control;
+  border-radius: var(--radius-control);
   font-weight: $font-weight-semibold;
 }
 
 .admin-message-error {
-  background: $color-primary-surface;
+  background: var(--primary-surface);
   color: var(--primary);
 }
 
@@ -79,7 +79,7 @@
 }
 
 .admin-message-info {
-  background: $color-secondary-surface;
+  background: var(--secondary-surface);
   color: var(--secondary);
 }
 
@@ -101,9 +101,9 @@
 
 .admin-summary-item {
   padding: $space-6 $space-7;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-control;
-  background: $color-secondary-surface;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-control);
+  background: var(--secondary-surface);
   color: var(--secondary);
   font-weight: $font-weight-bold;
 }
@@ -162,7 +162,7 @@
 .admin-question-builder {
   @include stack($space-6);
   padding-top: $space-6;
-  border-top: 1px solid $color-border-muted;
+  border-top: 1px solid var(--border-muted);
 }
 
 .admin-question-layout {
@@ -194,8 +194,8 @@
   min-width: 0;
   margin: 0;
   padding: $space-6;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-control;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-control);
 }
 
 .admin-option-fieldset legend {
@@ -206,9 +206,9 @@
 .admin-delete-confirmation {
   @include stack($space-4);
   padding: $space-5;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-control;
-  background: $color-secondary-surface;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-control);
+  background: var(--secondary-surface);
 }
 
 .admin-delete-confirmation p {
@@ -243,9 +243,9 @@
 
 .admin-workspace-detail {
   padding: $space-8;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-card;
-  background: $color-draft-row-surface;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-card);
+  background: var(--draft-row-surface);
 }
 
 .draft-list {
@@ -254,9 +254,9 @@
 
 .draft-row {
   padding: $space-8;
-  border: 1px solid $color-border-muted;
-  border-radius: $radius-card;
-  background: $color-draft-row-surface;
+  border: 1px solid var(--border-muted);
+  border-radius: var(--radius-card);
+  background: var(--draft-row-surface);
   @include stack($space-7);
 }
 
@@ -270,7 +270,7 @@
 .admin-publish-panel {
   @include stack($space-6);
   padding-top: $space-6;
-  border-top: 1px solid $color-border-muted;
+  border-top: 1px solid var(--border-muted);
 }
 
 .admin-checklist {
@@ -312,7 +312,7 @@
 .admin-unpublish-section {
   @include stack($space-4);
   padding-top: $space-4;
-  border-top: 1px solid $color-border-muted;
+  border-top: 1px solid var(--border-muted);
 }
 
 .admin-action-row.admin-unpublish-confirm {
