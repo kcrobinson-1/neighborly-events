@@ -335,14 +335,25 @@ classification this doc binds.
    first apps/site event route lands in M3 phase 3.1; apps/web event
    routes (game, redeem, redemptions) wire in M4 phase 4.1.
 
-For the typical case the brand-tied derived shades follow
-automatically from the brand bases via `color-mix()` in `:root`. If
-a theme needs a derived shade that does not match the standard
-percentage (a desaturated surface, a tinted-toward-warm border), the
-author overrides that single derived `--…` custom property in the
-Theme — but doing so should be rare and called out in code review,
-because deviating from the standard percentages weakens the visual
-consistency guarantee the policy buys.
+Brand-tied derived shades (`--primary-surface`,
+`--secondary-focus`, etc.) follow automatically from the brand bases
+via `color-mix()` in `:root`. **They are not `Theme` fields and
+per-event themes do not override them directly.** The `Theme` type
+intentionally cannot represent such an override, which is the whole
+point of option (a) with centralized derivation: visual consistency
+is enforced by construction, and the only knob a theme author turns
+is the brand base.
+
+If a future per-event theme genuinely requires a derived shade that
+does not match the standard alpha percentage of its base (a
+desaturated surface, a tinted-toward-warm border), that is a signal
+that the audit's policy is wrong for that derivation, not that the
+theme needs an escape hatch. The resolution path is to revise this
+doc and the `:root` derivation policy in a follow-up — and the
+revision should consider whether the standard alpha applies less
+universally than the current model assumes — before the new theme
+lands. No theme on the epic's M3 / M4 horizon (Sage Civic, the M3
+test events, Madrona) has surfaced such a need.
 
 ## Platform Sage Civic Theme
 
