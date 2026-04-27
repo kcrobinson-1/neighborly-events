@@ -237,11 +237,11 @@ export async function saveDraftEvent(
   );
 }
 
-/** Requests a server-generated random 3-letter event code. */
-export async function generateEventCode(): Promise<string> {
+/** Requests a server-generated random 3-letter event code for the named event. */
+export async function generateEventCode(eventId: string): Promise<string> {
   const result = await callAuthoringFunction<{ eventCode: string }>(
     "generate-event-code",
-    {},
+    { eventId },
     "We couldn't generate an event code right now.",
   );
   return result.eventCode;

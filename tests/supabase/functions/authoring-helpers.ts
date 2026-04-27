@@ -25,7 +25,7 @@ export function createAuthoringRequest(body: unknown) {
 }
 
 export function createAuthoringHttpDependencies(
-  overrides: Partial<AuthoringHttpDependencies>,
+  overrides: Partial<AuthoringHttpDependencies> = {},
 ): AuthoringHttpDependencies {
   return {
     ...defaultAuthoringHttpDependencies,

@@ -1,21 +1,19 @@
-import { type AdminAuthResult, authenticateQuizAdmin } from "./admin-auth.ts";
+import type { AdminAuthResult } from "./admin-auth.ts";
 import { createCorsHeaders, getAllowedOrigin } from "./cors.ts";
 
 /**
- * Shared authoring HTTP boundary for authenticated admin write functions.
- * Owns origin/method/config gates, admin allowlist auth, and consistent JSON
- * response wiring so each authoring endpoint can focus on domain logic.
+ * Shared authoring HTTP boundary for authoring write functions.
+ * Owns origin/method/config gates and consistent JSON response wiring so each
+ * authoring endpoint can focus on payload validation and per-event
+ * authorization. Authentication moved into the per-function handler in
+ * M2 phase 2.1.2 so each function can resolve its target eventId from its
+ * own validated payload before calling
+ * authenticateEventOrganizerOrAdmin.
  */
 type JsonBody = Record<string, unknown>;
 
 /** Injectable dependencies for the shared authoring HTTP handler factory. */
 export type AuthoringHttpDependencies = {
-  authenticateQuizAdmin: (
-    request: Request,
-    supabaseUrl: string,
-    serviceRoleKey: string,
-    supabaseClientKey: string,
-  ) => Promise<AdminAuthResult>;
   createCorsHeaders: typeof createCorsHeaders;
   getAllowedOrigin: typeof getAllowedOrigin;
   getServiceRoleKey: () => string | undefined;
@@ -23,16 +21,15 @@ export type AuthoringHttpDependencies = {
   getSupabaseUrl: () => string | undefined;
 };
 
-/** Trusted context passed to one authenticated authoring request handler. */
+/** Trusted context passed to one authoring request handler. */
 export type AuthoringRequestContext = {
-  admin: Extract<AdminAuthResult, { status: "ok" }>;
   jsonResponse: (status: number, body: JsonBody) => Response;
   serviceRoleKey: string;
+  supabaseClientKey: string;
   supabaseUrl: string;
 };
 
 export const defaultAuthoringHttpDependencies: AuthoringHttpDependencies = {
-  authenticateQuizAdmin,
   createCorsHeaders,
   getAllowedOrigin,
   getServiceRoleKey: () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
@@ -41,6 +38,22 @@ export const defaultAuthoringHttpDependencies: AuthoringHttpDependencies = {
       Deno.env.get("SUPABASE_ANON_KEY"),
   getSupabaseUrl: () => Deno.env.get("SUPABASE_URL"),
 };
+
+/**
+ * Maps a non-ok AdminAuthResult to the canonical authoring HTTP response.
+ * Returns 401 for unauthenticated callers and 403 for forbidden callers.
+ * Callers branch on `auth.status === 'ok'` themselves and only invoke this
+ * helper on the failure path.
+ */
+export function createAuthErrorResponse(
+  auth: Extract<AdminAuthResult, { status: "unauthenticated" | "forbidden" }>,
+  context: AuthoringRequestContext,
+): Response {
+  return context.jsonResponse(
+    auth.status === "unauthenticated" ? 401 : 403,
+    { error: auth.error },
+  );
+}
 
 /** Builds one JSON response with shared authoring CORS headers applied. */
 export function createAuthoringJsonResponse(
@@ -61,7 +74,10 @@ export function createAuthoringJsonResponse(
 /**
  * Creates a POST-only authoring handler with shared trust checks.
  * The returned handler enforces allowed origin, CORS preflight, server config,
- * and admin allowlist auth before executing `handleRequest`.
+ * and JSON response wiring before executing `handleRequest`. Per-event
+ * authorization is the per-function handler's responsibility (the function
+ * parses its payload, extracts the target eventId, and calls
+ * authenticateEventOrganizerOrAdmin from `_shared/event-organizer-auth.ts`).
  */
 export function createAuthoringPostHandler(
   dependencies: AuthoringHttpDependencies,
@@ -110,24 +126,7 @@ export function createAuthoringPostHandler(
       );
     }
 
-    const admin = await dependencies.authenticateQuizAdmin(
-      request,
-      supabaseUrl,
-      serviceRoleKey,
-      supabaseClientKey,
-    );
-
-    if (admin.status !== "ok") {
-      return createAuthoringJsonResponse(
-        admin.status === "unauthenticated" ? 401 : 403,
-        { error: admin.error },
-        origin,
-        dependencies.createCorsHeaders,
-      );
-    }
-
     return await handleRequest(request, {
-      admin,
       jsonResponse: (status, body) =>
         createAuthoringJsonResponse(
           status,
@@ -136,6 +135,7 @@ export function createAuthoringPostHandler(
           dependencies.createCorsHeaders,
         ),
       serviceRoleKey,
+      supabaseClientKey,
       supabaseUrl,
     });
   };

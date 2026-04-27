@@ -5,9 +5,11 @@ import {
 } from "../../../shared/game-config.ts";
 import {
   type AuthoringHttpDependencies,
+  createAuthErrorResponse,
   createAuthoringPostHandler,
   defaultAuthoringHttpDependencies,
 } from "../_shared/authoring-http.ts";
+import { authenticateEventOrganizerOrAdmin } from "../_shared/event-organizer-auth.ts";
 
 type DraftSaveRequestBody = {
   content: AuthoringGameDraftContent;
@@ -49,6 +51,7 @@ const EVENT_CODE_PATTERN = /^[A-Z]{3}$/;
 const MAX_EVENT_CODE_GENERATION_ATTEMPTS = 20;
 
 export type SaveDraftHandlerDependencies = {
+  authenticateEventOrganizerOrAdmin: typeof authenticateEventOrganizerOrAdmin;
   authoringHttp: AuthoringHttpDependencies;
   parseAuthoringGameDraftContent: typeof parseAuthoringGameDraftContent;
   saveDraft: (
@@ -198,6 +201,7 @@ async function upsertDraft(
 
 export const defaultSaveDraftHandlerDependencies: SaveDraftHandlerDependencies =
   {
+    authenticateEventOrganizerOrAdmin,
     authoringHttp: defaultAuthoringHttpDependencies,
     parseAuthoringGameDraftContent,
     saveDraft,
@@ -352,9 +356,24 @@ export function createSaveDraftHandler(
         );
       }
 
+      // The draft id doubles as the event id (game_event_drafts.id =
+      // game_events.id = event_role_assignments.event_id), so the
+      // organizer-or-admin gate keys on content.id directly.
+      const auth = await dependencies.authenticateEventOrganizerOrAdmin(
+        request,
+        content.id,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+        context.supabaseClientKey,
+      );
+
+      if (auth.status !== "ok") {
+        return createAuthErrorResponse(auth, context);
+      }
+
       const { data, error } = await dependencies.saveDraft(
         {
-          actorUserId: context.admin.userId,
+          actorUserId: auth.userId,
           content,
           eventCode: payload.eventCode,
         },

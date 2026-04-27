@@ -1,9 +1,15 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.101.1";
 import {
   type AuthoringHttpDependencies,
+  createAuthErrorResponse,
   createAuthoringPostHandler,
   defaultAuthoringHttpDependencies,
 } from "../_shared/authoring-http.ts";
+import { authenticateEventOrganizerOrAdmin } from "../_shared/event-organizer-auth.ts";
+
+type GenerateEventCodeRequestBody = {
+  eventId: string;
+};
 
 type EventCodePersistenceResult = {
   data: string | null;
@@ -11,6 +17,7 @@ type EventCodePersistenceResult = {
 };
 
 export type GenerateEventCodeHandlerDependencies = {
+  authenticateEventOrganizerOrAdmin: typeof authenticateEventOrganizerOrAdmin;
   authoringHttp: AuthoringHttpDependencies;
   generateEventCode: (
     supabaseUrl: string,
@@ -46,9 +53,34 @@ async function generateEventCode(
 
 export const defaultGenerateEventCodeHandlerDependencies:
   GenerateEventCodeHandlerDependencies = {
+    authenticateEventOrganizerOrAdmin,
     authoringHttp: defaultAuthoringHttpDependencies,
     generateEventCode,
   };
+
+export function validateGenerateEventCodePayload(
+  payload: unknown,
+): GenerateEventCodeRequestBody | null {
+  if (
+    typeof payload !== "object" || payload === null || Array.isArray(payload)
+  ) {
+    return null;
+  }
+
+  const eventId =
+    typeof (payload as Partial<GenerateEventCodeRequestBody>).eventId ===
+        "string"
+      ? (payload as Partial<GenerateEventCodeRequestBody>).eventId?.trim()
+      : "";
+
+  if (!eventId) {
+    return null;
+  }
+
+  return {
+    eventId,
+  };
+}
 
 /** Builds the request handler used by the authenticated event-code endpoint. */
 export function createGenerateEventCodeHandler(
@@ -57,7 +89,30 @@ export function createGenerateEventCodeHandler(
 ) {
   return createAuthoringPostHandler(
     dependencies.authoringHttp,
-    async (_request, context) => {
+    async (request, context) => {
+      const payload = validateGenerateEventCodePayload(
+        await request.json().catch(() => null),
+      );
+
+      if (!payload) {
+        return context.jsonResponse(
+          400,
+          { error: "Invalid generate-event-code payload." },
+        );
+      }
+
+      const auth = await dependencies.authenticateEventOrganizerOrAdmin(
+        request,
+        payload.eventId,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+        context.supabaseClientKey,
+      );
+
+      if (auth.status !== "ok") {
+        return createAuthErrorResponse(auth, context);
+      }
+
       const { data, error } = await dependencies.generateEventCode(
         context.supabaseUrl,
         context.serviceRoleKey,
@@ -78,7 +133,7 @@ export function createGenerateEventCodeHandler(
   );
 }
 
-/** Generates a non-persisted event-code suggestion for authenticated admins. */
+/** Generates a non-persisted event-code suggestion for an authorized author. */
 export const handleGenerateEventCodeRequest = createGenerateEventCodeHandler();
 
 if (import.meta.main) {

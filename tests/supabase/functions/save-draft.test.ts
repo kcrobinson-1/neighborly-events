@@ -29,15 +29,14 @@ Deno.test("validateDraftSavePayload requires a content property", () => {
   assertEquals(validateDraftSavePayload({ content: sampleDraft, eventCode: 123 }), null);
 });
 
-Deno.test("save-draft rejects missing admin authentication", async () => {
+Deno.test("save-draft rejects missing authentication", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        error: "Admin authentication is required.",
-        status: "unauthenticated",
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      error: "Authentication is required to author this event.",
+      status: "unauthenticated",
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => {
       throw new Error("saveDraft should not be called");
     },
@@ -49,19 +48,18 @@ Deno.test("save-draft rejects missing admin authentication", async () => {
 
   assertEquals(response.status, 401);
   assertEquals(await response.json(), {
-    error: "Admin authentication is required.",
+    error: "Authentication is required to author this event.",
   });
 });
 
-Deno.test("save-draft rejects authenticated non-admin users", async () => {
+Deno.test("save-draft rejects authenticated callers who are neither organizer nor root-admin", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        error: "This account is not allowlisted for game authoring.",
-        status: "forbidden",
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      error: "This account is not authorized to author this event.",
+      status: "forbidden",
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => {
       throw new Error("saveDraft should not be called");
     },
@@ -73,7 +71,7 @@ Deno.test("save-draft rejects authenticated non-admin users", async () => {
 
   assertEquals(response.status, 403);
   assertEquals(await response.json(), {
-    error: "This account is not allowlisted for game authoring.",
+    error: "This account is not authorized to author this event.",
   });
 });
 
@@ -81,12 +79,11 @@ Deno.test("save-draft rejects malformed draft content before persistence", async
   let saveCalls = 0;
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => {
       saveCalls += 1;
       return { data: null, error: null };
@@ -117,12 +114,11 @@ Deno.test("save-draft upserts the normalized draft and returns a safe summary", 
     | null = null;
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async (input) => {
       capturedInput = input;
 
@@ -165,12 +161,11 @@ Deno.test("save-draft passes supplied event codes to persistence", async () => {
   let capturedEventCode: string | null = null;
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async (input) => {
       capturedEventCode = input.eventCode;
 
@@ -200,12 +195,11 @@ Deno.test("save-draft rejects invalid event codes before persistence", async () 
   let saveCalls = 0;
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => {
       saveCalls += 1;
       return { data: null, error: null };
@@ -227,12 +221,11 @@ Deno.test("save-draft rejects invalid event codes before persistence", async () 
 Deno.test("save-draft rejects slug changes on published events as 422", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => ({
       data: null,
       error: {
@@ -256,12 +249,11 @@ Deno.test("save-draft rejects slug changes on published events as 422", async ()
 Deno.test("save-draft rejects event code changes on published events as 422", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => ({
       data: null,
       error: {
@@ -285,12 +277,11 @@ Deno.test("save-draft rejects event code changes on published events as 422", as
 Deno.test("save-draft reports slug conflicts as 409", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => ({
       data: null,
       error: {
@@ -314,12 +305,11 @@ Deno.test("save-draft reports slug conflicts as 409", async () => {
 Deno.test("save-draft reports event code conflicts as 409", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
-    authoringHttp: createAuthoringHttpDependencies({
-      authenticateQuizAdmin: async () => ({
-        status: "ok",
-        userId: adminUserId,
-      }),
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
     }),
+    authoringHttp: createAuthoringHttpDependencies(),
     saveDraft: async () => ({
       data: null,
       error: {
