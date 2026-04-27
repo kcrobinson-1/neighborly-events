@@ -10,9 +10,21 @@ Proposed; 2.3 `/auth/callback` and `/` migration — Proposed; 2.4
 platform admin migration — Proposed; 2.5 `/game/*` URL migration —
 Proposed. The epic's M2 row stays `Proposed` until 2.5 also lands.
 
-This plan flips to `Landed` when its single implementation PR merges.
-The epic's M2 row flip is owned by the last-merging M2 phase (2.5
-under the current sequencing), not by this PR.
+**Sub-phases:** this plan ships across two sub-phase PRs. 2.1.1
+([`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md)) — Proposed —
+ships the SQL migration (RLS broadening + RPC widening) and the pgTAP
+suite. 2.1.2 (plan TBD) — Proposed — ships the new
+`authenticateEventOrganizerOrAdmin` shared helper, the four authoring-
+function caller swaps, the `docs/architecture.md` updates, and the
+parent Status flip. The Files-to-touch, Execution steps, Commit
+boundaries, and Validation Gate sections below describe the union of
+both sub-phases; each sub-phase plan owns per-PR slicing, commit
+boundaries, and the deferred / not-touched record for its own diff.
+
+This plan flips to `Landed` when 2.1.2 (the terminal sub-phase under
+the current sequencing) merges. The epic's M2 row flip is owned by the
+last-merging M2 phase (2.5 under the current sequencing), not by this
+PR.
 
 **Scoping inputs:** [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md)
 for the file inventory and contracts walkthrough;
