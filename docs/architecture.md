@@ -108,6 +108,20 @@ grouped into a dedicated `apps/web/src/game/` module:
   reverse response the page fires a single-row re-read in parallel with
   the full bounded list refetch so the open sheet reconciles without
   waiting for the list refresh.
+- `apps/web/src/pages/EventAdminPage.tsx`
+  Event-scoped per-event admin route for `/event/:slug/admin`. Gates
+  on `useOrganizerForEvent` (slug → event-id resolution + parallel
+  `is_organizer_for_event` and `is_root_admin` RPCs); does **not**
+  call `getGameAdminStatus`/`is_admin`, so an organizer who is not on
+  the platform allowlist still reaches the authorized authoring
+  state. Wraps every state branch (signed-out, loading, role-gate,
+  transient-error, authorized) inside `<ThemeScope
+  theme={getThemeForSlug(slug)}>`, with the wrapping centralized in
+  the `App.tsx` routing dispatcher per the M1 phase 1.5 invariant.
+  The authorized branch composes `EventAdminWorkspace` from the
+  existing deep-editor primitives (`AdminEventDetailsForm`,
+  `AdminQuestionEditor`, `AdminPublishPanel`) for the single
+  slug-resolved draft.
 - `apps/web/src/pages/GameRoutePage.tsx`
   Async route loader that resolves `/event/:slug/game` into published content
   before rendering the game shell.
@@ -146,9 +160,11 @@ grouped into a dedicated `apps/web/src/game/` module:
   `getAccessToken()` there.
 - `apps/web/src/auth/`
   Role-neutral sign-in surface consumed by every authenticated route:
-  `validateNextPath`, `SignInForm`, `useAuthSession`, and
-  `AuthCallbackPage` (the magic-link return handler at
-  `/auth/callback`).
+  `validateNextPath`, `SignInForm`, `useAuthSession`,
+  `useOrganizerForEvent` (per-event organizer-or-admin authorization
+  hook re-exported from `shared/auth/`; consumed by the per-event
+  admin route), and `AuthCallbackPage` (the magic-link return
+  handler at `/auth/callback`).
 - `apps/web/src/redeem/`
   Event redemption modules for the direct-entry operator flow:
   authorization resolution, keypad state, keypad UI, trusted submit, and
@@ -173,7 +189,13 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/web/src/admin/`
   Admin dashboard hooks plus presentational components for
   status states, the event workspace, and selected draft
-  event routes under `/admin`.
+  event routes under `/admin`. Also hosts `EventAdminWorkspace` and
+  `useEventAdminWorkspace`, the per-event variants used by
+  `/event/:slug/admin`. The per-event hook seeds a one-row
+  dashboard state via `loadDraftEventSummary(eventId)` and then
+  composes the existing `useSelectedDraft` hook so the load /
+  save / publish / unpublish lifecycle stays shared with the
+  platform-admin deep editor.
 - `apps/web/src/types/game.ts`
   Client-side types for completion payloads and results.
 - `apps/web/src/data/games.ts`
@@ -849,7 +871,7 @@ first.
 | --- | --- | --- | --- |
 | 1 | `/event/:slug/game` | `apps/web` SPA | Permanent (event-scoped) |
 | 2 | `/event/:slug/game/:path*` | `apps/web` SPA | Permanent (event-scoped) |
-| 3 | `/event/:slug/admin` | `apps/web` SPA | Permanent; route shell added in M2 phase 2.2 |
+| 3 | `/event/:slug/admin` | `apps/web` SPA | Permanent (event-scoped); per-event admin shell |
 | 4 | `/event/:slug/admin/:path*` | `apps/web` SPA | Permanent (event-scoped) |
 | 5 | `/event/:slug/redeem` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redeem`) |
 | 6 | `/event/:slug/redemptions` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redemptions`) |
