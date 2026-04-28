@@ -16,6 +16,10 @@ html {
   color-scheme: light;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background: var(--bg);
@@ -38,4 +42,102 @@ h6 {
   font-family: var(--font-heading);
   font-weight: 600;
   line-height: 1.2;
+}
+
+a,
+button {
+  font: inherit;
+}
+
+.landing-shell,
+.auth-callback-shell {
+  min-height: 100svh;
+  padding: 72px 24px;
+}
+
+.landing-shell {
+  display: grid;
+  align-items: center;
+}
+
+.landing-intro,
+.auth-callback-shell .signin-stack {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 640px);
+}
+
+.landing-intro {
+  margin-inline: auto;
+}
+
+.auth-callback-shell .signin-stack {
+  min-height: calc(100svh - 144px);
+  align-content: center;
+  margin-inline: auto;
+}
+
+.landing-shell h1,
+.auth-callback-shell h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 12vw, 5.5rem);
+  line-height: 0.96;
+}
+
+.landing-copy,
+.auth-callback-shell .section-heading p {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--muted);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.primary-cta,
+.auth-callback-shell .primary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 48px;
+  border: 0;
+  border-radius: var(--radius-control);
+  padding: 12px 20px;
+  background: var(--primary);
+  color: var(--white-warm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.primary-cta:hover,
+.auth-callback-shell .primary-button:hover {
+  background: color-mix(in srgb, var(--primary) 88%, #000000 12%);
+}
+
+.primary-cta:focus-visible,
+.auth-callback-shell .primary-button:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .landing-shell,
+  .auth-callback-shell {
+    padding: 48px 18px;
+  }
+
+  .landing-shell h1,
+  .auth-callback-shell h1 {
+    font-size: clamp(2.35rem, 16vw, 4.25rem);
+  }
 }
