@@ -74,7 +74,7 @@ describe("GameRoutePage", () => {
       }),
     ).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("button", { name: "Go to demo overview" }));
+    fireEvent.click(screen.getByRole("button", { name: "Go to Neighborly Events" }));
     expect(onNavigate).toHaveBeenCalledWith("/");
   });
 

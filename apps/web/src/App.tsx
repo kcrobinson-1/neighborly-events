@@ -1,10 +1,8 @@
 import type { ReactNode } from "react";
-import { AuthCallbackPage } from "./auth";
 import { AdminPage } from "./pages/AdminPage";
 import { EventAdminPage } from "./pages/EventAdminPage";
 import { EventRedeemPage } from "./pages/EventRedeemPage";
 import { EventRedemptionsPage } from "./pages/EventRedemptionsPage";
-import { LandingPage } from "./pages/LandingPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import {
@@ -23,14 +21,6 @@ function getPageContent(
   pathname: string,
   navigate: (path: string, options?: { replace?: boolean }) => void,
 ): ReactNode {
-  if (pathname === routes.authCallback) {
-    return <AuthCallbackPage onNavigate={navigate} />;
-  }
-
-  if (pathname === routes.home) {
-    return <LandingPage onNavigate={navigate} />;
-  }
-
   if (pathname === routes.admin) {
     return <AdminPage onNavigate={navigate} />;
   }

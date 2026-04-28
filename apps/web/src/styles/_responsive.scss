@@ -1,13 +1,5 @@
 @use "./tokens" as *;
 
-@media (max-width: 860px) {
-  .landing-hero,
-  .feature-grid,
-  .flow-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
 @media (max-width: 640px) {
   .site-shell {
     padding: 18px 14px 32px;
@@ -30,9 +22,5 @@
   .panel {
     padding: $space-8;
     border-radius: var(--radius-panel-mobile);
-  }
-
-  .sample-game-row {
-    padding: $space-7;
   }
 }
