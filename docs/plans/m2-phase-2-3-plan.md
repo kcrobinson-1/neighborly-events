@@ -1408,9 +1408,8 @@ resolution path so reviewer attention does not relitigate them.
 - [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md) /
   [`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md) /
   [`m2-phase-2-1-2-plan.md`](./m2-phase-2-1-2-plan.md) — Landed
-  M2 phase 2.1 set; precedent for the plan-doc structure and
-  the two-phase Plan-to-Landed gate (which 2.3 does **not**
-  follow because it adds no Tier 5 production smoke assertions).
+  M2 phase 2.1 set; precedent for the plan-doc structure this
+  plan inherits.
 - [`shared-auth-foundation.md`](./shared-auth-foundation.md) —
   M1 phase 1.3 plan; cookie-boundary verification record from
   1.3.2 is the precedent for Execution step 18.
@@ -1418,8 +1417,12 @@ resolution path so reviewer attention does not relitigate them.
   — M0 phase 0.3 plan; original Vercel two-project topology
   decision and the deferred apps/site primary-domain promotion.
 - [`docs/testing-tiers.md`](../testing-tiers.md) — Tier 5
-  production smoke and the two-phase Plan-to-Landed gate
-  (referenced for why 2.3 does not need the gate).
+  production smoke and the two-phase Plan-to-Landed Gate For
+  Plans That Touch Production Smoke; 2.3 ships under this gate
+  via the rule's second-clause trigger ("plans that depend on
+  production smoke as final verification"), not the first
+  clause about extending smoke assertions. See the Status block
+  and Validation Gate for the concrete in-progress / Landed flip.
 - [`docs/self-review-catalog.md`](../self-review-catalog.md) —
   audit name source for the Self-Review Audits section.
 - [`AGENTS.md`](../../AGENTS.md) — workflow rules, Plan-to-PR
