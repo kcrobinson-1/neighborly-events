@@ -9,6 +9,7 @@ export {
   listDraftEventSummaries,
   loadDraftEvent,
   loadDraftEventStatus,
+  loadDraftEventSummary,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
