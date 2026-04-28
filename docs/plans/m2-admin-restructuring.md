@@ -59,6 +59,32 @@ deletion lands in the 2.5 PR or a focused cleanup PR.
 
 ## Sequencing
 
+Phase dependencies (arrows mean "is blocked by"):
+
+```mermaid
+flowchart LR
+    M1[M1<br/>Foundation extraction]
+    P21[2.1<br/>RLS broadening]
+    P22[2.2<br/>Per-event admin]
+    P23[2.3<br/>auth/callback + /<br/>migration]
+    P24[2.4<br/>Platform admin<br/>migration]
+    P25[2.5<br/>Operator URL<br/>migration]
+
+    M1 --> P21
+    M1 --> P23
+    M1 --> P25
+    P21 --> P22
+    P22 --> P24
+    P23 --> P24
+```
+
+Phase numbering reflects intended ship order, **not** strict
+dependency. 2.3 and 2.5 are independent of every M2 sibling phase
+and could draft / implement in parallel with 2.1 or 2.2 if
+separate attention is available; the numbering puts them later
+in the sequence because their PRs are convenient closers (2.4
+inherits from 2.3, and 2.5 carries the M2-row flip).
+
 The recommended implementation order, with the dependency rationale
 behind it:
 

@@ -239,6 +239,21 @@ before any per-phase planning.
   thread multiple phases, cross-phase decisions that lock contracts
   between phases, milestone-level risks, doc-currency map across the
   milestone set
+- **Phase dependency graph.** The milestone doc's "Sequencing"
+  section opens with a Mermaid `flowchart LR` block: each phase
+  is a node, "is blocked by" relationships are arrows, the
+  upstream milestone (e.g. M1 for an M2 doc) appears as a
+  dependency-only node so prerequisites are explicit. Phase
+  numbering reflects intended ship order, **not** strict
+  dependency — readers default-assume `N.k` depends on
+  `N.(k-1)`, which silently wastes time when phases are
+  independent and could draft or ship in parallel. The graph
+  makes parallelism visible at a glance instead of buried in
+  prose; the prose still carries rationale (which phase ships
+  first and why, terminal-PR conventions, cross-phase coupling
+  beyond hard dependencies). See the "Sequencing" section of
+  [`docs/plans/m2-admin-restructuring.md`](docs/plans/m2-admin-restructuring.md)
+  for a concrete example
 - **Anti-goal: do not pre-scope every phase in batch.** Batch scoping
   cross-pollinates wrong assumptions across docs and produces
   confident-feeling artifacts that may or may not be grounded in code.
