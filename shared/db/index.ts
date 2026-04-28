@@ -7,6 +7,8 @@
  * derivation helpers. Per-app adapters (apps/web today, apps/site in
  * M1 phase 1.3) own env reading, the singleton lifecycle, and any
  * framework-coupled gates (prototype fallback, missing-config copy).
+ * apps/web and apps/site both consume the browser-client factory through
+ * their own adapter modules.
  */
 export {
   createBrowserSupabaseClient,

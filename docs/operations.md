@@ -50,7 +50,8 @@ For this project today, that means:
 - [`apps/web/vercel.json`](../apps/web/vercel.json)
   SPA route rewrites for `/admin`, `/event/:slug/game`, and the
   per-event admin route at `/event/:slug/admin` (organizer-or-admin
-  authoring), plus other supported project behavior
+  authoring), plus proxy rewrites for apps/site-owned `/`,
+  `/auth/callback`, and event landing URLs
 - [`apps/web/package.json`](../apps/web/package.json)
   frontend build commands
 - [`apps/web/vite.config.ts`](../apps/web/vite.config.ts)
@@ -69,6 +70,8 @@ For this project today, that means:
 
 - [`apps/web/.env.example`](../apps/web/.env.example)
   local frontend env contract
+- [`apps/site/.env.example`](../apps/site/.env.example)
+  local apps/site public Supabase env contract
 - [`README.md`](../README.md)
   project entrypoint and quick-start guidance
 - [`docs/dev.md`](./dev.md)
@@ -148,6 +151,8 @@ CI docs-only trigger policy:
 - environment variable values:
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 - access control, team membership, and billing settings
 
 Why manual for now:
@@ -184,13 +189,20 @@ For a new deployment from a fork:
 1. Create a new Supabase project.
 2. Run the repo-backed Supabase bootstrap commands from [`dev.md`](./dev.md).
 3. Create a new Vercel project for the `apps/web` app.
-4. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in Vercel.
-5. Set `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` in Supabase.
-6. Set the Supabase Auth Site URL to the deployed web origin and add
+4. Create a new Vercel project for the `apps/site` app and point the
+   absolute rewrite destinations in `apps/web/vercel.json` at its
+   production alias.
+5. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+   in the apps/web Vercel project.
+6. Add `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in the apps/site
+   Vercel project.
+7. Set `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` in Supabase.
+8. Set the Supabase Auth Site URL to the deployed web origin and add
    `<origin>/auth/callback` as a redirect URL for each of your local
    and deployed origins.
-7. Insert at least one normalized admin email into `public.admin_users`.
-8. Recreate the desired GitHub branch protection and Actions secret
+9. Insert at least one normalized admin email into `public.admin_users`.
+10. Recreate the desired GitHub branch protection and Actions secret
    configuration, including the `SUPABASE_ACCESS_TOKEN`,
    `SUPABASE_DB_PASSWORD`, and `SUPABASE_PROJECT_REF` release secrets.
 

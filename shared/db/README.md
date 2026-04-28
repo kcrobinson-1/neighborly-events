@@ -18,17 +18,16 @@ Env-agnostic Supabase wiring shared across `apps/web` and `apps/site`.
 
 ## What stays in per-app adapters
 
-- Env reading (`import.meta.env.*` for Vite, `process.env.*` for
-  Next.js).
-- The singleton lifecycle. Each app decides whether one client per
-  process is the right shape (apps/web yes, apps/site SSR contexts
-  may differ).
+- Env reading (`import.meta.env.*` for Vite, `process.env.NEXT_PUBLIC_*`
+  for Next.js client routes).
+- The singleton lifecycle. Each browser app owns its own singleton.
 - Framework-coupled gates: prototype-fallback flags, missing-config
   copy keyed off `import.meta.env.DEV`, etc.
 
-The current adapter is
-[`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts).
-The `apps/site` adapter lands in M1 phase 1.3.
+The current adapters are
+[`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts)
+and
+[`apps/site/lib/supabaseBrowser.ts`](../../apps/site/lib/supabaseBrowser.ts).
 
 ## Plan reference
 

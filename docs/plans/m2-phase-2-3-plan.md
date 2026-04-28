@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. Ships under the **two-phase Plan-to-Landed Gate For
+In progress pending prod smoke. Ships under the **two-phase Plan-to-Landed Gate For
 Plans That Touch Production Smoke** from
 [`docs/testing-tiers.md`](../testing-tiers.md): the implementing PR
 merges with Status `In progress pending prod smoke` (the rule's
@@ -197,8 +197,13 @@ layout's metadata applies.
 **`apps/site/app/(authenticated)/auth/callback/page.tsx`.**
 `'use client'`. Renders
 `<AuthCallbackPage onNavigate={navigateAdapter} />` where the adapter
-calls `useRouter().replace(path)` from
-[`next/navigation`](../../node_modules/next/dist/docs/01-app/03-api-reference/04-functions/use-router.md).
+uses document-level `window.location.replace(path)` rather than
+`next/navigation`. Verified by:
+[`apps/web/vercel.json`](../../apps/web/vercel.json). The
+load-bearing `next=/admin` destination remains owned by apps/web
+through 2.4, so client-router navigation inside apps/site would try
+to resolve `/admin` against the apps/site route tree and bypass the
+apps/web Vercel routing layer.
 No `searchParams` prop is read — the shared component reads
 `window.location.search` per its existing contract
 ([`shared/auth/AuthCallbackPage.tsx:35-37`](../../shared/auth/AuthCallbackPage.tsx#L35)).
@@ -238,11 +243,11 @@ surface in apps/site for one consumer.
   `<h1>` size to landing-page proportions (root `h1` rule from
   globals.css doesn't size). `font-family` already inherits
   Fraunces via the existing `h1`–`h6` rule.
-- `.primary-cta` — pill button styling. `background:
+- `.primary-cta` and `.auth-callback-shell .primary-button` — pill button styling. `background:
   var(--primary)`; `color: var(--white-warm)` (or `#ffffff`
   fallback if `--white-warm` is not exposed by `themeToStyle`
   — verify at implementation time);
-  `border-radius: var(--control-radius)`;
+  `border-radius: var(--radius-control)`;
   `padding: 12px 20px`; `font-family: var(--font-body)`;
   `font-weight: 600`; `text-decoration: none`; `display:
   inline-block`; `:hover` and `:focus-visible` states using
@@ -364,7 +369,7 @@ epic-level invariants apply:
   classification." The
   [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
   extension consumes themable tokens (`--primary`, `--font-body`,
-  `--control-radius`, `--secondary`) via `var(--…)`; structural
+  `--radius-control`, `--secondary`) via `var(--…)`; structural
   tokens (status palette, spacing scale) are not introduced in
   apps/site because the landing surface has no consumer for them
   and a per-app structural-token system would be unjustified
@@ -377,11 +382,13 @@ epic-level invariants apply:
   No metadata override; root layout's metadata applies.
 - `apps/site/app/(authenticated)/auth/callback/page.tsx` —
   `'use client'`. Default-exports the page component. Calls
-  `useRouter()` from `next/navigation`, builds an `onNavigate`
-  adapter that calls `router.replace(path)` (no `scroll` /
-  `transitionTypes` overrides), renders `<AuthCallbackPage
-  onNavigate={onNavigate} />`. No `searchParams` prop — the shared
-  component reads `window.location.search` directly.
+  `window.location.replace(path)` from a stable `onNavigate`
+  adapter, renders `<AuthCallbackPage onNavigate={onNavigate} />`.
+  No `searchParams` prop — the shared component reads
+  `window.location.search` directly. Do not use
+  `next/navigation` here: cross-project destinations such as
+  `/admin` must re-enter Vercel's routing table instead of staying
+  inside apps/site's client router.
 - `apps/site/app/page.tsx` — server component; static markup for
   the new `/`. Headings, one-line tagline, primary-action link
   to `/admin` carrying the `.primary-cta` class defined in the
@@ -404,9 +411,12 @@ epic-level invariants apply:
 - [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
   — extend with `.landing-shell` (page container with
   `max-width` + centering + vertical padding), a `.landing-shell h1`
-  size override, and a `.primary-cta` pill-button rule per the
+  size override, `.auth-callback-shell` layout, shared auth-copy
+  selectors (`.signin-stack`, `.section-heading`, `.eyebrow`), and
+  `.primary-cta` / `.auth-callback-shell .primary-button`
+  pill-button rules per the
   Contracts section. All themable values via `var(--…)`
-  (`--primary`, `--font-body`, `--control-radius`, `--secondary`
+  (`--primary`, `--font-body`, `--radius-control`, `--secondary`
   for the focus ring); raw values for one-off layout dimensions.
   Existing `body` / `h1`–`h6` rules unchanged. Sibling additions
   only — no rewriting of existing selectors. Per
@@ -422,6 +432,13 @@ epic-level invariants apply:
   `LandingPage` import line. The `routes.home` still exists in
   [`shared/urls/routes.ts`](../../shared/urls/routes.ts) (as
   `validateNextPath`'s default fallback) and is not removed.
+- [`apps/web/src/usePathnameNavigation.ts`](../../apps/web/src/usePathnameNavigation.ts)
+  — route `routes.home` through document-level navigation
+  (`window.location.assign` / `replace`) instead of SPA
+  `history.pushState`. Existing apps/web affordances that navigate
+  home must leave the SPA after `/` moves to apps/site. Keep
+  surviving apps/web paths on the existing history-based navigation
+  path.
 - [`apps/web/src/auth/index.ts`](../../apps/web/src/auth/index.ts)
   — remove the `AuthCallbackPage` and `AuthCallbackPageProps`
   re-exports (lines 9 and 13 in the current file). Keep
@@ -437,6 +454,9 @@ epic-level invariants apply:
   test cases need modification — just the dead mock.
 - [`tests/web/pages/LandingPage.test.tsx`](../../tests/web/pages/LandingPage.test.tsx)
   — delete (sole consumer is the deleted page).
+- [`tests/web/usePathnameNavigation.test.ts`](../../tests/web/usePathnameNavigation.test.ts)
+  — add coverage that home navigation uses document-level navigation
+  and does not update SPA history.
 - [`apps/web/src/styles/_landing.scss`](../../apps/web/src/styles/_landing.scss)
   — delete the entire file. Verified zero non-LandingPage
   consumers for: `.landing-hero`, `.hero-copy`, `.hero-body`,
@@ -475,6 +495,13 @@ epic-level invariants apply:
   proxy-rewrites for `/auth/callback` and `/` to
   `https://neighborly-events-site.vercel.app/...` at the bottom
   of the array.
+- [`tests/e2e/mobile-smoke.spec.ts`](../../tests/e2e/mobile-smoke.spec.ts)
+  — start the featured attendee flow at `/event/first-sample/game`
+  instead of the removed apps/web landing CTA.
+- [`scripts/ui-review/capture-ui-review.cjs`](../../scripts/ui-review/capture-ui-review.cjs)
+  — remove apps/web landing captures and start the featured-flow
+  capture directly at `/event/first-sample/game`. The apps/site
+  landing is verified manually in this phase.
 - [`apps/site/package.json`](../../apps/site/package.json) — add
   exact-pinned `@supabase/ssr@0.10.0` and `@supabase/supabase-js`
   matching apps/web's resolved version (currently `2.101.1` per
@@ -566,6 +593,10 @@ epic-level invariants apply:
   origin domain that resolves it changes — the redirect-URL list
   matches against the apps/web frontend domain, which is still
   the entry point because the proxy-rewrite preserves host).
+- [`README.md`](../../README.md) — update the repo overview,
+  route ownership summary, and environment setup to include the
+  apps/site `/` and `/auth/callback` routes plus the new
+  `NEXT_PUBLIC_SUPABASE_*` variables.
 - This plan — Status flips from `Proposed` to `In progress pending
   prod smoke` in the implementing PR; a doc-only follow-up commit
   flips Status from `In progress pending prod smoke` to `Landed`
@@ -663,7 +694,7 @@ epic-level invariants apply:
    `/auth/callback` from this commit forward (the route group
    prefix does not appear in URLs). The shared
    `<AuthCallbackPage>` component is rendered with the
-   `next/navigation` `router.replace` adapter. `npm run build:site`
+   document-navigation adapter. `npm run build:site`
    confirms the route compiles; the route is not yet exercised
    end-to-end because the apps/web vercel.json still SPA-handles
    `/auth/callback`.
@@ -1192,11 +1223,9 @@ relevant doc updates this branch must carry:
   The post-MVP authoring-ownership entry closes with 2.5.
 - [`docs/backlog.md`](../backlog.md) — no change. The
   organizer-managed-agent-assignment unblock records with 2.5.
-- [`README.md`](../../README.md) — no change. The repo-level
-  README does not currently mention the bare `/` landing or the
-  `/auth/callback` URL; the apps/site adapter modules are below
-  the README's altitude. Confirm during step 11 by grep before
-  finalizing.
+- [`README.md`](../../README.md) — update route ownership and setup
+  guidance. The repo-level README names `/`, `/auth/callback`, Vercel
+  app ownership, and contributor env vars.
 - [`event-platform-epic.md`](./event-platform-epic.md) — M2 row
   stays `Proposed`. Its flip lands with 2.5.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —

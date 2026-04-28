@@ -4,8 +4,8 @@
  * `shared/auth/` owns the role-neutral Supabase Auth surface — the
  * session-restore primitives, the magic-link request and callback
  * flow, the in-place sign-in form, and the associated types — that
- * apps/web (today) and apps/site (after M2 phase 2.3) consume through
- * their per-app adapters. Per the parent epic's "Env access stays at
+ * apps/web and apps/site consume through their per-app adapters. Per the
+ * parent epic's "Env access stays at
  * the app boundary" invariant, this module never reads
  * `import.meta.env.*` or `process.env.*`; each app supplies its
  * env-derived providers once at startup via `configureSharedAuth`.
