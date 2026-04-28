@@ -2,7 +2,32 @@
 
 ## Status
 
-Proposed.
+Proposed. Ships under the **two-phase Plan-to-Landed Gate For
+Plans That Touch Production Smoke** from
+[`docs/testing-tiers.md`](../testing-tiers.md): the implementing PR
+merges with Status `In progress pending prod smoke` (the rule's
+exact required string, not a paraphrase); a doc-only follow-up
+commit flips Status to `Landed` and records the post-release
+`Production Admin Smoke` run URL as the durable external evidence.
+The gate trigger is the second clause of the rule's trigger —
+*"plans that depend on production smoke as final verification."*
+2.3 fits cleanly: the existing `Production Admin Smoke` workflow
+(`.github/workflows/production-admin-smoke.yml`) exercises
+[`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
+end-to-end through `/auth/callback`. After 2.3 deploys, that
+fixture run becomes the load-bearing verification of the
+cross-project proxy: the fixture cannot pass unless the proxy
+correctly routes `/auth/callback` to the new apps/site route and
+the auth cookie lands on apps/web's frontend host. The cross-project
+proxy is also unverifiable pre-merge by construction —
+[`apps/web/vercel.json`](../../apps/web/vercel.json) destinations
+are absolute production URLs
+(`https://neighborly-events-site.vercel.app/...`), so any
+`vercel dev` run from the workspace root proxies `/auth/callback`
+and `/` to the deployed apps/site (still on main, no new routes
+yet) rather than to the branch's local Next.js dev server. M1
+phase 1.3.2's cookie-boundary verification is the precedent for
+the deferral.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M2, Phase 2.3. Sibling phases: 2.1 RLS broadening + Edge
@@ -19,11 +44,13 @@ in parallel with 2.1 or 2.2. The recommended order puts 2.3 third
 because 2.4 inherits the apps/site adapter modules and bootstrap seam
 this phase introduces; 2.4 cannot draft against unmerged 2.3 deliverables.
 
-**Single PR.** Branch-test sketch (apps/site: 5 new files + package.json
+**Single PR (plus the doc-only follow-up that flips Status to
+`Landed`).** Branch-test sketch (apps/site: 5 new files + package.json
 edit; apps/web: 1 page delete + 4 file edits + SCSS prune; vercel.json:
-1 edit; docs: 3 edits; plan Status flip): ~3 distinct subsystems
-(apps/site adapter, apps/web removal, routing/docs), well under
-AGENTS.md's >5-subsystem / >300-LOC split threshold per
+1 edit; docs: 3 edits; plan Status records the in-progress state):
+~3 distinct subsystems (apps/site adapter, apps/web removal,
+routing/docs), well under AGENTS.md's >5-subsystem / >300-LOC split
+threshold per
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) "Phase
 Planning Sessions." The work is also tightly coupled — flipping the
 Vercel proxy and deleting apps/web's route handlers must happen in the
@@ -178,14 +205,62 @@ No `searchParams` prop is read — the shared component reads
 The page exports nothing else.
 
 **`apps/site/app/page.tsx`.** Server component (no `'use client'`).
-Static markup: an `<h1>` with the platform name, a one-line tagline,
-a primary-action `<a href="/admin">` CTA. Uses semantic markup
-(`<main>`, `<section>`, `<a>`) and only the Sage Civic root-layout
-defaults — no SCSS imports, no module CSS, no client-side state. The
-"subsume" landing shape from
+Static markup: an `<h1>` with the platform name, a one-line
+tagline, a primary-action `<a href="/admin">` CTA. Uses semantic
+markup (`<main>`, `<section>`, `<a class="primary-cta">`) plus
+the small landing styling surface in
+[`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+described below; no SCSS imports (apps/site is plain CSS); no
+client-side state. The "subsume" landing shape from
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
-"Cross-Phase Decisions" §5 is intentional: minimum surface, single
-CTA, no demo-events list.
+"Cross-Phase Decisions" §5 is intentional: minimum surface,
+single CTA, no demo-events list — but minimum-surface ≠
+unstyled-default. The CTA is the public-facing platform front
+door and must render as a recognizable button, not a
+browser-default link.
+
+**`apps/site/app/globals.css` (extension).** Adds three small
+selector groups for the landing surface, sibling to the
+existing `body` / `h1`–`h6` rules. Token discipline per
+[`docs/styling.md`](../styling.md) "Themable vs structural
+classification": brand color, typography, and radius come from
+`var(--…)` themable tokens already emitted on `<html>` by
+[`shared/styles/themeToStyle.ts`](../../shared/styles/themeToStyle.ts);
+one-off layout dimensions (page max-width, CTA padding) stay
+local raw values rather than introducing a new structural-token
+surface in apps/site for one consumer.
+
+- `.landing-shell` — page container. `max-width: 640px`,
+  centered, vertical padding to roughly center the hero on
+  typical viewports. Single column.
+- `.landing-shell h1` (or `.landing-shell .landing-headline`,
+  whichever reads cleaner during implementation) — adjusts the
+  `<h1>` size to landing-page proportions (root `h1` rule from
+  globals.css doesn't size). `font-family` already inherits
+  Fraunces via the existing `h1`–`h6` rule.
+- `.primary-cta` — pill button styling. `background:
+  var(--primary)`; `color: var(--white-warm)` (or `#ffffff`
+  fallback if `--white-warm` is not exposed by `themeToStyle`
+  — verify at implementation time);
+  `border-radius: var(--control-radius)`;
+  `padding: 12px 20px`; `font-family: var(--font-body)`;
+  `font-weight: 600`; `text-decoration: none`; `display:
+  inline-block`; `:hover` and `:focus-visible` states using
+  `var(--primary)` with `color-mix(...)` shading per the
+  pattern in apps/web's
+  [`apps/web/src/styles/_admin.scss`](../../apps/web/src/styles/_admin.scss)
+  `.primary-button` rule (verify the apps/web pattern at
+  implementation time and adapt to plain CSS — apps/site has no
+  Sass mixins). The implementer is welcome to use `:focus-visible`
+  with the existing `--secondary` brand for the focus ring,
+  matching the apps/web focus discipline; if that surfaces a
+  contrast question against the primary button background, use
+  a `2px` outline at `var(--secondary)` with `2px` offset.
+
+The contract names selectors and intent; the implementer picks
+the exact property values that satisfy "recognizable platform
+button" without introducing structural-token surface that 2.4
+would have to coordinate with.
 
 **`apps/site/components/SharedClientBootstrap.tsx`.**
 
@@ -284,6 +359,16 @@ epic-level invariants apply:
   URL hash; no `/signin` page is introduced.
 - **Per-event customization.** Not exercised. No per-event TypeScript
   or Theme code changes in this phase.
+- **Token bucket discipline.** Verified by:
+  [`docs/styling.md`](../styling.md) "Themable vs structural
+  classification." The
+  [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+  extension consumes themable tokens (`--primary`, `--font-body`,
+  `--control-radius`, `--secondary`) via `var(--…)`; structural
+  tokens (status palette, spacing scale) are not introduced in
+  apps/site because the landing surface has no consumer for them
+  and a per-app structural-token system would be unjustified
+  surface for one page.
 
 ## Files to touch — new
 
@@ -299,7 +384,8 @@ epic-level invariants apply:
   component reads `window.location.search` directly.
 - `apps/site/app/page.tsx` — server component; static markup for
   the new `/`. Headings, one-line tagline, primary-action link
-  to `/admin`. No client-state, no data fetching, no SCSS partial.
+  to `/admin` carrying the `.primary-cta` class defined in the
+  globals.css extension below. No client-state, no data fetching.
   Lives **outside** the `(authenticated)` route group because it
   consumes no `shared/auth/` or `shared/events/` symbol.
 - `apps/site/components/SharedClientBootstrap.tsx` — `'use client'`.
@@ -315,6 +401,21 @@ epic-level invariants apply:
 
 ## Files to touch — modify
 
+- [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+  — extend with `.landing-shell` (page container with
+  `max-width` + centering + vertical padding), a `.landing-shell h1`
+  size override, and a `.primary-cta` pill-button rule per the
+  Contracts section. All themable values via `var(--…)`
+  (`--primary`, `--font-body`, `--control-radius`, `--secondary`
+  for the focus ring); raw values for one-off layout dimensions.
+  Existing `body` / `h1`–`h6` rules unchanged. Sibling additions
+  only — no rewriting of existing selectors. Per
+  [`docs/styling.md`](../styling.md) "Themable vs structural
+  classification": brand color/typography/radius are themable
+  (CSS custom properties); the one-off layout dimensions stay
+  local because introducing a structural-token surface in
+  apps/site for one consumer would be unjustified per
+  [`AGENTS.md`](../../AGENTS.md) "Styling Token Discipline."
 - [`apps/web/src/App.tsx`](../../apps/web/src/App.tsx) — drop the
   `pathname === routes.authCallback` and `pathname === routes.home`
   branches, drop the `AuthCallbackPage` import line, drop the
@@ -465,13 +566,19 @@ epic-level invariants apply:
   origin domain that resolves it changes — the redirect-URL list
   matches against the apps/web frontend domain, which is still
   the entry point because the proxy-rewrite preserves host).
-- This plan — Status flips from `Proposed` to `Landed` in the
-  implementing PR per the Plan-to-PR Completion Gate.
+- This plan — Status flips from `Proposed` to `In progress pending
+  prod smoke` in the implementing PR; a doc-only follow-up commit
+  flips Status from `In progress pending prod smoke` to `Landed`
+  and records the post-release `Production Admin Smoke` run URL
+  per the two-phase Plan-to-Landed Gate from
+  [`docs/testing-tiers.md`](../testing-tiers.md). The Status
+  string is the rule's exact required label, not a paraphrase.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
   Phase Status table row for 2.3 updates from `not yet drafted`
   to the path of this plan when the plan-drafting commit lands;
-  the same row updates from `Proposed` to `Landed` and gains a
-  PR link when the implementing PR merges.
+  the same row updates to `In progress pending prod smoke` and
+  gains a PR link when the implementing PR merges; the same row
+  flips to `Landed` in the doc-only follow-up commit.
 
 ## Files intentionally not touched
 
@@ -560,11 +667,21 @@ epic-level invariants apply:
    confirms the route compiles; the route is not yet exercised
    end-to-end because the apps/web vercel.json still SPA-handles
    `/auth/callback`.
-6. **Landing page.** Create `apps/site/app/page.tsx` per the
-   Contracts section. Static markup only; CTA links to `/admin`
-   (still apps/web through 2.4 — the proxy-rewrite topology
-   handles the cross-app navigation transparently).
-   `npm run build:site` confirms the route compiles.
+6. **Landing page + globals.css extension.** Create
+   `apps/site/app/page.tsx` per the Contracts section. Static
+   markup; CTA links to `/admin` carrying the `.primary-cta`
+   class (still apps/web through 2.4 — the proxy-rewrite
+   topology handles the cross-app navigation transparently).
+   In the same commit, extend
+   [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+   with the `.landing-shell` / `.landing-shell h1` /
+   `.primary-cta` selectors per the Contracts section. Verify
+   in the local apps/site dev server (`npm run dev:site`) that
+   the CTA renders as a recognizable button (Sage Civic
+   primary background, rounded corners, no browser-default
+   underline) before moving on; a default-link CTA is the
+   regression mode this step's styling exists to prevent.
+   `npm run build:site` confirms both files compile.
 7. **vercel.json proxy flip.** Edit
    [`apps/web/vercel.json`](../../apps/web/vercel.json) per the
    Contracts section: remove the `/auth/:path*` SPA rule, append
@@ -649,61 +766,182 @@ epic-level invariants apply:
     `shared/auth/ used before configureSharedAuth() ran` throw),
     and Next.js's strict-mode double-mount does not break the
     shared component's effect cleanup.
-14. **Local Vercel-proxy exercise.** Install Vercel CLI if not
-    already present (`npm install -g vercel`); link both projects
-    locally with `vercel link` per
-    [`docs/dev.md`](../dev.md) "Vercel" sub-section. Run
-    `vercel dev` from the workspace root. Visit
-    `http://localhost:<vercel-dev-port>/` and confirm the
-    apps/site `/` landing renders (proves rule #12 routes to
-    apps/site). Visit `/auth/callback` (no hash) and confirm the
-    apps/site shared component renders the "Signing you in…"
-    state (proves rule #11). Visit `/admin` and confirm the
-    apps/web admin renders (proves rules #1–#10 are not pre-empted
-    by the new bottom rules). Visit `/event/community-checklist`
-    and confirm the apps/site event placeholder renders (rule #7
-    proxy holds). The exercise is the load-bearing
-    rule-precedence verification before deployment.
+14. **Local Vercel-proxy exercise (rule-order regression check
+    only).** Install Vercel CLI if not already present
+    (`npm install -g vercel`); link both projects locally with
+    `vercel link` per [`docs/dev.md`](../dev.md) "Vercel"
+    sub-section. Run `vercel dev` from the workspace root.
+    **Scope:** this exercise verifies rule precedence didn't
+    break existing routes. It **cannot** validate the new
+    apps/site routes end-to-end because
+    [`apps/web/vercel.json`](../../apps/web/vercel.json) destinations
+    are absolute production URLs
+    (`https://neighborly-events-site.vercel.app/...`); the proxy
+    hits the deployed apps/site (still on main, no new routes
+    yet), not the branch's local Next.js dev server.
+
+    **Identity-fingerprint procedure.** A bare 404 status code
+    cannot distinguish "rule fired and deployed apps/site 404'd"
+    from "local `vercel dev` no-match returned its own 404" or
+    "rewrite is malformed and didn't actually proxy." Establish
+    the apps/site response signature first by hitting the deployed
+    origin directly with `curl -i`; record which response headers
+    distinguish a deployed-Vercel response from a local
+    `vercel dev` no-match. Candidate identifying headers from
+    Vercel's deployed-response stack (verify empirically — Vercel
+    can change them): `server: Vercel`, `x-vercel-id`,
+    `x-vercel-cache`. The implementer captures the actual header
+    set during the run and pins them in the PR validation
+    section as the load-bearing fingerprint, rather than this
+    plan committing to a header name that may not exist at
+    implementation time.
+
+    Procedure:
+    a. **Capture the apps/site fingerprint.** Run
+       `curl -i https://neighborly-events-site.vercel.app/`
+       and note headers present that are unique to deployed
+       Vercel (e.g., `x-vercel-id: ...`,
+       `server: Vercel`). This is the response signature any
+       proxied-to-deployed-apps/site response should carry.
+    b. **Capture the apps/site 404 fingerprint.** Run
+       `curl -i https://neighborly-events-site.vercel.app/this-route-does-not-exist`
+       and note the 404 response carries the same identifying
+       headers. This proves "404 from deployed apps/site" is a
+       distinct signature, not just a status code.
+    c. **Capture the local-no-match negative control.** Run
+       `curl -i http://localhost:<vercel-dev-port>/this-rule-does-not-match-any-vercel-json-rule`
+       under `vercel dev`. The response should have *fewer* of
+       the deployed-Vercel headers (`vercel dev` is the local
+       CLI, not the Vercel CDN, so headers like `x-vercel-id`
+       are absent or differently shaped). This is the negative
+       fingerprint.
+    d. **Walk the new rules with `curl -i` against
+       `vercel dev`** and assert each response matches the
+       expected fingerprint:
+       - `curl -i http://localhost:<vercel-dev-port>/admin`
+         → 200 + apps/web SPA HTML (no deployed-Vercel headers
+         from apps/site; this is apps/web's SPA fallback served
+         by the local `vercel dev`, not a proxy hit). Proves
+         rule #9 isn't pre-empted.
+       - `curl -i http://localhost:<vercel-dev-port>/event/community-checklist`
+         → 200 + body containing the apps/site event placeholder
+         markup ("Event placeholder", per
+         [`apps/site/app/event/[slug]/page.tsx`](../../apps/site/app/event/[slug]/page.tsx))
+         + the apps/site identifying headers from step (a).
+         Proves rule #7 still proxies to apps/site.
+       - `curl -i http://localhost:<vercel-dev-port>/auth/callback`
+         → 404 + the apps/site 404 fingerprint from step (b)
+         (same identifying headers + body matching apps/site's
+         404 page, *not* matching the negative control from
+         step (c)). Proves the new proxy rule fires and reaches
+         deployed apps/site (which 404s pre-deploy because the
+         new route isn't on main yet) — falsifies "rule
+         missing" and "local no-match."
+       - `curl -i http://localhost:<vercel-dev-port>/`
+         → 404 + apps/site 404 fingerprint, same reasoning as
+         `/auth/callback`.
+
+    The **load-bearing pre-merge signal** is that the
+    `/auth/callback` and `/` responses carry the apps/site
+    fingerprint from step (a)/(b), not the negative control
+    fingerprint from step (c). Record the captured header sets
+    (apps/site signature + negative control) and the four
+    `curl -i` invocations + their observed headers in the PR
+    validation section so the assertion is reproducible and
+    falsifiable. End-to-end "the new apps/site routes serve the
+    right content" remains deferred to step 18.
 15. **Automated code-review feedback loop.** Walk the diff from a
     senior-reviewer stance against the Cross-Cutting Invariants
     above and each Self-Review Audit named below. Apply fixes
     in place; commit review-fix changes separately when that
     clarifies history per
     [`AGENTS.md`](../../AGENTS.md) Review-Fix Rigor.
-16. **Plan-to-PR completion gate.** Walk every Goal,
+16. **Plan-to-PR completion gate (in-progress).** Walk every Goal,
     Cross-Cutting Invariant, Validation Gate command, and
-    Self-Review Audit named in this plan. Confirm each is
-    satisfied or explicitly deferred in this plan with rationale.
-    Flip Status from `Proposed` to `Landed` in the same PR.
+    Self-Review Audit named in this plan. Confirm each is either
+    satisfied in the implementing PR, deferred in this plan with
+    rationale, or marked as a deferred-to-production check that
+    the post-release `Production Admin Smoke` run (step 18)
+    satisfies. Flip Status from `Proposed` to
+    **`In progress pending prod smoke`** in the same PR — the
+    rule's exact required string per
+    [`docs/testing-tiers.md`](../testing-tiers.md), not a
+    paraphrase. The `Landed` flip lands in step 19's doc-only
+    follow-up commit.
 17. **PR preparation.** Open the PR using
     [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
     Title under 70 characters
     (suggested: `feat(m2-2.3): migrate /auth/callback and / to apps/site`).
     Validation section lists every command actually run plus the
-    `vercel dev` rule-precedence walk from step 14. UX Review:
+    step-14 rule-order regression check; explicitly notes that
+    cross-project end-to-end verification of the new routes is
+    deferred to the post-release `Production Admin Smoke` run
+    (step 18) per the two-phase Plan-to-Landed Gate. UX Review:
     include before/after screenshots of `/` (apps/web LandingPage
-    → apps/site platform landing); for `/auth/callback`, capture
-    only the timeout-state shell (the in-flight state requires a
-    real magic-link flow and is exercised by the post-deploy
-    verification, not pre-merge). Remaining Risk: deployed-origin
-    cookie-boundary re-verification needed post-deploy because
-    the route handler moved cross-framework; the apps/site Vercel
-    project must have `NEXT_PUBLIC_SUPABASE_URL` and
+    → apps/site platform landing), captured by running both dev
+    servers in isolation (`npm run dev:web` for the before,
+    `npm run dev:site` for the after) — not via `vercel dev`,
+    which can't reach the branch's local apps/site for the after
+    capture; for `/auth/callback`, capture only the timeout-state
+    shell from `npm run dev:site` (the in-flight state requires
+    a real magic-link flow and is exercised by the post-deploy
+    smoke run, not pre-merge). Remaining Risk: every cross-project
+    end-to-end assertion is deferred to the post-release smoke
+    run by construction; the apps/site Vercel project must have
+    `NEXT_PUBLIC_SUPABASE_URL` and
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` set before
-    deploy succeeds.
-18. **Post-deploy verification (release-owner action).** After
-    the PR merges and Vercel deploys both apps:
-    - Visit the production `/` and confirm the new landing
-      renders (proves the proxy rule reaches apps/site).
-    - Visit production `/admin` and confirm apps/web still
-      handles it (proves rule #9 is not pre-empted).
-    - Sign out, request a magic link from `/admin`, click the
-      email link, and confirm the round-trip lands signed-in on
-      `/admin` with the auth cookie present on the apps/web
-      frontend host (the cookie-boundary check from M1 phase
-      1.3.2's verification pattern). This is the load-bearing
-      cookie-boundary verification. Capture the result in the
-      PR's deploy comment thread.
+    the deploy succeeds; the doc-only follow-up commit (step 19)
+    is the gate that actually flips Status to `Landed`.
+18. **Post-release `Production Admin Smoke` run (release-owner
+    activity — load-bearing gate).** After the PR merges and
+    Vercel deploys both apps to production, the release owner
+    triggers (or waits for) the `Production Admin Smoke`
+    workflow run per the existing
+    [`docs/tracking/production-admin-smoke-tracking.md`](../tracking/production-admin-smoke-tracking.md)
+    procedure. The workflow runs
+    [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
+    end-to-end on the production origin; this is the
+    load-bearing verification of the cross-project proxy because
+    the fixture cannot pass unless `/auth/callback` is correctly
+    routed to the new apps/site route by `apps/web/vercel.json`'s
+    proxy rule and the auth cookie lands on apps/web's frontend
+    host. The smoke run URL is the durable external evidence the
+    Plan-to-Landed Gate requires; the cookie boundary is
+    implicitly verified by the fixture passing.
+
+    Optional supplementary spot-check the release owner may
+    capture in the deploy comment thread (not the gate; the
+    smoke run is the gate):
+    - Visit production `/`, `/auth/callback`, `/admin`,
+      `/event/community-checklist` directly and note observed
+      behavior matches the rule-stack contract (apps/site
+      landing renders; `/auth/callback` reaches apps/site;
+      apps/web still serves `/admin`; apps/site still serves
+      the event placeholder).
+
+    If the smoke run fails, file a focused follow-up rather
+    than treating Status as flippable. Step 19 cannot proceed
+    without a green smoke run URL to record.
+19. **Plan Status follow-up (doc-only commit).** Once the
+    `Production Admin Smoke` run from step 18 passes green,
+    open a doc-only commit on a follow-up branch that:
+    - Flips this plan's Status from `In progress pending prod
+      smoke` to `Landed`.
+    - Records the smoke run URL inline in the Status section
+      as the durable external evidence per
+      [`docs/testing-tiers.md`](../testing-tiers.md)'s rule
+      ("the run URL is durable external evidence; commit SHAs
+      are not recorded because `git log` is authoritative for
+      that"). Mirrors the 2.2 plan's "Production verification
+      evidence" pattern but with the smoke run URL as the
+      load-bearing artifact rather than a hand-written
+      observation.
+    - Updates
+      [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+      Phase Status table row for 2.3 to `Landed` with both PR
+      links (the implementing PR and this doc-only follow-up).
+    The follow-up commit's PR description references the smoke
+    run URL as the source of truth.
 
 ## Commit boundaries
 
@@ -722,9 +960,13 @@ named upfront:
    Single commit; the page is reachable from this commit forward
    but the apps/web vercel.json still SPA-handles `/auth/callback`,
    so production behavior is unchanged.
-3. **Landing page.** `apps/site/app/page.tsx`. Single commit;
-   the route is reachable on the apps/site dev server from this
-   commit forward.
+3. **Landing page + globals.css extension.**
+   `apps/site/app/page.tsx` and the `.landing-shell` /
+   `.landing-shell h1` / `.primary-cta` additions to
+   [`apps/site/app/globals.css`](../../apps/site/app/globals.css).
+   Single commit; the route is reachable on the apps/site dev
+   server from this commit forward and renders with a recognizable
+   button-shaped CTA, not a default-browser link.
 4. **Vercel proxy flip + apps/web removal.**
    [`apps/web/vercel.json`](../../apps/web/vercel.json) edit, the
    apps/web `LandingPage` deletion, the App.tsx / auth/index.ts
@@ -742,11 +984,24 @@ named upfront:
    [`docs/architecture.md`](../architecture.md) /
    [`docs/operations.md`](../operations.md) updates; the
    [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
-   Phase Status row update; the plan Status flip in this file.
-   Single commit.
+   Phase Status row update to `In progress pending prod smoke`;
+   the plan Status flip in this file from `Proposed` to the same
+   in-progress state. Single commit. **Not** the `Landed` flip —
+   that ships in the step-19 doc-only follow-up commit on a
+   separate branch.
 7. **Review-fix commits.** As needed during step 15, kept
    distinct from the substantive implementation commits per
    AGENTS Review-Fix Rigor.
+8. **Doc-only Status follow-up (separate branch + PR).** Per
+   step 19, lands after the post-release `Production Admin Smoke`
+   run from step 18 passes green: this plan's Status flips to
+   `Landed`, the smoke run URL is recorded inline as the durable
+   external evidence,
+   [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+   Phase Status row flips to `Landed` and gains both PR links.
+   Single commit on a follow-up branch; the implementing PR
+   stays at `In progress pending prod smoke` until this commit
+   merges.
 
 ## Validation Gate
 
@@ -767,24 +1022,46 @@ named upfront:
 - pgTAP suite — pass on baseline; pass on final via
   `npm run test:db`. No SQL change in this phase; the gate
   confirms 2.1.1's broadened policies still hold.
-- Local apps/site exercise per Execution step 13 — load-bearing
-  for the `'use client'` boundary + bootstrap-seam wiring.
-- `vercel dev` rule-precedence walk per Execution step 14 —
-  load-bearing for the new `apps/web/vercel.json` rule order.
-- Post-deploy cookie-boundary verification per Execution step
-  18 — **deferred to production** per the existing Tier 5
-  pattern from M1 phase 1.3.2. The cookie boundary cannot be
-  verified pre-merge because the proxy-rewrite resolves to a
-  deployed apps/site origin, and the cookie boundary depends on
-  the production proxy implementation. Per
-  [`docs/testing-tiers.md`](../testing-tiers.md), the manual
-  post-deploy verification is the right tier for this check.
-  Unlike 2.2's two-phase Plan-to-Landed gate, 2.3 does **not**
-  add new Tier 5 production smoke assertions — the existing
-  fixtures already exercise `/auth/callback` end-to-end and
-  continue to do so post-deploy. The implementing PR can flip
-  Status to `Landed` at merge time once the manual
-  cookie-boundary check is recorded in the PR thread.
+- Local apps/site exercise per Execution step 13
+  (`npm run dev:site`) — load-bearing pre-merge for the
+  `'use client'` boundary + bootstrap-seam wiring; proves the
+  *new code itself* renders correctly in isolation.
+- `vercel dev` rule-order regression check per Execution step 14
+  — load-bearing pre-merge for "the new rules don't shadow
+  existing routes" *and* "the new proxy rules actually fire and
+  reach deployed apps/site (not local-no-match)." This check
+  **cannot** validate the new apps/site routes end-to-end because
+  [`apps/web/vercel.json`](../../apps/web/vercel.json)'s
+  destinations are absolute production URLs; under `vercel dev`
+  the proxy hits the deployed apps/site, not the branch's local
+  Next.js dev server. The check uses the identity-fingerprint
+  procedure in step 14 (capture deployed apps/site response
+  headers as the positive signature, capture local
+  `vercel dev` no-match response as the negative control, then
+  assert each new-rule response matches the positive signature
+  via `curl -i`) so a 404 from "rule missing" or "local
+  no-match" cannot pass as proof.
+- **Post-release `Production Admin Smoke` run per Execution
+  step 18 — load-bearing gate, deferred to production by
+  construction.** Per
+  [`docs/testing-tiers.md`](../testing-tiers.md) "Plan-to-Landed
+  Gate For Plans That Touch Production Smoke," 2.3 ships under
+  the two-phase gate. The trigger that catches 2.3 is the
+  rule's second clause — *"plans that depend on production
+  smoke as final verification"* — not the first clause about
+  extending smoke assertions (no new fixture lands). The
+  existing `Production Admin Smoke` workflow exercises
+  [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
+  end-to-end through `/auth/callback`; that fixture cannot
+  pass post-deploy unless the cross-project proxy correctly
+  routes `/auth/callback` to the new apps/site route and the
+  auth cookie lands on apps/web's frontend host. The smoke
+  run URL is therefore the durable external evidence the rule
+  requires; the cookie boundary is implicitly verified by
+  fixture passing. The implementing PR merges with Status
+  `In progress pending prod smoke`; the doc-only follow-up
+  commit (Execution step 19) flips Status to `Landed` after
+  the smoke run is green and records the run URL inline.
 - Existing e2e fixtures
   ([`admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts),
   [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
@@ -824,6 +1101,20 @@ matched to this phase's diff surfaces.
   pair surfaces the `getMissingSupabaseConfigMessage()` text
   when `getSupabaseConfig().enabled === false` rather than
   throwing during component render.
+- **Token bucket discipline audit** ([`docs/styling.md`](../styling.md)
+  "Themable vs structural classification" + AGENTS.md "Styling
+  Token Discipline"). The `apps/site/app/globals.css` extension
+  consumes themable values exclusively via `var(--…)`
+  (brand color, typography, themable radius); raw values appear
+  only for one-off layout dimensions where introducing a
+  structural-token surface in apps/site would be unjustified
+  per the "keep one-off layout values local when a token would
+  add indirection without improving readability or future change
+  cost" rule. Audit walks: no themable color is hardcoded; no
+  status color (`$color-success`, etc.) appears (status palette
+  is structural and apps/site has no consumer); the focus-ring
+  pattern uses `var(--secondary)` matching the apps/web
+  precedent.
 
 ### CI & testing infrastructure
 
@@ -850,14 +1141,16 @@ matched to this phase's diff surfaces.
 - **Readiness-gate truthfulness audit** ([catalog
   §Readiness-gate truthfulness audit](../self-review-catalog.md#L373)).
   The validation gate's "magic-link sign-in works end-to-end"
-  claim references the post-deploy cookie-boundary verification
-  in step 18, not just code shape. The PR description records
-  the deployed-origin URLs walked, the cookie name matched
-  (`sb-<project-ref>-auth-token`), and the host the cookie
-  landed on (apps/web frontend domain). Pre-merge, the claim
-  reads as "code shape is consistent with the cookie-boundary
-  invariant; production verification is recorded in the deploy
-  comment thread within 24h of deploy."
+  claim references the post-release `Production Admin Smoke`
+  run from step 18 as the load-bearing verification, not just
+  code shape. Pre-merge, the claim reads as "code shape is
+  consistent with the cookie-boundary invariant; production
+  verification is the post-release smoke run, whose URL is
+  recorded in the doc-only follow-up commit per step 19." The
+  smoke run URL is the durable external evidence per
+  [`docs/testing-tiers.md`](../testing-tiers.md); hand-captured
+  observations (URLs walked, cookie name) are supplementary
+  context the release owner may add but are not the gate.
 - **Platform-auth-gate config audit** ([catalog §Platform-auth-gate
   config audit](../self-review-catalog.md#L446)). Two
   configuration surfaces pair with the new route handler:
@@ -909,9 +1202,13 @@ relevant doc updates this branch must carry:
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
   Phase Status table row for 2.3 updates from `not yet drafted`
   to the path of this plan when the plan-drafting commit lands;
-  the same row updates from `Proposed` to `Landed` and gains a
-  PR link when the implementing PR merges.
-- This plan — Status flips from `Proposed` to `Landed`.
+  the same row updates to `In progress pending prod smoke` (and
+  gains a PR link) when the implementing PR merges; the same row
+  flips to `Landed` (and gains a second PR link) in the doc-only
+  follow-up commit per Execution step 19.
+- This plan — Status flips from `Proposed` to `In progress pending
+  prod smoke` in the implementing PR; flips to `Landed` in the
+  doc-only follow-up commit.
 
 ## Out Of Scope
 
@@ -938,16 +1235,18 @@ resolution path so reviewer attention does not relitigate them.
   per [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md)
   "Primary-project ownership flip." M2 stays on apps/web-primary
   proxy-rewrite.
-- **Tier 5 production smoke extension.** No new production smoke
-  assertions are added. The existing
-  `Production Admin Smoke` workflow continues to exercise
-  `admin-auth-fixture.ts` end-to-end through the new
-  apps/site-served `/auth/callback`; no new fixture or
-  workflow-level coverage is needed because the URL contract is
-  unchanged. This is why 2.3 does not need the two-phase
-  Plan-to-Landed gate from
-  [`docs/testing-tiers.md`](../testing-tiers.md) that 2.2
-  followed.
+- **New Tier 5 production smoke fixture.** No new fixture lands
+  in this phase — the URL contract for `/auth/callback` is
+  unchanged, so the existing `admin-auth-fixture.ts` continues
+  to cover it without modification. The two-phase Plan-to-Landed
+  Gate **still applies** because the rule's trigger has two
+  clauses; 2.3 is caught by the second one ("plans that depend
+  on production smoke as final verification"), not the first
+  ("plans that extend production smoke assertions"). The
+  existing `Production Admin Smoke` run becomes the load-bearing
+  verification that the cross-project proxy works end-to-end
+  post-deploy. The first clause is correctly out of scope for
+  2.3 — only the second clause triggers.
 - **Demo-events list on the new `/`.** Resolved in
   [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
   "Cross-Phase Decisions" §5: dropped from `/` per the
@@ -966,14 +1265,48 @@ resolution path so reviewer attention does not relitigate them.
 
 ## Risk Register
 
+- **Cross-project proxy unverifiable pre-merge.**
+  [`apps/web/vercel.json`](../../apps/web/vercel.json) destinations
+  are absolute production URLs
+  (`https://neighborly-events-site.vercel.app/...`), so any local
+  `vercel dev` run proxies `/auth/callback` and `/` to the
+  *deployed* apps/site (still on main, no new routes), not to the
+  branch's local Next.js dev server. End-to-end verification of
+  the new routes through the proxy can only happen post-deploy.
+  Mitigation: 2.3 ships under the two-phase Plan-to-Landed Gate
+  from [`docs/testing-tiers.md`](../testing-tiers.md) (caught by
+  the rule's second-clause trigger, "plans that depend on
+  production smoke as final verification"); the implementing PR
+  merges with Status `In progress pending prod smoke`; Execution
+  step 14 narrows its pre-merge claims to "rule-order regression
+  check + identity-fingerprint proof that the new proxy rules
+  fire"; the post-release `Production Admin Smoke` run (step 18)
+  is the load-bearing end-to-end verification; Execution step
+  19's doc-only follow-up commit records the smoke run URL and
+  flips Status to `Landed`.
 - **Vercel rule ordering pre-empts the bare `/` rule.** First
   top-level bare-path proxy-rewrite the rule stack has shipped;
   misordering would send every unmatched apps/web request to
   apps/site (sending `/admin` to apps/site's 404 page). Mitigation:
   the Contracts section locks the exact 12-rule ordered array;
-  Execution step 14's `vercel dev` rule-precedence walk is the
-  load-bearing pre-merge verification; Execution step 18's
-  post-deploy walk is the load-bearing post-merge verification.
+  Execution step 14's `vercel dev` rule-order regression check
+  catches misorder of *existing* routes pre-merge (e.g., `/admin`
+  no longer reaching apps/web SPA) and uses the identity-fingerprint
+  procedure to confirm the new bottom rules actually proxy (rather
+  than falling through to a local-no-match 404 that would also
+  surface as a 404 status code); Execution step 18's post-deploy
+  walk is the load-bearing verification for the new rules'
+  end-to-end behavior.
+- **Identity-fingerprint headers shift under future Vercel CLI
+  upgrades.** Step 14's procedure captures deployed-Vercel
+  response headers empirically rather than hardcoding their
+  names because Vercel can change them. If a future contributor
+  finds the captured set has shifted (e.g., `x-vercel-id`
+  renamed or removed), they should re-derive the positive +
+  negative fingerprints by repeating step 14 sub-steps (a)–(c)
+  before relying on the comparison. Mitigation: step 14
+  documents the procedure as "capture, then assert against the
+  capture," not "assert against this header name."
 - **Implicit-flow URL hash lost in server-side handler.**
   Magic-link tokens arrive as `#access_token=...` in the URL
   fragment per
@@ -991,10 +1324,13 @@ resolution path so reviewer attention does not relitigate them.
   If a proxy implementation surprise rewrites the host header,
   `Set-Cookie` would land on the apps/site Vercel hostname
   instead of apps/web's frontend domain and signed-in users
-  would appear signed-out on apps/web. Mitigation: Execution
-  step 18's post-deploy cookie-boundary verification is the
-  load-bearing check; the M1 phase 1.3.2 verification record is
-  the precedent.
+  would appear signed-out on apps/web. Mitigation: the
+  post-release `Production Admin Smoke` run (step 18) implicitly
+  verifies the cookie boundary because
+  [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
+  cannot complete its end-to-end magic-link round-trip unless
+  the cookie lands on the right host. The M1 phase 1.3.2
+  verification record is the precedent.
 - **Playwright auth fixtures fail under `npm run dev:web`.** The
   three fixtures hardcoded for `127.0.0.1:4173/auth/callback`
   now require `vercel dev` per the resolved local-dev decision.
@@ -1048,10 +1384,11 @@ resolution path so reviewer attention does not relitigate them.
   [`docs/backlog.md`](../backlog.md) is updated with M2's terminal
   PR (2.5) per the milestone doc.
 - No new backlog items expected from this phase. If the
-  post-deploy cookie-boundary verification surfaces an issue
-  with the proxy-rewrite host preservation, that becomes a
-  follow-up with explicit scope; through the plan-drafting time
-  no such issue is anticipated.
+  post-release `Production Admin Smoke` run surfaces an issue
+  with the proxy-rewrite host preservation (the fixture would
+  fail on the magic-link round-trip), that becomes a follow-up
+  with explicit scope; through the plan-drafting time no such
+  issue is anticipated.
 
 ## Related Docs
 
