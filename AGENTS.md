@@ -328,9 +328,22 @@ phase's implementation starts, **after** prior phases have shipped
   SELECT during UPDATE/DELETE, so write policies don't fire if the
   row isn't SELECT-visible). For TypeScript / Edge Function
   contracts: read the function signature and at least one real call
-  site. If the reality-check finds a discrepancy, fix the scoping
-  before drafting the plan; do not carry wrong premises into plan
-  time
+  site. For *validation-procedure* claims ("`vercel dev` will
+  validate X," "the existing fixture covers Y," "`npm test` will
+  catch Z"), trace whether the procedure actually exercises the
+  surface it claims. For dev-tool semantics specifically (Vercel
+  CLI, Next.js dev server, Vite, Playwright), read the project's
+  actual config (`vercel.json`, `next.config.ts`, `vite.config.ts`)
+  before claiming runtime behavior — these tools are
+  config-dependent and general knowledge will not catch
+  project-specific overrides. Recurring trap: `apps/web/vercel.json`
+  destinations are absolute production URLs, so `vercel dev`
+  proxies to deployed apps/site rather than the branch's local
+  Next.js dev server; "vercel dev validates the new local routes"
+  was a wrong claim because the config's absolute destinations were
+  never checked. If the reality-check finds a discrepancy, fix the
+  scoping before drafting the plan; do not carry wrong premises
+  into plan time
 - **Spike before plan for novel mechanisms.** When the phase
   introduces a new mechanism (a new authorization shape, a new
   cross-app boundary, a new SECURITY DEFINER pattern, a new
@@ -365,6 +378,67 @@ phase's implementation starts, **after** prior phases have shipped
   preference — it is the protective check this section exists to
   enforce, so the reality-check gate above does not get rolled back
   during plan-drafting
+- **Quote labels whose enforcement depends on exact-match
+  matching, with line citations.** When a plan references a label
+  whose value is checked or queried by exact-string match (Status
+  strings used for plan-state tracking, branch naming conventions
+  automation watches for, exact phrases a rule forbids paraphrasing
+  of), copy-paste from the source with a `path:line` citation
+  rather than retyping. Paraphrasing silently weakens rules whose
+  enforcement value depends on the exact string. Recurring trap:
+  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed
+  Gate" requires Status `In progress pending prod smoke` and
+  explicitly forbids paraphrase ("this exact string, not `Landed`
+  and not a paraphrase"); plan authors retyping have produced
+  descriptive variants that break the rule's queryability
+  invariant. Ordinary identifiers (env-var names, file paths,
+  function names, fixture names) do not need this treatment —
+  code blocks and adjacent file references already carry the
+  spelling, and citing every identifier adds noise without
+  protective value. Citation is required only when the plan claims
+  something specific about an identifier's wording, when the plan
+  is the artifact introducing it, or when downstream automation or
+  status tracking depends on its exact spelling. Apply the same
+  exact-match discipline to trigger clauses: when citing a rule's
+  trigger ("the trigger that catches this plan"), read every
+  clause and quote the one that catches your case, not the first
+  one that looks relevant
+- **Falsifiability check on each load-bearing claim (exercise,
+  not always recorded).** For every claim the plan presents as
+  load-bearing pre-merge proof ("step N validates Z," "fixture X
+  covers Y," "passing `build:web` confirms Q"), walk through the
+  falsifier in your head: what observation would prove the claim
+  wrong, and could the named procedure surface that observation?
+  If the exercise reveals the validation is ambiguous (multiple
+  causes produce the same observation, the named procedure cannot
+  distinguish them), tighten the procedure and record the
+  tightened version with its discriminator. If the falsifier is
+  obvious and the procedure clearly catches it, the exercise is
+  its own reward — no recording needed; most validation bullets
+  fall in this category. Recurring trap that *should* have been
+  caught and recorded: "`/auth/callback` returning 404 from
+  `vercel dev` proves the new proxy rule fires" had no
+  discriminating falsifier — every other failure mode (rule
+  missing, malformed rewrite, local-no-match) also produces 404,
+  so the test could not distinguish the desired signal from the
+  failures it was meant to catch. The fix was an identity-
+  fingerprint procedure that captures positive + negative response
+  signatures and asserts against both. The load-bearing case is
+  exactly when the exercise changes the procedure
+- **Bans on surface require rendering the consequence.** When a
+  plan writes "no X" / "minimum surface" / "intentionally not
+  done" for a user-visible or operationally-important surface,
+  state in concrete terms what the absence looks like. For UX
+  surfaces, render it: run the dev server and look at the page
+  before declaring minimum sufficient. Optimizing for diff size
+  produces plans that ship regressed UX. Recurring trap: M2 phase
+  2.3 first drafted "no SCSS, no module CSS" for the new apps/site
+  landing without checking that
+  [`apps/site/app/globals.css`](apps/site/app/globals.css)
+  provided no button styling — the public-facing CTA would have
+  rendered as a default-browser link. The discipline is not
+  "always add CSS" but "before banning the surface, prove the no-X
+  outcome is acceptable by looking at it"
 - **Cap.** ~90 minutes for scope + plan combined for a typical
   phase. If you're at 3+ hours and still drafting, diminishing
   returns have hit — stop, reality-check the actual scope size, and
@@ -513,6 +587,15 @@ patches.
 - when a fix adds a new async step, follow-up read, fallback path, or external
   dependency, review the success path, the originally reported bug, the inverse
   case, transient failure of the new dependency, and partial-success semantics
+- after fixing a reviewer-surfaced defect, audit the rest of the plan or diff
+  for siblings of the same class before committing the fix. Reviewer feedback
+  usually surfaces one instance of a recurring mistake; the same mistake often
+  lives in places the reviewer didn't reach. Ask: "what category of mistake is
+  this, and where else might that category live?" — then check those places.
+  Recurring trap: M2 phase 2.3's `vercel dev` claim was fixed in one paragraph,
+  but the same "treating tool output as proof without checking what it proves"
+  defect lived two paragraphs later in the 404-fingerprint check; catching the
+  second pre-emptively saves the next reviewer round
 - if a write already succeeded, do not let a best-effort follow-up read or
   reconciliation step make the overall operation appear failed unless the plan
   explicitly says the flow is atomic
