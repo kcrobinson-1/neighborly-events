@@ -121,12 +121,6 @@ async function clickOptionAndSubmit(page, optionLabel, submitLabel = "Submit ans
   await activate(page.getByRole("button", { name: submitLabel, exact: true }));
 }
 
-/** Navigates to the landing page and waits for the app to settle. */
-async function openHome(page, baseUrl) {
-  await page.goto(baseUrl, { waitUntil: "networkidle" });
-  await page.waitForLoadState("networkidle");
-}
-
 /** Saves a full-page screenshot into the current run directory. */
 async function capture(page, runDirectory, fileName) {
   await page.screenshot({
@@ -141,41 +135,17 @@ async function verifyDirectRoute(page, baseUrl) {
   await page.getByRole("heading", { name: "Madrona Music in the Playfield" }).waitFor();
 }
 
-/** Captures the landing page in both mobile and desktop layouts. */
-async function captureLandingStates(baseUrl, runDirectory) {
-  const mobileBrowser = await chromium.launch({ headless: true });
-  const mobileContext = await mobileBrowser.newContext({
-    ...devices["iPhone 13"],
-  });
-  const mobilePage = await mobileContext.newPage();
-
-  await openHome(mobilePage, baseUrl);
-  await capture(mobilePage, runDirectory, "01-landing-mobile.png");
-  await mobileBrowser.close();
-
-  const desktopBrowser = await chromium.launch({ headless: true });
-  const desktopPage = await desktopBrowser.newPage({
-    viewport: { width: 1440, height: 1200 },
-  });
-
-  await desktopPage.goto(baseUrl, { waitUntil: "networkidle" });
-  await capture(desktopPage, runDirectory, "02-landing-desktop.png");
-  await desktopBrowser.close();
-}
-
 /** Captures the primary featured sample flow, including back navigation and completion. */
 async function captureFeaturedFlow(page, baseUrl, runDirectory) {
-  await openHome(page, baseUrl);
-  await activate(page.getByRole("button", { name: "Try the attendee demo", exact: true }));
-  await page.waitForURL(`${baseUrl}/event/first-sample/game`);
+  await page.goto(`${baseUrl}/event/first-sample/game`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Madrona Music in the Playfield" }).waitFor();
-  await capture(page, runDirectory, "03-featured-intro.png");
+  await capture(page, runDirectory, "01-featured-intro.png");
 
   await activate(page.getByRole("button", { name: "Start game", exact: true }));
   await page.getByRole("heading", {
     name: "Which local spot is sponsoring this neighborhood music series question?",
   }).waitFor();
-  await capture(page, runDirectory, "04-featured-question-1.png");
+  await capture(page, runDirectory, "02-featured-question-1.png");
 
   await clickOptionAndSubmit(page, "Hi Spot Cafe");
   await page.getByRole("heading", {
@@ -201,7 +171,7 @@ async function captureFeaturedFlow(page, baseUrl, runDirectory) {
   await page.getByRole("heading", {
     name: "What matters most for reward eligibility in the MVP?",
   }).waitFor();
-  await capture(page, runDirectory, "05-featured-back-navigation.png");
+  await capture(page, runDirectory, "03-featured-back-navigation.png");
 
   await clickOptionAndSubmit(page, "Finishing the game");
   await page.getByRole("heading", {
@@ -215,19 +185,12 @@ async function captureFeaturedFlow(page, baseUrl, runDirectory) {
 
   await clickOptionAndSubmit(page, "That the attendee is officially done");
   await page.getByRole("heading", { name: "Show this screen at the volunteer table" }).waitFor();
-  await capture(page, runDirectory, "06-featured-completion.png");
+  await capture(page, runDirectory, "04-featured-completion.png");
 }
 
 /** Captures the incorrect and correct feedback states in the spotlight mode. */
 async function captureSpotlightFlow(page, baseUrl, runDirectory) {
-  await openHome(page, baseUrl);
-  await activate(
-    page
-      .locator(".sample-game-row")
-      .filter({ hasText: "Sponsor Spotlight Challenge" })
-      .getByRole("button", { name: "Try this demo", exact: true }),
-  );
-  await page.waitForURL(`${baseUrl}/event/sponsor-spotlight/game`);
+  await page.goto(`${baseUrl}/event/sponsor-spotlight/game`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Sponsor Spotlight Challenge" }).waitFor();
   await activate(page.getByRole("button", { name: "Start game", exact: true }));
   await page.getByRole("heading", {
@@ -236,23 +199,16 @@ async function captureSpotlightFlow(page, baseUrl, runDirectory) {
 
   await clickOptionAndSubmit(page, "To interrupt players with ads");
   await page.getByRole("status").getByText("Try again.", { exact: true }).waitFor();
-  await capture(page, runDirectory, "07-spotlight-incorrect.png");
+  await capture(page, runDirectory, "05-spotlight-incorrect.png");
 
   await clickOptionAndSubmit(page, "To feel integrated into the neighborhood event");
   await page.getByRole("heading", { name: "Bottlehouse" }).waitFor();
-  await capture(page, runDirectory, "08-spotlight-correct-feedback.png");
+  await capture(page, runDirectory, "06-spotlight-correct-feedback.png");
 }
 
 /** Captures the multiple-selection state in the checklist sample. */
 async function captureCommunityChecklist(page, baseUrl, runDirectory) {
-  await openHome(page, baseUrl);
-  await activate(
-    page
-      .locator(".sample-game-row")
-      .filter({ hasText: "Community Checklist Game" })
-      .getByRole("button", { name: "Try this demo", exact: true }),
-  );
-  await page.waitForURL(`${baseUrl}/event/community-checklist/game`);
+  await page.goto(`${baseUrl}/event/community-checklist/game`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "Community Checklist Game" }).waitFor();
   await activate(page.getByRole("button", { name: "Start game", exact: true }));
   await page.getByRole("heading", {
@@ -261,18 +217,18 @@ async function captureCommunityChecklist(page, baseUrl, runDirectory) {
 
   await activate(page.getByLabel("Large tap targets", { exact: true }));
   await activate(page.getByLabel("Visible progress", { exact: true }));
-  await capture(page, runDirectory, "09-community-multi-select.png");
+  await capture(page, runDirectory, "07-community-multi-select.png");
 }
 
 /** Captures unsupported routes and missing-game fallbacks. */
 async function captureNotFoundStates(page, baseUrl, runDirectory) {
   await page.goto(`${baseUrl}/not-a-route`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "That page isn't available in this demo." }).waitFor();
-  await capture(page, runDirectory, "10-not-found-route.png");
+  await capture(page, runDirectory, "08-not-found-route.png");
 
   await page.goto(`${baseUrl}/event/not-a-real-sample/game`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "This game isn't available right now." }).waitFor();
-  await capture(page, runDirectory, "11-unavailable-game-route.png");
+  await capture(page, runDirectory, "09-unavailable-game-route.png");
 }
 
 /** Captures the route-level load error when pointed at a misconfigured local app. */
@@ -289,7 +245,7 @@ async function captureRouteLoadError(errorBaseUrl, runDirectory) {
 
   await page.goto(`${errorBaseUrl}/event/first-sample/game`, { waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "This game couldn't load right now." }).waitFor();
-  await capture(page, runDirectory, "12-route-load-error.png");
+  await capture(page, runDirectory, "10-route-load-error.png");
 
   await browser.close();
 }
@@ -1002,8 +958,6 @@ async function main() {
     await captureAdminMode(baseUrl, runDirectory);
     return;
   }
-
-  await captureLandingStates(baseUrl, runDirectory);
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({
