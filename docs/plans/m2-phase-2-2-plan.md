@@ -2,17 +2,46 @@
 
 ## Status
 
-In progress — code, tests, and documentation are landed in the
-implementing branch; Status flips to `Landed` in the implementing
-PR after the manual organizer round-trip (Execution step 11) and
-the Playwright + UI-review captures (Execution steps 13, 14) run
-against a local Supabase. Those gates require a configured local
-Supabase project and an organizer-fixture user, and are explicitly
-the PR-opener's responsibility per AGENTS.md "Validation Honesty."
-The other Validation Gate commands (`npm run lint`,
-`npm run build:web`, `npm run build:site`, `npm test`,
-`npm run test:functions`, full pgTAP) all pass against the
-implementing branch.
+In progress pending prod verification — follows the two-phase
+"Plan-to-Landed Gate For Plans That Touch Production Smoke"
+pattern from
+[`docs/testing-tiers.md`](../testing-tiers.md). The implementing
+PR merges with this Status; a doc-only follow-up commit flips
+Status to `Landed` once the post-deploy verification on the
+production origin passes (manual organizer round-trip plus
+captured before/after of the redundant entry points
+`/admin/events/<eventId>` and `/event/<slug>/admin`).
+
+The local-Supabase round-trip described in Execution step 11 was
+attempted during implementation but blocked by an unrelated
+operator-side Supabase Auth allow-list issue: even with all four
+local origins (`http://localhost:5173/auth/callback`,
+`http://localhost:4173/auth/callback`,
+`http://127.0.0.1:5173/auth/callback`,
+`http://127.0.0.1:4173/auth/callback`) added to the project's
+Redirect URLs and a fresh magic-link request that confirmed
+apps/web sends the correct `redirect_to` in the OTP request
+URL, Supabase still fell back to the production Site URL when
+delivering the magic-link email. That symptom is server-side
+(stale allow-list cache or similar) and unrelated to anything
+this branch ships. Rather than block the merge on debugging the
+local-auth dashboard, the verification is moved to production
+where the `Production Admin Smoke` workflow already exercises
+the magic-link round-trip on the production origin, which is
+allow-listed.
+
+Validation that **passed** against the implementing branch:
+`npm run lint`, `npm run build:web`, `npm run build:site`,
+`npm test` (47 files / 473 tests), `npm run test:functions`
+(83 deno tests). pgTAP is unchanged by this branch (no SQL
+edits), so the full suite remains green from M2 phase 2.1.
+
+Validation **deferred to production**: manual organizer
+round-trip end-to-end (sign-in, draft load, save, publish,
+unpublish on `/event/<slug>/admin` for an organizer-fixture
+user); UI-review redundant-entry-point comparison capturing
+both `/admin/events/<eventId>` and `/event/<slug>/admin`
+against the same draft on the production origin.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M2, Phase 2.2. Sibling phases: 2.1 RLS broadening + Edge
@@ -689,12 +718,28 @@ named upfront:
 - pgTAP suite — pass on baseline; pass on final. No SQL change in
   this phase; the gate confirms 2.1.1's broadened policies still
   pass after rebase.
-- Manual organizer round-trip per Execution step 11.
+- Manual organizer round-trip per Execution step 11 — **deferred
+  to production** per the two-phase Plan-to-Landed Gate. The
+  implementing PR merges with Status `In progress pending prod
+  verification`; the post-deploy round-trip on the production
+  origin (an organizer-fixture user signing in, loading a draft,
+  saving, publishing, unpublishing on `/event/<slug>/admin`)
+  satisfies this gate. A doc-only follow-up commit flips Status
+  to `Landed` and records the verification evidence URL (the
+  `Production Admin Smoke` workflow run that includes the new
+  route, or a manual capture, whichever the release operator
+  chooses).
 - Playwright capture per Execution step 13 covering: organizer
   authorized state, organizer save → publish → unpublish round-trip,
-  non-organizer role-gate, signed-out in-place form. Mobile-first
-  per AGENTS UI-review process.
-- UI-review redundant-entry-point comparison per Execution step 14.
+  non-organizer role-gate, signed-out in-place form — **deferred
+  to production**. The vitest matrix in `EventAdminPage.test.tsx`
+  already covers the state-machine branches at the component
+  level; the deferred capture is the end-to-end auth-cookie-real
+  verification that only the production origin can satisfy
+  without per-developer Supabase-dashboard configuration.
+- UI-review redundant-entry-point comparison per Execution step
+  14 — **deferred to production**. The captured pair lands in
+  the doc-only follow-up commit alongside the Status flip.
 
 ## Self-Review Audits
 
