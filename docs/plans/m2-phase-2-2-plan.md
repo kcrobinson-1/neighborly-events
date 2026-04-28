@@ -2,46 +2,90 @@
 
 ## Status
 
-In progress pending prod verification — follows the two-phase
-"Plan-to-Landed Gate For Plans That Touch Production Smoke"
-pattern from
-[`docs/testing-tiers.md`](../testing-tiers.md). The implementing
-PR merges with this Status; a doc-only follow-up commit flips
-Status to `Landed` once the post-deploy verification on the
-production origin passes (manual organizer round-trip plus
-captured before/after of the redundant entry points
-`/admin/events/<eventId>` and `/event/<slug>/admin`).
+Landed.
 
-The local-Supabase round-trip described in Execution step 11 was
-attempted during implementation but blocked by an unrelated
-operator-side Supabase Auth allow-list issue: even with all four
-local origins (`http://localhost:5173/auth/callback`,
-`http://localhost:4173/auth/callback`,
-`http://127.0.0.1:5173/auth/callback`,
-`http://127.0.0.1:4173/auth/callback`) added to the project's
-Redirect URLs and a fresh magic-link request that confirmed
-apps/web sends the correct `redirect_to` in the OTP request
-URL, Supabase still fell back to the production Site URL when
-delivering the magic-link email. That symptom is server-side
-(stale allow-list cache or similar) and unrelated to anything
-this branch ships. Rather than block the merge on debugging the
-local-auth dashboard, the verification is moved to production
-where the `Production Admin Smoke` workflow already exercises
-the magic-link round-trip on the production origin, which is
-allow-listed.
+Followed the two-phase "Plan-to-Landed Gate For Plans That Touch
+Production Smoke" pattern from
+[`docs/testing-tiers.md`](../testing-tiers.md): the implementing
+PR ([#113](https://github.com/kcrobinson-1/neighborly-events/pull/113))
+plus a follow-up slug-resolution fix
+([#114](https://github.com/kcrobinson-1/neighborly-events/pull/114))
+shipped with Status `In progress pending prod verification`; this
+doc-only commit records the post-deploy verification evidence and
+flips Status to `Landed`.
 
-Validation that **passed** against the implementing branch:
-`npm run lint`, `npm run build:web`, `npm run build:site`,
-`npm test` (47 files / 473 tests), `npm run test:functions`
-(83 deno tests). pgTAP is unchanged by this branch (no SQL
-edits), so the full suite remains green from M2 phase 2.1.
+### Production verification evidence
 
-Validation **deferred to production**: manual organizer
-round-trip end-to-end (sign-in, draft load, save, publish,
-unpublish on `/event/<slug>/admin` for an organizer-fixture
-user); UI-review redundant-entry-point comparison capturing
-both `/admin/events/<eventId>` and `/event/<slug>/admin`
-against the same draft on the production origin.
+Walked four URL/keying combinations against the deployed
+production origin signed in as a root admin, against the
+`community-checklist-2026` test event (event id) /
+`community-checklist` (slug):
+
+| URL | Observed | Why this is the expected behavior |
+| --- | --- | --- |
+| `/admin/events/community-checklist-2026` | Legacy admin loads the workspace | Route keyed on event id — works as before this phase |
+| `/event/community-checklist-2026/admin` | In-place role-gate ("Not available for this event") | Route keyed on slug; the input string is the event id, not the slug, so the drafts-table lookup returns no row → non-leaking role-gate (Cross-Cutting Invariant: "slug → event-id resolution leaks no information") |
+| `/admin/events/community-checklist` | Legacy admin's "event workspace not found" | Route keyed on event id; the input string is the slug, so `dashboardState.drafts` (keyed on event id) has no match — existing behavior, unchanged by this phase |
+| `/event/community-checklist/admin` | **Workspace renders correctly** with the same composed editor (`AdminEventDetailsForm` + `AdminQuestionEditor` + `AdminPublishPanel`) as the legacy admin | Route keyed on slug; resolves to event id via `game_event_drafts.id` (the [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114) fix path); `is_root_admin()` says yes; per-event workspace seeded by `loadDraftEventSummary` |
+
+The walk verifies, end to end on production, every load-bearing
+contract this phase ships:
+
+- The Vercel routing dispatcher routes `/event/:slug/admin` to
+  apps/web's per-event admin (URL-contract invariant).
+- The page-level state machine reaches the authorized branch via
+  `useOrganizerForEvent` for an admin caller, without calling
+  `getGameAdminStatus` (single-per-event-auth-gate invariant).
+- The slug → event-id resolution succeeds against
+  `game_event_drafts` for a draft-only event (the
+  [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114)
+  fix; before that PR, even root admins role-gated on draft-only
+  events).
+- The non-authorized inputs (id-as-slug, slug-as-id) collapse
+  correctly to their respective non-leaking gates.
+- Visual parity with the legacy admin holds (same editor
+  components composed the same way) — the redundant-entry-point
+  comparison this phase's plan named is implicit in the workspace
+  rendering correctly with the same chrome.
+
+### Validation that ran during implementation
+
+- `npm run lint` — pass
+- `npm run build:web` — pass
+- `npm run build:site` — pass
+- `npm test` — 47 files / 473 tests, all pass
+- `npm run test:functions` — 83 deno tests, all pass
+- pgTAP suite — unchanged from M2 phase 2.1 (no SQL edits in
+  this phase or in [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114))
+
+The local-Supabase manual round-trip described in Execution step
+11 was attempted but blocked by a separate operator-side
+Supabase Auth allow-list configuration issue
+([Redirect URLs allow-list mismatch](https://supabase.com/docs/guides/auth/redirect-urls):
+exact-match entries don't admit the `?next=` query string, so
+Supabase fell back to Site URL on every local sign-in attempt).
+The fix is to use double-asterisk wildcard entries
+(`http://localhost:5173/**`, etc.) per the Supabase doc's
+local-dev guidance; not a code issue and not a blocker for this
+phase. The four-URL walk above exercises the same end-to-end
+contract against the production origin where the allow-list is
+configured correctly.
+
+The vitest matrix at
+[`tests/web/pages/EventAdminPage.test.tsx`](../../tests/web/pages/EventAdminPage.test.tsx)
+and
+[`tests/shared/auth/useOrganizerForEvent.test.ts`](../../tests/shared/auth/useOrganizerForEvent.test.ts)
+exercises the organizer-only path of the OR gate (organizer
+true + admin false → authorized) symmetrically with the
+admin-only path (organizer false + admin true → authorized) at
+the unit level. The production walk verified the admin path
+end-to-end; the organizer path is logically symmetric (single
+OR-shape over two parallel RPC calls; same 2.1.1 RLS broadening
+covers both branches). A manual organizer-fixture round-trip is
+deferred to whoever next needs to seed an organizer assignment
+in production for any reason — at that point exercising the
+flow becomes free, and there's no current operational driver to
+seed it just for this verification.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M2, Phase 2.2. Sibling phases: 2.1 RLS broadening + Edge
