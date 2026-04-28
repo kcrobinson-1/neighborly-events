@@ -11,6 +11,7 @@
  */
 export {
   matchAdminEventPath,
+  matchEventAdminPath,
   matchEventRedeemPath,
   matchEventRedemptionsPath,
   matchGamePath,

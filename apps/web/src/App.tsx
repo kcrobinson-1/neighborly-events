@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AuthCallbackPage } from "./auth";
 import { AdminPage } from "./pages/AdminPage";
+import { EventAdminPage } from "./pages/EventAdminPage";
 import { EventRedeemPage } from "./pages/EventRedeemPage";
 import { EventRedemptionsPage } from "./pages/EventRedemptionsPage";
 import { LandingPage } from "./pages/LandingPage";
@@ -8,11 +9,13 @@ import { GameRoutePage } from "./pages/GameRoutePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import {
   matchAdminEventPath,
+  matchEventAdminPath,
   matchEventRedeemPath,
   matchEventRedemptionsPath,
   matchGamePath,
   routes,
 } from "../../../shared/urls";
+import { ThemeScope, getThemeForSlug } from "../../../shared/styles";
 import { usePathnameNavigation } from "./usePathnameNavigation";
 
 /** Resolves the pathname to the page component that should be rendered. */
@@ -40,6 +43,20 @@ function getPageContent(
         onNavigate={navigate}
         selectedEventId={matchedAdminEvent.eventId}
       />
+    );
+  }
+
+  const matchedEventAdmin = matchEventAdminPath(pathname);
+
+  if (matchedEventAdmin) {
+    return (
+      <ThemeScope theme={getThemeForSlug(matchedEventAdmin.slug)}>
+        <EventAdminPage
+          key={matchedEventAdmin.slug}
+          onNavigate={navigate}
+          slug={matchedEventAdmin.slug}
+        />
+      </ThemeScope>
     );
   }
 

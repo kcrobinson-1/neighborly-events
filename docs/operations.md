@@ -48,7 +48,9 @@ For this project today, that means:
 ### Vercel
 
 - [`apps/web/vercel.json`](../apps/web/vercel.json)
-  SPA route rewrites for `/admin` and `/event/:slug/game`, plus other supported project behavior
+  SPA route rewrites for `/admin`, `/event/:slug/game`, and the
+  per-event admin route at `/event/:slug/admin` (organizer-or-admin
+  authoring), plus other supported project behavior
 - [`apps/web/package.json`](../apps/web/package.json)
   frontend build commands
 - [`apps/web/vite.config.ts`](../apps/web/vite.config.ts)
@@ -164,7 +166,9 @@ Why manual for now:
   - local `<origin>/auth/callback` redirect URL
   - deployed `<origin>/auth/callback` redirect URL
   - a single entry per environment — every authenticated route returns
-    through `/auth/callback?next=…`
+    through `/auth/callback?next=…` (`/admin`, `/admin/events/:eventId`,
+    `/event/:slug/game`, `/event/:slug/admin`,
+    `/event/:slug/redeem`, and `/event/:slug/redemptions`)
 - operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 

@@ -7,6 +7,16 @@
   padding: $space-11 $space-7 $space-site-bottom;
 }
 
+// `<ThemeScope>` (shared/styles/ThemeScope.tsx) emits a wrapper `<div>`
+// that carries CSS custom properties; the wrapper itself must not
+// introduce layout flow inside `.admin-layout` / `.app-card` /
+// `.game-layout` flex/grid hierarchies. `display: contents` removes
+// the wrapper from layout while preserving the cascade of the custom
+// properties it sets.
+.theme-scope {
+  display: contents;
+}
+
 .backdrop {
   position: absolute;
   inset: 0;

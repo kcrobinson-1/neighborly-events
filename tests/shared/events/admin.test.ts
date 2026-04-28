@@ -13,6 +13,7 @@ import {
   listDraftEventSummaries,
   loadDraftEvent,
   loadDraftEventStatus,
+  loadDraftEventSummary,
   publishDraftEvent,
   saveDraftEvent,
   unpublishEvent,
@@ -437,6 +438,48 @@ describe("shared/events admin API", () => {
       status: "draft_only",
       updatedAt: "2026-04-08T12:00:00.000Z",
     });
+  });
+
+  it("loads one draft event summary by event id", async () => {
+    client = createSupabaseClientMock({
+      statusRow: createStatusRow({
+        event_code: "MMF",
+        event_id: sampleDraft.id,
+        is_live: true,
+        last_published_version_number: 1,
+        status: "live",
+      }),
+    });
+
+    await expect(loadDraftEventSummary(sampleDraft.id)).resolves.toEqual({
+      eventCode: "MMF",
+      hasBeenPublished: true,
+      id: sampleDraft.id,
+      isLive: true,
+      lastPublishedVersionNumber: 1,
+      name: sampleDraft.name,
+      slug: sampleDraft.slug,
+      status: "live",
+      updatedAt: "2026-04-08T12:00:00.000Z",
+    });
+    expect(client.from).toHaveBeenCalledWith("game_event_admin_status");
+    expect(client.statusEq).toHaveBeenCalledWith("event_id", sampleDraft.id);
+  });
+
+  it("returns null when the status view has no row for an event id", async () => {
+    client = createSupabaseClientMock({ statusRow: null });
+
+    await expect(loadDraftEventSummary("missing-event")).resolves.toBeNull();
+  });
+
+  it("throws a transient error when the summary read fails", async () => {
+    client = createSupabaseClientMock({
+      statusMaybeSingleError: { message: "Network down." },
+    });
+
+    await expect(loadDraftEventSummary(sampleDraft.id)).rejects.toThrow(
+      "We couldn't load the draft event right now.",
+    );
   });
 
   it("loads the current status tuple for one draft event", async () => {

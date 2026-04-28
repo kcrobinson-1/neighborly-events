@@ -80,6 +80,18 @@ describe("validateNextPath", () => {
       );
     });
 
+    it("accepts a per-event admin route", () => {
+      expect(validateNextPath("/event/some-slug/admin")).toBe(
+        "/event/some-slug/admin",
+      );
+    });
+
+    it("accepts a URL-encoded per-event admin route", () => {
+      expect(
+        validateNextPath("/event/slug%20with%20spaces/admin"),
+      ).toBe("/event/slug%20with%20spaces/admin");
+    });
+
     it("accepts an attendee redeem route", () => {
       expect(validateNextPath("/event/some-slug/redeem")).toBe(
         "/event/some-slug/redeem",

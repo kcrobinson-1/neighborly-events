@@ -26,6 +26,10 @@ export {
 } from "./api.ts";
 export { useAuthSession } from "./useAuthSession.ts";
 export {
+  useOrganizerForEvent,
+  type UseOrganizerForEventState,
+} from "./useOrganizerForEvent.ts";
+export {
   AuthCallbackPage,
   type AuthCallbackPageProps,
 } from "./AuthCallbackPage.tsx";

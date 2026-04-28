@@ -163,6 +163,28 @@ export async function listDraftEventSummaries(): Promise<DraftEventSummary[]> {
   return ((data ?? []) as DraftEventStatusRow[]).map(mapDraftSummary);
 }
 
+/** Loads one draft event summary by event id from the admin status view. */
+export async function loadDraftEventSummary(
+  eventId: string,
+): Promise<DraftEventSummary | null> {
+  const { data, error } = await readSharedEventsProviders()
+    .getClient()
+    .from("game_event_admin_status")
+    .select("draft_updated_at,event_code,event_id,is_live,last_published_version_number,name,slug,status")
+    .eq("event_id", eventId)
+    .maybeSingle<DraftEventStatusRow>();
+
+  if (error) {
+    throw new Error("We couldn't load the draft event right now.");
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapDraftSummary(data);
+}
+
 /** Loads one private draft event document for an authenticated game admin. */
 export async function loadDraftEvent(eventId: string): Promise<DraftEventDetail | null> {
   const { data: statusRow, error: statusError } = await readSharedEventsProviders()

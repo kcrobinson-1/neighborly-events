@@ -41,7 +41,7 @@ phase 4.1 per the epic's "Deferred ThemeScope wiring" invariant.
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
 | 2.1 | RLS broadening with pgTAP coverage | [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) | Proposed | — |
-| 2.2 | Per-event admin route shell at `/event/:slug/admin` | not yet drafted | Proposed | — |
+| 2.2 | Per-event admin route shell at `/event/:slug/admin` | [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md) | Proposed | — |
 | 2.3 | `/auth/callback` and `/` migration to apps/site | not yet drafted | Proposed | — |
 | 2.4 | Platform admin migration to apps/site at `/admin` | not yet drafted | Proposed | — |
 | 2.5 | `/game/*` URL migration for operator routes | not yet drafted | Proposed | — |

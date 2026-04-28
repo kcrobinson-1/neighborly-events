@@ -9,9 +9,11 @@ export {
   AuthCallbackPage,
   SignInForm,
   useAuthSession,
+  useOrganizerForEvent,
   type AuthCallbackPageProps,
   type AuthSessionState,
   type MagicLinkState,
   type SignInFormCopy,
   type SignInFormProps,
+  type UseOrganizerForEventState,
 } from "../../../../shared/auth";

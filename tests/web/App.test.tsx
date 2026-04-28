@@ -30,6 +30,12 @@ vi.mock("../../apps/web/src/pages/EventRedeemPage.tsx", () => ({
   ),
 }));
 
+vi.mock("../../apps/web/src/pages/EventAdminPage.tsx", () => ({
+  EventAdminPage: ({ slug }: { slug: string }) => (
+    <div>Event Admin Page: {slug}</div>
+  ),
+}));
+
 vi.mock("../../apps/web/src/pages/NotFoundPage.tsx", () => ({
   NotFoundPage: () => <div>Not Found Page</div>,
 }));
@@ -76,5 +82,28 @@ describe("App", () => {
     render(<App />);
 
     expect(screen.getByText("Event Redeem Page: madrona-music-2026")).toBeTruthy();
+  });
+
+  it("renders the per-event admin route inside a ThemeScope wrapper", () => {
+    mockUsePathnameNavigation.mockReturnValue({
+      navigate: vi.fn(),
+      pathname: "/event/madrona-music-2026/admin",
+    });
+
+    const { container } = render(<App />);
+
+    expect(
+      screen.getByText("Event Admin Page: madrona-music-2026"),
+    ).toBeTruthy();
+
+    // The dispatcher wraps the per-event admin in `<ThemeScope>` per the
+    // M1 phase 1.5 centralization invariant. Asserting the wrapper element
+    // is present prevents the wrap from regressing back into the page
+    // component or being dropped entirely.
+    const themeScope = container.querySelector(".theme-scope");
+    expect(themeScope).not.toBeNull();
+    expect(themeScope?.textContent).toContain(
+      "Event Admin Page: madrona-music-2026",
+    );
   });
 });
