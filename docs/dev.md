@@ -814,13 +814,17 @@ for narrowing them as routes migrate.
 Most local work continues to use `npm run dev:web`,
 `npm run dev:web:local`, `npm run dev:web:test`, or
 `npm run dev:site` depending on the app under test. End-to-end
-fixtures that round-trip through `/auth/callback` need the Vercel
-routing layer, because the production path now enters through the
-apps/web frontend host and proxies the callback route to apps/site.
+fixtures that round-trip through `/auth/callback` need a local
+equivalent of the Vercel routing layer, because the production path
+now enters through the apps/web frontend host and proxies the callback
+route to apps/site.
 
-Use `vercel dev` from the workspace root for those fixture runs after
-linking both Vercel projects locally with `vercel link`. The relevant
-fixtures are:
+The auth e2e Playwright configs start
+[`scripts/testing/run-auth-e2e-dev-server.cjs`](../scripts/testing/run-auth-e2e-dev-server.cjs).
+That script keeps the browser origin at `http://127.0.0.1:4173`,
+routes `/auth/callback` and Next.js assets to branch-local apps/site,
+and routes every other app path to branch-local apps/web. The relevant
+fixtures keep their existing redirect URLs:
 
 - [`admin-auth-fixture.ts`](../tests/e2e/admin-auth-fixture.ts)
 - [`redeem-auth-fixture.ts`](../tests/e2e/redeem-auth-fixture.ts)
@@ -828,7 +832,8 @@ fixtures are:
 
 For callback work in apps/site, create `apps/site/.env.local` from
 `apps/site/.env.example` and mirror the same Supabase project values
-used by apps/web.
+used by apps/web. The e2e proxy also maps `VITE_SUPABASE_*` values to
+the corresponding `NEXT_PUBLIC_SUPABASE_*` values for apps/site.
 
 ### apps/site environment variables
 
@@ -838,7 +843,7 @@ apps/site client routes read these public Supabase variables:
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 
 Set them in the apps/site Vercel project and in
-`apps/site/.env.local` for local Next.js or `vercel dev` runs. They
+`apps/site/.env.local` for local Next.js or auth e2e proxy runs. They
 mirror the apps/web `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` values.
 

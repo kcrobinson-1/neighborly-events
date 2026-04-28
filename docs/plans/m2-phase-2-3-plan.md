@@ -60,8 +60,8 @@ same change to avoid a broken intermediate state.
 [`scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md) for the file
 inventory and cross-app contracts walkthrough;
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) "Cross-Phase
-Decisions" §3 (apps/site auth idiom + bootstrap seam), §4 (`vercel dev`
-local-dev story), §5 (subsume landing shape), and "Settled by default"
+Decisions" §3 (apps/site auth idiom + bootstrap seam), §4 (local auth
+e2e proxy story), §5 (subsume landing shape), and "Settled by default"
 (apps/site primary-domain promotion deferred) for the deliberation
 behind every cross-phase decision this plan consumes.
 
@@ -561,18 +561,17 @@ epic-level invariants apply:
     ([`admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts),
     [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
     [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
-    require `vercel dev` so the proxy rules in
-    `apps/web/vercel.json` resolve `/auth/callback` to apps/site.
-    Document the prerequisite (Vercel CLI installed; both Vercel
-    projects linked locally via `vercel link` per the dev.md
-    "Vercel" subsection at line 763), and the apps/site
-    `.env.local` recipe (see new sub-section below).
+    use `scripts/testing/run-auth-e2e-dev-server.cjs` so
+    `/auth/callback` resolves to branch-local apps/site while the
+    browser origin remains `127.0.0.1:4173`. Document that the proxy
+    maps the apps/web `VITE_SUPABASE_*` env values to apps/site's
+    `NEXT_PUBLIC_SUPABASE_*` values.
   - Add a new sub-section **"apps/site environment variables"**
     documenting `NEXT_PUBLIC_SUPABASE_URL` and
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` as the two
     new env vars the apps/site Vercel project needs (mirror the
     apps/web `VITE_SUPABASE_*` values), plus the local
-    `apps/site/.env.local` file recipe for `vercel dev` runs.
+    `apps/site/.env.local` file recipe for auth e2e proxy runs.
     The apps/site `.env*` files are ignored by the repo's existing
     `.gitignore`; confirm at implementation time and add an
     apps/site-specific entry only if not already covered.
@@ -650,9 +649,9 @@ epic-level invariants apply:
   [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
   [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
   — URLs unchanged. The fixtures continue to round-trip through
-  `127.0.0.1:4173/auth/callback?next=...`; the resolved `vercel dev`
-  decision means the proxy rewrites those URLs to the apps/site
-  origin during local runs, exactly as production does.
+  `127.0.0.1:4173/auth/callback?next=...`; the resolved auth e2e
+  proxy rewrites those URLs to the branch-local apps/site origin
+  during local runs without restoring an apps/web callback route.
 
 ## Execution steps
 
@@ -765,7 +764,7 @@ epic-level invariants apply:
     + URL ownership shape changed; `docs/operations.md` updates
     because the Vercel routing topology shifted;
     `docs/dev.md` updates because new env vars + a new local-dev
-    prerequisite (`vercel dev`) ship; `docs/product.md` does not
+    prerequisite (auth e2e proxy) ships; `docs/product.md` does not
     update (no user-visible capability change — the new `/`
     landing is platform chrome, not a product capability);
     `docs/backlog.md` does not update; `docs/open-questions.md`
@@ -1098,7 +1097,7 @@ named upfront:
   [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
   [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
   — must continue to pass. Per the resolved local-dev decision,
-  they require `vercel dev` for local runs (the URLs themselves
+  they require the auth e2e proxy for local runs (the URLs themselves
   do not change). The post-deploy
   `Production Admin Smoke` workflow run exercises
   `admin-auth-fixture.ts` against the deployed origin and is
@@ -1211,7 +1210,7 @@ relevant doc updates this branch must carry:
 - [`docs/dev.md`](../dev.md) — five edits per the modify list:
   three parenthetical conversions (lines 225, 253, 300), the
   rule-precedence walk update, and two new sub-sections
-  (apps/site env vars, local `vercel dev` story for the e2e
+  (apps/site env vars, local auth e2e proxy story for the e2e
   fixtures).
 - [`shared/db/client.ts`](../../shared/db/client.ts) inline
   comment at line 64 — corrected from future-tense to as-shipped.
@@ -1362,7 +1361,7 @@ resolution path so reviewer attention does not relitigate them.
   verification record is the precedent.
 - **Playwright auth fixtures fail under `npm run dev:web`.** The
   three fixtures hardcoded for `127.0.0.1:4173/auth/callback`
-  now require `vercel dev` per the resolved local-dev decision.
+  now require the auth e2e proxy per the resolved local-dev decision.
   Contributors who run them under `dev:web` get a 404 on
   `/auth/callback` because the apps/web SPA fallback no longer
   catches the URL. Mitigation: the new `docs/dev.md`
