@@ -59,7 +59,7 @@ deletion lands in the 2.5 PR or a focused cleanup PR.
 
 ## Sequencing
 
-Phase dependencies (arrows mean "is blocked by"):
+Phase dependencies (`A --> B` means A blocks B / B depends on A):
 
 ```mermaid
 flowchart LR

@@ -241,8 +241,9 @@ before any per-phase planning.
   milestone set
 - **Phase dependency graph.** The milestone doc's "Sequencing"
   section opens with a Mermaid `flowchart LR` block: each phase
-  is a node, "is blocked by" relationships are arrows, the
-  upstream milestone (e.g. M1 for an M2 doc) appears as a
+  is a node, "blocks" relationships are arrows (an `A --> B`
+  edge means A blocks B / B depends on A), the upstream
+  milestone (e.g. M1 for an M2 doc) appears as a
   dependency-only node so prerequisites are explicit. Phase
   numbering reflects intended ship order, **not** strict
   dependency — readers default-assume `N.k` depends on
