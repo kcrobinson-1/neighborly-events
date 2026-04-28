@@ -9,17 +9,17 @@ import {
 import { useOrganizerForEvent } from "../../../shared/auth/useOrganizerForEvent.ts";
 import type { Database } from "../../../shared/db";
 
-type EventResponse = { data: unknown; error: unknown };
+type DraftResponse = { data: unknown; error: unknown };
 type RpcResponse = { data: unknown; error: unknown };
 
 function createClientMock(config: {
-  eventResponse?: EventResponse | EventResponse[];
+  draftResponse?: DraftResponse | DraftResponse[];
   organizerResult?: RpcResponse | RpcResponse[];
   rootAdminResult?: RpcResponse | RpcResponse[];
 }) {
-  const eventResponses = Array.isArray(config.eventResponse)
-    ? [...config.eventResponse]
-    : [config.eventResponse ?? { data: null, error: null }];
+  const draftResponses = Array.isArray(config.draftResponse)
+    ? [...config.draftResponse]
+    : [config.draftResponse ?? { data: null, error: null }];
   const organizerResults = Array.isArray(config.organizerResult)
     ? [...config.organizerResult]
     : [config.organizerResult ?? { data: false, error: null }];
@@ -28,11 +28,18 @@ function createClientMock(config: {
     : [config.rootAdminResult ?? { data: false, error: null }];
 
   const maybeSingle = vi.fn().mockImplementation(async () => {
-    return eventResponses.shift() ?? { data: null, error: null };
+    return draftResponses.shift() ?? { data: null, error: null };
   });
   const eq = vi.fn(() => ({ maybeSingle }));
   const select = vi.fn(() => ({ eq }));
-  const from = vi.fn(() => ({ select }));
+  const from = vi.fn((table: string) => {
+    if (table !== "game_event_drafts") {
+      throw new Error(
+        `useOrganizerForEvent must resolve slugs via game_event_drafts, not ${table}.`,
+      );
+    }
+    return { select };
+  });
   const rpc = vi.fn((name: string) => {
     if (name === "is_organizer_for_event") {
       return Promise.resolve(
@@ -70,7 +77,7 @@ describe("useOrganizerForEvent", () => {
   it("collapses an unknown slug to role_gate without leaking", async () => {
     configureWith(
       createClientMock({
-        eventResponse: { data: null, error: null },
+        draftResponse: { data: null, error: null },
       }),
     );
 
@@ -86,8 +93,8 @@ describe("useOrganizerForEvent", () => {
   it("collapses signed-in-but-unassigned to role_gate", async () => {
     configureWith(
       createClientMock({
-        eventResponse: {
-          data: { id: "evt-1", event_code: "MMF" },
+        draftResponse: {
+          data: { id: "evt-1" },
           error: null,
         },
         organizerResult: { data: false, error: null },
@@ -107,8 +114,8 @@ describe("useOrganizerForEvent", () => {
   it("returns authorized when the caller is an organizer for the event", async () => {
     configureWith(
       createClientMock({
-        eventResponse: {
-          data: { id: "evt-1", event_code: "MMF" },
+        draftResponse: {
+          data: { id: "evt-1" },
           error: null,
         },
         organizerResult: { data: true, error: null },
@@ -125,15 +132,14 @@ describe("useOrganizerForEvent", () => {
     });
     if (result.current.status === "authorized") {
       expect(result.current.eventId).toBe("evt-1");
-      expect(result.current.eventCode).toBe("MMF");
     }
   });
 
   it("returns authorized when the caller is root-admin only", async () => {
     configureWith(
       createClientMock({
-        eventResponse: {
-          data: { id: "evt-1", event_code: "MMF" },
+        draftResponse: {
+          data: { id: "evt-1" },
           error: null,
         },
         organizerResult: { data: false, error: null },
@@ -150,12 +156,42 @@ describe("useOrganizerForEvent", () => {
     });
   });
 
+  it("returns authorized for a draft-only event the root-admin caller is authorized for", async () => {
+    // Regression: before the production-verification fix, the slug was
+    // resolved against game_events, which only contains published rows.
+    // Draft-only events therefore role-gated even root admins. The fix
+    // resolves the slug via game_event_drafts (always-present row),
+    // which is what the test mock simulates here — id present, no
+    // event-code constraint, root-admin RPC says yes.
+    configureWith(
+      createClientMock({
+        draftResponse: {
+          data: { id: "draft-only-evt" },
+          error: null,
+        },
+        organizerResult: { data: false, error: null },
+        rootAdminResult: { data: true, error: null },
+      }),
+    );
+
+    const { result } = renderHook(() =>
+      useOrganizerForEvent("community-checklist-2026", { retryDelayMs: 0 }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.status).toBe("authorized");
+    });
+    if (result.current.status === "authorized") {
+      expect(result.current.eventId).toBe("draft-only-evt");
+    }
+  });
+
   it("treats a non-boolean RPC payload as transient_error", async () => {
     configureWith(
       createClientMock({
-        eventResponse: [
-          { data: { id: "evt-1", event_code: "MMF" }, error: null },
-          { data: { id: "evt-1", event_code: "MMF" }, error: null },
+        draftResponse: [
+          { data: { id: "evt-1" }, error: null },
+          { data: { id: "evt-1" }, error: null },
         ],
         organizerResult: [
           { data: "not-a-bool", error: null },
@@ -180,7 +216,7 @@ describe("useOrganizerForEvent", () => {
   it("retries once on a transport error and surfaces transient_error on the second failure", async () => {
     configureWith(
       createClientMock({
-        eventResponse: [
+        draftResponse: [
           { data: null, error: { message: "Temporary failure." } },
           { data: null, error: { message: "Temporary failure." } },
         ],
@@ -202,9 +238,9 @@ describe("useOrganizerForEvent", () => {
   it("recovers when the second attempt succeeds after a transport error", async () => {
     configureWith(
       createClientMock({
-        eventResponse: [
+        draftResponse: [
           { data: null, error: { message: "Flaky." } },
-          { data: { id: "evt-1", event_code: "MMF" }, error: null },
+          { data: { id: "evt-1" }, error: null },
         ],
         organizerResult: { data: true, error: null },
         rootAdminResult: { data: false, error: null },
@@ -223,9 +259,9 @@ describe("useOrganizerForEvent", () => {
   it("transitions to transient_error when an RPC branch returns an error", async () => {
     configureWith(
       createClientMock({
-        eventResponse: [
-          { data: { id: "evt-1", event_code: "MMF" }, error: null },
-          { data: { id: "evt-1", event_code: "MMF" }, error: null },
+        draftResponse: [
+          { data: { id: "evt-1" }, error: null },
+          { data: { id: "evt-1" }, error: null },
         ],
         organizerResult: [
           { data: false, error: { message: "rpc fail" } },
@@ -234,25 +270,6 @@ describe("useOrganizerForEvent", () => {
         rootAdminResult: [
           { data: false, error: null },
           { data: false, error: null },
-        ],
-      }),
-    );
-
-    const { result } = renderHook(() =>
-      useOrganizerForEvent("madrona-music-2026", { retryDelayMs: 0 }),
-    );
-
-    await waitFor(() => {
-      expect(result.current.status).toBe("transient_error");
-    });
-  });
-
-  it("rejects a malformed event_code payload by retrying then surfacing transient_error", async () => {
-    configureWith(
-      createClientMock({
-        eventResponse: [
-          { data: { id: "evt-1", event_code: "lowercase" }, error: null },
-          { data: { id: "evt-1", event_code: "lowercase" }, error: null },
         ],
       }),
     );

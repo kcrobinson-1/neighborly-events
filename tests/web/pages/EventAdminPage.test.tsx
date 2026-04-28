@@ -197,7 +197,6 @@ describe("EventAdminPage state matrix", () => {
       status: "signed_in",
     });
     mockUseOrganizerForEvent.mockReturnValue({
-      eventCode: "MMF",
       eventId: "evt-1",
       status: "authorized",
     });
@@ -219,7 +218,6 @@ describe("EventAdminPage state matrix", () => {
       status: "signed_in",
     });
     mockUseOrganizerForEvent.mockReturnValue({
-      eventCode: "MMF",
       eventId: "evt-1",
       status: "authorized",
     });

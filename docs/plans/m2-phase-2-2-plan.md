@@ -200,7 +200,7 @@ checks are added at the `validateNextPath` boundary.
 ```ts
 type UseOrganizerForEventState =
   | { status: "loading" }
-  | { status: "authorized"; eventId: string; eventCode: string }
+  | { status: "authorized"; eventId: string }
   | { status: "role_gate" }
   | { status: "transient_error"; message: string; retry: () => void };
 ```
@@ -211,12 +211,16 @@ Behavior contract:
   + `shared/db/` providers pair (apps/web's startup wiring already
   satisfies this).
 - On mount and on `slug` change, the hook resolves slug → event-id
-  via `from("game_events").select("id,event_code").eq("slug", slug)`
-  with `.maybeSingle()`, then runs
+  via `from("game_event_drafts").select("id").eq("slug", slug)` with
+  `.maybeSingle()`, then runs
   `rpc("is_organizer_for_event", { target_event_id })` and
-  `rpc("is_root_admin")` in parallel.
-- An unknown slug, a non-3-letter `event_code` payload, or both RPC
-  branches returning `false` collapses to `role_gate` — no leak.
+  `rpc("is_root_admin")` in parallel. Resolution reads
+  `game_event_drafts` (always-present row from creation; SELECT
+  broadened to organizers + admins by M2 phase 2.1.1) rather than
+  `game_events` (only published events) so draft-only events are
+  reachable for any authorized caller, including root admins.
+- An unknown slug or both RPC branches returning `false` collapses to
+  `role_gate` — no leak.
 - A transport error or non-boolean payload from either RPC branch
   triggers one automatic retry after a short delay (mirrors
   `authorizeRedemptions`'s 2-second default; expose the same
@@ -351,7 +355,8 @@ following epic-level invariants apply:
 
 - `shared/auth/useOrganizerForEvent.ts` — new hook implementing the
   `UseOrganizerForEventState` contract above. Slug → event-id
-  lookup against `game_events`, then parallel RPCs against
+  lookup against `game_event_drafts` (covers both draft-only and
+  published events), then parallel RPCs against
   `is_organizer_for_event` and `is_root_admin`. One automatic
   retry on transient failure with a configurable `retryDelayMs`
   matching `authorizeRedemptions`'s 2-second default; a manual
@@ -920,39 +925,37 @@ resolution path so reviewer attention does not relitigate them.
   Remaining Risk section names this; reviewer attention treats
   the redundancy as a bounded interim, not a permanent two-write
   surface.
-- **Slug → event-id silent-no-op.** A typo in the URL slug, a
-  draft that has never been published (no `game_events` row yet),
-  or a hard-deleted event all surface as `role_gate`. The phase
+- **Slug → event-id silent-no-op.** A typo in the URL slug or a
+  hard-deleted draft surface as `role_gate`. The phase
   deliberately collapses these to a non-leaking gate per the
   Cross-Cutting Invariants. Reviewer attention should not read
   this as a bug; the role-gate copy is uniform across cases by
   design.
 
-  *Sub-case: drafts that have never been published.* Today
-  `loadDraftEventSummary(eventId)` reads from
-  `game_event_admin_status`, which is built on
-  `game_event_drafts` (`left join` to `game_events`); a draft
-  that has never published *does* have a row in the view (it
-  surfaces with `status = 'draft_only'`). So an organizer for a
-  never-published draft reaches the authorized state, not
-  `role_gate`. The role-gate trigger is the slug → `game_events`
-  lookup in `useOrganizerForEvent`, which keys on the
-  `game_events` table directly. **An organizer for a draft that
-  has never been published has no `game_events` row to look up
-  by slug**, so they hit the role-gate even though they should
-  be authorized. The plan deliberately accepts this trade-off
-  because (a) `is_organizer_for_event(<event-id>)` requires an
-  event-id, which today equals `game_events.id`, so an
-  organizer for a never-published draft has no event-id to
-  pass; (b) the existing assignment-creation surface (post-epic
-  agent-assignment UI) is expected to assign organizers
-  *after* publish, mirroring how root-admin authoring works
-  today. If a real never-published-organizer scenario surfaces
-  before the post-epic feature lands, the fix is to extend
-  `event_role_assignments` to accept draft IDs as well as
-  published event IDs — a focused follow-up, not a 2.2 blocker.
-  Documented here so reviewer attention does not read the
-  trade-off as a bug.
+  *Sub-case: drafts that have never been published — resolved.*
+  An earlier draft of this plan documented this as an accepted
+  trade-off (slug → event-id resolution read `game_events`,
+  which only contains published events, so draft-only events
+  role-gated even root admins). Production verification of the
+  initial implementation surfaced the gap immediately —
+  signed-in root admins hit `role_gate` for the
+  `community-checklist-2026` draft-only event because the
+  slug → `game_events` lookup returned no row before the
+  `is_root_admin()` RPC ever fired. The accepted-trade-off was
+  wrong: the per-event admin must reach draft-only events for
+  the same reason root admins reach them via the legacy
+  `/admin/events/:eventId` route, and 2.1.1 already broadened
+  `game_event_drafts.SELECT` to organizers + admins, so reading
+  the drafts table for slug resolution preserves the same
+  security posture. Fix landed: `useOrganizerForEvent` now
+  resolves slug via
+  `from("game_event_drafts").select("id").eq("slug", slug)`,
+  covering both draft-only and published events for any
+  authorized caller. The
+  `event_role_assignments.event_id`-equals-`game_events.id`
+  identity holds because the draft's `id` is itself the event
+  id (drafts and events share the same primary-key namespace);
+  no migration needed.
 
 - **`getGameAdminStatus` drift into the per-event flow.** If a
   copied `dashboardState.unauthorized` branch from
