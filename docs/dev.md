@@ -899,9 +899,16 @@ The release workflow currently expects these GitHub Actions secrets:
 
 Release integrity guard:
 
-- the release workflow resolves an explicit target SHA and verifies that SHA has
-  a successful `CI` push run on `main` before applying migrations or deploying
-  Edge Functions
+- the release workflow resolves an explicit target SHA from
+  `workflow_run.head_sha` (CI-completion trigger) or `github.sha` (manual
+  `workflow_dispatch`)
+- on the `workflow_run` trigger the integrity gate is the job's own `if:`
+  condition (`workflow_run.conclusion == 'success' && event == 'push'`); the
+  triggering run is by construction a successful CI push run on `main`, so no
+  additional API check is needed
+- on the `workflow_dispatch` trigger the workflow additionally verifies the
+  dispatched SHA has a successful `CI` push run on `main` before applying
+  migrations or deploying Edge Functions, since dispatch can pick any SHA
 
 The production smoke workflow expects these additional `production` environment
 settings (vars and secrets):

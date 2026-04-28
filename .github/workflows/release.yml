@@ -68,7 +68,18 @@ jobs:
           test -n "$SUPABASE_PROJECT_REF"
           printf '%s' "$SUPABASE_PROJECT_REF" | grep -Eq '^[a-z0-9]{20}$'
 
+      # The workflow_run path is already gated by this job's `if:` condition,
+      # which enforces `workflow_run.conclusion == 'success' && event == 'push'`.
+      # By construction the triggering CI run was a successful push CI run on
+      # main, so re-querying the actions/runs API for the same fact is pure
+      # belt-and-suspenders — and the head_sha-filtered query is eventually
+      # consistent enough that it has flaked (returned an empty result set
+      # for a CI run that demonstrably exists) within minutes of CI
+      # completing. Skip the API check on workflow_run; keep it on
+      # workflow_dispatch, where it is the only safety net against deploying
+      # a SHA that did not pass CI on main.
       - name: Validate target SHA passed CI on main
+        if: github.event_name == 'workflow_dispatch'
         env:
           TARGET_SHA: ${{ steps.release_target.outputs.sha }}
         run: |
