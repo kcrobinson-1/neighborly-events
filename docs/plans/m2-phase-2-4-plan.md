@@ -2,16 +2,14 @@
 
 ## Status
 
-Proposed (umbrella). Phase 2.4 ships as **three sequential
-sub-phases**, each with its own plan doc, PR, and Status. The
-umbrella's Status flips to `Landed` when all three sub-phase PRs
-merge and their plans flip to `Landed`.
+Landed (umbrella). Phase 2.4 shipped as **three sequential
+sub-phases**, each with its own plan doc, PR, and Status.
 
 | Sub-phase | Plan | PR | Status |
 | --- | --- | --- | --- |
 | 2.4.1 — Add platform admin page on apps/site | [m2-phase-2-4-1-plan.md](./m2-phase-2-4-1-plan.md) | — | Landed |
 | 2.4.2 — Flip routing + retarget e2e to cross-app shape | [m2-phase-2-4-2-plan.md](./m2-phase-2-4-2-plan.md) | [#124](https://github.com/kcrobinson-1/neighborly-events/pull/124) | Landed |
-| 2.4.3 — Delete legacy apps/web platform admin | [m2-phase-2-4-3-plan.md](./m2-phase-2-4-3-plan.md) | — | Proposed |
+| 2.4.3 — Delete legacy apps/web platform admin | [m2-phase-2-4-3-plan.md](./m2-phase-2-4-3-plan.md) | — | Landed |
 
 Only sub-phase **2.4.2** ships under the two-phase **Plan-to-Landed
 Gate For Plans That Touch Production Smoke** from

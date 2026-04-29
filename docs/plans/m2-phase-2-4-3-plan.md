@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. Tier 1–4 gate (no production smoke); deletes
+Landed. Tier 1–4 gate (no production smoke); deleted
 already-unreachable code.
 
 Sub-phase of M2 phase 2.4 — see
@@ -178,7 +178,17 @@ imports. Verified by:
   `AdminDashboardContent.tsx`. **Distinct from
   `EventAdminWorkspace.tsx`** (per-event admin from 2.2, stays).
 - [`apps/web/src/admin/useAdminDashboard.ts`](../../apps/web/src/admin/useAdminDashboard.ts)
-  — sole consumer was `AdminPage.tsx`.
+  — sole consumer of the hook value is `AdminPage.tsx`. The file
+  *also* re-exports four types (`AdminPublishState`,
+  `AdminQuestionSaveState`, `AdminSelectedDraftState`,
+  `AdminUnpublishState`) from `./useSelectedDraft` per a transitional
+  shim landed alongside the 2.2 selected-draft extraction; the
+  surviving `EventAdminWorkspace.tsx` and `AdminPublishPanel.tsx`
+  import those types through the re-export. The deletion forces a
+  forced behavior-preserving import-path bump in those two files
+  (the type-only imports point at `./useSelectedDraft` directly).
+  This is the only deep-editor surface edit in this PR; the umbrella's
+  "deep-editor surface untouched" invariant is otherwise honored.
 
 **Apps/web platform-admin test deletions.** Walk
 `tests/web/admin/*` at edit time to find tests of the deleted
