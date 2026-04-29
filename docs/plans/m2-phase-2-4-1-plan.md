@@ -131,11 +131,13 @@ contract progression, build-sequencing constraint).
   convention-only (Next.js route groups do not appear in URLs).
 - New apps/site events setup module:
   `apps/site/lib/setupEvents.ts`. Module-level side effect that
-  calls `configureSharedEvents({ getClient })` exactly once,
-  mirroring
-  [`apps/web/src/lib/setupEvents.ts`](../../apps/web/src/lib/setupEvents.ts)
-  with the apps/site browser-Supabase singleton as the `getClient`
-  source.
+  calls `configureSharedEvents(...)` once with the full
+  [`SharedEventsProviders`](../../shared/events/configure.ts#L9)
+  shape — `{ getClient, getConfig, getMissingConfigMessage,
+  getFeaturedGameSlug }`. Mirrors
+  [`apps/web/src/lib/setupEvents.ts`](../../apps/web/src/lib/setupEvents.ts);
+  the only apps/site-specific wiring is the `featuredGameSlug` import
+  source — see Contracts section.
 - New shared starter helper:
   `shared/events/draftCreation.ts`. Houses
   `createStarterDraftContent` and `createDuplicatedDraftContent`
@@ -223,13 +225,44 @@ pattern from
 Next.js's strict-mode double-mount must not produce two parallel
 fetches racing into `setDashboardState`.
 
-**`apps/site/lib/setupEvents.ts`.** Mirrors
+**`apps/site/lib/setupEvents.ts`.** Module-level side effect calling
+`configureSharedEvents(...)` once with the full
+[`SharedEventsProviders`](../../shared/events/configure.ts#L9) shape
+(verified by:
+[`shared/events/configure.ts:9-18`](../../shared/events/configure.ts#L9)
+— all four fields are required; `configureSharedEvents({ getClient })`
+fails type-check). The four providers wire as follows:
+
+- `getClient` → `getBrowserSupabaseClient` from
+  [`apps/site/lib/supabaseBrowser.ts`](../../apps/site/lib/supabaseBrowser.ts)
+  (shipped by 2.3).
+- `getConfig` → `getSupabaseConfig` from the same module.
+- `getMissingConfigMessage` → `getMissingSupabaseConfigMessage` from
+  the same module.
+- `getFeaturedGameSlug` → `() => featuredGameSlug` where
+  `featuredGameSlug` imports from
+  [`shared/game-config/constants.ts`](../../shared/game-config/constants.ts#L2)
+  (the source of truth — apps/web's
+  [`setupEvents.ts:2`](../../apps/web/src/lib/setupEvents.ts#L2)
+  resolves to the same constant via its
+  [`apps/web/src/data/games.ts`](../../apps/web/src/data/games.ts)
+  re-export, but apps/site has no equivalent app-local data module
+  and importing the shared constant directly is the right layering).
+
+The provider exists on apps/site even though no apps/site consumer
+calls `listPublishedGameSummaries` today — the new `/admin` page calls
+`listDraftEventSummaries`, not the published variant, and the
+`getFeaturedGameSlug` provider only feeds the published-summary sort
+in
+[`shared/events/published.ts:67`](../../shared/events/published.ts#L67).
+Supplying it satisfies the shared-module contract without inventing
+an apps/site-specific featured-slug concept; if a future apps/site
+surface ever lists published events, the sort is already wired.
+
+Mirrors
 [`apps/web/src/lib/setupEvents.ts`](../../apps/web/src/lib/setupEvents.ts)
-verbatim with apps/site's import paths. Module-level side effect
-calling `configureSharedEvents({ getClient })` once with `getClient`
-wired to `getBrowserSupabaseClient` from
-[`apps/site/lib/supabaseBrowser.ts`](../../apps/site/lib/supabaseBrowser.ts).
-No exports.
+in shape; the only apps/site-specific wiring is the
+`featuredGameSlug` import source. No exports.
 
 **`apps/site/components/SharedClientBootstrap.tsx` (modify).** Add
 `import "../lib/setupEvents";` immediately after the existing
