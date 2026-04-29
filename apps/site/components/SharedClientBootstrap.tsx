@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 
 import "../lib/setupAuth";
+import "../lib/setupEvents";
 
 type SharedClientBootstrapProps = {
   children: ReactNode;
