@@ -1440,6 +1440,29 @@ resolution path so reviewer attention does not relitigate them.
   console with the env var names so a misconfigured deploy is
   diagnosable in 30 seconds; the release owner sets the env
   vars on the apps/site Vercel project before the merge.
+- **Turbopack rewrites `process` before NEXT_PUBLIC substitution
+  fires.** Even when `NEXT_PUBLIC_*` env vars are correctly set
+  on the Vercel project, the apps/site bundle can still ship with
+  runtime lookups (`g.default.env.NEXT_PUBLIC_SUPABASE_URL`)
+  instead of inlined values. Cause: a transitive dependency in
+  `@supabase/supabase-js`'s graph polyfills Node's `process` as a
+  default-imported module; Turbopack rewrites the global `process`
+  reference to the polyfilled module before Next.js's
+  literal-pattern substitution pass sees it, so
+  `process.env.NEXT_PUBLIC_*` no longer matches and stays as a
+  runtime read against an empty polyfill. Source code uses the
+  correct literal pattern; the bug is in the bundler pipeline.
+  Mitigation: explicit `env` block in
+  [`apps/site/next.config.ts`](../../apps/site/next.config.ts)
+  that re-substitutes the names via Next.js's `next.config.ts`
+  definition pass (which runs *before* the bundler polyfill
+  rewrite). Surfaced post-deploy by the Production Admin Smoke
+  run for M2 phase 2.3; fixed in a focused follow-up before the
+  smoke gate flipped Status to `Landed`. Worth a future
+  AGENTS.md addition under "Bans on surface" /
+  production-build-mode discipline: when verifying NEXT_PUBLIC
+  inlining, grep the actual built bundle for the value, not the
+  env-var name.
 - **Doc-currency drift.** Six docs touch in this phase
   ([`docs/architecture.md`](../architecture.md),
   [`docs/operations.md`](../operations.md),
