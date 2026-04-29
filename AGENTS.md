@@ -371,6 +371,30 @@ phase's implementation starts, **after** prior phases have shipped
   never checked. If the reality-check finds a discrepancy, fix the
   scoping before drafting the plan; do not carry wrong premises
   into plan time
+- **Prefer existing wrapper scripts over lower-level CLI invocations
+  in plan validation steps.** Before naming a validation command in
+  a plan, search `package.json` `scripts` and `scripts/testing/` for
+  an existing wrapper. If a wrapper exists, name it — the wrapper is
+  what future contributors will run, and naming the lower-level
+  invocation silently skips meaningful orchestration the wrapper
+  does (local Docker Supabase stack, DB reset, function runtime,
+  env-var sourcing, fixture seeding). The lower-level command
+  usually still works, but it forces the implementer to reinvent
+  setup the wrapper already handles, which is a parallel-track
+  procedure rather than the project's canonical local path. This
+  rule is distinct from the reality-check gate above: that one asks
+  "does the named procedure exercise the right surface;" this one
+  asks "is the named procedure the canonical entry point, or am I
+  reinventing orchestration the project already wrapped." Recurring
+  trap: M2 phase 2.4.2's plan named
+  `npx playwright test --config playwright.admin.config.ts` for the
+  local auth e2e exercise, missing the canonical
+  `npm run test:e2e:admin` wrapper that provisions a local Supabase
+  Docker stack and forwards `SERVICE_ROLE_KEY` from it
+  automatically. The lower-level command worked, but it forced the
+  implementer to source a production service-role key into a tmp
+  file as a workaround — exactly the kind of operational drift the
+  wrapper exists to prevent
 - **Spike before plan for novel mechanisms.** When the phase
   introduces a new mechanism (a new authorization shape, a new
   cross-app boundary, a new SECURITY DEFINER pattern, a new

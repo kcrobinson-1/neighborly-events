@@ -415,22 +415,30 @@ implementation time against the merged-in state of dev.md.
    - If the side-by-side surfaces a fix to 2.4.1's apps/site page,
      the fix lands in 2.4.1 (re-opened) before 2.4.2 merges, not
      in 2.4.2 — keeps each PR's verb clean.
-8. **Local auth e2e exercise.** With apps/site env vars set, run
-   `npx playwright test --config playwright.admin.config.ts`. The
-   auth e2e proxy starts apps/web (Vite, port 4173) and apps/site
-   (Next dev), routes `/admin*` + `/auth/callback` + `/_next/*` +
-   `/` to apps/site and everything else to apps/web. The
-   `admin-workflow.admin.spec.ts` test exercises the full
-   save / publish / unpublish round-trip through the post-cutover
-   URL contract: `/admin` (apps/site) → `Open workspace` →
-   `/event/${slug}/admin` (apps/web) → save / publish / unpublish
-   through the proxied authoring functions → `/admin` again. Pass
-   means the cross-app navigation, test-asserted-locator
-   resolution, and the `installAuthoringFunctionProxy` setup all
-   work end-to-end on the local origins. **Load-bearing pre-merge
-   for the test-asserted set** — this is the strongest pre-merge
-   automation check because the auth e2e proxy reproduces the
-   cross-app routing on local origins where `vercel dev` cannot.
+8. **Local auth e2e exercise.** Run `npm run test:e2e:admin`. The
+   wrapper script
+   ([`scripts/testing/run-admin-e2e-tests.cjs`](../../scripts/testing/run-admin-e2e-tests.cjs))
+   provisions a local Supabase Docker stack, resets the local DB,
+   starts the local Edge Functions runtime, then invokes
+   `npx playwright test -c playwright.admin.config.ts` with
+   `VITE_SUPABASE_*`, `TEST_SUPABASE_*`, and (via the playwright
+   config's `webServer.env` block) `NEXT_PUBLIC_SUPABASE_*` env
+   vars sourced from the local stack — no production service-role
+   key is needed. The auth e2e proxy starts apps/web (Vite, port
+   4174) and apps/site (Next dev, port 3000), routes `/admin*` +
+   `/auth/callback` + `/_next/*` + `/` to apps/site and everything
+   else to apps/web. The `admin-workflow.admin.spec.ts` test
+   exercises the full save / publish / unpublish round-trip through
+   the post-cutover URL contract: `/admin` (apps/site) →
+   `Open workspace` → `/event/${slug}/admin` (apps/web) →
+   save / publish / unpublish through the proxied authoring
+   functions → `/admin` again. Pass means the cross-app navigation,
+   test-asserted-locator resolution, and the
+   `installAuthoringFunctionProxy` setup all work end-to-end on the
+   local origins. **Load-bearing pre-merge for the test-asserted
+   set** — this is the strongest pre-merge automation check because
+   the auth e2e proxy reproduces the cross-app routing on local
+   origins where `vercel dev` cannot.
 9. **`vercel dev` rule-order regression check** (negative-control
    procedure inherited from
    [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md) Execution step
@@ -585,10 +593,13 @@ implementation time against the merged-in state of dev.md.
   pre-merge for the cross-app navigation contract +
   `Open workspace` retargeting + test-asserted-locator resolution
   + auth e2e proxy `isSiteRequest` widening + readiness probe
-  retarget. The auth e2e proxy reproduces the production cross-app
-  proxy on local origins, exercising what `vercel dev` cannot
-  reach. The full `admin-workflow.admin.spec.ts` save / publish /
-  unpublish round-trip is the integration check.
+  retarget. Invoked via `npm run test:e2e:admin`, which orchestrates
+  a local Supabase Docker stack and the local Edge Functions
+  runtime around the Playwright run, so no production service-role
+  key is involved. The auth e2e proxy reproduces the production
+  cross-app proxy on local origins, exercising what `vercel dev`
+  cannot reach. The full `admin-workflow.admin.spec.ts` save /
+  publish / unpublish round-trip is the integration check.
 - **`vercel dev` rule-order regression check per Execution step 9**
   — load-bearing pre-merge for "the new `/admin*` proxy rules
   don't shadow existing routes and actually fire (not local-no-match
