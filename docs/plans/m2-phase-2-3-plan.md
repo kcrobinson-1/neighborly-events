@@ -323,16 +323,36 @@ rewrites array, in order:
 8. `/event/:slug/:path*` → `https://neighborly-events-site.vercel.app/event/:slug/:path*`
 9. `/admin/:path*` → `/index.html` (transitional; retired by 2.4)
 10. `/event/:path*` → `/index.html` (catch-all; retired alongside 2.5's bare-path retirement)
-11. **(new)** `/auth/callback` → `https://neighborly-events-site.vercel.app/auth/callback`
-12. **(new)** `/` → `https://neighborly-events-site.vercel.app/`
-13. **(removed)** `/auth/:path*` → `/index.html` *(was rule 11 pre-2.3; the more-specific proxy-rewrite at #11 supersedes the only `/auth/*` URL apps/web ever served, and `/auth/callback` is the only path under `/auth/` the app routes)*
+11. **(new)** `/_next/:path*` → `https://neighborly-events-site.vercel.app/_next/:path*`
+12. **(new)** `/auth/callback` → `https://neighborly-events-site.vercel.app/auth/callback`
+13. **(new)** `/` → `https://neighborly-events-site.vercel.app/`
+14. **(removed)** `/auth/:path*` → `/index.html` *(was rule 11 pre-2.3; the more-specific proxy-rewrite at #12 supersedes the only `/auth/*` URL apps/web ever served, and `/auth/callback` is the only path under `/auth/` the app routes)*
 
-The bare `/` rule (#12) is the first top-level catch-all the rule
+The bare `/` rule (#13) is the first top-level catch-all the rule
 stack has shipped. Vercel evaluates rewrites in order with first-match
 semantics, so any `/admin*`, `/event/*`, or `/auth/*` URL hits a
-specific rule above #12 before falling through to the bare-path proxy.
+specific rule above #13 before falling through to the bare-path proxy.
 The plan locks this exact order; the validation gate exercises every
 ownership combination on the deployed origin.
+
+Rule #11 (`/_next/:path*`) is the load-bearing proxy for Next.js's
+asset path. apps/site's HTML responses reference
+`/_next/static/chunks/...js`, `/_next/static/css/...css`, and
+`/_next/static/media/...` (the latter served by `next/font` for
+Inter + Fraunces, per
+[`apps/site/app/layout.tsx:3`](../../apps/site/app/layout.tsx#L3)).
+Without this rule, asset requests hit apps/web's static dist (a Vite
+SPA with no `/_next/` directory) and 404, breaking hydration on the
+`'use client'` `/auth/callback` route — the magic-link round-trip
+silently fails because `AuthCallbackPage`'s `useEffect` never runs to
+read `window.location.hash` and exchange the implicit-flow token. The
+existing `/event/<slug>` placeholder happens to survive without the
+rule today because it is a server component with no client
+interactivity, but is fragile to any future M3 client-component or
+CSS-via-globals change. Position is between rules #10 and #12 to keep
+the apps/site asset proxy adjacent to the apps/site HTML proxies it
+supports; correctness does not depend on position because no other
+rule competes for `/_next/...`.
 
 ## Cross-Cutting Invariants Touched
 
@@ -489,12 +509,15 @@ epic-level invariants apply:
   confirm at implementation time) line that pulls
   `_landing.scss` into the build.
 - [`apps/web/vercel.json`](../../apps/web/vercel.json) — replace the
-  current 12-rule rewrites array with the 12-rule final array
-  specified in the Contracts section above. Concretely: remove
-  the existing `/auth/:path*` SPA rewrite, append two new
-  proxy-rewrites for `/auth/callback` and `/` to
-  `https://neighborly-events-site.vercel.app/...` at the bottom
-  of the array.
+  current 11-rule rewrites array with the 13-rule final array
+  specified in the Contracts section above. Concretely: remove the
+  existing `/auth/:path*` SPA rewrite, append three new
+  proxy-rewrites for `/_next/:path*`, `/auth/callback`, and `/` to
+  `https://neighborly-events-site.vercel.app/...` at the bottom of
+  the array, in that order. The `/_next/:path*` rule is load-bearing
+  for hydration of the apps/site `'use client'` `/auth/callback`
+  route — without it, asset requests fall through to apps/web's
+  static dist and break magic-link sign-in end-to-end.
 - [`tests/e2e/mobile-smoke.spec.ts`](../../tests/e2e/mobile-smoke.spec.ts)
   — start the featured attendee flow at `/event/first-sample/game`
   instead of the removed apps/web landing CTA.
@@ -716,9 +739,10 @@ epic-level invariants apply:
 7. **vercel.json proxy flip.** Edit
    [`apps/web/vercel.json`](../../apps/web/vercel.json) per the
    Contracts section: remove the `/auth/:path*` SPA rule, append
-   the new `/auth/callback` and `/` proxy-rewrites at the bottom
-   of the array. The order in the file is the order Vercel
-   evaluates; do not reorder existing rules.
+   the new `/_next/:path*`, `/auth/callback`, and `/`
+   proxy-rewrites at the bottom of the array (in that order).
+   The order in the file is the order Vercel evaluates; do not
+   reorder existing rules.
 8. **apps/web removal.** Delete
    [`apps/web/src/pages/LandingPage.tsx`](../../apps/web/src/pages/LandingPage.tsx)
    and [`tests/web/pages/LandingPage.test.tsx`](../../tests/web/pages/LandingPage.test.tsx).
@@ -1317,7 +1341,7 @@ resolution path so reviewer attention does not relitigate them.
   top-level bare-path proxy-rewrite the rule stack has shipped;
   misordering would send every unmatched apps/web request to
   apps/site (sending `/admin` to apps/site's 404 page). Mitigation:
-  the Contracts section locks the exact 12-rule ordered array;
+  the Contracts section locks the exact 13-rule ordered array;
   Execution step 14's `vercel dev` rule-order regression check
   catches misorder of *existing* routes pre-merge (e.g., `/admin`
   no longer reaching apps/web SPA) and uses the identity-fingerprint
@@ -1336,6 +1360,29 @@ resolution path so reviewer attention does not relitigate them.
   before relying on the comparison. Mitigation: step 14
   documents the procedure as "capture, then assert against the
   capture," not "assert against this header name."
+- **Cross-app asset proxy must follow the HTML proxy.** When
+  apps/web's vercel.json proxies an HTML route to apps/site
+  (rules #7-8, #12-13), apps/site's response references
+  framework-specific asset paths (`/_next/static/chunks/*.js`,
+  `/_next/static/css/*.css`, `/_next/static/media/*` for
+  `next/font`). Without a paired `/_next/:path*` proxy, the
+  browser requests those paths from apps/web, hits the static
+  dist (a Vite SPA with no `/_next/` directory), and 404s. For
+  `'use client'` routes like `/auth/callback`, this breaks
+  hydration and silently fails the magic-link round-trip. For
+  server-only routes the impact is cosmetic (no styles, no
+  custom fonts) but still observable. Mitigation: rule #11
+  (`/_next/:path*` → apps/site) ships in this phase. The
+  pre-existing `/event/<slug>` placeholder (rule #7) survives
+  today only because it has no client interactivity; rule #11
+  protects it from any future M3 client-component or
+  CSS-via-globals change. Plan-process lesson worth recording
+  in [`AGENTS.md`](../../AGENTS.md) the next time it updates:
+  when narrowing a proxy ruleset, render the consequence in
+  *production-emulating* mode (apps/site `next build &&
+  next start` plus apps/web `vercel dev` proxying at it), not
+  framework-dev mode (`next dev`), because dev servers
+  self-serve their own asset paths and hide cross-project gaps.
 - **Implicit-flow URL hash lost in server-side handler.**
   Magic-link tokens arrive as `#access_token=...` in the URL
   fragment per
