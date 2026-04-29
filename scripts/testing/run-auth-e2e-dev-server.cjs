@@ -51,7 +51,10 @@ function isSiteRequest(url) {
     url === "/auth/callback" ||
     url.startsWith("/auth/callback?") ||
     url.startsWith("/_next/") ||
-    url.startsWith("/__nextjs")
+    url.startsWith("/__nextjs") ||
+    url === "/admin" ||
+    url.startsWith("/admin?") ||
+    url.startsWith("/admin/")
   );
 }
 
@@ -93,8 +96,8 @@ function requestUpstream(path, port) {
 
 async function handleReadyRequest(response) {
   const [site, web] = await Promise.all([
-    requestUpstream("/", sitePort),
-    requestUpstream("/admin", webPort),
+    requestUpstream("/admin", sitePort),
+    requestUpstream("/event/community-checklist/game", webPort),
   ]);
 
   const isReady = site.ok && web.ok;

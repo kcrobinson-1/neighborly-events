@@ -1,3 +1,11 @@
+// Local runs that exercise `/admin` or `/admin/...` must point `--base-url`
+// (or rely on the default 4173 origin) at the auth e2e proxy from
+// `scripts/testing/run-auth-e2e-dev-server.cjs`, not at a plain
+// `npm run dev:web` Vite origin. After M2 phase 2.4.2 flipped routing,
+// `/admin*` is owned by apps/site; the auth e2e proxy is the only local
+// origin that reproduces the cross-app shape (apps/site for `/admin*` +
+// apps/web for `/event/:slug/*`). Running against `dev:web` directly will
+// 404 the admin captures.
 const fs = require("node:fs");
 const path = require("node:path");
 const { chromium, devices } = require("playwright");
@@ -631,13 +639,13 @@ async function captureAdminAllEventsStates(baseUrl, runDirectory, installMocks) 
  * Screenshots 05 (mobile editor), 06 (desktop editor), 07 (validation error),
  * 08 (save success), 09 (backend save error).
  *
- * The event workspace URL is /admin/events/:eventId
+ * The event workspace URL is /event/:slug/admin (apps/web deep editor).
  */
 async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) {
   console.log("Capturing admin workspace states...");
 
-  const liveWorkspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[0].id)}`;
-  const draftOnlyWorkspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[1].id)}`;
+  const liveWorkspaceUrl = `${baseUrl}/event/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[0].content.slug)}/admin`;
+  const draftOnlyWorkspaceUrl = `${baseUrl}/event/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[1].content.slug)}/admin`;
 
   // 05 — mobile workspace (selected event editor)
   {
@@ -831,8 +839,8 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
 async function captureAdminQuestionEditorStates(baseUrl, runDirectory, installMocks) {
   console.log("Capturing admin question editor states...");
 
-  const eventId = ADMIN_DRAFT_DETAIL_FIXTURE[0].id;
-  const workspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(eventId)}`;
+  const eventSlug = ADMIN_DRAFT_DETAIL_FIXTURE[0].content.slug;
+  const workspaceUrl = `${baseUrl}/event/${encodeURIComponent(eventSlug)}/admin`;
 
   // 10 — mobile question editor
   {
