@@ -193,13 +193,30 @@ changes:
    from the existing apps/web URL set.
 
 **`tests/e2e/admin-workflow.admin.spec.ts` (modify).** Three URL
-assertions retarget. After the edits:
+assertions retarget plus one legacy-layout-specific Tab focus
+assertion is removed. After the edits:
 
 - Line 65: `await expect(page).toHaveURL(new RegExp(`/event/${fixture.eventSlug}/admin$`));`
   (was: `/admin/events/${fixture.eventId}$`).
 - Line 91: `await page.goto(`/event/${fixture.eventSlug}/admin`, { waitUntil: "networkidle" });`
   (was: `/admin/events/${fixture.eventId}`).
 - Line 125: same pattern as line 65.
+- Lines 133-135 deleted: the `getByRole("button", { name: "Back to
+  all events" }).focus(); Tab; expect(workspaceOpenLiveGameButton).toBeFocused();`
+  sequence tested keyboard-focus order on the legacy
+  `AdminEventWorkspace` per-event detail view (reachable from the
+  legacy `/admin/events/:eventId` URL). Post-cutover, the
+  `Open workspace` click lands on the apps/web deep editor
+  ([`EventAdminWorkspace`](../../apps/web/src/admin/EventAdminWorkspace.tsx)
+  at `/event/:slug/admin` from 2.2), which has different
+  back-navigation chrome (`Back to demo overview` on
+  [`EventAdminPage`](../../apps/web/src/pages/EventAdminPage.tsx)
+  rather than `Back to all events`). The focus check tested
+  legacy-component layout and doesn't translate; coverage of the
+  apps/site `/admin` keyboard-focus order is preserved by the
+  earlier focus check at line 120-122 (the Open workspace → Open
+  live game Tab on the event card). See "Discovered during
+  validation" below.
 
 Every other assertion stays unchanged. The ARIA / copy stability
 invariant guarantees `Game draft access` heading, `Event workspace
@@ -207,14 +224,42 @@ summary` aria region, `${eventName} event` card label, `Open
 workspace` / `Open live game` / `Duplicate` button names,
 `${liveCount} live` summary text, `Live v…` / `Draft only` status
 text, `aria-disabled="true"` + `aria-describedby` discipline,
-`Status: Draft only` text, `Slug: ${eventSlug}` text (latter on
-apps/web deep-editor side, post-2.2, unchanged), and `Back to all
-events` button text all still resolve. Verified by: 2.4.1's local
-apps/site exercise diffs every state branch's visible copy + ARIA
-against
+`Status: Draft only` text, and `Slug: ${eventSlug}` text (latter
+on apps/web deep-editor side, post-2.2, unchanged) all still
+resolve. Verified by: 2.4.1's local apps/site exercise diffs every
+state branch's visible copy + ARIA against
 [`apps/web/src/admin/AdminDashboardContent.tsx`](../../apps/web/src/admin/AdminDashboardContent.tsx);
 when 2.4.1 lands as merged code, the fixture re-check at this
 sub-phase's pre-edit gate confirms the diff stayed clean.
+
+### Discovered during validation
+
+The original draft of this plan included `Back to all events` in
+the stability list above and asserted "every other assertion stays
+unchanged." Mid-validation (Step 8 first run), `npm run
+test:e2e:admin` failed at line 133 with a 30s locator timeout
+waiting for `getByRole("button", { name: "Back to all events" })`.
+
+Root cause: the plan author conflated two different per-event
+admin components. `Back to all events` lived only on the legacy
+`AdminEventWorkspace` (the platform-admin per-event detail view at
+`/admin/events/:eventId`). After URL retargeting, the test's
+`Open workspace` click lands on the deep editor
+`EventAdminWorkspace` at `/event/:slug/admin`, which never had
+that button. The umbrella's enumerated locator-stability set
+correctly covered apps/site `/admin` event-list locators only;
+this plan's Contracts section incorrectly extended that set with
+a string from a now-unreachable component.
+
+Resolution: lines 133-135 deleted as documented above. No
+deep-editor source is edited (umbrella's "deep-editor surface
+untouched" invariant preserved). The earlier focus check at lines
+120-122 covers apps/site `/admin` keyboard navigation; the
+deep-editor's keyboard-focus order is a 2.2 concern, already
+shipped. Filed as a recurring trap in
+[`AGENTS.md`](../../AGENTS.md) "Phase Planning Sessions": when a
+URL retarget changes which component renders, audit every
+assertion against the new component, not just URL strings.
 
 **`tests/e2e/admin-production-smoke.spec.ts` (modify).** Same
 retargeting as `admin-workflow.admin.spec.ts`:

@@ -130,9 +130,6 @@ test.describe("admin authoring workflow", () => {
       workspaceOpenLiveGameButton,
       openLiveGameNotLiveReason,
     );
-    await page.getByRole("button", { name: "Back to all events" }).focus();
-    await page.keyboard.press("Tab");
-    await expect(workspaceOpenLiveGameButton).toBeFocused();
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(

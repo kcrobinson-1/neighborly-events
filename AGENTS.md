@@ -371,6 +371,29 @@ phase's implementation starts, **after** prior phases have shipped
   never checked. If the reality-check finds a discrepancy, fix the
   scoping before drafting the plan; do not carry wrong premises
   into plan time
+- **When a URL retarget changes which component renders, re-audit
+  every assertion the test makes after the retarget — not just URL
+  strings.** A test's locator inventory before and after a URL
+  change can differ even when the URL is the only line edited. A
+  test that called `getByRole("button", { name: "Foo" })` on the
+  old URL's component may find a different component (with no
+  "Foo" button) on the new URL. Locator-stability invariants on
+  the *new* page (e.g., the apps/site `/admin` event-list surface
+  in M2 phase 2.4.2) cover what that page must preserve; the
+  per-phase plan must additionally walk the test against the *new*
+  component reached at every navigation step in the test, not just
+  the entrypoint. Cite the target component file for each
+  navigation step the test takes, and verify the assertions
+  resolve against that component's actual markup. Recurring trap:
+  M2 phase 2.4.2's plan listed `Back to all events` in its
+  stability set, but after `Open workspace`'s URL retargeted from
+  `/admin/events/:eventId` (legacy `AdminEventWorkspace`) to
+  `/event/:slug/admin` (deep-editor `EventAdminWorkspace`), the
+  test reached a different component with no `Back to all events`
+  button — surfaced as a mid-validation Playwright timeout, not at
+  plan time. The plan's "every other assertion stays unchanged"
+  claim was wrong because it audited the entrypoint surface only,
+  not the post-navigation surface
 - **Prefer existing wrapper scripts over lower-level CLI invocations
   in plan validation steps.** Before naming a validation command in
   a plan, search `package.json` `scripts` and `scripts/testing/` for
