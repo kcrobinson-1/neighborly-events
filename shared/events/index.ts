@@ -34,3 +34,7 @@ export {
   type SaveDraftEventResult,
   type UnpublishEventResult,
 } from "./admin.ts";
+export {
+  createDuplicatedDraftContent,
+  createStarterDraftContent,
+} from "./draftCreation.ts";
