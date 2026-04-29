@@ -822,9 +822,9 @@ route to apps/site.
 The auth e2e Playwright configs start
 [`scripts/testing/run-auth-e2e-dev-server.cjs`](../scripts/testing/run-auth-e2e-dev-server.cjs).
 That script keeps the browser origin at `http://127.0.0.1:4173`,
-routes `/auth/callback` and Next.js assets to branch-local apps/site,
-and routes every other app path to branch-local apps/web. The relevant
-fixtures keep their existing redirect URLs:
+routes `/`, `/auth/callback`, and Next.js assets to branch-local
+apps/site, and routes every other app path to branch-local apps/web.
+The relevant fixtures keep their existing redirect URLs:
 
 - [`admin-auth-fixture.ts`](../tests/e2e/admin-auth-fixture.ts)
 - [`redeem-auth-fixture.ts`](../tests/e2e/redeem-auth-fixture.ts)

@@ -411,9 +411,9 @@ unusual weight.
    unchanged.
 3. Retain a thin apps/web `/auth/callback` shim through end of M2.
 4. Use a repo-owned local proxy for auth e2e: keep the browser
-   origin at `127.0.0.1:4173`, route `/auth/callback` and Next.js
-   assets to branch-local apps/site, and route all other paths to
-   branch-local apps/web.
+   origin at `127.0.0.1:4173`, route `/`, `/auth/callback`, and
+   Next.js assets to branch-local apps/site, and route all other paths
+   to branch-local apps/web.
 
 **Pros / cons.**
 
@@ -440,9 +440,9 @@ disguised as an option.
 Existing `npm run dev:web` flow stays for everything not touching
 `/auth/callback`. The auth e2e Playwright configs start
 `scripts/testing/run-auth-e2e-dev-server.cjs`, which preserves the
-fixture redirect URLs while routing the moved callback to apps/site.
-This keeps the hard cutover honest: apps/web does not regain an
-`/auth/callback` route.
+fixture redirect URLs while routing the moved root and callback routes
+to apps/site. This keeps the hard cutover honest: apps/web does not
+regain `/` or `/auth/callback` routes.
 
 ### 5. apps/site `/` landing-shape [Resolved → Subsume]
 

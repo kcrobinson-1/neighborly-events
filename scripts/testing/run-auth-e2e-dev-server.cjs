@@ -45,6 +45,8 @@ function shutdown(code = 0) {
 
 function isSiteRequest(url) {
   return (
+    url === "/" ||
+    url.startsWith("/?") ||
     url === "/auth/callback" ||
     url.startsWith("/auth/callback?") ||
     url.startsWith("/_next/") ||
@@ -115,47 +117,57 @@ const siteEnv = {
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
 };
 
-startProcess(
-  "npm",
-  [
-    "--workspace",
-    "@neighborly/web",
-    "run",
-    "dev",
-    "--",
-    "--host",
-    host,
-    "--port",
-    String(webPort),
-    "--strictPort",
-  ],
-  {},
-);
-
-startProcess(
-  "npm",
-  [
-    "--workspace",
-    "@neighborly/site",
-    "run",
-    "dev",
-    "--",
-    "-H",
-    host,
-    "-p",
-    String(sitePort),
-  ],
-  siteEnv,
-);
-
-server = http.createServer(proxyRequest);
-server.on("upgrade", proxyUpgrade);
-
-server.listen(proxyPort, host, () => {
-  console.log(
-    `[auth-e2e-dev] proxy listening on http://${host}:${proxyPort} (web ${webOrigin}, site ${siteOrigin})`,
+function main() {
+  startProcess(
+    "npm",
+    [
+      "--workspace",
+      "@neighborly/web",
+      "run",
+      "dev",
+      "--",
+      "--host",
+      host,
+      "--port",
+      String(webPort),
+      "--strictPort",
+    ],
+    {},
   );
-});
 
-process.on("SIGINT", () => shutdown(0));
-process.on("SIGTERM", () => shutdown(0));
+  startProcess(
+    "npm",
+    [
+      "--workspace",
+      "@neighborly/site",
+      "run",
+      "dev",
+      "--",
+      "-H",
+      host,
+      "-p",
+      String(sitePort),
+    ],
+    siteEnv,
+  );
+
+  server = http.createServer(proxyRequest);
+  server.on("upgrade", proxyUpgrade);
+
+  server.listen(proxyPort, host, () => {
+    console.log(
+      `[auth-e2e-dev] proxy listening on http://${host}:${proxyPort} (web ${webOrigin}, site ${siteOrigin})`,
+    );
+  });
+
+  process.on("SIGINT", () => shutdown(0));
+  process.on("SIGTERM", () => shutdown(0));
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  isSiteRequest,
+};

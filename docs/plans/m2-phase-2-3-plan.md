@@ -562,9 +562,9 @@ epic-level invariants apply:
     [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
     [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
     use `scripts/testing/run-auth-e2e-dev-server.cjs` so
-    `/auth/callback` resolves to branch-local apps/site while the
-    browser origin remains `127.0.0.1:4173`. Document that the proxy
-    maps the apps/web `VITE_SUPABASE_*` env values to apps/site's
+    `/` and `/auth/callback` resolve to branch-local apps/site while
+    the browser origin remains `127.0.0.1:4173`. Document that the
+    proxy maps the apps/web `VITE_SUPABASE_*` env values to apps/site's
     `NEXT_PUBLIC_SUPABASE_*` values.
   - Add a new sub-section **"apps/site environment variables"**
     documenting `NEXT_PUBLIC_SUPABASE_URL` and
@@ -651,7 +651,7 @@ epic-level invariants apply:
   — URLs unchanged. The fixtures continue to round-trip through
   `127.0.0.1:4173/auth/callback?next=...`; the resolved auth e2e
   proxy rewrites those URLs to the branch-local apps/site origin
-  during local runs without restoring an apps/web callback route.
+  during local runs without restoring apps/web root or callback routes.
 
 ## Execution steps
 
