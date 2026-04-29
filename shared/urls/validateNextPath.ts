@@ -1,5 +1,4 @@
 import {
-  matchAdminEventPath,
   matchEventAdminPath,
   matchEventRedeemPath,
   matchEventRedemptionsPath,
@@ -46,10 +45,6 @@ export function validateNextPath(rawNext: string | null): AuthNextPath {
 
   if (pathname === routes.admin) {
     return routes.admin;
-  }
-
-  if (matchAdminEventPath(pathname) !== null) {
-    return pathname as AuthNextPath;
   }
 
   if (matchEventAdminPath(pathname) !== null) {

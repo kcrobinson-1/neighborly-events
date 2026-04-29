@@ -17,6 +17,8 @@ const rejectedInputs: Array<{ description: string; input: string | null }> = [
   { description: "path traversal", input: "/admin/../evil" },
   { description: "null byte injection", input: "/admin%00/evil" },
   { description: "unknown pathname", input: "/unknown/route" },
+  { description: "deprecated admin event selection route", input: "/admin/events/some-id" },
+  { description: "deprecated URL-encoded admin event id", input: "/admin/events/id%20with%20spaces" },
   { description: "empty string", input: "" },
   { description: "null", input: null },
   { description: "whitespace only", input: "   " },
@@ -60,18 +62,6 @@ describe("validateNextPath", () => {
 
     it("accepts the admin dashboard", () => {
       expect(validateNextPath("/admin")).toBe(routes.admin);
-    });
-
-    it("accepts an admin event selection route", () => {
-      expect(validateNextPath("/admin/events/some-id")).toBe(
-        "/admin/events/some-id",
-      );
-    });
-
-    it("accepts a URL-encoded admin event id", () => {
-      expect(
-        validateNextPath("/admin/events/id%20with%20spaces"),
-      ).toBe("/admin/events/id%20with%20spaces");
     });
 
     it("accepts an attendee game route", () => {
