@@ -2,24 +2,23 @@
 
 ## Status
 
-In progress pending prod smoke. **Two-phase Plan-to-Landed Gate For
-Plans That Touch Production Smoke** from
-[`docs/testing-tiers.md`](../testing-tiers.md).
-Both trigger clauses apply: this PR (1) extends/modifies production
+Landed. **Two-phase Plan-to-Landed Gate For Plans That Touch
+Production Smoke** from [`docs/testing-tiers.md`](../testing-tiers.md).
+Both trigger clauses applied: this PR (1) extended/modified production
 smoke assertions — the URL pattern in
 [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
-changes from `/admin/events/${eventId}` to `/event/${eventSlug}/admin`
-— and (2) depends on production smoke as final verification — the
+changed from `/admin/events/${eventId}` to `/event/${eventSlug}/admin`
+— and (2) depended on production smoke as final verification — the
 apps/web → apps/site proxy for `/admin*` is unverifiable pre-merge by
 construction
 ([`apps/web/vercel.json`](../../apps/web/vercel.json) destinations are
 absolute production URLs).
 
-The implementing PR merges with Status `In progress pending prod smoke`
-(the rule's exact required string, not `Landed` and not a paraphrase);
-a doc-only follow-up commit flips Status to `Landed` after the
-post-release `Production Admin Smoke` run is green and records the
-run URL inline as durable external evidence.
+Implementing PR merged with Status `In progress pending prod smoke`;
+this commit flipped Status to `Landed` after the post-release
+`Production Admin Smoke` run went green. Production Admin Smoke run:
+<https://github.com/kcrobinson-1/neighborly-events/actions/runs/25128222744>
+(durable external evidence per the gate).
 
 Sub-phase of M2 phase 2.4 — see
 [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella) for the
