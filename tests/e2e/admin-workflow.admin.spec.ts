@@ -62,7 +62,7 @@ test.describe("admin authoring workflow", () => {
     await expect(eventCard).toBeVisible();
 
     await eventCard.getByRole("button", { name: "Open workspace" }).click();
-    await expect(page).toHaveURL(new RegExp(`/admin/events/${fixture.eventId}$`));
+    await expect(page).toHaveURL(new RegExp(`/event/${fixture.eventSlug}/admin$`));
     await expect(page.getByText(`Slug: ${fixture.eventSlug}`)).toBeVisible();
 
     await page.getByLabel("Event name").fill(editedEventName);
@@ -88,7 +88,7 @@ test.describe("admin authoring workflow", () => {
     await expect(page.getByRole("heading", { name: editedEventName })).toBeVisible();
     await expect(page.getByRole("button", { name: "Start game" })).toBeVisible();
 
-    await page.goto(`/admin/events/${fixture.eventId}`, { waitUntil: "networkidle" });
+    await page.goto(`/event/${fixture.eventSlug}/admin`, { waitUntil: "networkidle" });
     await expect(page.getByRole("button", { name: "Unpublish" })).toBeVisible();
     await page.getByRole("button", { name: "Unpublish" }).click();
     await page.getByRole("button", { name: "Confirm unpublish" }).click();
@@ -122,7 +122,7 @@ test.describe("admin authoring workflow", () => {
     await expect(reloadedOpenLiveGameButton).toBeFocused();
 
     await reloadedEventCard.getByRole("button", { name: "Open workspace" }).click();
-    await expect(page).toHaveURL(new RegExp(`/admin/events/${fixture.eventId}$`));
+    await expect(page).toHaveURL(new RegExp(`/event/${fixture.eventSlug}/admin$`));
     await expect(page.getByText("Status: Draft only")).toBeVisible();
     const workspaceOpenLiveGameButton = page.getByRole("button", { name: "Open live game" });
     await expectOpenLiveGameDisabledState(
@@ -130,9 +130,6 @@ test.describe("admin authoring workflow", () => {
       workspaceOpenLiveGameButton,
       openLiveGameNotLiveReason,
     );
-    await page.getByRole("button", { name: "Back to all events" }).focus();
-    await page.keyboard.press("Tab");
-    await expect(workspaceOpenLiveGameButton).toBeFocused();
 
     await page.goto(`/event/${fixture.eventSlug}/game`, { waitUntil: "networkidle" });
     await expect(

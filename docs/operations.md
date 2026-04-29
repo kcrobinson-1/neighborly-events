@@ -48,10 +48,10 @@ For this project today, that means:
 ### Vercel
 
 - [`apps/web/vercel.json`](../apps/web/vercel.json)
-  SPA route rewrites for `/admin`, `/event/:slug/game`, and the
-  per-event admin route at `/event/:slug/admin` (organizer-or-admin
-  authoring), plus proxy rewrites for apps/site-owned `/`,
-  `/auth/callback`, and event landing URLs
+  SPA route rewrites for `/event/:slug/game` and the per-event admin
+  route at `/event/:slug/admin` (organizer-or-admin authoring), plus
+  proxy rewrites for apps/site-owned `/`, `/auth/callback`, `/admin*`,
+  and event landing URLs
 - [`apps/web/package.json`](../apps/web/package.json)
   frontend build commands
 - [`apps/web/vite.config.ts`](../apps/web/vite.config.ts)
@@ -171,9 +171,9 @@ Why manual for now:
   - local `<origin>/auth/callback` redirect URL
   - deployed `<origin>/auth/callback` redirect URL
   - a single entry per environment — every authenticated route returns
-    through `/auth/callback?next=…` (`/admin`, `/admin/events/:eventId`,
-    `/event/:slug/game`, `/event/:slug/admin`,
-    `/event/:slug/redeem`, and `/event/:slug/redemptions`)
+    through `/auth/callback?next=…` (`/admin`, `/event/:slug/game`,
+    `/event/:slug/admin`, `/event/:slug/redeem`, and
+    `/event/:slug/redemptions`)
 - operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 
@@ -261,6 +261,10 @@ curl -I "$PRODUCTION_SMOKE_BASE_URL"
 curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/admin"
 curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game"
 ```
+
+`/admin` resolves through the apps/web → apps/site cross-app proxy
+rewrite (see `apps/web/vercel.json`), so a 200 response indicates both
+the proxy rule fired and apps/site's platform admin page rendered.
 
 Notes:
 

@@ -1,3 +1,11 @@
+// Local runs that exercise `/admin` or `/admin/...` must point `--base-url`
+// (or rely on the default 4173 origin) at the auth e2e proxy from
+// `scripts/testing/run-auth-e2e-dev-server.cjs`, not at a plain
+// `npm run dev:web` Vite origin. After M2 phase 2.4.2 flipped routing,
+// `/admin*` is owned by apps/site; the auth e2e proxy is the only local
+// origin that reproduces the cross-app shape (apps/site for `/admin*` +
+// apps/web for `/event/:slug/*`). Running against `dev:web` directly will
+// 404 the admin captures.
 const fs = require("node:fs");
 const path = require("node:path");
 const { chromium, devices } = require("playwright");
@@ -409,6 +417,17 @@ function getDraftDetailFixtureByEventId(eventId) {
   );
 }
 
+function getDraftDetailFixtureBySlug(slug) {
+  if (!slug) {
+    return ADMIN_DRAFT_DETAIL_FIXTURE[0];
+  }
+
+  return (
+    ADMIN_DRAFT_DETAIL_FIXTURE.find((draft) => draft.content.slug === slug) ??
+    ADMIN_DRAFT_DETAIL_FIXTURE[0]
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Admin capture mode — mock installer factory
 // ---------------------------------------------------------------------------
@@ -501,21 +520,32 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       });
     });
 
-    // game_event_drafts detail content reads (GET): the app only ever fetches
-    // with `.eq("id", eventId).maybeSingle()`, so always filter to the matching
-    // fixture row.
+    // game_event_drafts detail content reads (GET): two callers reach this
+    // route. (1) The admin workspace fetches draft content with
+    // `.eq("id", eventId).maybeSingle()` to load the editor for a selected
+    // draft. (2) The deep editor's `useOrganizerForEvent(slug)` hook fetches
+    // `.select("id").eq("slug", slug).maybeSingle()` to resolve a slug into
+    // an event-id before authorization runs (see
+    // shared/auth/useOrganizerForEvent.ts). The interceptor handles both
+    // filter shapes so the slug-based lookup returns the fixture matching
+    // that slug rather than silently falling back to the first fixture (which
+    // would make the draft-only workspace captures load the live draft).
     await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
         return;
       }
       const url = route.request().url();
+      const slug = readEqFilterValue(url, "slug");
       const eventId = readEqFilterValue(url, "id");
+      const fixture = slug
+        ? getDraftDetailFixtureBySlug(slug)
+        : getDraftDetailFixtureByEventId(eventId);
 
       void route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([getDraftDetailFixtureByEventId(eventId)]),
+        body: JSON.stringify([fixture]),
       });
     });
 
@@ -631,13 +661,13 @@ async function captureAdminAllEventsStates(baseUrl, runDirectory, installMocks) 
  * Screenshots 05 (mobile editor), 06 (desktop editor), 07 (validation error),
  * 08 (save success), 09 (backend save error).
  *
- * The event workspace URL is /admin/events/:eventId
+ * The event workspace URL is /event/:slug/admin (apps/web deep editor).
  */
 async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) {
   console.log("Capturing admin workspace states...");
 
-  const liveWorkspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[0].id)}`;
-  const draftOnlyWorkspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[1].id)}`;
+  const liveWorkspaceUrl = `${baseUrl}/event/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[0].content.slug)}/admin`;
+  const draftOnlyWorkspaceUrl = `${baseUrl}/event/${encodeURIComponent(ADMIN_DRAFT_DETAIL_FIXTURE[1].content.slug)}/admin`;
 
   // 05 — mobile workspace (selected event editor)
   {
@@ -831,8 +861,8 @@ async function captureAdminWorkspaceStates(baseUrl, runDirectory, installMocks) 
 async function captureAdminQuestionEditorStates(baseUrl, runDirectory, installMocks) {
   console.log("Capturing admin question editor states...");
 
-  const eventId = ADMIN_DRAFT_DETAIL_FIXTURE[0].id;
-  const workspaceUrl = `${baseUrl}/admin/events/${encodeURIComponent(eventId)}`;
+  const eventSlug = ADMIN_DRAFT_DETAIL_FIXTURE[0].content.slug;
+  const workspaceUrl = `${baseUrl}/event/${encodeURIComponent(eventSlug)}/admin`;
 
   // 10 — mobile question editor
   {
