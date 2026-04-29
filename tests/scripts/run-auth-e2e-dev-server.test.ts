@@ -3,13 +3,22 @@ import { describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
 
-const { isSiteRequest } = require(
+const { isReadyRequest, isSiteRequest, readyPath } = require(
   "../../scripts/testing/run-auth-e2e-dev-server.cjs",
 ) as {
+  isReadyRequest: (url: string) => boolean;
   isSiteRequest: (url: string) => boolean;
+  readyPath: string;
 };
 
 describe("auth e2e dev server routing", () => {
+  it("keeps the readiness path owned by the proxy", () => {
+    expect(readyPath).toBe("/__auth-e2e-ready");
+    expect(isReadyRequest("/__auth-e2e-ready")).toBe(true);
+    expect(isReadyRequest("/__auth-e2e-ready?cache-bust=1")).toBe(false);
+    expect(isSiteRequest("/__auth-e2e-ready")).toBe(false);
+  });
+
   it("routes site-owned auth and landing paths to apps/site", () => {
     expect(isSiteRequest("/")).toBe(true);
     expect(isSiteRequest("/?utm_source=test")).toBe(true);

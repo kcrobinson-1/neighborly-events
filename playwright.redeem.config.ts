@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const baseUrl = "http://127.0.0.1:4173";
+const readyUrl = `${baseUrl}/__auth-e2e-ready`;
 
 export default defineConfig({
   outputDir: "tmp/playwright/test-results-redeem",
@@ -36,6 +37,6 @@ export default defineConfig({
     },
     reuseExistingServer: false,
     timeout: 120_000,
-    url: baseUrl,
+    url: readyUrl,
   },
 });

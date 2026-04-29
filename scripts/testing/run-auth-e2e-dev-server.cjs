@@ -8,6 +8,7 @@ const webPort = 4174;
 const sitePort = 3000;
 const siteOrigin = `http://${host}:${sitePort}`;
 const webOrigin = `http://${host}:${webPort}`;
+const readyPath = "/__auth-e2e-ready";
 
 const children = new Set();
 let server = null;
@@ -54,7 +55,67 @@ function isSiteRequest(url) {
   );
 }
 
+function isReadyRequest(url) {
+  return url === readyPath;
+}
+
+function requestUpstream(path, port) {
+  return new Promise((resolve) => {
+    const request = http.request(
+      {
+        host,
+        method: "GET",
+        path,
+        port,
+      },
+      (response) => {
+        response.resume();
+        response.on("end", () => {
+          resolve({
+            ok: (response.statusCode ?? 500) < 500,
+            statusCode: response.statusCode ?? 0,
+          });
+        });
+      },
+    );
+
+    request.on("error", (error) => {
+      resolve({
+        error: error.message,
+        ok: false,
+        statusCode: 0,
+      });
+    });
+
+    request.end();
+  });
+}
+
+async function handleReadyRequest(response) {
+  const [site, web] = await Promise.all([
+    requestUpstream("/", sitePort),
+    requestUpstream("/admin", webPort),
+  ]);
+
+  const isReady = site.ok && web.ok;
+  response.writeHead(isReady ? 200 : 503, {
+    "content-type": "application/json",
+  });
+  response.end(
+    JSON.stringify({
+      ready: isReady,
+      site,
+      web,
+    }),
+  );
+}
+
 function proxyRequest(request, response) {
+  if (isReadyRequest(request.url ?? "/")) {
+    void handleReadyRequest(response);
+    return;
+  }
+
   const targetOrigin = isSiteRequest(request.url ?? "/")
     ? siteOrigin
     : webOrigin;
@@ -87,7 +148,12 @@ function proxyRequest(request, response) {
 
 function proxyUpgrade(request, socket, head) {
   const targetPort = isSiteRequest(request.url ?? "/") ? sitePort : webPort;
-  const upstream = net.connect(targetPort, host, () => {
+  let upstream;
+  const closeSockets = () => {
+    socket.destroy();
+    upstream?.destroy();
+  };
+  upstream = net.connect(targetPort, host, () => {
     upstream.write(
       [
         `${request.method} ${request.url} HTTP/${request.httpVersion}`,
@@ -103,9 +169,10 @@ function proxyUpgrade(request, socket, head) {
     socket.pipe(upstream);
   });
 
-  upstream.on("error", () => {
-    socket.destroy();
-  });
+  socket.on("error", closeSockets);
+  upstream.on("error", closeSockets);
+  socket.on("close", () => upstream.destroy());
+  upstream.on("close", () => socket.destroy());
 }
 
 const siteEnv = {
@@ -169,5 +236,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  isReadyRequest,
   isSiteRequest,
+  readyPath,
 };

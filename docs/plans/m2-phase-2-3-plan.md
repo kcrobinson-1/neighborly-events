@@ -565,7 +565,8 @@ epic-level invariants apply:
     `/` and `/auth/callback` resolve to branch-local apps/site while
     the browser origin remains `127.0.0.1:4173`. Document that the
     proxy maps the apps/web `VITE_SUPABASE_*` env values to apps/site's
-    `NEXT_PUBLIC_SUPABASE_*` values.
+    `NEXT_PUBLIC_SUPABASE_*` values and exposes a proxy-owned readiness
+    endpoint that waits for both apps/site and apps/web.
   - Add a new sub-section **"apps/site environment variables"**
     documenting `NEXT_PUBLIC_SUPABASE_URL` and
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` as the two

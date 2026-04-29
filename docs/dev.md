@@ -824,7 +824,9 @@ The auth e2e Playwright configs start
 That script keeps the browser origin at `http://127.0.0.1:4173`,
 routes `/`, `/auth/callback`, and Next.js assets to branch-local
 apps/site, and routes every other app path to branch-local apps/web.
-The relevant fixtures keep their existing redirect URLs:
+Its proxy-owned readiness endpoint waits for both apps/site `/` and
+apps/web `/admin` before Playwright starts the tests. The relevant
+fixtures keep their existing redirect URLs:
 
 - [`admin-auth-fixture.ts`](../tests/e2e/admin-auth-fixture.ts)
 - [`redeem-auth-fixture.ts`](../tests/e2e/redeem-auth-fixture.ts)
