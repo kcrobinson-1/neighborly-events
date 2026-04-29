@@ -49,14 +49,15 @@ This repo currently uses:
 The main working areas are:
 
 - `apps/web`
-  Vite + React SPA. Owns `/admin*`, the `/event/:slug/game` and
+  Vite + React SPA. Owns the `/event/:slug/game` and
   `/event/:slug/admin` namespaces, and the transitional bare-path
   operator routes `/event/:slug/redeem` and
   `/event/:slug/redemptions`.
 - `apps/site`
-  Next.js 16 (App Router) public-event surface. Owns `/`,
-  `/auth/callback`, `/event/:slug`, and any other event-scoped path not
-  carved out for `apps/web`. Event landing remains a placeholder until M3.
+  Next.js 16 (App Router) public-event and platform-admin surface.
+  Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and any other
+  event-scoped path not carved out for `apps/web`. Event landing
+  remains a placeholder until M3.
 - `shared`
   shared game definitions, validation, and scoring
 - `supabase/functions`
@@ -783,7 +784,8 @@ proxy-rewrites event-scoped non-game/admin URLs to `apps/site`.
 `apps/web` and `apps/site` are deployed as separate Vercel projects from
 the same git repository. `apps/web` is the primary project: it owns the
 production custom domain and its `vercel.json` hosts the cross-app
-rewrites that proxy event-scoped non-game/admin URLs to `apps/site`.
+rewrites that proxy `/admin*`, the auth callback, the platform landing,
+and event-scoped non-game/admin URLs to `apps/site`.
 
 The transitional routing contract is documented in
 [`docs/architecture.md`](./architecture.md#vercel-routing-topology) and
@@ -794,15 +796,15 @@ In short, the rule precedence inside `apps/web/vercel.json` is:
 
 1. `/event/:slug/game` and `/event/:slug/game/:path*` → `apps/web` SPA
 2. `/event/:slug/admin` and `/event/:slug/admin/:path*` → `apps/web` SPA
-   (route shell lands in M2 phase 2.2)
+   (per-event admin shell from M2 phase 2.2)
 3. `/event/:slug/redeem` and `/event/:slug/redemptions` → `apps/web` SPA
    (transitional; retired by M2 phase 2.5 when these URLs migrate into
    `/event/:slug/game/*`)
 4. `/event/:slug` and `/event/:slug/:path*` → `apps/site`
-5. Existing `/admin/:path*` and `/event/:path*` SPA rewrites →
-   `apps/web` (lowest precedence; `/admin*` migrates to `apps/site`
-   in M2 phase 2.4)
-6. `/auth/callback` and `/` → `apps/site`
+5. `/event/:path*` SPA fallback → `apps/web` (transitional)
+6. `/_next/:path*` → `apps/site` (apps/site asset path resolution)
+7. `/admin` and `/admin/:path*` → `apps/site` (platform admin)
+8. `/auth/callback` and `/` → `apps/site`
 
 Most-specific rules must come first. The bare-path operator carve-outs
 (`/event/:slug/redeem` and `/event/:slug/redemptions`) and the rule 5
@@ -822,11 +824,12 @@ route to apps/site.
 The auth e2e Playwright configs start
 [`scripts/testing/run-auth-e2e-dev-server.cjs`](../scripts/testing/run-auth-e2e-dev-server.cjs).
 That script keeps the browser origin at `http://127.0.0.1:4173`,
-routes `/`, `/auth/callback`, and Next.js assets to branch-local
-apps/site, and routes every other app path to branch-local apps/web.
-Its proxy-owned readiness endpoint waits for both apps/site `/` and
-apps/web `/admin` before Playwright starts the tests. The relevant
-fixtures keep their existing redirect URLs:
+routes `/`, `/auth/callback`, `/admin*`, and Next.js assets to
+branch-local apps/site, and routes every other app path (event-scoped
+URLs) to branch-local apps/web. Its proxy-owned readiness endpoint
+waits for apps/site `/admin` and an apps/web event-scoped URL before
+Playwright starts the tests. The relevant fixtures keep their existing
+redirect URLs:
 
 - [`admin-auth-fixture.ts`](../tests/e2e/admin-auth-fixture.ts)
 - [`redeem-auth-fixture.ts`](../tests/e2e/redeem-auth-fixture.ts)

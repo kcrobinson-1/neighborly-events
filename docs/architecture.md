@@ -26,15 +26,15 @@ Tooling and local workflow live in `dev.md`. Product intent lives in `product.md
 The current implementation is:
 
 - two frontend apps deployed as separate Vercel projects from one
-  monorepo: `apps/web` (Vite + React SPA, attendee game + admin plus
-  transitional ownership of `/admin*` and the bare-path operator routes),
+  monorepo: `apps/web` (Vite + React SPA, attendee game and per-event
+  admin plus transitional ownership of the bare-path operator routes),
   and `apps/site` (Next.js 16 App Router, static platform landing,
-  auth callback, and SSR/SSG public event landing pages — event landing
-  remains a placeholder until M3 of the Event Platform Epic). `apps/web`
-  is the primary Vercel project owning the production custom domain;
-  cross-app routing is implemented as proxy-rewrites in
-  `apps/web/vercel.json` and is **transitional** until M2 inverts the
-  URL ownership balance
+  auth callback, platform admin at `/admin*`, and SSR/SSG public event
+  landing pages — event landing remains a placeholder until M3 of the
+  Event Platform Epic). `apps/web` is the primary Vercel project owning
+  the production custom domain; cross-app routing is implemented as
+  proxy-rewrites in `apps/web/vercel.json` and is **transitional**
+  until M2 inverts the URL ownership balance
 - a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
 - private authoring draft, version, and event-role-assignment tables
@@ -57,15 +57,16 @@ Keep the game interaction local and fast, but make the completion state backend-
 ### Top-Level Layout
 
 - `apps/web`
-  The attendee-facing Vite + React single-page application. Owns
-  `/admin*`, the `/event/:slug/game` and `/event/:slug/admin`
-  namespaces, and the transitional bare-path operator routes
-  `/event/:slug/redeem` and `/event/:slug/redemptions`.
+  The attendee-facing Vite + React single-page application. Owns the
+  `/event/:slug/game` and `/event/:slug/admin` namespaces and the
+  transitional bare-path operator routes `/event/:slug/redeem` and
+  `/event/:slug/redemptions`.
 - `apps/site`
   The Next.js 16 App Router app for the platform landing, auth
-  callback, and public event landing pages. Owns `/`, `/auth/callback`,
-  `/event/:slug`, and any other event-scoped path not carved out for
-  `apps/web`. Event landing remains a placeholder until M3 of
+  callback, platform admin, and public event landing pages. Owns `/`,
+  `/auth/callback`, `/admin*`, `/event/:slug`, and any other
+  event-scoped path not carved out for `apps/web`. Event landing
+  remains a placeholder until M3 of
   [the Event Platform Epic](./plans/event-platform-epic.md).
 - `shared`
   Shared TypeScript domain logic used by both the browser and Supabase functions.
@@ -91,9 +92,6 @@ grouped into a dedicated `apps/web/src/game/` module:
   Minimal client-side navigation hook built on the History API for
   apps/web-owned routes, with document navigation for `/` now that the
   route is owned by apps/site.
-- `apps/web/src/pages/AdminPage.tsx`
-  Thin route adapter for `/admin` that composes the admin module and keeps
-  route navigation at the page boundary.
 - `apps/web/src/pages/EventRedeemPage.tsx`
   Event-scoped operator route for `/event/:slug/redeem`. Reuses the
   role-neutral auth shell, resolves event authorization, and renders the
@@ -209,6 +207,12 @@ grouped into a dedicated `apps/web/src/game/` module:
   rules.
 - `apps/site/app/page.tsx`
   Static platform landing at `/`, with a CTA into `/admin`.
+- `apps/site/app/(authenticated)/admin/page.tsx`
+  Platform admin client route for `/admin*`. Hosts the in-place
+  magic-link sign-in form, allowlist denial state, event-list
+  workspace, draft creation, duplication, and lifecycle controls;
+  hard-navigates to apps/web `/event/:slug/admin` for the per-event
+  deep editor and to `/event/:slug/game` for the live game.
 - `apps/site/app/(authenticated)/auth/callback/page.tsx`
   Client callback route for `/auth/callback`; wraps shared
   `AuthCallbackPage` and uses document navigation so post-auth
@@ -877,10 +881,10 @@ the SPA route rewrites and the cross-app proxy rewrites that route
 Routing is **transitional** through M2 of the
 [Event Platform Epic](./plans/event-platform-epic.md). Today,
 `apps/web` is the primary Vercel project owning the production custom
-domain; its `vercel.json` proxy-rewrites event-scoped non-game/admin
-URLs plus `/` and `/auth/callback` to the `apps/site` Vercel
-project. Vercel applies rewrites in file order ("first match wins"),
-so most-specific rules must come first.
+domain; its `vercel.json` proxy-rewrites the platform admin, the auth
+callback, the platform landing, and event-scoped non-game/admin URLs
+to the `apps/site` Vercel project. Vercel applies rewrites in file
+order ("first match wins"), so most-specific rules must come first.
 
 | # | Path pattern | Destination | Lifetime |
 | --- | --- | --- | --- |
@@ -892,18 +896,21 @@ so most-specific rules must come first.
 | 6 | `/event/:slug/redemptions` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redemptions`) |
 | 7 | `/event/:slug` | `apps/site` Vercel project | Permanent (placeholder in 0.3; real landing page in M3) |
 | 8 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
-| 9 | `/admin/:path*`, `/event/:path*` (existing SPA fallbacks) | `apps/web` SPA | Transitional; `/admin*` migrates in M2 phase 2.4 |
-| 10 | `/auth/callback` | `apps/site` Vercel project | Permanent auth callback route |
-| 11 | `/` | `apps/site` Vercel project | Platform landing |
+| 9 | `/event/:path*` (SPA fallback) | `apps/web` SPA | Transitional; narrows as event-scoped routes finalize |
+| 10 | `/_next/:path*` | `apps/site` Vercel project | Permanent; covers apps/site asset path resolution |
+| 11 | `/admin` | `apps/site` Vercel project | Permanent (platform admin) |
+| 12 | `/admin/:path*` | `apps/site` Vercel project | Permanent (platform admin) |
+| 13 | `/auth/callback` | `apps/site` Vercel project | Permanent auth callback route |
+| 14 | `/` | `apps/site` Vercel project | Platform landing |
 
-The cross-app destinations (rules 7, 8, 10, and 11) point at the production
-alias of the `apps/site` Vercel project via Vercel's path-rewrite-to-URL
-syntax. Whether `apps/site` later becomes the primary Vercel project
-(owning the custom domain) is a routing-config decision belonging to
-M2 plan authors.
+The cross-app destinations (rules 7, 8, 10, 11, 12, 13, and 14) point
+at the production alias of the `apps/site` Vercel project via
+Vercel's path-rewrite-to-URL syntax. Whether `apps/site` later
+becomes the primary Vercel project (owning the custom domain) is a
+routing-config decision belonging to M2 plan authors.
 
 The bare-path operator carve-outs (rules 5–6) and the rule 9
-fallbacks are explicitly transitional. M2 plan authors are responsible
+fallback are explicitly transitional. M2 plan authors are responsible
 for narrowing them as routes migrate.
 
 The current deployment discipline is simpler:

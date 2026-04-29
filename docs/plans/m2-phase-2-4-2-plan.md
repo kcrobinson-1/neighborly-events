@@ -2,8 +2,9 @@
 
 ## Status
 
-Proposed. **Two-phase Plan-to-Landed Gate For Plans That Touch
-Production Smoke** from [`docs/testing-tiers.md`](../testing-tiers.md).
+In progress pending prod smoke. **Two-phase Plan-to-Landed Gate For
+Plans That Touch Production Smoke** from
+[`docs/testing-tiers.md`](../testing-tiers.md).
 Both trigger clauses apply: this PR (1) extends/modifies production
 smoke assertions — the URL pattern in
 [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
