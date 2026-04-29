@@ -439,6 +439,53 @@ phase's implementation starts, **after** prior phases have shipped
   rendered as a default-browser link. The discipline is not
   "always add CSS" but "before banning the surface, prove the no-X
   outcome is acceptable by looking at it"
+
+  For routing/proxy/CDN config changes specifically, run the
+  consequence check against a *production build* of the
+  destination app, not its dev server: `next build && next start`
+  at the destination, `vercel dev` (or equivalent edge emulator)
+  at the source app proxying at it. Dev servers self-serve their
+  own asset paths (`/_next/*` for Next, `/@vite/*` for Vite,
+  etc.), which hides cross-project gaps the production proxy
+  exposes — dev returns the asset, production 404s. Recurring
+  trap: M2 phase 2.3's `apps/web/vercel.json` migrated
+  `/auth/callback` and `/` to apps/site; the plan's local check
+  ran `npm run dev:site` and never exercised the apps/web proxy
+  against a production-built apps/site, so the missing
+  `/_next/:path*` proxy rule stayed invisible until Codex review
+  caught it pre-merge. Hydration on the `'use client'` callback
+  route would have broken in production.
+- **Cross-app destinations need hard navigation, not client-side
+  navigation.** Client-side navigation APIs (also called soft
+  navigation: `useRouter().replace(href)` / `router.push` from
+  `next/navigation`, `<Link href>` components,
+  `history.pushState` / `replaceState`, react-router's
+  `navigate(path)`) update the URL in the browser without
+  triggering a full document load, so the upstream routing layer
+  (Vercel rewrites, CDN, ingress proxy) never re-evaluates.
+  That's correct for in-app destinations and broken for
+  destinations served by a *different* app behind a same-origin
+  proxy rule — the SPA stays on itself, the proxy never fires,
+  and the user lands on a 404 or a stale page. Cross-app
+  destinations need hard navigation
+  (`window.location.replace` / `assign`) that exits the SPA and
+  re-enters the routing layer. The same trap shows up in reverse
+  when a route migrates *out* of an SPA: existing client-side
+  navigation tooling that still produces the migrated URL (button
+  handlers, `<Link>`s, `pushState` callers) must be audited and
+  converted to hard navigation; the URL is generated correctly
+  but the SPA never leaves itself, so the proxy never fires. When
+  a plan specifies any of these APIs as a contract, walk every
+  destination and classify in-app vs. cross-app. Recurring traps
+  from M2 phase 2.3: the plan contract specified
+  `useRouter().replace(path)` for the apps/site `/auth/callback`
+  page, but the `next=/admin` destination is owned by apps/web —
+  implementer corrected to `window.location.replace(path)` so the
+  apps/web Vercel rewrite layer fires. Same class: apps/web's
+  `usePathnameNavigation` used `history.pushState` for
+  `routes.home`, which kept users in the SPA after `/` migrated
+  to apps/site; implementer added a hard-navigation seam scoped
+  to `routes.home`.
 - **Cap.** ~90 minutes for scope + plan combined for a typical
   phase. If you're at 3+ hours and still drafting, diminishing
   returns have hit — stop, reality-check the actual scope size, and
