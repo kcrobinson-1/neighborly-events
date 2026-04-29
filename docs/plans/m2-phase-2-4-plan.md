@@ -9,7 +9,7 @@ merge and their plans flip to `Landed`.
 
 | Sub-phase | Plan | PR | Status |
 | --- | --- | --- | --- |
-| 2.4.1 — Add platform admin page on apps/site | [m2-phase-2-4-1-plan.md](./m2-phase-2-4-1-plan.md) | — | Proposed |
+| 2.4.1 — Add platform admin page on apps/site | [m2-phase-2-4-1-plan.md](./m2-phase-2-4-1-plan.md) | — | Landed |
 | 2.4.2 — Flip routing + retarget e2e to cross-app shape | [m2-phase-2-4-2-plan.md](./m2-phase-2-4-2-plan.md) | — | Proposed |
 | 2.4.3 — Delete legacy apps/web platform admin | [m2-phase-2-4-3-plan.md](./m2-phase-2-4-3-plan.md) | — | Proposed |
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. Tier 1–4 gate (no production smoke); production behavior
+Landed. Tier 1–4 gate (no production smoke); production behavior
 unchanged through this PR.
 
 Sub-phase of M2 phase 2.4 — see
