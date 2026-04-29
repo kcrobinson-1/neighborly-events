@@ -155,7 +155,16 @@ under, single `page.tsx` is the shipped shape per AGENTS.md
 ## Contracts
 
 **`apps/site/app/(authenticated)/admin/page.tsx`.** `'use client'`.
-Default-exports the page component. State machine mirrors
+Default-exports the page component. The page renders inside a
+top-level `<div className="admin-shell">` (or analogous wrapping
+element) — the wrapper class is the load-bearing scope hook for the
+`apps/site/app/globals.css` extension below; without it the page
+renders unstyled (raw browser default for the form, the buttons,
+and the layout) because every admin-relevant rule in globals.css
+is scoped under `.admin-shell` per the Token bucket discipline
+section.
+
+State machine mirrors
 [`apps/web/src/admin/AdminDashboardContent.tsx`](../../apps/web/src/admin/AdminDashboardContent.tsx)'s
 top-level branches verbatim because the e2e specs that 2.4.2 will
 retarget assert against the visible copy and ARIA roles each branch
@@ -270,6 +279,108 @@ in shape; the only apps/site-specific wiring is the
 between the two imports does not matter (both idempotent, neither
 depends on the other).
 
+**`apps/site/app/globals.css` (extension).** Adds a scoped CSS
+surface for the new admin page. Without this extension the page
+renders mostly unstyled — the existing 2.3 globals.css scopes its
+sign-in selectors to `.auth-callback-shell` (verified by:
+[`apps/site/app/globals.css:64,74,88,104`](../../apps/site/app/globals.css#L64))
+and has no admin-specific rules at all, so the shared
+[`<SignInForm>`](../../shared/auth/SignInForm.tsx) classes
+(`.signin-stack`, `.section-heading`, `.signin-form`,
+`.signin-field`, `.signin-input`, `.primary-button`) plus the
+admin-only state and event-card layout would render with browser
+defaults. The "render the consequence" check (Execution step 6)
+confirms the styled outcome before merge per
+[`AGENTS.md`](../../AGENTS.md) "Bans on surface require rendering
+the consequence."
+
+Selectors the extension adds, scoped under `.admin-shell` so the
+new surface stays isolated from the existing landing / auth-callback
+surfaces:
+
+- `.admin-shell` — outer container (full-height padded shell). Same
+  shape as the existing `.landing-shell` / `.auth-callback-shell`
+  rule at
+  [`apps/site/app/globals.css:52-56`](../../apps/site/app/globals.css#L52);
+  extend the comma-list to add `.admin-shell` rather than duplicate
+  the rule body.
+- Sign-in branch reuse — extend the existing scoped sign-in selectors
+  ([`apps/site/app/globals.css:64,74,88,104,123,128`](../../apps/site/app/globals.css#L64)
+  — `.signin-stack`, `.section-heading p`, `.primary-button`,
+  hover, focus-visible) to also match `.admin-shell .…` so the
+  signed-out branch's `<SignInForm>` renders identically to the
+  `/auth/callback` shell. No body duplication; comma-list extension
+  only.
+- `.admin-shell .signin-form` / `.signin-field` / `.signin-field-label`
+  / `.signin-input` — minimal field layout for the form body.
+  These selectors are not styled by the existing 2.3 globals.css
+  (the auth-callback flow doesn't render a form interactively
+  pre-merge, so 2.3 didn't need to ship rules); 2.4.1 ships them
+  here because the admin page does render the form interactively.
+  Implementer chooses property values that match the apps/web
+  pattern enough to read as the same product (input border, focus
+  ring, label spacing).
+- `.admin-shell .admin-state-stack` — vertical stack for `loading` /
+  `unauthorized` / `error` state branches. Centered, gap between
+  heading and supporting copy / button.
+- `.admin-shell .admin-signed-in-as` — small "Signed in as <email>"
+  label.
+- `.admin-shell .admin-summary-region` (or whichever class wraps
+  the `Event workspace summary` aria region — implementer locks the
+  selector at edit time) — heading + `${liveCount} live` summary
+  + grid container for the event-card list.
+- `.admin-shell .event-card` — event-card box (status, name,
+  buttons row). Single-column on mobile; flexible row on wider
+  viewports.
+- `.admin-shell .event-card-status` — the `Live v…` / `Draft only`
+  status text.
+- `.admin-shell .event-card-buttons` — button row holding
+  `Open workspace`, `Open live game`, `Duplicate`.
+- `.admin-shell .secondary-button` — secondary-button styling
+  (smaller / outlined alternative to `.primary-button`). Used by
+  `Open workspace`, `Open live game`, `Duplicate`, and the
+  sign-out button.
+- `.admin-shell .secondary-button[aria-disabled="true"]` —
+  disabled visual state matching apps/web's pattern at
+  [`apps/web/src/styles/_admin.scss`](../../apps/web/src/styles/_admin.scss)
+  (the `.secondary-button[aria-disabled="true"]` rule), so the
+  disabled `Open live game` button reads as disabled rather than
+  identical to enabled.
+- `.admin-shell .admin-action-reason` — the reason text that
+  `aria-describedby` points at when `Open live game` is disabled
+  (`Publish this event to open the live game.`).
+
+Token discipline per
+[`docs/styling.md`](../styling.md) "Themable vs structural
+classification":
+
+- **Themable** values consumed via `var(--…)`: `--primary` (button
+  background), `--secondary` (focus ring + eyebrow), `--bg`,
+  `--text`, `--muted`, `--font-body`, `--font-heading`,
+  `--radius-control`, `--white-warm`. All already emitted on
+  `<html>` by
+  [`shared/styles/themeToStyle.ts`](../../shared/styles/themeToStyle.ts)
+  via the apps/site root layout's
+  [`platformTheme`](../../apps/site/app/layout.tsx) wiring.
+- **Structural** tokens: not introduced. apps/site has no SCSS,
+  no `$…` variable system, and no status palette consumer in this
+  surface. Per
+  [`AGENTS.md`](../../AGENTS.md) "Styling Token Discipline" "keep
+  one-off layout values local when a token would add indirection
+  without improving readability or future change cost," one-off
+  layout dimensions (event-card padding, button-row gap, summary
+  grid gap) stay as raw CSS values rather than introducing a
+  per-app structural-token surface.
+- **No status colors** (`$color-success`, `$color-status-*`)
+  consumed. Mutation errors render as inline text using `--text`
+  or `--muted` — matching the apps/web pattern but without the
+  status-palette dependency apps/web carries.
+
+The contract pins selectors and intent; the implementer picks the
+exact property values that satisfy "reads as the same product as
+apps/web" without copying apps/web's full SCSS surface verbatim.
+Property bodies are PR scope; the plan does not lock them.
+
 **`shared/events/draftCreation.ts` (new).** Houses
 `createStarterDraftContent(existingDrafts: DraftEventSummary[]):
 AuthoringGameDraftContent` and
@@ -317,6 +428,14 @@ for apps/web.
 
 - [`apps/site/components/SharedClientBootstrap.tsx`](../../apps/site/components/SharedClientBootstrap.tsx)
   — add `setupEvents` side-effect import.
+- [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+  — extend with the `.admin-shell` outer container, the comma-list
+  extension on the existing scoped sign-in selectors, the
+  `.signin-form` / `.signin-field` / `.signin-input` rules, the
+  admin state-stack / event-card / button selectors, and the
+  disabled-state / action-reason rules per the Contracts section.
+  Token discipline per the Contracts section's "Token discipline"
+  block.
 - [`shared/events/index.ts`](../../shared/events/index.ts) — add
   re-exports for the new helpers and any type re-exports needed by
   the shared module.
@@ -388,32 +507,63 @@ Sibling files referenced verbatim from 2.3:
    [`apps/site/components/SharedClientBootstrap.tsx`](../../apps/site/components/SharedClientBootstrap.tsx)
    to add the `import "../lib/setupEvents";` line.
    `npm run build:site` confirms the imports resolve.
-5. **apps/site `/admin` page.** Create
+5. **apps/site `/admin` page + globals.css extension.** Create
    `apps/site/app/(authenticated)/admin/page.tsx` per the Contracts
-   section. Implement the sign-in / loading / unauthorized /
+   section, wrapped in the `.admin-shell` container class. Extend
+   [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+   per the Contracts section: add `.admin-shell` to the existing
+   `.landing-shell, .auth-callback-shell` outer-container rule;
+   comma-extend the existing scoped sign-in selectors so they match
+   under `.admin-shell` too; add the new `.admin-shell .…` rules
+   for the form fields, state-stack, event-card, and button
+   surfaces. Implement the sign-in / loading / unauthorized /
    signed-in-allowlisted state stack with the ARIA / copy stability
    invariant in mind — every locator the existing e2e specs use
-   must resolve. `npm run build:site` confirms the route compiles.
-6. **Local apps/site exercise.** Run `npm run dev:site` and visit
-   `http://localhost:3000/admin`. Walk every state branch:
+   must resolve. `npm run build:site` confirms the route compiles
+   and globals.css is well-formed.
+6. **Local apps/site exercise (load-bearing render-the-consequence
+   check).** Run `npm run dev:site` and visit
+   `http://localhost:3000/admin`. Walk every state branch and
+   confirm the page is recognizably styled (not browser-default).
+   Per [`AGENTS.md`](../../AGENTS.md) "Bans on surface require
+   rendering the consequence," this step is the load-bearing
+   pre-merge check that the globals.css extension actually styles
+   what the page renders, not just that it compiles:
    - Signed-out: confirm in-place sign-in form renders with apps/site
-     Sage Civic typography (Fraunces heading, Inter body) and apps/site
-     brand colors. Diff the visible copy + ARIA against
+     Sage Civic typography (Fraunces heading, Inter body), apps/site
+     brand colors, and a styled pill button (not a default-browser
+     submit) — match the `/auth/callback` shell's visual register
+     by direct comparison (`http://localhost:3000/auth/callback`
+     in another tab). Diff the visible copy + ARIA against
      [`apps/web/src/admin/AdminDashboardContent.tsx:120-130`](../../apps/web/src/admin/AdminDashboardContent.tsx#L120) —
      heading text, eyebrow, button labels, field id all match.
+     Confirm the input field has a visible border + focus ring
+     rather than browser-default inset.
    - Signed-in non-admin: confirm `This account is not allowlisted
-     for game authoring.` heading renders.
+     for game authoring.` heading renders inside a styled state
+     stack with consistent vertical rhythm.
    - Signed-in admin: confirm `Game draft access` heading + `Event
      workspace summary` aria region + event cards all render with
-     the labels specified in the Contracts section. Click `Open
+     the labels specified in the Contracts section AND visible
+     card layout (border / background / padding distinguish the
+     card from the page background; status text reads as
+     secondary; button row reads as a button row not a default
+     wrap). Confirm the disabled `Open live game` reads as
+     visually disabled (reduced-opacity / muted color), not
+     identical to enabled. Confirm the action-reason text is
+     visible adjacent to the disabled button. Click `Open
      workspace` and `Open live game` to verify the buttons fire
      `window.location.assign(...)` (the navigation will hit
-     apps/site 404 because the apps/site dev server doesn't proxy to
-     apps/web — that's expected; production resolves via the proxy
-     topology).
+     apps/site 404 because the apps/site dev server doesn't proxy
+     to apps/web — that's expected; production resolves via the
+     proxy topology).
    - The cross-app navigation buttons cannot be exercised end-to-end
      in the apps/site dev server alone; that's the integration
      surface 2.4.2 will cover.
+
+   Capture a screenshot per state branch (mobile viewport, then
+   desktop) for the PR's UX Review section. The PR is not
+   ready-to-merge if any branch reads as browser-default.
 7. **Validation re-run.** All baseline commands from step 2 must
    pass. `npm test` confirms unit + shared-suite changes (the
    shared starter helper extraction may need a tiny test reshuffle
@@ -452,12 +602,18 @@ Per [`AGENTS.md`](../../AGENTS.md) "Planning Depth":
    additions, and the apps/web
    [`draftCreation.ts`](../../apps/web/src/admin/draftCreation.ts)
    shim. Single commit; behavior-preserving for apps/web.
-2. **apps/site `/admin` scaffold.** New
+2. **apps/site `/admin` scaffold + globals.css extension.** New
    `apps/site/app/(authenticated)/admin/page.tsx`,
-   `apps/site/lib/setupEvents.ts`, and the
+   `apps/site/lib/setupEvents.ts`,
+   [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+   extension per Contracts, and the
    [`SharedClientBootstrap.tsx`](../../apps/site/components/SharedClientBootstrap.tsx)
-   one-line edit. Single commit. Production behavior unchanged
-   because apps/web `vercel.json` still SPA-handles `/admin*`.
+   one-line edit. Single commit (the page and its styles ship
+   together so the diff stays one bisect target — landing the page
+   without its CSS would mean a tip with browser-default rendering;
+   landing the CSS without the page would mean unconsumed selectors).
+   Production behavior unchanged because apps/web `vercel.json`
+   still SPA-handles `/admin*`.
 3. **Review-fix commits.** As needed during step 8, kept distinct
    from the substantive implementation commits.
 
@@ -475,12 +631,23 @@ Per [`AGENTS.md`](../../AGENTS.md) "Planning Depth":
 - pgTAP suite — pass on baseline; pass on final via
   `npm run test:db`. No SQL change in this PR.
 - **Local apps/site exercise per Execution step 6** —
-  load-bearing pre-merge for ARIA / copy stability. The exercise
-  diffs the new page's visible copy and ARIA roles against
+  load-bearing pre-merge for two distinct invariants:
+  (1) **ARIA / copy stability** — the exercise diffs the new
+  page's visible copy and ARIA roles against
   [`apps/web/src/admin/AdminDashboardContent.tsx`](../../apps/web/src/admin/AdminDashboardContent.tsx)
-  per state branch. This is the strongest pre-merge integration
-  check for the cross-sub-phase ARIA-stability invariant; 2.4.2's
-  e2e exercise depends on this being correct.
+  per state branch; this is the strongest pre-merge integration
+  check for the cross-sub-phase ARIA-stability invariant, and
+  2.4.2's e2e exercise depends on this being correct.
+  (2) **Render-the-consequence** — the exercise confirms the
+  globals.css extension actually styles every state branch (form
+  fields have visible borders, buttons read as buttons not
+  default-browser submits, event cards have card-like layout, the
+  disabled `Open live game` reads as visually disabled, etc.) per
+  [`AGENTS.md`](../../AGENTS.md) "Bans on surface require rendering
+  the consequence." The PR is not ready-to-merge if any branch
+  reads as browser-default; screenshots per state branch (mobile +
+  desktop) ship in the PR body's UX Review section as durable
+  evidence the check ran.
 
 **No production smoke gate.** Production `/admin` continues to
 resolve to the legacy apps/web `AdminPage` through this PR.
@@ -509,13 +676,39 @@ Drawn from
   [`useAdminDashboard.ts:88-143`](../../apps/web/src/admin/useAdminDashboard.ts#L88).
   Next.js strict-mode double-mount must not produce parallel fetches
   racing into `setDashboardState`.
-- **Token bucket discipline.** No new SCSS / CSS surface in
-  apps/site for the new admin page. Layout reuses the existing
-  globals.css typography (`next/font` Inter / Fraunces) and the
-  brand tokens emitted by `themeToStyle.ts` on `<html>`. Local
-  raw values for one-off layout dimensions (event-card spacing,
-  sign-out button positioning) per AGENTS.md "keep one-off layout
-  values local" — no new structural-token surface.
+- **Token bucket discipline.** The
+  [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+  extension consumes themable values exclusively via `var(--…)`
+  for color / typography / radius / focus ring (`--primary`,
+  `--secondary`, `--bg`, `--text`, `--muted`, `--font-body`,
+  `--font-heading`, `--radius-control`, `--white-warm` —
+  enumerated in the Contracts section); raw CSS values appear only
+  for one-off layout dimensions (event-card padding, button-row
+  gap, summary grid gap) per
+  [`AGENTS.md`](../../AGENTS.md) "Styling Token Discipline" "keep
+  one-off layout values local when a token would add indirection
+  without improving readability or future change cost."
+  Audit walks: no themable color is hardcoded; no status palette
+  selector (`$color-success`, `$color-status-*`) appears (status
+  palette is structural and apps/site has no consumer in this
+  surface — mutation errors render via `--text` / `--muted`); the
+  focus-ring pattern uses `var(--secondary)` matching the apps/web
+  precedent and the 2.3 globals.css precedent at
+  [`apps/site/app/globals.css:128-130`](../../apps/site/app/globals.css#L128).
+  No new structural-token surface (no `$…` SCSS variables — apps/site
+  has no SCSS).
+- **Bans on surface require rendering the consequence.** The
+  earlier draft of this plan claimed "no new SCSS / CSS surface"
+  on the assumption that 2.3's globals.css would carry the new
+  page. The reality-check found that 2.3 scoped its sign-in
+  selectors to `.auth-callback-shell` only, leaving the admin page
+  unstyled if the claim shipped as-written. The fix is the
+  globals.css extension contract above. Audit walks: every
+  selector the page consumes (`<SignInForm>` classes, `.admin-shell`
+  layout, event-card, button row, disabled state, action-reason)
+  has a rule under `.admin-shell .…`; Execution step 6's
+  render-the-consequence check is the load-bearing pre-merge
+  verification that no surface ships unstyled.
 
 ### CI / build
 

@@ -263,13 +263,21 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
 - **In-place auth.** Verified by: 2.4.1's new `/admin` renders
   `<SignInForm>` inline within its shell when signed-out; no
   `/signin` page is introduced.
-- **Token bucket discipline.** No new SCSS / CSS surface in any
-  sub-phase. The platform admin reuses the existing apps/site
-  `globals.css` typography (`next/font` Inter + Fraunces) and the
-  brand color tokens emitted by
+- **Token bucket discipline.** 2.4.1 extends
+  [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+  with a scoped `.admin-shell` surface — see
+  [`m2-phase-2-4-1-plan.md`](./m2-phase-2-4-1-plan.md) Contracts
+  for the selector list and token-consumption record. The extension
+  consumes themable values via `var(--…)` (brand color, typography,
+  radius, focus ring) and keeps one-off layout dimensions local per
+  [`AGENTS.md`](../../AGENTS.md) "Styling Token Discipline." No
+  structural-token surface introduced (apps/site has no SCSS). 2.4.2
+  and 2.4.3 add no CSS / SCSS surface; 2.4.3's SCSS prune deletes
+  apps/web platform-admin selectors only after grep-confirming zero
+  surviving consumers. The apps/site brand color tokens themselves
+  are emitted on `<html>` by
   [`shared/styles/themeToStyle.ts`](../../shared/styles/themeToStyle.ts)
-  on `<html>`. 2.4.3's SCSS prune deletes apps/web platform-admin
-  selectors only after grep-confirming zero surviving consumers.
+  via the apps/site root layout, unchanged.
 
 ## Out Of Scope
 
