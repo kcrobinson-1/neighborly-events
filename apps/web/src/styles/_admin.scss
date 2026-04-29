@@ -2,20 +2,12 @@
 @use "./tokens" as *;
 
 .admin-panel,
-.admin-copy,
 .admin-state-stack,
 .admin-form,
-.admin-workspace-detail,
-.draft-list,
-.draft-row-copy {
+.admin-workspace-detail {
   @include stack(16px);
 }
 
-.admin-copy {
-  gap: $space-4;
-}
-
-.admin-copy p,
 .admin-state-stack p,
 .draft-row-meta {
   margin: 0;
@@ -24,8 +16,7 @@
 }
 
 .admin-panel h2,
-.admin-workspace-detail h3,
-.draft-row h3 {
+.admin-workspace-detail h3 {
   margin: 0;
 }
 
@@ -84,28 +75,12 @@
 }
 
 .admin-signout-button,
-.admin-inline-button,
-.admin-refresh-button {
+.admin-inline-button {
   width: fit-content;
 }
 
 .admin-signed-in-as {
   font-size: 0.95rem;
-}
-
-.admin-summary-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $space-5;
-}
-
-.admin-summary-item {
-  padding: $space-6 $space-7;
-  border: 1px solid var(--border-muted);
-  border-radius: var(--radius-control);
-  background: var(--secondary-surface);
-  color: var(--secondary);
-  font-weight: $font-weight-bold;
 }
 
 .admin-toolbar,
@@ -248,25 +223,6 @@
   background: var(--draft-row-surface);
 }
 
-.draft-list {
-  gap: $space-5;
-}
-
-.draft-row {
-  padding: $space-8;
-  border: 1px solid var(--border-muted);
-  border-radius: var(--radius-card);
-  background: var(--draft-row-surface);
-  @include stack($space-7);
-}
-
-.draft-row-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: $space-5;
-}
-
 .admin-publish-panel {
   @include stack($space-6);
   padding-top: $space-6;
@@ -320,10 +276,6 @@
 }
 
 @media (max-width: 620px) {
-  .admin-summary-grid {
-    grid-template-columns: 1fr;
-  }
-
   .admin-details-grid {
     grid-template-columns: 1fr;
   }
