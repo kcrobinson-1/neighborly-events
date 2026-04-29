@@ -2,32 +2,92 @@
 
 ## Status
 
-In progress pending prod smoke. Ships under the **two-phase Plan-to-Landed Gate For
-Plans That Touch Production Smoke** from
-[`docs/testing-tiers.md`](../testing-tiers.md): the implementing PR
-merges with Status `In progress pending prod smoke` (the rule's
-exact required string, not a paraphrase); a doc-only follow-up
-commit flips Status to `Landed` and records the post-release
-`Production Admin Smoke` run URL as the durable external evidence.
-The gate trigger is the second clause of the rule's trigger —
-*"plans that depend on production smoke as final verification."*
-2.3 fits cleanly: the existing `Production Admin Smoke` workflow
-(`.github/workflows/production-admin-smoke.yml`) exercises
-[`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
-end-to-end through `/auth/callback`. After 2.3 deploys, that
-fixture run becomes the load-bearing verification of the
-cross-project proxy: the fixture cannot pass unless the proxy
-correctly routes `/auth/callback` to the new apps/site route and
-the auth cookie lands on apps/web's frontend host. The cross-project
-proxy is also unverifiable pre-merge by construction —
+Landed.
+
+Followed the two-phase **Plan-to-Landed Gate For Plans That Touch
+Production Smoke** from
+[`docs/testing-tiers.md`](../testing-tiers.md). The implementing PR
+([#118](https://github.com/kcrobinson-1/neighborly-events/pull/118))
+plus a routing follow-up
+([#120](https://github.com/kcrobinson-1/neighborly-events/pull/120))
+shipped with Status `In progress pending prod smoke`; this doc-only
+commit records the post-release verification evidence and flips
+Status to `Landed`.
+
+### Production verification evidence
+
+`Production Admin Smoke` run on
+[GitHub Actions run 25088898061](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25088898061)
+— **success**, 1m20s, against `main` SHA `27a9275` (post-#120 merge).
+Both fixture cases passed:
+
+- `denies a non-allowlisted signed-in user` — magic-link round-trip
+  through the new apps/site `/auth/callback` lands on apps/web's
+  `/admin` with the in-place "This account is not allowlisted for
+  game authoring." copy rendered for the denied test user.
+- `covers save, publish, and unpublish against deployed authoring
+  functions` — full round-trip through the same callback path,
+  reaches the apps/web `/admin` workspace ("Game draft access"
+  heading), and exercises save / publish / unpublish via the
+  deployed Edge Functions.
+
+The smoke fixture's full magic-link round-trip is the load-bearing
+end-to-end verification: it cannot pass unless the apps/web Vercel
+proxy correctly routes `/auth/callback` and `/_next/:path*` to the
+new apps/site app, the apps/site bundle loads `NEXT_PUBLIC_SUPABASE_*`
+correctly, the implicit-flow URL fragment is consumed by the shared
+`AuthCallbackPage`, the auth cookie lands on apps/web's frontend
+host, and the post-callback `window.location.replace("/admin")`
+returns the user into apps/web's SPA where `useAuthSession` resolves
+the session.
+
+Bundle-grep verification confirmed the `NEXT_PUBLIC_SUPABASE_URL`
+and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` values are
+inlined in the deployed apps/site bundle (`hekluyblch`,
+`supabase.co`, and `sb_publishable` each appear exactly once across
+the chunks the `/auth/callback` HTML preloads), confirming the
+`next.config.ts` `env` block from #120 takes effect with the
+correctly-configured Vercel project env vars.
+
+### Post-deploy follow-up that gated this flip
+
+Two operational issues surfaced during the deferred verification
+window:
+
+1. **apps/site Vercel project env vars on the wrong project.**
+   `NEXT_PUBLIC_SUPABASE_URL` and
+   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` were initially
+   configured on the apps/web Vercel project rather than the
+   apps/site project, so the apps/site build environment did not
+   see them and inlined empty strings. The plan's Risk Register
+   "apps/site env vars unset on Vercel project" entry named this
+   exact failure mode pre-merge. Resolution: set the env vars on
+   the correct (`neighborly-events-site`) Vercel project. No code
+   change.
+2. **Turbopack rewrites `process` before NEXT_PUBLIC substitution
+   fires.** Even with correct Vercel env vars, the bundle would
+   have shipped runtime lookups against an empty polyfilled
+   `process` because Turbopack's bundling pipeline rewrites
+   `process` to a polyfilled module reference before Next.js's
+   literal-pattern substitution pass sees it. This was diagnosed
+   from the bundle structure (`g.default.env.NEXT_PUBLIC_SUPABASE_URL`
+   in the compiled output instead of inlined values). Resolution:
+   explicit `env` block in
+   [`apps/site/next.config.ts`](../../apps/site/next.config.ts)
+   that re-substitutes the names via Next.js's `next.config.ts`
+   definition pass, which runs before the bundler's polyfill
+   rewrite. Shipped in [#120](https://github.com/kcrobinson-1/neighborly-events/pull/120).
+
+Both fixes were required for the smoke run to go green; either
+alone would have left the bundle reading empty values at runtime.
+
+The cross-project proxy was unverifiable pre-merge by construction —
 [`apps/web/vercel.json`](../../apps/web/vercel.json) destinations
-are absolute production URLs
-(`https://neighborly-events-site.vercel.app/...`), so any
-`vercel dev` run from the workspace root proxies `/auth/callback`
-and `/` to the deployed apps/site (still on main, no new routes
-yet) rather than to the branch's local Next.js dev server. M1
-phase 1.3.2's cookie-boundary verification is the precedent for
-the deferral.
+are absolute production URLs, so any `vercel dev` run proxies
+`/auth/callback` and `/` to deployed apps/site (which did not yet
+have the new routes pre-merge) rather than the branch's local
+Next.js dev server. M1 phase 1.3.2's cookie-boundary verification
+is the precedent for the post-deploy gate this plan followed.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M2, Phase 2.3. Sibling phases: 2.1 RLS broadening + Edge
@@ -1429,40 +1489,58 @@ resolution path so reviewer attention does not relitigate them.
   failure mode if the bootstrap is misordered; the test is to
   visit `/auth/callback` with no hash and watch for the
   `configureSharedAuth` throw.
-- **apps/site env vars unset on Vercel project.** First deploy
-  after the PR merges would 500 on `/auth/callback` because
-  `getSupabaseConfig()` returns `enabled: false`. Mitigation:
-  the PR description names
-  `NEXT_PUBLIC_SUPABASE_URL` and
-  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` as a
-  deploy-time prerequisite; the
-  `getMissingSupabaseConfigMessage()` text surfaces in the dev
-  console with the env var names so a misconfigured deploy is
-  diagnosable in 30 seconds; the release owner sets the env
-  vars on the apps/site Vercel project before the merge.
-- **Turbopack rewrites `process` before NEXT_PUBLIC substitution
-  fires.** Even when `NEXT_PUBLIC_*` env vars are correctly set
-  on the Vercel project, the apps/site bundle can still ship with
-  runtime lookups (`g.default.env.NEXT_PUBLIC_SUPABASE_URL`)
-  instead of inlined values. Cause: a transitive dependency in
-  `@supabase/supabase-js`'s graph polyfills Node's `process` as a
-  default-imported module; Turbopack rewrites the global `process`
-  reference to the polyfilled module before Next.js's
-  literal-pattern substitution pass sees it, so
-  `process.env.NEXT_PUBLIC_*` no longer matches and stays as a
-  runtime read against an empty polyfill. Source code uses the
-  correct literal pattern; the bug is in the bundler pipeline.
-  Mitigation: explicit `env` block in
-  [`apps/site/next.config.ts`](../../apps/site/next.config.ts)
-  that re-substitutes the names via Next.js's `next.config.ts`
-  definition pass (which runs *before* the bundler polyfill
-  rewrite). Surfaced post-deploy by the Production Admin Smoke
-  run for M2 phase 2.3; fixed in a focused follow-up before the
-  smoke gate flipped Status to `Landed`. Worth a future
-  AGENTS.md addition under "Bans on surface" /
-  production-build-mode discipline: when verifying NEXT_PUBLIC
-  inlining, grep the actual built bundle for the value, not the
-  env-var name.
+- **Public env vars must reach the apps/site Vercel build AND
+  survive Turbopack bundling.** Two independent failure modes
+  conspired during the deferred verification window for M2 phase
+  2.3, both producing the same observable symptom (empty values
+  in `getSupabaseConfig()`, `enabled: false`, callback drops to
+  the timeout state, magic-link round-trip silently fails). Each
+  failure mode masks the other: fix only one and smoke is still
+  red, fix neither and the bundle ships empty values at runtime.
+  - **Mode 1: env vars set on the wrong Vercel project.**
+    `NEXT_PUBLIC_SUPABASE_URL` and
+    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` were initially
+    configured on the apps/web project rather than the apps/site
+    project, so the apps/site build environment never saw them.
+    Mitigation: set the env vars on the
+    `neighborly-events-site` Vercel project (the apps/site one),
+    in the Production environment scope. The
+    `getMissingSupabaseConfigMessage()` text names both env vars
+    so a misconfigured deploy is diagnosable from the browser
+    console in 30 seconds.
+  - **Mode 2: Turbopack rewrites `process` before NEXT_PUBLIC
+    substitution fires.** Even with correct Vercel env vars,
+    Turbopack's bundling pipeline rewrites the global `process`
+    reference to a polyfilled module reference (likely triggered
+    by the `@supabase/supabase-js` dependency graph polyfilling
+    Node's `process` as a default-imported module). Next.js's
+    NEXT_PUBLIC literal-pattern substitution pass runs against
+    `process.env.X` before the rewrite — but here it never sees
+    that pattern because the rewrite already swapped `process`
+    for `g.default`. Substitution silently no-ops; the bundle
+    ships `g.default.env.NEXT_PUBLIC_SUPABASE_URL` as a runtime
+    read against an empty polyfill. Source code uses the correct
+    literal pattern; the bug is downstream in the bundler.
+    Mitigation: explicit `env` block in
+    [`apps/site/next.config.ts`](../../apps/site/next.config.ts)
+    that re-substitutes the names via Next.js's `next.config.ts`
+    definition pass, which runs *before* the bundler polyfill
+    rewrite. The `env` block is permanent — even with correct
+    Vercel config, removing it would silently re-introduce the
+    polyfill-rewrite trap.
+
+  Diagnostic discipline that surfaced both modes: grep the *built
+  bundle* (not the source) for the env-var *value*, not the env-var
+  name. Name-presence in the bundle is the smoking gun for missed
+  substitution; value-presence is the only positive signal of
+  correct inlining. Worth a future AGENTS.md addition under
+  "Bans on surface" / production-build-mode discipline.
+
+  Lesson worth recording for the AGENTS.md retrospective set:
+  when diagnosing a "missing env var" production failure, do not
+  stop investigating after finding the first cause. Both Vercel
+  project config and bundler substitution can produce identical
+  observable failures; check both before concluding.
 - **Doc-currency drift.** Six docs touch in this phase
   ([`docs/architecture.md`](../architecture.md),
   [`docs/operations.md`](../operations.md),
