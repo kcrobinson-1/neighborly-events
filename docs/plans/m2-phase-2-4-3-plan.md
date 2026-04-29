@@ -17,17 +17,20 @@ Strict-serial sequencing is enforced at PR-open time: the
 implementer confirms the umbrella's Sub-phase Status row for 2.4.2
 reads `Landed` before opening this PR.
 
-**Single PR.** Branch-test sketch — apps/web: 5 file deletes
+**Single PR.** Branch-test sketch — apps/web: 6 file deletes
 (`pages/AdminPage.tsx`, `admin/AdminDashboardContent.tsx`,
 `admin/AdminPageShell.tsx`, `admin/AdminEventWorkspace.tsx`,
-`admin/useAdminDashboard.ts`) + ~4 corresponding test deletes under
-`tests/web/admin/` + 2 modifies (`App.tsx`, possibly SCSS partials);
-shared: 3 modifies (`shared/urls/routes.ts`,
-`shared/urls/validateNextPath.ts`, `shared/urls/index.ts`); tests: 2
-modifies (`tests/shared/urls/routes.test.ts`,
+`admin/useAdminDashboard.ts`, plus the transitional
+`admin/draftCreation.ts` shim landed in 2.4.1) + ~4 corresponding
+test deletes under `tests/web/admin/` + 2-3 modifies (`App.tsx`,
+possibly SCSS partials, possibly `apps/web/src/admin/README.md`
+if it mentions the deleted helpers); shared: 3 modifies
+(`shared/urls/routes.ts`, `shared/urls/validateNextPath.ts`,
+`shared/urls/index.ts`); tests: 2 modifies
+(`tests/shared/urls/routes.test.ts`,
 `tests/shared/urls/validateNextPath.test.ts`); docs: 1-2 modifies
 (`docs/architecture.md` apps/web admin module description rewrite,
-plus README currency check). ~17 files total. Pure deletion of dead
+plus README currency check). ~18 files total. Pure deletion of dead
 code post-cutover; no observable production behavior change.
 
 ## Context
@@ -54,10 +57,14 @@ What this PR touches:
 
 - The apps/web platform-admin module — deletes the page-level
   `AdminPage`, the dashboard content shell, the chrome shell, the
-  selected-event workspace, and the dashboard state hook. The
-  per-event admin (`EventAdminPage` / `EventAdminWorkspace` from
-  phase 2.2) is **untouched** — the names differ by word order
-  (`AdminEventWorkspace` deletes; `EventAdminWorkspace` stays).
+  selected-event workspace, the dashboard state hook, and the
+  transitional `draftCreation.ts` binding shim landed in 2.4.1
+  (orphan after `useAdminDashboard.ts` deletes — the test that
+  imported through it already moved to `tests/shared/events/`
+  in 2.4.1). The per-event admin (`EventAdminPage` /
+  `EventAdminWorkspace` from phase 2.2) is **untouched** — the
+  names differ by word order (`AdminEventWorkspace` deletes;
+  `EventAdminWorkspace` stays).
 - apps/web's [`App.tsx`](../../apps/web/src/App.tsx) — the
   `pathname === routes.admin` and `matchAdminEventPath` branches
   remove, along with the `AdminPage` and `matchAdminEventPath`
@@ -252,6 +259,18 @@ this PR.
 - [`apps/web/src/admin/AdminPageShell.tsx`](../../apps/web/src/admin/AdminPageShell.tsx)
 - [`apps/web/src/admin/AdminEventWorkspace.tsx`](../../apps/web/src/admin/AdminEventWorkspace.tsx)
 - [`apps/web/src/admin/useAdminDashboard.ts`](../../apps/web/src/admin/useAdminDashboard.ts)
+- [`apps/web/src/admin/draftCreation.ts`](../../apps/web/src/admin/draftCreation.ts)
+  — transitional binding shim landed in 2.4.1; sole apps/web source
+  consumer (`useAdminDashboard.ts`) deletes in this same commit;
+  the test that imported through the shim moved to
+  `tests/shared/events/draftCreation.test.ts` in 2.4.1; nothing
+  else references the shim. Confirm with
+  `grep -rn "from \"./draftCreation\"\|from \"\.\./admin/draftCreation\"\|from \".*apps/web/src/admin/draftCreation\"" .`
+  at pre-edit gate; the only hits should be the about-to-delete
+  `useAdminDashboard.ts` and the
+  [`apps/web/src/admin/README.md:38`](../../apps/web/src/admin/README.md#L38)
+  descriptive mention (handle the README mention as a doc edit
+  in this PR).
 
 ### Delete (apps/web tests)
 
@@ -283,6 +302,14 @@ deep-editor source, it stays.
   prune per the audit.
 - [`apps/web/src/styles.scss`](../../apps/web/src/styles.scss) —
   drop `@use` for any fully-deleted partial.
+- [`apps/web/src/admin/README.md`](../../apps/web/src/admin/README.md)
+  — update or scrub any line that names the deleted platform-admin
+  files (`AdminPage`, `AdminDashboardContent`, `AdminPageShell`,
+  `AdminEventWorkspace`, `useAdminDashboard`, `draftCreation`).
+  Line 38 currently mentions `draftCreation.ts` as part of
+  starter-content responsibility; rewrite to describe the surviving
+  per-event admin scope. Audit the rest of the README for
+  platform-admin references at edit time.
 - [`docs/architecture.md`](../architecture.md) — apps/web admin
   module description rewrite + URL-ownership currency check.
 - [`README.md`](../../README.md) — currency check.
@@ -313,9 +340,11 @@ deep-editor source, it stays.
   `questionBuilder.ts`, `questionFormMapping.ts`,
   `questionStructure.ts`, plus `tests/web/admin/*` for those
   files) — preserved verbatim.
-- [`apps/web/src/admin/draftCreation.ts`](../../apps/web/src/admin/draftCreation.ts)
-  — already a binding shim post-2.4.1; consumed by the surviving
-  deep-editor surface; no edit.
+- (Removed from "not touched" — see Delete list. The shim's only
+  apps/web source consumer was `useAdminDashboard.ts` deleted by
+  this PR; the test that imported through the shim moved to
+  `tests/shared/events/draftCreation.test.ts` in 2.4.1; nothing
+  else imports it.)
 - Edge Functions, migrations,
   [`shared/auth/`](../../shared/auth),
   [`shared/db/`](../../shared/db),
@@ -336,9 +365,11 @@ deep-editor source, it stays.
    `npm run test:functions`, `npm run build:web`, and
    `npm run build:site`. All must pass before any edit.
 3. **Apps/web platform-admin source + test deletes + App.tsx edit.**
-   Delete the five source files, the corresponding test files
-   (audited per "Files To Touch — Delete (apps/web tests)"), and
-   edit
+   Delete the six source files (the five Admin* / useAdminDashboard
+   files plus the transitional
+   [`apps/web/src/admin/draftCreation.ts`](../../apps/web/src/admin/draftCreation.ts)
+   shim), the corresponding test files (audited per "Files To
+   Touch — Delete (apps/web tests)"), and edit
    [`apps/web/src/App.tsx`](../../apps/web/src/App.tsx) to remove
    the two admin branches and the `AdminPage` /
    `matchAdminEventPath` imports. `npm run build:web` confirms
@@ -430,10 +461,13 @@ deep-editor source, it stays.
 
 ## Commit Boundaries
 
-1. **Apps/web platform-admin deletes + `App.tsx` edit.** The five
-   source deletes, the corresponding test deletes, and the
-   `App.tsx` admin-branch / import removals. Single commit; this
-   is the load-bearing legacy-removal commit.
+1. **Apps/web platform-admin deletes + `App.tsx` edit.** The six
+   source deletes (five Admin* / useAdminDashboard files plus the
+   transitional `draftCreation.ts` shim), the corresponding test
+   deletes, and the `App.tsx` admin-branch / import removals.
+   Single commit; this is the load-bearing legacy-removal commit.
+   The shim deletes alongside its sole consumer
+   (`useAdminDashboard.ts`) so the tip stays buildable.
 2. **`shared/urls` deprecation + test cleanup.**
    [`shared/urls/routes.ts`](../../shared/urls/routes.ts),
    [`validateNextPath.ts`](../../shared/urls/validateNextPath.ts),

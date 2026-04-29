@@ -77,9 +77,11 @@ What this PR touches:
 - The two Playwright admin specs — their URL assertions retarget from
   `/admin/events/${eventId}` (legacy apps/web URL) to
   `/event/${eventSlug}/admin` (apps/web deep editor, the new
-  navigation target after `Open workspace`). Visible copy and ARIA
-  locators stay stable per the cross-sub-phase ARIA-stability
-  invariant.
+  navigation target after `Open workspace`). Test-asserted locators
+  stay exact-match stable per the cross-sub-phase
+  test-asserted-locator stability invariant; best-effort copy
+  outside that set is verified by the manual side-by-side review
+  this PR adds (see Execution step 7).
 - The UI-review capture script — its workspace-screenshot URLs
   retarget similarly.
 - Documentation that names URL ownership (architecture, operations,
@@ -116,6 +118,15 @@ rules.
   unchanged) — `redirectTo` still points at
   `/auth/callback?next=/admin`, the magic-link round-trip semantics
   are unchanged, only the post-`Open workspace` URL shape changes.
+- **Manual side-by-side review owned by this PR.** The umbrella's
+  manual-side-by-side-review invariant lands here: before the
+  cutover commits, the implementer walks both apps/web `/admin`
+  (still resolving via the legacy SPA fallback at the start of this
+  PR's work) and apps/site `/admin` (resolving on the apps/site
+  dev server) state-by-state and confirms the apps/site view reads
+  as the same admin tool overall. See Execution step 7 for the
+  procedure; before/after screenshots ship in the PR's UX Review
+  section as durable evidence the check ran.
 - **Auth-cookie boundary preserved.** Cookie is set host-only (no
   `Domain=` attribute, per
   [`shared/db/client.ts:48-66`](../../shared/db/client.ts#L48)).
@@ -369,7 +380,41 @@ implementation time against the merged-in state of dev.md.
    [`scripts/ui-review/capture-ui-review.cjs`](../../scripts/ui-review/capture-ui-review.cjs)
    per the Contracts section. Add the inline comment header noting
    local runs need the auth e2e proxy origin for `/admin*`.
-7. **Local auth e2e exercise.** With apps/site env vars set, run
+7. **Manual side-by-side review (load-bearing pre-cutover check).**
+   Per the umbrella's manual-side-by-side-review invariant, walk
+   both `/admin` views state-by-state in dev servers before the
+   cutover commits. Concretely:
+   - Start `npm run dev:web` (port 4173 or 5173, whichever the
+     local repo defaults to) so apps/web's legacy `/admin` still
+     resolves via the SPA fallback that this PR is about to remove.
+     In a separate terminal, start `npm run dev:site` so apps/site's
+     `/admin` resolves on its own origin. Open both in side-by-side
+     browser windows.
+   - Walk every state branch on both views: signed-out (in-place
+     sign-in form), signed-in non-admin (allowlist denial), signed-in
+     admin with no drafts (empty list), signed-in admin with seeded
+     drafts (workspace summary + event-card list with mixed live /
+     draft-only entries). Use the same fixture seed for both
+     environments so the workspace state matches.
+   - For each state, confirm the apps/site view reads as the same
+     admin tool: same essential affordances (sign-in / sign-out,
+     Create draft, Open workspace, Open live game, duplicate-draft,
+     publish / unpublish where applicable), same overall information
+     density, same navigation shape. Per the umbrella's
+     test-asserted-locator stability invariant, the test-pinned
+     strings are exact-match (the e2e exercise in step 8 verifies
+     this); the side-by-side check is for the best-effort surface.
+   - Capture mobile + desktop screenshots of both views per state
+     branch. Pair them in the PR body's UX Review section
+     (apps/web before; apps/site after) so reviewers can verify
+     parity without re-running the dev servers. The PR is not
+     ready-to-cutover if any state shows materially less capable
+     UI on apps/site (missing affordance, broken layout,
+     unrecognizable copy).
+   - If the side-by-side surfaces a fix to 2.4.1's apps/site page,
+     the fix lands in 2.4.1 (re-opened) before 2.4.2 merges, not
+     in 2.4.2 — keeps each PR's verb clean.
+8. **Local auth e2e exercise.** With apps/site env vars set, run
    `npx playwright test --config playwright.admin.config.ts`. The
    auth e2e proxy starts apps/web (Vite, port 4173) and apps/site
    (Next dev), routes `/admin*` + `/auth/callback` + `/_next/*` +
@@ -379,13 +424,13 @@ implementation time against the merged-in state of dev.md.
    URL contract: `/admin` (apps/site) → `Open workspace` →
    `/event/${slug}/admin` (apps/web) → save / publish / unpublish
    through the proxied authoring functions → `/admin` again. Pass
-   means the cross-app navigation, ARIA / copy stability, and the
-   `installAuthoringFunctionProxy` setup all work end-to-end on the
-   local origins. **Load-bearing pre-merge** — this is the strongest
-   pre-merge integration check because the auth e2e proxy
-   reproduces the cross-app routing on local origins where
-   `vercel dev` cannot.
-8. **`vercel dev` rule-order regression check** (negative-control
+   means the cross-app navigation, test-asserted-locator
+   resolution, and the `installAuthoringFunctionProxy` setup all
+   work end-to-end on the local origins. **Load-bearing pre-merge
+   for the test-asserted set** — this is the strongest pre-merge
+   automation check because the auth e2e proxy reproduces the
+   cross-app routing on local origins where `vercel dev` cannot.
+9. **`vercel dev` rule-order regression check** (negative-control
    procedure inherited from
    [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md) Execution step
    14 / Validation Gate). The check verifies (a) existing rules
@@ -403,56 +448,55 @@ implementation time against the merged-in state of dev.md.
    deployed apps/site until this PR itself deploys. Capture the
    curl outputs in the PR validation section as the load-bearing
    fingerprint.
-9. **Documentation pass.** Edit
-   [`docs/architecture.md`](../architecture.md),
-   [`docs/operations.md`](../operations.md),
-   [`docs/dev.md`](../dev.md), and check
-   [`README.md`](../../README.md) per the Contracts section. Walk
-   the [`AGENTS.md`](../../AGENTS.md) "Doc Currency Is a PR Gate"
-   triggers. Update the umbrella's Sub-phase Status table row for
-   2.4.2 to `In progress pending prod smoke` (preparing for the
-   in-progress flip in step 11).
-10. **Validation re-run.** All baseline commands from step 2 must
+10. **Documentation pass.** Edit
+    [`docs/architecture.md`](../architecture.md),
+    [`docs/operations.md`](../operations.md),
+    [`docs/dev.md`](../dev.md), and check
+    [`README.md`](../../README.md) per the Contracts section. Walk
+    the [`AGENTS.md`](../../AGENTS.md) "Doc Currency Is a PR Gate"
+    triggers. Update the umbrella's Sub-phase Status table row for
+    2.4.2 to `In progress pending prod smoke` (preparing for the
+    in-progress flip in step 12).
+11. **Validation re-run.** All baseline commands from step 2 must
     pass. `npm run lint`, `npm test`, `npm run build:web`,
     `npm run build:site`. The `admin-workflow.admin.spec.ts` and
     `admin-production-smoke.spec.ts` files now reference URLs that
     resolve correctly post-cutover; they cannot run as full
     end-to-end tests without the auth e2e proxy (the spec is type-
     checked by `npm run lint`, exercised end-to-end by the
-    Playwright run in step 7).
-11. **Code-review feedback loop.** Walk the diff against every
+    Playwright run in step 8).
+12. **Code-review feedback loop.** Walk the diff against every
     Cross-Cutting Invariant Touched and every Self-Review Audit
     named below. Apply fixes; commit review-fix changes separately
     per AGENTS.md Review-Fix Rigor.
-12. **Plan-to-PR completion gate (in-progress).** Walk every Goal,
+13. **Plan-to-PR completion gate (in-progress).** Walk every Goal,
     Cross-Cutting Invariant, Validation Gate command, and
     Self-Review Audit. Confirm each is satisfied or deferred to
     the post-release smoke run. Flip Status from `Proposed` to
     **`In progress pending prod smoke`** in the same PR — the
     rule's exact required string per
     [`docs/testing-tiers.md`](../testing-tiers.md), not a
-    paraphrase. The `Landed` flip lands in step 14's doc-only
+    paraphrase. The `Landed` flip lands in step 15's doc-only
     follow-up commit.
-13. **PR preparation.** Open the PR using
+14. **PR preparation.** Open the PR using
     [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
     Title under 70 characters
     (suggested: `feat(m2-2.4.2): flip /admin routing to apps/site`).
     Validation section lists every command actually run plus the
-    step-7 local auth e2e exercise and the step-8 rule-order
-    regression check; explicitly notes that cross-project end-to-end
-    verification of the new `/admin*` proxy rules is deferred to
-    the post-release `Production Admin Smoke` run (step 14) per
-    the two-phase Plan-to-Landed Gate. UX Review: include
-    before/after screenshots of `/admin` (apps/web AdminPage →
-    apps/site `/admin` page from 2.4.1), captured by running the
-    auth e2e proxy and walking the same fixture state for both.
-    The deep-editor screenshots (apps/web `/event/:slug/admin`)
-    do not need re-capture (phase 2.2 surface unchanged).
-    Remaining Risk: every cross-project end-to-end assertion is
-    deferred to the post-release smoke run; the doc-only follow-up
-    commit (step 14) is the gate that actually flips Status to
-    `Landed`.
-14. **Post-release `Production Admin Smoke` run (release-owner
+    step-7 manual side-by-side review, the step-8 local auth e2e
+    exercise, and the step-9 rule-order regression check;
+    explicitly notes that cross-project end-to-end verification of
+    the new `/admin*` proxy rules is deferred to the post-release
+    `Production Admin Smoke` run (step 15) per the two-phase
+    Plan-to-Landed Gate. UX Review: include the apps/web-vs-apps/site
+    side-by-side screenshot pairs captured in step 7 (mobile +
+    desktop, every state branch). The deep-editor screenshots
+    (apps/web `/event/:slug/admin`) do not need re-capture (phase
+    2.2 surface unchanged). Remaining Risk: every cross-project
+    end-to-end assertion is deferred to the post-release smoke
+    run; the doc-only follow-up commit (step 15) is the gate that
+    actually flips Status to `Landed`.
+15. **Post-release `Production Admin Smoke` run (release-owner
     activity — load-bearing gate).** After the PR merges and
     Vercel deploys both apps to production, the release owner
     triggers (or waits for) the `Production Admin Smoke` workflow
@@ -464,16 +508,16 @@ implementation time against the merged-in state of dev.md.
     post-deploy unless the `apps/web/vercel.json` proxy correctly
     routes `/admin` to apps/site, the auth cookie lands on apps/web's
     frontend host, the apps/site `/admin` page renders the
-    workspace with the new ARIA / copy contract, the `Open
-    workspace` button hard-navigates to `/event/${slug}/admin`
+    workspace with every test-asserted locator resolving, the
+    `Open workspace` button hard-navigates to `/event/${slug}/admin`
     (apps/web deep editor from 2.2), the deep editor saves /
     publishes / unpublishes via the authoring functions, and direct
     navigation to `/event/${slug}/admin` reaches the deep editor.
     The smoke run URL is the durable external evidence the
     Plan-to-Landed Gate requires. If the smoke run fails, file a
     focused follow-up rather than treating Status as flippable.
-15. **Plan Status follow-up (doc-only commit).** Once the
-    `Production Admin Smoke` run from step 14 passes green, open
+16. **Plan Status follow-up (doc-only commit).** Once the
+    `Production Admin Smoke` run from step 15 passes green, open
     a doc-only commit on a follow-up branch that:
     - Flips this plan's Status from `In progress pending prod
       smoke` to `Landed`.
@@ -511,7 +555,7 @@ implementation time against the merged-in state of dev.md.
 3. **Review-fix commits.** As needed, kept distinct per AGENTS.md
    Review-Fix Rigor.
 4. **Doc-only Status follow-up (separate branch + PR).** Per
-   step 15, lands after the post-release smoke run passes green.
+   step 16, lands after the post-release smoke run passes green.
    Single commit on a follow-up branch; the implementing PR stays
    at `In progress pending prod smoke` until this commit merges.
 
@@ -520,22 +564,31 @@ implementation time against the merged-in state of dev.md.
 - `npm run lint` — pass on baseline; pass on final.
 - `npm test` — pass on baseline; pass on final. The Playwright
   spec changes are picked up by lint + type-check, not by `npm
-  test` (which runs vitest); end-to-end exercise is in step 7.
+  test` (which runs vitest); end-to-end exercise is in step 8.
 - `npm run test:functions` — pass on baseline; pass on final
   (unchanged).
 - `npm run build:web` — pass on baseline; pass on final.
 - `npm run build:site` — pass on baseline; pass on final.
 - pgTAP suite — pass on baseline; pass on final via
   `npm run test:db`. No SQL change.
-- **Local auth e2e exercise per Execution step 7** — load-bearing
+- **Manual side-by-side review per Execution step 7** —
+  load-bearing pre-merge for the umbrella's
+  manual-side-by-side-review invariant. Walk apps/web and apps/site
+  `/admin` views state-by-state in dev servers, capture before/after
+  screenshot pairs, confirm the apps/site view reads as the same
+  admin tool overall. This is the load-bearing check for best-effort
+  surface that the test-asserted-locator stability invariant doesn't
+  cover; the screenshot pairs in the PR's UX Review section are the
+  durable evidence.
+- **Local auth e2e exercise per Execution step 8** — load-bearing
   pre-merge for the cross-app navigation contract +
-  `Open workspace` retargeting + ARIA / copy stability + auth e2e
-  proxy `isSiteRequest` widening + readiness probe retarget. The
-  auth e2e proxy reproduces the production cross-app proxy on local
-  origins, exercising what `vercel dev` cannot reach. The full
-  `admin-workflow.admin.spec.ts` save / publish / unpublish
-  round-trip is the integration check.
-- **`vercel dev` rule-order regression check per Execution step 8**
+  `Open workspace` retargeting + test-asserted-locator resolution
+  + auth e2e proxy `isSiteRequest` widening + readiness probe
+  retarget. The auth e2e proxy reproduces the production cross-app
+  proxy on local origins, exercising what `vercel dev` cannot
+  reach. The full `admin-workflow.admin.spec.ts` save / publish /
+  unpublish round-trip is the integration check.
+- **`vercel dev` rule-order regression check per Execution step 9**
   — load-bearing pre-merge for "the new `/admin*` proxy rules
   don't shadow existing routes and actually fire (not local-no-match
   404)." Uses the identity-fingerprint procedure from
@@ -543,14 +596,14 @@ implementation time against the merged-in state of dev.md.
   positive signature and the local-no-match negative control are
   the load-bearing assertions.
 - **Post-release `Production Admin Smoke` run per Execution step
-  14 — load-bearing gate, deferred to production by construction.**
+  15 — load-bearing gate, deferred to production by construction.**
   Per [`docs/testing-tiers.md`](../testing-tiers.md) "Plan-to-
   Landed Gate For Plans That Touch Production Smoke," 2.4.2 ships
   under the two-phase gate. Both trigger clauses apply (extends
   smoke assertions + depends on production smoke as final
   verification); either alone would suffice. The implementing PR
   merges with Status `In progress pending prod smoke`; the
-  doc-only follow-up commit (Execution step 15) flips Status to
+  doc-only follow-up commit (Execution step 16) flips Status to
   `Landed` after the smoke run is green and records the run URL
   inline.
 - Existing e2e fixtures
@@ -652,16 +705,16 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   the new `/admin*` proxy with the deleted SPA fallback (defeating
   the cutover) or shadow the surviving event-scoped rules.
   Mitigation: Contracts section pins the rule placement; Execution
-  step 8's identity-fingerprint check confirms each post-flip rule
-  fires correctly; Execution step 14's post-deploy smoke run is
+  step 9's identity-fingerprint check confirms each post-flip rule
+  fires correctly; Execution step 15's post-deploy smoke run is
   the load-bearing verification.
 - **Auth e2e proxy readiness probe breaks Playwright.** If the
   retargeted readiness probe fails (apps/site dev server not yet
   serving the new `/admin` page, or the apps/web probe URL doesn't
   exist), Playwright's `webServer` config waits forever. Mitigation:
-  Execution step 7's first run validates the readiness signal works
+  Execution step 8's first run validates the readiness signal works
   correctly before any test runs; if it hangs, the implementer
-  fixes the probe before declaring step 7 complete.
+  fixes the probe before declaring step 8 complete.
 - **e2e fixture URL retarget reveals 2.4.1 ARIA / copy drift.** If
   2.4.1's local apps/site exercise missed an ARIA / copy difference
   from the apps/web baseline, this PR's local auth e2e exercise

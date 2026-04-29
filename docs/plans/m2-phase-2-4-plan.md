@@ -186,21 +186,55 @@ These rules thread two or more sub-phases. Sub-phase-local
 invariants (e.g., bootstrap-seam idempotency, only relevant to
 2.4.1) live in their respective sub-phase plans.
 
-- **ARIA / copy stability across the cross-app port.** The new
-  apps/site `/admin` event-list surface (built in 2.4.1) preserves
-  the exact ARIA labels, role names, and visible copy that
+- **Test-asserted-locator stability across the cross-app port.**
+  The new apps/site `/admin` event-list surface (built in 2.4.1)
+  preserves the **specific ARIA labels, role names, and visible
+  strings the e2e fixtures assert against** so 2.4.2's URL retarget
+  is a pure URL-pattern diff — every other locator must still
+  resolve. Enumerated from
   [`tests/e2e/admin-workflow.admin.spec.ts`](../../tests/e2e/admin-workflow.admin.spec.ts)
   and
   [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
-  assert against — `Game draft access` heading, `Event workspace
-  summary` aria region, `${eventName} event` event-card label,
-  `Open workspace` / `Open live game` / `Duplicate` buttons,
-  `${liveCount} live` summary text, `Live v…` / `Draft only`
-  status text, `aria-disabled="true"` + `aria-describedby` reason
-  pattern with `Publish this event to open the live game.`
-  reason text. 2.4.2's only e2e diff is **URL pattern** —
-  `/admin/events/${eventId}` → `/event/${eventSlug}/admin` — and
-  the proxy / fixture wiring; copy and ARIA do not change.
+  at plan-time:
+
+  - `Game draft access` heading text
+  - `Event workspace summary` aria-label on the summary region
+  - `${eventName} event` aria-label on each event card
+  - `Open workspace` button name (role=button)
+  - `Open live game` button name (role=button)
+  - `${liveCount} live` summary text (regex `^\d+ live$`)
+  - `Draft only` status text (the value, not a heading)
+  - `Live v` prefix in status text (regex `^Live v`)
+  - `aria-disabled="true"` + `aria-describedby` discipline on the
+    disabled `Open live game` button
+  - `Publish this event to open the live game.` reason text the
+    `aria-describedby` points at
+
+  Implementer should re-derive the list against the merged-in spec
+  files at 2.4.1's pre-edit gate; the enumeration above is
+  plan-time accurate but the specs are the source-of-truth and
+  2.4.2 will edit them. Strings outside this set (button labels
+  not asserted on, layout copy, supplementary text) are
+  **best-effort fidelity** — implementer aims for "reads as the
+  same product as apps/web" using apps/web's copy as the default,
+  but exact-string match is not contracted (e.g.,
+  [`AdminEventWorkspace.tsx:286`](../../apps/web/src/admin/AdminEventWorkspace.tsx#L286)
+  renders `Duplicate draft`, not `Duplicate` — implementer chooses
+  whichever reads better in apps/site idiom).
+
+- **Manual side-by-side review before 2.4.2's cutover ships.**
+  Because the locator set above is exact-match but everything else
+  is best-effort, 2.4.2's PR includes a manual side-by-side
+  comparison of apps/web `/admin` vs apps/site `/admin` walked
+  state-by-state in dev servers (signed-out, signed-in non-admin,
+  signed-in admin with empty list, signed-in admin with seeded
+  drafts). The check confirms the apps/site version reads as the
+  same admin tool overall — same essential surface, same
+  navigation affordances — before the legacy view becomes
+  unreachable in production. Captured as before/after screenshots
+  in the PR's UX Review section. Side-by-side fidelity is the
+  human-readable counterpart to the test-asserted-locator
+  invariant; together they cover what automation alone can't.
 - **Deep-editor surface untouched.** apps/web's
   [`EventAdminPage`](../../apps/web/src/pages/EventAdminPage.tsx) and
   [`EventAdminWorkspace`](../../apps/web/src/admin/EventAdminWorkspace.tsx)
@@ -339,15 +373,26 @@ respective plan docs.
   exercise + 2.4.2's local auth e2e exercise are the strongest
   pre-merge integration checks (the auth e2e proxy reproduces the
   cross-app routing on local origins).
-- **ARIA / copy stability slip in 2.4.1 silently breaks 2.4.2's
-  e2e specs.** A typo or simplification in the apps/site `/admin`
-  port (2.4.1) silently fails the e2e specs after 2.4.2 retargets
-  URLs. Mitigation: 2.4.1's local apps/site exercise includes an
-  explicit ARIA / copy diff against
-  [`apps/web/src/admin/AdminDashboardContent.tsx`](../../apps/web/src/admin/AdminDashboardContent.tsx);
-  2.4.2's pre-merge auth e2e exercise runs the full
-  `admin-workflow.admin.spec.ts` round-trip and catches any drift
-  before the cutover ships.
+- **Test-asserted-locator slip in 2.4.1 silently breaks 2.4.2's
+  e2e specs.** A typo or wrong attribute on any string the
+  test-asserted-locator stability invariant pins fails the e2e
+  specs after 2.4.2 retargets URLs. Mitigation: 2.4.1's pre-edit
+  gate re-derives the locator list against the merged-in spec
+  files; 2.4.1's local apps/site exercise walks every pinned
+  locator and confirms resolution; 2.4.2's pre-merge auth e2e
+  exercise runs the full `admin-workflow.admin.spec.ts` round-trip
+  and catches any residual drift before the cutover ships.
+- **Best-effort surface drifts unacceptably from apps/web.**
+  Strings outside the test-asserted set are best-effort, but the
+  apps/site `/admin` should still read as the same admin tool.
+  Risk: implementer over-simplifies (drops the duplicate-draft
+  button entirely, omits the sign-out control, restructures the
+  workspace summary into a different shape) and the apps/site
+  view ships materially less capable than apps/web's. Mitigation:
+  2.4.2's manual side-by-side review per the umbrella's invariant
+  is the load-bearing check; a reviewer (and the implementer
+  themselves at PR-prep time) confirms parity walking both views
+  state-by-state in dev servers before the cutover commits.
 - **Cross-app navigation client-side regression.** Using
   `useRouter().replace(href)` or `<Link href>` from
   `next/navigation` for the `Open workspace` / `Open live game`
