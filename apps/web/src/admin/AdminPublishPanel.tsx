@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import type { DraftEventDetail } from "../lib/adminGameApi";
 import { routes } from "../../../../shared/urls";
 import { computePublishChecklist, isPublishReady } from "./publishChecklist";
-import type { AdminPublishState, AdminUnpublishState } from "./useAdminDashboard";
+import type { AdminPublishState, AdminUnpublishState } from "./useSelectedDraft";
 
 type AdminPublishPanelProps = {
   disabled: boolean;

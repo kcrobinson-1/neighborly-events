@@ -8,7 +8,7 @@ import type {
   AdminQuestionSaveState,
   AdminSelectedDraftState,
   AdminUnpublishState,
-} from "./useAdminDashboard";
+} from "./useSelectedDraft";
 import type { AdminEventDetailsFormValues } from "./eventDetails";
 
 const openLiveGameNotLiveReason = "Publish this event to open the live game.";
