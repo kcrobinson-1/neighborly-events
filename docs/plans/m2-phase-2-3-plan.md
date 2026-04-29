@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. Ships under the **two-phase Plan-to-Landed Gate For
+In progress pending prod smoke. Ships under the **two-phase Plan-to-Landed Gate For
 Plans That Touch Production Smoke** from
 [`docs/testing-tiers.md`](../testing-tiers.md): the implementing PR
 merges with Status `In progress pending prod smoke` (the rule's
@@ -60,8 +60,8 @@ same change to avoid a broken intermediate state.
 [`scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md) for the file
 inventory and cross-app contracts walkthrough;
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) "Cross-Phase
-Decisions" §3 (apps/site auth idiom + bootstrap seam), §4 (`vercel dev`
-local-dev story), §5 (subsume landing shape), and "Settled by default"
+Decisions" §3 (apps/site auth idiom + bootstrap seam), §4 (local auth
+e2e proxy story), §5 (subsume landing shape), and "Settled by default"
 (apps/site primary-domain promotion deferred) for the deliberation
 behind every cross-phase decision this plan consumes.
 
@@ -197,8 +197,13 @@ layout's metadata applies.
 **`apps/site/app/(authenticated)/auth/callback/page.tsx`.**
 `'use client'`. Renders
 `<AuthCallbackPage onNavigate={navigateAdapter} />` where the adapter
-calls `useRouter().replace(path)` from
-[`next/navigation`](../../node_modules/next/dist/docs/01-app/03-api-reference/04-functions/use-router.md).
+uses document-level `window.location.replace(path)` rather than
+`next/navigation`. Verified by:
+[`apps/web/vercel.json`](../../apps/web/vercel.json). The
+load-bearing `next=/admin` destination remains owned by apps/web
+through 2.4, so client-router navigation inside apps/site would try
+to resolve `/admin` against the apps/site route tree and bypass the
+apps/web Vercel routing layer.
 No `searchParams` prop is read — the shared component reads
 `window.location.search` per its existing contract
 ([`shared/auth/AuthCallbackPage.tsx:35-37`](../../shared/auth/AuthCallbackPage.tsx#L35)).
@@ -238,11 +243,11 @@ surface in apps/site for one consumer.
   `<h1>` size to landing-page proportions (root `h1` rule from
   globals.css doesn't size). `font-family` already inherits
   Fraunces via the existing `h1`–`h6` rule.
-- `.primary-cta` — pill button styling. `background:
+- `.primary-cta` and `.auth-callback-shell .primary-button` — pill button styling. `background:
   var(--primary)`; `color: var(--white-warm)` (or `#ffffff`
   fallback if `--white-warm` is not exposed by `themeToStyle`
   — verify at implementation time);
-  `border-radius: var(--control-radius)`;
+  `border-radius: var(--radius-control)`;
   `padding: 12px 20px`; `font-family: var(--font-body)`;
   `font-weight: 600`; `text-decoration: none`; `display:
   inline-block`; `:hover` and `:focus-visible` states using
@@ -318,16 +323,36 @@ rewrites array, in order:
 8. `/event/:slug/:path*` → `https://neighborly-events-site.vercel.app/event/:slug/:path*`
 9. `/admin/:path*` → `/index.html` (transitional; retired by 2.4)
 10. `/event/:path*` → `/index.html` (catch-all; retired alongside 2.5's bare-path retirement)
-11. **(new)** `/auth/callback` → `https://neighborly-events-site.vercel.app/auth/callback`
-12. **(new)** `/` → `https://neighborly-events-site.vercel.app/`
-13. **(removed)** `/auth/:path*` → `/index.html` *(was rule 11 pre-2.3; the more-specific proxy-rewrite at #11 supersedes the only `/auth/*` URL apps/web ever served, and `/auth/callback` is the only path under `/auth/` the app routes)*
+11. **(new)** `/_next/:path*` → `https://neighborly-events-site.vercel.app/_next/:path*`
+12. **(new)** `/auth/callback` → `https://neighborly-events-site.vercel.app/auth/callback`
+13. **(new)** `/` → `https://neighborly-events-site.vercel.app/`
+14. **(removed)** `/auth/:path*` → `/index.html` *(was rule 11 pre-2.3; the more-specific proxy-rewrite at #12 supersedes the only `/auth/*` URL apps/web ever served, and `/auth/callback` is the only path under `/auth/` the app routes)*
 
-The bare `/` rule (#12) is the first top-level catch-all the rule
+The bare `/` rule (#13) is the first top-level catch-all the rule
 stack has shipped. Vercel evaluates rewrites in order with first-match
 semantics, so any `/admin*`, `/event/*`, or `/auth/*` URL hits a
-specific rule above #12 before falling through to the bare-path proxy.
+specific rule above #13 before falling through to the bare-path proxy.
 The plan locks this exact order; the validation gate exercises every
 ownership combination on the deployed origin.
+
+Rule #11 (`/_next/:path*`) is the load-bearing proxy for Next.js's
+asset path. apps/site's HTML responses reference
+`/_next/static/chunks/...js`, `/_next/static/css/...css`, and
+`/_next/static/media/...` (the latter served by `next/font` for
+Inter + Fraunces, per
+[`apps/site/app/layout.tsx:3`](../../apps/site/app/layout.tsx#L3)).
+Without this rule, asset requests hit apps/web's static dist (a Vite
+SPA with no `/_next/` directory) and 404, breaking hydration on the
+`'use client'` `/auth/callback` route — the magic-link round-trip
+silently fails because `AuthCallbackPage`'s `useEffect` never runs to
+read `window.location.hash` and exchange the implicit-flow token. The
+existing `/event/<slug>` placeholder happens to survive without the
+rule today because it is a server component with no client
+interactivity, but is fragile to any future M3 client-component or
+CSS-via-globals change. Position is between rules #10 and #12 to keep
+the apps/site asset proxy adjacent to the apps/site HTML proxies it
+supports; correctness does not depend on position because no other
+rule competes for `/_next/...`.
 
 ## Cross-Cutting Invariants Touched
 
@@ -364,7 +389,7 @@ epic-level invariants apply:
   classification." The
   [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
   extension consumes themable tokens (`--primary`, `--font-body`,
-  `--control-radius`, `--secondary`) via `var(--…)`; structural
+  `--radius-control`, `--secondary`) via `var(--…)`; structural
   tokens (status palette, spacing scale) are not introduced in
   apps/site because the landing surface has no consumer for them
   and a per-app structural-token system would be unjustified
@@ -377,11 +402,13 @@ epic-level invariants apply:
   No metadata override; root layout's metadata applies.
 - `apps/site/app/(authenticated)/auth/callback/page.tsx` —
   `'use client'`. Default-exports the page component. Calls
-  `useRouter()` from `next/navigation`, builds an `onNavigate`
-  adapter that calls `router.replace(path)` (no `scroll` /
-  `transitionTypes` overrides), renders `<AuthCallbackPage
-  onNavigate={onNavigate} />`. No `searchParams` prop — the shared
-  component reads `window.location.search` directly.
+  `window.location.replace(path)` from a stable `onNavigate`
+  adapter, renders `<AuthCallbackPage onNavigate={onNavigate} />`.
+  No `searchParams` prop — the shared component reads
+  `window.location.search` directly. Do not use
+  `next/navigation` here: cross-project destinations such as
+  `/admin` must re-enter Vercel's routing table instead of staying
+  inside apps/site's client router.
 - `apps/site/app/page.tsx` — server component; static markup for
   the new `/`. Headings, one-line tagline, primary-action link
   to `/admin` carrying the `.primary-cta` class defined in the
@@ -404,9 +431,12 @@ epic-level invariants apply:
 - [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
   — extend with `.landing-shell` (page container with
   `max-width` + centering + vertical padding), a `.landing-shell h1`
-  size override, and a `.primary-cta` pill-button rule per the
+  size override, `.auth-callback-shell` layout, shared auth-copy
+  selectors (`.signin-stack`, `.section-heading`, `.eyebrow`), and
+  `.primary-cta` / `.auth-callback-shell .primary-button`
+  pill-button rules per the
   Contracts section. All themable values via `var(--…)`
-  (`--primary`, `--font-body`, `--control-radius`, `--secondary`
+  (`--primary`, `--font-body`, `--radius-control`, `--secondary`
   for the focus ring); raw values for one-off layout dimensions.
   Existing `body` / `h1`–`h6` rules unchanged. Sibling additions
   only — no rewriting of existing selectors. Per
@@ -422,6 +452,13 @@ epic-level invariants apply:
   `LandingPage` import line. The `routes.home` still exists in
   [`shared/urls/routes.ts`](../../shared/urls/routes.ts) (as
   `validateNextPath`'s default fallback) and is not removed.
+- [`apps/web/src/usePathnameNavigation.ts`](../../apps/web/src/usePathnameNavigation.ts)
+  — route `routes.home` through document-level navigation
+  (`window.location.assign` / `replace`) instead of SPA
+  `history.pushState`. Existing apps/web affordances that navigate
+  home must leave the SPA after `/` moves to apps/site. Keep
+  surviving apps/web paths on the existing history-based navigation
+  path.
 - [`apps/web/src/auth/index.ts`](../../apps/web/src/auth/index.ts)
   — remove the `AuthCallbackPage` and `AuthCallbackPageProps`
   re-exports (lines 9 and 13 in the current file). Keep
@@ -437,6 +474,9 @@ epic-level invariants apply:
   test cases need modification — just the dead mock.
 - [`tests/web/pages/LandingPage.test.tsx`](../../tests/web/pages/LandingPage.test.tsx)
   — delete (sole consumer is the deleted page).
+- [`tests/web/usePathnameNavigation.test.ts`](../../tests/web/usePathnameNavigation.test.ts)
+  — add coverage that home navigation uses document-level navigation
+  and does not update SPA history.
 - [`apps/web/src/styles/_landing.scss`](../../apps/web/src/styles/_landing.scss)
   — delete the entire file. Verified zero non-LandingPage
   consumers for: `.landing-hero`, `.hero-copy`, `.hero-body`,
@@ -469,12 +509,22 @@ epic-level invariants apply:
   confirm at implementation time) line that pulls
   `_landing.scss` into the build.
 - [`apps/web/vercel.json`](../../apps/web/vercel.json) — replace the
-  current 12-rule rewrites array with the 12-rule final array
-  specified in the Contracts section above. Concretely: remove
-  the existing `/auth/:path*` SPA rewrite, append two new
-  proxy-rewrites for `/auth/callback` and `/` to
-  `https://neighborly-events-site.vercel.app/...` at the bottom
-  of the array.
+  current 11-rule rewrites array with the 13-rule final array
+  specified in the Contracts section above. Concretely: remove the
+  existing `/auth/:path*` SPA rewrite, append three new
+  proxy-rewrites for `/_next/:path*`, `/auth/callback`, and `/` to
+  `https://neighborly-events-site.vercel.app/...` at the bottom of
+  the array, in that order. The `/_next/:path*` rule is load-bearing
+  for hydration of the apps/site `'use client'` `/auth/callback`
+  route — without it, asset requests fall through to apps/web's
+  static dist and break magic-link sign-in end-to-end.
+- [`tests/e2e/mobile-smoke.spec.ts`](../../tests/e2e/mobile-smoke.spec.ts)
+  — start the featured attendee flow at `/event/first-sample/game`
+  instead of the removed apps/web landing CTA.
+- [`scripts/ui-review/capture-ui-review.cjs`](../../scripts/ui-review/capture-ui-review.cjs)
+  — remove apps/web landing captures and start the featured-flow
+  capture directly at `/event/first-sample/game`. The apps/site
+  landing is verified manually in this phase.
 - [`apps/site/package.json`](../../apps/site/package.json) — add
   exact-pinned `@supabase/ssr@0.10.0` and `@supabase/supabase-js`
   matching apps/web's resolved version (currently `2.101.1` per
@@ -534,18 +584,18 @@ epic-level invariants apply:
     ([`admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts),
     [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
     [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
-    require `vercel dev` so the proxy rules in
-    `apps/web/vercel.json` resolve `/auth/callback` to apps/site.
-    Document the prerequisite (Vercel CLI installed; both Vercel
-    projects linked locally via `vercel link` per the dev.md
-    "Vercel" subsection at line 763), and the apps/site
-    `.env.local` recipe (see new sub-section below).
+    use `scripts/testing/run-auth-e2e-dev-server.cjs` so
+    `/` and `/auth/callback` resolve to branch-local apps/site while
+    the browser origin remains `127.0.0.1:4173`. Document that the
+    proxy maps the apps/web `VITE_SUPABASE_*` env values to apps/site's
+    `NEXT_PUBLIC_SUPABASE_*` values and exposes a proxy-owned readiness
+    endpoint that waits for both apps/site and apps/web.
   - Add a new sub-section **"apps/site environment variables"**
     documenting `NEXT_PUBLIC_SUPABASE_URL` and
     `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` as the two
     new env vars the apps/site Vercel project needs (mirror the
     apps/web `VITE_SUPABASE_*` values), plus the local
-    `apps/site/.env.local` file recipe for `vercel dev` runs.
+    `apps/site/.env.local` file recipe for auth e2e proxy runs.
     The apps/site `.env*` files are ignored by the repo's existing
     `.gitignore`; confirm at implementation time and add an
     apps/site-specific entry only if not already covered.
@@ -566,6 +616,10 @@ epic-level invariants apply:
   origin domain that resolves it changes — the redirect-URL list
   matches against the apps/web frontend domain, which is still
   the entry point because the proxy-rewrite preserves host).
+- [`README.md`](../../README.md) — update the repo overview,
+  route ownership summary, and environment setup to include the
+  apps/site `/` and `/auth/callback` routes plus the new
+  `NEXT_PUBLIC_SUPABASE_*` variables.
 - This plan — Status flips from `Proposed` to `In progress pending
   prod smoke` in the implementing PR; a doc-only follow-up commit
   flips Status from `In progress pending prod smoke` to `Landed`
@@ -619,9 +673,9 @@ epic-level invariants apply:
   [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
   [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
   — URLs unchanged. The fixtures continue to round-trip through
-  `127.0.0.1:4173/auth/callback?next=...`; the resolved `vercel dev`
-  decision means the proxy rewrites those URLs to the apps/site
-  origin during local runs, exactly as production does.
+  `127.0.0.1:4173/auth/callback?next=...`; the resolved auth e2e
+  proxy rewrites those URLs to the branch-local apps/site origin
+  during local runs without restoring apps/web root or callback routes.
 
 ## Execution steps
 
@@ -663,7 +717,7 @@ epic-level invariants apply:
    `/auth/callback` from this commit forward (the route group
    prefix does not appear in URLs). The shared
    `<AuthCallbackPage>` component is rendered with the
-   `next/navigation` `router.replace` adapter. `npm run build:site`
+   document-navigation adapter. `npm run build:site`
    confirms the route compiles; the route is not yet exercised
    end-to-end because the apps/web vercel.json still SPA-handles
    `/auth/callback`.
@@ -685,9 +739,10 @@ epic-level invariants apply:
 7. **vercel.json proxy flip.** Edit
    [`apps/web/vercel.json`](../../apps/web/vercel.json) per the
    Contracts section: remove the `/auth/:path*` SPA rule, append
-   the new `/auth/callback` and `/` proxy-rewrites at the bottom
-   of the array. The order in the file is the order Vercel
-   evaluates; do not reorder existing rules.
+   the new `/_next/:path*`, `/auth/callback`, and `/`
+   proxy-rewrites at the bottom of the array (in that order).
+   The order in the file is the order Vercel evaluates; do not
+   reorder existing rules.
 8. **apps/web removal.** Delete
    [`apps/web/src/pages/LandingPage.tsx`](../../apps/web/src/pages/LandingPage.tsx)
    and [`tests/web/pages/LandingPage.test.tsx`](../../tests/web/pages/LandingPage.test.tsx).
@@ -734,7 +789,7 @@ epic-level invariants apply:
     + URL ownership shape changed; `docs/operations.md` updates
     because the Vercel routing topology shifted;
     `docs/dev.md` updates because new env vars + a new local-dev
-    prerequisite (`vercel dev`) ship; `docs/product.md` does not
+    prerequisite (auth e2e proxy) ships; `docs/product.md` does not
     update (no user-visible capability change — the new `/`
     landing is platform chrome, not a product capability);
     `docs/backlog.md` does not update; `docs/open-questions.md`
@@ -1067,7 +1122,7 @@ named upfront:
   [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
   [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
   — must continue to pass. Per the resolved local-dev decision,
-  they require `vercel dev` for local runs (the URLs themselves
+  they require the auth e2e proxy for local runs (the URLs themselves
   do not change). The post-deploy
   `Production Admin Smoke` workflow run exercises
   `admin-auth-fixture.ts` against the deployed origin and is
@@ -1180,7 +1235,7 @@ relevant doc updates this branch must carry:
 - [`docs/dev.md`](../dev.md) — five edits per the modify list:
   three parenthetical conversions (lines 225, 253, 300), the
   rule-precedence walk update, and two new sub-sections
-  (apps/site env vars, local `vercel dev` story for the e2e
+  (apps/site env vars, local auth e2e proxy story for the e2e
   fixtures).
 - [`shared/db/client.ts`](../../shared/db/client.ts) inline
   comment at line 64 — corrected from future-tense to as-shipped.
@@ -1192,11 +1247,9 @@ relevant doc updates this branch must carry:
   The post-MVP authoring-ownership entry closes with 2.5.
 - [`docs/backlog.md`](../backlog.md) — no change. The
   organizer-managed-agent-assignment unblock records with 2.5.
-- [`README.md`](../../README.md) — no change. The repo-level
-  README does not currently mention the bare `/` landing or the
-  `/auth/callback` URL; the apps/site adapter modules are below
-  the README's altitude. Confirm during step 11 by grep before
-  finalizing.
+- [`README.md`](../../README.md) — update route ownership and setup
+  guidance. The repo-level README names `/`, `/auth/callback`, Vercel
+  app ownership, and contributor env vars.
 - [`event-platform-epic.md`](./event-platform-epic.md) — M2 row
   stays `Proposed`. Its flip lands with 2.5.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
@@ -1288,7 +1341,7 @@ resolution path so reviewer attention does not relitigate them.
   top-level bare-path proxy-rewrite the rule stack has shipped;
   misordering would send every unmatched apps/web request to
   apps/site (sending `/admin` to apps/site's 404 page). Mitigation:
-  the Contracts section locks the exact 12-rule ordered array;
+  the Contracts section locks the exact 13-rule ordered array;
   Execution step 14's `vercel dev` rule-order regression check
   catches misorder of *existing* routes pre-merge (e.g., `/admin`
   no longer reaching apps/web SPA) and uses the identity-fingerprint
@@ -1307,6 +1360,29 @@ resolution path so reviewer attention does not relitigate them.
   before relying on the comparison. Mitigation: step 14
   documents the procedure as "capture, then assert against the
   capture," not "assert against this header name."
+- **Cross-app asset proxy must follow the HTML proxy.** When
+  apps/web's vercel.json proxies an HTML route to apps/site
+  (rules #7-8, #12-13), apps/site's response references
+  framework-specific asset paths (`/_next/static/chunks/*.js`,
+  `/_next/static/css/*.css`, `/_next/static/media/*` for
+  `next/font`). Without a paired `/_next/:path*` proxy, the
+  browser requests those paths from apps/web, hits the static
+  dist (a Vite SPA with no `/_next/` directory), and 404s. For
+  `'use client'` routes like `/auth/callback`, this breaks
+  hydration and silently fails the magic-link round-trip. For
+  server-only routes the impact is cosmetic (no styles, no
+  custom fonts) but still observable. Mitigation: rule #11
+  (`/_next/:path*` → apps/site) ships in this phase. The
+  pre-existing `/event/<slug>` placeholder (rule #7) survives
+  today only because it has no client interactivity; rule #11
+  protects it from any future M3 client-component or
+  CSS-via-globals change. Plan-process lesson worth recording
+  in [`AGENTS.md`](../../AGENTS.md) the next time it updates:
+  when narrowing a proxy ruleset, render the consequence in
+  *production-emulating* mode (apps/site `next build &&
+  next start` plus apps/web `vercel dev` proxying at it), not
+  framework-dev mode (`next dev`), because dev servers
+  self-serve their own asset paths and hide cross-project gaps.
 - **Implicit-flow URL hash lost in server-side handler.**
   Magic-link tokens arrive as `#access_token=...` in the URL
   fragment per
@@ -1333,7 +1409,7 @@ resolution path so reviewer attention does not relitigate them.
   verification record is the precedent.
 - **Playwright auth fixtures fail under `npm run dev:web`.** The
   three fixtures hardcoded for `127.0.0.1:4173/auth/callback`
-  now require `vercel dev` per the resolved local-dev decision.
+  now require the auth e2e proxy per the resolved local-dev decision.
   Contributors who run them under `dev:web` get a 404 on
   `/auth/callback` because the apps/web SPA fallback no longer
   catches the URL. Mitigation: the new `docs/dev.md`

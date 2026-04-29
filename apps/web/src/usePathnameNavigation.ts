@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { normalizePathname } from "../../../shared/urls";
+import { normalizePathname, routes } from "../../../shared/urls";
 
 /** Reads the browser pathname while staying safe in non-browser environments. */
 function getCurrentPathname() {
@@ -9,6 +9,15 @@ function getCurrentPathname() {
 
   return normalizePathname(window.location.pathname);
 }
+
+export const documentNavigation = {
+  assign(path: string) {
+    window.location.assign(path);
+  },
+  replace(path: string) {
+    window.location.replace(path);
+  },
+};
 
 /** Minimal pathname-based navigation hook for the single-page prototype. */
 export function usePathnameNavigation() {
@@ -39,6 +48,15 @@ export function usePathnameNavigation() {
     }
 
     const useReplace = options?.replace === true;
+
+    if (nextPath === routes.home && nextPath !== pathname) {
+      if (useReplace) {
+        documentNavigation.replace(nextPath);
+      } else {
+        documentNavigation.assign(nextPath);
+      }
+      return;
+    }
 
     if (useReplace) {
       // replaceState intentionally writes regardless of whether the pathname

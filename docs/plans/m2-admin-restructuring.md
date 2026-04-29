@@ -42,7 +42,7 @@ phase 4.1 per the epic's "Deferred ThemeScope wiring" invariant.
 | --- | --- | --- | --- | --- |
 | 2.1 | RLS broadening with pgTAP coverage | [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) | Proposed | — |
 | 2.2 | Per-event admin route shell at `/event/:slug/admin` | [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md) | Landed | [#113](https://github.com/kcrobinson-1/neighborly-events/pull/113), [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114) |
-| 2.3 | `/auth/callback` and `/` migration to apps/site | [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md) | Proposed | — |
+| 2.3 | `/auth/callback` and `/` migration to apps/site | [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md) | In progress pending prod smoke | — |
 | 2.4 | Platform admin migration to apps/site at `/admin` | not yet drafted | Proposed | — |
 | 2.5 | `/game/*` URL migration for operator routes | not yet drafted | Proposed | — |
 
@@ -391,7 +391,7 @@ the cascade.
 Future SSR-heavy organizer surfaces can revisit when real value
 emerges.
 
-### 4. Local-dev story for `/auth/callback` fixtures [Resolved → `vercel dev`]
+### 4. Local-dev story for `/auth/callback` fixtures [Resolved → local auth e2e proxy]
 
 **What was decided.** How local Playwright fixtures
 ([admin-auth-fixture.ts](../../tests/e2e/admin-auth-fixture.ts),
@@ -410,6 +410,10 @@ unusual weight.
 2. Require `vercel dev` for local auth-flow runs; fixtures
    unchanged.
 3. Retain a thin apps/web `/auth/callback` shim through end of M2.
+4. Use a repo-owned local proxy for auth e2e: keep the browser
+   origin at `127.0.0.1:4173`, route `/`, `/auth/callback`, and
+   Next.js assets to branch-local apps/site, and route all other paths
+   to branch-local apps/web.
 
 **Pros / cons.**
 
@@ -424,16 +428,21 @@ unusual weight.
 - *Option 3.* Pro: fixtures unchanged through M2. Con: contradicts
   the "hard cutover" framing of 2.3; carries dead apps/web code
   into M3+; reads as indecision.
+- *Option 4.* Pro: preserves the production-origin shape and
+  exercises the branch-local apps/site callback without retaining
+  apps/web callback code. Con: adds a small test-only proxy script.
 
 **Came down to.** Production fidelity vs. local-dev speed. The
 fixtures exercise a security boundary; option 3 is process loss
 disguised as an option.
 
-**Resolution.** **Option 2 (`vercel dev` for auth-flow runs).**
+**Resolution.** **Option 4 (repo-owned local auth e2e proxy).**
 Existing `npm run dev:web` flow stays for everything not touching
-`/auth/callback`. The split documents in
-[docs/dev.md](../dev.md) as part of 2.3's docs pass; fixtures keep
-their existing URLs.
+`/auth/callback`. The auth e2e Playwright configs start
+`scripts/testing/run-auth-e2e-dev-server.cjs`, which preserves the
+fixture redirect URLs while routing the moved root and callback routes
+to apps/site. This keeps the hard cutover honest: apps/web does not
+regain `/` or `/auth/callback` routes.
 
 ### 5. apps/site `/` landing-shape [Resolved → Subsume]
 
@@ -643,7 +652,7 @@ the named phase; M2 is not complete until all are landed.
 - [docs/product.md](../product.md) — owned by 2.5 (capability set
   after M2 completes). Other phases don't touch product.md.
 - [docs/dev.md](../dev.md) — owned by 2.3 (apps/site adapter +
-  `vercel dev` for auth-flow fixtures) and 2.5 (apps/web URL list
+  local auth e2e proxy for auth-flow fixtures) and 2.5 (apps/web URL list
   + rule-precedence walk-through). Other phases don't touch dev.md.
 - [docs/open-questions.md](../open-questions.md) — owned by 2.5
   (closes the post-MVP authoring-ownership entry per the epic's

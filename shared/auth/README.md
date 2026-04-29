@@ -26,21 +26,23 @@ Env-agnostic Supabase Auth surface shared across `apps/web` and
 
 - Env reading (`import.meta.env.*` for Vite,
   `process.env.*`/`NEXT_PUBLIC_*` for Next.js).
-- The Supabase client singleton (apps/web) or per-request lifecycle
-  (apps/site server components).
+- The Supabase client singleton lifecycle in each browser app
+  adapter.
 - The `configureSharedAuth` invocation, providing the per-app
   `getClient` and `getConfigStatus`.
 - Framework-coupled gates: prototype-fallback flags,
   missing-config copy keyed off `import.meta.env.DEV`, etc.
 
-The current adapter is
-[`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts),
-which calls `configureSharedAuth` at module-init and re-exports the
-shared API surface so existing call sites keep importing from
-`apps/web/src/lib/authApi`. The apps/web component, hook, and
-type re-exports live at
-[`apps/web/src/auth/index.ts`](../../apps/web/src/auth/index.ts).
-The `apps/site` adapter lands in M2 phase 2.3.
+The apps/web setup lives in
+[`apps/web/src/lib/setupAuth.ts`](../../apps/web/src/lib/setupAuth.ts)
+and the apps/site setup lives in
+[`apps/site/lib/setupAuth.ts`](../../apps/site/lib/setupAuth.ts).
+Both call `configureSharedAuth` at client startup. apps/web keeps
+compatibility re-exports in
+[`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+and [`apps/web/src/auth/index.ts`](../../apps/web/src/auth/index.ts);
+apps/site mounts its setup through
+[`apps/site/components/SharedClientBootstrap.tsx`](../../apps/site/components/SharedClientBootstrap.tsx).
 
 ## React DI mechanism
 
@@ -54,9 +56,8 @@ with mock providers. A `_resetSharedAuthForTests()` helper exists
 for tests that need a clean slate between cases.
 
 The cost is hidden global state at startup. It is mitigated by
-each app calling `configureSharedAuth` exactly once, in a single
-startup module, before any call site reads — apps/web does this
-inside `apps/web/src/lib/authApi.ts` at module-init.
+each app calling `configureSharedAuth` from one startup module before
+any call site reads.
 
 ## Plan reference
 

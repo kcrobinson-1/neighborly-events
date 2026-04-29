@@ -13,7 +13,7 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps) {
       <span className="chip">Page not found</span>
       <h1>That page isn't available in this demo.</h1>
       <p>
-        Go back to the demo overview or jump straight into the attendee flow.
+        Go back to Neighborly Events or jump straight into the attendee flow.
       </p>
       <div className="not-found-actions">
         <button
@@ -21,7 +21,7 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps) {
           onClick={() => onNavigate(routes.home)}
           type="button"
         >
-          Go to demo overview
+          Go to Neighborly Events
         </button>
         <button
           className="secondary-button"

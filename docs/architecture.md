@@ -26,11 +26,11 @@ Tooling and local workflow live in `dev.md`. Product intent lives in `product.md
 The current implementation is:
 
 - two frontend apps deployed as separate Vercel projects from one
-  monorepo: `apps/web` (Vite + React SPA, attendee game + admin + auth +
-  transitional ownership of `/`, `/admin*`, `/auth/callback`, and the
-  bare-path operator routes), and `apps/site` (Next.js 16 App Router,
-  SSR/SSG public event landing pages — currently a placeholder, with the
-  real landing page landing in M3 of the Event Platform Epic). `apps/web`
+  monorepo: `apps/web` (Vite + React SPA, attendee game + admin plus
+  transitional ownership of `/admin*` and the bare-path operator routes),
+  and `apps/site` (Next.js 16 App Router, static platform landing,
+  auth callback, and SSR/SSG public event landing pages — event landing
+  remains a placeholder until M3 of the Event Platform Epic). `apps/web`
   is the primary Vercel project owning the production custom domain;
   cross-app routing is implemented as proxy-rewrites in
   `apps/web/vercel.json` and is **transitional** until M2 inverts the
@@ -57,15 +57,16 @@ Keep the game interaction local and fast, but make the completion state backend-
 ### Top-Level Layout
 
 - `apps/web`
-  The attendee-facing Vite + React single-page application. Owns `/`,
-  `/admin*`, `/auth/callback`, the `/event/:slug/game` and
-  `/event/:slug/admin` namespaces, and the transitional bare-path
-  operator routes `/event/:slug/redeem` and `/event/:slug/redemptions`.
+  The attendee-facing Vite + React single-page application. Owns
+  `/admin*`, the `/event/:slug/game` and `/event/:slug/admin`
+  namespaces, and the transitional bare-path operator routes
+  `/event/:slug/redeem` and `/event/:slug/redemptions`.
 - `apps/site`
-  The Next.js 16 App Router app for public event landing pages. Owns
-  `/event/:slug` and any other event-scoped path not carved out for
-  `apps/web`. Currently a placeholder; the real landing page lands in
-  M3 of [the Event Platform Epic](./plans/event-platform-epic.md).
+  The Next.js 16 App Router app for the platform landing, auth
+  callback, and public event landing pages. Owns `/`, `/auth/callback`,
+  `/event/:slug`, and any other event-scoped path not carved out for
+  `apps/web`. Event landing remains a placeholder until M3 of
+  [the Event Platform Epic](./plans/event-platform-epic.md).
 - `shared`
   Shared TypeScript domain logic used by both the browser and Supabase functions.
 - `supabase/functions`
@@ -87,9 +88,9 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/web/src/routes.ts`
   Central route definitions plus pathname normalization and matching.
 - `apps/web/src/usePathnameNavigation.ts`
-  Minimal client-side navigation hook built on the History API.
-- `apps/web/src/pages/LandingPage.tsx`
-  Product overview and entry point into published demo events.
+  Minimal client-side navigation hook built on the History API for
+  apps/web-owned routes, with document navigation for `/` now that the
+  route is owned by apps/site.
 - `apps/web/src/pages/AdminPage.tsx`
   Thin route adapter for `/admin` that composes the admin module and keeps
   route navigation at the page boundary.
@@ -163,8 +164,8 @@ grouped into a dedicated `apps/web/src/game/` module:
   `validateNextPath`, `SignInForm`, `useAuthSession`,
   `useOrganizerForEvent` (per-event organizer-or-admin authorization
   hook re-exported from `shared/auth/`; consumed by the per-event
-  admin route), and `AuthCallbackPage` (the magic-link return
-  handler at `/auth/callback`).
+  admin route). The magic-link return handler now lives in apps/site
+  and wraps the shared `AuthCallbackPage`.
 - `apps/web/src/redeem/`
   Event redemption modules for the direct-entry operator flow:
   authorization resolution, keypad state, keypad UI, trusted submit, and
@@ -203,9 +204,20 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/web/src/styles.scss`
   Frontend styling entrypoint.
 - `apps/web/src/styles/`
-  SCSS partials for tokens, mixins, layout, landing-page UI, focused game UI
+  SCSS partials for tokens, mixins, layout, focused game UI
   component groups, admin UI, redeem UI, monitoring UI, and responsive
   rules.
+- `apps/site/app/page.tsx`
+  Static platform landing at `/`, with a CTA into `/admin`.
+- `apps/site/app/(authenticated)/auth/callback/page.tsx`
+  Client callback route for `/auth/callback`; wraps shared
+  `AuthCallbackPage` and uses document navigation so post-auth
+  destinations can cross back to apps/web.
+- `apps/site/components/SharedClientBootstrap.tsx`
+  Client boundary that registers apps/site's shared auth providers for
+  routes in the `(authenticated)` group.
+- `apps/site/lib/supabaseBrowser.ts` and `apps/site/lib/setupAuth.ts`
+  Next.js client adapter for `shared/db/` and `shared/auth/`.
 
 ### Shared Domain Structure
 
@@ -221,8 +233,8 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   callers. Owns request/response shapes for redeem, reverse, and attendee
   status without pulling fetch or UI concerns into the shared layer.
 - `shared/db/`
-  Env-agnostic Supabase wiring shared across `apps/web` and (after M1
-  phase 1.3) `apps/site`. Owns the browser client factory
+  Env-agnostic Supabase wiring shared across `apps/web` and `apps/site`.
+  Owns the browser client factory
   (`createBrowserSupabaseClient`), the auth-header helper
   (`createSupabaseAuthHeaders`), the response error-message reader
   (`readSupabaseErrorMessage`), the `SupabaseConfig` shape every
@@ -237,15 +249,14 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   row results are typed at every consumer. Holds no env access and
   no singleton state — those stay in per-app adapters
   ([`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts)
-  today; the apps/site adapter lands in M1 phase 1.3) so each app
-  can choose its own lifecycle (browser singleton vs. per-request
-  SSR client). The `PublishedGame*Row` types in
+  and [`apps/site/lib/supabaseBrowser.ts`](../apps/site/lib/supabaseBrowser.ts)).
+  The `PublishedGame*Row` types in
   `shared/game-config/db-content.ts` remain authoritative for the
   published-content surface during this phase; aligning them with
   the generated `Database` type is out of scope for M1 phase 1.1.
 - `shared/urls/`
   Canonical route table, route matchers, and post-auth `next=`
-  validation shared across `apps/web` and (later) `apps/site`. Owns
+  validation shared across `apps/web` and `apps/site`. Owns
   the `AppPath` literal-union type, the `routes` builder object
   (`home`, `admin`, `adminEvent(id)`, `eventLanding(slug)`,
   `eventAdmin(slug)`, `game(slug)`, `eventRedeem(slug)`,
@@ -260,15 +271,15 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   for forward-compatibility with M2 phase 2.2 and M3; their matchers
   and `validateNextPath` allow-list entries land with the consumers.
   `validateNextPath` reads `window.location.origin` and is therefore
-  browser-only — server-side `next` validation (when M2 phase 2.3
-  migrates `/auth/callback` to apps/site) is a separate seam not
-  implemented in this module. Per-app code never composes route
+  browser-only. apps/site's `/auth/callback` route is a client
+  component, so no server-side `next` validation seam exists yet.
+  Per-app code never composes route
   strings inline; the single remaining hardcoded URL family lives in
   the e2e Playwright fixtures, where the literal expresses the
   contract being tested.
 - `shared/auth/`
   Env-agnostic Supabase Auth surface shared across `apps/web` and
-  (after M2 phase 2.3) `apps/site`. Owns the role-neutral auth API
+  `apps/site`. Owns the role-neutral auth API
   (`getAuthSession`, `subscribeToAuthState`, `requestMagicLink`,
   `signOut`, `getAccessToken`), the role-neutral `useAuthSession`
   hook, the magic-link return handler `AuthCallbackPage` (with its
@@ -282,13 +293,17 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   exactly once at startup with its env-derived providers. apps/web
   registers them from
   [`apps/web/src/lib/setupAuth.ts`](../apps/web/src/lib/setupAuth.ts)
-  (imported for side-effect by `apps/web/src/main.tsx`); the apps/web
+  (imported for side-effect by `apps/web/src/main.tsx`); apps/site
+  registers them from
+  [`apps/site/lib/setupAuth.ts`](../apps/site/lib/setupAuth.ts)
+  through
+  [`SharedClientBootstrap`](../apps/site/components/SharedClientBootstrap.tsx);
+  the apps/web
   adapter at
   [`apps/web/src/lib/authApi.ts`](../apps/web/src/lib/authApi.ts) is
   a pure re-export so existing call sites keep importing from a
   stable apps/web path, and `apps/web/src/auth/index.ts` re-exports
-  the components, hook, and types for the same reason. The apps/site
-  adapter lands in M2 phase 2.3. Session storage uses
+  the components, hook, and types for the same reason. Session storage uses
   `@supabase/ssr`'s frontend-origin chunked cookie storage paired
   with `@supabase/supabase-js`'s `createClient` in
   [`shared/db/client.ts`](../shared/db/client.ts)'s
@@ -863,9 +878,9 @@ Routing is **transitional** through M2 of the
 [Event Platform Epic](./plans/event-platform-epic.md). Today,
 `apps/web` is the primary Vercel project owning the production custom
 domain; its `vercel.json` proxy-rewrites event-scoped non-game/admin
-URLs to the `apps/site` Vercel project. Vercel applies rewrites in
-file order ("first match wins"), so most-specific rules must come
-first.
+URLs plus `/` and `/auth/callback` to the `apps/site` Vercel
+project. Vercel applies rewrites in file order ("first match wins"),
+so most-specific rules must come first.
 
 | # | Path pattern | Destination | Lifetime |
 | --- | --- | --- | --- |
@@ -877,9 +892,11 @@ first.
 | 6 | `/event/:slug/redemptions` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redemptions`) |
 | 7 | `/event/:slug` | `apps/site` Vercel project | Permanent (placeholder in 0.3; real landing page in M3) |
 | 8 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
-| 9 | `/admin/:path*`, `/event/:path*`, `/auth/:path*` (existing SPA fallbacks) | `apps/web` SPA | Transitional; `/auth/callback` and `/` migrate to `apps/site` in M2 phase 2.3, `/admin*` migrates in M2 phase 2.4 |
+| 9 | `/admin/:path*`, `/event/:path*` (existing SPA fallbacks) | `apps/web` SPA | Transitional; `/admin*` migrates in M2 phase 2.4 |
+| 10 | `/auth/callback` | `apps/site` Vercel project | Permanent auth callback route |
+| 11 | `/` | `apps/site` Vercel project | Platform landing |
 
-The cross-app destinations (rules 7 and 8) point at the production
+The cross-app destinations (rules 7, 8, 10, and 11) point at the production
 alias of the `apps/site` Vercel project via Vercel's path-rewrite-to-URL
 syntax. Whether `apps/site` later becomes the primary Vercel project
 (owning the custom domain) is a routing-config decision belonging to

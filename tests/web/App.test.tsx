@@ -10,10 +10,6 @@ vi.mock("../../apps/web/src/usePathnameNavigation.ts", () => ({
   usePathnameNavigation: mockUsePathnameNavigation,
 }));
 
-vi.mock("../../apps/web/src/pages/LandingPage.tsx", () => ({
-  LandingPage: () => <div>Landing Page</div>,
-}));
-
 vi.mock("../../apps/web/src/pages/AdminPage.tsx", () => ({
   AdminPage: ({ selectedEventId }: { selectedEventId?: string }) => (
     <div>Admin Page{selectedEventId ? `: ${selectedEventId}` : ""}</div>

@@ -6,11 +6,9 @@
  * at startup from `apps/web/src/main.tsx`.
  */
 export {
-  AuthCallbackPage,
   SignInForm,
   useAuthSession,
   useOrganizerForEvent,
-  type AuthCallbackPageProps,
   type AuthSessionState,
   type MagicLinkState,
   type SignInFormCopy,

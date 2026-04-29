@@ -19,7 +19,7 @@ The product is intended for community events like concerts, fairs, and neighborh
 This repository currently includes:
 
 - a Vite + React attendee experience prototype
-- a landing page plus published demo game routes
+- a static platform landing in `apps/site` plus published demo game routes
 - database-backed published event and quiz content
 - a Supabase Auth-backed admin event workspace for private draft access plus
   draft create, duplicate, event-detail edit, question edit, answer-option
@@ -61,15 +61,16 @@ Initial validation target:
 The codebase is intentionally small and split by responsibility:
 
 - `apps/web`
-  React attendee experience built with Vite. Owns `/`, `/admin*`,
-  `/auth/callback`, the event-scoped `/event/:slug/game` and
-  `/event/:slug/admin` namespaces, and the transitional bare-path operator
-  routes `/event/:slug/redeem` and `/event/:slug/redemptions`.
+  React attendee and admin experience built with Vite. Owns `/admin*`,
+  the event-scoped `/event/:slug/game` and `/event/:slug/admin`
+  namespaces, and the transitional bare-path operator routes
+  `/event/:slug/redeem` and `/event/:slug/redemptions`.
 - `apps/site`
   Public event landing pages built with Next.js 16 (App Router, server
-  rendered). Owns `/event/:slug` and any other event-scoped path not carved
-  out for `apps/web`. Currently a placeholder; the real landing page lands in
-  M3 of [the Event Platform Epic](./docs/plans/event-platform-epic.md).
+  rendered). Owns `/`, `/auth/callback`, `/event/:slug`, and any other
+  event-scoped path not carved out for `apps/web`. Event landing is still a
+  placeholder; the real landing page lands in M3 of
+  [the Event Platform Epic](./docs/plans/event-platform-epic.md).
 - `shared`
   shared `game-config.ts` entrypoint plus `shared/game-config/` modules for DB mapping, quiz runtime shape, validation, scoring, and explicit sample fixtures
 - `supabase/functions`
@@ -83,9 +84,9 @@ Runtime responsibilities are:
 
 - `Vercel` serves both apps as separate projects: `apps/web` is the primary
   project owning the production custom domain, and its `vercel.json`
-  proxy-rewrites event-scoped non-game/admin URLs to the `apps/site` Vercel
-  project. Routing is **transitional** — `/`, `/admin*`, and `/auth/callback`
-  migrate to `apps/site` in M2 of the Event Platform Epic, and the bare-path
+  proxy-rewrites `/`, `/auth/callback`, and event-scoped non-game/admin URLs
+  to the `apps/site` Vercel project. Routing is **transitional** —
+  `/admin*` migrates to `apps/site` in M2 phase 2.4, and the bare-path
   operator routes retire in M2 phase 2.5.
 - the browser runs the quiz flow locally during play
 - `Supabase` handles the trusted completion step at the end
@@ -141,7 +142,14 @@ If you have access to the shared Supabase project:
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 
-3. Start the app:
+3. If you need local `apps/site` auth callback work, copy
+   [apps/site/.env.example](./apps/site/.env.example) to
+   `apps/site/.env.local` and set the matching Next.js variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+
+4. Start the app:
 
 ```bash
 npm run dev:web
@@ -212,7 +220,8 @@ In short:
 - configure Supabase Auth redirect URLs for your `/admin` origins
 - add at least one allowlisted admin email in `public.admin_users`
 - create your own Vercel project for `apps/web`
-- set the frontend env vars in Vercel
+- create your own Vercel project for `apps/site`
+- set the frontend env vars in both Vercel projects
 - set Supabase secrets such as `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS`
 
 ## Release Model

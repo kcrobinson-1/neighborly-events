@@ -28,11 +28,10 @@ validation shared across `apps/web` and `apps/site`.
 ## Browser-only constraint on `validateNextPath`
 
 `validateNextPath` reads `window.location.origin` to enforce the
-same-origin check. That makes it client-only. Server-side `next`
-validation (when M2 phase 2.3 migrates `/auth/callback` to
-`apps/site`) needs an origin parameter and should land as a
-separate seam — do not import `validateNextPath` from a Next.js
-server component or RSC context.
+same-origin check. That makes it client-only. M2 phase 2.3 kept
+`/auth/callback` as a client component in apps/site, so no
+server-side seam exists yet — do not import `validateNextPath` from
+a Next.js server component or RSC context.
 
 ## Naming
 
@@ -53,7 +52,8 @@ matching the same precedent as `shared/db/` exporting
   in M2 phase 2.5 so builder name and URL stay aligned at every
   gate.
 - Server-side next-path validation. Deferred until a concrete
-  server-side consumer surfaces.
+  server-side consumer surfaces; apps/site's current callback route
+  uses the browser-only shared component.
 
 ## Plan reference
 

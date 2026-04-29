@@ -22,9 +22,9 @@ It is responsible for:
 ## Boundaries
 
 - role-neutral login/session primitives (`SignInForm`,
-  `useAuthSession`, `AuthCallbackPage`, `validateNextPath`) live under
-  `src/auth/`; this module consumes them and owns the admin-specific
-  shell state
+  `useAuthSession`, `requestMagicLink`, and `signOut`) are consumed
+  through `src/auth/` and `src/lib/authApi.ts`; `/auth/callback` is
+  now hosted by apps/site using the shared `AuthCallbackPage`
 - keep `/admin` dashboard state orchestration in `useAdminDashboard`
 - keep the top-level page route adapter thin; route navigation remains in
   `src/pages/AdminPage.tsx`

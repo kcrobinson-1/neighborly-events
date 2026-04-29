@@ -49,14 +49,14 @@ This repo currently uses:
 The main working areas are:
 
 - `apps/web`
-  Vite + React SPA. Owns `/`, `/admin*`, `/auth/callback`, the
-  `/event/:slug/game` and `/event/:slug/admin` namespaces, and the
-  transitional bare-path operator routes `/event/:slug/redeem` and
+  Vite + React SPA. Owns `/admin*`, the `/event/:slug/game` and
+  `/event/:slug/admin` namespaces, and the transitional bare-path
+  operator routes `/event/:slug/redeem` and
   `/event/:slug/redemptions`.
 - `apps/site`
-  Next.js 16 (App Router) public-event surface. Owns `/event/:slug` and any
-  other event-scoped path not carved out for `apps/web`. Currently a
-  placeholder; the real landing page lands in M3 of the Event Platform Epic.
+  Next.js 16 (App Router) public-event surface. Owns `/`,
+  `/auth/callback`, `/event/:slug`, and any other event-scoped path not
+  carved out for `apps/web`. Event landing remains a placeholder until M3.
 - `shared`
   shared game definitions, validation, and scoring
 - `supabase/functions`
@@ -221,9 +221,8 @@ The same module owns `validateNextPath`, the open-redirect defense
 for the raw `next` query parameter received at `/auth/callback`. It
 is **browser-only**: the same-origin check reads
 `window.location.origin`, which is unavailable in Next.js server
-components and RSC contexts. Server-side `next` validation lands as
-a separate seam if and when M2 phase 2.3's `/auth/callback`
-migration to apps/site needs it.
+components and RSC contexts. M2 phase 2.3 kept `/auth/callback` as
+a client component in apps/site, so no server-side seam exists yet.
 
 The `eventLanding` and `eventAdmin` builder entries are present for
 forward-compatibility with M2 phase 2.2 and M3; their pathname
@@ -249,8 +248,11 @@ import paths do not change.
 at startup with its env-derived providers. apps/web's setup lives
 in
 [`apps/web/src/lib/setupAuth.ts`](../apps/web/src/lib/setupAuth.ts),
-imported for side-effect by `apps/web/src/main.tsx`. The apps/site
-adapter lands in M2 phase 2.3.
+imported for side-effect by `apps/web/src/main.tsx`. apps/site's
+setup lives in [`apps/site/lib/setupAuth.ts`](../apps/site/lib/setupAuth.ts),
+mounted by
+[`SharedClientBootstrap`](../apps/site/components/SharedClientBootstrap.tsx)
+inside its `(authenticated)` route group.
 
 When writing a test that exercises code transitively calling
 `shared/auth/`, choose one of two patterns:
@@ -296,8 +298,8 @@ links have no client-side PKCE code-verifier, so auth-js throws
 the resulting hash-fragment redirect. Pairing `createClient` with
 `@supabase/ssr`'s chunked cookie storage and `flowType: "implicit"`
 keeps both real magic-link sign-ins and the production smoke
-fixture working while preserving the chunked-cookie format
-apps/site's future `createServerClient` (M2 phase 2.3) will read.
+fixture working while preserving the chunked-cookie format shared by
+the apps/web and apps/site browser adapters.
 `@supabase/ssr` is exact-pinned at `0.10.0` in
 `apps/web/package.json` so the deep import path is stable.
 
@@ -797,14 +799,55 @@ In short, the rule precedence inside `apps/web/vercel.json` is:
    (transitional; retired by M2 phase 2.5 when these URLs migrate into
    `/event/:slug/game/*`)
 4. `/event/:slug` and `/event/:slug/:path*` → `apps/site`
-5. Existing `/admin/:path*`, `/event/:path*`, `/auth/:path*` SPA
-   rewrites → `apps/web` (lowest precedence; `/admin*` and
-   `/auth/callback` migrate to `apps/site` in M2 phases 2.3 and 2.4)
+5. Existing `/admin/:path*` and `/event/:path*` SPA rewrites →
+   `apps/web` (lowest precedence; `/admin*` migrates to `apps/site`
+   in M2 phase 2.4)
+6. `/auth/callback` and `/` → `apps/site`
 
 Most-specific rules must come first. The bare-path operator carve-outs
 (`/event/:slug/redeem` and `/event/:slug/redemptions`) and the rule 5
 fallback are explicitly transitional. M2 plan authors are responsible
 for narrowing them as routes migrate.
+
+### Local-dev story for `/auth/callback` e2e fixtures
+
+Most local work continues to use `npm run dev:web`,
+`npm run dev:web:local`, `npm run dev:web:test`, or
+`npm run dev:site` depending on the app under test. End-to-end
+fixtures that round-trip through `/auth/callback` need a local
+equivalent of the Vercel routing layer, because the production path
+now enters through the apps/web frontend host and proxies the callback
+route to apps/site.
+
+The auth e2e Playwright configs start
+[`scripts/testing/run-auth-e2e-dev-server.cjs`](../scripts/testing/run-auth-e2e-dev-server.cjs).
+That script keeps the browser origin at `http://127.0.0.1:4173`,
+routes `/`, `/auth/callback`, and Next.js assets to branch-local
+apps/site, and routes every other app path to branch-local apps/web.
+Its proxy-owned readiness endpoint waits for both apps/site `/` and
+apps/web `/admin` before Playwright starts the tests. The relevant
+fixtures keep their existing redirect URLs:
+
+- [`admin-auth-fixture.ts`](../tests/e2e/admin-auth-fixture.ts)
+- [`redeem-auth-fixture.ts`](../tests/e2e/redeem-auth-fixture.ts)
+- [`redemptions-auth-fixture.ts`](../tests/e2e/redemptions-auth-fixture.ts)
+
+For callback work in apps/site, create `apps/site/.env.local` from
+`apps/site/.env.example` and mirror the same Supabase project values
+used by apps/web. The e2e proxy also maps `VITE_SUPABASE_*` values to
+the corresponding `NEXT_PUBLIC_SUPABASE_*` values for apps/site.
+
+### apps/site environment variables
+
+apps/site client routes read these public Supabase variables:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
+
+Set them in the apps/site Vercel project and in
+`apps/site/.env.local` for local Next.js or auth e2e proxy runs. They
+mirror the apps/web `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` values.
 
 ### Cookie-boundary verification
 

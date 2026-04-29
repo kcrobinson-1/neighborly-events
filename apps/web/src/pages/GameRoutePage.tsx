@@ -38,7 +38,7 @@ function RouteStateShell(
           onClick={onNavigateHome}
           type="button"
         >
-          Back to demo overview
+          Back to Neighborly Events
         </button>
       </nav>
 
@@ -134,7 +134,7 @@ export function GameRoutePage({ onNavigate, slug }: GameRoutePageProps) {
             onClick={() => onNavigate(routes.home)}
             type="button"
           >
-            Go to demo overview
+            Go to Neighborly Events
           </button>
         }
         body="This event link isn't available right now."
