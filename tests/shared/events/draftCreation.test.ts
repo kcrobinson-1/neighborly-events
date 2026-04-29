@@ -4,11 +4,11 @@ import {
   type AuthoringGameDraftContent,
 } from "../../../shared/game-config";
 import { getGameById } from "../../../shared/game-config/sample-fixtures";
-import type { DraftEventDetail, DraftEventSummary } from "../../../apps/web/src/lib/adminGameApi";
+import type { DraftEventDetail, DraftEventSummary } from "../../../shared/events";
 import {
   createDuplicatedDraftContent,
   createStarterDraftContent,
-} from "../../../apps/web/src/admin/draftCreation";
+} from "../../../shared/events/draftCreation";
 
 const sampleGame = getGameById("madrona-music-2026");
 
