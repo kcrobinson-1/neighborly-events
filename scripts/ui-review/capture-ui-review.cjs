@@ -417,6 +417,17 @@ function getDraftDetailFixtureByEventId(eventId) {
   );
 }
 
+function getDraftDetailFixtureBySlug(slug) {
+  if (!slug) {
+    return ADMIN_DRAFT_DETAIL_FIXTURE[0];
+  }
+
+  return (
+    ADMIN_DRAFT_DETAIL_FIXTURE.find((draft) => draft.content.slug === slug) ??
+    ADMIN_DRAFT_DETAIL_FIXTURE[0]
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Admin capture mode — mock installer factory
 // ---------------------------------------------------------------------------
@@ -509,21 +520,32 @@ function buildAdminMocks(supabaseUrl, overrides = {}) {
       });
     });
 
-    // game_event_drafts detail content reads (GET): the app only ever fetches
-    // with `.eq("id", eventId).maybeSingle()`, so always filter to the matching
-    // fixture row.
+    // game_event_drafts detail content reads (GET): two callers reach this
+    // route. (1) The admin workspace fetches draft content with
+    // `.eq("id", eventId).maybeSingle()` to load the editor for a selected
+    // draft. (2) The deep editor's `useOrganizerForEvent(slug)` hook fetches
+    // `.select("id").eq("slug", slug).maybeSingle()` to resolve a slug into
+    // an event-id before authorization runs (see
+    // shared/auth/useOrganizerForEvent.ts). The interceptor handles both
+    // filter shapes so the slug-based lookup returns the fixture matching
+    // that slug rather than silently falling back to the first fixture (which
+    // would make the draft-only workspace captures load the live draft).
     await page.route(`${supabaseUrl}/rest/v1/game_event_drafts*`, (route) => {
       if (route.request().method() !== "GET") {
         void route.continue();
         return;
       }
       const url = route.request().url();
+      const slug = readEqFilterValue(url, "slug");
       const eventId = readEqFilterValue(url, "id");
+      const fixture = slug
+        ? getDraftDetailFixtureBySlug(slug)
+        : getDraftDetailFixtureByEventId(eventId);
 
       void route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify([getDraftDetailFixtureByEventId(eventId)]),
+        body: JSON.stringify([fixture]),
       });
     });
 
