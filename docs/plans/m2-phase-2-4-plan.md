@@ -89,6 +89,61 @@ combined SQL helper RPC declined). Plan-time reality check ran against
 the merged state of phases 2.1.1 / 2.1.2 / 2.2 / 2.3; results recorded
 in the Risk Register.
 
+## Context
+
+This phase moves the platform admin — the page where root admins sign
+in, see the list of game events, create new drafts, and publish or
+unpublish events — from the prototype-era apps/web frontend to the
+newer apps/site frontend. After it lands, apps/web stops owning any
+URL that isn't event-scoped: the deep editor for an individual event
+already moved to apps/web's `/event/:slug/admin` in phase 2.2, and the
+sign-in callback already moved to apps/site in phase 2.3. The platform
+admin (the list view) is the last loose end in the non-event namespace.
+
+It's the right moment to do this because everything the move depends
+on is already in production: broadened backend authorization for
+organizers, the per-event deep editor, and the apps/site adapter
+pattern for sign-in. Holding the platform admin on the older frontend
+any longer means the platform's primary chrome — the public landing
+page and the admin entry point — stays split across two frameworks
+indefinitely, and future organizer-self-serve work would either build
+against the older frontend by accident or pay the cost of this same
+migration mid-feature. Finishing the move now also unlocks the option
+to flip apps/site to be the primary Vercel project post-epic, since
+apps/web's URL footprint will be small enough that the inversion is
+cheap.
+
+What this touches:
+
+- The admin page on apps/site — a fresh client-component
+  implementation, not a copy of the apps/web component (different
+  framework idioms, different styling system, smaller-scope state
+  hook because deep editing has already moved away).
+- The apps/web admin module — the platform-admin scaffold (event
+  list shell, sign-in form host, dashboard hook, lifecycle controls)
+  deletes; the deep editor for an individual event stays exactly
+  where it is.
+- The Vercel same-origin proxy that routes top-level URLs between
+  the two apps — gains rules sending `/admin*` to apps/site, loses
+  the legacy SPA fallback for the same path.
+- The starter-content helper that creates new drafts — moves from
+  apps/web-local to a shared module so both apps consume from one
+  place and can't drift.
+- The end-to-end Playwright fixtures that walk the admin save /
+  publish / unpublish flow — their URL assertions retarget to the
+  new cross-app shape, but every page label, button name, and ARIA
+  region stays stable so the rest of the locators don't need to
+  move.
+- The local auth e2e proxy that lets contributors run the same
+  fixtures against branch-local code — its routing table widens to
+  send `/admin*` to apps/site too.
+- Documentation that names URL ownership: architecture, operations,
+  dev, and the README.
+
+What this doesn't touch: the database, the authoring backend Edge
+Functions, the deep editor surface in apps/web, the sign-in callback
+on apps/site (already moved), or per-event branding (deferred to M4).
+
 ## Goal
 
 Migrate `/admin` from apps/web (Vite/React) to apps/site (Next.js

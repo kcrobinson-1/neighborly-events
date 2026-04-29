@@ -316,6 +316,33 @@ phase's implementation starts, **after** prior phases have shipped
   Cross-Cutting Invariants, Files-to-touch, Execution steps, Commit
   boundaries, Validation Gate, Self-Review Audits, Documentation
   Currency, Out Of Scope, Risk Register)
+- **Plan opens with a plain-language context preamble.** Before any
+  implementation specifics (file paths, framework names, function
+  signatures, phase-numbering shorthand), the plan must contain
+  1–3 paragraphs that name three things in plain English: **what
+  this phase is** (the surface or capability under change, not the
+  file paths), **why it's being done now** in human terms ("closes
+  the loose end of apps/web still owning non-event-scoped URLs
+  after 2.3 landed," "lays the foundation for organizer self-serve
+  work in a future phase"), and **what surfaces this touches** at
+  the conceptual level (admin pages, routing layer, e2e fixtures,
+  docs — not file paths). Phase-numbering prose ("depends on 2.2 +
+  2.3," "prerequisite for 2.5") describes the dependency graph,
+  not the motivation, and does not satisfy "why now." The preamble
+  can live at the top of `## Goal` or in a separate `## Context`
+  section before Goal; structure is implementer choice. The
+  protective check this rule enforces: a reader who hasn't read
+  the epic, milestone, or scoping doc can understand what problem
+  this phase solves and why anyone should care after reading the
+  plan's first ~250 words. Implementation-detail-first openings
+  are the recurring trap that motivates this rule — M2 phase 2.4's
+  first draft opened with "Migrate /admin from apps/web (Vite/React)
+  to apps/site (Next.js 16 App Router) as the root-admin platform
+  surface," which is true, complete, mechanical, and silent on why
+  anyone other than the plan author should care. Existing landed
+  plans (M2 phases 2.1, 2.2, 2.3) predate this rule and are not
+  retroactively non-conforming; the rule applies to plans drafted
+  from this point forward
 - **Reality-check gate between scoping and plan.** Before promoting
   the scoping doc to plan-drafting, do a forced reality-check pass on
   every load-bearing technical claim. For SQL contracts: read the
