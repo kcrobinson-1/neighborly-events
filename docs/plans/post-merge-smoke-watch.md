@@ -191,11 +191,12 @@ make a successful operation look failed?":
 - **Stage triggered multiple times for the same SHA.** Take the
   most-recent run; report the run ID in stdout so the operator can
   investigate if surprising.
-- **Smoke succeeded but on a `workflow_dispatch` rather than the
-  chain.** The `headSha` filter includes manual dispatches; the
-  script does not try to distinguish trigger source. Operator
-  validates the run is the right one — the URL is the durable
-  artifact regardless of trigger.
+- **Manual smoke rerun exists for the same SHA.** V1 does not accept
+  `workflow_dispatch` smoke runs. Those remain valid production-smoke
+  evidence per `docs/testing-tiers.md`, but the operator captures their
+  URL manually until a later enhancement broadens the watcher. This
+  keeps the static chain deterministic: CI `push` → Release
+  `workflow_run` → Production Admin Smoke `workflow_run`.
 
 ## Files To Touch
 
@@ -288,6 +289,11 @@ canonical usage path.
 - **Generic workflow watcher reuse.** The first implementation is scoped
   to the known production-smoke evidence path. A later script can add
   `--workflow` or DAG discovery if another post-merge gate needs it.
+- **Manual `workflow_dispatch` smoke-run capture.** Release-owner
+  dispatched smoke runs are still valid evidence for the Plan-to-Landed
+  gate, but v1 watches only the automatic post-Release `workflow_run`
+  chain. Operators capture manual rerun URLs through the GitHub Actions
+  UI or ad-hoc `gh` commands.
 - **Replacing `gh run watch` with a custom HTTP poll.** `gh run
   watch` already handles polling efficiently; reimplementing is
   wasted surface.
