@@ -41,10 +41,14 @@ AI coding sessions reading GitHub Actions state without browser context.
 
 ## Context
 
-After a PR merges to `main`, the project's workflow chain fires.
+After a non-ignored push to `main`, the project's workflow chain fires.
 Verified by: `.github/workflows/ci.yml:3`,
 `.github/workflows/ci.yml:5`, `.github/workflows/ci.yml:6`, and
-`.github/workflows/ci.yml:7`.
+`.github/workflows/ci.yml:7`. Docs-only and markdown-only pushes are
+ignored by CI and therefore do not create the downstream Release →
+Production Admin Smoke chain. Verified by: `.github/workflows/ci.yml:8`,
+`.github/workflows/ci.yml:9`, `.github/workflows/ci.yml:10`, and
+`.github/workflows/ci.yml:11`.
 
 1. **CI** on push to main.
 2. **Release** on `workflow_run: { workflow: CI, conclusion: success }`.
@@ -64,14 +68,14 @@ wall time. The current manual flow is to watch the Actions tab, run
 ad-hoc `gh run list`, or wait for email/Slack notification, then copy
 the smoke run URL or the failed-step logs by hand.
 
-The watcher bridges the chain: for a given merge SHA, it checks each
-known workflow in order and emits structured stdout updates. The first
-implementation intentionally treats the chain as static because the
-workflow shape is stable and the immediate problem is evidence capture,
-not generic Actions topology discovery. The script does NOT auto-flip
-the plan Status — generation of the doc-only follow-up commit remains
-owner-driven. The script's job is to supply the durable external
-evidence the gate requires.
+The watcher bridges the chain: for a given merge SHA that produced push
+CI, it checks each known workflow in order and emits structured stdout
+updates. The first implementation intentionally treats the chain as
+static because the workflow shape is stable and the immediate problem
+is evidence capture, not generic Actions topology discovery. The script
+does NOT auto-flip the plan Status — generation of the doc-only
+follow-up commit remains owner-driven. The script's job is to supply
+the durable external evidence the gate requires.
 
 ## Cross-Cutting Invariants
 
@@ -92,8 +96,9 @@ evidence the gate requires.
 
 `node scripts/release/post-merge-smoke-watch.cjs <merge-sha> [--deadline-minutes <N>]`
 
-- `<merge-sha>` (required): the merge commit SHA on `main`. Used to
-  filter workflow runs by `headSha`.
+- `<merge-sha>` (required): the merge commit SHA on `main` for a
+  non-ignored push that produced push CI. Used to filter workflow runs
+  by `headSha`.
 - `--deadline-minutes` (optional, default `45`): hard upper bound on
   total wait time. Exits non-zero with a deadline-exceeded message if
   the chain hasn't completed by then.
@@ -172,8 +177,18 @@ The workflow chain is intentionally static in v1. Verified by:
 3. `production-admin-smoke.yml` (`workflowName: Production Admin Smoke`,
    `event: workflow_run`, `headBranch: main`)
 
-Each lookup uses `gh run list --commit <merge-sha> --workflow <file>`
-and then verifies the returned run's workflow name, event, branch,
+Each lookup first uses
+`gh run list --commit <merge-sha> --workflow <file>`. If that returns no
+matching run while the watcher is still inside the stage wait window,
+the fallback lists recent runs for the same workflow, branch, and event,
+then filters locally for the same `headSha`. This fallback exists
+because the repository already documents head-SHA-filtered Actions API
+queries as eventually consistent shortly after CI completion. Verified
+by: `.github/workflows/release.yml:71`, `.github/workflows/release.yml:72`,
+`.github/workflows/release.yml:75`, `.github/workflows/release.yml:76`,
+and `.github/workflows/release.yml:77`.
+
+The watcher verifies the returned run's workflow name, event, branch,
 `headSha`, `status`, and `conclusion` before reporting success. The
 script may store this chain as a small local constant; it should not add
 YAML parsing or generic DAG discovery until workflow churn makes that
@@ -186,8 +201,10 @@ make a successful operation look failed?":
 
 - **Stage didn't trigger within a reasonable window.** Don't fail
   immediately; poll up to 5 minutes per stage with 15-second
-  intervals. The chain is asynchronous and the next stage might just
-  be queueing.
+  intervals. Each poll uses the primary `--commit` lookup plus the
+  recent-runs fallback described above. The chain is asynchronous and
+  the next stage might just be queueing or the head-SHA-filtered query
+  might be temporarily empty.
 - **Stage triggered multiple times for the same SHA.** Take the
   most-recent run; report the run ID in stdout so the operator can
   investigate if surprising.
