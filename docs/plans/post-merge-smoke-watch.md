@@ -190,11 +190,23 @@ by: `.github/workflows/release.yml:71`, `.github/workflows/release.yml:72`,
 `.github/workflows/release.yml:75`, `.github/workflows/release.yml:76`,
 and `.github/workflows/release.yml:77`.
 
-The watcher verifies the returned run's workflow name, event, branch,
-`headSha`, `status`, and `conclusion` before reporting success. The
-script may store this chain as a small local constant; it should not add
-YAML parsing or generic DAG discovery until workflow churn makes that
-complexity useful.
+The watcher filters to eligible runs before choosing a result. A run is
+eligible only when its workflow name/file, event, branch, and `headSha`
+match the static stage contract above; `workflow_dispatch` runs are not
+eligible in v1. If multiple eligible runs exist for a stage, selection
+order is:
+
+1. If any eligible run is queued or in progress, keep polling until it
+   completes or the deadline expires.
+2. If one or more eligible runs completed successfully, choose the
+   most-recent successful run for that stage.
+3. If no successful eligible run exists and one or more eligible runs
+   completed with a non-success conclusion, report the most-recent
+   completed non-success run as the stage failure.
+
+The script may store this chain as a small local constant; it should
+not add YAML parsing or generic DAG discovery until workflow churn makes
+that complexity useful.
 
 ### Failure-mode handling
 
@@ -207,9 +219,9 @@ make a successful operation look failed?":
   recent-runs fallback described above. The chain is asynchronous and
   the next stage might just be queueing or the head-SHA-filtered query
   might be temporarily empty.
-- **Stage triggered multiple times for the same SHA.** Take the
-  most-recent run; report the run ID in stdout so the operator can
-  investigate if surprising.
+- **Stage triggered multiple times for the same SHA.** Apply the
+  eligible-run selection order above; report the chosen run ID in
+  stdout so the operator can investigate if surprising.
 - **Manual smoke rerun exists for the same SHA.** V1 does not accept
   `workflow_dispatch` smoke runs. Those remain valid production-smoke
   evidence per `docs/testing-tiers.md`, but the operator captures their
