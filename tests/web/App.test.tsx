@@ -44,7 +44,7 @@ describe("App", () => {
   it("renders the event redeem route with the selected slug", () => {
     mockUsePathnameNavigation.mockReturnValue({
       navigate: vi.fn(),
-      pathname: "/event/madrona-music-2026/redeem",
+      pathname: "/event/madrona-music-2026/game/redeem",
     });
 
     render(<App />);

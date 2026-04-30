@@ -6,9 +6,9 @@ import { GameRoutePage } from "./pages/GameRoutePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import {
   matchEventAdminPath,
-  matchEventRedeemPath,
-  matchEventRedemptionsPath,
   matchGamePath,
+  matchGameRedeemPath,
+  matchGameRedemptionsPath,
 } from "../../../shared/urls";
 import { ThemeScope, getThemeForSlug } from "../../../shared/styles";
 import { usePathnameNavigation } from "./usePathnameNavigation";
@@ -38,7 +38,7 @@ function getPageContent(
     return <GameRoutePage key={matchedGame.slug} onNavigate={navigate} slug={matchedGame.slug} />;
   }
 
-  const matchedRedeem = matchEventRedeemPath(pathname);
+  const matchedRedeem = matchGameRedeemPath(pathname);
 
   if (matchedRedeem) {
     return (
@@ -50,7 +50,7 @@ function getPageContent(
     );
   }
 
-  const matchedRedemptions = matchEventRedemptionsPath(pathname);
+  const matchedRedemptions = matchGameRedemptionsPath(pathname);
 
   if (matchedRedemptions) {
     return (

@@ -182,7 +182,7 @@ describe("EventRedemptionsPage", () => {
       expect(mockRequestMagicLink).toHaveBeenCalledWith(
         "organizer@example.com",
         {
-          next: "/event/madrona-music-2026/redemptions",
+          next: "/event/madrona-music-2026/game/redemptions",
         },
       );
     });

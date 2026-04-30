@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   matchEventAdminPath,
-  matchEventRedeemPath,
-  matchEventRedemptionsPath,
   matchGamePath,
+  matchGameRedeemPath,
+  matchGameRedemptionsPath,
   routes,
 } from "../../../shared/urls";
 
@@ -47,7 +47,7 @@ describe("event admin routes", () => {
   it("rejects malformed and non-admin event paths", () => {
     expect(matchEventAdminPath("/event/madrona-music-2026")).toBeNull();
     expect(matchEventAdminPath("/event/madrona-music-2026/game")).toBeNull();
-    expect(matchEventAdminPath("/event/madrona-music-2026/redeem")).toBeNull();
+    expect(matchEventAdminPath("/event/madrona-music-2026/game/redeem")).toBeNull();
     expect(matchEventAdminPath("/event/madrona-music-2026/admin/extra")).toBeNull();
     expect(matchEventAdminPath("/event//admin")).toBeNull();
     expect(matchEventAdminPath("/event/event%2Fid/admin")).toBeNull();
@@ -60,55 +60,55 @@ describe("event admin routes", () => {
 
 describe("redeem routes", () => {
   it("builds and parses one event redeem path", () => {
-    const path = routes.eventRedeem("madrona music 2026");
+    const path = routes.gameRedeem("madrona music 2026");
 
-    expect(path).toBe("/event/madrona%20music%202026/redeem");
-    expect(matchEventRedeemPath(path)).toEqual({
+    expect(path).toBe("/event/madrona%20music%202026/game/redeem");
+    expect(matchGameRedeemPath(path)).toEqual({
       slug: "madrona music 2026",
     });
   });
 
   it("rejects malformed and non-redeem paths", () => {
-    expect(matchEventRedeemPath("/event/madrona-music-2026")).toBeNull();
-    expect(matchEventRedeemPath("/event/madrona-music-2026/game")).toBeNull();
-    expect(matchEventRedeemPath("/event/madrona-music-2026/redeem/extra")).toBeNull();
-    expect(matchEventRedeemPath("/event/event%2Fid/redeem")).toBeNull();
+    expect(matchGameRedeemPath("/event/madrona-music-2026")).toBeNull();
+    expect(matchGameRedeemPath("/event/madrona-music-2026/game")).toBeNull();
+    expect(matchGameRedeemPath("/event/madrona-music-2026/game/redeem/extra")).toBeNull();
+    expect(matchGameRedeemPath("/event/event%2Fid/game/redeem")).toBeNull();
   });
 
   it("does not match the monitoring path", () => {
     expect(
-      matchEventRedeemPath("/event/madrona-music-2026/redemptions"),
+      matchGameRedeemPath("/event/madrona-music-2026/game/redemptions"),
     ).toBeNull();
   });
 });
 
 describe("redemptions monitoring routes", () => {
   it("builds and parses one event redemptions path", () => {
-    const path = routes.eventRedemptions("madrona music 2026");
+    const path = routes.gameRedemptions("madrona music 2026");
 
-    expect(path).toBe("/event/madrona%20music%202026/redemptions");
-    expect(matchEventRedemptionsPath(path)).toEqual({
+    expect(path).toBe("/event/madrona%20music%202026/game/redemptions");
+    expect(matchGameRedemptionsPath(path)).toEqual({
       slug: "madrona music 2026",
     });
   });
 
   it("rejects malformed and non-monitoring paths", () => {
     expect(
-      matchEventRedemptionsPath("/event/madrona-music-2026"),
+      matchGameRedemptionsPath("/event/madrona-music-2026"),
     ).toBeNull();
     expect(
-      matchEventRedemptionsPath("/event/madrona-music-2026/game"),
+      matchGameRedemptionsPath("/event/madrona-music-2026/game"),
     ).toBeNull();
     expect(
-      matchEventRedemptionsPath("/event/madrona-music-2026/redeem"),
+      matchGameRedemptionsPath("/event/madrona-music-2026/game/redeem"),
     ).toBeNull();
     expect(
-      matchEventRedemptionsPath(
-        "/event/madrona-music-2026/redemptions/extra",
+      matchGameRedemptionsPath(
+        "/event/madrona-music-2026/game/redemptions/extra",
       ),
     ).toBeNull();
     expect(
-      matchEventRedemptionsPath("/event/event%2Fid/redemptions"),
+      matchGameRedemptionsPath("/event/event%2Fid/game/redemptions"),
     ).toBeNull();
   });
 });

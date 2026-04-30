@@ -1,8 +1,8 @@
 import {
   matchEventAdminPath,
-  matchEventRedeemPath,
-  matchEventRedemptionsPath,
   matchGamePath,
+  matchGameRedeemPath,
+  matchGameRedemptionsPath,
   routes,
   type AuthNextPath,
 } from "./routes.ts";
@@ -55,11 +55,11 @@ export function validateNextPath(rawNext: string | null): AuthNextPath {
     return pathname as AuthNextPath;
   }
 
-  if (matchEventRedeemPath(pathname) !== null) {
+  if (matchGameRedeemPath(pathname) !== null) {
     return pathname as AuthNextPath;
   }
 
-  if (matchEventRedemptionsPath(pathname) !== null) {
+  if (matchGameRedemptionsPath(pathname) !== null) {
     return pathname as AuthNextPath;
   }
 

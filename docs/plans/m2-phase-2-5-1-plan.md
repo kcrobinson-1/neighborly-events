@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 Sub-phase of M2 phase 2.5 — see
 [`m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md) (umbrella) for the

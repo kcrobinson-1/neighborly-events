@@ -27,7 +27,7 @@ const defaultEventId = "madrona-music-2026";
 const defaultEventSlug = "first-sample";
 const defaultRedeemSuffix = "0427";
 const defaultRedirectUrl =
-  "http://127.0.0.1:4173/auth/callback?next=/event/first-sample/redeem";
+  "http://127.0.0.1:4173/auth/callback?next=/event/first-sample/game/redeem";
 const defaultClientSessionId = "redeem-smoke-session";
 
 function readRequiredEnv(name: string) {

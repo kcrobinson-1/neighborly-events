@@ -11,9 +11,9 @@
  */
 export {
   matchEventAdminPath,
-  matchEventRedeemPath,
-  matchEventRedemptionsPath,
   matchGamePath,
+  matchGameRedeemPath,
+  matchGameRedemptionsPath,
   normalizePathname,
   routes,
   type AppPath,

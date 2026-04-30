@@ -88,7 +88,7 @@ describe("EventRedeemPage", () => {
 
     await waitFor(() => {
       expect(mockRequestMagicLink).toHaveBeenCalledWith("agent@example.com", {
-        next: "/event/madrona-music-2026/redeem",
+        next: "/event/madrona-music-2026/game/redeem",
       });
     });
     expect(

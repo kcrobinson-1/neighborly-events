@@ -116,7 +116,7 @@ type SignedInRedemptionsFlowProps = {
 };
 
 /**
- * Signed-in monitoring experience for `/event/:slug/redemptions`.
+ * Signed-in monitoring experience for `/event/:slug/game/redemptions`.
  *
  * Rendered only while `sessionState.status === "signed_in"`, so signing out
  * unmounts this component and discards its authorization cache. A fresh
@@ -612,7 +612,7 @@ function AuthorizedRedemptionsView({
   );
 }
 
-/** Event-scoped monitoring route shell that gates `/event/:slug/redemptions` on sign-in. */
+/** Event-scoped monitoring route shell that gates `/event/:slug/game/redemptions` on sign-in. */
 export function EventRedemptionsPage(
   { onNavigate, slug }: EventRedemptionsPageProps,
 ) {
@@ -642,7 +642,7 @@ export function EventRedemptionsPage(
     });
 
     try {
-      const nextPath = routes.eventRedemptions(slug) as AuthNextPath;
+      const nextPath = routes.gameRedemptions(slug) as AuthNextPath;
 
       await requestMagicLink(emailInput, {
         next: nextPath,

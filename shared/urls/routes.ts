@@ -5,8 +5,8 @@ export type AppPath =
   | `/event/${string}`
   | `/event/${string}/admin`
   | `/event/${string}/game`
-  | `/event/${string}/redeem`
-  | `/event/${string}/redemptions`
+  | `/event/${string}/game/redeem`
+  | `/event/${string}/game/redemptions`
   | "/auth/callback";
 
 /**
@@ -32,10 +32,10 @@ export const routes = {
     `/event/${encodeURIComponent(slug)}/admin`,
   game: (slug: string): AppPath =>
     `/event/${encodeURIComponent(slug)}/game`,
-  eventRedeem: (slug: string): AppPath =>
-    `/event/${encodeURIComponent(slug)}/redeem`,
-  eventRedemptions: (slug: string): AppPath =>
-    `/event/${encodeURIComponent(slug)}/redemptions`,
+  gameRedeem: (slug: string): AppPath =>
+    `/event/${encodeURIComponent(slug)}/game/redeem`,
+  gameRedemptions: (slug: string): AppPath =>
+    `/event/${encodeURIComponent(slug)}/game/redemptions`,
   authCallback: "/auth/callback",
 } as const;
 
@@ -130,10 +130,10 @@ export function matchEventAdminPath(pathname: string) {
 }
 
 /** Parses a redeem route and returns the decoded slug when the path matches. */
-export function matchEventRedeemPath(pathname: string) {
+export function matchGameRedeemPath(pathname: string) {
   const normalizedPath = normalizePathname(pathname);
   const prefix = `${routes.gamePrefix}/`;
-  const suffix = "/redeem";
+  const suffix = "/game/redeem";
 
   if (!normalizedPath.startsWith(prefix)) {
     return null;
@@ -168,10 +168,10 @@ export function matchEventRedeemPath(pathname: string) {
 }
 
 /** Parses a redemptions-monitoring route and returns the decoded slug when the path matches. */
-export function matchEventRedemptionsPath(pathname: string) {
+export function matchGameRedemptionsPath(pathname: string) {
   const normalizedPath = normalizePathname(pathname);
   const prefix = `${routes.gamePrefix}/`;
-  const suffix = "/redemptions";
+  const suffix = "/game/redemptions";
 
   if (!normalizedPath.startsWith(prefix)) {
     return null;

@@ -28,7 +28,7 @@ const defaultOrganizerEmail = "redemptions-smoke-organizer@example.com";
 const defaultEventId = "madrona-music-2026";
 const defaultEventSlug = "first-sample";
 const defaultRedirectUrl =
-  "http://127.0.0.1:4173/auth/callback?next=/event/first-sample/redemptions";
+  "http://127.0.0.1:4173/auth/callback?next=/event/first-sample/game/redemptions";
 const defaultClientSessionPrefix = "redemptions-smoke-session";
 
 function readRequiredEnv(name: string) {
