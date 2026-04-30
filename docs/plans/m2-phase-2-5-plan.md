@@ -24,20 +24,67 @@ just-in-time drafting has access to actual merged shapes." The
 sub-phase rows above flip to plan-linked when their plan
 drafts.
 
-**No production-smoke gate on any sub-phase.** Unlike 2.4.2, the
-2.5 cutover does not touch any production-smoke fixture: the
-existing `Production Admin Smoke`
+**No production-smoke fixture covers any sub-phase, but 2.5.2
+ships under a two-phase Status pattern.** Unlike 2.4.2, the 2.5
+cutover does not touch any production-smoke fixture: the existing
+`Production Admin Smoke`
 ([`scripts/testing/run-production-admin-smoke.cjs`](../../scripts/testing/run-production-admin-smoke.cjs))
 exercises `/auth/callback?next=/admin` and never reaches the
 operator route family. The two-phase **Plan-to-Landed Gate For
 Plans That Touch Production Smoke** from
 [`docs/testing-tiers.md`](../testing-tiers.md) therefore does not
-apply. 2.5.2's load-bearing post-deploy verification is a manual
-deployed-origin check captured inline in the implementing PR; the
-Status flip from `Proposed` to `Landed` happens in the same PR as
-merge, gated on the manual run completing during PR-prep + an
-explicit post-merge re-run captured in a doc-only follow-up if
-post-deploy reveals drift.
+apply *as written* — that gate is keyed on a specific fixture run.
+
+But 2.5.2's load-bearing verifier is a manual deployed-origin
+check (the cross-app proxy can only be observed against the real
+Vercel routing layer post-deploy;
+[`apps/web/vercel.json`](../../apps/web/vercel.json) destinations
+are absolute production URLs, so any local `vercel dev` run
+proxies to *deployed* apps/site rather than the branch-local
+instance — the same pre-merge unverifiability that bit 2.3 and
+forced 2.4.2's two-phase pattern). A plan that flips Status to
+`Landed` at merge while its load-bearing verifier hasn't yet run
+asserts a verification claim it can't back. **2.5.2 therefore
+ships under a two-phase Status flip, parallel to the
+testing-tiers.md pattern but with a non-prod-smoke Status
+string**:
+
+1. The implementing PR merges with this plan's Status reading
+   `In progress pending deployed-origin verification` (exact
+   string; no paraphrase). Pre-merge gates that *can* run
+   (rule-table review against the post-edit contract; the local
+   auth-e2e wrapper run against the updated dev-server proxy;
+   the apps/web local smoke confirming the dispatcher side of
+   the contract) all pass before the merge button.
+2. After deploy, the implementer runs the manual deployed-origin
+   check (bare paths reach apps/site's unknown-route response;
+   new operator URLs reach apps/web's operator pages). The
+   evidence — response shells, headers, screenshots if useful —
+   captures inline in the PR (a comment) or as a doc-only
+   follow-up commit linked from the PR.
+3. The Status flip from
+   `In progress pending deployed-origin verification` to
+   `Landed` happens in that doc-only follow-up commit (or the
+   PR comment + a separate doc-only commit) — never in the
+   implementing PR itself. Same shape as
+   [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md)'s
+   "Production verification evidence" section that landed
+   2.3's terminal flip post-deploy.
+
+This pattern keeps the load-bearing claim honest: the plan does
+not assert verification it doesn't have. 2.5.3's pre-edit gate
+("2.5.2 reverted but 2.5.3 already merged" risk in the Risk
+Register) reads 2.5.2's Status as `Landed` only after the
+deployed-origin check has been captured — the Status string is
+the load-bearing signal that the cutover is verified, not just
+merged.
+
+**2.5.1 and 2.5.3 ship under the regular Tier 1–4 gate.** 2.5.1
+is a pre-merge-verifiable code rename (no cross-project routing
+change); 2.5.3 is doc-only + Status flips against an
+already-verified cutover. Neither has a post-deploy verifier, so
+the regular `Proposed` → `Landed` flip in the implementing PR
+applies.
 
 **Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
 Milestone M2, Phase 2.5. Sibling phases: 2.1 RLS broadening — Landed
@@ -423,10 +470,16 @@ respective plan docs.
   a production-routing issue and is reverted, but 2.5.3 has
   somehow merged in the meantime, the M2 row is `Landed` but the
   cutover isn't actually deployed. Mitigation: strict-serial
-  sequencing — 2.5.3's pre-edit gate confirms 2.5.2's PR is
-  `Landed` AND its post-deploy manual verification ran green,
-  exactly mirroring 2.4.3's protective gate against 2.4.2's
-  state. The protective check is named in 2.5.3's Pre-Edit Gate.
+  sequencing — 2.5.3's pre-edit gate confirms 2.5.2's Status reads
+  `Landed` (which under 2.5.2's two-phase Status pattern from the
+  Status section above is itself the load-bearing signal that
+  the post-deploy deployed-origin check has been captured;
+  intermediate `In progress pending deployed-origin verification`
+  is *not* sufficient for 2.5.3 to open). Mirrors 2.4.3's
+  protective gate against 2.4.2's `In progress pending prod
+  smoke` state, with a different Status string for the
+  manual-rather-than-fixture verifier. The protective check is
+  named in 2.5.3's eventual Pre-Edit Gate.
 - **M2-status-flip premature.** Per the
   [milestone doc](./m2-admin-restructuring.md) "Cross-Phase Risks
   — Plan-drafting cascade staleness" and the scoping doc's
@@ -496,8 +549,11 @@ Doc edits distribute across sub-phases per
   Supabase Auth dashboard redirect-URL allow-list description.
   These are the doc surfaces whose accuracy depends on the
   cutover; landing them in 2.5.2 keeps doc state synchronous with
-  vercel.json. Plan Status flips to `Landed` in 2.5.2's PR (no
-  `In progress pending prod smoke` state — see Status above).
+  vercel.json. Plan Status flips per the two-phase pattern in
+  the Status section above:
+  `Proposed` → `In progress pending deployed-origin verification`
+  at merge → `Landed` in a doc-only follow-up commit after the
+  post-deploy manual check is captured.
 - **2.5.3** — page-behavior + API-shape doc edits.
   [`docs/architecture.md`](../architecture.md) route inventory
   entries for `EventRedeemPage` / `EventRedemptionsPage`,
