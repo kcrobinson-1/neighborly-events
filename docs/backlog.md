@@ -58,6 +58,16 @@ Reduce deployment risk and contributor friction before the live event.
   policy changes cannot widen access silently.
   Detail: [`docs/plans/archive/admin-live-status-plan.md`](./plans/archive/admin-live-status-plan.md)
 
+- [ ] **`infra` Automate post-merge smoke watch + URL capture**
+  Plans that ship under the two-phase Plan-to-Landed Gate currently require the
+  implementer to manually paste the Production Admin Smoke run URL into the
+  doc-only follow-up commit. A focused `npm run release:watch-smoke -- <sha>`
+  watcher would walk the CI → Release → Smoke chain keyed to the merge SHA,
+  emit the URL on green smoke or surface failed-step logs on any-stage failure,
+  eliminating the out-of-band browser navigation. Lets AI sessions close the
+  loop on a Plan-to-Landed gate without humans ferrying the URL back.
+  Detail: [`docs/plans/post-merge-smoke-watch.md`](./plans/post-merge-smoke-watch.md)
+
 ---
 
 ## Tier 3 — Admin Authoring Polish
