@@ -2,14 +2,14 @@
 
 ## Status
 
-Proposed (umbrella). Phase 2.5 ships as **three sequential
+Landed (umbrella). Phase 2.5 shipped as **three sequential
 sub-phases**, each with its own plan doc, PR, and Status.
 
 | Sub-phase | Plan | PR | Status |
 | --- | --- | --- | --- |
 | 2.5.1 — Code rename + tests + dashboard allow-list audit | [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md) | [#130](https://github.com/kcrobinson-1/neighborly-events/pull/130) | Landed |
 | 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | [m2-phase-2-5-2-plan.md](./m2-phase-2-5-2-plan.md) | [#131](https://github.com/kcrobinson-1/neighborly-events/pull/131) | Landed |
-| 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | [m2-phase-2-5-3-plan.md](./m2-phase-2-5-3-plan.md) | — | Proposed |
+| 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | [m2-phase-2-5-3-plan.md](./m2-phase-2-5-3-plan.md) | [#133](https://github.com/kcrobinson-1/neighborly-events/pull/133) | Landed |
 
 **Per-sub-phase plans draft just-in-time, not in batch.** Only
 2.5.1's plan exists at umbrella-drafting time. 2.5.2's plan

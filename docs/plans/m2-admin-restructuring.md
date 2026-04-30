@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed. Status mirrors the
-[epic milestone row](./event-platform-epic.md). Flips to `Landed`
-when M2's last-merging phase PR also flips the epic's M2 row.
+Landed. Status mirrors the
+[epic milestone row](./event-platform-epic.md). Flipped to
+`Landed` in M2 phase 2.5.3's PR alongside the epic M2-row flip.
 
 This milestone doc is the durable coordination artifact for M2:
 restated goal, phase sequencing, cross-phase invariants, locked
@@ -40,11 +40,11 @@ phase 4.1 per the epic's "Deferred ThemeScope wiring" invariant.
 
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 2.1 | RLS broadening with pgTAP coverage | [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) | Proposed | — |
+| 2.1 | RLS broadening with pgTAP coverage | [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) | Landed | [#108](https://github.com/kcrobinson-1/neighborly-events/pull/108), [#109](https://github.com/kcrobinson-1/neighborly-events/pull/109) |
 | 2.2 | Per-event admin route shell at `/event/:slug/admin` | [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md) | Landed | [#113](https://github.com/kcrobinson-1/neighborly-events/pull/113), [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114) |
 | 2.3 | `/auth/callback` and `/` migration to apps/site | [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md) | Landed | [#118](https://github.com/kcrobinson-1/neighborly-events/pull/118), [#120](https://github.com/kcrobinson-1/neighborly-events/pull/120) |
 | 2.4 | Platform admin migration to apps/site at `/admin` | [m2-phase-2-4-plan.md](./m2-phase-2-4-plan.md) | Landed | [#126](https://github.com/kcrobinson-1/neighborly-events/pull/126) |
-| 2.5 | `/game/*` URL migration for operator routes | [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md) | Proposed | — |
+| 2.5 | `/game/*` URL migration for operator routes | [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md) | Landed | [#130](https://github.com/kcrobinson-1/neighborly-events/pull/130), [#131](https://github.com/kcrobinson-1/neighborly-events/pull/131), [#133](https://github.com/kcrobinson-1/neighborly-events/pull/133) |
 
 Each row updates as the phase's plan drafts and as its PR merges.
 2.5 ships as three sub-phases (2.5.1 code rename, 2.5.2 Vercel
