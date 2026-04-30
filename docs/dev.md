@@ -914,6 +914,24 @@ The intended release path is:
    verify deployed admin auth and authoring workflows against dedicated
    production smoke fixtures (with manual rerun support).
 
+### Watching The Post-Merge Chain
+
+`npm run release:watch-smoke -- <merge-sha>` watches the static
+`CI` → `Release` → `Production Admin Smoke` chain keyed to a merge commit
+on `main`, prints stage-by-stage progress, and emits a load-bearing
+`SMOKE_URL=<run-url>` line on green smoke. Use it to capture the smoke
+run URL for the doc-only follow-up commit required by
+[`testing-tiers.md`](./testing-tiers.md) "Plan-to-Landed Gate For Plans
+That Touch Production Smoke" without leaving the terminal. Pass
+`--deadline-minutes <N>` to override the default 45-minute cap.
+
+The watcher shells out to `gh` and requires `gh >= 2.89.0` for stable
+JSON shape on `run list` / `run view`. The runtime check enforces this
+before any polling starts; the same minimum is encoded as a constant in
+[`scripts/release/post-merge-smoke-watch.cjs`](../scripts/release/post-merge-smoke-watch.cjs)
+and exercised by
+[`tests/scripts/post-merge-smoke-watch.test.ts`](../tests/scripts/post-merge-smoke-watch.test.ts).
+
 ### Pull Request Notes
 
 Pull requests use [`.github/pull_request_template.md`](../.github/pull_request_template.md)
