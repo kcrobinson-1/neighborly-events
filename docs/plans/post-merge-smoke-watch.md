@@ -145,8 +145,10 @@ human-readable line to stderr before the non-zero exit.
 ### gh CLI dependency
 
 The script shells out to `gh` (already required by other release
-procedures). Pre-flight check: `gh auth status` with non-zero exit →
-script exits 3 with a clear message naming the missing auth.
+procedures). Pre-flight check: `gh auth status --hostname github.com`
+with non-zero exit → script exits 3 with a clear message naming the
+missing `github.com` auth. The watcher does not care about auth state
+for any other configured GitHub host.
 
 Because the script parses `gh run list` / `gh run view` JSON, the
 implementation must run the **CLI / tooling pinning audit** from
@@ -333,9 +335,9 @@ canonical usage path.
   CLI / tooling pinning audit before handoff.
 - **Auth drift mid-run.** If gh's auth token expires partway
   through, mid-stage `gh` calls fail. Mitigation: pre-flight
-  `gh auth status` at start; if fails mid-run, exit 1 with the gh
-  error plus the partial-progress trail. Operator re-auths and
-  re-runs (idempotent).
+  `gh auth status --hostname github.com` at start; if a `github.com`
+  auth call fails mid-run, exit 1 with the gh error plus the
+  partial-progress trail. Operator re-auths and re-runs (idempotent).
 - **Chain takes longer than 45 minutes.** Default deadline. Operator
   can override with `--deadline-minutes`. Mitigation: clear
   deadline-exceeded message names which stage was waiting.
