@@ -2,7 +2,57 @@
 
 ## Status
 
-In progress pending deployed-origin verification.
+Landed. The implementing PR
+([#131](https://github.com/kcrobinson-1/neighborly-events/pull/131))
+shipped with Status `In progress pending deployed-origin verification`;
+this doc-only commit records the post-deploy verification evidence and
+flips Status to `Landed`.
+
+### Deployed-origin verification evidence
+
+Manual deployed-origin shell-fingerprint check run against
+`https://neighborly-scavenger-game-web.vercel.app` on 2026-04-30
+post-deploy. Both branches of the load-bearing claim hold:
+
+- **Retired bare paths reach apps/site's unknown-route response.**
+  `curl -sI /event/production-smoke-event/redeem` and
+  `curl -sI /event/production-smoke-event/redemptions` both return
+  HTTP 404 with `content-disposition: inline; filename="404"` and
+  `x-matched-path: /404` — the apps/site Next.js routing-layer
+  fingerprint. The HTML body carries `_next/static` asset
+  references, the apps/site bundle marker. Confirms the cross-app
+  `/event/:slug/:path*` rule (post-cutover rule 6) catches the bare
+  paths and proxies them to apps/site, where the Next.js
+  unknown-route response handles them per the umbrella's "No
+  backward-compat redirect" invariant and the
+  [milestone doc](./m2-admin-restructuring.md) "Settled by default"
+  decision.
+- **New operator URLs reach apps/web's operator pages.**
+  `curl -sI /event/production-smoke-event/game/redeem` and
+  `curl -sI /event/production-smoke-event/game/redemptions` both
+  return HTTP 200 with `content-disposition: inline; filename="index.html"`
+  — apps/web's Vite SPA shell served by the rule 2
+  `/event/:slug/game/:path*` carve-out. The HTML body carries
+  `src="/assets/` references, the apps/web Vite bundle marker.
+  Confirms the rule-ordering invariant: the apps/web carve-outs
+  match before the cross-app rule, so `/game/redeem` and
+  `/game/redemptions` reach apps/web rather than getting proxied
+  to apps/site.
+
+The shell-fingerprint discriminator (apps/site `_next/static` +
+`x-matched-path` vs. apps/web `src="/assets/` + `filename="index.html"`)
+distinguished the desired signal from every plausible failure mode,
+per the plan's Validation Gate falsifier discipline. A misorder
+would have surfaced as an apps/web shell on the bare paths or an
+apps/site shell on the new operator URLs; neither was observed.
+
+The release smoke run that paired with this deploy passed
+([`Production Admin Smoke`](../../scripts/testing/run-production-admin-smoke.cjs)),
+confirming the cutover did not regress the apps/web `/admin`
+auth-flow path that runs through the same `vercel.json`. 2.5's
+phase footprint is independent of the smoke fixture by design (per
+the umbrella's Status section), so the smoke pass is a
+no-regression signal rather than a load-bearing verifier.
 
 Sub-phase of M2 phase 2.5 — see
 [`m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md) (umbrella) for the
