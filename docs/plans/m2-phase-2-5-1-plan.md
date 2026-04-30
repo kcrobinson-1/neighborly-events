@@ -577,12 +577,12 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
 ## Related Docs
 
 - [`m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md) — umbrella;
-  this PR's Status flip + sequencing.
-- [`m2-phase-2-5-2-plan.md`](./m2-phase-2-5-2-plan.md) — sibling
-  Proposed sub-phase (Vercel cutover; cannot draft until this
-  sub-phase is `Landed`).
-- [`m2-phase-2-5-3-plan.md`](./m2-phase-2-5-3-plan.md) — sibling
-  Proposed sub-phase (cleanup + M2 closure).
+  this PR's Status flip + sequencing + the cross-sub-phase
+  narrative 2.5.2 and 2.5.3 will draft against.
+- 2.5.2 and 2.5.3 sub-phase plans — not yet drafted per the
+  umbrella's "Just-in-time sub-phase drafting" rule. 2.5.2
+  drafts after this PR lands; 2.5.3 drafts after 2.5.2 lands
+  and its post-deploy verification passes.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone; Phase Status row updates as each sub-phase ships.
 - [`shared-urls-foundation.md`](./shared-urls-foundation.md) —

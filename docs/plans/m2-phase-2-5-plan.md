@@ -8,8 +8,21 @@ sub-phases**, each with its own plan doc, PR, and Status.
 | Sub-phase | Plan | PR | Status |
 | --- | --- | --- | --- |
 | 2.5.1 — Code rename + tests + dashboard allow-list audit | [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md) | — | Proposed |
-| 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | [m2-phase-2-5-2-plan.md](./m2-phase-2-5-2-plan.md) | — | Proposed |
-| 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | [m2-phase-2-5-3-plan.md](./m2-phase-2-5-3-plan.md) | — | Proposed |
+| 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | not yet drafted | — | Proposed |
+| 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | not yet drafted | — | Proposed |
+
+**Per-sub-phase plans draft just-in-time, not in batch.** Only
+2.5.1's plan exists at umbrella-drafting time. 2.5.2's plan
+drafts after 2.5.1 is `Landed` (against the merged
+`shared/urls/` rename and the merged dispatcher); 2.5.3's plan
+drafts after 2.5.2 is `Landed` and its post-deploy bare-path
+retirement check ran green (against the merged vercel.json + the
+URL-shape doc edits 2.5.2 already landed). Per AGENTS.md "Phase
+Planning Sessions — Plan-drafting cadence":
+"Plans drafted against not-yet-merged code stale fast;
+just-in-time drafting has access to actual merged shapes." The
+sub-phase rows above flip to plan-linked when their plan
+drafts.
 
 **No production-smoke gate on any sub-phase.** Unlike 2.4.2, the
 2.5 cutover does not touch any production-smoke fixture: the
@@ -198,25 +211,30 @@ green. Per
 deliberate split AGENTS.md welcomes when the high-risk surface is
 small and isolating it pays for the coordination cost.
 
-**Just-in-time sub-phase drafting.** All three sub-phase plans
-draft now (alongside this umbrella) so the cross-sub-phase
-narrative is verifiable in one read. Each sub-phase's reality-check
-gate re-runs against actually-merged sibling state before its
-implementing PR opens: 2.5.2's plan re-checks against merged 2.5.1
-(specifically the `routes.gameRedeem` / `routes.gameRedemptions`
-exports); 2.5.3's plan re-checks against merged 2.5.2 (specifically
-the post-edit `apps/web/vercel.json` rule order and the doc-currency
-edits 2.5.2 already landed). The sub-phase plans contain "Verified
-by:" annotations against the merged shapes the implementing PR will
-read; if any annotation drifts at re-check, the affected sub-phase
-plan updates before its PR opens.
+**Just-in-time sub-phase drafting.** Only 2.5.1's plan exists at
+umbrella-drafting time. 2.5.2's plan drafts after 2.5.1 lands —
+its file inventory and contracts re-check against the merged
+`shared/urls/` rename and the merged dispatcher rather than against
+this umbrella's predicted shape. 2.5.3's plan drafts after 2.5.2
+lands and its post-deploy verification passes — its file inventory
+re-checks against the post-edit `apps/web/vercel.json` rule order,
+the URL-shape doc edits 2.5.2 already landed, and the actual
+remaining doc-currency surface. Per AGENTS.md "Phase Planning
+Sessions — Plan-drafting cadence" and the
+[milestone doc](./m2-admin-restructuring.md) "Sequencing —
+Plan-drafting cadence": plans drafted against not-yet-merged code
+stale fast. The cross-sub-phase narrative below (invariants,
+risks, doc-currency split) is umbrella-owned and gives 2.5.2's
+and 2.5.3's eventual plan-drafters a stable contract to draft
+against without pre-locking the per-file inventory.
 
 ## Cross-Cutting Invariants
 
 These rules thread two or more sub-phases. Sub-phase-local
 invariants (e.g., dispatcher build-coupling inside 2.5.1, vercel
 rule-ordering inside 2.5.2) live in their respective sub-phase
-plans.
+plans — 2.5.1's already; 2.5.2's and 2.5.3's when they draft per
+the just-in-time rule above.
 
 - **No backward-compat redirect for the bare paths, ever.** The
   hard cutover framing is load-bearing across all three sub-phases:
@@ -369,12 +387,16 @@ respective plan docs.
   `/event/:slug/game` / `/event/:slug/game/:path*` carve-outs
   (rules 1–2). Vercel honors source order; a careless reorder
   would proxy the new operator URLs to apps/site instead of
-  apps/web. Mitigation: 2.5.2's plan pins the post-edit rule
-  table; the post-deploy manual check exercises both the new
-  operator URLs (must reach apps/web's operator pages) and the
-  bare paths (must reach apps/site's unknown-route response). A
-  misorder surfaces as the new operator URL landing on apps/site
-  instead of the operator page.
+  apps/web. Mitigation: 2.5.2's plan-drafter pins the post-edit
+  rule table in that sub-phase's Contracts section against the
+  carve-out-order constraint named in this umbrella's
+  "URL contract progression" invariant; pre-merge code review
+  diffs vercel.json against the contracted shape; the post-deploy
+  manual check exercises both the new operator URLs (must reach
+  apps/web's operator pages) and the bare paths (must reach
+  apps/site's unknown-route response). A misorder surfaces as the
+  new operator URL landing on apps/site instead of the operator
+  page.
 - **Bare-path UX gap between 2.5.1 and 2.5.2 merges.** Between
   2.5.1 landing and 2.5.2 landing, bare URLs reach apps/web
   through the still-present carve-outs but the dispatcher no
@@ -516,11 +538,12 @@ Doc edits distribute across sub-phases per
   deletes in 2.5.3's batch.
 - [`m2-phase-2-5-1-plan.md`](./m2-phase-2-5-1-plan.md) — sub-phase
   2.5.1 plan (code rename + tests + dashboard allow-list audit).
-- [`m2-phase-2-5-2-plan.md`](./m2-phase-2-5-2-plan.md) — sub-phase
-  2.5.2 plan (vercel cutover + local proxy + URL-shape doc
-  currency).
-- [`m2-phase-2-5-3-plan.md`](./m2-phase-2-5-3-plan.md) — sub-phase
-  2.5.3 plan (doc cleanup + M2 closure + scoping batch delete).
+- 2.5.2 sub-phase plan (vercel cutover + local proxy + URL-shape
+  doc currency) — drafts after 2.5.1 lands; will live at
+  `m2-phase-2-5-2-plan.md`.
+- 2.5.3 sub-phase plan (doc cleanup + M2 closure + scoping batch
+  delete) — drafts after 2.5.2 lands and its post-deploy
+  verification passes; will live at `m2-phase-2-5-3-plan.md`.
 - [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
   [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md),
   [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md),
