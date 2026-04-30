@@ -2,9 +2,9 @@
 
 ## Status
 
-Proposed. Status mirrors the
-[epic milestone row](./event-platform-epic.md). Flips to `Landed`
-when M2's last-merging phase PR also flips the epic's M2 row.
+Landed. Status mirrors the
+[epic milestone row](./event-platform-epic.md). Flipped to
+`Landed` in M2 phase 2.5.3's PR alongside the epic M2-row flip.
 
 This milestone doc is the durable coordination artifact for M2:
 restated goal, phase sequencing, cross-phase invariants, locked
@@ -40,11 +40,11 @@ phase 4.1 per the epic's "Deferred ThemeScope wiring" invariant.
 
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 2.1 | RLS broadening with pgTAP coverage | [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) | Proposed | — |
+| 2.1 | RLS broadening with pgTAP coverage | [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) | Landed | [#108](https://github.com/kcrobinson-1/neighborly-events/pull/108), [#109](https://github.com/kcrobinson-1/neighborly-events/pull/109) |
 | 2.2 | Per-event admin route shell at `/event/:slug/admin` | [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md) | Landed | [#113](https://github.com/kcrobinson-1/neighborly-events/pull/113), [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114) |
 | 2.3 | `/auth/callback` and `/` migration to apps/site | [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md) | Landed | [#118](https://github.com/kcrobinson-1/neighborly-events/pull/118), [#120](https://github.com/kcrobinson-1/neighborly-events/pull/120) |
 | 2.4 | Platform admin migration to apps/site at `/admin` | [m2-phase-2-4-plan.md](./m2-phase-2-4-plan.md) | Landed | [#126](https://github.com/kcrobinson-1/neighborly-events/pull/126) |
-| 2.5 | `/game/*` URL migration for operator routes | [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md) | Proposed | — |
+| 2.5 | `/game/*` URL migration for operator routes | [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md) | Landed | [#130](https://github.com/kcrobinson-1/neighborly-events/pull/130), [#131](https://github.com/kcrobinson-1/neighborly-events/pull/131), [#133](https://github.com/kcrobinson-1/neighborly-events/pull/133) |
 
 Each row updates as the phase's plan drafts and as its PR merges.
 2.5 ships as three sub-phases (2.5.1 code rename, 2.5.2 Vercel
@@ -52,12 +52,13 @@ cutover, 2.5.3 cleanup + M2 closure) under the umbrella plan
 linked above; 2.5.3's PR also flips the epic's M2 row to `Landed`
 per the sequencing below.
 
-Per-phase scoping docs at
-[`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) through
-[`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md) are
-transient. They delete in batch (with this doc absorbing their
-durable cross-phase content) when all five M2 plans exist; the
-deletion lands in the 2.5 PR or a focused cleanup PR.
+Per-phase scoping docs at `docs/plans/scoping/m2-phase-2-1.md`
+through `docs/plans/scoping/m2-phase-2-5.md` deleted in batch in
+M2 phase 2.5.3 (all five M2 plans existed at that point; the
+durable cross-phase content this doc absorbs lives in
+"Cross-Phase Decisions," "Cross-Phase Invariants," and
+"Cross-Phase Risks" below). See git history for the pre-deletion
+content.
 
 ## Sequencing
 
@@ -690,12 +691,24 @@ the named phase; M2 is not complete until all are landed.
 
 - [event-platform-epic.md](./event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
-- [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) — 2.1 plan.
-- 2.2-2.5 plan docs — drafted just-in-time before each phase
-  implements.
-- [scoping/m2-phase-2-1.md](./scoping/m2-phase-2-1.md) through
-  [scoping/m2-phase-2-5.md](./scoping/m2-phase-2-5.md) — transient
-  scoping docs; delete in batch when all five M2 plans exist.
+- [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md),
+  [m2-phase-2-1-1-plan.md](./m2-phase-2-1-1-plan.md),
+  [m2-phase-2-1-2-plan.md](./m2-phase-2-1-2-plan.md),
+  [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md),
+  [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md),
+  [m2-phase-2-4-plan.md](./m2-phase-2-4-plan.md),
+  [m2-phase-2-4-1-plan.md](./m2-phase-2-4-1-plan.md),
+  [m2-phase-2-4-2-plan.md](./m2-phase-2-4-2-plan.md),
+  [m2-phase-2-4-3-plan.md](./m2-phase-2-4-3-plan.md),
+  [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md),
+  [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md),
+  [m2-phase-2-5-2-plan.md](./m2-phase-2-5-2-plan.md),
+  [m2-phase-2-5-3-plan.md](./m2-phase-2-5-3-plan.md) — per-phase
+  plans.
+- `docs/plans/scoping/m2-phase-2-1.md` through
+  `docs/plans/scoping/m2-phase-2-5.md` — transient scoping docs
+  deleted in batch by M2 phase 2.5.3 (see git history for the
+  pre-deletion content).
 - [docs/self-review-catalog.md](../self-review-catalog.md) — audit
   name source for per-phase Self-Review Audits sections.
 - [AGENTS.md](../../AGENTS.md) — workflow rules, Plan-to-PR

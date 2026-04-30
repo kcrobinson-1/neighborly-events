@@ -104,14 +104,15 @@ returns zero rows on every read (RLS filters drafts and versions) and
 still gate on `is_admin` only). 2.1.1 + 2.1.2 are both Landed; this
 plan assumes both are in `main` before the 2.2 PR opens.
 
-**Scoping inputs:**
-[`scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md) for the file
-inventory and contracts walkthrough;
+**Scoping inputs:** the per-phase scoping doc this plan compressed
+from (`docs/plans/scoping/m2-phase-2-2.md`, deleted in M2 phase
+2.5.3 batch deletion — see git history for the pre-deletion file
+inventory, contracts walkthrough, and Resolved Decisions section);
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
 "Cross-Phase Decisions" §1, §3, and "Settled by default" for the
 audit-log-via-RPC, apps/site auth idiom, and combined-helper
-deliberation; the Resolved Decisions section in the scoping doc for
-the hook-home (`shared/auth/`) and helper-signature
+deliberation; the Resolved Decisions for the
+hook-home (`shared/auth/`) and helper-signature
 (slug-resolved-to-event-id) settled defaults this plan inherits.
 
 ## Goal
@@ -524,10 +525,12 @@ following epic-level invariants apply:
   `AdminOptionEditor`, `AdminPublishPanel`, `eventDetails.ts`,
   `publishChecklist.ts`, `questionBuilder.ts`,
   `questionFormMapping.ts`, `questionStructure.ts`,
-  `useSelectedDraft.ts`) stay in `apps/web/src/admin/` per
-  [`scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md) "Outputs
-  Other Siblings Need" so phase 2.4's diff stays a clean
-  surface-shrink rather than a mixed move/edit.
+  `useSelectedDraft.ts`) stay in `apps/web/src/admin/` per the
+  scoping doc's "Outputs Other Siblings Need" subsection
+  (`docs/plans/scoping/m2-phase-2-2.md`, deleted in M2 phase
+  2.5.3 batch deletion; see git history for the pre-deletion
+  content) so phase 2.4's diff stays a clean surface-shrink
+  rather than a mixed move/edit.
 - [`apps/web/vercel.json`](../../apps/web/vercel.json) — no edit.
   `/event/:slug/admin` and `/event/:slug/admin/:path*` were
   reserved for apps/web by M0 phase 0.3 (lines 11–18); the SPA
@@ -544,10 +547,11 @@ following epic-level invariants apply:
 1. **Pre-edit gate.** Confirm clean worktree and a feature branch
    (not `main`). Confirm 2.1.1 + 2.1.2 are both in `main`
    (`git log --oneline main | grep -i "phase 2.1"` should show two
-   merge commits before this branch's base). Read
-   [`scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md),
-   [`m2-admin-restructuring.md`](./m2-admin-restructuring.md), and
-   the M1 phase 1.5.2 plan
+   merge commits before this branch's base). Read this plan, then
+   [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) and
+   the M1 phase 1.5.2 plan (the per-phase scoping doc that fed
+   this plan, `docs/plans/scoping/m2-phase-2-2.md`, was deleted in
+   M2 phase 2.5.3 batch deletion — see git history if needed)
    ([`shared-styles-foundation.md`](./shared-styles-foundation.md))
    for the ThemeScope wrapping conventions before editing.
 2. **Baseline validation.** Run `npm run lint`,
@@ -1046,8 +1050,9 @@ resolution path so reviewer attention does not relitigate them.
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.
-- [`scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md) — scoping
-  doc this plan compresses.
+- `docs/plans/scoping/m2-phase-2-2.md` — scoping doc this plan
+  compressed from (deleted in M2 phase 2.5.3 batch deletion; see
+  git history for the pre-deletion content).
 - [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md) — sibling phase
   whose RLS broadening + Edge Function gate this phase consumes.
 - [`shared-styles-foundation.md`](./shared-styles-foundation.md) —

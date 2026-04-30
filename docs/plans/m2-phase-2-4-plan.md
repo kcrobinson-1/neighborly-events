@@ -43,10 +43,10 @@ and the cross-app proxy pattern in
 which the platform admin (root-only) passes through the
 `is_root_admin()` branch.
 
-**Scoping inputs:**
-[`scoping/m2-phase-2-4.md`](./scoping/m2-phase-2-4.md) for the file
-inventory and contracts walkthrough (transient; deletes in the M2
-terminal cleanup);
+**Scoping inputs:** the per-phase scoping doc this plan compressed
+from (`docs/plans/scoping/m2-phase-2-4.md`, deleted in M2 phase
+2.5.3 batch deletion — see git history for the pre-deletion file
+inventory and contracts walkthrough);
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
 "Cross-Phase Decisions" §3 (apps/site auth idiom + bootstrap seam,
 inherited from 2.3), §6 (`createStarterDraftContent` home →
@@ -474,8 +474,9 @@ Doc edits distribute across sub-phases per
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; Cross-Phase Decisions §3 / §6 / §7 / "Settled by
   default" drive the resolved decisions this phase consumes.
-- [`scoping/m2-phase-2-4.md`](./scoping/m2-phase-2-4.md) — scoping
-  doc the umbrella + sub-phase plans compress; transient.
+- `docs/plans/scoping/m2-phase-2-4.md` — scoping doc the umbrella
+  + sub-phase plans compressed from (deleted in M2 phase 2.5.3
+  batch deletion; see git history for the pre-deletion content).
 - [`m2-phase-2-4-1-plan.md`](./m2-phase-2-4-1-plan.md) — sub-phase
   2.4.1 plan (add new).
 - [`m2-phase-2-4-2-plan.md`](./m2-phase-2-4-2-plan.md) — sub-phase

@@ -29,11 +29,11 @@ This repository currently includes:
   a successful publish
 - authenticated admin APIs for draft save, publish, and unpublish operations
 - server-generated 3-letter event codes for drafts and published events
-- an authenticated direct-entry redeem route at `/event/:slug/redeem` for
+- an authenticated direct-entry redeem route at `/event/:slug/game/redeem` for
   event agents and root admins, backed by the existing trusted redemption API
   and still intentionally undiscoverable in app navigation
 - an authenticated direct-entry monitoring + reversal route at
-  `/event/:slug/redemptions` for event organizers and root admins,
+  `/event/:slug/game/redemptions` for event organizers and root admins,
   combining dispute verification (bounded list, filters, suffix search,
   detail sheet) with in-sheet reversal through the trusted reverse
   redemption Edge Function, still intentionally undiscoverable in app
@@ -62,9 +62,8 @@ The codebase is intentionally small and split by responsibility:
 
 - `apps/web`
   React attendee and per-event admin experience built with Vite. Owns
-  the event-scoped `/event/:slug/game` and `/event/:slug/admin`
-  namespaces, and the transitional bare-path operator routes
-  `/event/:slug/redeem` and `/event/:slug/redemptions`.
+  the event-scoped `/event/:slug/game/*` and `/event/:slug/admin`
+  namespaces.
 - `apps/site`
   Platform landing, platform admin, auth callback, and public event
   landing pages built with Next.js 16 (App Router, server rendered).

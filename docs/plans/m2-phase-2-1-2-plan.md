@@ -15,9 +15,10 @@ This sub-phase plan flips Status to `Landed` when its implementation
 PR merges. The parent 2.1 plan also flips with this PR — 2.1.2 is the
 terminal sub-phase under the current sequencing.
 
-**Scoping inputs:**
-[`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) for the file
-inventory and contracts walkthrough;
+**Scoping inputs:** the per-phase scoping doc this plan compressed
+from (`docs/plans/scoping/m2-phase-2-1.md`, deleted in M2 phase
+2.5.3 batch deletion — see git history for the pre-deletion
+content);
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
 "Cross-Phase Decisions" for the resolution and rejected alternatives
 behind every cross-phase decision this plan depends on. The parent
@@ -480,11 +481,15 @@ doesn't relitigate them):
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.
-- [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) — scoping
-  doc the parent plan compresses.
-- [`scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md) — the
+- `docs/plans/scoping/m2-phase-2-1.md` — scoping doc the parent
+  plan compressed from (deleted in M2 phase 2.5.3 batch deletion;
+  see git history for the pre-deletion content).
+- `docs/plans/scoping/m2-phase-2-2.md` — scoping doc for the
   consumer phase whose UI is the first user-reachable consumer of
-  this sub-phase's broadening.
+  this sub-phase's broadening (deleted in M2 phase 2.5.3 batch
+  deletion; see git history for the pre-deletion content). The
+  consumer phase plan is
+  [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md).
 - [`docs/self-review-catalog.md`](../self-review-catalog.md) —
   audit name source.
 - [`AGENTS.md`](../../AGENTS.md) — workflow rules, Plan-to-PR

@@ -554,8 +554,10 @@ Sibling files referenced verbatim from 2.3:
 
 1. **Pre-edit gate.** Confirm clean worktree and a feature branch
    (not `main`). Re-read
-   [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella),
-   [`scoping/m2-phase-2-4.md`](./scoping/m2-phase-2-4.md), and 2.3's
+   [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella;
+   the per-phase scoping doc, `docs/plans/scoping/m2-phase-2-4.md`,
+   was deleted in M2 phase 2.5.3 batch deletion — see git history
+   if needed), and 2.3's
    apps/site adapter pair at
    [`apps/site/lib/setupAuth.ts`](../../apps/site/lib/setupAuth.ts) +
    [`apps/site/lib/supabaseBrowser.ts`](../../apps/site/lib/supabaseBrowser.ts)

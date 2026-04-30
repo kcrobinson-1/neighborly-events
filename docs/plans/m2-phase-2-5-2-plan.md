@@ -394,9 +394,9 @@ the post-deploy manual verification captures.
   [`docs/plans/event-platform-epic.md`](./event-platform-epic.md),
   [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md),
   [`docs/plans/m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md),
-  M2 scoping docs under [`scoping/`](./scoping/) — owned by
-  2.5.3 per the umbrella's "Doc currency split across
-  sub-phases."
+  M2 scoping docs (deleted in M2 phase 2.5.3 batch deletion; see
+  git history) — closure work owned by 2.5.3 per the umbrella's
+  "Doc currency split across sub-phases."
 - Production-smoke fixtures at
   [`scripts/testing/run-production-admin-smoke.cjs`](../../scripts/testing/run-production-admin-smoke.cjs)
   and the production-admin-smoke playwright config at
