@@ -128,20 +128,12 @@ prioritization before starting.
   without requiring Supabase Studio access.
   Detail: [`docs/plans/analytics-strategy.md`](./plans/analytics-strategy.md)
 
-- [ ] **`decision` Post-MVP authoring ownership and permission model**
-  Decide whether post-MVP authoring should stay managed
-  (root-admin-created events with manual organizer assignment) or move toward a
-  self-serve model where organizers can create and own their own events. This
-  decision should set the permission-management direction before any broader
-  root-admin or organizer self-service UX is built. Current working posture:
-  keep provisioning manual for now.
-  Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
-
 - [ ] **`ux` Organizer-managed agent assignment**
-  If the post-MVP operating model supports organizer-owned event operations,
-  add a way for an organizer to maintain event agents without requiring manual
-  root-admin SQL edits. Blocked on the broader authoring ownership decision.
-  Detail: [`docs/open-questions.md` — Authoring And Publishing](./open-questions.md)
+  Now that organizers have full event-scoped write access via M2's RLS
+  broadening, add a way for an organizer to maintain event agents without
+  requiring manual root-admin SQL edits. Unblocked by M2 phases 2.1 + 2.1.1
+  + 2.1.2 (organizer authorization across PostgREST + Edge Functions).
+  Detail: [`docs/plans/event-platform-epic.md` — Open Questions Resolved By This Epic](./plans/event-platform-epic.md)
 
 - [ ] **`dev` Richer publish controls**
   Expiry windows, scheduled publish, multiple games per event, and friendlier
@@ -198,6 +190,25 @@ Execute in any order.
   `event_code_data_model.test.sql` and `redemption_data_model.test.sql`. Pure
   rename, behavior-preserving.
   Detail: [`docs/tracking/code-refactor-checklist.md`](./tracking/code-refactor-checklist.md)
+
+- [ ] **`dev` Archive M2 plan docs**
+  M2 closed in phase 2.5.3. Move the 14 M2 plan files
+  (`m2-admin-restructuring.md`, `m2-phase-2-1-plan.md`,
+  `m2-phase-2-1-1-plan.md`, `m2-phase-2-1-2-plan.md`,
+  `m2-phase-2-2-plan.md`, `m2-phase-2-3-plan.md`,
+  `m2-phase-2-4-plan.md`, `m2-phase-2-4-1-plan.md`,
+  `m2-phase-2-4-2-plan.md`, `m2-phase-2-4-3-plan.md`,
+  `m2-phase-2-5-plan.md`, `m2-phase-2-5-1-plan.md`,
+  `m2-phase-2-5-2-plan.md`, `m2-phase-2-5-3-plan.md`) under a
+  `docs/plans/archive/m2/` (or equivalent) tree via `git mv` so
+  history is preserved, then rewrite cross-references from any
+  surviving doc surface that still points into the M2 set
+  (`docs/plans/event-platform-epic.md`, `README.md`, any other
+  doc that names an M2 plan path). Sibling milestones (M0
+  `framework-decision.md`, `site-scaffold-and-routing.md`; M1
+  foundation-extraction plans) are out of scope for this entry —
+  archive them when their respective milestones close.
+  Detail: [`docs/plans/m2-phase-2-5-3-plan.md` — Backlog Impact](./plans/m2-phase-2-5-3-plan.md)
 
 - [ ] **`dev` Stable PR screenshot upload path**
   Add `npm run ui:review:upload` backed by a scriptable durable provider so
