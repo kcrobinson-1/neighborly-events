@@ -98,7 +98,7 @@ type SignedInRedeemFlowProps = {
 };
 
 /**
- * Signed-in redemption experience for `/event/:slug/redeem`.
+ * Signed-in redemption experience for `/event/:slug/game/redeem`.
  *
  * Rendered only while `sessionState.status === "signed_in"`, so signing out
  * unmounts this component and discards its authorization cache. A fresh
@@ -355,7 +355,7 @@ function SignedInRedeemFlow({
   );
 }
 
-/** Event-scoped redemption route shell that gates `/event/:slug/redeem` on sign-in. */
+/** Event-scoped redemption route shell that gates `/event/:slug/game/redeem` on sign-in. */
 export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
   const sessionState = useAuthSession();
   const [emailInput, setEmailInput] = useState("");
@@ -381,7 +381,7 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
     });
 
     try {
-      const nextPath = routes.eventRedeem(slug) as AuthNextPath;
+      const nextPath = routes.gameRedeem(slug) as AuthNextPath;
 
       await requestMagicLink(emailInput, {
         next: nextPath,
