@@ -50,9 +50,7 @@ The main working areas are:
 
 - `apps/web`
   Vite + React SPA. Owns the `/event/:slug/game` and
-  `/event/:slug/admin` namespaces, and the transitional bare-path
-  operator routes `/event/:slug/redeem` and
-  `/event/:slug/redemptions`.
+  `/event/:slug/admin` namespaces.
 - `apps/site`
   Next.js 16 (App Router) public-event and platform-admin surface.
   Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and any other
@@ -795,21 +793,18 @@ the implementing plan is
 In short, the rule precedence inside `apps/web/vercel.json` is:
 
 1. `/event/:slug/game` and `/event/:slug/game/:path*` → `apps/web` SPA
+   (covers `/game/redeem` and `/game/redemptions` operator routes)
 2. `/event/:slug/admin` and `/event/:slug/admin/:path*` → `apps/web` SPA
    (per-event admin shell from M2 phase 2.2)
-3. `/event/:slug/redeem` and `/event/:slug/redemptions` → `apps/web` SPA
-   (transitional; retired by M2 phase 2.5 when these URLs migrate into
-   `/event/:slug/game/*`)
-4. `/event/:slug` and `/event/:slug/:path*` → `apps/site`
-5. `/event/:path*` SPA fallback → `apps/web` (transitional)
-6. `/_next/:path*` → `apps/site` (apps/site asset path resolution)
-7. `/admin` and `/admin/:path*` → `apps/site` (platform admin)
-8. `/auth/callback` and `/` → `apps/site`
+3. `/event/:slug` and `/event/:slug/:path*` → `apps/site`
+4. `/event/:path*` SPA fallback → `apps/web` (transitional)
+5. `/_next/:path*` → `apps/site` (apps/site asset path resolution)
+6. `/admin` and `/admin/:path*` → `apps/site` (platform admin)
+7. `/auth/callback` and `/` → `apps/site`
 
-Most-specific rules must come first. The bare-path operator carve-outs
-(`/event/:slug/redeem` and `/event/:slug/redemptions`) and the rule 5
-fallback are explicitly transitional. M2 plan authors are responsible
-for narrowing them as routes migrate.
+Most-specific rules must come first. The rule 4 SPA fallback is
+explicitly transitional. M2 plan authors are responsible for
+narrowing it as event-scoped routes finalize.
 
 ### Local-dev story for `/auth/callback` e2e fixtures
 

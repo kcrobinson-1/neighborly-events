@@ -27,14 +27,13 @@ The current implementation is:
 
 - two frontend apps deployed as separate Vercel projects from one
   monorepo: `apps/web` (Vite + React SPA, attendee game and per-event
-  admin plus transitional ownership of the bare-path operator routes),
-  and `apps/site` (Next.js 16 App Router, static platform landing,
-  auth callback, platform admin at `/admin*`, and SSR/SSG public event
-  landing pages — event landing remains a placeholder until M3 of the
-  Event Platform Epic). `apps/web` is the primary Vercel project owning
-  the production custom domain; cross-app routing is implemented as
-  proxy-rewrites in `apps/web/vercel.json` and is **transitional**
-  until M2 inverts the URL ownership balance
+  admin), and `apps/site` (Next.js 16 App Router, static platform
+  landing, auth callback, platform admin at `/admin*`, and SSR/SSG
+  public event landing pages — event landing remains a placeholder
+  until M3 of the Event Platform Epic). `apps/web` is the primary
+  Vercel project owning the production custom domain; cross-app routing
+  is implemented as proxy-rewrites in `apps/web/vercel.json` and is
+  **transitional** until M2 inverts the URL ownership balance
 - a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
 - private authoring draft, version, and event-role-assignment tables
@@ -58,9 +57,7 @@ Keep the game interaction local and fast, but make the completion state backend-
 
 - `apps/web`
   The attendee-facing Vite + React single-page application. Owns the
-  `/event/:slug/game` and `/event/:slug/admin` namespaces and the
-  transitional bare-path operator routes `/event/:slug/redeem` and
-  `/event/:slug/redemptions`.
+  `/event/:slug/game` and `/event/:slug/admin` namespaces.
 - `apps/site`
   The Next.js 16 App Router app for the platform landing, auth
   callback, platform admin, and public event landing pages. Owns `/`,
@@ -892,29 +889,26 @@ order ("first match wins"), so most-specific rules must come first.
 | # | Path pattern | Destination | Lifetime |
 | --- | --- | --- | --- |
 | 1 | `/event/:slug/game` | `apps/web` SPA | Permanent (event-scoped) |
-| 2 | `/event/:slug/game/:path*` | `apps/web` SPA | Permanent (event-scoped) |
+| 2 | `/event/:slug/game/:path*` | `apps/web` SPA | Permanent (event-scoped); covers `/game/redeem` and `/game/redemptions` operator routes |
 | 3 | `/event/:slug/admin` | `apps/web` SPA | Permanent (event-scoped); per-event admin shell |
 | 4 | `/event/:slug/admin/:path*` | `apps/web` SPA | Permanent (event-scoped) |
-| 5 | `/event/:slug/redeem` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redeem`) |
-| 6 | `/event/:slug/redemptions` | `apps/web` SPA | Transitional; retired by M2 phase 2.5 (URL moves to `/event/:slug/game/redemptions`) |
-| 7 | `/event/:slug` | `apps/site` Vercel project | Permanent (placeholder in 0.3; real landing page in M3) |
-| 8 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
-| 9 | `/event/:path*` (SPA fallback) | `apps/web` SPA | Transitional; narrows as event-scoped routes finalize |
-| 10 | `/_next/:path*` | `apps/site` Vercel project | Permanent; covers apps/site asset path resolution |
-| 11 | `/admin` | `apps/site` Vercel project | Permanent (platform admin) |
-| 12 | `/admin/:path*` | `apps/site` Vercel project | Permanent (platform admin) |
-| 13 | `/auth/callback` | `apps/site` Vercel project | Permanent auth callback route |
-| 14 | `/` | `apps/site` Vercel project | Platform landing |
+| 5 | `/event/:slug` | `apps/site` Vercel project | Permanent (placeholder in 0.3; real landing page in M3) |
+| 6 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
+| 7 | `/event/:path*` (SPA fallback) | `apps/web` SPA | Transitional; narrows as event-scoped routes finalize |
+| 8 | `/_next/:path*` | `apps/site` Vercel project | Permanent; covers apps/site asset path resolution |
+| 9 | `/admin` | `apps/site` Vercel project | Permanent (platform admin) |
+| 10 | `/admin/:path*` | `apps/site` Vercel project | Permanent (platform admin) |
+| 11 | `/auth/callback` | `apps/site` Vercel project | Permanent auth callback route |
+| 12 | `/` | `apps/site` Vercel project | Platform landing |
 
-The cross-app destinations (rules 7, 8, 10, 11, 12, 13, and 14) point
+The cross-app destinations (rules 5, 6, 8, 9, 10, 11, and 12) point
 at the production alias of the `apps/site` Vercel project via
 Vercel's path-rewrite-to-URL syntax. Whether `apps/site` later
 becomes the primary Vercel project (owning the custom domain) is a
 routing-config decision belonging to M2 plan authors.
 
-The bare-path operator carve-outs (rules 5–6) and the rule 9
-fallback are explicitly transitional. M2 plan authors are responsible
-for narrowing them as routes migrate.
+The rule 7 SPA fallback is explicitly transitional. M2 plan authors
+are responsible for narrowing it as event-scoped routes finalize.
 
 The current deployment discipline is simpler:
 

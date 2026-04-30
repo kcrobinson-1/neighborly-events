@@ -31,10 +31,22 @@ describe("auth e2e dev server routing", () => {
     expect(isSiteRequest("/admin/events/sample")).toBe(true);
   });
 
-  it("leaves event-scoped paths on apps/web", () => {
-    expect(isSiteRequest("/event/first-sample/redeem")).toBe(false);
-    expect(isSiteRequest("/event/first-sample/redemptions")).toBe(false);
+  it("leaves apps/web event-scoped carve-outs on apps/web", () => {
     expect(isSiteRequest("/event/first-sample/game")).toBe(false);
+    expect(isSiteRequest("/event/first-sample/game/redeem")).toBe(false);
+    expect(isSiteRequest("/event/first-sample/game/redemptions")).toBe(false);
+    expect(isSiteRequest("/event/first-sample/game/intro")).toBe(false);
+    expect(isSiteRequest("/event/first-sample/game?utm=test")).toBe(false);
     expect(isSiteRequest("/event/first-sample/admin")).toBe(false);
+    expect(isSiteRequest("/event/first-sample/admin/events/sample")).toBe(false);
+    expect(isSiteRequest("/event/first-sample/admin?from=signin")).toBe(false);
+  });
+
+  it("routes retired bare event-scoped paths to apps/site", () => {
+    expect(isSiteRequest("/event/first-sample/redeem")).toBe(true);
+    expect(isSiteRequest("/event/first-sample/redemptions")).toBe(true);
+    expect(isSiteRequest("/event/first-sample")).toBe(true);
+    expect(isSiteRequest("/event/first-sample/landing")).toBe(true);
+    expect(isSiteRequest("/event/first-sample?utm=test")).toBe(true);
   });
 });

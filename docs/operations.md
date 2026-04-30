@@ -172,8 +172,8 @@ Why manual for now:
   - deployed `<origin>/auth/callback` redirect URL
   - a single entry per environment — every authenticated route returns
     through `/auth/callback?next=…` (`/admin`, `/event/:slug/game`,
-    `/event/:slug/admin`, `/event/:slug/redeem`, and
-    `/event/:slug/redemptions`)
+    `/event/:slug/admin`, `/event/:slug/game/redeem`, and
+    `/event/:slug/game/redemptions`)
 - operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 

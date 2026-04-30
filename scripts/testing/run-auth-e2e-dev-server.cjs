@@ -44,6 +44,22 @@ function shutdown(code = 0) {
   setTimeout(() => process.exit(code), 2_000).unref();
 }
 
+function isEventCarveOut(url) {
+  if (!url.startsWith("/event/")) return false;
+  const afterEvent = url.slice("/event/".length);
+  const slashIdx = afterEvent.indexOf("/");
+  if (slashIdx === -1) return false;
+  const restAfterSlug = afterEvent.slice(slashIdx);
+  return (
+    restAfterSlug === "/game" ||
+    restAfterSlug.startsWith("/game/") ||
+    restAfterSlug.startsWith("/game?") ||
+    restAfterSlug === "/admin" ||
+    restAfterSlug.startsWith("/admin/") ||
+    restAfterSlug.startsWith("/admin?")
+  );
+}
+
 function isSiteRequest(url) {
   return (
     url === "/" ||
@@ -54,7 +70,8 @@ function isSiteRequest(url) {
     url.startsWith("/__nextjs") ||
     url === "/admin" ||
     url.startsWith("/admin?") ||
-    url.startsWith("/admin/")
+    url.startsWith("/admin/") ||
+    (url.startsWith("/event/") && !isEventCarveOut(url))
   );
 }
 
