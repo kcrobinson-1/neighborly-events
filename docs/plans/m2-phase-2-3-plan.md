@@ -116,9 +116,10 @@ Planning Sessions." The work is also tightly coupled — flipping the
 Vercel proxy and deleting apps/web's route handlers must happen in the
 same change to avoid a broken intermediate state.
 
-**Scoping inputs:**
-[`scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md) for the file
-inventory and cross-app contracts walkthrough;
+**Scoping inputs:** the per-phase scoping doc this plan compressed
+from (`docs/plans/scoping/m2-phase-2-3.md`, deleted in M2 phase
+2.5.3 batch deletion — see git history for the pre-deletion file
+inventory and cross-app contracts walkthrough);
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) "Cross-Phase
 Decisions" §3 (apps/site auth idiom + bootstrap seam), §4 (local auth
 e2e proxy story), §5 (subsume landing shape), and "Settled by default"
@@ -740,11 +741,12 @@ epic-level invariants apply:
 ## Execution steps
 
 1. **Pre-edit gate.** Confirm clean worktree and a feature branch
-   (not `main`). Re-read
-   [`scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md),
+   (not `main`). Re-read this plan, then
    [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
-   "Cross-Phase Decisions" §3-5, and the M1 phase 1.3.2
-   cookie-boundary verification record in
+   "Cross-Phase Decisions" §3-5 (the per-phase scoping doc that
+   fed this plan, `docs/plans/scoping/m2-phase-2-3.md`, was deleted
+   in M2 phase 2.5.3 batch deletion — see git history if needed),
+   and the M1 phase 1.3.2 cookie-boundary verification record in
    [`docs/plans/shared-auth-foundation.md`](./shared-auth-foundation.md)
    so the post-deploy verification step has a precedent to follow.
 2. **Baseline validation.** Run `npm run lint`, `npm test`,
@@ -1574,10 +1576,9 @@ resolution path so reviewer attention does not relitigate them.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions §3-5 + Settled by default
   drive every resolved decision this plan consumes.
-- [`scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md) — scoping
-  doc this plan compresses; transient (deletes in batch with the
-  full M2 plan set per the milestone doc's "Output set"
-  paragraph).
+- `docs/plans/scoping/m2-phase-2-3.md` — scoping doc this plan
+  compressed from (deleted in M2 phase 2.5.3 batch deletion; see
+  git history for the pre-deletion content).
 - [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md) — sibling
   Landed plan; structural template for this plan (Status, Goal,
   Cross-Cutting Invariants, Files-to-touch, Execution steps,

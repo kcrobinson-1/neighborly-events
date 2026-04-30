@@ -118,10 +118,11 @@ M2 phase 2.3
 ([`scripts/testing/run-auth-e2e-dev-server.cjs:47-59`](../../scripts/testing/run-auth-e2e-dev-server.cjs#L47))
 is the fixture-side surface 2.5.2 widens.
 
-**Scoping inputs:**
-[`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md) for the
-single-PR file inventory and contracts walkthrough (transient;
-deletes in 2.5.3's batch deletion);
+**Scoping inputs:** the per-phase scoping doc this umbrella + its
+sub-phase plans compressed from
+(`docs/plans/scoping/m2-phase-2-5.md`, deleted in 2.5.3's batch
+deletion — see git history for the pre-deletion file inventory
+and contracts walkthrough);
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
 "Cross-Phase Decisions" "Settled by default" entries (cross-app
 smoke for bare-path retirement: defer to apps/site's ordinary
@@ -576,75 +577,30 @@ Doc edits distribute across sub-phases per
   (umbrella Plan link landed at draft time per the milestone
   doc's "Each row updates as the phase's plan drafts" rule); the
   `Landed` Status + PR link land in 2.5.3.
-- **Scoping doc batch deletion** lands in 2.5.3 per the milestone
+- **Scoping doc batch deletion** landed in 2.5.3 per the milestone
   doc's "Phase Status" rule ("delete in batch when the milestone's
-  full set of plans exists"). The five docs delete:
-  [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) through
-  [`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md). The
-  milestone doc's stated reason for batch deletion is
-  "this doc absorbing their durable cross-phase content" — i.e.,
-  the deletion is correct only if every durable cross-phase claim
-  the scoping docs held has been pulled into a surviving
-  surface. **This means the deletion is a doc-currency action,
-  not a file-system action: it has a link-rewrite contract
-  attached.**
+  full set of plans exists"). All five scoping docs deleted —
+  `docs/plans/scoping/m2-phase-2-1.md` through
+  `docs/plans/scoping/m2-phase-2-5.md`. See git history for the
+  pre-deletion content.
 
-  **Pre-deletion link-rewrite contract.** Before any scoping
-  doc deletes in 2.5.3, every surviving link to it from any
-  surface — the M2 plan-doc family (each plan's "Scoping
-  inputs:" preamble, in-text cross-decision citations, Related
-  Docs entries — survey at draft time across
-  `m2-phase-2-1-plan.md` through `m2-phase-2-5-plan.md` and the
-  sub-phase plan files), the milestone doc itself
-  ([`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
-  Phase Status notice + Related Docs entry), and any non-plan
-  doc surface a draft-time grep surfaces — must be rewritten to
-  one of three durable targets:
-
-  1. **A milestone-doc section** when the linked claim has been
-     absorbed into [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
-     (Cross-Phase Decisions, Cross-Phase Invariants,
-     Cross-Phase Risks). Most "Scoping inputs:" preamble
-     references and cross-decision citations land here because
-     the milestone doc owns the durable cross-phase narrative
-     by design.
-  2. **A sibling plan-doc section** when the linked claim was
-     specific to one phase and the relevant plan now owns the
-     durable contract.
-  3. **A plain-text path reference (no link) with explanatory
-     prose** when the linked content was draft-time scaffolding
-     that the consuming plan has fully absorbed and no
-     surviving doc owns it. Example replacement language:
-     "the scoping doc this plan compressed from (deleted in M2
-     phase 2.5.3 batch deletion per the
-     [milestone doc's batch-deletion rule](./m2-admin-restructuring.md)
-     — see git history for the pre-deletion content)."
-
-  **Why the link-rewrite contract matters.** The milestone
-  doc's batch-deletion rule exists to prevent doc state from
-  diverging across redundant surfaces (scoping doc + plan doc
-  + milestone doc all describing the same cross-phase contract
-  drift independently); it does not exist to create permission
-  to leave broken links in durable docs. Broken links in
-  durable docs are themselves doc-state divergence (the link
-  asserts the target exists; deleting the target without
-  rewriting the link makes the assertion false). Treating the
-  rewrite as "busywork without protective value" — as an
-  earlier draft of this contract proposed — was wrong: the
-  protective value is exactly the discipline of confirming
-  every absorbed claim has a surviving home before the source
-  deletes. If a claim has no surviving home, the rewrite step
-  surfaces it and forces an explicit decision (absorb into the
-  milestone doc, absorb into a plan, or accept the loss with
-  prose acknowledgement) instead of letting it disappear
-  silently behind a 404.
-
-  **Sequencing.** 2.5.3's pre-deletion grep
-  (`grep -rn "scoping/m2-phase-2-" --include="*.md"
-  --exclude-dir=archive .`) lists every link to rewrite. The
-  rewrite commit must precede the deletion commit so every
-  intermediate tip leaves no broken link. The milestone doc's
-  own two references update in the same rewrite commit.
+  **Link-rewrite contract satisfied.** The original umbrella
+  contract required every surviving scoping-doc link to rewrite
+  to a durable target before deletion (option 1: milestone-doc
+  Cross-Phase Decisions / Invariants / Risks section; option 2:
+  sibling plan-doc section; option 3: plain-text path reference
+  with explanatory prose pointing at git history). 2.5.3 biased
+  every rewrite toward option 3 because the M2 plan-doc set is
+  itself headed for archive (tracked as a `dev`-tag entry in
+  [`docs/backlog.md`](../backlog.md) "Archive M2 plan docs"); a
+  follow-up PR moves the entire M2 plan-doc set under a
+  `docs/plans/archive/m2/` (or equivalent) tree, so option-1
+  rewrites pointing at milestone-doc sections would re-resolve
+  in that follow-up anyway. Option 3 is durable across the
+  archive move because git history is the rewrite target, not a
+  path that changes. Option 3 also satisfies the umbrella's
+  "every absorbed claim has a surviving home before the source
+  deletes" protective check — git history is the surviving home.
 
 ## Related Docs
 
@@ -653,17 +609,16 @@ Doc edits distribute across sub-phases per
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
   M2 milestone doc; Phase Status row for 2.5 + top-level Status
   flip to `Landed` in 2.5.3.
-- [`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md) —
-  scoping doc the umbrella + sub-phase plans compress; transient,
-  deletes in 2.5.3's batch.
+- `docs/plans/scoping/m2-phase-2-5.md` — scoping doc the umbrella
+  + sub-phase plans compressed from (deleted in 2.5.3's batch
+  deletion; see git history for the pre-deletion content).
 - [`m2-phase-2-5-1-plan.md`](./m2-phase-2-5-1-plan.md) — sub-phase
   2.5.1 plan (code rename + tests + dashboard allow-list audit).
-- 2.5.2 sub-phase plan (vercel cutover + local proxy + URL-shape
-  doc currency) — drafts after 2.5.1 lands; will live at
-  `m2-phase-2-5-2-plan.md`.
-- 2.5.3 sub-phase plan (doc cleanup + M2 closure + scoping batch
-  delete) — drafts after 2.5.2 lands and its post-deploy
-  verification passes; will live at `m2-phase-2-5-3-plan.md`.
+- [`m2-phase-2-5-2-plan.md`](./m2-phase-2-5-2-plan.md) — sub-phase
+  2.5.2 plan (vercel cutover + local proxy + URL-shape doc
+  currency).
+- [`m2-phase-2-5-3-plan.md`](./m2-phase-2-5-3-plan.md) — sub-phase
+  2.5.3 plan (doc cleanup + M2 closure + scoping batch delete).
 - [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
   [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md),
   [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md),

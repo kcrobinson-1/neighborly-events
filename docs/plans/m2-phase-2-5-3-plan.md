@@ -410,16 +410,17 @@ forward-looking constraint. Verified by:
 batch per the milestone doc's batch-deletion rule
 ([`m2-admin-restructuring.md:55-60`](./m2-admin-restructuring.md#L55)):
 
-- [`docs/plans/scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md)
-- [`docs/plans/scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md)
-- [`docs/plans/scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md)
-- [`docs/plans/scoping/m2-phase-2-4.md`](./scoping/m2-phase-2-4.md)
-- [`docs/plans/scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md)
+- `docs/plans/scoping/m2-phase-2-1.md`
+- `docs/plans/scoping/m2-phase-2-2.md`
+- `docs/plans/scoping/m2-phase-2-3.md`
+- `docs/plans/scoping/m2-phase-2-4.md`
+- `docs/plans/scoping/m2-phase-2-5.md`
 
 The deletions land in a commit that comes **after** the
 link-rewrite commit so every intermediate tip leaves no broken
-link. Verified by: filesystem listing under
-[`docs/plans/scoping/`](./scoping/).
+link. Plain-text paths above (no clickable link) avoid creating
+broken links inside this plan once the targets delete. See git
+history for the pre-deletion content of any of the five.
 
 **Link-rewrite inventory.** Per the umbrella's link-rewrite
 contract
@@ -508,11 +509,11 @@ doc-only against an already-verified cutover).
 
 ### Delete (M2 scoping docs)
 
-- [`docs/plans/scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md)
-- [`docs/plans/scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md)
-- [`docs/plans/scoping/m2-phase-2-3.md`](./scoping/m2-phase-2-3.md)
-- [`docs/plans/scoping/m2-phase-2-4.md`](./scoping/m2-phase-2-4.md)
-- [`docs/plans/scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md)
+- `docs/plans/scoping/m2-phase-2-1.md`
+- `docs/plans/scoping/m2-phase-2-2.md`
+- `docs/plans/scoping/m2-phase-2-3.md`
+- `docs/plans/scoping/m2-phase-2-4.md`
+- `docs/plans/scoping/m2-phase-2-5.md`
 
 ### Files intentionally not touched
 

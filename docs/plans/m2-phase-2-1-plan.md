@@ -30,11 +30,13 @@ sub-phases; each sub-phase plan owns its own per-PR slicing record.
 The epic's M2 row flip is owned by the last-merging M2 phase (2.5
 under the current sequencing), not by this PR.
 
-**Scoping inputs:** [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md)
-for the file inventory and contracts walkthrough;
-[`m2-admin-restructuring.md`](./m2-admin-restructuring.md) "Cross-Phase
-Decisions" for the resolution and rejected alternatives behind every
-cross-phase decision this plan depends on.
+**Scoping inputs:** the per-phase scoping doc this plan compressed
+from (`docs/plans/scoping/m2-phase-2-1.md`, deleted in M2 phase
+2.5.3 batch deletion — see git history for the pre-deletion
+content); [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+"Cross-Phase Decisions" for the resolution and rejected
+alternatives behind every cross-phase decision this plan depends
+on.
 
 ## Goal
 
@@ -308,9 +310,10 @@ this phase consumes them and adds no new helper variant.
 - [`supabase/functions/generate-event-code/index.ts`](../../supabase/functions/generate-event-code/index.ts)
   — same swap. The shared client signature for `generateEventCode`
   gains an `eventId` parameter; the apps/web call site already has
-  the id in scope, so the change is mechanical (per
-  [`scoping/m2-phase-2-4.md`](./scoping/m2-phase-2-4.md) Resolved
-  Decisions).
+  the id in scope, so the change is mechanical (per the M2 phase
+  2.4 scoping doc's Resolved Decisions —
+  `docs/plans/scoping/m2-phase-2-4.md`, deleted in M2 phase 2.5.3
+  batch deletion; see git history for the pre-deletion content).
 - [`docs/architecture.md`](../architecture.md) — "Backend Structure",
   "What Is Implemented Now", and "Current Backend Surface" sections
   describe organizer write capability and the broadened authoring-
@@ -653,10 +656,14 @@ resolution path so reviewer attention does not relitigate them.
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
   M2 milestone doc; cross-phase decisions, sequencing, invariants.
-- [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) — scoping
-  doc this plan compresses.
-- [`scoping/m2-phase-2-2.md`](./scoping/m2-phase-2-2.md) — the
-  consumer phase whose UI relies on this broadening.
+- `docs/plans/scoping/m2-phase-2-1.md` — scoping doc this plan
+  compressed from (deleted in M2 phase 2.5.3 batch deletion; see
+  git history for the pre-deletion content).
+- `docs/plans/scoping/m2-phase-2-2.md` — scoping doc for the
+  consumer phase whose UI relied on this broadening (deleted in
+  M2 phase 2.5.3 batch deletion; see git history for the
+  pre-deletion content). The consumer phase plan is
+  [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md).
 - [`docs/self-review-catalog.md`](../self-review-catalog.md) —
   audit name source.
 - [`AGENTS.md`](../../AGENTS.md) — workflow rules, Plan-to-PR

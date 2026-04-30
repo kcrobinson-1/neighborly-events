@@ -52,12 +52,13 @@ cutover, 2.5.3 cleanup + M2 closure) under the umbrella plan
 linked above; 2.5.3's PR also flips the epic's M2 row to `Landed`
 per the sequencing below.
 
-Per-phase scoping docs at
-[`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) through
-[`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md) are
-transient. They delete in batch (with this doc absorbing their
-durable cross-phase content) when all five M2 plans exist; the
-deletion lands in the 2.5 PR or a focused cleanup PR.
+Per-phase scoping docs at `docs/plans/scoping/m2-phase-2-1.md`
+through `docs/plans/scoping/m2-phase-2-5.md` deleted in batch in
+M2 phase 2.5.3 (all five M2 plans existed at that point; the
+durable cross-phase content this doc absorbs lives in
+"Cross-Phase Decisions," "Cross-Phase Invariants," and
+"Cross-Phase Risks" below). See git history for the pre-deletion
+content.
 
 ## Sequencing
 
@@ -690,12 +691,24 @@ the named phase; M2 is not complete until all are landed.
 
 - [event-platform-epic.md](./event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
-- [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md) — 2.1 plan.
-- 2.2-2.5 plan docs — drafted just-in-time before each phase
-  implements.
-- [scoping/m2-phase-2-1.md](./scoping/m2-phase-2-1.md) through
-  [scoping/m2-phase-2-5.md](./scoping/m2-phase-2-5.md) — transient
-  scoping docs; delete in batch when all five M2 plans exist.
+- [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md),
+  [m2-phase-2-1-1-plan.md](./m2-phase-2-1-1-plan.md),
+  [m2-phase-2-1-2-plan.md](./m2-phase-2-1-2-plan.md),
+  [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md),
+  [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md),
+  [m2-phase-2-4-plan.md](./m2-phase-2-4-plan.md),
+  [m2-phase-2-4-1-plan.md](./m2-phase-2-4-1-plan.md),
+  [m2-phase-2-4-2-plan.md](./m2-phase-2-4-2-plan.md),
+  [m2-phase-2-4-3-plan.md](./m2-phase-2-4-3-plan.md),
+  [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md),
+  [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md),
+  [m2-phase-2-5-2-plan.md](./m2-phase-2-5-2-plan.md),
+  [m2-phase-2-5-3-plan.md](./m2-phase-2-5-3-plan.md) — per-phase
+  plans.
+- `docs/plans/scoping/m2-phase-2-1.md` through
+  `docs/plans/scoping/m2-phase-2-5.md` — transient scoping docs
+  deleted in batch by M2 phase 2.5.3 (see git history for the
+  pre-deletion content).
 - [docs/self-review-catalog.md](../self-review-catalog.md) — audit
   name source for per-phase Self-Review Audits sections.
 - [AGENTS.md](../../AGENTS.md) — workflow rules, Plan-to-PR
