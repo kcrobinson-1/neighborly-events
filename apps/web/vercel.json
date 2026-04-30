@@ -17,14 +17,6 @@
       "destination": "/index.html"
     },
     {
-      "source": "/event/:slug/redeem",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/event/:slug/redemptions",
-      "destination": "/index.html"
-    },
-    {
       "source": "/event/:slug",
       "destination": "https://neighborly-events-site.vercel.app/event/:slug"
     },
