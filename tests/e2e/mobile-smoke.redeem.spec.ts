@@ -15,13 +15,13 @@ test("redeems an event-scoped code through the mobile operator route", async ({ 
   const fixture = await ensureRedeemE2eFixture();
   await installRedeemFunctionProxy(page);
 
-  await page.goto(`/event/${fixture.eventSlug}/redeem`, { waitUntil: "networkidle" });
+  await page.goto(`/event/${fixture.eventSlug}/game/redeem`, { waitUntil: "networkidle" });
   await expect(
     page.getByRole("heading", { name: "Sign in to redeem codes" }),
   ).toBeVisible();
 
   await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });
-  await expect(page).toHaveURL(new RegExp(`/event/${fixture.eventSlug}/redeem$`));
+  await expect(page).toHaveURL(new RegExp(`/event/${fixture.eventSlug}/game/redeem$`));
   await expect(page.getByLabel("Code preview")).toHaveText(`${fixture.eventCode}••••`);
 
   await enterSuffix(page, fixture.redeemSuffix);

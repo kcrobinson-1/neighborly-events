@@ -9,7 +9,7 @@ test("loads the monitoring list, narrows via chip + search, and opens the detail
 }) => {
   const fixture = await ensureRedemptionsE2eFixture();
 
-  await page.goto(`/event/${fixture.eventSlug}/redemptions`, {
+  await page.goto(`/event/${fixture.eventSlug}/game/redemptions`, {
     waitUntil: "networkidle",
   });
   await expect(
@@ -18,7 +18,7 @@ test("loads the monitoring list, narrows via chip + search, and opens the detail
 
   await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(
-    new RegExp(`/event/${fixture.eventSlug}/redemptions$`),
+    new RegExp(`/event/${fixture.eventSlug}/game/redemptions$`),
   );
 
   // Authorized list renders all three seeded rows (redeemed×2, reversed×1).
@@ -74,7 +74,7 @@ test("organizer reverses a redeemed row from the detail sheet end to end", async
 
   await page.goto(fixture.magicLinkUrl, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(
-    new RegExp(`/event/${fixture.eventSlug}/redemptions$`),
+    new RegExp(`/event/${fixture.eventSlug}/game/redemptions$`),
   );
 
   // Narrow to the row we will reverse so the first matching View details

@@ -83,27 +83,27 @@ describe("validateNextPath", () => {
     });
 
     it("accepts an attendee redeem route", () => {
-      expect(validateNextPath("/event/some-slug/redeem")).toBe(
-        "/event/some-slug/redeem",
+      expect(validateNextPath("/event/some-slug/game/redeem")).toBe(
+        "/event/some-slug/game/redeem",
       );
     });
 
     it("accepts a URL-encoded redeem route", () => {
       expect(
-        validateNextPath("/event/slug%20with%20spaces/redeem"),
-      ).toBe("/event/slug%20with%20spaces/redeem");
+        validateNextPath("/event/slug%20with%20spaces/game/redeem"),
+      ).toBe("/event/slug%20with%20spaces/game/redeem");
     });
 
     it("accepts an organizer redemptions monitoring route", () => {
-      expect(validateNextPath("/event/some-slug/redemptions")).toBe(
-        "/event/some-slug/redemptions",
+      expect(validateNextPath("/event/some-slug/game/redemptions")).toBe(
+        "/event/some-slug/game/redemptions",
       );
     });
 
     it("accepts a URL-encoded redemptions route", () => {
       expect(
-        validateNextPath("/event/slug%20with%20spaces/redemptions"),
-      ).toBe("/event/slug%20with%20spaces/redemptions");
+        validateNextPath("/event/slug%20with%20spaces/game/redemptions"),
+      ).toBe("/event/slug%20with%20spaces/game/redemptions");
     });
 
     it("drops the query string and round-trips the pathname", () => {
