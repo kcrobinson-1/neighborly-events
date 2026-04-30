@@ -2,7 +2,71 @@
 
 ## Status
 
-In progress pending deployed-origin verification.
+Landed. The implementing PR
+([#131](https://github.com/kcrobinson-1/neighborly-events/pull/131))
+shipped with Status `In progress pending deployed-origin verification`;
+this doc-only commit records the post-deploy verification evidence and
+flips Status to `Landed`.
+
+### Deployed-origin verification evidence
+
+Manual deployed-origin shell-fingerprint check run against
+`https://neighborly-scavenger-game-web.vercel.app` on 2026-04-30
+post-deploy. Both branches of the load-bearing claim hold:
+
+The verification ran two commands per URL: `curl -sI <url>` for
+the response-header fingerprint (Vercel routing-layer signals
+that are HEAD-visible: `x-matched-path`, `content-disposition`,
+status code) followed by `curl -s <url> | grep -oE
+"_next/static|src=\"/assets/"` for the response-body fingerprint
+(bundle markers that only appear in a GET response body, not in
+HEAD output). Both signals must agree to count as proof on
+either side; a mismatch (e.g., apps/site headers but apps/web
+body markers, or vice versa) would have indicated a partial
+proxy regression and failed the check.
+
+- **Retired bare paths reach apps/site's unknown-route response.**
+  `curl -sI` of `/event/production-smoke-event/redeem` and
+  `/event/production-smoke-event/redemptions` both return HTTP
+  404 with `content-disposition: inline; filename="404"` and
+  `x-matched-path: /404` — the apps/site Next.js routing-layer
+  fingerprint. `curl -s` of the same URLs piped through the grep
+  above shows `_next/static` references in the HTML body — the
+  apps/site bundle marker. Confirms the cross-app
+  `/event/:slug/:path*` rule (post-cutover rule 6) catches the
+  bare paths and proxies them to apps/site, where the Next.js
+  unknown-route response handles them per the umbrella's "No
+  backward-compat redirect" invariant and the
+  [milestone doc](./m2-admin-restructuring.md) "Settled by
+  default" decision.
+- **New operator URLs reach apps/web's operator pages.**
+  `curl -sI` of `/event/production-smoke-event/game/redeem` and
+  `/event/production-smoke-event/game/redemptions` both return
+  HTTP 200 with `content-disposition: inline; filename="index.html"`
+  — apps/web's Vite SPA shell served by the rule 2
+  `/event/:slug/game/:path*` carve-out. `curl -s` of the same
+  URLs piped through the grep above shows `src="/assets/`
+  references in the HTML body — the apps/web Vite bundle marker.
+  Confirms the rule-ordering invariant: the apps/web carve-outs
+  match before the cross-app rule, so `/game/redeem` and
+  `/game/redemptions` reach apps/web rather than getting proxied
+  to apps/site.
+
+The combined shell-fingerprint discriminator (apps/site
+`_next/static` + `x-matched-path` vs. apps/web `src="/assets/` +
+`filename="index.html"`) distinguished the desired signal from
+every plausible failure mode, per the plan's Validation Gate
+falsifier discipline. A misorder would have surfaced as an
+apps/web shell on the bare paths or an apps/site shell on the new
+operator URLs; neither was observed.
+
+The release smoke run that paired with this deploy passed
+([`Production Admin Smoke`](../../scripts/testing/run-production-admin-smoke.cjs)),
+confirming the cutover did not regress the apps/web `/admin`
+auth-flow path that runs through the same `vercel.json`. 2.5's
+phase footprint is independent of the smoke fixture by design (per
+the umbrella's Status section), so the smoke pass is a
+no-regression signal rather than a load-bearing verifier.
 
 Sub-phase of M2 phase 2.5 — see
 [`m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md) (umbrella) for the
@@ -404,16 +468,21 @@ the post-deploy manual verification captures.
    carve-out routing.
 8. **Local apps/web smoke through the auth-e2e proxy.** Optional
    sanity confirmation: with the auth-e2e dev-server running,
-   curl the bare paths
-   (`curl -sI "http://127.0.0.1:4173/event/first-sample/redeem"`,
-   `curl -sI "http://127.0.0.1:4173/event/first-sample/redemptions"`)
-   and confirm the response shell matches apps/site (Next.js
-   headers, not the Vite SPA shell). curl the new operator
+   curl the bare paths and confirm the response matches apps/site
+   on both sides of the discriminator — `curl -sI
+   "http://127.0.0.1:4173/event/first-sample/redeem"` for the
+   header fingerprint (Next.js routing-layer signals, not the Vite
+   SPA shell), then `curl -s
+   "http://127.0.0.1:4173/event/first-sample/redeem" | grep -oE
+   "_next/static|src=\"/assets/"` for the body fingerprint
+   (`_next/static` markers, not `src="/assets/`). Repeat for
+   `/event/first-sample/redemptions`. Then curl the new operator
    URLs (`/event/first-sample/game/redeem`,
-   `/event/first-sample/game/redemptions`) and confirm the
-   response shell matches apps/web. This is local-only
-   confirmation; the load-bearing observation runs against the
-   deployed Vercel routing layer in step 11.
+   `/event/first-sample/game/redemptions`) the same way and
+   confirm the response matches apps/web on both sides
+   (`filename="index.html"` headers + `src="/assets/` body). This
+   is local-only confirmation; the load-bearing observation runs
+   against the deployed Vercel routing layer in step 11.
 9. **Validation re-run.** All baseline commands from step 2 must
    pass.
 10. **Code-review feedback loop.** Walk the diff against every
@@ -483,21 +552,30 @@ the post-deploy manual verification captures.
   load-bearing for the local proxy widening: the wrappers
   exercise the post-cutover carve-out routing through the local
   proxy, and a regression in the proxy edit fails them.
-- **Manual: deployed-origin verification (post-deploy).** Curl
-  the production apps/web origin against the bare paths
-  (`/event/<seeded-slug>/redeem`,
-  `/event/<seeded-slug>/redemptions`) and confirm the response
-  shell matches apps/site's unknown-route response (Next.js
-  headers, apps/site's `/event/:slug` placeholder shell, or the
-  apps/site catch-all 404 — whichever apps/site emits today for
-  unrecognized event-scoped paths). Curl the new operator URLs
+- **Manual: deployed-origin verification (post-deploy).** Run
+  two curl invocations per URL — `curl -sI <url>` for the
+  response headers (`x-matched-path`, `content-disposition`,
+  status) and `curl -s <url> | grep -oE
+  "_next/static|src=\"/assets/"` for the response-body bundle
+  markers — because HEAD responses do not include the body and
+  GET responses provide both. The headers-only and body-only
+  signals must agree on each URL. Run the pair against the bare
+  paths (`/event/<seeded-slug>/redeem`,
+  `/event/<seeded-slug>/redemptions`) and confirm both signals
+  match apps/site's unknown-route response (Next.js routing-
+  layer headers including `x-matched-path`; `_next/static`
+  references in the body — apps/site's `/event/:slug`
+  placeholder shell, or the apps/site catch-all 404, whichever
+  apps/site emits today for unrecognized event-scoped paths).
+  Run the same pair against the new operator URLs
   (`/event/<seeded-slug>/game/redeem`,
-  `/event/<seeded-slug>/game/redemptions`) and confirm the
-  response shell matches apps/web's operator pages (Vite SPA
-  shell, apps/web HTML structure). This is the load-bearing
-  post-deploy check and the load-bearing reason this plan
-  ships under the two-phase Status pattern. Failure at either
-  side is a deployment-blocking issue.
+  `/event/<seeded-slug>/game/redemptions`) and confirm both
+  signals match apps/web's operator pages
+  (`content-disposition: filename="index.html"` headers;
+  `src="/assets/` references in the body — Vite SPA shell). This
+  is the load-bearing post-deploy check and the load-bearing
+  reason this plan ships under the two-phase Status pattern.
+  Failure on either signal is a deployment-blocking issue.
 
 **Falsifier discipline (per AGENTS.md "Phase Planning Sessions —
 Falsifiability check on each load-bearing claim").** The deployed-
