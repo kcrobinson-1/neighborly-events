@@ -7,8 +7,8 @@ sub-phases**, each with its own plan doc, PR, and Status.
 
 | Sub-phase | Plan | PR | Status |
 | --- | --- | --- | --- |
-| 2.5.1 — Code rename + tests + dashboard allow-list audit | [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md) | — | Proposed |
-| 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | not yet drafted | — | Proposed |
+| 2.5.1 — Code rename + tests + dashboard allow-list audit | [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md) | [#130](https://github.com/kcrobinson-1/neighborly-events/pull/130) | Landed |
+| 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | [m2-phase-2-5-2-plan.md](./m2-phase-2-5-2-plan.md) | — | Proposed |
 | 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | not yet drafted | — | Proposed |
 
 **Per-sub-phase plans draft just-in-time, not in batch.** Only
