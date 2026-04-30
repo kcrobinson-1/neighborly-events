@@ -524,7 +524,71 @@ Doc edits distribute across sub-phases per
   doc's "Phase Status" rule ("delete in batch when the milestone's
   full set of plans exists"). The five docs delete:
   [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) through
-  [`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md).
+  [`scoping/m2-phase-2-5.md`](./scoping/m2-phase-2-5.md). The
+  milestone doc's stated reason for batch deletion is
+  "this doc absorbing their durable cross-phase content" — i.e.,
+  the deletion is correct only if every durable cross-phase claim
+  the scoping docs held has been pulled into a surviving
+  surface. **This means the deletion is a doc-currency action,
+  not a file-system action: it has a link-rewrite contract
+  attached.**
+
+  **Pre-deletion link-rewrite contract.** Before any scoping
+  doc deletes in 2.5.3, every surviving link to it from any
+  surface — the M2 plan-doc family (each plan's "Scoping
+  inputs:" preamble, in-text cross-decision citations, Related
+  Docs entries — survey at draft time across
+  `m2-phase-2-1-plan.md` through `m2-phase-2-5-plan.md` and the
+  sub-phase plan files), the milestone doc itself
+  ([`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  Phase Status notice + Related Docs entry), and any non-plan
+  doc surface a draft-time grep surfaces — must be rewritten to
+  one of three durable targets:
+
+  1. **A milestone-doc section** when the linked claim has been
+     absorbed into [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+     (Cross-Phase Decisions, Cross-Phase Invariants,
+     Cross-Phase Risks). Most "Scoping inputs:" preamble
+     references and cross-decision citations land here because
+     the milestone doc owns the durable cross-phase narrative
+     by design.
+  2. **A sibling plan-doc section** when the linked claim was
+     specific to one phase and the relevant plan now owns the
+     durable contract.
+  3. **A plain-text path reference (no link) with explanatory
+     prose** when the linked content was draft-time scaffolding
+     that the consuming plan has fully absorbed and no
+     surviving doc owns it. Example replacement language:
+     "the scoping doc this plan compressed from (deleted in M2
+     phase 2.5.3 batch deletion per the
+     [milestone doc's batch-deletion rule](./m2-admin-restructuring.md)
+     — see git history for the pre-deletion content)."
+
+  **Why the link-rewrite contract matters.** The milestone
+  doc's batch-deletion rule exists to prevent doc state from
+  diverging across redundant surfaces (scoping doc + plan doc
+  + milestone doc all describing the same cross-phase contract
+  drift independently); it does not exist to create permission
+  to leave broken links in durable docs. Broken links in
+  durable docs are themselves doc-state divergence (the link
+  asserts the target exists; deleting the target without
+  rewriting the link makes the assertion false). Treating the
+  rewrite as "busywork without protective value" — as an
+  earlier draft of this contract proposed — was wrong: the
+  protective value is exactly the discipline of confirming
+  every absorbed claim has a surviving home before the source
+  deletes. If a claim has no surviving home, the rewrite step
+  surfaces it and forces an explicit decision (absorb into the
+  milestone doc, absorb into a plan, or accept the loss with
+  prose acknowledgement) instead of letting it disappear
+  silently behind a 404.
+
+  **Sequencing.** 2.5.3's pre-deletion grep
+  (`grep -rn "scoping/m2-phase-2-" --include="*.md"
+  --exclude-dir=archive .`) lists every link to rewrite. The
+  rewrite commit must precede the deletion commit so every
+  intermediate tip leaves no broken link. The milestone doc's
+  own two references update in the same rewrite commit.
 
 ## Related Docs
 
