@@ -90,11 +90,11 @@ grouped into a dedicated `apps/web/src/game/` module:
   apps/web-owned routes, with document navigation for `/` now that the
   route is owned by apps/site.
 - `apps/web/src/pages/EventRedeemPage.tsx`
-  Event-scoped operator route for `/event/:slug/redeem`. Reuses the
+  Event-scoped operator route for `/event/:slug/game/redeem`. Reuses the
   role-neutral auth shell, resolves event authorization, and renders the
   keypad-driven redemption UI.
 - `apps/web/src/pages/EventRedemptionsPage.tsx`
-  Event-scoped operator route for `/event/:slug/redemptions` (monitoring
+  Event-scoped operator route for `/event/:slug/game/redemptions` (monitoring
   + reversal). Gates on `is_organizer_for_event` / `is_root_admin`,
   reads `game_entitlements` directly through the browser Supabase client
   (RLS-scoped, explicit event-id filter), and renders the sticky filter
@@ -263,11 +263,11 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   validation shared across `apps/web` and `apps/site`. Owns
   the `AppPath` literal-union type, the `routes` builder object
   (`home`, `admin`, `eventLanding(slug)`, `eventAdmin(slug)`,
-  `game(slug)`, `eventRedeem(slug)`, `eventRedemptions(slug)`,
+  `game(slug)`, `gameRedeem(slug)`, `gameRedemptions(slug)`,
   `authCallback`), the pathname matchers consumed by the apps/web
   router and by `validateNextPath` (`matchEventAdminPath`,
-  `matchGamePath`, `matchEventRedeemPath`,
-  `matchEventRedemptionsPath`) plus the `normalizePathname` helper,
+  `matchGamePath`, `matchGameRedeemPath`,
+  `matchGameRedemptionsPath`) plus the `normalizePathname` helper,
   the `AuthNextPath` type that excludes the transport-only callback
   route, and `validateNextPath` itself — the open-redirect defense
   for the raw `next` query parameter received at `/auth/callback`.
@@ -664,12 +664,12 @@ The current scope still stops short of a preview route or AI authoring UI.
 ### Direct-entry operator redeem route
 
 The web app now also includes an inert direct-entry route at
-`/event/:slug/redeem`.
+`/event/:slug/game/redeem`.
 
 Today that route:
 
 - accepts magic-link sign-in through the same role-neutral auth shell used by
-  `/admin`, with `next=/event/:slug/redeem` validated through
+  `/admin`, with `next=/event/:slug/game/redeem` validated through
   `validateNextPath`
 - keeps signed-out, loading, missing-config, authorized, role-gated, and
   transient-error states explicit in the page shell
@@ -690,13 +690,13 @@ Today that route:
 ### Direct-entry operator monitoring + reversal route
 
 The web app also includes an inert direct-entry route at
-`/event/:slug/redemptions` for dispute handling.
+`/event/:slug/game/redemptions` for dispute handling.
 
 Today that route:
 
 - accepts magic-link sign-in through the same role-neutral auth shell used
-  by `/admin` and `/event/:slug/redeem`, with
-  `next=/event/:slug/redemptions` validated through `validateNextPath`
+  by `/admin` and `/event/:slug/game/redeem`, with
+  `next=/event/:slug/game/redemptions` validated through `validateNextPath`
 - keeps signed-out, loading, missing-config, authorized, role-gated, and
   transient-error states explicit in the page shell, reusing the
   non-leaking role-gate copy the redeem route introduced

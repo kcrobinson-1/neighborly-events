@@ -207,9 +207,9 @@ derived type in `shared/db/`; current example:
 
 Every cross-app URL family is built through `shared/urls/`. The
 `routes` object exposes one builder or constant per family
-(`home`, `admin`, `adminEvent(id)`, `eventLanding(slug)`,
-`eventAdmin(slug)`, `game(slug)`, `eventRedeem(slug)`,
-`eventRedemptions(slug)`, `authCallback`); each builder returns an
+(`home`, `admin`, `gamePrefix`, `eventLanding(slug)`,
+`eventAdmin(slug)`, `game(slug)`, `gameRedeem(slug)`,
+`gameRedemptions(slug)`, `authCallback`); each builder returns an
 `AppPath` literal so navigation calls type-check at the call site.
 Per-app code never composes route strings inline — the only
 hardcoded URL strings that remain in the repo are in the
