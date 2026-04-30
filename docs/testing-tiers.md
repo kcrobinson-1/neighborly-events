@@ -139,7 +139,10 @@ smoke as final verification, land in two phases:
    passes against production. The plan's Status flips to `Landed` in a
    follow-up doc commit that records the production smoke run URL.
    The run URL is durable external evidence; commit SHAs are not
-   recorded because `git log` is authoritative for that.
+   recorded because `git log` is authoritative for that. Run
+   `npm run release:watch-smoke -- <merge-sha>` to capture the run URL
+   for the doc-only follow-up commit; see [`dev.md`](./dev.md) "Watching
+   The Post-Merge Chain."
 
 This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to
 for plans that extend Tier 5 assertions. The implementing PR still leaves

@@ -224,7 +224,16 @@ working.
 
 ### First Signal: Production Smoke
 
-Start with GitHub Actions:
+When you have the merge commit SHA in hand (typical for the doc-only
+follow-up commit required by the Plan-to-Landed Gate), prefer
+`npm run release:watch-smoke -- <merge-sha>` for evidence capture. It
+walks the `CI` → `Release` → `Production Admin Smoke` chain, prints
+stage-by-stage progress, and emits a `SMOKE_URL=<run-url>` line on green
+smoke or the failed-step logs on any-stage failure — see
+[`dev.md`](./dev.md) "Watching The Post-Merge Chain."
+
+Otherwise (operator triage with no merge SHA, or follow-up on a
+`workflow_dispatch` rerun), start with GitHub Actions:
 
 1. Open the `Production Admin Smoke` workflow.
 2. Check the latest run for the release candidate or `main`.
