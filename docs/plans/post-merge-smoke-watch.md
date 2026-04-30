@@ -11,8 +11,9 @@ two-phase **Plan-to-Landed Gate For Plans That Touch Production Smoke**
 (per [`docs/testing-tiers.md`](../testing-tiers.md)) with a focused
 watcher script that, given a merge commit SHA:
 
-1. Watches the post-merge GitHub Actions chain (CI → Release →
-   Production Admin Smoke) keyed to that commit.
+1. Watches the current static post-merge GitHub Actions chain
+   (`ci.yml` → `release.yml` → `production-admin-smoke.yml`) keyed to
+   that commit.
 2. Reports stage-by-stage progress to stdout.
 3. On green: prints the smoke run URL on its own line for easy capture.
 4. On any failure: prints the failed-step logs and exits non-zero.
@@ -52,23 +53,23 @@ wall time. The current manual flow is to watch the Actions tab, run
 ad-hoc `gh run list`, or wait for email/Slack notification, then copy
 the smoke run URL or the failed-step logs by hand.
 
-The watcher bridges the chain: for a given merge SHA, it walks each
-stage in order and emits structured stdout updates. The script does NOT
-auto-flip the plan Status — generation of the doc-only follow-up commit
-remains owner-driven. The script's job is to supply the durable
-external evidence the gate requires.
+The watcher bridges the chain: for a given merge SHA, it checks each
+known workflow in order and emits structured stdout updates. The first
+implementation intentionally treats the chain as static because the
+workflow shape is stable and the immediate problem is evidence capture,
+not generic Actions topology discovery. The script does NOT auto-flip
+the plan Status — generation of the doc-only follow-up commit remains
+owner-driven. The script's job is to supply the durable external
+evidence the gate requires.
 
 ## Contracts
 
 ### Invocation
 
-`node scripts/release/post-merge-smoke-watch.cjs <merge-sha> [--workflow <name>] [--deadline-minutes <N>]`
+`node scripts/release/post-merge-smoke-watch.cjs <merge-sha> [--deadline-minutes <N>]`
 
 - `<merge-sha>` (required): the merge commit SHA on `main`. Used to
   filter workflow runs by `headSha`.
-- `--workflow` (optional, default `production-admin-smoke.yml`): the
-  final-stage workflow file to watch for. Allows future gates that
-  aren't smoke-specific to reuse the watcher.
 - `--deadline-minutes` (optional, default `45`): hard upper bound on
   total wait time. Exits non-zero with a deadline-exceeded message if
   the chain hasn't completed by then.
@@ -118,13 +119,33 @@ The script shells out to `gh` (already required by other release
 procedures). Pre-flight check: `gh auth status` with non-zero exit →
 script exits 3 with a clear message naming the missing auth.
 
+Because the script parses `gh run list` / `gh run view` JSON, the
+implementation must run the **CLI / tooling pinning audit** from
+[`docs/self-review-catalog.md`](../self-review-catalog.md). The v1
+contract is a runtime minimum-version check in the watcher itself:
+`gh --version` must report at least `2.89.0` before any polling starts.
+`docs/dev.md` records that requirement next to the npm wrapper. The
+watcher should rely only on the JSON fields confirmed by that version
+(`databaseId`, `workflowName`, `event`, `headBranch`, `headSha`,
+`status`, `conclusion`, `createdAt`, and `url`) so future `gh` bumps have
+a small compatibility surface.
+
 ### Workflow chain assumption
 
-Discovery reads `.github/workflows/*.yml` at runtime, builds the
-dependency DAG from `on.workflow_run.workflows` references, and finds
-the path from CI to the named `--workflow`. Hard-coding the chain
-shape is rejected so future workflow restructuring doesn't silently
-break the watcher.
+The workflow chain is intentionally static in v1:
+
+1. `ci.yml` (`workflowName: CI`, `event: push`, `headBranch: main`)
+2. `release.yml` (`workflowName: Release`, `event: workflow_run`,
+   `headBranch: main`)
+3. `production-admin-smoke.yml` (`workflowName: Production Admin Smoke`,
+   `event: workflow_run`, `headBranch: main`)
+
+Each lookup uses `gh run list --commit <merge-sha> --workflow <file>`
+and then verifies the returned run's workflow name, event, branch,
+`headSha`, `status`, and `conclusion` before reporting success. The
+script may store this chain as a small local constant; it should not add
+YAML parsing or generic DAG discovery until workflow churn makes that
+complexity useful.
 
 ### Failure-mode handling
 
@@ -162,8 +183,12 @@ make a successful operation look failed?":
 - [`package.json`](../../package.json) — add `release:watch-smoke`
   script wrapping the `.cjs` invocation.
 - [`docs/dev.md`](../dev.md) — short subsection under the release
-  process naming the watcher and when to use it. Two paragraphs
-  maximum.
+  process naming the watcher, the `gh >= 2.89.0` requirement, and when
+  to use it. Two paragraphs maximum.
+- [`docs/operations.md`](../operations.md) — update the production smoke
+  triage runbook to name the watcher as the preferred evidence-capture
+  path when the operator has a merge SHA; retain the browser/manual
+  dispatch path for operational triage.
 - [`docs/testing-tiers.md`](../testing-tiers.md) "Plan-to-Landed
   Gate For Plans That Touch Production Smoke" — single-sentence note
   that `npm run release:watch-smoke -- <sha>` is the recommended way
@@ -176,6 +201,16 @@ make a successful operation look failed?":
   supplies the URL.
 - The CI / Release / Smoke workflow files. The watcher consumes the
   existing chain; no workflow change.
+- Generic workflow-chain discovery. The v1 script is smoke-specific and
+  static by design.
+
+## Commit Boundaries
+
+One implementation commit is sufficient: add the watcher, npm wrapper,
+unit tests, and release/runbook docs together. The diff is a focused
+operational-script change with one small docs surface; splitting the
+docs into a separate commit would make the script land without its
+canonical usage path.
 
 ## Validation Gate
 
@@ -187,9 +222,24 @@ make a successful operation look failed?":
   `npm run release:watch-smoke -- <sha>` against an
   actually-completed chain; confirm it reports `succeeded` for each
   stage and prints `SMOKE_URL=` matching the actual run.
-- Manual failure injection: run against a SHA whose smoke run failed
-  historically (or a deliberately-broken test branch); confirm exit
-  1 + failed-step logs.
+- Failed-run handling is validated in unit tests with stubbed `gh`
+  output for failed CI, failed Release, and failed Production Admin
+  Smoke runs. Manual failure validation is only required if an existing
+  historical failed main-chain run is available; do not create or merge
+  a deliberately broken branch just to exercise this path.
+
+## Self-Review Audits
+
+- **CI & testing infrastructure — CLI / tooling pinning audit.** Applies
+  because the watcher parses `gh` JSON. Confirm `gh >= 2.89.0` is
+  enforced before polling, the documented requirement matches the
+  runtime check, and the parsed JSON fields are covered by unit tests.
+- **CI & testing infrastructure — Readiness-gate truthfulness audit.**
+  Applies because the watcher decides whether the post-merge chain has
+  reached a usable smoke URL. Walk wrong-SHA, missing-stage,
+  wrong-branch, failed-stage, pending-stage, and successful-stage
+  fixtures; the script must not print `SMOKE_URL=` unless the final
+  Production Admin Smoke run for that SHA completed successfully.
 
 ## Out Of Scope
 
@@ -201,6 +251,9 @@ make a successful operation look failed?":
 - **Watching CI on non-main branches** (PR-side feature branches).
   The chain only fires on main, so the watcher's domain is
   post-merge.
+- **Generic workflow watcher reuse.** The first implementation is scoped
+  to the known production-smoke evidence path. A later script can add
+  `--workflow` or DAG discovery if another post-merge gate needs it.
 - **Replacing `gh run watch` with a custom HTTP poll.** `gh run
   watch` already handles polling efficiently; reimplementing is
   wasted surface.
@@ -210,14 +263,17 @@ make a successful operation look failed?":
 
 ## Risk Register
 
-- **GitHub workflow chain restructured.** If the project reorders or
-  removes the `workflow_run` chain, the script's discovery loop
-  needs to adapt. Mitigation: discovery reads workflow YAML at
-  runtime rather than hard-coding stage names; fails gracefully with
-  a clear "no chain found from CI to `<final>`" message.
+- **GitHub workflow chain restructured.** The v1 watcher assumes the
+  current static chain. If the project reorders or removes the
+  `workflow_run` chain, the script and docs need a small follow-up.
+  Mitigation: each lookup verifies workflow name, event, branch, SHA,
+  status, and conclusion; mismatch fails with a message naming the
+  expected workflow file and stage rather than silently returning a
+  wrong URL.
 - **gh CLI breaking changes.** The script relies on `gh run list /
-  view / watch` JSON shape. Mitigation: pin `gh` minimum version in
-  pre-flight; surface clear error if the JSON shape changes.
+  view / watch` JSON shape. Mitigation: enforce `gh >= 2.89.0` in
+  pre-flight, document the requirement in `docs/dev.md`, and run the
+  CLI / tooling pinning audit before handoff.
 - **Auth drift mid-run.** If gh's auth token expires partway
   through, mid-stage `gh` calls fail. Mitigation: pre-flight
   `gh auth status` at start; if fails mid-run, exit 1 with the gh
@@ -246,9 +302,13 @@ make a successful operation look failed?":
 - [`docs/tracking/production-admin-smoke-tracking.md`](../tracking/production-admin-smoke-tracking.md)
   — production smoke workflow ownership and triage runbook.
 - [`docs/operations.md`](../operations.md) — release process where
-  this script slots in.
+  this script slots in and production-smoke triage runbook updated by
+  the implementation.
 - [`AGENTS.md`](../../AGENTS.md) "Phase Planning Sessions" — the
   wrapper-script preference rule this script answers, so plans
   naming smoke-evidence capture can name
   `npm run release:watch-smoke …` rather than raw `gh run`
   invocations.
+- [`docs/self-review-catalog.md`](../self-review-catalog.md) — the
+  CLI / tooling pinning audit applies because the watcher parses `gh`
+  JSON.
