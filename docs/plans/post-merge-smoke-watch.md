@@ -41,12 +41,23 @@ AI coding sessions reading GitHub Actions state without browser context.
 
 ## Context
 
-After a PR merges to `main`, the project's workflow chain fires:
+After a PR merges to `main`, the project's workflow chain fires.
+Verified by: `.github/workflows/ci.yml:3`,
+`.github/workflows/ci.yml:5`, `.github/workflows/ci.yml:6`, and
+`.github/workflows/ci.yml:7`.
 
 1. **CI** on push to main.
 2. **Release** on `workflow_run: { workflow: CI, conclusion: success }`.
+   Verified by: `.github/workflows/release.yml:3`,
+   `.github/workflows/release.yml:4`, `.github/workflows/release.yml:6`,
+   `.github/workflows/release.yml:29`, `.github/workflows/release.yml:32`,
+   and `.github/workflows/release.yml:33`.
 3. **Production Admin Smoke** on `workflow_run: { workflow: Release,
-   conclusion: success }`.
+   conclusion: success }`. Verified by:
+   `.github/workflows/production-admin-smoke.yml:3`,
+   `.github/workflows/production-admin-smoke.yml:5`,
+   `.github/workflows/production-admin-smoke.yml:7`, and
+   `.github/workflows/production-admin-smoke.yml:31`.
 
 Each stage takes roughly 5-10 minutes; total chain is ~15-30 minutes
 wall time. The current manual flow is to watch the Actions tab, run
@@ -61,6 +72,19 @@ not generic Actions topology discovery. The script does NOT auto-flip
 the plan Status — generation of the doc-only follow-up commit remains
 owner-driven. The script's job is to supply the durable external
 evidence the gate requires.
+
+## Cross-Cutting Invariants
+
+- Every stage lookup, status line, unit fixture, and docs example keys
+  off the same merge commit SHA; no stage may substitute a PR head SHA,
+  branch tip, or latest-run query.
+- `SMOKE_URL=` is printed only after the `Production Admin Smoke` run
+  for the watched SHA has completed successfully; failed, missing,
+  pending, wrong-branch, or wrong-workflow runs must never produce the
+  capture line.
+- The static workflow chain and `gh >= 2.89.0` contract stay aligned
+  across the watcher implementation, tests, `package.json` wrapper, and
+  release/runbook docs.
 
 ## Contracts
 
@@ -132,7 +156,15 @@ a small compatibility surface.
 
 ### Workflow chain assumption
 
-The workflow chain is intentionally static in v1:
+The workflow chain is intentionally static in v1. Verified by:
+`.github/workflows/ci.yml:1`, `.github/workflows/ci.yml:3`,
+`.github/workflows/ci.yml:5`, `.github/workflows/ci.yml:6`,
+`.github/workflows/ci.yml:7`,
+`.github/workflows/release.yml:1`, `.github/workflows/release.yml:4`,
+`.github/workflows/release.yml:6`,
+`.github/workflows/production-admin-smoke.yml:1`,
+`.github/workflows/production-admin-smoke.yml:5`, and
+`.github/workflows/production-admin-smoke.yml:7`.
 
 1. `ci.yml` (`workflowName: CI`, `event: push`, `headBranch: main`)
 2. `release.yml` (`workflowName: Release`, `event: workflow_run`,
@@ -221,7 +253,9 @@ canonical usage path.
 - Manual smoke against a recent merged PR: run
   `npm run release:watch-smoke -- <sha>` against an
   actually-completed chain; confirm it reports `succeeded` for each
-  stage and prints `SMOKE_URL=` matching the actual run.
+  stage and prints `SMOKE_URL=` matching the actual run. Verified by:
+  `docs/testing-tiers.md:137`, `docs/testing-tiers.md:138`,
+  `docs/testing-tiers.md:139`, and `docs/testing-tiers.md:140`.
 - Failed-run handling is validated in unit tests with stubbed `gh`
   output for failed CI, failed Release, and failed Production Admin
   Smoke runs. Manual failure validation is only required if an existing
