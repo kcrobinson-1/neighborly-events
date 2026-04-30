@@ -109,7 +109,7 @@ Release-readiness documentation checks are defined in
 
 File-level headers should answer "what is this file responsible for?" and,
 when useful, "what does this file deliberately not own?" For example, a
-route-level admin component such as `AdminEventWorkspace.tsx` should make clear
+route-level admin component such as `EventAdminWorkspace.tsx` should make clear
 whether it owns layout/orchestration only, or whether it also owns persistence,
 validation, mutation state, or API calls.
 

@@ -2,7 +2,6 @@
 export type AppPath =
   | "/"
   | "/admin"
-  | `/admin/events/${string}`
   | `/event/${string}`
   | `/event/${string}/admin`
   | `/event/${string}/game`
@@ -26,9 +25,6 @@ export type AuthNextPath = Exclude<AppPath, "/auth/callback">;
 export const routes = {
   home: "/",
   admin: "/admin",
-  adminEventsPrefix: "/admin/events",
-  adminEvent: (eventId: string): AppPath =>
-    `/admin/events/${encodeURIComponent(eventId)}`,
   gamePrefix: "/event",
   eventLanding: (slug: string): AppPath =>
     `/event/${encodeURIComponent(slug)}`,
@@ -55,36 +51,6 @@ export function normalizePathname(pathname: string) {
   }
 
   return normalizedPathname;
-}
-
-/** Parses an admin event route and returns the decoded event id when matched. */
-export function matchAdminEventPath(pathname: string) {
-  const normalizedPath = normalizePathname(pathname);
-  const prefix = `${routes.adminEventsPrefix}/`;
-
-  if (!normalizedPath.startsWith(prefix)) {
-    return null;
-  }
-
-  const encodedEventId = normalizedPath.slice(prefix.length);
-
-  if (!encodedEventId || encodedEventId.includes("/")) {
-    return null;
-  }
-
-  try {
-    const eventId = decodeURIComponent(encodedEventId);
-
-    if (!eventId || eventId.includes("/")) {
-      return null;
-    }
-
-    return {
-      eventId,
-    };
-  } catch {
-    return null;
-  }
 }
 
 /** Parses a game route and returns the decoded slug when the path matches. */

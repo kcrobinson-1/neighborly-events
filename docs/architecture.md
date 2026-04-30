@@ -186,15 +186,18 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/web/src/lib/session.ts`
   Small client id-generation helpers.
 - `apps/web/src/admin/`
-  Admin dashboard hooks plus presentational components for
-  status states, the event workspace, and selected draft
-  event routes under `/admin`. Also hosts `EventAdminWorkspace` and
-  `useEventAdminWorkspace`, the per-event variants used by
-  `/event/:slug/admin`. The per-event hook seeds a one-row
-  dashboard state via `loadDraftEventSummary(eventId)` and then
-  composes the existing `useSelectedDraft` hook so the load /
-  save / publish / unpublish lifecycle stays shared with the
-  platform-admin deep editor.
+  Per-event admin authoring module consumed only by the
+  `/event/:slug/admin` route. Hosts `EventAdminWorkspace` and
+  `useEventAdminWorkspace` plus the shared deep-editor primitives
+  (`AdminEventDetailsForm`, `AdminQuestionEditor`,
+  `AdminQuestionList`, `AdminQuestionFields`, `AdminOptionEditor`,
+  `AdminPublishPanel`, `useSelectedDraft`, plus
+  `eventDetails.ts`, `publishChecklist.ts`, `questionBuilder.ts`,
+  `questionFormMapping.ts`, `questionStructure.ts`). The per-event
+  hook seeds a one-row dashboard state via
+  `loadDraftEventSummary(eventId)` and composes `useSelectedDraft`
+  for the load / save / publish / unpublish lifecycle. Platform-admin
+  list / sign-in / draft-creation chrome is owned by apps/site.
 - `apps/web/src/types/game.ts`
   Client-side types for completion payloads and results.
 - `apps/web/src/data/games.ts`
@@ -262,25 +265,21 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   Canonical route table, route matchers, and post-auth `next=`
   validation shared across `apps/web` and `apps/site`. Owns
   the `AppPath` literal-union type, the `routes` builder object
-  (`home`, `admin`, `adminEvent(id)`, `eventLanding(slug)`,
-  `eventAdmin(slug)`, `game(slug)`, `eventRedeem(slug)`,
-  `eventRedemptions(slug)`, `authCallback`), the four pathname
-  matchers consumed by the apps/web router and by `validateNextPath`
-  (`matchAdminEventPath`, `matchGamePath`, `matchEventRedeemPath`,
+  (`home`, `admin`, `eventLanding(slug)`, `eventAdmin(slug)`,
+  `game(slug)`, `eventRedeem(slug)`, `eventRedemptions(slug)`,
+  `authCallback`), the pathname matchers consumed by the apps/web
+  router and by `validateNextPath` (`matchEventAdminPath`,
+  `matchGamePath`, `matchEventRedeemPath`,
   `matchEventRedemptionsPath`) plus the `normalizePathname` helper,
   the `AuthNextPath` type that excludes the transport-only callback
   route, and `validateNextPath` itself — the open-redirect defense
   for the raw `next` query parameter received at `/auth/callback`.
-  The `eventLanding` and `eventAdmin` builder entries are present
-  for forward-compatibility with M2 phase 2.2 and M3; their matchers
-  and `validateNextPath` allow-list entries land with the consumers.
   `validateNextPath` reads `window.location.origin` and is therefore
   browser-only. apps/site's `/auth/callback` route is a client
   component, so no server-side `next` validation seam exists yet.
-  Per-app code never composes route
-  strings inline; the single remaining hardcoded URL family lives in
-  the e2e Playwright fixtures, where the literal expresses the
-  contract being tested.
+  Per-app code never composes route strings inline; the single
+  remaining hardcoded URL family lives in the e2e Playwright
+  fixtures, where the literal expresses the contract being tested.
 - `shared/auth/`
   Env-agnostic Supabase Auth surface shared across `apps/web` and
   `apps/site`. Owns the role-neutral auth API
@@ -620,24 +619,28 @@ This capability is implemented in both the shared config model and the `useGameS
 
 ### Admin event workspace for authoring access
 
-The web app now includes a dedicated `/admin` route.
+The platform splits admin authoring across the two apps:
 
-Today that route:
+- apps/site owns `/admin*` — the platform-admin list view. Signs root
+  admins in with Supabase Auth magic links, checks the private email
+  allowlist through `public.is_admin()`, shows the event-centered draft
+  list, lets admins create starter drafts and duplicate existing private
+  drafts, and hard-navigates to apps/web's `/event/:slug/admin` for the
+  per-event deep editor and to `/event/:slug/game` for the live game.
+- apps/web owns `/event/:slug/admin` — the per-event deep editor.
+  Resolves slug → event-id and authorizes through
+  `useOrganizerForEvent` (parallel `is_organizer_for_event` and
+  `is_root_admin` RPCs), so an organizer who is not on the platform
+  allowlist still reaches the authorized authoring state. Lets admins
+  edit event-level draft details, edit existing question text /
+  sponsor attribution / selection mode / option labels / correct
+  answers, add / duplicate / reorder / delete draft questions, add /
+  delete draft answer options, and publish or unpublish the draft.
 
-- signs admins in with Supabase Auth magic links
-- checks a private email allowlist through `public.is_admin()`
-- shows an event-centered workspace for private draft events visible to
-  allowlisted admins
-- supports direct event selection under `/admin/events/:eventId`
-- lets admins create starter drafts and duplicate existing private drafts
-  through the authenticated draft save path
-- lets admins edit selected event-level draft details without changing live
-  attendee content
-- lets admins edit existing question text, sponsor attribution, selection mode,
-  option labels, and correct answers in private drafts
-- lets admins add, duplicate, reorder, and delete draft questions plus add and
-  delete draft answer options
-- keeps non-admin authenticated users out of the draft data path
+Both surfaces keep non-admin authenticated users out of the draft data
+path: apps/site's platform list runs the `is_admin()` allowlist gate,
+apps/web's per-event editor runs the `is_organizer_for_event OR
+is_root_admin` gate.
 
 The browser requests magic links with `requestMagicLink(email,
 { next: routes.admin })`, which transits the return trip through
@@ -648,7 +651,7 @@ links do not fall back to a local default. Adding a new authenticated
 route in a later phase only requires extending `AppPath` and the
 `validateNextPath` allow-list — no new dashboard entry is needed.
 
-The visible admin page can create, duplicate, and update event-level,
+Both admin surfaces can create, duplicate, and update event-level,
 question-level, and answer-option private draft content, but the backend API
 surface owns validation and persistence:
 

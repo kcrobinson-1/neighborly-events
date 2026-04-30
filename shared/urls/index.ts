@@ -10,7 +10,6 @@
  * server-side caveat.
  */
 export {
-  matchAdminEventPath,
   matchEventAdminPath,
   matchEventRedeemPath,
   matchEventRedemptionsPath,

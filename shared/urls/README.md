@@ -9,12 +9,12 @@ validation shared across `apps/web` and `apps/site`.
   serves, narrowed to literal types so navigation calls are
   type-checked at the call site.
 - The `routes` object — one builder or constant per route family
-  (`home`, `admin`, `adminEvent(id)`, `eventLanding(slug)`,
-  `eventAdmin(slug)`, `game(slug)`, `eventRedeem(slug)`,
-  `eventRedemptions(slug)`, `authCallback`). Builders return
-  `AppPath` literals so consumers never see widened `string`.
-- The four pathname matchers used by `apps/web`'s router and by
-  `validateNextPath` (`matchAdminEventPath`, `matchGamePath`,
+  (`home`, `admin`, `eventLanding(slug)`, `eventAdmin(slug)`,
+  `game(slug)`, `eventRedeem(slug)`, `eventRedemptions(slug)`,
+  `authCallback`). Builders return `AppPath` literals so consumers
+  never see widened `string`.
+- The pathname matchers used by `apps/web`'s router and by
+  `validateNextPath` (`matchEventAdminPath`, `matchGamePath`,
   `matchEventRedeemPath`, `matchEventRedemptionsPath`) and the
   `normalizePathname` helper they share.
 - The `AuthNextPath` type — `Exclude<AppPath, "/auth/callback">`,
@@ -43,10 +43,9 @@ matching the same precedent as `shared/db/` exporting
 
 ## What is intentionally absent
 
-- Matchers for `eventLanding` and `eventAdmin`. Those routes are
-  consumed in M2 phase 2.2 (`eventAdmin`) and M3 (`eventLanding`);
-  their matchers and `validateNextPath` allow-list entries land
-  with the consumers.
+- A matcher for `eventLanding`. The route is consumed in M3; its
+  matcher and `validateNextPath` allow-list entry land with the
+  consumer.
 - Operator-route renames (`eventRedeem`/`eventRedemptions` →
   `gameRedeem`/`gameRedemptions`). Those land with the URL change
   in M2 phase 2.5 so builder name and URL stay aligned at every
@@ -54,6 +53,12 @@ matching the same precedent as `shared/db/` exporting
 - Server-side next-path validation. Deferred until a concrete
   server-side consumer surfaces; apps/site's current callback route
   uses the browser-only shared component.
+- The deprecated `/admin/events/:eventId` family
+  (`routes.adminEvent`, `routes.adminEventsPrefix`,
+  `matchAdminEventPath`). Removed in M2 phase 2.4.3 — the
+  platform-admin module that consumed the family lives on apps/site
+  at `/admin*`, and per-event editing reaches drafts through
+  `/event/:slug/admin`.
 
 ## Plan reference
 

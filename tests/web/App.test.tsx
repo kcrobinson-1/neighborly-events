@@ -10,12 +10,6 @@ vi.mock("../../apps/web/src/usePathnameNavigation.ts", () => ({
   usePathnameNavigation: mockUsePathnameNavigation,
 }));
 
-vi.mock("../../apps/web/src/pages/AdminPage.tsx", () => ({
-  AdminPage: ({ selectedEventId }: { selectedEventId?: string }) => (
-    <div>Admin Page{selectedEventId ? `: ${selectedEventId}` : ""}</div>
-  ),
-}));
-
 vi.mock("../../apps/web/src/pages/GameRoutePage.tsx", () => ({
   GameRoutePage: () => <div>Game Route Page</div>,
 }));
@@ -45,28 +39,6 @@ describe("App", () => {
 
   afterEach(() => {
     cleanup();
-  });
-
-  it("renders the admin route when the pathname is /admin", () => {
-    mockUsePathnameNavigation.mockReturnValue({
-      navigate: vi.fn(),
-      pathname: "/admin",
-    });
-
-    render(<App />);
-
-    expect(screen.getByText("Admin Page")).toBeTruthy();
-  });
-
-  it("renders the admin event route with the selected event id", () => {
-    mockUsePathnameNavigation.mockReturnValue({
-      navigate: vi.fn(),
-      pathname: "/admin/events/madrona-music-2026",
-    });
-
-    render(<App />);
-
-    expect(screen.getByText("Admin Page: madrona-music-2026")).toBeTruthy();
   });
 
   it("renders the event redeem route with the selected slug", () => {
