@@ -44,11 +44,13 @@ phase 4.1 per the epic's "Deferred ThemeScope wiring" invariant.
 | 2.2 | Per-event admin route shell at `/event/:slug/admin` | [m2-phase-2-2-plan.md](./m2-phase-2-2-plan.md) | Landed | [#113](https://github.com/kcrobinson-1/neighborly-events/pull/113), [#114](https://github.com/kcrobinson-1/neighborly-events/pull/114) |
 | 2.3 | `/auth/callback` and `/` migration to apps/site | [m2-phase-2-3-plan.md](./m2-phase-2-3-plan.md) | Landed | [#118](https://github.com/kcrobinson-1/neighborly-events/pull/118), [#120](https://github.com/kcrobinson-1/neighborly-events/pull/120) |
 | 2.4 | Platform admin migration to apps/site at `/admin` | [m2-phase-2-4-plan.md](./m2-phase-2-4-plan.md) | Landed | [#126](https://github.com/kcrobinson-1/neighborly-events/pull/126) |
-| 2.5 | `/game/*` URL migration for operator routes | not yet drafted | Proposed | — |
+| 2.5 | `/game/*` URL migration for operator routes | [m2-phase-2-5-plan.md](./m2-phase-2-5-plan.md) | Proposed | — |
 
 Each row updates as the phase's plan drafts and as its PR merges.
-The 2.5 row's PR also flips the epic's M2 row to `Landed` per the
-sequencing below.
+2.5 ships as three sub-phases (2.5.1 code rename, 2.5.2 Vercel
+cutover, 2.5.3 cleanup + M2 closure) under the umbrella plan
+linked above; 2.5.3's PR also flips the epic's M2 row to `Landed`
+per the sequencing below.
 
 Per-phase scoping docs at
 [`scoping/m2-phase-2-1.md`](./scoping/m2-phase-2-1.md) through
