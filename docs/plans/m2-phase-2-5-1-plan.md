@@ -323,8 +323,8 @@ Verified by:
 - [`docs/plans/event-platform-epic.md`](./event-platform-epic.md)
   M2 row, [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md)
   Status — owned by 2.5.3.
-- M2 scoping docs under
-  [`scoping/`](./scoping/) — batch deletion in 2.5.3.
+- M2 scoping docs (deleted in 2.5.3's batch deletion; see git
+  history).
 - Edge Functions, migrations,
   [`shared/auth/`](../../shared/auth),
   [`shared/db/`](../../shared/db),
@@ -360,10 +360,12 @@ Verified by:
    sub-phase split (files this sub-phase doesn't touch but 2.5.2
    or 2.5.3 will). Re-grep
    `routes\.eventRedeem\|routes\.eventRedemptions\|matchEventRedeem\|matchEventRedemptions`.
-   Any miss is either intentional (in
-   [`docs/plans/scoping/`](./scoping/) or
-   [`docs/plans/m2-phase-2-*`](./m2-phase-2-1-plan.md), retrospective
-   description) or a real miss to add to the inventory.
+   Any miss is either intentional (in `docs/plans/scoping/`
+   pre-deletion content or
+   [`docs/plans/m2-phase-2-*`](./m2-phase-2-1-plan.md) retrospective
+   description) or a real miss to add to the inventory. (M2
+   scoping docs deleted in 2.5.3's batch deletion; see git
+   history for the pre-deletion content.)
 4. **Pre-merge: Supabase Auth dashboard allow-list audit per
    environment.** For each Supabase environment (local, preview,
    production), confirm the redirect-URL allow-list contains
