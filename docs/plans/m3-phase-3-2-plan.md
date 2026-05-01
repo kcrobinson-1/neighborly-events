@@ -2,15 +2,15 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 3.2 is the middle phase of M3 ("Site Rendering Infrastructure With
 Test Events"). It registers a second test event content module
 (`riverside-jam`) and a second per-event Theme so the rendering
 pipeline 3.1 shipped is exercised across two visually-distinct
 identities. The 3.2 row in the M3 milestone doc's Phase Status table
-flips from `Proposed` to `Landed` in this plan's PR; this plan's
-Status flips from `Proposed` to `Landed` in the same PR per
+flipped from `Proposed` to `Landed` in this plan's PR; this plan's
+Status flipped from `Proposed` to `Landed` in the same PR per
 [`AGENTS.md`](/AGENTS.md) "Plan-to-PR Completion Gate." No commit
 SHAs are recorded in the row (`git log` and `git blame` are
 authoritative).
