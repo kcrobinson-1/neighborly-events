@@ -231,6 +231,35 @@ decisions.
   each phase's Status can flip independently, rather than merging a
   partially-satisfied plan and tracking the remainder informally
 
+### Epic Drafting
+
+Epics scope the *what* and *why* of a multi-milestone arc:
+capability targets, cross-cutting invariants, milestone
+sequencing rationale, milestone-level risks, and the open
+questions the epic resolves or opens. Epics should *not*
+prescribe per-milestone phase counts, per-phase content,
+per-phase PR counts, validation-gate specifics, documentation
+lists, or self-review audit sets. Those details belong to the
+milestone planning session for each milestone, against
+actually-merged code at milestone-start.
+
+When an epic does name per-milestone details (during initial
+epic drafting, before the milestone planning sessions have run),
+tag them explicitly as estimates pending milestone planning, not
+as binding specs. Sizing summaries in epics carry the same
+caveat: per-milestone phase and PR counts are early estimates,
+not commitments.
+
+The milestone planning session re-derives the actual phase
+shape and the milestone doc supersedes the epic's estimates.
+The milestone doc PR also reconciles the epic's prescriptive
+paragraphs — either rewriting them to match the milestone-doc
+shape, or marking them as pre-milestone-planning estimates and
+pointing to the milestone doc as canonical. Pre-existing epics
+written before this rule are not retroactively non-conforming;
+the rule applies to epic drafting and to milestone planning
+PRs from this point forward.
+
 ### Milestone Planning Sessions
 
 A milestone planning session establishes durable cross-phase
@@ -260,34 +289,43 @@ before any per-phase planning.
   beyond hard dependencies). See the "Sequencing" section of
   [`docs/plans/archive/m2/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   for a concrete example
-- **Anti-goal: do not pre-scope every phase in batch.** Batch scoping
-  cross-pollinates wrong assumptions across docs and produces
-  confident-feeling artifacts that may or may not be grounded in code.
-  When phase A's scoping cites phase B's "Inputs From Siblings"
-  section, both docs feel verified; neither is. The first phase scopes
-  in this session (so the milestone doc has at least one grounded
-  scoping reference); subsequent phases scope just-in-time before
-  their implementation, against actually-merged earlier phases
-- **Output set.** Milestone doc — durable; survives all phase work.
-  First phase's scoping doc — transient. Phase scoping docs delete
-  in batch when the milestone's full set of plans exists, not when
-  each individual plan lands. The reason: sibling scoping docs
-  reference each other, so deleting one early creates link rot
-  elsewhere; batch-deletion as part of the milestone's terminal PR
-  (or a focused cleanup PR) avoids that. The milestone doc may
-  override this rule for an unusual lifecycle, but should record the
-  override explicitly. Cross-phase decision record lives inside the
-  milestone doc, not as a separate file
-- **Cap.** ~15-20% of estimated total milestone implementation time.
-  Fallback when no credible implementation estimate exists yet
-  (typical at milestone-start): cap milestone planning at ~4 hours
-  of session time end-to-end, and stop when scoping starts producing
-  iteration without ending — repeated rewrites of the same section,
-  cross-phase decisions that re-open after being marked resolved,
-  or new docs spawning without resolving existing ones. That
-  iteration signal is the real diminishing-returns indicator;
-  remaining value comes from doing the work, not from more planning
-  content
+- **Anti-goal: do not scope any phase in this session.** Phase
+  scoping (file inventory, contracts, validation gate, self-review
+  audits, risks) belongs to the phase planning session for each
+  phase, against actually-merged earlier phases. Scoping any phase
+  in the milestone session — even the first — risks recording
+  assumptions that won't survive contact with merged code, and
+  produces confident-feeling artifacts that may or may not be
+  grounded. When phase A's scoping cites phase B's "Inputs From
+  Siblings" section, both docs feel verified; neither is. Earlier
+  drafts of this rule allowed first-phase scoping in the milestone
+  session "so the milestone doc has at least one grounded scoping
+  reference"; the practical risk outweighed the grounding benefit,
+  and grounding now lives in the per-cross-phase-decision
+  verification rule below ("read the actual code that would be
+  affected by each option")
+- **Output set.** Milestone doc — durable; survives all phase
+  work. Single output of this session. Phase scoping docs are
+  produced by their respective phase planning sessions, not here;
+  they delete in batch when the milestone's full set of plans
+  exists (not as each plan lands), as part of the milestone's
+  terminal PR or a focused cleanup PR. The reason: sibling
+  scoping docs reference each other, so deleting one early
+  creates link rot elsewhere. The milestone doc may override the
+  batch-deletion rule for an unusual lifecycle, but should record
+  the override explicitly. Cross-phase decision record lives
+  inside the milestone doc, not as a separate file
+- **Cap.** ~10-15% of estimated total milestone implementation
+  time (lower than the previous 15-20% because first-phase
+  scoping no longer lives in this session). Fallback when no
+  credible implementation estimate exists yet (typical at
+  milestone-start): cap milestone planning at ~3 hours of session
+  time end-to-end, and stop when iteration without ending hits —
+  repeated rewrites of the same section, cross-phase decisions
+  that re-open after being marked resolved, or new docs spawning
+  without resolving existing ones. That iteration signal is the
+  real diminishing-returns indicator; remaining value comes from
+  doing the work, not from more planning content
 - **Verify before recording any cross-phase decision.** For each
   cross-phase decision, read the actual code that would be affected
   by each option, not summaries from a research subagent. A decision
@@ -321,6 +359,22 @@ phase's implementation starts, **after** prior phases have shipped
   Cross-Cutting Invariants, Files-to-touch, Execution steps, Commit
   boundaries, Validation Gate, Self-Review Audits, Documentation
   Currency, Out Of Scope, Risk Register)
+- **Scoping precedes plan drafting; check before starting plan
+  draft.** Before opening the plan doc to write, verify the
+  scoping doc exists at
+  `docs/plans/scoping/m<N>-phase-<X>-<Y>.md` with substantive
+  content (file inventory, contracts, validation surface, named
+  risks — not empty, not a stub, not a placeholder paragraph
+  saying "scoping pending"). If the scoping doc does not exist
+  or is a stub, do scoping first as its own artifact;
+  plan-drafting cannot start without it. Without scoping
+  content, the reality-check gate below has nothing to operate
+  on, and plan-drafting silently collapses into
+  scoping-during-drafting — exactly what scoping exists to
+  separate from drafting. The check is a simple file-existence
+  + first-paragraph read, takes seconds, and protects against
+  the most common procedural skip when phase planning starts
+  in a fresh agent session that did not produce the scoping doc
 - **Plan opens with a plain-language context preamble.** Before any
   implementation specifics (file paths, framework names, function
   signatures, phase-numbering shorthand), the plan must contain
