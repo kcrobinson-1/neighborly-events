@@ -13,7 +13,7 @@ per-event registry is empty in M1 phase 1.5.2 and grows as M3 phase
   gradient stops and admin surfaces, body and heading typography,
   panel/card/control radii). Field set is the binding output of the
   M1 phase 1.5.1 audit
-  ([`docs/styling.md`](../../docs/styling.md)).
+  ([`docs/styling.md`](/docs/styling.md)).
 - `ThemeScope` — universal React component (no `'use client'`, no
   effects, no state) that emits the Theme as inline-style CSS custom
   properties on a `<div className="theme-scope">` wrapper. SSR-safe;
@@ -21,7 +21,7 @@ per-event registry is empty in M1 phase 1.5.2 and grows as M3 phase
   without hydration concerns.
 - `getThemeForSlug(slug: string): Theme` — pure resolver. Returns
   the registered Theme if `slug` appears in
-  [`themes/index.ts`](./themes/index.ts), otherwise the platform
+  [`themes/index.ts`](/shared/styles/themes/index.ts), otherwise the platform
   Sage Civic Theme.
 - `platformTheme` — the platform Sage Civic Theme, consumed as
   apps/site's root-layout default and as the resolver fallback.
@@ -44,7 +44,7 @@ the brand bases the Theme emits — option (a) with centralized
 derivation per the audit. Per-event themes do not override derived
 shades directly; if a future theme genuinely needs a non-standard
 derivation, the resolution is to revise
-[`docs/styling.md`](../../docs/styling.md) and the `:root` policy in
+[`docs/styling.md`](/docs/styling.md) and the `:root` policy in
 a follow-up PR before the theme lands, not to add a typed escape
 hatch in `Theme`.
 
@@ -64,7 +64,7 @@ with no `'use client'` directive. `bodyFontFamily` and
 
 Per the parent epic's "Deferred ThemeScope wiring" cross-cutting
 invariant, ThemeScope is centralized in apps/web's
-[`App.tsx`](../../apps/web/src/App.tsx) routing dispatcher (not
+[`App.tsx`](/apps/web/src/App.tsx) routing dispatcher (not
 per-page), and apps/site uses its framework-equivalent
 (`apps/site/app/event/[slug]/layout.tsx` in M3 phase 3.1). 1.5.2
 ships the component with **no production wiring**. Wiring sites:
@@ -78,7 +78,7 @@ ships the component with **no production wiring**. Wiring sites:
 ## Source-of-truth split for `:root` defaults
 
 apps/web's `:root` block (in
-[`_tokens.scss`](../../apps/web/src/styles/_tokens.scss)) carries
+[`_tokens.scss`](/apps/web/src/styles/_tokens.scss)) carries
 today's warm-cream values byte-identically. apps/site's root layout
 emits the platform Sage Civic Theme. The two are deliberately
 independent sources, not a sync gap — apps/web carries warm-cream
@@ -89,12 +89,12 @@ to Madrona's Theme at M4 phase 4.1.
 
 ## Plan reference
 
-- [`docs/plans/shared-styles-foundation.md`](../../docs/plans/shared-styles-foundation.md)
+- [`docs/plans/shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
   — phase 1.5 plan (subphase tables, execution steps, validation
   gate)
-- [`docs/plans/event-platform-epic.md`](../../docs/plans/event-platform-epic.md)
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   — parent epic (M1 phase 1.5 description carries the Sage Civic
   palette source of truth)
-- [`docs/styling.md`](../../docs/styling.md) — themable vs.
+- [`docs/styling.md`](/docs/styling.md) — themable vs.
   structural classification, derivation policy, Theme model,
   procedure for adding a new theme

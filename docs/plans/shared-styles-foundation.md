@@ -4,13 +4,13 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.5. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases:
-[`shared-db-foundation.md`](./shared-db-foundation.md) (1.1, Landed),
-[`shared-urls-foundation.md`](./shared-urls-foundation.md) (1.2, Landed),
-[`shared-auth-foundation.md`](./shared-auth-foundation.md) (1.3, Landed),
-[`shared-events-foundation.md`](./shared-events-foundation.md) (1.4, Landed).
+[`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) (1.1, Landed),
+[`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) (1.2, Landed),
+[`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) (1.3, Landed),
+[`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md) (1.4, Landed).
 
 This plan flips to `Landed` after both subphases below land. Each subphase
 is its own PR; each subphase's status row inside this plan flips when its
@@ -28,7 +28,7 @@ those surfaces with different attention; bundling them dilutes both.
 
 This plan inherits the **production cookie-boundary verification gate**
 named in the epic's M1 validation section. That gate was already
-satisfied in [`shared-auth-foundation.md`](./shared-auth-foundation.md)
+satisfied in [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
 subphase 1.3.2 against the real frontend-origin auth cookie; nothing in
 phase 1.5 touches authentication, so the gate is asserted-still-satisfied
 rather than re-run. Subphase 1.5.2's PR cites the existing 1.3.2 evidence
@@ -84,7 +84,7 @@ that first triggered the rule.
   consumer (event landing pages), M4 phase 4.1 wires the existing
   apps/web event routes (game, redeem, redemptions).
 - **ThemeScope placement is centralized in apps/web's
-  [`App.tsx`](../../apps/web/src/App.tsx) routing dispatcher.** Per-page
+  [`App.tsx`](/apps/web/src/App.tsx) routing dispatcher.** Per-page
   wrapping was rejected during scoping: the invariant is a routing-layer
   rule (URL determines theme), self-review of one dispatcher beats
   self-review of N pages, and M2 / M4 additions stay symmetric.
@@ -111,7 +111,7 @@ that first triggered the rule.
 ## Naming
 
 - **Module:** `shared/styles/`. Distinct from per-app SCSS
-  ([`apps/web/src/styles/`](../../apps/web/src/styles)) which still owns
+  ([`apps/web/src/styles/`](/apps/web/src/styles)) which still owns
   apps/web's structural SCSS partials and the apps/web `:root` block.
 - **Component:** `ThemeScope`. Universal React component; takes a
   `theme: Theme` prop and renders `children` inside a wrapper element
@@ -134,7 +134,7 @@ that first triggered the rule.
 ## Subphase 1.5.1 — Token audit (doc-only)
 
 **Scope.** Walk every token in
-[`apps/web/src/styles/_tokens.scss`](../../apps/web/src/styles/_tokens.scss):
+[`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss):
 ~50 colors, 12 spacing values, 4 panel/card/control radii (plus the pill),
 3 composite shadows, the font stack, two font weights, four control
 sizes, the interactive transition composite, and the focus-ring composite.
@@ -173,7 +173,7 @@ accordingly. The choice has the largest scoping multiplier on 1.5.2 and
 must not be left implicit.
 
 **Deliverable.** New
-[`docs/styling.md`](../styling.md) covering:
+[`docs/styling.md`](/docs/styling.md) covering:
 
 1. Themable vs structural classification table — one row per token, today's
    value, classification, and a one-line rationale where
@@ -211,7 +211,7 @@ implementation.
    `<body>`. `next/font` integration loads Inter (body) and Fraunces
    (heading) as variable fonts with build-time download.
 3. **apps/web SCSS migration.** Themable tokens in
-   [`apps/web/src/styles/_tokens.scss`](../../apps/web/src/styles/_tokens.scss)
+   [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
    migrate from `$color-*` SCSS variables to CSS custom properties on
    `:root`. **Default values are today's warm-cream values, encoded
    byte-identically.** The 13 consuming partials update references from
@@ -232,7 +232,7 @@ implementation.
    reorganized to introduce themable/structural classification before
    the "use a token" guidance. Themable = CSS custom properties via
    `var(--…)`; structural = SCSS variables. Points at
-   [`docs/styling.md`](../styling.md) for the binding classification
+   [`docs/styling.md`](/docs/styling.md) for the binding classification
    table.
 
 **Deliberately out of scope (deferred to M4 phase 4.1).**
@@ -289,11 +289,11 @@ convenience but the epic is the source of truth.
 - **`shared/styles/index.ts`** — public barrel. Re-exports `Theme`,
   `ThemeScope`, `getThemeForSlug`, the platform Theme, and the registry.
 - **`shared/styles/README.md`** — ownership note in the same shape as
-  [`shared/auth/README.md`](../../shared/auth/README.md): what the
+  [`shared/auth/README.md`](/shared/auth/README.md): what the
   module owns, the no-env / no-framework-imports constraint, the
   brand-only skin model, the placement-in-`App.tsx` invariant, and a
   link back to this plan.
-- **[`apps/web/src/styles/_tokens.scss`](../../apps/web/src/styles/_tokens.scss)**
+- **[`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)**
   — the themable subset migrates to CSS custom properties on `:root`.
   Today's warm-cream values are encoded byte-identically. Structural
   SCSS variables stay. The `:root` block is the source-of-truth for
@@ -302,27 +302,27 @@ convenience but the epic is the source of truth.
   source-of-truth) because apps/web carries today's warm-cream legacy
   defaults until M4 wraps its event routes in ThemeScope. Treating
   these as two independent sources is intentional, not a sync gap.
-- **[`apps/web/src/styles/_*.scss`](../../apps/web/src/styles)** (13
+- **[`apps/web/src/styles/_*.scss`](/apps/web/src/styles)** (13
   partials) — references migrated from `$color-…` to `var(--…)` for
   every token classified themable by the 1.5.1 audit. Structural
   references unchanged.
-- **[`apps/site/app/layout.tsx`](../../apps/site/app/layout.tsx)** —
+- **[`apps/site/app/layout.tsx`](/apps/site/app/layout.tsx)** —
   imports the platform Theme from `shared/styles/`, emits its CSS
   custom properties as inline style on `<html>` (or equivalent root
   element), wires `next/font` for Inter (body) and Fraunces (heading).
   This is the first apps/site route with real visual identity.
-- **[`AGENTS.md`](../../AGENTS.md)** — the "Styling Token Discipline"
+- **[`AGENTS.md`](/AGENTS.md)** — the "Styling Token Discipline"
   section (currently lines 65–82) is rewritten to introduce
   themable/structural classification before the existing "use a token"
   guidance. Points at `docs/styling.md`.
-- **[`docs/architecture.md`](../architecture.md)** — the shared-layer
+- **[`docs/architecture.md`](/docs/architecture.md)** — the shared-layer
   description gains a `shared/styles/` bullet under the same heading
   the `shared/db/`, `shared/urls/`, `shared/auth/`, and `shared/events/`
   extractions added.
-- **[`docs/dev.md`](../dev.md)** — extended only if the apps/site
+- **[`docs/dev.md`](/docs/dev.md)** — extended only if the apps/site
   visual-identity change requires a new local-validation step. No new
   validation command expected.
-- **[`docs/styling.md`](../styling.md)** — new in 1.5.1. Updated in
+- **[`docs/styling.md`](/docs/styling.md)** — new in 1.5.1. Updated in
   1.5.2 only if the implementation surfaced an audit gap that requires
   a doc fix.
 - **This plan** — Status flips on each subphase merge.
@@ -330,30 +330,30 @@ convenience but the epic is the source of truth.
 
 ## Files intentionally not touched
 
-- **[`shared/db/`](../../shared/db),
-  [`shared/urls/`](../../shared/urls),
-  [`shared/auth/`](../../shared/auth),
-  [`shared/events/`](../../shared/events)** — sibling shared modules; no
+- **[`shared/db/`](/shared/db),
+  [`shared/urls/`](/shared/urls),
+  [`shared/auth/`](/shared/auth),
+  [`shared/events/`](/shared/events)** — sibling shared modules; no
   styling concerns. No changes.
-- **[`apps/web/src/App.tsx`](../../apps/web/src/App.tsx)** — ThemeScope
+- **[`apps/web/src/App.tsx`](/apps/web/src/App.tsx)** — ThemeScope
   wiring deferred to M4 phase 4.1. App.tsx unchanged in 1.5.2.
-- **[`apps/web/src/pages/GameRoutePage.tsx`](../../apps/web/src/pages/GameRoutePage.tsx),
-  [`apps/web/src/pages/EventRedeemPage.tsx`](../../apps/web/src/pages/EventRedeemPage.tsx),
-  [`apps/web/src/pages/EventRedemptionsPage.tsx`](../../apps/web/src/pages/EventRedemptionsPage.tsx)**
+- **[`apps/web/src/pages/GameRoutePage.tsx`](/apps/web/src/pages/GameRoutePage.tsx),
+  [`apps/web/src/pages/EventRedeemPage.tsx`](/apps/web/src/pages/EventRedeemPage.tsx),
+  [`apps/web/src/pages/EventRedemptionsPage.tsx`](/apps/web/src/pages/EventRedemptionsPage.tsx)**
   — event-route page components stay un-wrapped. M4 wires them.
-- **[`apps/site/app/event/[slug]/page.tsx`](../../apps/site/app/event/[slug]/page.tsx)**
+- **[`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)**
   — placeholder event page; no per-event theme wiring in 1.5.2 (M3
   phase 3.1 owns it). Inherits the platform palette via the root
   layout.
 - **`shared/styles/themes/madrona.ts`** — does not exist in 1.5.2;
   created in M4 phase 4.1.
-- **[`supabase/`](../../supabase)** — no backend touched.
+- **[`supabase/`](/supabase)** — no backend touched.
 
 ## Execution steps
 
 1. **Pre-edit gate.** Confirm clean worktree, on a feature branch (not
    `main`). Confirm Node and npm versions match
-   [`mise.toml`](../../mise.toml) / [`package.json`](../../package.json).
+   [`mise.toml`](/mise.toml) / [`package.json`](/package.json).
 2. **Baseline validation.** Run `npm run lint`, `npm run build:web`,
    `npm run build:site`, `npm test`. All must pass before any edits.
 3. **(1.5.1)** Walk every token in `_tokens.scss`. Produce the
@@ -398,7 +398,7 @@ convenience but the epic is the source of truth.
 
 ## Self-Review Audits
 
-From [`docs/self-review-catalog.md`](../self-review-catalog.md), the audits
+From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md), the audits
 that match the diff surfaces in this phase:
 
 - **Rename-aware diff classification.** 1.5.2 introduces bulk renames in
@@ -460,11 +460,11 @@ section that this phase touches must reflect the implemented state by the
 1.5.2 PR's merge:
 
 - **`docs/styling.md`** — new in 1.5.1.
-- **[`docs/architecture.md`](../architecture.md)** — shared-layer
+- **[`docs/architecture.md`](/docs/architecture.md)** — shared-layer
   description gains `shared/styles/` bullet (1.5.2).
-- **[`AGENTS.md`](../../AGENTS.md)** — "Styling Token Discipline" section
+- **[`AGENTS.md`](/AGENTS.md)** — "Styling Token Discipline" section
   rewritten (1.5.2).
-- **[`docs/plans/event-platform-epic.md`](./event-platform-epic.md)** —
+- **[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)** —
   M1 phase 1.5 description rewritten in this plan's branch alongside
   the cascade edits to M2 phase 2.2, M2 phase 2.5, and M4 phase 4.1.
   M1 row in the milestone status table flips to `Landed` when 1.5.2
@@ -473,17 +473,17 @@ section that this phase touches must reflect the implemented state by the
 
 ## Related Docs
 
-- [`AGENTS.md`](../../AGENTS.md) — agent behavior, planning depth,
+- [`AGENTS.md`](/AGENTS.md) — agent behavior, planning depth,
   doc currency PR gate, Styling Token Discipline (rewritten in 1.5.2)
-- [`docs/dev.md`](../dev.md) — contributor workflow source of truth
-- [`docs/architecture.md`](../architecture.md) — current system shape
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) — named
+- [`docs/dev.md`](/docs/dev.md) — contributor workflow source of truth
+- [`docs/architecture.md`](/docs/architecture.md) — current system shape
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) — named
   self-review audits per surface
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic
-- [`docs/plans/framework-decision.md`](./framework-decision.md) —
+- [`docs/plans/framework-decision.md`](/docs/plans/framework-decision.md) —
   Next.js 16 App Router decision; describes `shared/styles/` as
   universal (the `<ThemeScope>` component matches that spec)
-- [`shared/auth/README.md`](../../shared/auth/README.md),
-  [`shared/events/README.md`](../../shared/events/README.md) — sibling
+- [`shared/auth/README.md`](/shared/auth/README.md),
+  [`shared/events/README.md`](/shared/events/README.md) — sibling
   module READMEs (precedent for `shared/styles/README.md` shape)

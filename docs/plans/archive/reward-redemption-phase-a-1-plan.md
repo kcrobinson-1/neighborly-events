@@ -6,8 +6,8 @@ follow-up fixes `b2382d8`, `230d718`, `e52d0b3`, `36f2b4b`, `10817fe`
 that hardened the shape check, cascade assertion, test catalog
 queries, and service_role privileges). Successor phase A.2a landed
 the mutation surface and scoped RLS read policies; see
-[`reward-redemption-phase-a-2-plan.md`](./reward-redemption-phase-a-2-plan.md).
-**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
+[`reward-redemption-phase-a-2-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2-plan.md).
+**Parent design:** [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
 **Scope:** Phase A.1 only — the inert backend foundation. No callers reference
 the new columns, helpers, or role table at the end of this phase; the PR is
 structural and ships safely on its own.

@@ -7,9 +7,9 @@ sub-phases**, each with its own plan doc, PR, and Status.
 
 | Sub-phase | Plan | PR | Status |
 | --- | --- | --- | --- |
-| 2.5.1 — Code rename + tests + dashboard allow-list audit | [m2-phase-2-5-1-plan.md](./m2-phase-2-5-1-plan.md) | [#130](https://github.com/kcrobinson-1/neighborly-events/pull/130) | Landed |
-| 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | [m2-phase-2-5-2-plan.md](./m2-phase-2-5-2-plan.md) | [#131](https://github.com/kcrobinson-1/neighborly-events/pull/131) | Landed |
-| 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | [m2-phase-2-5-3-plan.md](./m2-phase-2-5-3-plan.md) | [#133](https://github.com/kcrobinson-1/neighborly-events/pull/133) | Landed |
+| 2.5.1 — Code rename + tests + dashboard allow-list audit | [m2-phase-2-5-1-plan.md](/docs/plans/archive/m2/m2-phase-2-5-1-plan.md) | [#130](https://github.com/kcrobinson-1/neighborly-events/pull/130) | Landed |
+| 2.5.2 — Vercel cutover + local proxy + URL-shape doc currency | [m2-phase-2-5-2-plan.md](/docs/plans/archive/m2/m2-phase-2-5-2-plan.md) | [#131](https://github.com/kcrobinson-1/neighborly-events/pull/131) | Landed |
+| 2.5.3 — Doc cleanup + M2 closure + scoping batch delete | [m2-phase-2-5-3-plan.md](/docs/plans/archive/m2/m2-phase-2-5-3-plan.md) | [#133](https://github.com/kcrobinson-1/neighborly-events/pull/133) | Landed |
 
 **Per-sub-phase plans draft just-in-time, not in batch.** Only
 2.5.1's plan exists at umbrella-drafting time. 2.5.2's plan
@@ -28,17 +28,17 @@ drafts.
 ships under a two-phase Status pattern.** Unlike 2.4.2, the 2.5
 cutover does not touch any production-smoke fixture: the existing
 `Production Admin Smoke`
-([`scripts/testing/run-production-admin-smoke.cjs`](../../../../scripts/testing/run-production-admin-smoke.cjs))
+([`scripts/testing/run-production-admin-smoke.cjs`](/scripts/testing/run-production-admin-smoke.cjs))
 exercises `/auth/callback?next=/admin` and never reaches the
 operator route family. The two-phase **Plan-to-Landed Gate For
 Plans That Touch Production Smoke** from
-[`docs/testing-tiers.md`](../../../testing-tiers.md) therefore does not
+[`docs/testing-tiers.md`](/docs/testing-tiers.md) therefore does not
 apply *as written* — that gate is keyed on a specific fixture run.
 
 But 2.5.2's load-bearing verifier is a manual deployed-origin
 check (the cross-app proxy can only be observed against the real
 Vercel routing layer post-deploy;
-[`apps/web/vercel.json`](../../../../apps/web/vercel.json) destinations
+[`apps/web/vercel.json`](/apps/web/vercel.json) destinations
 are absolute production URLs, so any local `vercel dev` run
 proxies to *deployed* apps/site rather than the branch-local
 instance — the same pre-merge unverifiability that bit 2.3 and
@@ -67,7 +67,7 @@ string**:
    `Landed` happens in that doc-only follow-up commit (or the
    PR comment + a separate doc-only commit) — never in the
    implementing PR itself. Same shape as
-   [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md)'s
+   [`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md)'s
    "Production verification evidence" section that landed
    2.3's terminal flip post-deploy.
 
@@ -86,36 +86,36 @@ already-verified cutover. Neither has a post-deploy verifier, so
 the regular `Proposed` → `Landed` flip in the implementing PR
 applies.
 
-**Parent epic:** [`event-platform-epic.md`](../../event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M2, Phase 2.5. Sibling phases: 2.1 RLS broadening — Landed
-([`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
-[`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md),
-[`m2-phase-2-1-2-plan.md`](./m2-phase-2-1-2-plan.md)); 2.2 per-event
+([`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md),
+[`m2-phase-2-1-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-1-plan.md),
+[`m2-phase-2-1-2-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-2-plan.md)); 2.2 per-event
 admin shell — Landed
-([`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md)); 2.3
+([`m2-phase-2-2-plan.md`](/docs/plans/archive/m2/m2-phase-2-2-plan.md)); 2.3
 `/auth/callback` and `/` migration — Landed
-([`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md)); 2.4 platform
+([`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md)); 2.4 platform
 admin migration — Landed
-([`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md)). **This is M2's
+([`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md)). **This is M2's
 terminal phase**: 2.5.3's PR flips the
-[epic's M2 row](../../event-platform-epic.md) from `Proposed` to
+[epic's M2 row](/docs/plans/event-platform-epic.md) from `Proposed` to
 `Landed` and the
-[M2 milestone doc](./m2-admin-restructuring.md)'s top-level Status
+[M2 milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md)'s top-level Status
 to `Landed`.
 
 **Hard dependencies on landed siblings.** The
-[`/event/:slug/game/*`](../../site-scaffold-and-routing.md) apps/web
+[`/event/:slug/game/*`](/docs/plans/site-scaffold-and-routing.md) apps/web
 carve-out at
-[`apps/web/vercel.json:8`](../../../../apps/web/vercel.json#L8) (M0 phase
+[`apps/web/vercel.json:8`](/apps/web/vercel.json#L8) (M0 phase
 0.3) is what makes 2.5.2's deletion of the bare-path carve-outs
 safe — the migrated URLs already match rule 2 before reaching the
 cross-app rule. The `routes.eventRedeem` /
 `routes.eventRedemptions` builders + their matchers from M1 phase
 1.2
-([`shared/urls/routes.ts:35-38,132-206`](../../../../shared/urls/routes.ts#L35))
+([`shared/urls/routes.ts:35-38,132-206`](/shared/urls/routes.ts#L35))
 are the rename targets. The local auth-e2e dev-server proxy from
 M2 phase 2.3
-([`scripts/testing/run-auth-e2e-dev-server.cjs:47-59`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs#L47))
+([`scripts/testing/run-auth-e2e-dev-server.cjs:47-59`](/scripts/testing/run-auth-e2e-dev-server.cjs#L47))
 is the fixture-side surface 2.5.2 widens.
 
 **Scoping inputs:** the per-phase scoping doc this umbrella + its
@@ -123,7 +123,7 @@ sub-phase plans compressed from
 (`docs/plans/scoping/m2-phase-2-5.md`, deleted in 2.5.3's batch
 deletion — see git history for the pre-deletion file inventory
 and contracts walkthrough);
-[`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
 "Cross-Phase Decisions" "Settled by default" entries (cross-app
 smoke for bare-path retirement: defer to apps/site's ordinary
 unknown-route response; vercel.json composition with 2.3/2.4:
@@ -191,7 +191,7 @@ routing cutover from additive code changes and from doc/closure
 churn. After the phase, apps/web's URL footprint is purely
 `/event/:slug/game/*` and `/event/:slug/admin`; bare-path operator
 URLs serve apps/site's ordinary unknown-route response (per
-[milestone doc](./m2-admin-restructuring.md) "Settled by default"
+[milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Settled by default"
 entry on cross-app smoke for bare-path retirement). The
 `shared/urls/` `eventRedeem` / `eventRedemptions` builders and
 their matchers rename to `gameRedeem` / `gameRedemptions` in
@@ -228,7 +228,7 @@ choice, not a forced split, mirroring 2.4's three-verb shape:
 - **Maximum reviewer focus on the high-risk surface.** 2.5.2's
   `apps/web/vercel.json` edit is the single load-bearing risk in
   the phase per the
-  [milestone doc](./m2-admin-restructuring.md) "Cross-Phase Risks
+  [milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Cross-Phase Risks
   — Vercel rule-ordering misordering across 2.3, 2.4, 2.5." The
   cutover PR has ~4 substantive files (vercel.json, the local
   proxy, its unit test, operations.md) plus the URL-shape doc
@@ -254,7 +254,7 @@ The trade-off is three review rounds instead of one. The win is
 the load-bearing routing edit getting its own focused review and
 the cleanup PR landing only after the cutover is observably
 green. Per
-[`AGENTS.md`](../../../../AGENTS.md) "Phase Planning Sessions" /
+[`AGENTS.md`](/AGENTS.md) "Phase Planning Sessions" /
 "PR-count predictions need a branch test," this is the kind of
 deliberate split AGENTS.md welcomes when the high-risk surface is
 small and isolating it pays for the coordination cost.
@@ -269,7 +269,7 @@ re-checks against the post-edit `apps/web/vercel.json` rule order,
 the URL-shape doc edits 2.5.2 already landed, and the actual
 remaining doc-currency surface. Per AGENTS.md "Phase Planning
 Sessions — Plan-drafting cadence" and the
-[milestone doc](./m2-admin-restructuring.md) "Sequencing —
+[milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Sequencing —
 Plan-drafting cadence": plans drafted against not-yet-merged code
 stale fast. The cross-sub-phase narrative below (invariants,
 risks, doc-currency split) is umbrella-owned and gives 2.5.2's
@@ -293,7 +293,7 @@ the just-in-time rule above.
   evidence surfaces a real bookmark population, the response is a
   focused follow-up (apps/site per-URL handler), not a re-litigated
   in-phase decision. Resolved in
-  [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Settled by default" — cross-app smoke for bare-path retirement.
 - **Builder name and URL stay aligned at every gate.** Per M1
   phase 1.2's deferral (`shared/urls/README.md:49-52`), the
@@ -311,7 +311,7 @@ the just-in-time rule above.
   don't touch the dispatcher. The operator routes continue to
   render against apps/web's warm-cream `:root` defaults across
   every sub-phase. M4 phase 4.1's central
-  [`App.tsx`](../../../../apps/web/src/App.tsx) wiring lands the wrap
+  [`App.tsx`](/apps/web/src/App.tsx) wiring lands the wrap
   for all three apps/web event-route shells (`GameRoutePage`,
   `EventRedeemPage` at its `/game/redeem` URL,
   `EventRedemptionsPage` at its `/game/redemptions` URL) in the
@@ -319,10 +319,10 @@ the just-in-time rule above.
 - **Trust boundary unchanged.** No SQL migration, no RLS policy
   change, no Edge Function body change, no `shared/auth/` edit
   in any sub-phase. The operator routes continue to call
-  [`redeem-entitlement`](../../../../supabase/functions/redeem-entitlement),
-  [`reverse-entitlement-redemption`](../../../../supabase/functions/reverse-entitlement-redemption),
+  [`redeem-entitlement`](/supabase/functions/redeem-entitlement),
+  [`reverse-entitlement-redemption`](/supabase/functions/reverse-entitlement-redemption),
   and
-  [`get-redemption-status`](../../../../supabase/functions/get-redemption-status)
+  [`get-redemption-status`](/supabase/functions/get-redemption-status)
   through the existing browser Supabase client under the same
   authorization model. Phase 2.5 is a URL contract change, not a
   trust-boundary change.
@@ -368,7 +368,7 @@ the just-in-time rule above.
 ## Cross-Cutting Invariants Touched (epic-level)
 
 - **Auth integration.** Verified by:
-  [`shared/urls/validateNextPath.ts:23-67`](../../../../shared/urls/validateNextPath.ts#L23).
+  [`shared/urls/validateNextPath.ts:23-67`](/shared/urls/validateNextPath.ts#L23).
   `validateNextPath`'s open-redirect defense continues to admit
   only the post-rename allow-list (the matchers' decoding-and-
   validation discipline preserves verbatim across the rename).
@@ -376,13 +376,13 @@ the just-in-time rule above.
   carries over.
 - **URL contract.** Already covered above.
 - **Theme route scoping.** Verified by:
-  [`apps/web/src/App.tsx:41-63`](../../../../apps/web/src/App.tsx#L41).
+  [`apps/web/src/App.tsx:41-63`](/apps/web/src/App.tsx#L41).
   Today's redeem and redemptions branches do not wrap in
   `<ThemeScope>`; the rename swaps imports and matcher names
   but keeps the unwrapped JSX shape. M4 phase 4.1 owns the wrap.
 - **Trust boundary.** Already covered above.
 - **In-place auth.** Verified by:
-  [`apps/web/src/pages/EventRedeemPage.tsx:358-384`](../../../../apps/web/src/pages/EventRedeemPage.tsx#L358)
+  [`apps/web/src/pages/EventRedeemPage.tsx:358-384`](/apps/web/src/pages/EventRedeemPage.tsx#L358)
   and the corresponding section in `EventRedemptionsPage.tsx`.
   Page-shell sign-in surface is unchanged; only the magic-link
   `next=` URL the page emits is rewritten.
@@ -393,7 +393,7 @@ Phase-level decisions that apply across all three sub-phases.
 Sub-phase-local exclusions live in their respective plan docs.
 
 - **Backward-compat redirects for the bare paths.** Resolved in
-  [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Settled by default" — apps/site's ordinary unknown-route
   response handles the retired URLs; no per-URL handler on either
   side. Re-opening this decision in any sub-phase is out of scope.
@@ -426,7 +426,7 @@ respective plan docs.
 
 - **Vercel rule-ordering misorder breaks the new operator URLs.**
   Per
-  [milestone doc](./m2-admin-restructuring.md) "Cross-Phase Risks
+  [milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Cross-Phase Risks
   — Vercel rule-ordering misordering across 2.3, 2.4, 2.5":
   2.5.2's deletion of `apps/web/vercel.json` rules 5–6 must not
   reorder the surviving rules in a way that puts the cross-app
@@ -482,7 +482,7 @@ respective plan docs.
   manual-rather-than-fixture verifier. The protective check is
   named in 2.5.3's eventual Pre-Edit Gate.
 - **M2-status-flip premature.** Per the
-  [milestone doc](./m2-admin-restructuring.md) "Cross-Phase Risks
+  [milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Cross-Phase Risks
   — Plan-drafting cascade staleness" and the scoping doc's
   "Risks — M2-status-flip premature": 2.5.3 carries the M2-row
   flip, but the flip is wrong if any other M2 phase ever shows
@@ -522,11 +522,11 @@ respective plan docs.
 - "Organizer-managed agent assignment" stays *unblocked but not
   landed*. 2.5 does not change the unblock recorded by 2.1.1's
   `event_role_assignments` policies; 2.5.3 updates
-  [`docs/backlog.md`](../../../backlog.md) to mark the entry unblocked.
+  [`docs/backlog.md`](/docs/backlog.md) to mark the entry unblocked.
 - "Post-MVP authoring ownership and permission model" closes per
   the epic's "Open Questions Resolved By This Epic"; 2.5.3 closes
-  the entry in [`docs/backlog.md`](../../../backlog.md) and the
-  corresponding [`docs/open-questions.md`](../../../open-questions.md)
+  the entry in [`docs/backlog.md`](/docs/backlog.md) and the
+  corresponding [`docs/open-questions.md`](/docs/open-questions.md)
   entry.
 - No new backlog items expected. If the 2.5.2 post-deploy bare-path
   retirement check surfaces a Vercel-routing issue, that becomes a
@@ -535,18 +535,18 @@ respective plan docs.
 ## Documentation Currency
 
 Doc edits distribute across sub-phases per
-[`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate":
+[`AGENTS.md`](/AGENTS.md) "Doc Currency Is a PR Gate":
 
 - **2.5.1** — minimal doc surface.
-  [`shared/urls/README.md`](../../../../shared/urls/README.md) `routes`
+  [`shared/urls/README.md`](/shared/urls/README.md) `routes`
   builder list and matcher list update in lockstep with the rename
   (reads as part of the load-bearing module change). Plan Status
   flips to `Landed` in 2.5.1's PR.
 - **2.5.2** — URL-ownership-shape edits.
-  [`docs/architecture.md`](../../../architecture.md) URL ownership prose
+  [`docs/architecture.md`](/docs/architecture.md) URL ownership prose
   (top-level layout section) and the Vercel routing topology
-  table. [`docs/dev.md`](../../../dev.md) apps/web URL list and
-  rule-precedence walk-through. [`docs/operations.md`](../../../operations.md)
+  table. [`docs/dev.md`](/docs/dev.md) apps/web URL list and
+  rule-precedence walk-through. [`docs/operations.md`](/docs/operations.md)
   Supabase Auth dashboard redirect-URL allow-list description.
   These are the doc surfaces whose accuracy depends on the
   cutover; landing them in 2.5.2 keeps doc state synchronous with
@@ -556,23 +556,23 @@ Doc edits distribute across sub-phases per
   at merge → `Landed` in a doc-only follow-up commit after the
   post-deploy manual check is captured.
 - **2.5.3** — page-behavior + API-shape doc edits.
-  [`docs/architecture.md`](../../../architecture.md) route inventory
+  [`docs/architecture.md`](/docs/architecture.md) route inventory
   entries for `EventRedeemPage` / `EventRedemptionsPage`,
   auth-flow narrative URL strings, `shared/urls` builder/matcher
-  description. [`docs/dev.md`](../../../dev.md) routes builder list.
-  [`docs/product.md`](../../../product.md) capability bullet URL
-  strings. [`README.md`](../../../../README.md) operator-route URL
+  description. [`docs/dev.md`](/docs/dev.md) routes builder list.
+  [`docs/product.md`](/docs/product.md) capability bullet URL
+  strings. [`README.md`](/README.md) operator-route URL
   refs and Repo Shape apps/web ownership prose.
-  [`docs/open-questions.md`](../../../open-questions.md) close entry.
-  [`docs/backlog.md`](../../../backlog.md) close + unblock.
-  [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md)
-  M2 row flip. [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`docs/open-questions.md`](/docs/open-questions.md) close entry.
+  [`docs/backlog.md`](/docs/backlog.md) close + unblock.
+  [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+  M2 row flip. [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   Phase Status row + top-level Status flips. Umbrella (this doc)
   Status flips to `Landed`. Sub-phase 2.5.3 plan Status flips to
   `Landed`.
 - **Umbrella (this doc)** — Status flips to `Landed` after all
   three sub-phases land (2.5.3's PR carries the flip).
-- **[`m2-admin-restructuring.md`](./m2-admin-restructuring.md)**
+- **[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)**
   — Phase Status table row for 2.5 reflects sub-phase progress
   (umbrella Plan link landed at draft time per the milestone
   doc's "Each row updates as the phase's plan drafts" rule); the
@@ -592,7 +592,7 @@ Doc edits distribute across sub-phases per
   with explanatory prose pointing at git history). 2.5.3 biased
   every rewrite toward option 3 because the M2 plan-doc set is
   itself headed for archive (tracked as a `dev`-tag entry in
-  [`docs/backlog.md`](../../../backlog.md) "Archive M2 plan docs"); a
+  [`docs/backlog.md`](/docs/backlog.md) "Archive M2 plan docs"); a
   follow-up PR moves the entire M2 plan-doc set under a
   `docs/plans/archive/m2/` (or equivalent) tree, so option-1
   rewrites pointing at milestone-doc sections would re-resolve
@@ -604,38 +604,38 @@ Doc edits distribute across sub-phases per
 
 ## Related Docs
 
-- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
   epic; M2 row flips to `Landed` in 2.5.3's PR.
-- [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
+- [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   M2 milestone doc; Phase Status row for 2.5 + top-level Status
   flip to `Landed` in 2.5.3.
 - `docs/plans/scoping/m2-phase-2-5.md` — scoping doc the umbrella
   + sub-phase plans compressed from (deleted in 2.5.3's batch
   deletion; see git history for the pre-deletion content).
-- [`m2-phase-2-5-1-plan.md`](./m2-phase-2-5-1-plan.md) — sub-phase
+- [`m2-phase-2-5-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-1-plan.md) — sub-phase
   2.5.1 plan (code rename + tests + dashboard allow-list audit).
-- [`m2-phase-2-5-2-plan.md`](./m2-phase-2-5-2-plan.md) — sub-phase
+- [`m2-phase-2-5-2-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-2-plan.md) — sub-phase
   2.5.2 plan (vercel cutover + local proxy + URL-shape doc
   currency).
-- [`m2-phase-2-5-3-plan.md`](./m2-phase-2-5-3-plan.md) — sub-phase
+- [`m2-phase-2-5-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-3-plan.md) — sub-phase
   2.5.3 plan (doc cleanup + M2 closure + scoping batch delete).
-- [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
-  [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md),
-  [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md),
-  [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) — Landed
+- [`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md),
+  [`m2-phase-2-2-plan.md`](/docs/plans/archive/m2/m2-phase-2-2-plan.md),
+  [`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md),
+  [`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) — Landed
   sibling phase plans.
-- [`shared-urls-foundation.md`](../../shared-urls-foundation.md) —
+- [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) —
   M1 phase 1.2 plan; established the deferral of the
   `gameRedeem` / `gameRedemptions` rename to this phase.
-- [`site-scaffold-and-routing.md`](../../site-scaffold-and-routing.md)
+- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
   — M0 phase 0.3 plan; established the
   `/event/:slug/game/*` apps/web carve-out the migrated URLs sit
   inside.
-- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source for sub-phase Self-Review Audits sections.
-- [`docs/testing-tiers.md`](../../../testing-tiers.md) — production-smoke
+- [`docs/testing-tiers.md`](/docs/testing-tiers.md) — production-smoke
   tier reference; the two-phase Plan-to-Landed Gate does not apply
   to any 2.5 sub-phase per Status above.
-- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules; Phase Planning
+- [`AGENTS.md`](/AGENTS.md) — workflow rules; Phase Planning
   Sessions, PR-count predictions, Doc Currency Is a PR Gate,
   Verified-by annotations.

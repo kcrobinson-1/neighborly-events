@@ -3,15 +3,15 @@
 **Status:** Landed. Both sub-phases are on `main`: Phase 1 delivered the
 role-neutral primitives inert, and Phase 2 wired them into the admin
 shell behind `/auth/callback`. See the sub-phase execution plans
-([Phase 1](./archive/auth-signin-generalization-phase-1-plan.md),
-[Phase 2](./archive/auth-signin-generalization-phase-2-plan.md)) for the
+([Phase 1](/docs/plans/archive/auth-signin-generalization-phase-1-plan.md),
+[Phase 2](/docs/plans/archive/auth-signin-generalization-phase-2-plan.md)) for the
 landed surface; this overview remains as the architectural reference
 for Phase B consumers. Sub-phase plans follow the Phase A precedent
-([A.1](./archive/reward-redemption-phase-a-1-plan.md),
-[A.2a](./archive/reward-redemption-phase-a-2-plan.md),
-[A.2b](./archive/reward-redemption-phase-a-2b-plan.md)).
+([A.1](/docs/plans/archive/reward-redemption-phase-a-1-plan.md),
+[A.2a](/docs/plans/archive/reward-redemption-phase-a-2-plan.md),
+[A.2b](/docs/plans/archive/reward-redemption-phase-a-2b-plan.md)).
 **Parent context:** Prerequisite for
-[`reward-redemption-phase-b-plan.md`](./archive/reward-redemption-phase-b-plan.md).
+[`reward-redemption-phase-b-plan.md`](/docs/plans/archive/reward-redemption-phase-b-plan.md).
 Both sub-phases must land before Phase B starts.
 
 ## Why This Plan Exists
@@ -23,11 +23,11 @@ authorization (`is_admin()` vs. `is_agent_for_event(...)` vs.
 `is_organizer_for_event(...)`), enforced in the DB and Edge Functions.
 
 The frontend, however, still names the sign-in surface as if it belongs
-to the admin workspace. [`AdminSignInForm`](../../apps/web/src/admin/AdminSignInForm.tsx),
-[`useAdminSession`](../../apps/web/src/admin/useAdminSession.ts), and
+to the admin workspace. [`AdminSignInForm`](/apps/web/src/admin/AdminSignInForm.tsx),
+[`useAdminSession`](/apps/web/src/admin/useAdminSession.ts), and
 the `getAdminSession` / `subscribeToAdminAuthState` /
 `requestAdminMagicLink` / `signOutAdmin` helpers inside
-[`adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts) are all
+[`adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts) are all
 role-agnostic Supabase Auth wrappers dressed as admin surfaces. The
 redeem and monitoring routes would either duplicate these or reach
 across the `/admin` naming boundary. Both are worse than renaming.
@@ -71,7 +71,7 @@ touching Phase 1 (or vice versa) is straightforward.
 
 | Sub-phase | Scope | Consumers at merge | Detail plan |
 |-----------|-------|--------------------|-------------|
-| **Phase 1** | `authApi.ts` (5 helpers), `validateNextPath`, `auth/types.ts`, bypass-vector tests | None — inert | [`auth-signin-generalization-phase-1-plan.md`](./archive/auth-signin-generalization-phase-1-plan.md) |
+| **Phase 1** | `authApi.ts` (5 helpers), `validateNextPath`, `auth/types.ts`, bypass-vector tests | None — inert | [`auth-signin-generalization-phase-1-plan.md`](/docs/plans/archive/auth-signin-generalization-phase-1-plan.md) |
 | **Phase 2** | `useAuthSession`, `SignInForm`, `AuthCallbackPage`, `_signin.scss`, admin-shell migration, test mocks, docs | `/admin` uses all new primitives; `/auth/callback` lives in the router | drafted as `auth-signin-generalization-phase-2-plan.md` before Phase 2 implementation |
 
 ## Sub-Phase Scope Boundaries
@@ -123,41 +123,41 @@ In scope:
   `AdminPage` switch to the new primitives; `AdminSignInForm`,
   `useAdminSession`, `AdminMagicLinkState`, `getAdminAccessToken`,
   and the four renamed helpers leave the tree.
-- [`apps/web/vercel.json`](../../apps/web/vercel.json): add
+- [`apps/web/vercel.json`](/apps/web/vercel.json): add
   `/auth/:path*` to the rewrites list so direct-load of the magic-link
   return URL resolves to the SPA shell instead of 404. The current
   rewrites only cover `/admin/:path*` and `/event/:path*`; without
   this update, production magic-link returns will 404 on direct load.
 - Vitest mock migration in
-  [`tests/web/pages/AdminPage.test.tsx`](../../tests/web/pages/AdminPage.test.tsx).
+  [`tests/web/pages/AdminPage.test.tsx`](/tests/web/pages/AdminPage.test.tsx).
 - e2e admin fixture update in
-  [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts):
+  [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts):
   update `defaultAdminRedirectUrl` for the `/auth/callback?next=/admin`
   intermediate hop, and update any production smoke env var guidance
   that currently reads `/admin` (see docs list below).
 - Docs updates — expanded surface from the initial draft:
-  - [`docs/architecture.md`](../architecture.md) — add `/auth/callback`
+  - [`docs/architecture.md`](/docs/architecture.md) — add `/auth/callback`
     to any frontend route enumeration.
-  - [`docs/operations.md:162`](../operations.md) — the
+  - [`docs/operations.md:162`](/docs/operations.md) — the
     "Auth URL configuration" block currently names
     "local `/admin` redirect URLs" and
     "deployed `/admin` redirect URLs"; rewrite to name
     `<origin>/auth/callback` as the single redirect URL per
     environment.
-  - [`docs/dev.md:151`](../dev.md) — the paragraph that states magic
+  - [`docs/dev.md:151`](/docs/dev.md) — the paragraph that states magic
     links redirect back to `/admin` needs rewriting to describe the
     callback route.
-  - [`README.md:129`](../../README.md) — the
+  - [`README.md:129`](/README.md) — the
     "admin authoring shell and authoring APIs also require" bullet
     list includes redirect URLs with `/admin` origins; rewrite to
     name the callback route.
-  - [`docs/tracking/production-admin-smoke-tracking.md:88`](../tracking/production-admin-smoke-tracking.md)
+  - [`docs/tracking/production-admin-smoke-tracking.md:88`](/docs/tracking/production-admin-smoke-tracking.md)
     — `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` defaults to
     `<PRODUCTION_SMOKE_BASE_URL>/admin`. Decide whether to update the
     default to `/auth/callback?next=/admin` or keep the env var
     admin-scoped and add a separate callback URL. Smoke workflow
     must continue to work end to end.
-  - [`apps/web/src/admin/README.md`](../../apps/web/src/admin/README.md)
+  - [`apps/web/src/admin/README.md`](/apps/web/src/admin/README.md)
     if it references removed files.
 - Operational step coordinated at merge: add `<origin>/auth/callback`
   to the Supabase Auth redirect URL allowlist per environment. The
@@ -180,7 +180,7 @@ items — decided now to avoid drift):
   component must not call `replaceState` to the validated `next`
   path until Supabase has finished URL-based session detection.
   `detectSessionInUrl: true` is enabled globally in
-  [`supabaseBrowser.ts:52`](../../apps/web/src/lib/supabaseBrowser.ts),
+  [`supabaseBrowser.ts:52`](/apps/web/src/lib/supabaseBrowser.ts),
   but the hash consumption is asynchronous. Locked sequence:
   1. Mount.
   2. Call `getAuthSession()` to force Supabase client instantiation
@@ -215,7 +215,7 @@ Open items the Phase 2 detail plan must settle before implementation:
   the default, introduce a sibling callback-URL env var, or let
   the smoke workflow resolve it from the same base URL. The answer
   drives the
-  [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
+  [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
   fixture shape.
 
 ## Prerequisites
@@ -228,7 +228,7 @@ either sub-phase.
 
 - **Type surface.** Two distinct types at the auth boundary, not
   one:
-  - `AppPath` (in [`routes.ts`](../../apps/web/src/routes.ts)) — the
+  - `AppPath` (in [`routes.ts`](/apps/web/src/routes.ts)) — the
     union of every path the client router can route to, including
     transport-only routes. Phase 2 extends this with
     `"/auth/callback"`; Phase B extends it with redemption routes.
@@ -258,7 +258,7 @@ either sub-phase.
 ## Rollout Sequence At The Phase Level
 
 1. **Draft the Phase 1 detail plan** (done — see
-   [`auth-signin-generalization-phase-1-plan.md`](./archive/auth-signin-generalization-phase-1-plan.md)).
+   [`auth-signin-generalization-phase-1-plan.md`](/docs/plans/archive/auth-signin-generalization-phase-1-plan.md)).
 2. **Implement Phase 1.** Land the inert foundation with exhaustive
    validator tests. Review focus is open-redirect correctness.
 3. **Draft the Phase 2 detail plan** close to implementation, using
@@ -305,7 +305,7 @@ either sub-phase.
   environment. Not tracked in git. Mitigation: named explicitly in
   the Phase 2 PR description and documented in `docs/operations.md`.
 - **Vercel rewrite drift.** `/auth/callback` must be added to the
-  SPA rewrites in [`apps/web/vercel.json`](../../apps/web/vercel.json)
+  SPA rewrites in [`apps/web/vercel.json`](/apps/web/vercel.json)
   in the same commit that adds the route; otherwise production
   magic-link returns 404 on direct load. Mitigation: named in the
   Phase 2 scope above; the production-smoke workflow will catch a
@@ -330,11 +330,11 @@ either sub-phase.
 - **Stale docs/smoke references to `/admin` redirect.** Several
   docs and smoke fixtures hardcode `/admin` as the magic-link
   return target
-  ([`README.md:129`](../../README.md),
-  [`docs/dev.md:151`](../dev.md),
-  [`docs/operations.md:162`](../operations.md),
-  [`docs/tracking/production-admin-smoke-tracking.md:88`](../tracking/production-admin-smoke-tracking.md),
-  [`tests/e2e/admin-auth-fixture.ts:37`](../../tests/e2e/admin-auth-fixture.ts)).
+  ([`README.md:129`](/README.md),
+  [`docs/dev.md:151`](/docs/dev.md),
+  [`docs/operations.md:162`](/docs/operations.md),
+  [`docs/tracking/production-admin-smoke-tracking.md:88`](/docs/tracking/production-admin-smoke-tracking.md),
+  [`tests/e2e/admin-auth-fixture.ts:37`](/tests/e2e/admin-auth-fixture.ts)).
   Mitigation: the Phase 2 scope enumerates each file; the PR
   reviewer walks the list before merge.
 
@@ -377,7 +377,7 @@ the `/auth/callback` allowlist entry in place for faster re-roll.
   primitives.
 - `/auth/callback` is a role-neutral magic-link return handler that
   consumes any validated `next: AuthNextPath`.
-- [`reward-redemption-phase-b-plan.md`](./archive/reward-redemption-phase-b-plan.md)
+- [`reward-redemption-phase-b-plan.md`](/docs/plans/archive/reward-redemption-phase-b-plan.md)
   can schedule B.1 implementation against `SignInForm`,
   `useAuthSession`, `requestMagicLink({ next })`, `getAccessToken`,
   and `validateNextPath` — with zero Supabase Auth dashboard changes

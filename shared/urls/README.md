@@ -58,4 +58,4 @@ matching the same precedent as `shared/db/` exporting
 
 ## Plan reference
 
-[`docs/plans/shared-urls-foundation.md`](../../docs/plans/shared-urls-foundation.md).
+[`docs/plans/shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md).

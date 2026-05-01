@@ -8,7 +8,7 @@ Landed.
 
 Replace the manual "paste the smoke run URL when it's green" step in the
 two-phase **Plan-to-Landed Gate For Plans That Touch Production Smoke**
-(per [`docs/testing-tiers.md`](../testing-tiers.md)) with a focused
+(per [`docs/testing-tiers.md`](/docs/testing-tiers.md)) with a focused
 watcher script that, given a merge commit SHA:
 
 1. Watches the current static post-merge GitHub Actions chain
@@ -104,7 +104,7 @@ the durable external evidence the gate requires.
   the chain hasn't completed by then.
 
 `npm run release:watch-smoke -- <merge-sha>` is the canonical wrapper.
-Per [`AGENTS.md`](../../AGENTS.md) "Phase Planning Sessions" →
+Per [`AGENTS.md`](/AGENTS.md) "Phase Planning Sessions" →
 "Prefer existing wrapper scripts over lower-level CLI invocations,"
 plans that reference this watcher should name the npm script, not the
 underlying `node scripts/...` invocation.
@@ -152,7 +152,7 @@ for any other configured GitHub host.
 
 Because the script parses `gh run list` / `gh run view` JSON, the
 implementation must run the **CLI / tooling pinning audit** from
-[`docs/self-review-catalog.md`](../self-review-catalog.md). The v1
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md). The v1
 contract is a runtime minimum-version check in the watcher itself:
 `gh --version` must report at least `2.89.0` before any polling starts.
 `docs/dev.md` records that requirement next to the npm wrapper. The
@@ -210,7 +210,7 @@ that complexity useful.
 
 ### Failure-mode handling
 
-Per [`AGENTS.md`](../../AGENTS.md) "Review-Fix Rigor" → "Could this
+Per [`AGENTS.md`](/AGENTS.md) "Review-Fix Rigor" → "Could this
 make a successful operation look failed?":
 
 - **Stage didn't trigger within a reasonable window.** Don't fail
@@ -233,27 +233,27 @@ make a successful operation look failed?":
 
 ### Create
 
-- [`scripts/release/post-merge-smoke-watch.cjs`](../../scripts/release/post-merge-smoke-watch.cjs)
+- [`scripts/release/post-merge-smoke-watch.cjs`](/scripts/release/post-merge-smoke-watch.cjs)
   — the watcher.
-- [`tests/scripts/post-merge-smoke-watch.test.ts`](../../tests/scripts/post-merge-smoke-watch.test.ts)
+- [`tests/scripts/post-merge-smoke-watch.test.ts`](/tests/scripts/post-merge-smoke-watch.test.ts)
   — unit coverage for the SHA filter, stage-detection, output
   formatting, deadline handling, and exit-code branches. Stubs `gh`
   via an injectable runner per the existing pattern in
-  [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../scripts/testing/run-auth-e2e-dev-server.cjs)
+  [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs)
   export shape.
 
 ### Modify
 
-- [`package.json`](../../package.json) — add `release:watch-smoke`
+- [`package.json`](/package.json) — add `release:watch-smoke`
   script wrapping the `.cjs` invocation.
-- [`docs/dev.md`](../dev.md) — short subsection under the release
+- [`docs/dev.md`](/docs/dev.md) — short subsection under the release
   process naming the watcher, the `gh >= 2.89.0` requirement, and when
   to use it. Two paragraphs maximum.
-- [`docs/operations.md`](../operations.md) — update the production smoke
+- [`docs/operations.md`](/docs/operations.md) — update the production smoke
   triage runbook to name the watcher as the preferred evidence-capture
   path when the operator has a merge SHA; retain the browser/manual
   dispatch path for operational triage.
-- [`docs/testing-tiers.md`](../testing-tiers.md) "Plan-to-Landed
+- [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
   Gate For Plans That Touch Production Smoke" — single-sentence note
   that `npm run release:watch-smoke -- <sha>` is the recommended way
   to capture the run URL for the doc-only follow-up commit.
@@ -361,25 +361,25 @@ canonical usage path.
 ## Backlog Impact
 
 - This plan adds one Tier 2 entry to
-  [`docs/backlog.md`](../backlog.md) ("`infra` Automate post-merge
+  [`docs/backlog.md`](/docs/backlog.md) ("`infra` Automate post-merge
   smoke watch + URL capture"). The entry closes when this plan
   lands.
 
 ## Related Docs
 
-- [`docs/testing-tiers.md`](../testing-tiers.md) — "Plan-to-Landed
+- [`docs/testing-tiers.md`](/docs/testing-tiers.md) — "Plan-to-Landed
   Gate For Plans That Touch Production Smoke" defines the two-phase
   gate this script automates evidence-capture for.
-- [`docs/tracking/production-admin-smoke-tracking.md`](../tracking/production-admin-smoke-tracking.md)
+- [`docs/tracking/production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md)
   — production smoke workflow ownership and triage runbook.
-- [`docs/operations.md`](../operations.md) — release process where
+- [`docs/operations.md`](/docs/operations.md) — release process where
   this script slots in and production-smoke triage runbook updated by
   the implementation.
-- [`AGENTS.md`](../../AGENTS.md) "Phase Planning Sessions" — the
+- [`AGENTS.md`](/AGENTS.md) "Phase Planning Sessions" — the
   wrapper-script preference rule this script answers, so plans
   naming smoke-evidence capture can name
   `npm run release:watch-smoke …` rather than raw `gh run`
   invocations.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) — the
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) — the
   CLI / tooling pinning audit applies because the watcher parses `gh`
   JSON.

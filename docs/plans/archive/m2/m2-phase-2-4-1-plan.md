@@ -6,7 +6,7 @@ Landed. Tier 1–4 gate (no production smoke); production behavior
 unchanged through this PR.
 
 Sub-phase of M2 phase 2.4 — see
-[`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella) for the
+[`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) (umbrella) for the
 phase-level context, sequencing rationale, cross-sub-phase
 invariants, phase-level Out of Scope, and cross-sub-phase risks.
 This plan covers the per-PR contract for sub-phase 2.4.1 only.
@@ -17,7 +17,7 @@ supporting shared modules, but does not change Vercel routing, does
 not touch e2e fixtures, and does not delete any apps/web code.
 Production `/admin` continues to resolve to the legacy apps/web
 `AdminPage` because
-[`apps/web/vercel.json`](../../../../apps/web/vercel.json) still SPA-handles
+[`apps/web/vercel.json`](/apps/web/vercel.json) still SPA-handles
 `/admin/:path*` until 2.4.2's cutover.
 
 **Single PR.** Branch-test sketch — apps/site: 2 new files
@@ -43,7 +43,7 @@ copy-then-shim with no logic change. The PR is at the upper edge
 of what AGENTS.md "PR-count predictions need a branch test" treats
 as one cohesive sub-phase; the work is tightly coupled (page +
 CSS ship together so the dev-server render the
-[`AGENTS.md`](../../../../AGENTS.md) "Bans on surface require rendering
+[`AGENTS.md`](/AGENTS.md) "Bans on surface require rendering
 the consequence" rule mandates is observable in this single bisect
 target), so further splitting would fragment one verb across two
 PRs without review-coherence gain.
@@ -112,7 +112,7 @@ build-sequencing constraint).
   `setupAuth` import. Both modules are idempotent — `configureSharedAuth`
   and `configureSharedEvents` overwrite-on-second-call by design,
   per
-  [`shared/auth/configure.ts:35`](../../../../shared/auth/configure.ts#L35).
+  [`shared/auth/configure.ts:35`](/shared/auth/configure.ts#L35).
   The bootstrap component must not gate either import behind state;
   both run unconditionally at module evaluation, before any
   descendant client component reads the providers.
@@ -125,7 +125,7 @@ build-sequencing constraint).
   `next/navigation`. Same trap that bit M2 phase 2.3's first draft.
   The apps/site `/auth/callback` page uses `window.location.replace`
   for the same reason — see
-  [`apps/site/app/(authenticated)/auth/callback/page.tsx:12-14`](../../../../apps/site/app/(authenticated)/auth/callback/page.tsx#L12).
+  [`apps/site/app/(authenticated)/auth/callback/page.tsx:12-14`](/apps/site/app/(authenticated)/auth/callback/page.tsx#L12).
   Note: the navigation targets resolve to apps/web in production via
   the proxy-rewrite topology, but apps/web doesn't own those URLs
   yet through 2.4.1 — they go through the existing apps/web SPA
@@ -134,7 +134,7 @@ build-sequencing constraint).
 - **Trust boundary preserved.** Authoring writes (Create draft,
   Duplicate draft, Publish, Unpublish) flow through the four
   Edge Functions gated on
-  [`authenticateEventOrganizerOrAdmin`](../../../../supabase/functions/_shared/event-organizer-auth.ts);
+  [`authenticateEventOrganizerOrAdmin`](/supabase/functions/_shared/event-organizer-auth.ts);
   the platform admin passes through the `is_root_admin()` branch.
   The new apps/site page's client gate (`useAuthSession()` +
   `getGameAdminStatus()`) is a UX gate, not the enforcement point.
@@ -150,19 +150,19 @@ build-sequencing constraint).
 - New apps/site events setup module:
   `apps/site/lib/setupEvents.ts`. Module-level side effect that
   calls `configureSharedEvents(...)` once with the full
-  [`SharedEventsProviders`](../../../../shared/events/configure.ts#L9)
+  [`SharedEventsProviders`](/shared/events/configure.ts#L9)
   shape — `{ getClient, getConfig, getMissingConfigMessage,
   getFeaturedGameSlug }`. Mirrors
-  [`apps/web/src/lib/setupEvents.ts`](../../../../apps/web/src/lib/setupEvents.ts);
+  [`apps/web/src/lib/setupEvents.ts`](/apps/web/src/lib/setupEvents.ts);
   the only apps/site-specific wiring is the `featuredGameSlug` import
   source — see Contracts section.
 - New shared starter helper:
   `shared/events/draftCreation.ts`. Houses
   `createStarterDraftContent` and `createDuplicatedDraftContent`
   (both currently in
-  [`apps/web/src/admin/draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts)).
+  [`apps/web/src/admin/draftCreation.ts`](/apps/web/src/admin/draftCreation.ts)).
   Re-exported through
-  [`shared/events/index.ts`](../../../../shared/events/index.ts).
+  [`shared/events/index.ts`](/shared/events/index.ts).
 
 **Not created in 2.4.1:** per-component split of the apps/site
 `/admin` page. The plan defers split until the file exceeds
@@ -183,7 +183,7 @@ is scoped under `.admin-shell` per the Token bucket discipline
 section.
 
 State machine mirrors
-[`apps/web/src/admin/AdminDashboardContent.tsx`](../../../../apps/web/src/admin/AdminDashboardContent.tsx)'s
+[`apps/web/src/admin/AdminDashboardContent.tsx`](/apps/web/src/admin/AdminDashboardContent.tsx)'s
 top-level branches at the structural level — same status branches,
 same overall page shape. The umbrella's
 **test-asserted-locator stability** invariant pins the specific
@@ -195,21 +195,21 @@ otherwise. The state branches:
 - `sessionState.status === "missing_config"` → renders the
   `getMissingSupabaseConfigMessage()` text in a state stack.
   Modeled on
-  [`apps/web/src/admin/AdminDashboardContent.tsx:100-107`](../../../../apps/web/src/admin/AdminDashboardContent.tsx#L100).
+  [`apps/web/src/admin/AdminDashboardContent.tsx:100-107`](/apps/web/src/admin/AdminDashboardContent.tsx#L100).
 - `sessionState.status === "loading"` → renders a "session
   restoring" state stack with a disabled placeholder button.
   Modeled on
-  [`apps/web/src/admin/AdminDashboardContent.tsx:109-118`](../../../../apps/web/src/admin/AdminDashboardContent.tsx#L109).
+  [`apps/web/src/admin/AdminDashboardContent.tsx:109-118`](/apps/web/src/admin/AdminDashboardContent.tsx#L109).
 - `sessionState.status === "signed_out"` → renders `<SignInForm>`
-  from [`shared/auth`](../../../../shared/auth) inline with magic-link
+  from [`shared/auth`](/shared/auth) inline with magic-link
   copy modeled on apps/web's `ADMIN_SIGN_IN_COPY`
-  ([`AdminDashboardContent.tsx:20-28`](../../../../apps/web/src/admin/AdminDashboardContent.tsx#L20)).
+  ([`AdminDashboardContent.tsx:20-28`](/apps/web/src/admin/AdminDashboardContent.tsx#L20)).
   Submit calls `requestMagicLink(email, { next: routes.admin })`.
 - `sessionState.status === "signed_in"` and
   `getGameAdminStatus()` resolves false → renders the heading
   **`This account is not allowlisted for game authoring.`**
   (test-asserted-locator; exact-match required per
-  [`tests/e2e/admin-production-smoke.spec.ts:51-55`](../../../../tests/e2e/admin-production-smoke.spec.ts#L51)).
+  [`tests/e2e/admin-production-smoke.spec.ts:51-55`](/tests/e2e/admin-production-smoke.spec.ts#L51)).
 - `sessionState.status === "signed_in"` and admin → renders the
   workspace surface. **Test-asserted locators (exact-match
   required)**: the `Game draft access` heading, the `Event
@@ -259,37 +259,37 @@ Button handler contracts:
 
 State management: a single hook (sub-phase-local helper, e.g.,
 `useAdminEventList`) that mirrors the relevant slice of apps/web's
-[`useAdminDashboard.ts`](../../../../apps/web/src/admin/useAdminDashboard.ts)
+[`useAdminDashboard.ts`](/apps/web/src/admin/useAdminDashboard.ts)
 without the deep-editor selected-draft state (no `useSelectedDraft`,
 no inline event-detail editing — those are in apps/web's deep
 editor at `/event/:slug/admin`). The effect that fetches admin
 status + drafts on `signed_in` transition uses the `isCancelled`
 pattern from
-[`useAdminDashboard.ts:88-143`](../../../../apps/web/src/admin/useAdminDashboard.ts#L88).
+[`useAdminDashboard.ts:88-143`](/apps/web/src/admin/useAdminDashboard.ts#L88).
 Next.js's strict-mode double-mount must not produce two parallel
 fetches racing into `setDashboardState`.
 
 **`apps/site/lib/setupEvents.ts`.** Module-level side effect calling
 `configureSharedEvents(...)` once with the full
-[`SharedEventsProviders`](../../../../shared/events/configure.ts#L9) shape
+[`SharedEventsProviders`](/shared/events/configure.ts#L9) shape
 (verified by:
-[`shared/events/configure.ts:9-18`](../../../../shared/events/configure.ts#L9)
+[`shared/events/configure.ts:9-18`](/shared/events/configure.ts#L9)
 — all four fields are required; `configureSharedEvents({ getClient })`
 fails type-check). The four providers wire as follows:
 
 - `getClient` → `getBrowserSupabaseClient` from
-  [`apps/site/lib/supabaseBrowser.ts`](../../../../apps/site/lib/supabaseBrowser.ts)
+  [`apps/site/lib/supabaseBrowser.ts`](/apps/site/lib/supabaseBrowser.ts)
   (shipped by 2.3).
 - `getConfig` → `getSupabaseConfig` from the same module.
 - `getMissingConfigMessage` → `getMissingSupabaseConfigMessage` from
   the same module.
 - `getFeaturedGameSlug` → `() => featuredGameSlug` where
   `featuredGameSlug` imports from
-  [`shared/game-config/constants.ts`](../../../../shared/game-config/constants.ts#L2)
+  [`shared/game-config/constants.ts`](/shared/game-config/constants.ts#L2)
   (the source of truth — apps/web's
-  [`setupEvents.ts:2`](../../../../apps/web/src/lib/setupEvents.ts#L2)
+  [`setupEvents.ts:2`](/apps/web/src/lib/setupEvents.ts#L2)
   resolves to the same constant via its
-  [`apps/web/src/data/games.ts`](../../../../apps/web/src/data/games.ts)
+  [`apps/web/src/data/games.ts`](/apps/web/src/data/games.ts)
   re-export, but apps/site has no equivalent app-local data module
   and importing the shared constant directly is the right layering).
 
@@ -298,13 +298,13 @@ calls `listPublishedGameSummaries` today — the new `/admin` page calls
 `listDraftEventSummaries`, not the published variant, and the
 `getFeaturedGameSlug` provider only feeds the published-summary sort
 in
-[`shared/events/published.ts:67`](../../../../shared/events/published.ts#L67).
+[`shared/events/published.ts:67`](/shared/events/published.ts#L67).
 Supplying it satisfies the shared-module contract without inventing
 an apps/site-specific featured-slug concept; if a future apps/site
 surface ever lists published events, the sort is already wired.
 
 Mirrors
-[`apps/web/src/lib/setupEvents.ts`](../../../../apps/web/src/lib/setupEvents.ts)
+[`apps/web/src/lib/setupEvents.ts`](/apps/web/src/lib/setupEvents.ts)
 in shape; the only apps/site-specific wiring is the
 `featuredGameSlug` import source. No exports.
 
@@ -318,15 +318,15 @@ depends on the other).
 surface for the new admin page. Without this extension the page
 renders mostly unstyled — the existing 2.3 globals.css scopes its
 sign-in selectors to `.auth-callback-shell` (verified by:
-[`apps/site/app/globals.css:64,74,88,104`](../../../../apps/site/app/globals.css#L64))
+[`apps/site/app/globals.css:64,74,88,104`](/apps/site/app/globals.css#L64))
 and has no admin-specific rules at all, so the shared
-[`<SignInForm>`](../../../../shared/auth/SignInForm.tsx) classes
+[`<SignInForm>`](/shared/auth/SignInForm.tsx) classes
 (`.signin-stack`, `.section-heading`, `.signin-form`,
 `.signin-field`, `.signin-input`, `.primary-button`) plus the
 admin-only state and event-card layout would render with browser
 defaults. The "render the consequence" check (Execution step 6)
 confirms the styled outcome before merge per
-[`AGENTS.md`](../../../../AGENTS.md) "Bans on surface require rendering
+[`AGENTS.md`](/AGENTS.md) "Bans on surface require rendering
 the consequence."
 
 Selectors the extension adds, scoped under `.admin-shell` so the
@@ -336,11 +336,11 @@ surfaces:
 - `.admin-shell` — outer container (full-height padded shell). Same
   shape as the existing `.landing-shell` / `.auth-callback-shell`
   rule at
-  [`apps/site/app/globals.css:52-56`](../../../../apps/site/app/globals.css#L52);
+  [`apps/site/app/globals.css:52-56`](/apps/site/app/globals.css#L52);
   extend the comma-list to add `.admin-shell` rather than duplicate
   the rule body.
 - Sign-in branch reuse — extend the existing scoped sign-in selectors
-  ([`apps/site/app/globals.css:64,74,88,104,123,128`](../../../../apps/site/app/globals.css#L64)
+  ([`apps/site/app/globals.css:64,74,88,104,123,128`](/apps/site/app/globals.css#L64)
   — `.signin-stack`, `.section-heading p`, `.primary-button`,
   hover, focus-visible) to also match `.admin-shell .…` so the
   signed-out branch's `<SignInForm>` renders identically to the
@@ -377,7 +377,7 @@ surfaces:
   the three per-card actions and the sign-out control.
 - `.admin-shell .secondary-button[aria-disabled="true"]` —
   disabled visual state matching apps/web's pattern at
-  [`apps/web/src/styles/_admin.scss`](../../../../apps/web/src/styles/_admin.scss)
+  [`apps/web/src/styles/_admin.scss`](/apps/web/src/styles/_admin.scss)
   (the `.secondary-button[aria-disabled="true"]` rule), so the
   disabled `Open live game` button reads as disabled rather than
   identical to enabled.
@@ -386,7 +386,7 @@ surfaces:
   (`Publish this event to open the live game.`).
 
 Token discipline per
-[`docs/styling.md`](../../../styling.md) "Themable vs structural
+[`docs/styling.md`](/docs/styling.md) "Themable vs structural
 classification":
 
 - **Themable** values consumed via `var(--…)`: `--primary` (button
@@ -394,13 +394,13 @@ classification":
   `--text`, `--muted`, `--font-body`, `--font-heading`,
   `--radius-control`, `--white-warm`. All already emitted on
   `<html>` by
-  [`shared/styles/themeToStyle.ts`](../../../../shared/styles/themeToStyle.ts)
+  [`shared/styles/themeToStyle.ts`](/shared/styles/themeToStyle.ts)
   via the apps/site root layout's
-  [`platformTheme`](../../../../apps/site/app/layout.tsx) wiring.
+  [`platformTheme`](/apps/site/app/layout.tsx) wiring.
 - **Structural** tokens: not introduced. apps/site has no SCSS,
   no `$…` variable system, and no status palette consumer in this
   surface. Per
-  [`AGENTS.md`](../../../../AGENTS.md) "Styling Token Discipline" "keep
+  [`AGENTS.md`](/AGENTS.md) "Styling Token Discipline" "keep
   one-off layout values local when a token would add indirection
   without improving readability or future change cost," one-off
   layout dimensions (event-card padding, button-row gap, summary
@@ -422,15 +422,15 @@ AuthoringGameDraftContent` and
 `createDuplicatedDraftContent(source: DraftEventDetail, existingDrafts:
 DraftEventSummary[]): AuthoringGameDraftContent`. Body identical to
 apps/web's current
-[`apps/web/src/admin/draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts)
+[`apps/web/src/admin/draftCreation.ts`](/apps/web/src/admin/draftCreation.ts)
 modulo import paths (the helper consumes the
 `AuthoringGameDraftContent` validator from
-[`shared/game-config/`](../../../../shared/game-config), unchanged). The
+[`shared/game-config/`](/shared/game-config), unchanged). The
 `DraftEventSummary` and `DraftEventDetail` types must be reachable
 from `shared/events/`; if they aren't already exported, this PR adds
 a re-export through `shared/events/index.ts` rather than expanding
 the shared surface mid-port. Verified by reading
-[`shared/events/index.ts`](../../../../shared/events/index.ts) at
+[`shared/events/index.ts`](/shared/events/index.ts) at
 implementation time and recording the resolution in the PR body.
 
 **`shared/events/index.ts` (modify).** Add re-exports for
@@ -444,10 +444,10 @@ shim:
 from "../../../../shared/events/draftCreation";` (or equivalent
 re-export shape). Mirrors the binding-module pattern from M1 phase
 1.4's
-[`apps/web/src/lib/adminGameApi.ts`](../../../../apps/web/src/lib/adminGameApi.ts).
+[`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts).
 
 The shim's only purpose is keeping
-[`useAdminDashboard.ts:17-19`](../../../../apps/web/src/admin/useAdminDashboard.ts#L17)
+[`useAdminDashboard.ts:17-19`](/apps/web/src/admin/useAdminDashboard.ts#L17)
 resolvable through 2.4.1's diff so this PR stays purely
 behavior-preserving for apps/web. `useAdminDashboard.ts` is the
 **only apps/web source consumer** (verified by:
@@ -467,12 +467,12 @@ function under test now lives at `shared/events/draftCreation.ts`;
 the test follows the source-of-truth rather than continuing to
 import through the apps/web shim. The move is a Git rename in a
 single commit (test bodies unchanged; only the import path at
-[`tests/web/admin/draftCreation.test.ts:11`](../../../../tests/web/admin/draftCreation.test.ts#L11)
+[`tests/web/admin/draftCreation.test.ts:11`](/tests/web/admin/draftCreation.test.ts#L11)
 updates from `../../../apps/web/src/admin/draftCreation` to
 `../../../shared/events/draftCreation` or similar — implementer
 locks the relative path at edit time). Vitest config picks up
 `tests/shared/**/*.test.ts` already (verified by:
-[`vitest.config.ts`](../../../../vitest.config.ts) at edit time); if
+[`vitest.config.ts`](/vitest.config.ts) at edit time); if
 the directory pattern is narrower than expected, this PR widens
 it. After the move, no apps/web test imports through the shim
 either, and the shim is exclusively kept alive for
@@ -489,9 +489,9 @@ useAdminDashboard.ts's import — until 2.4.3 deletes both.
 
 ### Modify
 
-- [`apps/site/components/SharedClientBootstrap.tsx`](../../../../apps/site/components/SharedClientBootstrap.tsx)
+- [`apps/site/components/SharedClientBootstrap.tsx`](/apps/site/components/SharedClientBootstrap.tsx)
   — add `setupEvents` side-effect import.
-- [`apps/site/app/globals.css`](../../../../apps/site/app/globals.css)
+- [`apps/site/app/globals.css`](/apps/site/app/globals.css)
   — extend with the `.admin-shell` outer container, the comma-list
   extension on the existing scoped sign-in selectors, the
   `.signin-form` / `.signin-field` / `.signin-input` rules, the
@@ -499,71 +499,71 @@ useAdminDashboard.ts's import — until 2.4.3 deletes both.
   disabled-state / action-reason rules per the Contracts section.
   Token discipline per the Contracts section's "Token discipline"
   block.
-- [`shared/events/index.ts`](../../../../shared/events/index.ts) — add
+- [`shared/events/index.ts`](/shared/events/index.ts) — add
   re-exports for the new helpers and any type re-exports needed by
   the shared module.
-- [`apps/web/src/admin/draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts)
+- [`apps/web/src/admin/draftCreation.ts`](/apps/web/src/admin/draftCreation.ts)
   — replace body with a binding-module shim re-exporting from
   `shared/events/draftCreation.ts`. Transitional through 2.4.3,
   which deletes the shim alongside its sole remaining consumer
-  ([`useAdminDashboard.ts`](../../../../apps/web/src/admin/useAdminDashboard.ts)).
+  ([`useAdminDashboard.ts`](/apps/web/src/admin/useAdminDashboard.ts)).
 
 ### Move
 
-- [`tests/web/admin/draftCreation.test.ts`](../../../../tests/web/admin/draftCreation.test.ts)
+- [`tests/web/admin/draftCreation.test.ts`](/tests/web/admin/draftCreation.test.ts)
   → `tests/shared/events/draftCreation.test.ts`. Test file follows
   the function it tests to its new shared location; the import at
   line 11 updates to point at `shared/events/draftCreation`
   directly rather than through the apps/web shim. Confirm at edit
   time that
-  [`vitest.config.ts`](../../../../vitest.config.ts) picks up
+  [`vitest.config.ts`](/vitest.config.ts) picks up
   `tests/shared/**/*.test.ts`; widen the include pattern if not.
 
 ### Files intentionally not touched
 
 Reserved for sibling sub-phases:
 
-- [`apps/web/vercel.json`](../../../../apps/web/vercel.json) — 2.4.2.
-- [`tests/e2e/admin-workflow.admin.spec.ts`](../../../../tests/e2e/admin-workflow.admin.spec.ts),
-  [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts),
-  [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs),
-  [`scripts/ui-review/capture-ui-review.cjs`](../../../../scripts/ui-review/capture-ui-review.cjs)
+- [`apps/web/vercel.json`](/apps/web/vercel.json) — 2.4.2.
+- [`tests/e2e/admin-workflow.admin.spec.ts`](/tests/e2e/admin-workflow.admin.spec.ts),
+  [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts),
+  [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs),
+  [`scripts/ui-review/capture-ui-review.cjs`](/scripts/ui-review/capture-ui-review.cjs)
   — 2.4.2.
-- [`apps/web/src/pages/AdminPage.tsx`](../../../../apps/web/src/pages/AdminPage.tsx)
+- [`apps/web/src/pages/AdminPage.tsx`](/apps/web/src/pages/AdminPage.tsx)
   + the `apps/web/src/admin/Admin*.tsx` /
   `useAdminDashboard.ts` platform-admin module + its tests +
-  [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx) admin
+  [`apps/web/src/App.tsx`](/apps/web/src/App.tsx) admin
   route branches — 2.4.3.
-- [`shared/urls/`](../../../../shared/urls) deprecation +
-  [`tests/shared/urls/`](../../../../tests/shared/urls) cleanup — 2.4.3.
+- [`shared/urls/`](/shared/urls) deprecation +
+  [`tests/shared/urls/`](/tests/shared/urls) cleanup — 2.4.3.
 - apps/web SCSS prune — 2.4.3.
-- [`docs/architecture.md`](../../../architecture.md),
-  [`docs/operations.md`](../../../operations.md),
-  [`docs/dev.md`](../../../dev.md),
-  [`README.md`](../../../../README.md) URL-ownership and module-ownership
+- [`docs/architecture.md`](/docs/architecture.md),
+  [`docs/operations.md`](/docs/operations.md),
+  [`docs/dev.md`](/docs/dev.md),
+  [`README.md`](/README.md) URL-ownership and module-ownership
   edits — 2.4.2 (URL ownership) and 2.4.3 (module ownership).
 
 Sibling files referenced verbatim from 2.3:
 
-- [`apps/site/lib/setupAuth.ts`](../../../../apps/site/lib/setupAuth.ts)
-  / [`supabaseBrowser.ts`](../../../../apps/site/lib/supabaseBrowser.ts)
-  / [`apps/site/app/(authenticated)/layout.tsx`](../../../../apps/site/app/(authenticated)/layout.tsx)
+- [`apps/site/lib/setupAuth.ts`](/apps/site/lib/setupAuth.ts)
+  / [`supabaseBrowser.ts`](/apps/site/lib/supabaseBrowser.ts)
+  / [`apps/site/app/(authenticated)/layout.tsx`](/apps/site/app/(authenticated)/layout.tsx)
   — verbatim reuse from 2.3; no edit.
 
 ## Execution Steps
 
 1. **Pre-edit gate.** Confirm clean worktree and a feature branch
    (not `main`). Re-read
-   [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella;
+   [`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) (umbrella;
    the per-phase scoping doc, `docs/plans/scoping/m2-phase-2-4.md`,
    was deleted in M2 phase 2.5.3 batch deletion — see git history
    if needed), and 2.3's
    apps/site adapter pair at
-   [`apps/site/lib/setupAuth.ts`](../../../../apps/site/lib/setupAuth.ts) +
-   [`apps/site/lib/supabaseBrowser.ts`](../../../../apps/site/lib/supabaseBrowser.ts)
+   [`apps/site/lib/setupAuth.ts`](/apps/site/lib/setupAuth.ts) +
+   [`apps/site/lib/supabaseBrowser.ts`](/apps/site/lib/supabaseBrowser.ts)
    so the new `setupEvents.ts` mirrors the established pattern.
    Re-read apps/web's
-   [`AdminDashboardContent.tsx`](../../../../apps/web/src/admin/AdminDashboardContent.tsx)
+   [`AdminDashboardContent.tsx`](/apps/web/src/admin/AdminDashboardContent.tsx)
    for the exact ARIA / copy contract the new page must preserve.
 2. **Baseline validation.** Run `npm run lint`, `npm test`,
    `npm run test:functions`, `npm run build:web`, and
@@ -571,32 +571,32 @@ Sibling files referenced verbatim from 2.3:
 3. **Shared starter helper extraction + test move.** Create
    `shared/events/draftCreation.ts` with bodies copied from
    apps/web's
-   [`draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts);
+   [`draftCreation.ts`](/apps/web/src/admin/draftCreation.ts);
    adjust import paths. Add re-exports to
-   [`shared/events/index.ts`](../../../../shared/events/index.ts);
+   [`shared/events/index.ts`](/shared/events/index.ts);
    include any type re-exports needed by the shared module.
    Replace
-   [`apps/web/src/admin/draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts)
+   [`apps/web/src/admin/draftCreation.ts`](/apps/web/src/admin/draftCreation.ts)
    body with a binding-module shim (transitional — 2.4.3 deletes
    it). Move
-   [`tests/web/admin/draftCreation.test.ts`](../../../../tests/web/admin/draftCreation.test.ts)
+   [`tests/web/admin/draftCreation.test.ts`](/tests/web/admin/draftCreation.test.ts)
    to `tests/shared/events/draftCreation.test.ts` (Git rename;
    update the import path to point at `shared/events/draftCreation`
    directly). Confirm
-   [`vitest.config.ts`](../../../../vitest.config.ts) picks up
+   [`vitest.config.ts`](/vitest.config.ts) picks up
    `tests/shared/**/*.test.ts` (widen the include pattern if not).
    Run `npm run lint` + `npm test` + `npm run build:web` to
    confirm the moved test still runs and apps/web's existing call
    sites resolve unchanged through the shim.
 4. **apps/site setupEvents adapter + bootstrap update.** Create
    `apps/site/lib/setupEvents.ts` per the Contracts section; edit
-   [`apps/site/components/SharedClientBootstrap.tsx`](../../../../apps/site/components/SharedClientBootstrap.tsx)
+   [`apps/site/components/SharedClientBootstrap.tsx`](/apps/site/components/SharedClientBootstrap.tsx)
    to add the `import "../lib/setupEvents";` line.
    `npm run build:site` confirms the imports resolve.
 5. **apps/site `/admin` page + globals.css extension.** Create
    `apps/site/app/(authenticated)/admin/page.tsx` per the Contracts
    section, wrapped in the `.admin-shell` container class. Extend
-   [`apps/site/app/globals.css`](../../../../apps/site/app/globals.css)
+   [`apps/site/app/globals.css`](/apps/site/app/globals.css)
    per the Contracts section: add `.admin-shell` to the existing
    `.landing-shell, .auth-callback-shell` outer-container rule;
    comma-extend the existing scoped sign-in selectors so they match
@@ -612,7 +612,7 @@ Sibling files referenced verbatim from 2.3:
    check).** Run `npm run dev:site` and visit
    `http://localhost:3000/admin`. Walk every state branch and
    confirm the page is recognizably styled (not browser-default).
-   Per [`AGENTS.md`](../../../../AGENTS.md) "Bans on surface require
+   Per [`AGENTS.md`](/AGENTS.md) "Bans on surface require
    rendering the consequence," this step is the load-bearing
    pre-merge check that the globals.css extension actually styles
    what the page renders, not just that it compiles:
@@ -623,12 +623,12 @@ Sibling files referenced verbatim from 2.3:
      by direct comparison (`http://localhost:3000/auth/callback`
      in another tab). Walk the test-asserted locators
      (re-derived list from
-     [`tests/e2e/admin-workflow.admin.spec.ts`](../../../../tests/e2e/admin-workflow.admin.spec.ts)
+     [`tests/e2e/admin-workflow.admin.spec.ts`](/tests/e2e/admin-workflow.admin.spec.ts)
      and
-     [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts))
+     [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts))
      and confirm each resolves; for non-pinned strings, sanity-check
      against
-     [`apps/web/src/admin/AdminDashboardContent.tsx:120-130`](../../../../apps/web/src/admin/AdminDashboardContent.tsx#L120)
+     [`apps/web/src/admin/AdminDashboardContent.tsx:120-130`](/apps/web/src/admin/AdminDashboardContent.tsx#L120)
      for "reads as the same product" without insisting on
      character-by-character match. Confirm the input field has a
      visible border + focus ring rather than browser-default inset.
@@ -673,7 +673,7 @@ Sibling files referenced verbatim from 2.3:
    above and every Self-Review Audit named below. Apply fixes in
    place; commit review-fix changes separately when that clarifies
    history per
-   [`AGENTS.md`](../../../../AGENTS.md) Review-Fix Rigor.
+   [`AGENTS.md`](/AGENTS.md) Review-Fix Rigor.
 9. **Plan-to-PR completion gate.** Walk every Goal, Cross-Cutting
    Invariant Touched, Validation Gate command, and Self-Review Audit
    named in this plan. Confirm each is satisfied in the PR or
@@ -683,7 +683,7 @@ Sibling files referenced verbatim from 2.3:
    umbrella's Sub-phase Status table row for 2.4.1 to `Landed` with
    the PR link.
 10. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 characters
     (suggested: `feat(m2-2.4.1): add platform admin page on apps/site`).
     Validation section lists every command actually run.
@@ -693,15 +693,15 @@ Sibling files referenced verbatim from 2.3:
 
 ## Commit Boundaries
 
-Per [`AGENTS.md`](../../../../AGENTS.md) "Planning Depth":
+Per [`AGENTS.md`](/AGENTS.md) "Planning Depth":
 
 1. **Shared starter helper extraction + apps/web binding shim +
    test move.** New `shared/events/draftCreation.ts`,
-   [`shared/events/index.ts`](../../../../shared/events/index.ts) re-export
+   [`shared/events/index.ts`](/shared/events/index.ts) re-export
    additions, the apps/web
-   [`draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts)
+   [`draftCreation.ts`](/apps/web/src/admin/draftCreation.ts)
    shim, and the
-   [`tests/web/admin/draftCreation.test.ts`](../../../../tests/web/admin/draftCreation.test.ts)
+   [`tests/web/admin/draftCreation.test.ts`](/tests/web/admin/draftCreation.test.ts)
    → `tests/shared/events/draftCreation.test.ts` move (Git rename
    with the import path updated). Single commit; behavior-preserving
    for apps/web. The test moves with the source-of-truth so
@@ -711,9 +711,9 @@ Per [`AGENTS.md`](../../../../AGENTS.md) "Planning Depth":
 2. **apps/site `/admin` scaffold + globals.css extension.** New
    `apps/site/app/(authenticated)/admin/page.tsx`,
    `apps/site/lib/setupEvents.ts`,
-   [`apps/site/app/globals.css`](../../../../apps/site/app/globals.css)
+   [`apps/site/app/globals.css`](/apps/site/app/globals.css)
    extension per Contracts, and the
-   [`SharedClientBootstrap.tsx`](../../../../apps/site/components/SharedClientBootstrap.tsx)
+   [`SharedClientBootstrap.tsx`](/apps/site/components/SharedClientBootstrap.tsx)
    one-line edit. Single commit (the page and its styles ship
    together so the diff stays one bisect target — landing the page
    without its CSS would mean a tip with browser-default rendering;
@@ -753,7 +753,7 @@ Per [`AGENTS.md`](../../../../AGENTS.md) "Planning Depth":
   fields have visible borders, buttons read as buttons not
   default-browser submits, event cards have card-like layout, the
   disabled `Open live game` reads as visually disabled, etc.) per
-  [`AGENTS.md`](../../../../AGENTS.md) "Bans on surface require rendering
+  [`AGENTS.md`](/AGENTS.md) "Bans on surface require rendering
   the consequence." The PR is not ready-to-merge if any branch
   reads as browser-default; screenshots per state branch (mobile +
   desktop) ship in the PR body's UX Review section as durable
@@ -765,29 +765,29 @@ resolve to the legacy apps/web `AdminPage` through this PR.
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../../../self-review-catalog.md).
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md).
 
 ### Frontend (apps/site)
 
 - **Silent-no-op on missing lookup**
-  ([catalog §Silent-no-op on missing lookup audit](../../../self-review-catalog.md#L420)).
+  ([catalog §Silent-no-op on missing lookup audit](/docs/self-review-catalog.md#L420)).
   Event list `listDraftEventSummaries()` empty result must render
   an empty-state message that distinguishes "no drafts exist" from
   "lookup failed." `getGameAdminStatus()` similarly distinguishes
   "false (not allowlisted)" from "RPC failed."
 - **Error-surfacing for user-initiated mutations**
-  ([catalog §Error-surfacing for user-initiated mutations](../../../self-review-catalog.md#L266)).
+  ([catalog §Error-surfacing for user-initiated mutations](/docs/self-review-catalog.md#L266)).
   Create / duplicate click handlers surface failures inline. The
   failure path does not navigate.
 - **Effect cleanup audit**
-  ([catalog §Effect cleanup audit](../../../self-review-catalog.md#L287)).
+  ([catalog §Effect cleanup audit](/docs/self-review-catalog.md#L287)).
   The `signed_in` → admin-status-fetch → drafts-list-fetch effect
   uses the `isCancelled` pattern from
-  [`useAdminDashboard.ts:88-143`](../../../../apps/web/src/admin/useAdminDashboard.ts#L88).
+  [`useAdminDashboard.ts:88-143`](/apps/web/src/admin/useAdminDashboard.ts#L88).
   Next.js strict-mode double-mount must not produce parallel fetches
   racing into `setDashboardState`.
 - **Token bucket discipline.** The
-  [`apps/site/app/globals.css`](../../../../apps/site/app/globals.css)
+  [`apps/site/app/globals.css`](/apps/site/app/globals.css)
   extension consumes themable values exclusively via `var(--…)`
   for color / typography / radius / focus ring (`--primary`,
   `--secondary`, `--bg`, `--text`, `--muted`, `--font-body`,
@@ -795,7 +795,7 @@ Drawn from
   enumerated in the Contracts section); raw CSS values appear only
   for one-off layout dimensions (event-card padding, button-row
   gap, summary grid gap) per
-  [`AGENTS.md`](../../../../AGENTS.md) "Styling Token Discipline" "keep
+  [`AGENTS.md`](/AGENTS.md) "Styling Token Discipline" "keep
   one-off layout values local when a token would add indirection
   without improving readability or future change cost."
   Audit walks: no themable color is hardcoded; no status palette
@@ -804,7 +804,7 @@ Drawn from
   surface — mutation errors render via `--text` / `--muted`); the
   focus-ring pattern uses `var(--secondary)` matching the apps/web
   precedent and the 2.3 globals.css precedent at
-  [`apps/site/app/globals.css:128-130`](../../../../apps/site/app/globals.css#L128).
+  [`apps/site/app/globals.css:128-130`](/apps/site/app/globals.css#L128).
   No new structural-token surface (no `$…` SCSS variables — apps/site
   has no SCSS).
 - **Bans on surface require rendering the consequence.** The
@@ -823,13 +823,13 @@ Drawn from
 ### CI / build
 
 - **CLI / tooling pinning audit**
-  ([catalog §CLI / tooling pinning audit](../../../self-review-catalog.md#L331)).
+  ([catalog §CLI / tooling pinning audit](/docs/self-review-catalog.md#L331)).
   No new
-  [`apps/site/package.json`](../../../../apps/site/package.json)
+  [`apps/site/package.json`](/apps/site/package.json)
   dependencies. The new admin page consumes only existing apps/site
   dependencies plus shared modules.
 - **Rename-aware diff classification**
-  ([catalog §Rename-aware diff classification](../../../self-review-catalog.md#L354)).
+  ([catalog §Rename-aware diff classification](/docs/self-review-catalog.md#L354)).
   `shared/events/draftCreation.ts` is a copy-then-shim, not a Git
   rename — describe in the PR body so reviewers don't flag the
   apps/web file as rewritten. The new apps/site page is a fresh
@@ -841,19 +841,19 @@ Drawn from
 This sub-phase's surface is internal — no URL ownership change, no
 module ownership change. Doc updates this branch carries:
 
-- [`shared/events/README.md`](../../../../shared/events/README.md) — if
+- [`shared/events/README.md`](/shared/events/README.md) — if
   the README documents the public surface, add the new
   `createStarterDraftContent` / `createDuplicatedDraftContent`
   entries. If not, no edit.
-- [`docs/architecture.md`](../../../architecture.md) — no edit.
+- [`docs/architecture.md`](/docs/architecture.md) — no edit.
   URL-ownership and module-ownership shifts land in 2.4.2 / 2.4.3.
-- [`docs/operations.md`](../../../operations.md),
-  [`docs/dev.md`](../../../dev.md),
-  [`README.md`](../../../../README.md) — no edits.
-- [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella) —
+- [`docs/operations.md`](/docs/operations.md),
+  [`docs/dev.md`](/docs/dev.md),
+  [`README.md`](/README.md) — no edits.
+- [`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) (umbrella) —
   Sub-phase Status table row for 2.4.1 updates to `Landed` with
   the PR link when this PR merges.
-- [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
+- [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   Phase Status table row for 2.4 stays `Proposed` (the umbrella
   flips when all three sub-phases land).
 - This plan — Status flips from `Proposed` to `Landed` in the
@@ -889,7 +889,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   `useRouter().replace(href)` or `<Link href>` from
   `next/navigation` would silently break in production. Mitigation:
   invariant locked above; the
-  [`apps/site/app/(authenticated)/auth/callback/page.tsx`](../../../../apps/site/app/(authenticated)/auth/callback/page.tsx)
+  [`apps/site/app/(authenticated)/auth/callback/page.tsx`](/apps/site/app/(authenticated)/auth/callback/page.tsx)
   precedent uses `window.location.replace`; reviewer catches any
   `useRouter` import in the new page.
 - **`createStarterDraftContent` binding shim drift (transitional).**
@@ -916,20 +916,20 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
 
 ## Related Docs
 
-- [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) — umbrella;
+- [`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) — umbrella;
   cross-sub-phase context, sequencing rationale, cross-sub-phase
   invariants and risks.
-- [`m2-phase-2-4-2-plan.md`](./m2-phase-2-4-2-plan.md) — sibling
+- [`m2-phase-2-4-2-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-2-plan.md) — sibling
   sub-phase (cutover); this sub-phase's ARIA / copy contract is the
   pre-condition for 2.4.2's e2e retargeting.
-- [`m2-phase-2-4-3-plan.md`](./m2-phase-2-4-3-plan.md) — sibling
+- [`m2-phase-2-4-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-3-plan.md) — sibling
   sub-phase (deletion).
-- [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md) — Landed sibling;
+- [`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md) — Landed sibling;
   apps/site adapter pair, `(authenticated)` route group, and
   `<SharedClientBootstrap>` precedent this sub-phase extends.
-- [`shared-events-foundation.md`](../../shared-events-foundation.md) —
+- [`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md) —
   M1 phase 1.4 plan; binding-module pattern for the
   `apps/web/src/admin/draftCreation.ts` shim.
-- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source.
-- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules.
+- [`AGENTS.md`](/AGENTS.md) — workflow rules.

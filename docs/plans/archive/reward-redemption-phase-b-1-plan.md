@@ -1,12 +1,12 @@
 # Reward Redemption — Phase B.1 Execution Plan
 
 **Status:** Landed in commits `5ca8d4d`, `5971a5e`, `30cb2ba`, `95062cb`, `f6422c7`, and `fc37ea5`.
-**Parent overview:** [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
-**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
+**Parent overview:** [`reward-redemption-phase-b-plan.md`](/docs/plans/archive/reward-redemption-phase-b-plan.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
 **Predecessors (all landed):**
-[`auth-signin-generalization-plan.md`](../auth-signin-generalization-plan.md),
-[`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md),
-[`event-code-prerequisite-plan.md`](./event-code-prerequisite-plan.md).
+[`auth-signin-generalization-plan.md`](/docs/plans/auth-signin-generalization-plan.md),
+[`reward-redemption-phase-a-2b-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2b-plan.md),
+[`event-code-prerequisite-plan.md`](/docs/plans/archive/event-code-prerequisite-plan.md).
 **Scope:** Phase B.1 only — the `/event/:slug/redeem` mobile operator
 route that consumes the landed A.2b `redeem-entitlement` Edge Function
 through the landed role-neutral sign-in shell. No monitoring list, no
@@ -24,7 +24,7 @@ the redemption MVP.
 
 B.1 ships inert: no nav link, no `/admin` link, no role seeding. It
 becomes usable only after Phase D seeds agent assignments through the
-[`supabase/role-management/`](../../../supabase/role-management/README.md)
+[`supabase/role-management/`](/supabase/role-management/README.md)
 runbook. The only user who can complete a redemption on day one is a
 root admin, and only when they happen to type the URL. This matches
 the overview's unadvertised-entry deployment posture and keeps rollout
@@ -220,7 +220,7 @@ goal without the operator losing the prior outcome record on-screen.
 ### Styling tokens
 
 - Reuse existing tokens from
-  [`apps/web/src/styles/_tokens.scss`](../../../apps/web/src/styles/_tokens.scss)
+  [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
   for colors, spacing, radii, and shadows wherever a token exists.
 - Introduce new tokens only for values that will be reused by B.2
   (result-card surfaces, status-badge palettes for redeemed /
@@ -413,22 +413,22 @@ rather than widening B.1.
    Land review-fix commits separately when that makes the history
    easier to audit.
 9. **Self-review audits.** Walk the named audits from
-   [`docs/self-review-catalog.md`](../../self-review-catalog.md) that
+   [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) that
    apply to this diff's surfaces (see § "Self-Review Audits" below).
 10. **Documentation currency sync.** Update in-branch, not in a
     follow-up:
     - this plan doc — flip `Status` from `Proposed — not started.`
       to `Landed in commits <SHA list>.` and replace "Proposed" /
       "not started" in every reference to current phase state;
-    - [`reward-redemption-phase-b-plan.md`](./reward-redemption-phase-b-plan.md)
+    - [`reward-redemption-phase-b-plan.md`](/docs/plans/archive/reward-redemption-phase-b-plan.md)
       sub-phase summary row for B.1 — the overview already links to
       this plan with a `(Proposed)` marker; flip that marker to
       `(Landed)` and verify no other prose in the overview still
       describes B.1 as "not started";
-    - [`docs/architecture.md`](../../architecture.md) — add the new
+    - [`docs/architecture.md`](/docs/architecture.md) — add the new
       route under the runtime-flow section and note the unadvertised
       entry posture;
-    - [`docs/product.md`](../../product.md) — only if the implemented
+    - [`docs/product.md`](/docs/product.md) — only if the implemented
       capability set actually changed from the pre-branch narrative;
       otherwise leave unchanged and say so in the PR body.
 
@@ -453,7 +453,7 @@ rather than widening B.1.
     but recommended", "nice to have", "consider adding") remains in
     this plan by merge time.
 13. **PR preparation.** Open a PR against `main` using the template
-    in [`.github/pull_request_template.md`](../../../.github/pull_request_template.md).
+    in [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     State explicitly that B.1 is inert: direct URL works, no nav
     link is added, root admin is the only caller who can complete a
     redemption until Phase D seeds an agent.
@@ -571,7 +571,7 @@ Supabase + local Edge Functions with a seeded agent fixture:
 ## Self-Review Audits
 
 Run the applicable named audits from
-[`docs/self-review-catalog.md`](../../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Frontend/browser surface — `Error-surfacing for user-initiated
   mutations`.** Every redeem submission and every authorization
@@ -633,7 +633,7 @@ blocker in the PR's Validation section rather than claiming success.
   in `validateNextPath` is a security boundary change. Mitigation:
   the new branch goes through `matchEventRedeemPath` only; the full
   bypass-vector table from
-  [`validateNextPath.test.ts`](../../../tests/web/auth/validateNextPath.test.ts)
+  [`validateNextPath.test.ts`](/tests/web/auth/validateNextPath.test.ts)
   is re-run unchanged with no new accepted input beyond the named
   route.
 - **Keypad focus loss on submit.** A full-page re-render after a

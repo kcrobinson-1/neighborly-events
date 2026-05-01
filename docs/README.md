@@ -27,24 +27,24 @@ checklist or a running tracker, it is in `tracking/`.
 
 If you want:
 
-- a quick project overview and setup entrypoint, start with [../README.md](../README.md)
-- the problem, users, goals, and success criteria, read [product.md](./product.md)
-- the intended attendee and organizer experience, read [experience.md](./experience.md)
-- the current system shape and trust boundaries, read [architecture.md](./architecture.md)
-- the published-content milestone details and tradeoffs, read [plans/archive/database-backed-quiz-content.md](./plans/archive/database-backed-quiz-content.md)
-- the historical quiz authoring plan, read [plans/archive/quiz-authoring-plan.md](./plans/archive/quiz-authoring-plan.md)
-- the local workflow, validation commands, release flow, or troubleshooting steps, read [dev.md](./dev.md)
-- the named audits to run on a diff before push, read [self-review-catalog.md](./self-review-catalog.md)
+- a quick project overview and setup entrypoint, start with [../README.md](/README.md)
+- the problem, users, goals, and success criteria, read [product.md](/docs/product.md)
+- the intended attendee and organizer experience, read [experience.md](/docs/experience.md)
+- the current system shape and trust boundaries, read [architecture.md](/docs/architecture.md)
+- the published-content milestone details and tradeoffs, read [plans/archive/database-backed-quiz-content.md](/docs/plans/archive/database-backed-quiz-content.md)
+- the historical quiz authoring plan, read [plans/archive/quiz-authoring-plan.md](/docs/plans/archive/quiz-authoring-plan.md)
+- the local workflow, validation commands, release flow, or troubleshooting steps, read [dev.md](/docs/dev.md)
+- the named audits to run on a diff before push, read [self-review-catalog.md](/docs/self-review-catalog.md)
 - proposed improvements to local validation, screenshot, PR, and agent workflow,
-  read [tracking/dev-workflow-improvements.md](./tracking/dev-workflow-improvements.md)
+  read [tracking/dev-workflow-improvements.md](/docs/tracking/dev-workflow-improvements.md)
 - the live-event-readiness fix plan for the admin live-status mismatch, read
-  [plans/archive/admin-live-status-plan.md](./plans/archive/admin-live-status-plan.md)
-- the testing strategy, current coverage snapshot, command-selection matrix, and rollout plan, read [testing.md](./testing.md)
-- the platform ownership model and live monitoring runbook for GitHub, Vercel, and Supabase, read [operations.md](./operations.md)
-- the analytics strategy, tool recommendations, and dashboard goals, read [plans/analytics-strategy.md](./plans/analytics-strategy.md)
-- the unresolved product, UX, and workflow decisions, read [open-questions.md](./open-questions.md)
-- the documentation maintenance plan, read [tracking/documentation-quality-checklist.md](./tracking/documentation-quality-checklist.md)
-- the living release readiness plan and quality-check methodology, read [plans/release-readiness.md](./plans/release-readiness.md)
+  [plans/archive/admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md)
+- the testing strategy, current coverage snapshot, command-selection matrix, and rollout plan, read [testing.md](/docs/testing.md)
+- the platform ownership model and live monitoring runbook for GitHub, Vercel, and Supabase, read [operations.md](/docs/operations.md)
+- the analytics strategy, tool recommendations, and dashboard goals, read [plans/analytics-strategy.md](/docs/plans/analytics-strategy.md)
+- the unresolved product, UX, and workflow decisions, read [open-questions.md](/docs/open-questions.md)
+- the documentation maintenance plan, read [tracking/documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md)
+- the living release readiness plan and quality-check methodology, read [plans/release-readiness.md](/docs/plans/release-readiness.md)
 
 ## Doc Ownership
 

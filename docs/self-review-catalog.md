@@ -21,7 +21,7 @@ tell you you're safe.
    not only at the end. Small diffs are easier to audit honestly.
 
 PR plans should name the audits they commit to running — see
-[`AGENTS.md`](../AGENTS.md) § "Planning Depth" and § "Pre-Edit Gate".
+[`AGENTS.md`](/AGENTS.md) § "Planning Depth" and § "Pre-Edit Gate".
 
 ## Contributing
 
@@ -47,7 +47,7 @@ not.
 ## Workflow-discipline audits
 
 Read-logs-first, speculative-commit-traceability, and local-vs-CI-baseline
-discipline live in [`AGENTS.md`](../AGENTS.md) § "Debugging Discipline".
+discipline live in [`AGENTS.md`](/AGENTS.md) § "Debugging Discipline".
 They are not duplicated here; the triggers fire on most non-trivial
 debugging work and are closer in intent to process than to diff review.
 
@@ -314,10 +314,10 @@ initial-render output.
 
 **Example.** Introduced alongside `useAttendeeRedemptionStatus` in
 Phase C.1
-([`reward-redemption-phase-c-1-plan.md`](plans/archive/reward-redemption-phase-c-1-plan.md)),
+([`reward-redemption-phase-c-1-plan.md`](/docs/plans/archive/reward-redemption-phase-c-1-plan.md)),
 the first interval-based fetch in the web app. The closest prior art
 is the `isCancelled` pattern in
-[`apps/web/src/game/useGameSession.ts`](../apps/web/src/game/useGameSession.ts),
+[`apps/web/src/game/useGameSession.ts`](/apps/web/src/game/useGameSession.ts),
 which guards a single completion submit; the polling case generalizes
 the same discipline to a recurring loop. No production incident at
 audit creation time; the audit exists so future polling, subscription,

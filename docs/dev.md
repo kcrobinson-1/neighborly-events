@@ -17,7 +17,7 @@ System shape and data ownership live in `architecture.md`. UX intent lives in `e
 Testing scope, layer ownership, and rollout priorities live in `testing.md`.
 Unresolved contributor-workflow and release questions live in `open-questions.md`.
 Release gates, the senior-engineer quality-check methodology, and the living
-release-blocking view live in [`release-readiness.md`](./plans/release-readiness.md).
+release-blocking view live in [`release-readiness.md`](/docs/plans/release-readiness.md).
 
 ## Current Tooling
 
@@ -103,7 +103,7 @@ Avoid comment noise:
   describe
 
 Release-readiness documentation checks are defined in
-[`release-readiness.md` — Code Documentation And Comments](./plans/release-readiness.md#2-code-documentation-and-comments).
+[`release-readiness.md` — Code Documentation And Comments](/docs/plans/release-readiness.md#2-code-documentation-and-comments).
 
 File-level headers should answer "what is this file responsible for?" and,
 when useful, "what does this file deliberately not own?" For example, a
@@ -139,7 +139,7 @@ itself is env-agnostic and exposes only the SDK-level wiring
 pass in.
 
 In `apps/web` the adapter is
-[`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts);
+[`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts);
 import `getBrowserSupabaseClient`, `getSupabaseConfig`,
 `isPrototypeFallbackEnabled`, etc. from there. Reach into
 `shared/db/` directly only when adding a new per-app adapter or
@@ -148,19 +148,19 @@ when consuming the generated DB row types described next.
 ### Shared event-domain API
 
 Event-domain reads and admin writes live in
-[`shared/events/`](../shared/events/). It owns public published-content
+[`shared/events/`](/shared/events). It owns public published-content
 reads, admin status/draft reads, authenticated authoring function calls,
 and the projection types those flows return. It is env-agnostic: each app
 calls `configureSharedEvents(...)` once at startup with its Supabase
 config/client providers.
 
 In `apps/web`, provider registration lives in
-[`apps/web/src/lib/setupEvents.ts`](../apps/web/src/lib/setupEvents.ts),
+[`apps/web/src/lib/setupEvents.ts`](/apps/web/src/lib/setupEvents.ts),
 imported for side-effect by `apps/web/src/main.tsx`. Existing apps/web
 call sites keep importing from
-[`apps/web/src/lib/gameContentApi.ts`](../apps/web/src/lib/gameContentApi.ts)
+[`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts)
 and
-[`apps/web/src/lib/adminGameApi.ts`](../apps/web/src/lib/adminGameApi.ts).
+[`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts).
 `gameContentApi.ts` owns only the local prototype fallback gate and fixture
 lookup; `adminGameApi.ts` is a pure re-export shim. Do not add
 `import.meta.env.*`, `process.env.*`, `window`, app imports, or singleton
@@ -213,7 +213,7 @@ Every cross-app URL family is built through `shared/urls/`. The
 `AppPath` literal so navigation calls type-check at the call site.
 Per-app code never composes route strings inline — the only
 hardcoded URL strings that remain in the repo are in the
-[`tests/e2e/`](../tests/e2e) Playwright fixtures, where the literal
+[`tests/e2e/`](/tests/e2e) Playwright fixtures, where the literal
 expresses the contract under test.
 
 The same module owns `validateNextPath`, the open-redirect defense
@@ -234,11 +234,11 @@ The role-neutral Supabase Auth surface — `getAuthSession`,
 `subscribeToAuthState`, `requestMagicLink`, `signOut`,
 `getAccessToken`, the `useAuthSession` hook, the `AuthCallbackPage`
 magic-link return handler, and the `SignInForm` — lives in
-[`shared/auth/`](../shared/auth/). apps/web call sites continue to
+[`shared/auth/`](/shared/auth). apps/web call sites continue to
 import from
-[`apps/web/src/lib/authApi`](../apps/web/src/lib/authApi.ts) (a pure
+[`apps/web/src/lib/authApi`](/apps/web/src/lib/authApi.ts) (a pure
 re-export) and
-[`apps/web/src/auth`](../apps/web/src/auth/index.ts) (a pure
+[`apps/web/src/auth`](/apps/web/src/auth/index.ts) (a pure
 re-export barrel for the components, hook, and types) so existing
 import paths do not change.
 
@@ -246,11 +246,11 @@ import paths do not change.
 `configureSharedAuth({ getClient, getConfigStatus })` exactly once
 at startup with its env-derived providers. apps/web's setup lives
 in
-[`apps/web/src/lib/setupAuth.ts`](../apps/web/src/lib/setupAuth.ts),
+[`apps/web/src/lib/setupAuth.ts`](/apps/web/src/lib/setupAuth.ts),
 imported for side-effect by `apps/web/src/main.tsx`. apps/site's
-setup lives in [`apps/site/lib/setupAuth.ts`](../apps/site/lib/setupAuth.ts),
+setup lives in [`apps/site/lib/setupAuth.ts`](/apps/site/lib/setupAuth.ts),
 mounted by
-[`SharedClientBootstrap`](../apps/site/components/SharedClientBootstrap.tsx)
+[`SharedClientBootstrap`](/apps/site/components/SharedClientBootstrap.tsx)
 inside its `(authenticated)` route group.
 
 When writing a test that exercises code transitively calling
@@ -268,7 +268,7 @@ When writing a test that exercises code transitively calling
 Session storage uses `@supabase/ssr`'s frontend-origin chunked
 cookie storage paired with `@supabase/supabase-js`'s `createClient`,
 both wired in
-[`shared/db/client.ts`](../shared/db/client.ts)'s
+[`shared/db/client.ts`](/shared/db/client.ts)'s
 `createBrowserSupabaseClient`. The cookie is named
 `sb-<project-ref>-auth-token` (chunked into `.0`/`.1` siblings when
 the JWT exceeds the per-cookie size limit; encoding is `base64url`).
@@ -286,7 +286,7 @@ writing the cookie from JS — same exposure surface as the prior
 `localStorage` path.
 
 The factory uses `@supabase/ssr`'s internal
-[`createStorageFromOptions`](../node_modules/@supabase/ssr/dist/module/cookies.d.ts)
+[`createStorageFromOptions`](/node_modules/@supabase/ssr/dist/module/cookies.d.ts)
 deep import rather than its public `createBrowserClient` because
 `createBrowserClient` hardcodes `flowType: "pkce"` after spreading
 user options (the option is unoverridable through the public API).
@@ -466,11 +466,11 @@ Constraint:
 ## Self-Review Before Push
 
 Before pushing a branch, walk the named audits from
-[`self-review-catalog.md`](./self-review-catalog.md) that match the diff's
+[`self-review-catalog.md`](/docs/self-review-catalog.md) that match the diff's
 surfaces. The catalog collects recurring review findings so self-review is
 targeted (which specific failure modes to look for, what concrete checks
 tell you you're safe) rather than generic. PR plans should list the
-applicable audits upfront — see [`AGENTS.md`](../AGENTS.md) § "Planning
+applicable audits upfront — see [`AGENTS.md`](/AGENTS.md) § "Planning
 Depth".
 
 ## Validation Commands
@@ -500,7 +500,7 @@ flat config (`apps/site/eslint.config.mjs`). The Next.js plugin and
 parser are kept inside `apps/site`'s workspace so the root devDeps stay
 framework-agnostic.
 
-Those commands are also reflected in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml).
+Those commands are also reflected in [`.github/workflows/ci.yml`](/.github/workflows/ci.yml).
 
 Production-only smoke coverage uses a separate command:
 
@@ -559,7 +559,7 @@ Database test note:
   migrations before running the integration and pgTAP suite so warm local state
   cannot hide schema drift
 
-Broader test strategy guidance, including what should eventually run in PR CI versus local-only iteration, lives in [testing.md](./testing.md).
+Broader test strategy guidance, including what should eventually run in PR CI versus local-only iteration, lives in [testing.md](/docs/testing.md).
 
 Admin functionality validation is now exposed as a dedicated local end-to-end
 command:
@@ -597,14 +597,14 @@ The command:
 - runs a single-worker Playwright admin smoke suite against the deployed web
   origin
 - expects the smoke environment contract documented in
-  [`production-admin-smoke-tracking.md`](./tracking/production-admin-smoke-tracking.md)
+  [`production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md)
 
 Manual execution path:
 
 1. Open the `Production Admin Smoke` workflow in GitHub Actions.
 2. Use `Run workflow` (`workflow_dispatch`) on `main`.
 3. Confirm the `production` environment has all required smoke vars and
-   secrets documented in [`operations.md`](./operations.md).
+   secrets documented in [`operations.md`](/docs/operations.md).
 
 Failure triage categories:
 
@@ -615,11 +615,11 @@ Failure triage categories:
 - public route publish-state mismatch
 
 Use the detailed runbook in
-[`production-admin-smoke-tracking.md`](./tracking/production-admin-smoke-tracking.md)
+[`production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md)
 for owner routing and first-response checks.
 
 For live-event monitoring beyond the smoke workflow, use
-[`operations.md` — Live Monitoring And Log Triage](./operations.md#live-monitoring-and-log-triage).
+[`operations.md` — Live Monitoring And Log Triage](/docs/operations.md#live-monitoring-and-log-triage).
 
 ## UI Review Workflow
 
@@ -786,9 +786,9 @@ rewrites that proxy `/admin*`, the auth callback, the platform landing,
 and event-scoped non-game/admin URLs to `apps/site`.
 
 The transitional routing contract is documented in
-[`docs/architecture.md`](./architecture.md#vercel-routing-topology) and
+[`docs/architecture.md`](/docs/architecture.md#vercel-routing-topology) and
 the implementing plan is
-[`docs/plans/site-scaffold-and-routing.md`](./plans/site-scaffold-and-routing.md).
+[`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md).
 
 In short, the rule precedence inside `apps/web/vercel.json` is:
 
@@ -817,7 +817,7 @@ now enters through the apps/web frontend host and proxies the callback
 route to apps/site.
 
 The auth e2e Playwright configs start
-[`scripts/testing/run-auth-e2e-dev-server.cjs`](../scripts/testing/run-auth-e2e-dev-server.cjs).
+[`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs).
 That script keeps the browser origin at `http://127.0.0.1:4173`,
 routes `/`, `/auth/callback`, `/admin*`, and Next.js assets to
 branch-local apps/site, and routes every other app path (event-scoped
@@ -826,9 +826,9 @@ waits for apps/site `/admin` and an apps/web event-scoped URL before
 Playwright starts the tests. The relevant fixtures keep their existing
 redirect URLs:
 
-- [`admin-auth-fixture.ts`](../tests/e2e/admin-auth-fixture.ts)
-- [`redeem-auth-fixture.ts`](../tests/e2e/redeem-auth-fixture.ts)
-- [`redemptions-auth-fixture.ts`](../tests/e2e/redemptions-auth-fixture.ts)
+- [`admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
+- [`redeem-auth-fixture.ts`](/tests/e2e/redeem-auth-fixture.ts)
+- [`redemptions-auth-fixture.ts`](/tests/e2e/redemptions-auth-fixture.ts)
 
 For callback work in apps/site, create `apps/site/.env.local` from
 `apps/site/.env.example` and mirror the same Supabase project values
@@ -859,7 +859,7 @@ phase 1.3.2** when implementation surfaced a planning-time bug: the
 (`*.supabase.co`), not on the apps/web frontend domain, so it is
 never readable by Next.js `cookies()` in apps/site routes regardless
 of the rewrite topology. See
-[`docs/plans/site-scaffold-and-routing.md`](./plans/site-scaffold-and-routing.md)
+[`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
 "Verification Evidence" for the full analysis.
 
 M1 phase 1.3.2 introduced `@supabase/ssr`'s frontend-origin cookie
@@ -902,10 +902,10 @@ The intended release path is:
    still do not trigger CI and therefore do not trigger production Supabase
    release.
 4. Let Vercel Git integration publish the frontend from the validated commit.
-5. Let [`.github/workflows/release.yml`](../.github/workflows/release.yml) apply
+5. Let [`.github/workflows/release.yml`](/.github/workflows/release.yml) apply
    production Supabase migrations and deploy production Edge Functions from that
    same validated SHA.
-6. Let [`.github/workflows/production-admin-smoke.yml`](../.github/workflows/production-admin-smoke.yml)
+6. Let [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
    verify deployed admin auth and authoring workflows against dedicated
    production smoke fixtures (with manual rerun support).
 
@@ -916,20 +916,20 @@ The intended release path is:
 on `main`, prints stage-by-stage progress, and emits a load-bearing
 `SMOKE_URL=<run-url>` line on green smoke. Use it to capture the smoke
 run URL for the doc-only follow-up commit required by
-[`testing-tiers.md`](./testing-tiers.md) "Plan-to-Landed Gate For Plans
+[`testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate For Plans
 That Touch Production Smoke" without leaving the terminal. Pass
 `--deadline-minutes <N>` to override the default 45-minute cap.
 
 The watcher shells out to `gh` and requires `gh >= 2.89.0` for stable
 JSON shape on `run list` / `run view`. The runtime check enforces this
 before any polling starts; the same minimum is encoded as a constant in
-[`scripts/release/post-merge-smoke-watch.cjs`](../scripts/release/post-merge-smoke-watch.cjs)
+[`scripts/release/post-merge-smoke-watch.cjs`](/scripts/release/post-merge-smoke-watch.cjs)
 and exercised by
-[`tests/scripts/post-merge-smoke-watch.test.ts`](../tests/scripts/post-merge-smoke-watch.test.ts).
+[`tests/scripts/post-merge-smoke-watch.test.ts`](/tests/scripts/post-merge-smoke-watch.test.ts).
 
 ### Pull Request Notes
 
-Pull requests use [`.github/pull_request_template.md`](../.github/pull_request_template.md)
+Pull requests use [`.github/pull_request_template.md`](/.github/pull_request_template.md)
 as a lightweight guide for review-ready context.
 
 Every PR body should include:
@@ -972,7 +972,7 @@ Release integrity guard:
 The production smoke workflow expects these additional `production` environment
 settings (vars and secrets):
 
-- see [`operations.md`](./operations.md) for the complete smoke settings list
+- see [`operations.md`](/docs/operations.md) for the complete smoke settings list
 
 Important boundary:
 
@@ -987,7 +987,7 @@ Important boundary:
 
 For live site, admin, Supabase Edge Function, or database triage during an
 event, start with the operator runbook in
-[`operations.md` — Live Monitoring And Log Triage](./operations.md#live-monitoring-and-log-triage).
+[`operations.md` — Live Monitoring And Log Triage](/docs/operations.md#live-monitoring-and-log-triage).
 
 ### Session bootstrap succeeds but completion returns 401
 

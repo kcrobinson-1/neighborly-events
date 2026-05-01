@@ -25,10 +25,10 @@ Env-agnostic Supabase wiring shared across `apps/web` and `apps/site`.
   copy keyed off `import.meta.env.DEV`, etc.
 
 The current adapters are
-[`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts)
+[`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts)
 and
-[`apps/site/lib/supabaseBrowser.ts`](../../apps/site/lib/supabaseBrowser.ts).
+[`apps/site/lib/supabaseBrowser.ts`](/apps/site/lib/supabaseBrowser.ts).
 
 ## Plan reference
 
-[`docs/plans/shared-db-foundation.md`](../../docs/plans/shared-db-foundation.md).
+[`docs/plans/shared-db-foundation.md`](/docs/plans/shared-db-foundation.md).

@@ -4,11 +4,11 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.3. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases:
-[`shared-db-foundation.md`](./shared-db-foundation.md) (1.1, Landed),
-[`shared-urls-foundation.md`](./shared-urls-foundation.md) (1.2,
+[`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) (1.1, Landed),
+[`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) (1.2,
 Landed), 1.4 `shared/events/`, 1.5 `shared/styles/` — each owns its
 own plan.
 
@@ -28,7 +28,7 @@ with different attention; bundling them dilutes both.
 
 This plan inherits the **production cookie-boundary verification gate**
 originally scoped to M0 phase 0.3. See
-[`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md)
+[`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
 "Verification Evidence" for why that gate was deferred. The gate is
 the readiness criterion for subphase 1.3.2 only; subphase 1.3.1 has no
 production-verification dependency.
@@ -39,8 +39,8 @@ Stand up `shared/auth/` as the canonical home for the role-neutral
 Supabase Auth surface — the API, the session-restore hook, the
 magic-link callback page, the in-place sign-in form, and the
 associated types — that today live in
-[`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts) and
-[`apps/web/src/auth/`](../../apps/web/src/auth/). After this phase
+[`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts) and
+[`apps/web/src/auth/`](/apps/web/src/auth). After this phase
 lands, no app holds a duplicate Supabase Auth wrapper or duplicate
 session-state primitive. `apps/web` (today) and `apps/site` (in M2)
 consume the same module.
@@ -74,7 +74,7 @@ not only the file that first triggered the rule.
   reads `import.meta.env.*` or `process.env.*` directly. Each app
   supplies its env-derived client and config-status to the shared
   surface through a per-app adapter. Same precedent as
-  [`shared/db/`](../../shared/db/).
+  [`shared/db/`](/shared/db).
 - **No new framework-specific dependencies inside `shared/auth/`.**
   Anything imported from `shared/auth/` must be Vite-safe **and**
   Next.js-safe. No Vite-only globals, no Next.js-only imports, no
@@ -103,9 +103,9 @@ not only the file that first triggered the rule.
   must run end-to-end against the real frontend-origin auth
   cookie before subphase 1.3.2's row flips `Landed`. Two-phase
   Plan-to-Landed per
-  [`docs/testing-tiers.md`](../testing-tiers.md) "Plan-to-Landed
+  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
   Gate For Plans That Touch Production Smoke." Same pattern
-  [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md)
+  [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
   used.
 
 ## Decisions Resolved In This Plan
@@ -128,7 +128,7 @@ recorded here so reviewer attention does not relitigate them.
   to `neighborly_*` was considered for naming-family consistency
   with the existing `neighborly_session` cookie and
   `x-neighborly-session` header (preserved per
-  [`repo-rename.md`](./repo-rename.md)). Rejected: the default is
+  [`repo-rename.md`](/docs/plans/repo-rename.md)). Rejected: the default is
   a stable Supabase contract that `@supabase/ssr`'s
   `createServerClient` (used in M2 phase 2.3 and 2.4) reads by
   default, so overriding the name would force apps/site to know
@@ -182,11 +182,11 @@ contract above. The contract is otherwise honored verbatim.
 - **`configureSharedAuth` lives in a dedicated startup module, not
   inside the apps/web binding.** apps/web's `configureSharedAuth`
   side-effect lives in
-  [`apps/web/src/lib/setupAuth.ts`](../../apps/web/src/lib/setupAuth.ts),
+  [`apps/web/src/lib/setupAuth.ts`](/apps/web/src/lib/setupAuth.ts),
   imported once for side-effect by
-  [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx). The plan's
+  [`apps/web/src/main.tsx`](/apps/web/src/main.tsx). The plan's
   Responsibility Split named eager configuration inside
-  [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+  [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
   as the recommended starting point but explicitly allowed a
   dedicated startup module. The dedicated module was chosen because
   the eager-inside-authApi shape made authApi.ts import
@@ -199,7 +199,7 @@ contract above. The contract is otherwise honored verbatim.
   effect — they either mock `shared/auth/api` directly or call
   `configureSharedAuth` themselves with mock providers.
 - **Vitest gains `esbuild: { jsx: "automatic" }`.**
-  [`vitest.config.ts`](../../vitest.config.ts) gains an explicit
+  [`vitest.config.ts`](/vitest.config.ts) gains an explicit
   esbuild JSX option so `.tsx` files in `shared/auth/` transform
   with the automatic JSX runtime, matching the `jsx: "react-jsx"`
   setting apps/web's tsconfig already declares. apps/web's tsconfig
@@ -208,20 +208,20 @@ contract above. The contract is otherwise honored verbatim.
   runtime under vitest before this change.
 - **Test mock-path updates extend beyond the two named files.** In
   addition to moving
-  [`tests/web/lib/authApi.test.ts`](../../tests/web/lib/) and
-  [`tests/web/auth/AuthCallbackPage.test.tsx`](../../tests/web/auth/) to
-  [`tests/shared/auth/`](../../tests/shared/auth/), four additional
+  [`tests/web/lib/authApi.test.ts`](/tests/web/lib) and
+  [`tests/web/auth/AuthCallbackPage.test.tsx`](/tests/web/auth) to
+  [`tests/shared/auth/`](/tests/shared/auth), four additional
   test files were updated to point their `vi.mock` paths at the new
   `shared/auth/` modules:
-  [`tests/web/pages/AdminPage.test.tsx`](../../tests/web/pages/AdminPage.test.tsx),
-  [`tests/web/pages/EventRedemptionsPage.test.tsx`](../../tests/web/pages/EventRedemptionsPage.test.tsx),
-  [`tests/web/pages/EventRedeemPage.test.tsx`](../../tests/web/pages/EventRedeemPage.test.tsx),
+  [`tests/web/pages/AdminPage.test.tsx`](/tests/web/pages/AdminPage.test.tsx),
+  [`tests/web/pages/EventRedemptionsPage.test.tsx`](/tests/web/pages/EventRedemptionsPage.test.tsx),
+  [`tests/web/pages/EventRedeemPage.test.tsx`](/tests/web/pages/EventRedeemPage.test.tsx),
   and
-  [`tests/web/redemptions/useReverseRedemption.test.ts`](../../tests/web/redemptions/useReverseRedemption.test.ts) —
+  [`tests/web/redemptions/useReverseRedemption.test.ts`](/tests/web/redemptions/useReverseRedemption.test.ts) —
   each moved its mock from `apps/web/src/auth/useAuthSession.ts`
   and/or `apps/web/src/lib/authApi.ts` to the corresponding
   `shared/auth/` path.
-  [`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts)
+  [`tests/web/lib/adminGameApi.test.ts`](/tests/web/lib/adminGameApi.test.ts)
   was tightened to call `configureSharedAuth` in its `beforeEach`,
   wiring the existing `mockGetBrowserSupabaseClient` as the shared
   client-getter so adminGameApi's `getAccessToken` calls resolve
@@ -237,11 +237,11 @@ contract above. The contract is otherwise honored verbatim.
 ### Subphase goal
 
 Move the role-neutral Supabase Auth surface from
-[`apps/web/src/auth/`](../../apps/web/src/auth/) and
-[`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+[`apps/web/src/auth/`](/apps/web/src/auth) and
+[`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
 into `shared/auth/`, with the per-app adapter pattern matching
-[`shared/db/`](../../shared/db/) and
-[`shared/urls/`](../../shared/urls/). Migrate every existing
+[`shared/db/`](/shared/db) and
+[`shared/urls/`](/shared/urls). Migrate every existing
 apps/web consumer. Behavior-preserving: storage stays as
 `localStorage` in 1.3.1; the cookie migration is 1.3.2's job.
 
@@ -281,13 +281,13 @@ apps/web consumer. Behavior-preserving: storage stays as
   `MagicLinkState`.
 - **`shared/auth/README.md`** is the ownership note in the same
   shape as
-  [`shared/db/README.md`](../../shared/db/README.md) and
-  [`shared/urls/README.md`](../../shared/urls/README.md): what
+  [`shared/db/README.md`](/shared/db/README.md) and
+  [`shared/urls/README.md`](/shared/urls/README.md): what
   `shared/auth/` owns, the env-agnostic boundary, the
   `configureSharedAuth` startup contract, the per-app adapter
   pattern, and a link back to this plan.
 - **apps/web per-app adapter
-  ([`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+  ([`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
   becomes the binding module).** The file narrows to: import the
   shared API + `configureSharedAuth`, call
   `configureSharedAuth({ getClient: getBrowserSupabaseClient,
@@ -318,9 +318,9 @@ apps/web today — role resolution is via direct
 `client.rpc("is_organizer_for_event", ...)`,
 `client.rpc("is_root_admin")`, and `client.rpc("is_agent_for_event", ...)`
 calls inside
-[`apps/web/src/redemptions/authorizeRedemptions.ts`](../../apps/web/src/redemptions/authorizeRedemptions.ts)
+[`apps/web/src/redemptions/authorizeRedemptions.ts`](/apps/web/src/redemptions/authorizeRedemptions.ts)
 and
-[`apps/web/src/redeem/authorizeRedeem.ts`](../../apps/web/src/redeem/authorizeRedeem.ts).
+[`apps/web/src/redeem/authorizeRedeem.ts`](/apps/web/src/redeem/authorizeRedeem.ts).
 Per AGENTS.md "don't add features beyond what the task requires,"
 1.3.1 does not create new hook abstractions speculatively. The
 hooks are created in the phases that have a real consumer — M2
@@ -348,35 +348,35 @@ decision belongs to phase 1.4's plan, not this one.
 
 ### Files to touch — modify
 
-- [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts) —
+- [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts) —
   narrows to the apps/web binding module: imports the shared API
   and `configureSharedAuth`, calls configure with apps/web's
   `getBrowserSupabaseClient` and a config-status getter that
   wraps `getSupabaseConfig` + `getMissingSupabaseConfigMessage`,
   re-exports the shared API surface so existing call sites are
   unaffected.
-- [`apps/web/src/auth/AuthCallbackPage.tsx`](../../apps/web/src/auth/AuthCallbackPage.tsx) —
+- [`apps/web/src/auth/AuthCallbackPage.tsx`](/apps/web/src/auth/AuthCallbackPage.tsx) —
   deleted (moved to `shared/auth/`).
-- [`apps/web/src/auth/SignInForm.tsx`](../../apps/web/src/auth/SignInForm.tsx) —
+- [`apps/web/src/auth/SignInForm.tsx`](/apps/web/src/auth/SignInForm.tsx) —
   deleted (moved to `shared/auth/`).
-- [`apps/web/src/auth/useAuthSession.ts`](../../apps/web/src/auth/useAuthSession.ts) —
+- [`apps/web/src/auth/useAuthSession.ts`](/apps/web/src/auth/useAuthSession.ts) —
   deleted (moved to `shared/auth/`, with config-status read
   through the configured getter).
-- [`apps/web/src/auth/types.ts`](../../apps/web/src/auth/types.ts) —
+- [`apps/web/src/auth/types.ts`](/apps/web/src/auth/types.ts) —
   deleted (moved to `shared/auth/`).
 - New `apps/web/src/auth/index.ts` (or equivalent re-export
   module) — re-exports the shared components, hook, and types so
   existing apps/web call sites can keep importing from
   `apps/web/src/auth/*` without churn.
 - The apps/web call sites enumerated by the scoping investigation
-  ([`AdminPageShell`](../../apps/web/src/admin/AdminPageShell.tsx),
-  [`AdminDashboardContent`](../../apps/web/src/admin/AdminDashboardContent.tsx),
-  [`useAdminDashboard`](../../apps/web/src/admin/useAdminDashboard.ts),
-  [`AdminPage`](../../apps/web/src/pages/AdminPage.tsx), and any
+  ([`AdminPageShell`](/apps/web/src/admin/AdminPageShell.tsx),
+  [`AdminDashboardContent`](/apps/web/src/admin/AdminDashboardContent.tsx),
+  [`useAdminDashboard`](/apps/web/src/admin/useAdminDashboard.ts),
+  [`AdminPage`](/apps/web/src/pages/AdminPage.tsx), and any
   router entry that mounts the auth-callback route) — verify
   imports still resolve through the apps/web re-export module;
   no logic changes.
-- [`tests/web/auth/AuthCallbackPage.test.tsx`](../../tests/web/auth/AuthCallbackPage.test.tsx) —
+- [`tests/web/auth/AuthCallbackPage.test.tsx`](/tests/web/auth/AuthCallbackPage.test.tsx) —
   moved to `tests/shared/auth/AuthCallbackPage.test.tsx`. Mock
   paths update from
   `vi.mock("../../../apps/web/src/lib/authApi.ts", ...)` to
@@ -385,18 +385,18 @@ decision belongs to phase 1.4's plan, not this one.
   module-level configuration pattern). Test bodies stay intact;
   the assertions about session-resolve and timeout behavior do
   not change.
-- [`tests/web/lib/authApi.test.ts`](../../tests/web/lib/authApi.test.ts) —
+- [`tests/web/lib/authApi.test.ts`](/tests/web/lib/authApi.test.ts) —
   moved to `tests/shared/auth/api.test.ts`. Same mock-path
   treatment. Test bodies stay intact.
-- [`docs/architecture.md`](../architecture.md) — add the
+- [`docs/architecture.md`](/docs/architecture.md) — add the
   `shared/auth/` shared-layer bullet describing the auth surface,
   the env-agnostic boundary, and the per-app adapter pattern.
   Mirrors the bullets added in phases 1.1 and 1.2.
-- [`docs/dev.md`](../dev.md) — add a contributor note that
+- [`docs/dev.md`](/docs/dev.md) — add a contributor note that
   Supabase Auth code goes through `shared/auth/` consumed via the
   per-app adapter, not directly. No new validation command in
   1.3.1.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   phase 1.3 paragraph tightened on three points: (1) name
   subphases 1.3.1 and 1.3.2 in place of "One PR"; (2) clarify
   that role-resolution hooks (`useOrganizerForEvent`,
@@ -417,35 +417,35 @@ decision belongs to phase 1.4's plan, not this one.
 
 ### Files intentionally not touched
 
-- [`apps/web/src/redemptions/authorizeRedemptions.ts`](../../apps/web/src/redemptions/authorizeRedemptions.ts)
+- [`apps/web/src/redemptions/authorizeRedemptions.ts`](/apps/web/src/redemptions/authorizeRedemptions.ts)
   and
-  [`apps/web/src/redeem/authorizeRedeem.ts`](../../apps/web/src/redeem/authorizeRedeem.ts) —
+  [`apps/web/src/redeem/authorizeRedeem.ts`](/apps/web/src/redeem/authorizeRedeem.ts) —
   surface-specific authorization helpers (slug + event-code
   lookup bundled with role checks). Not role-neutral. Phase 1.4
   decides whether to move them.
-- [`apps/web/src/admin/useAdminDashboard.ts`](../../apps/web/src/admin/useAdminDashboard.ts) —
+- [`apps/web/src/admin/useAdminDashboard.ts`](/apps/web/src/admin/useAdminDashboard.ts) —
   apps/web admin-shell orchestration. Stays.
-- [`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts) —
+- [`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts) —
   the apps/web Supabase client adapter. Stays exactly as
   phase 1.1.1 left it. Subphase 1.3.2 modifies the underlying
   factory in `shared/db/client.ts`, not this adapter.
-- [`apps/site/`](../../apps/site/) — does not consume
+- [`apps/site/`](/apps/site) — does not consume
   `shared/auth/` in 1.3.1. Subphase 1.3.2 wires the apps/site
   placeholder readout using native Next.js `cookies()`, not
   `shared/auth/`.
-- [`supabase/functions/`](../../supabase/functions/) — server-side
+- [`supabase/functions/`](/supabase/functions) — server-side
   Deno auth concerns are a separate seam. Out of scope.
 - E2E auth fixtures
-  ([`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts),
-  [`tests/e2e/redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
-  [`tests/e2e/redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts)) —
+  ([`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts),
+  [`tests/e2e/redeem-auth-fixture.ts`](/tests/e2e/redeem-auth-fixture.ts),
+  [`tests/e2e/redemptions-auth-fixture.ts`](/tests/e2e/redemptions-auth-fixture.ts)) —
   exercise auth flows end-to-end through the browser; the
   internal-import moves don't affect them. Validation step 7
   confirms.
 - Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*` storage
   keys, `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](./repo-rename.md).
+  [`repo-rename.md`](/docs/plans/repo-rename.md).
 
 ### Execution steps
 
@@ -490,8 +490,8 @@ decision belongs to phase 1.4's plan, not this one.
    moved file's discriminant); both must pass without rewriting
    assertion bodies.
 8. **Documentation update.** Update
-   [`docs/architecture.md`](../architecture.md),
-   [`docs/dev.md`](../dev.md), the parent epic's phase 1.3
+   [`docs/architecture.md`](/docs/architecture.md),
+   [`docs/dev.md`](/docs/dev.md), the parent epic's phase 1.3
    paragraph and Sizing Summary line, and this plan's subphase
    1.3.1 status row. Doc currency is a PR gate per AGENTS.md.
 9. **Repeat full validation.** `npm run lint`,
@@ -515,7 +515,7 @@ decision belongs to phase 1.4's plan, not this one.
     row to `Landed`. Plan-level Status stays `Proposed` until
     subphase 1.3.2 lands.
 12. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 chars. Validation section lists `npm run lint`,
     `npm test`, `npm run test:functions`, `npm run build:web`,
     `npm run build:site` — all run. Target Shape Evidence
@@ -547,7 +547,7 @@ decision belongs to phase 1.4's plan, not this one.
 ### Self-review audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Rename-aware diff classification.** This subphase moves four
   files from `apps/web/src/auth/` and one file's contents from
@@ -603,7 +603,7 @@ contract above. The contract is otherwise honored verbatim.
 - **Cookie attributes set explicitly: `path: "/"`, `sameSite: "lax"`,
   `secure: <protocol-derived>`.** Inspection of
   `@supabase/ssr@0.10.0`'s `DEFAULT_COOKIE_OPTIONS`
-  ([`node_modules/@supabase/ssr/dist/module/utils/constants.js`](../../node_modules/@supabase/ssr/dist/module/utils/constants.js))
+  ([`node_modules/@supabase/ssr/dist/module/utils/constants.js`](/node_modules/@supabase/ssr/dist/module/utils/constants.js))
   surfaced that the package does **not** auto-detect `Secure` — its
   defaults are `path: "/"`, `sameSite: "lax"`, `httpOnly: false`,
   `maxAge: 400 days` only. The plan invariant called for `Secure` in
@@ -622,7 +622,7 @@ contract above. The contract is otherwise honored verbatim.
   `createBrowserClient`.** The plan's original shape called for
   `createBrowserClient` from `@supabase/ssr` directly. Post-merge
   production smoke surfaced that
-  [`createBrowserClient`](../../node_modules/@supabase/ssr/dist/module/createBrowserClient.js)
+  [`createBrowserClient`](/node_modules/@supabase/ssr/dist/module/createBrowserClient.js)
   hardcodes `flowType: "pkce"` **after** spreading user
   `options.auth` (the option is unoverridable through the public
   API). PKCE is incompatible with the production admin smoke
@@ -670,17 +670,17 @@ Migrate Supabase Auth's session storage from browser
 `localStorage` to a frontend-origin cookie by replacing the
 `createClient` call from `@supabase/supabase-js` with
 `createBrowserClient` from `@supabase/ssr` inside
-[`shared/db/client.ts`](../../shared/db/client.ts). Replace the
+[`shared/db/client.ts`](/shared/db/client.ts). Replace the
 [`apps/site` placeholder's deferral
 notice](../../apps/site/app/event/[slug]/page.tsx) with a native
 Next.js `cookies()` presence-check readout for the new auth
 cookie. Verify the cookie boundary against production via Tier 5
 production smoke. Two-phase Plan-to-Landed per
-[`docs/testing-tiers.md`](../testing-tiers.md).
+[`docs/testing-tiers.md`](/docs/testing-tiers.md).
 
 ### Responsibility split
 
-- **[`shared/db/client.ts`](../../shared/db/client.ts)** —
+- **[`shared/db/client.ts`](/shared/db/client.ts)** —
   `createBrowserSupabaseClient(config)` swaps the
   `@supabase/supabase-js` `createClient` call for
   `createBrowserClient` from `@supabase/ssr`. Function
@@ -692,7 +692,7 @@ production smoke. Two-phase Plan-to-Landed per
   `cookieOptions` parameter. The function is still env-agnostic;
   `shared/db/`'s rule that env access stays at the app boundary
   is unaffected.
-- **[`apps/site/app/event/[slug]/page.tsx`](../../apps/site/app/event/[slug]/page.tsx)** —
+- **[`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)** —
   the `cookies()` call already wired by the M0 phase 0.3 +
   Stage 2 follow-up is repointed at the new auth cookie name.
   The deferral notice paragraph is replaced with a presence-only
@@ -723,24 +723,24 @@ None.
 
 ### Files to touch — modify
 
-- [`apps/web/package.json`](../../apps/web/package.json) — add
+- [`apps/web/package.json`](/apps/web/package.json) — add
   `@supabase/ssr` as an exact-pinned dependency. The version
   pin is picked at write-time for compatibility with
   `@supabase/supabase-js` `^2.101.1` already in the repo. No
   caret, no tilde.
-- [`package-lock.json`](../../package-lock.json) — regenerated
+- [`package-lock.json`](/package-lock.json) — regenerated
   by `npm install` in the same commit.
-- [`shared/db/client.ts`](../../shared/db/client.ts) — swap
+- [`shared/db/client.ts`](/shared/db/client.ts) — swap
   `createClient` from `@supabase/supabase-js` for
   `createBrowserClient` from `@supabase/ssr`. Pass cookie
   options matching the cross-cutting invariant. Keep the
   function signature and return type identical.
-- [`apps/site/app/event/[slug]/page.tsx`](../../apps/site/app/event/[slug]/page.tsx) —
+- [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx) —
   replace the deferral notice paragraph with the presence-check
   readout. Use the regex above against `cookies().getAll()`.
   Render presence-only ("present" / "not present") — never
   echo the cookie value.
-- [`docs/dev.md`](../dev.md) — replace the cookie-boundary
+- [`docs/dev.md`](/docs/dev.md) — replace the cookie-boundary
   verification procedure originally documented in M0 phase 0.3
   (which referenced the `neighborly_session` cookie) with the
   current procedure: sign in to apps/web on the production
@@ -752,13 +752,13 @@ None.
   `SameSite=Lax`, `Secure`, no `Domain=`, no `HttpOnly`) for
   contributor reference. Document that admins are forced to
   re-sign-in once when this PR deploys.
-- [`docs/architecture.md`](../architecture.md) — update the
+- [`docs/architecture.md`](/docs/architecture.md) — update the
   auth trust-boundary description: Supabase Auth session is
   stored in a frontend-origin cookie set by `@supabase/ssr`,
   visible to apps/site server-rendered routes through Vercel's
   proxy-rewrite. The earlier `localStorage` description is
   replaced, not appended.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   strike the M1 phase 1.3 inheritance language pointing at the
   M0 phase 0.3 deferred verification (the gate has now run);
   flip subphase 1.3.2's row in this plan's status table to
@@ -776,26 +776,26 @@ None.
 
 ### Files intentionally not touched
 
-- [`apps/site/package.json`](../../apps/site/package.json) —
+- [`apps/site/package.json`](/apps/site/package.json) —
   does not gain `@supabase/ssr` in 1.3.2. Deferred to M2
   phase 2.3 (auth-callback migration) and M2 phase 2.4
   (platform admin), where it has real consumers.
-- [`shared/auth/`](../../shared/auth/) — the cookie adapter
+- [`shared/auth/`](/shared/auth) — the cookie adapter
   swap is invisible at the auth-API level. No `shared/auth/`
   source change in 1.3.2.
-- [`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts) —
+- [`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts) —
   the apps/web Supabase client adapter. Singleton lifecycle and
   env reading unchanged. The factory it calls now uses
   `@supabase/ssr` internally, but the adapter doesn't see the
   difference.
-- [`docs/plans/site-scaffold-and-routing.md`](./site-scaffold-and-routing.md) —
+- [`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md) —
   the M0 phase 0.3 plan stays as historical record. Its
   Verification Evidence subsection documents why the original
   `neighborly_session` gate was unworkable; that record is
   durable. The current verification status lives in this plan
   going forward.
 - Edge functions
-  ([`supabase/functions/_shared/session-cookie.ts`](../../supabase/functions/_shared/session-cookie.ts) etc.)
+  ([`supabase/functions/_shared/session-cookie.ts`](/supabase/functions/_shared/session-cookie.ts) etc.)
   — the `neighborly_session` game-session cookie is a separate
   concern; edge functions still issue it from the Supabase
   origin and still validate it via the `x-neighborly-session`
@@ -803,7 +803,7 @@ None.
 - Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*` storage
   keys, `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](./repo-rename.md).
+  [`repo-rename.md`](/docs/plans/repo-rename.md).
 
 ### Execution steps
 
@@ -843,20 +843,20 @@ None.
    `sb-<ref>-auth-token` key. If chunking is triggered (large
    JWT), confirm the `.0`, `.1` siblings appear.
 8. **E2E auth fixture verification.** Walk
-   [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts),
-   [`tests/e2e/redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
-   [`tests/e2e/redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts).
+   [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts),
+   [`tests/e2e/redeem-auth-fixture.ts`](/tests/e2e/redeem-auth-fixture.ts),
+   [`tests/e2e/redemptions-auth-fixture.ts`](/tests/e2e/redemptions-auth-fixture.ts).
    Confirm the cookie-jar-based auth flow still works with the
    new cookie name. Update fixture cookie expectations if a
    fixture explicitly named the old `localStorage` key or
    asserted on cookie shape.
 9. **Documentation update.** Update
-   [`docs/dev.md`](../dev.md) (new cookie-boundary verification
+   [`docs/dev.md`](/docs/dev.md) (new cookie-boundary verification
    procedure with the new cookie name and the cookie attributes
    reference; admin re-sign-in note),
-   [`docs/architecture.md`](../architecture.md) (auth trust
+   [`docs/architecture.md`](/docs/architecture.md) (auth trust
    boundary: cookie storage),
-   [`docs/plans/event-platform-epic.md`](./event-platform-epic.md)
+   [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
    (strike the M1 phase 1.3 inheritance language; mark
    subphase 1.3.2 row in this plan as
    `In progress pending prod smoke`), and this plan's subphase
@@ -905,7 +905,7 @@ None.
     deployments are green.
 15. **Post-merge: production cookie-boundary verification.**
     Execute the procedure documented in
-    [`docs/dev.md`](../dev.md) updated in step 9: sign in to
+    [`docs/dev.md`](/docs/dev.md) updated in step 9: sign in to
     apps/web at `/admin` (or `/event/:slug/admin` for any
     seeded event the admin can author) on the production
     domain → confirm the `sb-<project-ref>-auth-token` cookie
@@ -945,7 +945,7 @@ None.
 ### Self-review audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **CLI / tooling pinning audit.** Adding `@supabase/ssr` is
   the substantive new dependency. Confirm exact-version pin
@@ -1009,7 +1009,7 @@ forwarding (it stays on apps/web's `/admin`). The plan's gate
 specifically requires the cross-app path because M0 phase 0.3's
 original failure mode was a cookie that worked on one origin but not
 through the proxy. Per the procedure documented in
-[`docs/dev.md`](../dev.md) "Cookie-boundary verification," the
+[`docs/dev.md`](/docs/dev.md) "Cookie-boundary verification," the
 following manual run on `5af99f4` covers it:
 
 | Step | Observation |
@@ -1043,31 +1043,31 @@ rows to read `Landed`.
 Across the two subphases, these named docs must reflect the
 implemented state by the time each subphase's PR opens:
 
-- [`README.md`](../../README.md) — touched only if the
+- [`README.md`](/README.md) — touched only if the
   monorepo-structure prose names the new `shared/auth/`
   directory at the layout level. If the existing README's
   `shared` bullet covers it without naming sub-directories,
   no edit is required.
-- [`docs/architecture.md`](../architecture.md) — updated in
+- [`docs/architecture.md`](/docs/architecture.md) — updated in
   1.3.1 (`shared/auth/` shared-layer bullet, env-agnostic
   boundary) and 1.3.2 (auth trust boundary: cookie storage
   replaces localStorage; cookie visible to apps/site through
   proxy-rewrite).
-- [`docs/dev.md`](../dev.md) — updated in 1.3.1 (per-app auth
+- [`docs/dev.md`](/docs/dev.md) — updated in 1.3.1 (per-app auth
   adapter pattern note) and 1.3.2 (cookie-boundary
   verification procedure with the new cookie name; cookie
   attributes reference; admin re-sign-in note).
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   updated in 1.3.1 (phase 1.3 paragraph subphased; role-resolution
   hook clarification; Sizing Summary line and epic total
   updated). Updated in 1.3.2 (strike the M1 phase 1.3
   inheritance from M0 phase 0.3 once the gate is satisfied).
   M1 row stays `Proposed` throughout (phases 1.4 and 1.5
   remain).
-- [`docs/plans/site-scaffold-and-routing.md`](./site-scaffold-and-routing.md) —
+- [`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md) —
   not touched in 1.3.x. The M0 phase 0.3 deferral language
   is historical record.
-- [`AGENTS.md`](../../AGENTS.md) — not touched by phase 1.3
+- [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.3
   (styling-token-discipline is M1 phase 1.5).
 - This plan — each subphase's row flips on its own PR;
   plan-level Status flips to `Landed` in subphase 1.3.2's
@@ -1094,7 +1094,7 @@ Captured here so reviewer attention does not relitigate them.
   (`shared/events/`) lands; that decision belongs to the
   1.4 plan, not this one.
 - **Admin-shell orchestration
-  ([`useAdminDashboard`](../../apps/web/src/admin/useAdminDashboard.ts)).**
+  ([`useAdminDashboard`](/apps/web/src/admin/useAdminDashboard.ts)).**
   apps/web-specific orchestration of the admin route family.
   Stays.
 - **`apps/site` `@supabase/ssr` adoption with
@@ -1146,13 +1146,13 @@ Captured here so reviewer attention does not relitigate them.
   `<ThemeScope>`. apps/web's existing `/admin` shell stays
   unthemed in 1.3.x.
 - **Service-role client used by
-  [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts).**
+  [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts).**
   Different concern from the browser auth client; not
   migrated.
 - **Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*`
   storage keys, `@neighborly/web` workspace scope).**
-  Preserved per [`repo-rename.md`](./repo-rename.md).
+  Preserved per [`repo-rename.md`](/docs/plans/repo-rename.md).
 
 ## Risk Register
 
@@ -1243,7 +1243,7 @@ Captured here so reviewer attention does not relitigate them.
   browsers.
 - **Doc-only Stage 2 follow-up violates branch protection
   (1.3.2).** Solo-safe branch protection per
-  [`docs/dev.md`](../dev.md) permits direct push to `main`
+  [`docs/dev.md`](/docs/dev.md) permits direct push to `main`
   for the maintainer; if branch protection has tightened,
   the doc-only flip becomes a tiny follow-up PR rather than
   a direct push. Mitigation: cosmetic only; either path
@@ -1263,34 +1263,34 @@ relationship lives in the parent epic, not this plan.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic; M1 milestone owns the foundation extraction;
   sibling phases 1.1, 1.2, 1.4, 1.5 own their own plans
-- [`shared-db-foundation.md`](./shared-db-foundation.md) —
+- [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) —
   sibling phase 1.1 plan; precedent for module layout, README
   ownership note, per-app adapter pattern, two-subphase
   structure with different risk profiles
-- [`shared-urls-foundation.md`](./shared-urls-foundation.md) —
+- [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) —
   sibling phase 1.2 plan; precedent for `tests/shared/`
   migration and Vitest include-glob expansion
-- [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md) —
+- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md) —
   sibling phase 0.3 plan; cookie-boundary verification gate
   inherited from there; "Verification Evidence" subsection
   documents why the M0 attempt was unworkable and why the
   gate folded into M1 phase 1.3.2
-- [`repo-rename.md`](./repo-rename.md) —
+- [`repo-rename.md`](/docs/plans/repo-rename.md) —
   runtime-identifier preservation rules govern which cookie
   and storage names this plan may not change
-- [`AGENTS.md`](../../AGENTS.md) — planning depth, plan-to-PR
+- [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR
   completion gate, doc currency, validation honesty, scope
   guardrails, two-phase Plan-to-Landed for plans that touch
   production smoke
-- [`docs/dev.md`](../dev.md) — current contributor workflow;
+- [`docs/dev.md`](/docs/dev.md) — current contributor workflow;
   updated by both subphases
-- [`docs/architecture.md`](../architecture.md) — current
+- [`docs/architecture.md`](/docs/architecture.md) — current
   shape; updated by both subphases
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at every subphase's gate
-- [`docs/testing-tiers.md`](../testing-tiers.md) — Tier 5
+- [`docs/testing-tiers.md`](/docs/testing-tiers.md) — Tier 5
   production smoke and the Plan-to-Landed Gate For Plans That
   Touch Production Smoke

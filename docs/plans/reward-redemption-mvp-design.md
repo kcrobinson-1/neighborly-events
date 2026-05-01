@@ -560,7 +560,7 @@ Operational success at event:
      pgTAP coverage of constraints, helper return values, and index
      presence. Review was structural. Corresponds to migration-sequence
      steps 1–2 in checklist item 10. See
-     [`reward-redemption-phase-a-1-plan.md`](./archive/reward-redemption-phase-a-1-plan.md).
+     [`reward-redemption-phase-a-1-plan.md`](/docs/plans/archive/reward-redemption-phase-a-1-plan.md).
    - **Phase A.2a — DB mutation surface.** *Landed.*
      `public.redeem_entitlement_by_code(...)` and
      `public.reverse_entitlement_redemption(...)` shipped as
@@ -572,7 +572,7 @@ Operational success at event:
      authorization matrix, cross-event non-leakage, and the new RLS
      policies. Review was SQL-focused. Corresponds to migration-sequence
      steps 3–4 in checklist item 10. See
-     [`reward-redemption-phase-a-2-plan.md`](./archive/reward-redemption-phase-a-2-plan.md).
+     [`reward-redemption-phase-a-2-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2-plan.md).
    - **Phase A.2b — Edge Function wrappers + attendee read path.** *Landed.*
      The redeem and reverse Edge Function wrappers, the attendee
      `get-redemption-status` read path, handler coverage for
@@ -580,7 +580,7 @@ Operational success at event:
      `shared/`. A.2a's pgTAP suite pins the outcome contract so A.2b only
      has to mirror it through HTTP. Corresponds to migration-sequence step
      5 in checklist item 10. See
-     [`reward-redemption-phase-a-2b-plan.md`](./archive/reward-redemption-phase-a-2b-plan.md).
+     [`reward-redemption-phase-a-2b-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2b-plan.md).
 
    Split along two seams. First seam: A.1 (inert foundation) vs. A.2
    (mutation + read behavior), so structural review is not mixed with

@@ -21,11 +21,11 @@ Use this doc when:
 
 Owner docs this file coordinates:
 
-- [dev.md](../dev.md) — validation commands and local workflow source of truth
-- [../../AGENTS.md](../../AGENTS.md) — agent behavior and decision discipline
-- [testing.md](../testing.md) — validation surface the agent runs against
-- [operations.md](../operations.md) — platform-managed settings
-- [backlog.md](../backlog.md) — priority-ordered follow-up work
+- [dev.md](/docs/dev.md) — validation commands and local workflow source of truth
+- [../../AGENTS.md](/AGENTS.md) — agent behavior and decision discipline
+- [testing.md](/docs/testing.md) — validation surface the agent runs against
+- [operations.md](/docs/operations.md) — platform-managed settings
+- [backlog.md](/docs/backlog.md) — priority-ordered follow-up work
 
 ## Current Status (2026-04-20)
 

@@ -7,9 +7,9 @@ classification and color-derivation policy below are **binding** for
 the implementation in M1 phase 1.5.2; any token misclassification
 surfaced during 1.5.2 sends a doc fix back here in the same PR before
 the implementation continues. See
-[`docs/plans/shared-styles-foundation.md`](plans/shared-styles-foundation.md)
+[`docs/plans/shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
 and the parent epic
-[`docs/plans/event-platform-epic.md`](plans/event-platform-epic.md)
+[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
 for context.
 
 ## Purpose
@@ -27,12 +27,12 @@ deriving brand-tied surface tints, the `Theme` model that
 `shared/styles/` exposes, and the procedure for adding a new theme.
 
 It does **not** cover when to add a new token at all — that decision
-lives in [`AGENTS.md`](../AGENTS.md) "Styling Token Discipline."
+lives in [`AGENTS.md`](/AGENTS.md) "Styling Token Discipline."
 
 ## Two Buckets
 
 Every token in
-[`apps/web/src/styles/_tokens.scss`](../apps/web/src/styles/_tokens.scss)
+[`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
 is classified into one of two buckets. No token is split across both.
 
 - **Per-event brand themable.** Migrates to a CSS custom property in
@@ -292,7 +292,7 @@ declaration.
 
 Every field corresponds to a flat CSS custom property
 (`--token-name`, no `--theme-` prefix — see "Naming" in
-[`shared-styles-foundation.md`](plans/shared-styles-foundation.md)).
+[`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)).
 `<ThemeScope theme={…}>` emits the CSS custom properties as inline
 style on a wrapper element. Brand-tied derived shades
 (`--secondary-surface`, etc.) are not Theme fields; they are
@@ -324,7 +324,7 @@ classification this doc binds.
    row).
 2. Create `shared/styles/themes/<slug>.ts` exporting a `Theme` object
    populated with those values. Use
-   [`shared/styles/themes/platform.ts`](../shared/styles/themes/platform.ts)
+   [`shared/styles/themes/platform.ts`](/shared/styles/themes/platform.ts)
    (Sage Civic) as the shape reference once 1.5.2 lands.
 3. Add the new theme to the registry barrel at
    `shared/styles/themes/index.ts` mapping slug → Theme.
@@ -360,7 +360,7 @@ test events, Madrona) has surfaced such a need.
 These values land in `shared/styles/themes/platform.ts` and apps/site's
 root layout in M1 phase 1.5.2. They are recorded here for
 cross-reference; the parent epic
-[`docs/plans/event-platform-epic.md`](plans/event-platform-epic.md) M1
+[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) M1
 phase 1.5 description is the source of truth for the values
 themselves.
 
@@ -399,15 +399,15 @@ phase.
 
 ## Related Docs
 
-- [`AGENTS.md`](../AGENTS.md) — Styling Token Discipline (rule for
+- [`AGENTS.md`](/AGENTS.md) — Styling Token Discipline (rule for
   when to add a token; updated in 1.5.2 to point here for the
   themable/structural binding)
-- [`docs/plans/shared-styles-foundation.md`](plans/shared-styles-foundation.md)
+- [`docs/plans/shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
   — phase 1.5 plan (subphase tables, execution steps, validation
   gate)
-- [`docs/plans/event-platform-epic.md`](plans/event-platform-epic.md)
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   — parent epic; M1 phase 1.5 carries the Sage Civic palette source
   of truth
-- [`apps/web/src/styles/_tokens.scss`](../apps/web/src/styles/_tokens.scss)
+- [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
   — current token source for apps/web (today's warm-cream values
   preserved byte-identically through 1.5.2)

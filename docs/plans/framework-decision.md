@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M0, Phase 0.2. M0's milestone Status remains `Proposed` until
 phase 0.3 lands.
 
@@ -426,7 +426,7 @@ correct call when the alternative does not rise to "much more suited."
 ## Open Questions Opened
 
 The following items the documentation could not close. They are
-mirrored into [`docs/open-questions.md`](../open-questions.md) in the
+mirrored into [`docs/open-questions.md`](/docs/open-questions.md) in the
 same PR that lands this decision.
 
 - **Cookie boundary across path-routed Vercel projects on the same
@@ -473,12 +473,12 @@ same PR that lands this decision.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent epic
-- [`docs/architecture.md`](../architecture.md) — current SPA shape;
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
+- [`docs/architecture.md`](/docs/architecture.md) — current SPA shape;
   updated in later milestones
-- [`docs/dev.md`](../dev.md) — current contributor workflow; updated
+- [`docs/dev.md`](/docs/dev.md) — current contributor workflow; updated
   in M0 phase 0.3 when `npm run build:site` is added
-- [`docs/open-questions.md`](../open-questions.md) — log of doc-gap
+- [`docs/open-questions.md`](/docs/open-questions.md) — log of doc-gap
   questions surfaced by this research
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) — audits
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) — audits
   named in the spike plan

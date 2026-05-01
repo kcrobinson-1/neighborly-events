@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M0, Phase 0.1. The epic's M0 row stays `Proposed` until phase 0.3
 lands; this plan governs phase 0.1 only.
 
@@ -17,7 +17,7 @@ identity is **Neighborly Events** and the GitHub repo becomes
 changes. One PR.
 
 Historical references that point to specific git history — commit and
-PR URLs embedded in [`docs/self-review-catalog.md`](../self-review-catalog.md)
+PR URLs embedded in [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
 and `docs/plans/archive/*.md` — are explicitly **out of scope**. Those
 URLs anchor frozen evidence (specific commits, specific PR
 conversations); GitHub auto-redirects them and rewriting them would
@@ -29,7 +29,7 @@ so the boundary is named, not implied.
 
 Change in place via `gh repo rename`. GitHub auto-redirects the old URL
 for clones, refs, and the ~40 hardcoded `github.com/kcrobinson-1/neighborly-scavenger-game/...`
-links inside [`docs/self-review-catalog.md`](../self-review-catalog.md)
+links inside [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
 and archived plans, so those do not need to change. A new repo is
 explicitly rejected because it would discard issue history, PR history,
 GitHub Actions run history, branch protection, and the existing Vercel
@@ -37,7 +37,7 @@ git integration for no benefit.
 
 The Vercel project rename is **deferred** — the project name
 (`neighborly-scavenger-game-web`, surfaced as the fallback origin in
-[`supabase/functions/_shared/cors.ts`](../../supabase/functions/_shared/cors.ts))
+[`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts))
 is decoupled from the GitHub repo name, production runs on a custom
 domain via `ALLOWED_ORIGINS`, and the rename PR stays purely textual.
 
@@ -73,21 +73,21 @@ Confirmed via `grep -i 'neighborly[ -]?scavenger'`. No file paths are
 renamed in this PR.
 
 **In-repo identity.**
-- [`package.json`](../../package.json) — root `name` field.
+- [`package.json`](/package.json) — root `name` field.
 - `package-lock.json` — root `name` field, regenerated via `npm install`
   after the root `package.json` edit.
-- [`supabase/config.toml`](../../supabase/config.toml) — `project_id`
+- [`supabase/config.toml`](/supabase/config.toml) — `project_id`
   (cosmetic; the local Supabase CLI link is decoupled from the live
   Supabase project).
 
 **User-visible product copy.**
-- [`apps/web/index.html`](../../apps/web/index.html) — `<title>` and the
+- [`apps/web/index.html`](/apps/web/index.html) — `<title>` and the
   `<meta name="description">` tag.
-- [`README.md`](../../README.md) — top-level title and lead paragraph
+- [`README.md`](/README.md) — top-level title and lead paragraph
   product description.
 
 **Docs that reference the product or repo by name.**
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) — two
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) — two
   surfaces, both rewritten in this PR per the AGENTS.md Plan-to-PR
   Completion Gate (when reality diverges from a plan's predicted
   scope, the plan is updated, not silently exceeded):
@@ -108,9 +108,9 @@ renamed in this PR.
      plan), names the deliberately preserved prefixes, and references
      this plan as the executed contract. M0's Status row stays
      `Proposed`; only the phase 0.1 paragraph and intro line change.
-- [`docs/plans/release-readiness.md`](./release-readiness.md) — first
+- [`docs/plans/release-readiness.md`](/docs/plans/release-readiness.md) — first
   paragraph product reference.
-- [`docs/plans/analytics-strategy.md`](./analytics-strategy.md) —
+- [`docs/plans/analytics-strategy.md`](/docs/plans/analytics-strategy.md) —
   Document Role and End Goal product references.
 
 **This plan.**
@@ -127,19 +127,19 @@ A grep match against any of these is correct. Self-review must not
   env var, `generate_neighborly_verification_code` DB function — all
   enumerated under cross-cutting invariants above.
 - Workspace package name `@neighborly/web` in
-  [`apps/web/package.json`](../../apps/web/package.json) and the four
+  [`apps/web/package.json`](/apps/web/package.json) and the four
   `npm --workspace @neighborly/web` script references in the root
   `package.json`.
 - The error string `"Missing root element for Neighborly web app."` in
-  [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx) — refers to the
+  [`apps/web/src/main.tsx`](/apps/web/src/main.tsx) — refers to the
   app, not the repo.
 - The Vercel default-origin fallback
   `https://neighborly-scavenger-game-web.vercel.app` in
-  [`supabase/functions/_shared/cors.ts`](../../supabase/functions/_shared/cors.ts)
+  [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
   — the Vercel project rename is deferred; this URL remains valid until
   Vercel renames the project.
 - All `https://github.com/kcrobinson-1/neighborly-scavenger-game/...`
-  links in [`docs/self-review-catalog.md`](../self-review-catalog.md)
+  links in [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
   and `docs/plans/archive/*.md` — GitHub auto-redirects from the old
   repo URL.
 - Workflow files in `.github/workflows/*.yml` — none reference the old
@@ -212,7 +212,7 @@ present because skipping it has burned this repo before.
    rewrite.** Apply textual replacements in
    `docs/plans/release-readiness.md` and `docs/plans/analytics-strategy.md`
    per the "Files To Touch" enumeration. Then handle
-   [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) as
+   [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) as
    two distinct edits, not a textual replace:
    - Rewrite the platform-repo intro line (currently line 42) from
      "The repo currently named `neighborly-scavenger-game` becomes the
@@ -227,7 +227,7 @@ present because skipping it has burned this repo before.
      the deliberately preserved prefixes (`@neighborly/web` workspace
      scope, all `neighborly` runtime identifiers) with one-line
      rationale; reference this plan
-     ([`repo-rename.md`](./repo-rename.md)) as the executed contract;
+     ([`repo-rename.md`](/docs/plans/repo-rename.md)) as the executed contract;
      keep the "No code logic changes. One PR." closer. The paragraph
      stays present-tense in the same way phase 0.2's already-landed
      paragraph stays present-tense — past-tense conversion is not the
@@ -261,7 +261,7 @@ present because skipping it has burned this repo before.
      prefix with rationale, so a future reader does not re-litigate
      them;
    - no archived-plan GitHub URL was changed; the
-     [`docs/self-review-catalog.md`](../self-review-catalog.md)
+     [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
      example anchors are byte-identical to baseline.
    Apply any review fixes, rerun lint+build, and commit review fixes
    separately if a separate commit improves the history.
@@ -279,7 +279,7 @@ present because skipping it has burned this repo before.
 11. **Self-review against named audits.** See the Self-Review Audits
     section below.
 12. **PR preparation.** Open the PR using the
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md)
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md)
     9-section template. Title under 70 chars. Validation section lists
     `npm run lint` and `npm run build:web` checked off; `npm test`,
     `npm run test:functions`, `npm run test:supabase` listed as not
@@ -314,13 +314,13 @@ present because skipping it has burned this repo before.
 ## Self-Review Audits
 
 Named in the parent epic for phase 0.1, drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Rename-aware diff classification.** This PR is a multi-surface
   change touching `package.json` (config), `apps/web/index.html` (web
   app), `supabase/config.toml` (Supabase config), and several `docs/`
   files. The CI scope detector at
-  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) classifies
+  [`.github/workflows/ci.yml`](/.github/workflows/ci.yml) classifies
   by file path and may treat doc-heavy diffs as "docs only," skipping
   heavy validation. Verify the detector classifies this PR for **full
   validation** (because of `package.json`, `apps/web/index.html`, and
@@ -378,10 +378,10 @@ gates per the parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent epic
-- [`framework-decision.md`](./framework-decision.md) — sibling phase
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
+- [`framework-decision.md`](/docs/plans/framework-decision.md) — sibling phase
   0.2 plan (already landed) for naming-convention reference
-- [`AGENTS.md`](../../AGENTS.md) — planning depth, plan-to-PR gate,
+- [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR gate,
   doc currency, validation honesty
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   Rename-aware diff classification audit

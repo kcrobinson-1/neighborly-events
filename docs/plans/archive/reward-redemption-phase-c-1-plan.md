@@ -5,12 +5,12 @@
 (`feat(web): render redemption status on completion screen`), `a145a79`
 (`fix(web): preserve fallback completion copy`), and `6dfd5e2`
 (`test(e2e): cover attendee redemption status reflection`).
-**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
 **Predecessors:**
-[`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md),
-[`reward-redemption-phase-b-1-plan.md`](./reward-redemption-phase-b-1-plan.md),
-[`reward-redemption-phase-b-2a-plan.md`](./reward-redemption-phase-b-2a-plan.md),
-[`reward-redemption-phase-b-2b-plan.md`](./reward-redemption-phase-b-2b-plan.md)
+[`reward-redemption-phase-a-2b-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2b-plan.md),
+[`reward-redemption-phase-b-1-plan.md`](/docs/plans/archive/reward-redemption-phase-b-1-plan.md),
+[`reward-redemption-phase-b-2a-plan.md`](/docs/plans/archive/reward-redemption-phase-b-2a-plan.md),
+[`reward-redemption-phase-b-2b-plan.md`](/docs/plans/archive/reward-redemption-phase-b-2b-plan.md)
 — landed.
 **Scope:** Phase C.1 only — the bare-bones attendee completion-screen
 status surface that consumes the landed `get-redemption-status` Edge
@@ -27,7 +27,7 @@ operator redeem/reverse surfaces, so a redemption now writes durable
 state that an attendee session can legally read back. The attendee
 completion screen still does not consume that read. Without this
 phase the end-to-end MVP loop in
-[`reward-redemption-mvp-design.md` §"End-to-End MVP Flow"](../reward-redemption-mvp-design.md)
+[`reward-redemption-mvp-design.md` §"End-to-End MVP Flow"](/docs/plans/reward-redemption-mvp-design.md)
 step 7 cannot complete: the volunteer redeems but the attendee's screen
 never updates.
 
@@ -36,7 +36,7 @@ validation signal — "attendees consistently see redeemed state within 5
 seconds while the completion screen is open" — be measured at all. It
 deliberately ships only the polling spine and the redeemed-vs-unredeemed
 display difference; everything else listed in
-[`reward-redemption-mvp-design.md` §"Completion Screen Status (attendee)"](../reward-redemption-mvp-design.md)
+[`reward-redemption-mvp-design.md` §"Completion Screen Status (attendee)"](/docs/plans/reward-redemption-mvp-design.md)
 becomes a backlog item, not a pre-planned sub-phase.
 
 The phase is intentionally frontend-only. If implementation discovers
@@ -133,7 +133,7 @@ verification-code sub-meta line.
 - A 401 response triggers exactly one call to `ensureServerSession`
   followed by one replay of the same request, mirroring the landed
   `submitGameCompletionToSupabase` posture in
-  [`apps/web/src/lib/gameApi.ts`](../../../apps/web/src/lib/gameApi.ts).
+  [`apps/web/src/lib/gameApi.ts`](/apps/web/src/lib/gameApi.ts).
   A second 401 in the same tick is treated as a transient failure for
   that tick.
 - Transient failures (network error, 5xx, malformed 200, second 401)
@@ -177,7 +177,7 @@ verification-code sub-meta line.
   `redeemed → unredeemed` mid-session simply re-renders as
   `unredeemed`. Reversal-aware messaging is a backlog item.
 - Realtime / Supabase channel subscriptions. The MVP decision in
-  [`reward-redemption-mvp-design.md` §"MVP decision"](../reward-redemption-mvp-design.md)
+  [`reward-redemption-mvp-design.md` §"MVP decision"](/docs/plans/reward-redemption-mvp-design.md)
   remains polling-only.
 - Any new Edge Function, RPC, migration, grant, or shared-type field.
 - Any change to operator surfaces, the redemptions monitoring route,
@@ -219,11 +219,11 @@ verification-code sub-meta line.
 - Endpoint:
   `POST <supabaseUrl>/functions/v1/get-redemption-status`
 - Request headers: the existing `createServerSessionHeaders` helper
-  from [`apps/web/src/lib/gameApi.ts`](../../../apps/web/src/lib/gameApi.ts).
+  from [`apps/web/src/lib/gameApi.ts`](/apps/web/src/lib/gameApi.ts).
   C.1 does not introduce a parallel header builder.
 - Request body: `{ eventId: string }`, matching
   `GetRedemptionStatusRequest` in
-  [`shared/redemption.ts`](../../../shared/redemption.ts).
+  [`shared/redemption.ts`](/shared/redemption.ts).
 - `credentials: "include"` so the signed session cookie travels.
 - Response mapping uses the landed `RedemptionStatusResponse` type.
   The hook maps:
@@ -246,7 +246,7 @@ verification-code sub-meta line.
 - A 401 response triggers exactly one call to `ensureServerSession`
   followed by exactly one replay of the same request, identical in
   shape and behavior to
-  [`apps/web/src/lib/gameApi.ts:300`](../../../apps/web/src/lib/gameApi.ts:300).
+  [`apps/web/src/lib/gameApi.ts:300`](/apps/web/src/lib/gameApi.ts:300).
 - A second 401 within the same tick — or a `ensureServerSession`
   failure — is treated as a transient failure for that tick. The hook
   does not surface a sign-out, prompt, or banner in C.1.
@@ -287,7 +287,7 @@ verification-code sub-meta line.
 
 ### Copy axes: redemption status vs entitlement.status
 
-Today's [`GameCompletionPanel`](../../../apps/web/src/game/components/GameCompletionPanel.tsx)
+Today's [`GameCompletionPanel`](/apps/web/src/game/components/GameCompletionPanel.tsx)
 uses `completion.entitlement.status` (`"new"` vs `"existing"`) to drive
 the chip text (`"Reward entry ready"` vs `"Already checked in"`) and
 the main body sentence (`"You're checked in for the reward."` vs
@@ -435,14 +435,14 @@ does not dissolve into ad hoc edits across `game/` and `redemptions/`.
    § "Self-Review Audits" below against the implementation commits.
 7. **Documentation current-state gate.** Update in the same PR:
    - this plan doc — flip `Status` to `Landed in commits <SHA list>.`
-   - [`docs/architecture.md`](../../architecture.md) — update the
+   - [`docs/architecture.md`](/docs/architecture.md) — update the
      attendee/completion description from "no status read" to
      "5-second polling against `get-redemption-status` while the
      completion panel is mounted, with one-time 401 re-bootstrap"
-   - [`README.md`](../../../README.md) — update the current capability
+   - [`README.md`](/README.md) — update the current capability
      summary so the attendee surface no longer reads as
      redemption-status-blind
-   - [`docs/product.md`](../../product.md) — update any current-state
+   - [`docs/product.md`](/docs/product.md) — update any current-state
      language that still treats attendee status visibility as deferred
 
    `docs/backlog.md` is in scope for this PR for the deferred items
@@ -579,13 +579,13 @@ change the C.1 contract.
 ## Self-Review Audits
 
 Run the applicable named audits from
-[`docs/self-review-catalog.md`](../../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Plan-local — recurring-effect cleanup check.** Not in
-  [`docs/self-review-catalog.md`](../../self-review-catalog.md); checked
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md); checked
   here because C.1 introduces the first interval-based fetch in the
   web app. The closest prior art is the `isCancelled` pattern in
-  [`apps/web/src/game/useGameSession.ts`](../../../apps/web/src/game/useGameSession.ts),
+  [`apps/web/src/game/useGameSession.ts`](/apps/web/src/game/useGameSession.ts),
   which guards a single completion submit; the polling case
   generalizes the same discipline to a recurring loop. Walk every
   mount, unmount, and `eventId` transition against four guarantees:
@@ -606,10 +606,10 @@ Run the applicable named audits from
   Promote this check to the catalog if a second interval/subscription
   site appears or if a late-`setState` warning surfaces in production.
 - **Plan-local — retry boundedness check.** Not in
-  [`docs/self-review-catalog.md`](../../self-review-catalog.md); checked
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md); checked
   here because C.1 is the second site in the codebase to implement an
   on-401 re-bootstrap-and-replay (after
-  [`apps/web/src/lib/gameApi.ts`](../../../apps/web/src/lib/gameApi.ts))
+  [`apps/web/src/lib/gameApi.ts`](/apps/web/src/lib/gameApi.ts))
   and the first to do so inside a recurring loop. Walk the hook
   against four guarantees:
   1. The 401 retry path is capped at exactly one
@@ -771,7 +771,7 @@ when picked up:
 - **Visibility-aware polling.** Page Visibility API pause when the
   tab is hidden, with one immediate refresh on resume, matching the
   contract in
-  [`reward-redemption-mvp-design.md` §"visibility/offline/error retry behavior"](../reward-redemption-mvp-design.md).
+  [`reward-redemption-mvp-design.md` §"visibility/offline/error retry behavior"](/docs/plans/reward-redemption-mvp-design.md).
   Promote first if telemetry shows long idle completion sessions.
 - **Manual refresh affordance.** A `Refresh status` control plus the
   associated freshness messaging.
@@ -784,7 +784,7 @@ when picked up:
   `redeemed → unredeemed` mid-session, beyond the C.1 default of
   re-rendering as unredeemed.
 
-These items are added to [`docs/backlog.md`](../../backlog.md) in the
+These items are added to [`docs/backlog.md`](/docs/backlog.md) in the
 same PR that lands C.1 so the backlog reflects post-C.1 reality
 before merge. Phase D (role seeding and volunteer dry run) does not
 depend on any of them.

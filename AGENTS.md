@@ -67,7 +67,7 @@ Do not default to the local browser-only completion fallback when a remote Supab
 Every styling token belongs to one of two buckets: **per-event brand
 themable** (CSS custom property; overridable by a per-event `Theme`)
 or **platform-shared structural** (SCSS variable; constant across
-events). [`docs/styling.md`](docs/styling.md) is the binding
+events). [`docs/styling.md`](/docs/styling.md) is the binding
 classification — use it before adding or moving a token.
 
 - **Themable.** Brand bases, brand-tied gradient stops and admin
@@ -146,7 +146,7 @@ step count.
 - for PR-sized work, name the intended commit boundaries before editing when
   practical, and keep review-fix commits distinct when they clarify the history
 - name the self-review audits that apply to this PR's diff surfaces, drawn
-  from [`docs/self-review-catalog.md`](docs/self-review-catalog.md). The
+  from [`docs/self-review-catalog.md`](/docs/self-review-catalog.md). The
   plan should list audit names by surface (SQL / frontend / CI / runbook)
   so the implementer runs them at commit boundaries rather than
   rediscovering review feedback at PR-review time
@@ -203,7 +203,7 @@ decisions.
   after merge, which forces a follow-up commit whose only purpose is
   to record the previous commit's SHA). Exception: plans that extend
   Tier 5 production smoke assertions land in two phases per
-  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed Gate
+  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate
   For Plans That Touch Production Smoke" — the implementing PR merges
   with Status `In progress pending prod smoke`; a follow-up doc-only
   commit flips Status to `Landed` and records the production smoke
@@ -253,7 +253,7 @@ before any per-phase planning.
   prose; the prose still carries rationale (which phase ships
   first and why, terminal-PR conventions, cross-phase coupling
   beyond hard dependencies). See the "Sequencing" section of
-  [`docs/plans/archive/m2/m2-admin-restructuring.md`](docs/plans/archive/m2/m2-admin-restructuring.md)
+  [`docs/plans/archive/m2/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   for a concrete example
 - **Anti-goal: do not pre-scope every phase in batch.** Batch scoping
   cross-pollinates wrong assumptions across docs and produces
@@ -460,7 +460,7 @@ phase's implementation starts, **after** prior phases have shipped
   of), copy-paste from the source with a `path:line` citation
   rather than retyping. Paraphrasing silently weakens rules whose
   enforcement value depends on the exact string. Recurring trap:
-  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed
+  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
   Gate" requires Status `In progress pending prod smoke` and
   explicitly forbids paraphrase ("this exact string, not `Landed`
   and not a paraphrase"); plan authors retyping have produced
@@ -508,7 +508,7 @@ phase's implementation starts, **after** prior phases have shipped
   produces plans that ship regressed UX. Recurring trap: M2 phase
   2.3 first drafted "no SCSS, no module CSS" for the new apps/site
   landing without checking that
-  [`apps/site/app/globals.css`](apps/site/app/globals.css)
+  [`apps/site/app/globals.css`](/apps/site/app/globals.css)
   provided no button styling — the public-facing CTA would have
   rendered as a default-browser link. The discipline is not
   "always add CSS" but "before banning the surface, prove the no-X
@@ -1116,7 +1116,7 @@ When a change touches testing infrastructure, validation commands, CI, or local 
 
 Plan authors and reviewers must distinguish tiers that are valid pre-merge
 gates from tiers that are not. The full tier map lives in
-[`docs/testing-tiers.md`](docs/testing-tiers.md).
+[`docs/testing-tiers.md`](/docs/testing-tiers.md).
 
 The two rules that trip up plan authors most often:
 
@@ -1128,13 +1128,13 @@ The two rules that trip up plan authors most often:
   plan `In progress pending prod smoke`, then plan flipped to `Landed`
   after the post-release smoke run is green. Do not gate the merge on a
   check that can only pass post-deploy. See
-  [`docs/testing-tiers.md`](docs/testing-tiers.md) "Plan-to-Landed Gate For
+  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate For
   Plans That Touch Production Smoke."
 - **Plans must not require contributors to configure production credentials
   on local laptops.** `PRODUCTION_SMOKE_*` env vars, production admin
   fixture emails, and production service-role keys live in the GitHub
   `production` environment per
-  [`docs/tracking/production-admin-smoke-tracking.md`](docs/tracking/production-admin-smoke-tracking.md).
+  [`docs/tracking/production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md).
   They are owned by the release/ops owner. A plan that implicitly requires
   them on the implementer's laptop is misrouting validation — the fix is
   to adjust the plan's validation section, not to provision production
@@ -1238,7 +1238,7 @@ This keeps the repo aligned with the rule that generated screenshots live under 
 ## Self-Review Checklist
 
 Before finishing, walk the named audits from
-[`docs/self-review-catalog.md`](docs/self-review-catalog.md) that match
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md) that match
 the diff's surfaces — the plan step named them upfront. Then walk the
 plan's `Cross-Cutting Invariants` section (if the plan has one) against
 every call site the diff touches, not just the site the invariant was

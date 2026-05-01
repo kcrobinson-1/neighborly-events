@@ -1,9 +1,9 @@
 # Reward Redemption — Phase A.2a Execution Plan
 
 **Status:** Completed
-**Parent design:** [`reward-redemption-mvp-design.md`](../reward-redemption-mvp-design.md)
-**Predecessor:** [`reward-redemption-phase-a-1-plan.md`](./reward-redemption-phase-a-1-plan.md) — landed.
-**Successor:** [`reward-redemption-phase-a-2b-plan.md`](./reward-redemption-phase-a-2b-plan.md).
+**Parent design:** [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
+**Predecessor:** [`reward-redemption-phase-a-1-plan.md`](/docs/plans/archive/reward-redemption-phase-a-1-plan.md) — landed.
+**Successor:** [`reward-redemption-phase-a-2b-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2b-plan.md).
 A.2b owns the Edge Function wrappers, the attendee redemption-status read path,
 and the HTTP-mapping handler coverage.
 **Scope:** A.2a only — the trusted database mutation surface and the

@@ -18,7 +18,7 @@ This document is a complete historical reference for Phases 0–5 of the quiz
 authoring implementation. All phases are now either implemented or explicitly
 deferred post-MVP. This is not an active execution document.
 
-Post-MVP follow-up items are tracked in [`docs/backlog.md`](../../backlog.md).
+Post-MVP follow-up items are tracked in [`docs/backlog.md`](/docs/backlog.md).
 
 ## Purpose
 
@@ -1084,7 +1084,7 @@ Suggested validation:
   validation, saved, and failed-save states
 
 Related UX follow-up items discovered during Phases 4.3 and 4.4 are tracked in
-[docs/tracking/admin-ux-roadmap.md](../../tracking/admin-ux-roadmap.md). Keep that file focused on
+[docs/tracking/admin-ux-roadmap.md](/docs/tracking/admin-ux-roadmap.md). Keep that file focused on
 product-facing polish and navigation decisions; workflow tooling stays in
 `docs/tracking/dev-workflow-improvements.md`.
 

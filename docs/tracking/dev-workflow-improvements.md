@@ -89,9 +89,9 @@ states across mobile and desktop viewports: sign-in, all-events list,
 selected-event editor, client-side validation error, save success,
 save error, question editor, signed-in-but-not-allowlisted, and the
 draft-only workspace variant. Documented in
-[`docs/dev.md` "Admin UI review"](../dev.md). Referenced from the PR
+[`docs/dev.md` "Admin UI review"](/docs/dev.md). Referenced from the PR
 screenshot workflow in `AGENTS.md` "UI Review Runs" and from
-[`docs/testing-tiers.md`](../testing-tiers.md) Tier 4.
+[`docs/testing-tiers.md`](/docs/testing-tiers.md) Tier 4.
 
 Resolved decisions:
 
@@ -99,7 +99,7 @@ Resolved decisions:
   `scripts/ui-review/capture-ui-review.cjs` as `--mode admin` rather
   than a sibling script. Splitting the file is tracked separately at
   refactor-checklist score 7/10
-  ([`docs/tracking/code-refactor-checklist.md`](./code-refactor-checklist.md))
+  ([`docs/tracking/code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md))
   and is not blocking.
 - The mocked draft fixture is inline in the script. Sharing it with a
   test fixture module is deferred — the admin capture and the test

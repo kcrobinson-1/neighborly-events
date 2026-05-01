@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.2. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases (1.1 `shared/db/` —
 Landed, 1.3 `shared/auth/`, 1.4 `shared/events/`, 1.5 `shared/styles/`)
@@ -16,8 +16,8 @@ This plan flips to `Landed` when its single PR merges.
 
 Stand up `shared/urls/` as the canonical home for the route table,
 route matchers, and post-auth `next=` validation that today live in
-[`apps/web/src/routes.ts`](../../apps/web/src/routes.ts) and
-[`apps/web/src/auth/validateNextPath.ts`](../../apps/web/src/auth/validateNextPath.ts).
+[`apps/web/src/routes.ts`](/apps/web/src/routes.ts) and
+[`apps/web/src/auth/validateNextPath.ts`](/apps/web/src/auth/validateNextPath.ts).
 After this phase lands, no app holds a duplicate route table or
 duplicate next-path allowlist; both `apps/web` (today) and `apps/site`
 (later phases) can consume the same primitives.
@@ -113,7 +113,7 @@ reflect the deferred rename.
   `apps/web/src/routes` and `apps/web/src/auth/validateNextPath` to
   `shared/urls/`. No call-site logic changes. The single hardcoded
   `/auth/callback?next=...` literal in
-  [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+  [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
   is rewritten to compose `routes.authCallback` with the query
   string, so no app-side file holds a bare URL literal for any of
   the seven route families.
@@ -130,35 +130,35 @@ reflect the deferred rename.
   named under "Responsibility Split."
 - `shared/urls/README.md` — short ownership note in the same shape
   as
-  [`shared/db/README.md`](../../shared/db/README.md): what the
+  [`shared/db/README.md`](/shared/db/README.md): what the
   module owns, the browser-only constraint on `validateNextPath`,
   the `routes` naming decision, and a link to this plan.
 - `tests/shared/urls/routes.test.ts` — the existing
   `tests/web/routes.test.ts` body moved verbatim, import paths
   updated to point at `shared/urls/`. The test runner must already
   pick up `tests/shared/**/*.test.ts`; if the existing
-  [`vitest.config.ts`](../../vitest.config.ts) include glob does
+  [`vitest.config.ts`](/vitest.config.ts) include glob does
   not cover that path, the include glob is widened in the same
   commit.
 
 ## Files to touch — modify
 
-- [`apps/web/src/routes.ts`](../../apps/web/src/routes.ts) — deleted.
+- [`apps/web/src/routes.ts`](/apps/web/src/routes.ts) — deleted.
   Its 13+ in-app consumers update their import paths to
   `shared/urls/`. Any consumer that today reaches into a re-exported
   symbol through this file's path is updated in the same commit.
-- [`apps/web/src/auth/validateNextPath.ts`](../../apps/web/src/auth/validateNextPath.ts) —
+- [`apps/web/src/auth/validateNextPath.ts`](/apps/web/src/auth/validateNextPath.ts) —
   deleted. Its single consumer
-  ([`apps/web/src/auth/AuthCallbackPage.tsx`](../../apps/web/src/auth/AuthCallbackPage.tsx))
+  ([`apps/web/src/auth/AuthCallbackPage.tsx`](/apps/web/src/auth/AuthCallbackPage.tsx))
   imports from `shared/urls/`.
-- [`apps/web/src/auth/types.ts`](../../apps/web/src/auth/types.ts) —
+- [`apps/web/src/auth/types.ts`](/apps/web/src/auth/types.ts) —
   the `AuthNextPath` type is removed; the file's other auth-state
   types stay (those are `shared/auth/` phase 1.3 scope). Consumers
   of `AuthNextPath`
-  ([`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+  ([`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
   and the auth-callback page) update their import paths to
   `shared/urls/`.
-- [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts) —
+- [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts) —
   the bare `/auth/callback?next=...` URL composition is rewritten to
   use `routes.authCallback` plus the query string, removing the last
   hardcoded literal in `apps/web` source. `requestMagicLink`'s
@@ -169,22 +169,22 @@ reflect the deferred rename.
   files plus the auth-callback page; the implementer walks every one
   in the same commit). Each consumer's edit is a one-line
   import-path swap; no logic changes.
-- [`tests/web/routes.test.ts`](../../tests/web/routes.test.ts) —
+- [`tests/web/routes.test.ts`](/tests/web/routes.test.ts) —
   deleted (moved to `tests/shared/urls/routes.test.ts`).
-- [`tests/web/auth/AuthCallbackPage.test.tsx`](../../tests/web/auth/AuthCallbackPage.test.tsx) —
+- [`tests/web/auth/AuthCallbackPage.test.tsx`](/tests/web/auth/AuthCallbackPage.test.tsx) —
   import paths updated to `shared/urls/`. The test stays in its
   current `tests/web/auth/` location because it tests an apps/web
   page component, not the shared module directly.
-- [`docs/architecture.md`](../architecture.md) — the shared-layer
+- [`docs/architecture.md`](/docs/architecture.md) — the shared-layer
   description gains a `shared/urls/` bullet under the same heading
   the shared/db extraction added. The bullet names what the module
   owns and that `validateNextPath` is browser-only.
-- [`docs/dev.md`](../dev.md) — if the contributor workflow notes any
+- [`docs/dev.md`](/docs/dev.md) — if the contributor workflow notes any
   rule about importing routes (the existing prose around
   `shared/db/` is the precedent), the rule is extended to cover
   `shared/urls/`. No new validation command is introduced in this
   phase.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   phase 1.2 paragraph tightened on three points: (1) builder names
   for the operator routes are `eventRedeem`/`eventRedemptions` in
   this phase, with the rename to `gameRedeem`/`gameRedemptions`
@@ -197,20 +197,20 @@ reflect the deferred rename.
 
 ## Files intentionally not touched
 
-- [`shared/db/`](../../shared/db) — different shared module, already
+- [`shared/db/`](/shared/db) — different shared module, already
   landed; no change.
-- [`shared/game-config/`](../../shared/game-config) and
-  [`shared/redemption.ts`](../../shared/redemption.ts) — different
+- [`shared/game-config/`](/shared/game-config) and
+  [`shared/redemption.ts`](/shared/redemption.ts) — different
   shared modules, no URL concerns; no change.
-- [`apps/site/`](../../apps/site) — does not consume `shared/urls/`
+- [`apps/site/`](/apps/site) — does not consume `shared/urls/`
   in this phase. Cross-app navigation lands in M3 phase 3.3; the
   auth-callback migration to `apps/site` is M2 phase 2.3. No
   `apps/site` source changes here.
-- [`supabase/functions/`](../../supabase/functions) — zero hardcoded
+- [`supabase/functions/`](/supabase/functions) — zero hardcoded
   references to the URL families this phase owns (verified during
   scoping). Out of scope for the entire phase.
 - E2E spec files and fixtures under
-  [`tests/e2e/`](../../tests/e2e) — Playwright `page.goto` calls and
+  [`tests/e2e/`](/tests/e2e) — Playwright `page.goto` calls and
   magic-link fixture URLs hardcode strings such as
   `/event/first-sample/game` and
   `/auth/callback?next=/event/first-sample/redeem`. Those are test
@@ -220,14 +220,14 @@ reflect the deferred rename.
   they stay as literals. The phase 1.2 invariant "no hardcoded URL
   literal in `apps/web` source" excludes test data by intent.
 - Doc prose references to URL strings in
-  [`docs/architecture.md`](../architecture.md),
-  [`docs/operations.md`](../operations.md), and
-  [`docs/dev.md`](../dev.md) — those describe the URL contract; they
+  [`docs/architecture.md`](/docs/architecture.md),
+  [`docs/operations.md`](/docs/operations.md), and
+  [`docs/dev.md`](/docs/dev.md) — those describe the URL contract; they
   are not consumers of the builder layer.
 - Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*` storage keys,
   `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](./repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
 
 ## Execution steps
 
@@ -253,23 +253,23 @@ reflect the deferred rename.
    file that imports from `apps/web/src/routes` or
    `apps/web/src/auth/validateNextPath` and update its import path
    to `shared/urls/`. Update
-   [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+   [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
    to compose `routes.authCallback` with the query string instead
    of the bare `/auth/callback?next=...` literal. Remove the
    deprecated apps/web files in the same commit.
 6. **Migrate `AuthNextPath`.**
-   [`apps/web/src/auth/types.ts`](../../apps/web/src/auth/types.ts)
+   [`apps/web/src/auth/types.ts`](/apps/web/src/auth/types.ts)
    loses the `AuthNextPath` type. Its consumers
-   ([`authApi.ts`](../../apps/web/src/lib/authApi.ts),
-   [`AuthCallbackPage.tsx`](../../apps/web/src/auth/AuthCallbackPage.tsx),
-   [`EventRedemptionsPage.tsx`](../../apps/web/src/pages/EventRedemptionsPage.tsx))
+   ([`authApi.ts`](/apps/web/src/lib/authApi.ts),
+   [`AuthCallbackPage.tsx`](/apps/web/src/auth/AuthCallbackPage.tsx),
+   [`EventRedemptionsPage.tsx`](/apps/web/src/pages/EventRedemptionsPage.tsx))
    import it from `shared/urls/`.
 7. **Run focused validation.** `npm test -- routes`,
    `npm test -- AuthCallbackPage`. Both must pass without rewriting
    assertion bodies.
 8. **Documentation update.** Update
-   [`docs/architecture.md`](../architecture.md),
-   [`docs/dev.md`](../dev.md), the parent epic's phase 1.2
+   [`docs/architecture.md`](/docs/architecture.md),
+   [`docs/dev.md`](/docs/dev.md), the parent epic's phase 1.2
    paragraph (per the three tightening points named in
    "Files to touch — modify"), and this plan's Status. Doc currency
    is a PR gate per `AGENTS.md`.
@@ -290,7 +290,7 @@ reflect the deferred rename.
     this plan with rationale. Flip the plan-level Status to
     `Landed` in the same PR.
 12. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 chars. Validation section lists `npm run lint`,
     `npm test`, `npm run test:functions`, `npm run build:web`,
     `npm run build:site` — all run. Target Shape Evidence section
@@ -319,7 +319,7 @@ reflect the deferred rename.
 
 Named in the parent epic for phase 1.2 by inheritance from M1's
 audit pattern, drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Rename-aware diff classification.** The phase moves
   `apps/web/src/routes.ts`, `apps/web/src/auth/validateNextPath.ts`,
@@ -344,20 +344,20 @@ audit pattern, drawn from
 Named docs that must reflect the implemented state by the time the
 PR opens:
 
-- [`README.md`](../../README.md) — touched only if the
+- [`README.md`](/README.md) — touched only if the
   monorepo-structure prose names the new `shared/urls/` directory at
   the layout level. If the existing README's `shared` bullet covers
   it without naming sub-directories, no edit is required.
-- [`docs/architecture.md`](../architecture.md) — updated to add the
+- [`docs/architecture.md`](/docs/architecture.md) — updated to add the
   `shared/urls/` shared-layer bullet and the browser-only
   constraint on `validateNextPath`.
-- [`docs/dev.md`](../dev.md) — updated only if existing prose names
+- [`docs/dev.md`](/docs/dev.md) — updated only if existing prose names
   a per-app rule about route imports that should now include
   `shared/urls/`.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   phase 1.2 paragraph tightened per "Files to touch — modify."
   M1 row stays `Proposed`.
-- [`AGENTS.md`](../../AGENTS.md) — not touched by phase 1.2. The
+- [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.2. The
   styling-token-discipline update is M1 phase 1.5.
 - This plan — Status flipped to `Landed` in the same PR.
 
@@ -426,7 +426,7 @@ Captured here so reviewer attention does not relitigate them.
 - **Vitest include glob does not pick up `tests/shared/`.**
   `tests/shared/urls/routes.test.ts` is the first file to land
   under `tests/shared/`. If the existing
-  [`vitest.config.ts`](../../vitest.config.ts) include glob is
+  [`vitest.config.ts`](/vitest.config.ts) include glob is
   `tests/web/**/*.test.{ts,tsx}` (or similar), the moved test
   silently goes uncovered. Mitigation: step 4 runs the focused
   test command after the move; the implementer widens the
@@ -448,21 +448,21 @@ parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
   epic; M1 milestone owns the foundation extraction; sibling
   phases 1.1, 1.3, 1.4, 1.5 own their own plans.
-- [`shared-db-foundation.md`](./shared-db-foundation.md) — the
+- [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) — the
   prior phase's plan and template precedent for module layout,
   README ownership note, and per-app adapter pattern.
-- [`AGENTS.md`](../../AGENTS.md) — planning depth, plan-to-PR
+- [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR
   completion gate, doc currency, validation honesty, scope
   guardrails.
-- [`docs/dev.md`](../dev.md) — current contributor workflow.
-- [`docs/architecture.md`](../architecture.md) — current shape
+- [`docs/dev.md`](/docs/dev.md) — current contributor workflow.
+- [`docs/architecture.md`](/docs/architecture.md) — current shape
   with the two-app split; updated by this plan to describe the
   new `shared/urls/` layer.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at this phase's gate.
-- [`repo-rename.md`](./repo-rename.md) — runtime-identifier
+- [`repo-rename.md`](/docs/plans/repo-rename.md) — runtime-identifier
   preservation rules carry over here (cookie names, header
   names, storage keys, workspace scope).

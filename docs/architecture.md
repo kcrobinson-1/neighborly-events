@@ -64,7 +64,7 @@ Keep the game interaction local and fast, but make the completion state backend-
   `/auth/callback`, `/admin*`, `/event/:slug`, and any other
   event-scoped path not carved out for `apps/web`. Event landing
   remains a placeholder until M3 of
-  [the Event Platform Epic](./plans/event-platform-epic.md).
+  [the Event Platform Epic](/docs/plans/event-platform-epic.md).
 - `shared`
   Shared TypeScript domain logic used by both the browser and Supabase functions.
 - `supabase/functions`
@@ -252,8 +252,8 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   parameterized on `Database`, so PostgREST builders, RPC calls, and
   row results are typed at every consumer. Holds no env access and
   no singleton state — those stay in per-app adapters
-  ([`apps/web/src/lib/supabaseBrowser.ts`](../apps/web/src/lib/supabaseBrowser.ts)
-  and [`apps/site/lib/supabaseBrowser.ts`](../apps/site/lib/supabaseBrowser.ts)).
+  ([`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts)
+  and [`apps/site/lib/supabaseBrowser.ts`](/apps/site/lib/supabaseBrowser.ts)).
   The `PublishedGame*Row` types in
   `shared/game-config/db-content.ts` remain authoritative for the
   published-content surface during this phase; aligning them with
@@ -292,21 +292,21 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   app calls `configureSharedAuth({ getClient, getConfigStatus })`
   exactly once at startup with its env-derived providers. apps/web
   registers them from
-  [`apps/web/src/lib/setupAuth.ts`](../apps/web/src/lib/setupAuth.ts)
+  [`apps/web/src/lib/setupAuth.ts`](/apps/web/src/lib/setupAuth.ts)
   (imported for side-effect by `apps/web/src/main.tsx`); apps/site
   registers them from
-  [`apps/site/lib/setupAuth.ts`](../apps/site/lib/setupAuth.ts)
+  [`apps/site/lib/setupAuth.ts`](/apps/site/lib/setupAuth.ts)
   through
-  [`SharedClientBootstrap`](../apps/site/components/SharedClientBootstrap.tsx);
+  [`SharedClientBootstrap`](/apps/site/components/SharedClientBootstrap.tsx);
   the apps/web
   adapter at
-  [`apps/web/src/lib/authApi.ts`](../apps/web/src/lib/authApi.ts) is
+  [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts) is
   a pure re-export so existing call sites keep importing from a
   stable apps/web path, and `apps/web/src/auth/index.ts` re-exports
   the components, hook, and types for the same reason. Session storage uses
   `@supabase/ssr`'s frontend-origin chunked cookie storage paired
   with `@supabase/supabase-js`'s `createClient` in
-  [`shared/db/client.ts`](../shared/db/client.ts)'s
+  [`shared/db/client.ts`](/shared/db/client.ts)'s
   `createBrowserSupabaseClient` (cookie name
   `sb-<project-ref>-auth-token`, chunked as `.0`/`.1` siblings when
   the JWT exceeds the per-cookie size limit; `Path=/`, `SameSite=Lax`,
@@ -328,12 +328,12 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   typed browser client, the missing-config copy, and the featured
   published-event sort key through `configureSharedEvents(...)`.
   apps/web registers those providers from
-  [`apps/web/src/lib/setupEvents.ts`](../apps/web/src/lib/setupEvents.ts),
+  [`apps/web/src/lib/setupEvents.ts`](/apps/web/src/lib/setupEvents.ts),
   imported for side-effect by `apps/web/src/main.tsx`. The apps/web
   adapters at
-  [`apps/web/src/lib/gameContentApi.ts`](../apps/web/src/lib/gameContentApi.ts)
+  [`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts)
   and
-  [`apps/web/src/lib/adminGameApi.ts`](../apps/web/src/lib/adminGameApi.ts)
+  [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts)
   preserve stable app import paths; `gameContentApi.ts` owns only the
   Vite-only prototype fixture fallback before delegating remote reads,
   and `adminGameApi.ts` is a pure re-export shim. `shared/events/`
@@ -343,20 +343,20 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
 - `shared/styles/`
   Platform theme model shared across `apps/web` and `apps/site`.
   Owns the `Theme` TypeScript type (binding output of the M1 phase
-  1.5.1 token audit at [`docs/styling.md`](styling.md)), the
+  1.5.1 token audit at [`docs/styling.md`](/docs/styling.md)), the
   universal `<ThemeScope>` React component (no `'use client'`, no
   effects, no state — SSR-safe), the `getThemeForSlug(slug)` resolver
   that returns the registered `Theme` for an event slug or the
   platform Sage Civic Theme as fallback, the platform Theme at
-  [`shared/styles/themes/platform.ts`](../shared/styles/themes/platform.ts),
+  [`shared/styles/themes/platform.ts`](/shared/styles/themes/platform.ts),
   and the per-event registry at
-  [`shared/styles/themes/index.ts`](../shared/styles/themes/index.ts)
+  [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
   (empty in M1 phase 1.5.2; M3 phase 3.2 adds test events; M4 phase
   4.1 adds Madrona). apps/site's root layout consumes the platform
   Theme via inline-style emission of CSS custom properties on
   `<html>` plus `next/font` for Inter (body) and Fraunces (heading);
   apps/web's `:root` block in
-  [`apps/web/src/styles/_tokens.scss`](../apps/web/src/styles/_tokens.scss)
+  [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
   carries today's warm-cream values byte-identically until M4 phase
   4.1 wires `<ThemeScope>` into apps/web event routes. Brand-tied
   derived shades (`--primary-surface`, etc.) are computed in each
@@ -871,7 +871,7 @@ Those services have distinct roles:
 - `Vercel` is not the backend of record. It serves the built SPA and handles route rewrites for browser navigation.
 - `Supabase` is not rendering the game UI. It stores data and runs the trusted completion/session logic.
 
-In this repo, [apps/web/vercel.json](../apps/web/vercel.json) hosts both
+In this repo, [apps/web/vercel.json](/apps/web/vercel.json) hosts both
 the SPA route rewrites and the cross-app proxy rewrites that route
 `apps/site`-owned URLs to the second Vercel project. See
 "Vercel routing topology" below.
@@ -879,7 +879,7 @@ the SPA route rewrites and the cross-app proxy rewrites that route
 ### Vercel routing topology
 
 Routing is **transitional** through M2 of the
-[Event Platform Epic](./plans/event-platform-epic.md). Today,
+[Event Platform Epic](/docs/plans/event-platform-epic.md). Today,
 `apps/web` is the primary Vercel project owning the production custom
 domain; its `vercel.json` proxy-rewrites the platform admin, the auth
 callback, the platform landing, and event-scoped non-game/admin URLs
@@ -916,7 +916,7 @@ The current deployment discipline is simpler:
 2. Use pull requests and CI to review changes before merge.
 3. Merge to `main`.
 4. Let Vercel Git integration deploy the frontend from the merged repo state.
-5. Let [`.github/workflows/release.yml`](../.github/workflows/release.yml) apply Supabase migrations and deploy Edge Functions to the production project from the same repo state.
+5. Let [`.github/workflows/release.yml`](/.github/workflows/release.yml) apply Supabase migrations and deploy Edge Functions to the production project from the same repo state.
 
 This keeps deployment repo-driven without requiring hotfixes to start in production, and without introducing preview-branch infrastructure on the backend yet.
 
