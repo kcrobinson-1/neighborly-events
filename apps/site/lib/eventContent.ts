@@ -64,16 +64,17 @@ export type EventContent = {
   footer?: { attribution?: string };
 };
 
+import { harvestBlockPartyContent } from "../events/harvest-block-party.ts";
+
 /**
- * Slug → content registry. Initialized empty in this commit; the
- * Harvest Block Party content module registers in the next commit
- * alongside the content authoring + SVG sponsor assets, so a reader
- * walking commits 2 → 3 sees the empty-registry intermediate state
- * and the population in one focused diff. M3 phase 3.2 extends the
- * literal with the second test event; M4 phase 4.2 registers
- * Madrona.
+ * Slug → content registry. M3 phase 3.1.1 registers the first test
+ * event (`harvest-block-party`); M3 phase 3.2 extends the literal
+ * with the second test event; M4 phase 4.2 registers Madrona. Static
+ * imports keep tree-shaking and Next.js bundle analysis predictable.
  */
-const eventContentBySlug: Record<string, EventContent> = {};
+const eventContentBySlug: Record<string, EventContent> = {
+  [harvestBlockPartyContent.slug]: harvestBlockPartyContent,
+};
 
 /**
  * Synchronous slug → content resolver consumed by the page route's
