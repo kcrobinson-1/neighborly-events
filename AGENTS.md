@@ -410,18 +410,28 @@ phase's implementation starts, **after** prior phases have shipped
   draft.** Before opening the plan doc to write, verify the
   scoping doc exists at
   `docs/plans/scoping/m<N>-phase-<X>-<Y>.md` with substantive
-  content (file inventory, contracts, validation surface, named
-  risks — not empty, not a stub, not a placeholder paragraph
-  saying "scoping pending"). If the scoping doc does not exist
-  or is a stub, do scoping first as its own artifact;
+  scoping-owned content per the rule above — at minimum, a
+  "Decisions made at scoping time" section with at least one
+  decision carrying a `Verified by:` code citation, plus
+  whichever of "Open decisions to make at plan-drafting,"
+  "Plan structure handoff," and "Reality-check inputs" the
+  phase needs. Not empty, not a stub, not a placeholder
+  paragraph saying "scoping pending." If the scoping doc does
+  not exist or is a stub, do scoping first as its own artifact;
   plan-drafting cannot start without it. Without scoping
   content, the reality-check gate below has nothing to operate
   on, and plan-drafting silently collapses into
   scoping-during-drafting — exactly what scoping exists to
-  separate from drafting. The check is a simple file-existence
-  + first-paragraph read, takes seconds, and protects against
-  the most common procedural skip when phase planning starts
-  in a fresh agent session that did not produce the scoping doc
+  separate from drafting. The substantive-content list named
+  here is the falsifier for that gate; it intentionally tracks
+  scoping's owned content per "Scoping owns / plan owns"
+  above, not the plan-owned content (file inventory, contracts,
+  validation surface, risks) that earlier drafts of this rule
+  asked scoping to also carry. The check is a simple
+  file-existence + first-paragraph read, takes seconds, and
+  protects against the most common procedural skip when phase
+  planning starts in a fresh agent session that did not produce
+  the scoping doc
 - **Plan opens with a plain-language context preamble.** Before any
   implementation specifics (file paths, framework names, function
   signatures, phase-numbering shorthand), the plan must contain
