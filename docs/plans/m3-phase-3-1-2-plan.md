@@ -142,26 +142,42 @@ triggered the rule.
   literal `process.env.NEXT_PUBLIC_SITE_ORIGIN` form Next.js'
   substitution requires.
 - **Empty-env fallback uses logical-OR, not nullish-coalescing,
-  *and* fails fast on Vercel deploys.** The root layout's
-  `resolveMetadataBaseOrigin()` helper reads
-  `process.env.NEXT_PUBLIC_SITE_ORIGIN`, returns it when set, and
-  on miss either (a) throws a named build-time error when
-  `process.env.VERCEL_ENV` is `production` or `preview`, or
-  (b) falls back to `http://localhost:3000` for local dev /
-  non-Vercel CI. The fail-fast gate makes the foot-gun structural
-  rather than procedural: a misconfigured Vercel deploy cannot
-  ship localhost-shaped meta tags because the build itself
-  refuses to complete. The `||`-vs-`??` discipline still applies
-  inside the helper (the `env` block substitutes `""` when the
-  parent env is unset, and `??` does not short-circuit on
-  empty-string), but the fail-fast gate is now the load-bearing
-  protection — local/CI builds keep their localhost fallback for
-  contributor ergonomics, Vercel deploys do not. Auto-derivation
-  from `VERCEL_URL` was rejected at scoping time per
-  `docs/plans/scoping/m3-phase-3-1-2.md` "metadataBase source"
-  because apps/site sits behind apps/web's Vercel rewrite — the
-  canonical user-facing origin is apps/web's hostname, not
-  apps/site's.
+  *and* the helper handles each `VERCEL_ENV` differently.** The
+  root layout's `resolveMetadataBaseOrigin()` helper reads
+  `process.env.NEXT_PUBLIC_SITE_ORIGIN`; when set it always wins.
+  On miss the helper branches on `process.env.VERCEL_ENV`:
+  - `"production"`: throws a named build-time error. The
+    canonical user-facing origin in production is apps/web's
+    hostname, which apps/site cannot derive from its own runtime
+    env (`VERCEL_URL` would resolve to apps/site's hostname per
+    the scoping doc rejection); the operator must set the var
+    on the apps/site Vercel project's Production environment.
+  - `"preview"`: derives from `process.env.VERCEL_BRANCH_URL`
+    (or `VERCEL_URL` as backup) and returns
+    `https://${branchUrl}`. The `VERCEL_URL` rejection above
+    only applies to production: in production apps/web's
+    canonical alias differs from apps/site's hostname; in
+    preview, apps/web's per-branch alias isn't knowable from
+    inside apps/site's build, so apps/site's own per-branch URL
+    is the right pragmatic shape — the PR's preview unfurls
+    render the PR's content (bypassing the apps/web rewrite
+    layer that only matters for production user traffic). The
+    operator can still pin a preview origin explicitly via the
+    env var if a particular preview needs to test against a
+    specific apps/web alias. If neither `VERCEL_BRANCH_URL` nor
+    `VERCEL_URL` is available (broken Vercel context), the
+    helper throws a named error directing the operator to set
+    the var explicitly.
+  - any other context (`VERCEL_ENV` unset — local dev, local
+    `next build`, GitHub CI): falls back to
+    `http://localhost:3000` so contributor builds stay green.
+  The fail-fast gate makes the production foot-gun structural
+  rather than procedural: a misconfigured production deploy
+  cannot ship localhost-shaped meta tags because the build
+  itself refuses to complete. The `||`-vs-`??` discipline still
+  applies inside the helper because the `env` block substitutes
+  `""` when the parent env is unset and `??` does not
+  short-circuit on empty string.
 - **OG and Twitter images render the same content.** Both
   file-convention routes import `EventOgImage` from
   `apps/site/lib/eventOgImage.tsx`. A future change to the visual
@@ -344,25 +360,32 @@ Behavior contract:
   `process.env.NEXT_PUBLIC_SITE_ORIGIN` (Next.js substitutes via
   the `env` block per the Cross-Cutting Invariant) and returns
   it when set.
-- On miss, the helper inspects `process.env.VERCEL_ENV`. When it
-  is `"production"` or `"preview"`, the helper **throws** a
-  named `Error` ("NEXT_PUBLIC_SITE_ORIGIN must be set on Vercel
-  &lt;env&gt; builds…"), which fails the `next build` so a
-  misconfigured deploy cannot ship.
-- On any other context (`VERCEL_ENV` unset — local dev, local
-  `next build`, GitHub CI), the helper returns
-  `http://localhost:3000` so contributor builds stay green.
-- Production deploy still requires the operator to set the var
-  in the Vercel apps/site project's Production environment to
-  apps/web's canonical custom-domain origin; the difference is
-  that the misconfiguration now produces a loud build failure
-  pre-deploy rather than a silent post-deploy regression.
+- On miss, the helper branches on `process.env.VERCEL_ENV`:
+  - `"production"`: throws a named `Error`
+    ("NEXT_PUBLIC_SITE_ORIGIN must be set on Vercel production
+    builds…"), which fails the `next build` so a misconfigured
+    production deploy cannot ship. Production requires the
+    operator to set the var to apps/web's canonical
+    custom-domain origin.
+  - `"preview"`: derives the origin from
+    `process.env.VERCEL_BRANCH_URL` (or `VERCEL_URL` as
+    backup) and returns `https://${branchUrl}` — apps/site's
+    own per-branch URL. Per the Cross-Cutting Invariant, this
+    is the right pragmatic shape for preview (apps/web's
+    per-branch alias isn't knowable from apps/site's build,
+    and the PR's preview unfurls should render the PR's
+    content, not production content). The operator can still
+    pin a preview origin via the env var if a specific preview
+    test needs to point at a specific apps/web alias. If both
+    Vercel URL vars are absent (broken Vercel context), the
+    helper throws a named error directing the operator to set
+    the env var explicitly.
+  - any other context (`VERCEL_ENV` unset — local dev, local
+    `next build`, GitHub CI): returns `http://localhost:3000`
+    so contributor builds stay green.
 - Logical-OR `||` discipline (not `??`) still applies inside
   the helper because the `env` block substitutes `""` for unset
   vars; the fail-fast gate is layered on top, not a replacement.
-- Auto-derivation from `VERCEL_URL` was rejected at scoping
-  time per `docs/plans/scoping/m3-phase-3-1-2.md`; see the
-  Cross-Cutting Invariant above.
 
 ### `next.config.ts` env entry
 
@@ -973,19 +996,28 @@ resolution path so reviewer attention does not relitigate them.
   vigilance. Codex flagged the silent-localhost-fallback shape
   during PR #142 review as a P1; the implementing PR replaced
   the inline `process.env || 'localhost'` expression with a
-  `resolveMetadataBaseOrigin()` helper that **throws at build
-  time** when `VERCEL_ENV` is `production` or `preview` and the
-  var is unset. The risk is now structurally mitigated rather
-  than procedurally — a misconfigured Vercel deploy fails the
+  `resolveMetadataBaseOrigin()` helper that handles each
+  `VERCEL_ENV` distinctly: production throws when unset
+  (operator-set is required); preview auto-derives from
+  `VERCEL_BRANCH_URL` (apps/site's own per-branch URL) so
+  PR previews build without per-PR operator config; local
+  contexts fall back to `http://localhost:3000`.
+  The production risk is now structurally mitigated rather than
+  procedurally — a misconfigured production deploy fails the
   build with a named error instead of silently shipping
-  `http://localhost:3000/...` meta tags. The PR body's
+  `http://localhost:3000/...` meta tags. Preview deploys
+  produce stable, correct meta tags pointing at the PR's own
+  preview URL without needing operator input; the operator can
+  still pin a specific origin on the Preview env if a test
+  needs to target a specific apps/web alias. The PR body's
   pre-merge operator check (Execution step 15) and the Slack
   unfurl capture remain useful as defense-in-depth, but the
-  fail-fast gate is now the primary protection. The four
-  build-mode cases (no `VERCEL_ENV` → fallback ok; production
-  unset → throws; production set → succeeds; preview unset →
-  throws) are exercised in the implementing PR's Validation
-  section.
+  fail-fast gate is now the primary protection. The five
+  build-mode cases exercised in the implementing PR's
+  Validation section: no `VERCEL_ENV` → localhost; production
+  unset → throws; production set → uses var; preview unset
+  with `VERCEL_BRANCH_URL` → derives branch URL; preview unset
+  with no Vercel URL vars → throws.
 - **Turbopack substitution trap regression.** If the new
   `NEXT_PUBLIC_SITE_ORIGIN` lookup is added to source without
   the `next.config.ts` `env` block update, Turbopack rewrites
