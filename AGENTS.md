@@ -201,17 +201,20 @@ decisions.
   authoritative for navigating from plan to history, and recording
   SHAs creates a chicken-and-egg problem (the SHA isn't known until
   after merge, which forces a follow-up commit whose only purpose is
-  to record the previous commit's SHA). Exception: plans that extend
-  Tier 5 production smoke assertions land in two phases per
-  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate
-  For Plans That Touch Production Smoke" — the implementing PR merges
-  with Status `In progress pending prod smoke`; a follow-up doc-only
-  commit flips Status to `Landed` and records the production smoke
-  run URL once the post-release run passes. The smoke run URL is
-  durable external evidence, unlike a commit SHA which is already in
-  git. This is the single authoritative status rule for that case; do
-  not invent additional states or leave the flip to an informal
-  post-merge promise
+  to record the previous commit's SHA). Same-PR flip is the default
+  whenever the plan's Validation Gate can be fully satisfied pre-merge.
+  Exception: plans whose Validation Gate names a check that can only
+  run post-release (Tier 5 production smoke is the canonical case)
+  land in two phases per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
+  "Plan-to-Landed Gate For Plans That Touch Production Smoke" — the
+  implementing PR merges with Status `In progress pending prod smoke`;
+  a follow-up doc-only commit flips Status to `Landed` and records the
+  post-release validation URL (smoke run URL for the canonical case)
+  once the post-release run passes. The run URL is durable external
+  evidence, unlike a commit SHA which is already in git. This is the
+  single authoritative status rule for that case; do not invent
+  additional states or leave the flip to an informal post-merge
+  promise
 - ban soft-commitment words in plans: "optional but recommended,"
   "consider adding," "nice to have," "probably should." A requirement
   is either in-scope or deferred — there is no third option. Soft
