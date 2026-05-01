@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 3.1.2 is the second and terminal child of M3 phase 3.1 (the first
 child, 3.1.1, landed in
