@@ -207,13 +207,16 @@ must rewrite each reference to the archive path.
   source. Updates to `./plans/archive/m2/m2-admin-restructuring.md`.
   Verified by: [`docs/open-questions.md:36`](../open-questions.md#L36).
 - **[`docs/plans/event-platform-epic.md`](./event-platform-epic.md)** —
-  three references at lines 546, 583, and the M2 row's plan-link
-  column at line 19. The line 19 row-link rewrite changes the click
-  target from `./m2-admin-restructuring.md` to
-  `./archive/m2/m2-admin-restructuring.md`. Lines 546 and 583 (the
-  prose narrative referencing the milestone doc) rewrite to the same
-  archive path. Verified by:
-  [`docs/plans/event-platform-epic.md:19,546,583`](./event-platform-epic.md#L19).
+  two prose-narrative references at lines 546 and 583 pointing at the
+  M2 milestone doc. Both rewrite from `./m2-admin-restructuring.md`
+  to `./archive/m2/m2-admin-restructuring.md`. The earlier draft of
+  this plan also claimed a line-19 row-link rewrite, but the milestone
+  status table at lines 15–20 has only `Milestone | Status` columns —
+  no plan-link column exists on the M2 row, so there is no link to
+  rewrite there. Verified by:
+  [`docs/plans/event-platform-epic.md:546,583`](./event-platform-epic.md#L546)
+  and `grep -nE 'm2-(admin-restructuring|phase-2-)' docs/plans/event-platform-epic.md`
+  returning exactly those two hits.
 - **[`docs/backlog.md`](../backlog.md)** — the "Archive M2 plan docs"
   entry at lines 194–211 removes entirely (this PR completes it).
   No other M2 references in the backlog survive the entry removal.
