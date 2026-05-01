@@ -229,12 +229,28 @@ Behavior contract:
 
 Specialized Route Handler per Next.js 16 file convention. Exports:
 
-- `alt: string` — set to `content.meta.title` resolved per request,
-  emits as `<meta property="og:image:alt">`.
+- `alt: string` — module-level static export per Next.js' file
+  convention (see
+  [`opengraph-image.md` lines 263-273](/node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/01-metadata/opengraph-image.md)
+  — `alt` is a `const` evaluated once at module load and cannot
+  read route params at request time; per-route-instance dynamic
+  alt would require `generateImageMetadata`, which is rejected
+  for 3.1.2 because the rendered image already carries
+  per-event content visually and a generic alt is sufficient
+  for screen readers and crawlers). Wording is implementer
+  choice; "Neighborly Events — event preview" or similar
+  generic platform-level phrasing satisfies the shape. Emits
+  as `<meta property="og:image:alt">`.
 - `size = { width: 1200, height: 630 }` — emits as
   `og:image:width` + `og:image:height`.
 - `contentType = 'image/png'` — emits as `og:image:type`.
-- `default async function Image({ params }: { params: Promise<{ slug: string }> }): Promise<ImageResponse>`.
+- `default async function Image({ params }: { params: Promise<{ slug: string }> }): Promise<ImageResponse>`
+  — receives the route params at request time (per
+  [`opengraph-image.md` lines 217-243, 528](/node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/01-metadata/opengraph-image.md);
+  `params` is a Promise in v16). The default function is the
+  per-event surface (resolves slug to content, renders the
+  per-event image); `alt` is the platform-level surface (one
+  static value across all events).
 
 Behavior contract:
 
