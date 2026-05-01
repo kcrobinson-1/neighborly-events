@@ -158,6 +158,53 @@ step count.
   plan. Plans attract code review; every bug in a code snippet inside a
   plan costs a review round on the plan doc itself before the
   implementation even starts, which is pure churn
+- **Code shapes in plans are directional pseudocode.** Whatever code-
+  shaped content the five-line rule above admits — a backticked
+  field-value pair, a one-line type signature, a short expression — is
+  *shape*, not source. It communicates contract structure (what field
+  exists where, what shape it takes, how it relates to other fields),
+  not exact syntax. The implementer translates shapes into
+  syntactically-correct code at PR time, against the surrounding prose
+  that frames the shape. Reviewers (human or automated) should focus
+  on shape-level questions — is the right field named? does the shape
+  match what the prose around it describes? is the contract self-
+  consistent? — not on syntax-level findings (template-literal quotes,
+  shell precedence, missing imports, semicolons). The five-line rule
+  caps how much code-shaped content lives here even under this
+  framing; this rule shifts the reviewer's stance on whatever content
+  the cap admits. AGENTS.md is not visible to automated reviewers
+  (Codex, similar bots) during PR review, so the framing must travel
+  inside the plan doc itself: each plan-drafting session **must**
+  include the boilerplate notice below, placed inside the `## Context`
+  section of the plan (either as a `### Reading this plan` subsection
+  at the end of Context, or as the first content immediately after
+  Context's prose ends — anywhere within the Context boundary so a
+  reader who jumps straight to Context encounters the framing before
+  any contract content). Verbatim boilerplate (copy-paste; do not
+  paraphrase, since the wording is the artifact reviewers anchor on):
+
+  > **Reading this plan: code shapes are directional pseudocode.**
+  >
+  > Inline code shapes in this plan (field-value pairs, type
+  > signatures, expressions, short snippets) communicate contract
+  > *shape* — what field exists where, what shape it takes, how it
+  > relates to other fields — not exact source. The implementer
+  > translates shapes into syntactically-correct code at PR time,
+  > against the surrounding prose. Reviewers (human or automated)
+  > should focus on shape-level questions (missing field, wrong
+  > relationship, contract self-inconsistent), not syntax-level ones
+  > (template-literal quotes, shell precedence, missing imports,
+  > semicolons). The five-line rule from AGENTS.md "Planning Depth"
+  > still caps how much code-shaped content lives here.
+
+  Existing landed phase plans (M2 phases 2.1 through 2.5, M3 phase
+  3.1.1) predate this rule and are not retroactively non-conforming.
+  M3 phase 3.1.2 is the in-flight case at land time — under the
+  same "may opt to add" carveout pattern recorded in the
+  [scoping owns / plan owns rule](#phase-planning-sessions), 3.1.2
+  opts in here as the first plan to carry the boilerplate, testing
+  the framing on the live case before the implementing PR opens.
+  Plans drafted from this point forward must include the boilerplate.
 - list the cross-cutting invariants that thread through multiple files
   in their own `## Cross-Cutting Invariants` subsection, distinct from
   per-file contracts. Per-file contracts describe what one module does;

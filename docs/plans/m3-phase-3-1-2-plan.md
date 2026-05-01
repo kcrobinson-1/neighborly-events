@@ -86,6 +86,20 @@ procedure (a curl falsifier plus a Slack consumer-client capture).
 No DB changes, no auth changes, no apps/web changes, no URL
 contract changes, no `EventContent` shape changes.
 
+### Reading this plan: code shapes are directional pseudocode
+
+> Inline code shapes in this plan (field-value pairs, type
+> signatures, expressions, short snippets) communicate contract
+> *shape* — what field exists where, what shape it takes, how it
+> relates to other fields — not exact source. The implementer
+> translates shapes into syntactically-correct code at PR time,
+> against the surrounding prose. Reviewers (human or automated)
+> should focus on shape-level questions (missing field, wrong
+> relationship, contract self-inconsistent), not syntax-level ones
+> (template-literal quotes, shell precedence, missing imports,
+> semicolons). The five-line rule from AGENTS.md "Planning Depth"
+> still caps how much code-shaped content lives here.
+
 ## Goal
 
 Land per-event Open Graph and Twitter card images at
