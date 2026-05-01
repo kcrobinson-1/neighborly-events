@@ -1,55 +1,8 @@
 import type { ReactElement } from "react";
 
-import { parseEventDate, type EventContent } from "./eventContent.ts";
+import type { EventContent } from "./eventContent.ts";
+import { formatHeroDateRange } from "./eventDateFormat.ts";
 import { getThemeForSlug } from "../../../shared/styles/index.ts";
-
-const monthAbbreviations = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-/**
- * Mirrors the page header's `formatHeroDateRange`
- * ([`EventHeader.tsx`](../components/event/EventHeader.tsx)) so the
- * OG image and the rendered page show the same date string. Kept
- * inline rather than extracted shared util per the M3 phase 3.1.2
- * plan's scope ("Files intentionally not touched: section components").
- */
-function formatDateRange(start: string, end: string): string {
-  const startDate = parseEventDate(start);
-  const endDate = parseEventDate(end);
-
-  if (!startDate || !endDate) {
-    return start === end ? start : `${start} – ${end}`;
-  }
-
-  const startMonthName = monthAbbreviations[startDate.month - 1];
-  const endMonthName = monthAbbreviations[endDate.month - 1];
-
-  if (start === end) {
-    return `${startMonthName} ${startDate.day}, ${startDate.year}`;
-  }
-
-  if (startDate.year !== endDate.year) {
-    return `${startMonthName} ${startDate.day}, ${startDate.year} – ${endMonthName} ${endDate.day}, ${endDate.year}`;
-  }
-
-  if (startDate.month !== endDate.month) {
-    return `${startMonthName} ${startDate.day} – ${endMonthName} ${endDate.day}, ${startDate.year}`;
-  }
-
-  return `${startMonthName} ${startDate.day}-${endDate.day}, ${startDate.year}`;
-}
 
 /**
  * Per-event Open Graph image content. The same React element backs
@@ -72,8 +25,10 @@ function formatDateRange(start: string, end: string): string {
  * function is pure and synchronous and stays under the Satori 500 KB
  * bundle ceiling without custom font weight.
  *
- * The helper has no caller until the file-convention image routes
- * import it (next commit on this branch).
+ * Date formatting comes from the shared
+ * [`formatHeroDateRange`](./eventDateFormat.ts) helper — the same
+ * util the page header consumes — so the OG card and the page hero
+ * cannot drift on a content change.
  */
 export function EventOgImage({
   content,
@@ -81,7 +36,7 @@ export function EventOgImage({
   content: EventContent;
 }): ReactElement {
   const theme = getThemeForSlug(content.themeSlug);
-  const dateRange = formatDateRange(
+  const dateRange = formatHeroDateRange(
     content.hero.dates.start,
     content.hero.dates.end,
   );
