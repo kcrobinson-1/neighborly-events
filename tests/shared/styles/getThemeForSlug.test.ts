@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { getThemeForSlug } from "../../../shared/styles/getThemeForSlug.ts";
 import { platformTheme } from "../../../shared/styles/themes/platform.ts";
 import { themes } from "../../../shared/styles/themes/index.ts";
+import { harvestBlockPartyTheme } from "../../../shared/styles/themes/harvest-block-party.ts";
 
 describe("getThemeForSlug", () => {
   it("returns the platform Theme for unregistered slugs", () => {
@@ -11,11 +12,19 @@ describe("getThemeForSlug", () => {
     expect(getThemeForSlug("")).toBe(platformTheme);
   });
 
-  it("registry is empty in M1 phase 1.5.2", () => {
-    // Per-event themes register over time (M3 test events; M4 Madrona).
-    // This assertion is a tripwire: if the registry grows, this test
-    // updates to assert per-slug resolution at the same time so
-    // resolver behavior is verified, not asserted by code reasoning.
-    expect(Object.keys(themes)).toHaveLength(0);
+  it("returns harvestBlockPartyTheme for the harvest-block-party slug", () => {
+    // M3 phase 3.1.1 registers the first per-event Theme. The
+    // assertion is referential identity (`toBe`), not deep-equal, so
+    // the test fails if the registry is rewired to a copy or alias of
+    // a different Theme.
+    expect(getThemeForSlug("harvest-block-party")).toBe(harvestBlockPartyTheme);
+  });
+
+  it("registry contains the registered per-event themes", () => {
+    // Tripwire: when a phase registers a new per-event Theme, this
+    // assertion updates alongside an explicit per-slug resolution
+    // case above so resolver behavior is verified, not asserted by
+    // code reasoning.
+    expect(Object.keys(themes).sort()).toEqual(["harvest-block-party"]);
   });
 });
