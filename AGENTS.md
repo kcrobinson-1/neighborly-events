@@ -206,15 +206,17 @@ decisions.
   Exception: plans whose Validation Gate names a check that can only
   run post-release (Tier 5 production smoke is the canonical case)
   land in two phases per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
-  "Plan-to-Landed Gate For Plans That Touch Production Smoke" — the
-  implementing PR merges with Status `In progress pending prod smoke`;
-  a follow-up doc-only commit flips Status to `Landed` and records the
-  post-release validation URL (smoke run URL for the canonical case)
-  once the post-release run passes. The run URL is durable external
-  evidence, unlike a commit SHA which is already in git. This is the
-  single authoritative status rule for that case; do not invent
-  additional states or leave the flip to an informal post-merge
-  promise
+  "Plan-to-Landed Gate For Plans With Post-Release Validation" — the
+  implementing PR merges with Status `In progress pending <validation-name>`,
+  where the name is a stable, exact-match label for the specific check
+  (the canonical Tier 5 case is exactly `In progress pending prod smoke`;
+  see testing-tiers.md for non-smoke precedents); a follow-up doc-only
+  commit flips Status to `Landed` and records the post-release
+  validation run URL once the post-release run passes. The run URL is
+  durable external evidence, unlike a commit SHA which is already in
+  git. This is the single authoritative status rule for that case; do
+  not invent additional states or leave the flip to an informal
+  post-merge promise
 - ban soft-commitment words in plans: "optional but recommended,"
   "consider adding," "nice to have," "probably should." A requirement
   is either in-scope or deferred — there is no third option. Soft
@@ -1130,9 +1132,10 @@ The two rules that trip up plan authors most often:
   extend production smoke assertions land in two phases: code merged with
   plan `In progress pending prod smoke`, then plan flipped to `Landed`
   after the post-release smoke run is green. Do not gate the merge on a
-  check that can only pass post-deploy. See
-  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate For
-  Plans That Touch Production Smoke."
+  check that can only pass post-deploy. The same two-phase gate applies
+  to any other plan whose Validation Gate names a check that can only
+  run post-release; see [`docs/testing-tiers.md`](/docs/testing-tiers.md)
+  "Plan-to-Landed Gate For Plans With Post-Release Validation."
 - **Plans must not require contributors to configure production credentials
   on local laptops.** `PRODUCTION_SMOKE_*` env vars, production admin
   fixture emails, and production service-role keys live in the GitHub

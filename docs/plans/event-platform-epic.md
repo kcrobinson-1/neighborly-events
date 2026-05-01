@@ -823,7 +823,7 @@ asserted by code reasoning), Rename-aware diff classification (phase
 content addition around an unchanged child, not a move), Effect
 cleanup audit (any new content components added for Madrona-specific
 rendering must clean up correctly). M4 also follows the
-Plan-to-Landed Gate For Plans That Touch Production Smoke from
+Plan-to-Landed Gate For Plans With Post-Release Validation from
 `docs/testing-tiers.md` if the production smoke assertions added in M4
 must run post-deploy.
 
