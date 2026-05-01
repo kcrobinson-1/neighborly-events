@@ -350,9 +350,7 @@ sections in this order:
 1. Status (with terminal-PR note: 3.2's PR flips both this plan's
    Status and the M3 milestone doc's Phase 3.2 row to `Landed`)
 2. Plain-language Context preamble (per AGENTS.md "Plan opens
-   with a plain-language context preamble") plus the verbatim
-   "Reading this plan: code shapes are directional pseudocode"
-   boilerplate per AGENTS.md "Planning Depth"
+   with a plain-language context preamble")
 3. Goal
 4. Cross-Cutting Invariants
 5. Naming
