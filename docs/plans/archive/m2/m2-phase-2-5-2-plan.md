@@ -37,7 +37,7 @@ proxy regression and failed the check.
   bare paths and proxies them to apps/site, where the Next.js
   unknown-route response handles them per the umbrella's "No
   backward-compat redirect" invariant and the
-  [milestone doc](./m2-admin-restructuring.md) "Settled by
+  [milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Settled by
   default" decision.
 - **New operator URLs reach apps/web's operator pages.**
   `curl -sI` of `/event/production-smoke-event/game/redeem` and
@@ -61,7 +61,7 @@ apps/web shell on the bare paths or an apps/site shell on the new
 operator URLs; neither was observed.
 
 The release smoke run that paired with this deploy passed
-([`Production Admin Smoke`](../../../../scripts/testing/run-production-admin-smoke.cjs)),
+([`Production Admin Smoke`](/scripts/testing/run-production-admin-smoke.cjs)),
 confirming the cutover did not regress the apps/web `/admin`
 auth-flow path that runs through the same `vercel.json`. 2.5's
 phase footprint is independent of the smoke fixture by design (per
@@ -69,7 +69,7 @@ the umbrella's Status section), so the smoke pass is a
 no-regression signal rather than a load-bearing verifier.
 
 Sub-phase of M2 phase 2.5 — see
-[`m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md) (umbrella) for the
+[`m2-phase-2-5-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-plan.md) (umbrella) for the
 phase-level context, sequencing rationale, cross-sub-phase
 invariants, phase-level Out of Scope, and cross-sub-phase risks.
 
@@ -83,7 +83,7 @@ sequencing diagram.
 
 **Two-phase Status flip.** Per the umbrella's Status section, this
 plan ships under a non-prod-smoke variant of the
-[`docs/testing-tiers.md`](../../../testing-tiers.md) "Plan-to-Landed Gate
+[`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate
 For Plans That Touch Production Smoke" pattern. The implementing PR
 merges with this plan's Status reading
 `In progress pending deployed-origin verification` (exact string;
@@ -95,20 +95,20 @@ comment + doc-only commit) — never in the implementing PR itself.
 The umbrella Status section names the load-bearing reason: the
 cross-app proxy can only be observed against the real Vercel
 routing layer post-deploy, because
-[`apps/web/vercel.json`](../../../../apps/web/vercel.json) destinations
+[`apps/web/vercel.json`](/apps/web/vercel.json) destinations
 are absolute production URLs and any local `vercel dev` run
 proxies to *deployed* apps/site rather than the branch-local
 instance.
 
 **Single PR.** Branch-test sketch — apps/web: 1 modify
-([`vercel.json`](../../../../apps/web/vercel.json)); scripts/testing: 1
+([`vercel.json`](/apps/web/vercel.json)); scripts/testing: 1
 modify
-([`run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs));
+([`run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs));
 tests: 1 modify
-([`run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts));
+([`run-auth-e2e-dev-server.test.ts`](/tests/scripts/run-auth-e2e-dev-server.test.ts));
 docs: 3 modifies
-([`architecture.md`](../../../architecture.md), [`dev.md`](../../../dev.md),
-[`operations.md`](../../../operations.md)); plan Status: 1 (this file).
+([`architecture.md`](/docs/architecture.md), [`dev.md`](/docs/dev.md),
+[`operations.md`](/docs/operations.md)); plan Status: 1 (this file).
 ~7 files. ~2 distinct subsystems (production routing config + local
 proxy fixture; URL-ownership-shape docs). The cutover is the one
 load-bearing edit; the rest are doc currency that depends on it.
@@ -148,7 +148,7 @@ What this sub-phase touches: the apps/web Vercel routing config
 local auth-e2e dev-server proxy + its unit test (parallel widening
 of the bare-path branch); and the URL-ownership-shape docs. What it
 doesn't touch: any apps/web or apps/site source, any
-[`shared/`](../../../../shared) module, any Edge Function, any SQL, any
+[`shared/`](/shared) module, any Edge Function, any SQL, any
 test other than the one dev-server unit test, any page-behavior
 or `shared/urls/` API-shape doc surface (deferred to 2.5.3 per the
 umbrella's "Doc currency split across sub-phases" invariant), and
@@ -184,7 +184,7 @@ These are sub-phase-local. See the umbrella for cross-sub-phase
 rules.
 
 - **Vercel rule-ordering invariant.** Per the
-  [milestone doc](./m2-admin-restructuring.md) "Cross-Phase Risks
+  [milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Cross-Phase Risks
   — Vercel rule-ordering misordering across 2.3, 2.4, 2.5":
   deleting rules 5–6 must not move the cross-app
   `/event/:slug/:path*` rule (current rule 8, becoming rule 6
@@ -196,7 +196,7 @@ rules.
   same diff.
 - **Local auth-e2e proxy widening must not catch the apps/web
   carve-outs.** The
-  [`isSiteRequest`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs#L47)
+  [`isSiteRequest`](/scripts/testing/run-auth-e2e-dev-server.cjs#L47)
   branch added in this sub-phase routes bare event-scoped paths
   to the local apps/site dev server **only** when the path is not
   inside the `/event/:slug/game(/...)?` or
@@ -212,7 +212,7 @@ rules.
   every `shared/` module stay untouched.
 - **No production-smoke fixture change.** Per the umbrella Status
   section, the existing
-  [`Production Admin Smoke`](../../../../scripts/testing/run-production-admin-smoke.cjs)
+  [`Production Admin Smoke`](/scripts/testing/run-production-admin-smoke.cjs)
   exercises `/auth/callback?next=/admin` and never reaches the
   operator route family — this sub-phase neither extends nor
   modifies it.
@@ -227,7 +227,7 @@ this sub-phase (the rename surface settled in 2.5.1).
 Each contract carries an inline "Verified by:" reference per
 AGENTS.md.
 
-**[`apps/web/vercel.json`](../../../../apps/web/vercel.json) (modify, load-bearing).**
+**[`apps/web/vercel.json`](/apps/web/vercel.json) (modify, load-bearing).**
 Delete the two bare-path operator carve-out rule blocks: today's
 rule 5 (`{"source": "/event/:slug/redeem", "destination": "/index.html"}`)
 and rule 6 (`{"source": "/event/:slug/redemptions", "destination": "/index.html"}`).
@@ -240,12 +240,12 @@ rule 6) stays strictly below rules 1–4 so the
 `/event/:slug/game/redeem` and `/event/:slug/game/redemptions` URLs
 match rule 2 before reaching rule 6. No rule additions; no
 destination edits; no `dest` reorders. Verified by:
-[`apps/web/vercel.json:19-26`](../../../../apps/web/vercel.json#L19) (the
+[`apps/web/vercel.json:19-26`](/apps/web/vercel.json#L19) (the
 two rule blocks to delete) and
-[`apps/web/vercel.json:1-18,27-58`](../../../../apps/web/vercel.json#L1)
+[`apps/web/vercel.json:1-18,27-58`](/apps/web/vercel.json#L1)
 (the surviving rule blocks whose order is preserved).
 
-**[`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs) (modify).**
+**[`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs) (modify).**
 Widen the `isSiteRequest` predicate at lines 47–59 so bare event-
 scoped paths route to the local apps/site dev server *unless* the
 path is inside an apps/web carve-out
@@ -253,9 +253,9 @@ path is inside an apps/web carve-out
 shape stays a pure URL-prefix check (no regex helper added). The
 existing site-owned branches (`/`, `/auth/callback`, `/_next/`,
 `/__nextjs`, `/admin*`) stay verbatim. Verified by:
-[`scripts/testing/run-auth-e2e-dev-server.cjs:47-59`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs#L47).
+[`scripts/testing/run-auth-e2e-dev-server.cjs:47-59`](/scripts/testing/run-auth-e2e-dev-server.cjs#L47).
 
-**[`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts) (modify).**
+**[`tests/scripts/run-auth-e2e-dev-server.test.ts`](/tests/scripts/run-auth-e2e-dev-server.test.ts) (modify).**
 Extend the existing "leaves event-scoped paths on apps/web"
 describe block at lines 34–39 with positive assertions for the
 post-cutover apps/web carve-outs
@@ -270,14 +270,14 @@ and the redemptions counterpart. Existing assertions for `/`,
 `/auth/callback`, `/_next/...`, `/__nextjs...`, `/admin`, the
 `/__auth-e2e-ready` readiness path, and the proxy-shape contract
 stay verbatim. Verified by:
-[`tests/scripts/run-auth-e2e-dev-server.test.ts:14-40`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts#L14).
+[`tests/scripts/run-auth-e2e-dev-server.test.ts:14-40`](/tests/scripts/run-auth-e2e-dev-server.test.ts#L14).
 
-**[`docs/architecture.md`](../../../architecture.md) (modify, URL-ownership-shape only).**
+**[`docs/architecture.md`](/docs/architecture.md) (modify, URL-ownership-shape only).**
 Two surfaces update in this sub-phase per the umbrella's
 "Documentation Currency" subsection:
 
 - **Top-level URL-ownership prose** at the
-  [Top-Level Layout section](../../../architecture.md#L57): drop the
+  [Top-Level Layout section](/docs/architecture.md#L57): drop the
   "and the transitional bare-path operator routes
   `/event/:slug/redeem` and `/event/:slug/redemptions`" appendage
   from the apps/web ownership sentence at lines 59–63 and the
@@ -297,11 +297,11 @@ Page-behavior surfaces (the `EventRedeemPage` /
 the auth-flow narrative URL strings, and the runtime request flow)
 defer to 2.5.3 per the umbrella's "Doc currency split across
 sub-phases" invariant. Verified by:
-[`docs/architecture.md:28-35`](../../../architecture.md#L28),
-[`docs/architecture.md:59-63`](../../../architecture.md#L59),
-[`docs/architecture.md:884-917`](../../../architecture.md#L884).
+[`docs/architecture.md:28-35`](/docs/architecture.md#L28),
+[`docs/architecture.md:59-63`](/docs/architecture.md#L59),
+[`docs/architecture.md:884-917`](/docs/architecture.md#L884).
 
-**[`docs/dev.md`](../../../dev.md) (modify, URL-ownership-shape only).**
+**[`docs/dev.md`](/docs/dev.md) (modify, URL-ownership-shape only).**
 Two surfaces update in this sub-phase:
 
 - **apps/web URL list** at lines 52–55: drop "and the transitional
@@ -320,11 +320,11 @@ generic "every other app path (event-scoped URLs)" branch. The
 `/event/:slug/game` references in the readiness check description
 also stay verbatim (the readiness check exercises an apps/web URL
 that is unaffected by this cutover). Verified by:
-[`docs/dev.md:52-55`](../../../dev.md#L52),
-[`docs/dev.md:795-812`](../../../dev.md#L795),
-[`docs/dev.md:826-830`](../../../dev.md#L826).
+[`docs/dev.md:52-55`](/docs/dev.md#L52),
+[`docs/dev.md:795-812`](/docs/dev.md#L795),
+[`docs/dev.md:826-830`](/docs/dev.md#L826).
 
-**[`docs/operations.md`](../../../operations.md) (modify, URL-ownership-shape only).**
+**[`docs/operations.md`](/docs/operations.md) (modify, URL-ownership-shape only).**
 The Supabase Auth dashboard redirect-URL allow-list description
 at lines 169–176 currently lists every authenticated route
 behind `/auth/callback?next=…`, including the now-retired
@@ -337,7 +337,7 @@ the bare-path entries from the listed examples. The surrounding
 sentence at line 173 ("a single entry per environment — every
 authenticated route returns through `/auth/callback?next=…`")
 stays verbatim. Verified by:
-[`docs/operations.md:169-176`](../../../operations.md#L169).
+[`docs/operations.md:169-176`](/docs/operations.md#L169).
 
 **This plan (modify, terminal step in the implementing PR).**
 Status flips from `Proposed` to
@@ -350,18 +350,18 @@ the post-deploy manual verification captures.
 
 ### Modify (apps/web routing config)
 
-- [`apps/web/vercel.json`](../../../../apps/web/vercel.json)
+- [`apps/web/vercel.json`](/apps/web/vercel.json)
 
 ### Modify (local auth-e2e fixture)
 
-- [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)
-- [`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts)
+- [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs)
+- [`tests/scripts/run-auth-e2e-dev-server.test.ts`](/tests/scripts/run-auth-e2e-dev-server.test.ts)
 
 ### Modify (URL-ownership-shape docs)
 
-- [`docs/architecture.md`](../../../architecture.md)
-- [`docs/dev.md`](../../../dev.md)
-- [`docs/operations.md`](../../../operations.md)
+- [`docs/architecture.md`](/docs/architecture.md)
+- [`docs/dev.md`](/docs/dev.md)
+- [`docs/operations.md`](/docs/operations.md)
 
 ### Modify (plan Status — implementing PR)
 
@@ -375,47 +375,47 @@ the post-deploy manual verification captures.
 
 ### Files intentionally not touched
 
-- [`shared/urls/`](../../../../shared/urls), apps/web source, apps/site
+- [`shared/urls/`](/shared/urls), apps/web source, apps/site
   source, Edge Functions, migrations, `shared/auth/`,
   `shared/db/`, `shared/events/`, `shared/styles/` — owned by
   2.5.1 (already merged) or out of scope across all 2.5
   sub-phases.
 - All test files except
-  [`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts)
+  [`tests/scripts/run-auth-e2e-dev-server.test.ts`](/tests/scripts/run-auth-e2e-dev-server.test.ts)
   — the e2e fixtures and unit tests for the operator route family
   retargeted to the new URLs in 2.5.1.
-- [`docs/architecture.md`](../../../architecture.md) page-behavior
+- [`docs/architecture.md`](/docs/architecture.md) page-behavior
   surfaces (route-inventory entries, auth-flow narrative URL
-  strings, runtime request flow), [`docs/dev.md`](../../../dev.md)
-  routes builder list, [`docs/product.md`](../../../product.md),
-  [`README.md`](../../../../README.md),
-  [`docs/open-questions.md`](../../../open-questions.md),
-  [`docs/backlog.md`](../../../backlog.md),
-  [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md),
-  [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md),
-  [`docs/plans/m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md),
+  strings, runtime request flow), [`docs/dev.md`](/docs/dev.md)
+  routes builder list, [`docs/product.md`](/docs/product.md),
+  [`README.md`](/README.md),
+  [`docs/open-questions.md`](/docs/open-questions.md),
+  [`docs/backlog.md`](/docs/backlog.md),
+  [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+  [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md),
+  [`docs/plans/m2-phase-2-5-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-plan.md),
   M2 scoping docs (deleted in M2 phase 2.5.3 batch deletion; see
   git history) — closure work owned by 2.5.3 per the umbrella's
   "Doc currency split across sub-phases."
 - Production-smoke fixtures at
-  [`scripts/testing/run-production-admin-smoke.cjs`](../../../../scripts/testing/run-production-admin-smoke.cjs)
+  [`scripts/testing/run-production-admin-smoke.cjs`](/scripts/testing/run-production-admin-smoke.cjs)
   and the production-admin-smoke playwright config at
-  [`playwright.production-admin-smoke.config.ts`](../../../../playwright.production-admin-smoke.config.ts)
+  [`playwright.production-admin-smoke.config.ts`](/playwright.production-admin-smoke.config.ts)
   — out of scope for the entire 2.5 phase.
 
 ## Execution Steps
 
 1. **Pre-edit gate.** Confirm clean worktree, feature branch (not
    `main`). Confirm 2.5.1 is `Landed` in
-   [`m2-phase-2-5-1-plan.md`](./m2-phase-2-5-1-plan.md) Status (the
+   [`m2-phase-2-5-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-1-plan.md) Status (the
    umbrella's strict-serial sequencing requires this), and that
    the apps/web dispatcher and `shared/urls/` already serve the
    new URLs (a 5-second `git log -- shared/urls/routes.ts` +
    `git grep "matchGameRedeemPath" apps/web/src/App.tsx` confirms).
    Re-read the umbrella's "Cross-Cutting Invariants" and this
    plan's Contracts section. Confirm no other PR is in flight
-   against [`apps/web/vercel.json`](../../../../apps/web/vercel.json) or
-   [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs).
+   against [`apps/web/vercel.json`](/apps/web/vercel.json) or
+   [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs).
 2. **Baseline validation.** `npm run lint`, `npm test`,
    `npm run build:web`, `npm run build:site`,
    `npm run test:functions`. All must pass before any edit.
@@ -431,37 +431,37 @@ the post-deploy manual verification captures.
    inventory are doc-currency leftovers for 2.5.3 (intentional)
    or real misses (escalate before editing).
 4. **vercel.json cutover.** Edit
-   [`apps/web/vercel.json`](../../../../apps/web/vercel.json) per the
+   [`apps/web/vercel.json`](/apps/web/vercel.json) per the
    Contracts section: delete the two bare-path rule blocks. Run
    `npm run build:web` to confirm no syntactic regression. Re-run
    the unit-test suite to confirm no test depends on the deleted
    rules.
 5. **Local proxy widening.** Edit
-   [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)
+   [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs)
    per the Contracts section, then update
-   [`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts)
+   [`tests/scripts/run-auth-e2e-dev-server.test.ts`](/tests/scripts/run-auth-e2e-dev-server.test.ts)
    with the new positive + negative assertions. `npm test`
    confirms the unit-test additions pass.
 6. **URL-ownership-shape doc updates.** Edit
-   [`docs/architecture.md`](../../../architecture.md),
-   [`docs/dev.md`](../../../dev.md), and
-   [`docs/operations.md`](../../../operations.md) per the Contracts
+   [`docs/architecture.md`](/docs/architecture.md),
+   [`docs/dev.md`](/docs/dev.md), and
+   [`docs/operations.md`](/docs/operations.md) per the Contracts
    section. Re-grep the touched files for any remaining bare-
    path operator URL references; any survivor is either a
    page-behavior surface that defers to 2.5.3 (intentional) or
    a missed edit.
 7. **Local auth e2e exercise.** Run
    `npm run test:e2e:redeem` and `npm run test:e2e:redemptions`
-   ([`package.json:27-28`](../../../../package.json#L27)). The
+   ([`package.json:27-28`](/package.json#L27)). The
    wrappers provision the local Supabase Docker stack, forward
    the local service-role key, start the auth-e2e dev-server
    proxy (now widened per step 5), and exercise the renamed
    routes through the magic-link round-trip. The e2e fixtures
    already target the new `/game/redeem` and `/game/redemptions`
    URLs (per 2.5.1's edits at
-   [`tests/e2e/redeem-auth-fixture.ts:30`](../../../../tests/e2e/redeem-auth-fixture.ts#L30)
+   [`tests/e2e/redeem-auth-fixture.ts:30`](/tests/e2e/redeem-auth-fixture.ts#L30)
    and
-   [`tests/e2e/redemptions-auth-fixture.ts:30-31`](../../../../tests/e2e/redemptions-auth-fixture.ts#L29)),
+   [`tests/e2e/redemptions-auth-fixture.ts:30-31`](/tests/e2e/redemptions-auth-fixture.ts#L29)),
    so the e2e wrappers exercise the post-cutover apps/web carve-
    outs through the widened local proxy. The integration-side
    confirmation that the local proxy widening preserves the
@@ -491,7 +491,7 @@ the post-deploy manual verification captures.
     separately per AGENTS.md Review-Fix Rigor.
 11. **PR preparation, merge, and post-deploy verification.** Open
     the PR using
-    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 characters (suggested:
     `chore(m2-2.5.2): retire bare-path operator carve-outs from apps/web vercel.json`).
     Validation section names every command run + the local
@@ -548,7 +548,7 @@ the post-deploy manual verification captures.
   (unchanged).
 - **`npm run test:e2e:redeem` and `npm run test:e2e:redemptions`
   via the canonical wrappers**
-  ([`package.json:27-28`](../../../../package.json#L27)). Pre-merge
+  ([`package.json:27-28`](/package.json#L27)). Pre-merge
   load-bearing for the local proxy widening: the wrappers
   exercise the post-cutover carve-out routing through the local
   proxy, and a regression in the proxy edit fails them.
@@ -599,12 +599,12 @@ deployed-origin verification has been captured.
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../../../self-review-catalog.md).
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md).
 
 ### Frontend
 
 - **Vercel rewrite ordering audit**
-  ([catalog §Vercel rewrite ordering audit](../../../self-review-catalog.md)).
+  ([catalog §Vercel rewrite ordering audit](/docs/self-review-catalog.md)).
   Walk the post-edit `vercel.json` rule list against the
   invariant in this plan's Cross-Cutting Invariants section:
   rules 1–4 (apps/web carve-outs for `game` and `admin`
@@ -626,7 +626,7 @@ Drawn from
   11. `/auth/callback` → apps/site
   12. `/` → apps/site
 - **Platform-auth-gate config audit**
-  ([catalog §Platform-auth-gate config audit](../../../self-review-catalog.md)).
+  ([catalog §Platform-auth-gate config audit](/docs/self-review-catalog.md)).
   Three independent allow-lists must agree on the renamed
   operator URLs across every environment:
   `validateNextPath`'s allow-list (already updated in 2.5.1 and
@@ -640,22 +640,22 @@ Drawn from
 ### CI
 
 - **Rename-aware diff classification**
-  ([catalog §Rename-aware diff classification](../../../self-review-catalog.md#L354)).
+  ([catalog §Rename-aware diff classification](/docs/self-review-catalog.md#L354)).
   This sub-phase's diff is small but mixed: a JSON config file,
   a JS proxy file, a TS test file, and three docs. No symbol
   renames; the bulk of the diff is content changes (rule
   deletions, predicate widening, doc prose). The classifier
   should mark the branch as code-touching, not docs-only,
-  because [`apps/web/vercel.json`](../../../../apps/web/vercel.json)
+  because [`apps/web/vercel.json`](/apps/web/vercel.json)
   changes alter production routing.
 
 ### Runbook
 
 - **Vercel routing topology table currency**
-  ([catalog §Vercel routing topology table currency](../../../self-review-catalog.md)).
+  ([catalog §Vercel routing topology table currency](/docs/self-review-catalog.md)).
   The doc-table edits in
-  [`docs/architecture.md`](../../../architecture.md) and
-  [`docs/dev.md`](../../../dev.md) walk the post-edit `vercel.json` row
+  [`docs/architecture.md`](/docs/architecture.md) and
+  [`docs/dev.md`](/docs/dev.md) walk the post-edit `vercel.json` row
   by row. The Vercel rewrite ordering audit above and this audit
   cross-check each other: the audit asserts the source order is
   correct; this audit asserts the docs describe that source
@@ -663,13 +663,13 @@ Drawn from
 
 ## Documentation Currency PR Gate
 
-- [`docs/architecture.md`](../../../architecture.md) — top-level URL-
+- [`docs/architecture.md`](/docs/architecture.md) — top-level URL-
   ownership prose (lines 28–35, 59–63) and the Vercel routing
   topology table (lines 884–917) per Contracts.
-- [`docs/dev.md`](../../../dev.md) — apps/web URL list (lines 52–55)
+- [`docs/dev.md`](/docs/dev.md) — apps/web URL list (lines 52–55)
   and the Vercel rule-precedence walkthrough (lines 795–812) per
   Contracts.
-- [`docs/operations.md`](../../../operations.md) — Supabase Auth
+- [`docs/operations.md`](/docs/operations.md) — Supabase Auth
   dashboard redirect-URL allow-list description (lines 169–176)
   per Contracts.
 - This plan — Status flips to
@@ -689,14 +689,14 @@ of Scope.
 
 - **`shared/urls/` edits.** The rename surface settled in 2.5.1;
   this sub-phase touches no
-  [`shared/urls/`](../../../../shared/urls) file.
+  [`shared/urls/`](/shared/urls) file.
 - **apps/web or apps/site source edits.** The dispatcher and the
   page files settled in 2.5.1; this sub-phase introduces no
   source change in either app.
 - **Per-URL handler on apps/site for the retired bare paths.**
   Per the umbrella's "No backward-compat redirect for the bare
   paths, ever" invariant and the
-  [milestone doc](./m2-admin-restructuring.md) "Settled by
+  [milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md) "Settled by
   default" entry on cross-app smoke for bare-path retirement —
   apps/site's ordinary unknown-route response is the answer; no
   per-URL handler.
@@ -712,7 +712,7 @@ of Scope.
 - **Production-smoke fixture changes.** Per the umbrella's
   Status section, no 2.5 sub-phase modifies any production-smoke
   fixture; the existing
-  [`Production Admin Smoke`](../../../../scripts/testing/run-production-admin-smoke.cjs)
+  [`Production Admin Smoke`](/scripts/testing/run-production-admin-smoke.cjs)
   is independent of this phase.
 - **`<ThemeScope>` wiring on operator routes.** Deferred to M4
   phase 4.1 per the umbrella's invariant. The operator routes
@@ -744,7 +744,7 @@ risks.
   URLs to the local apps/site dev server; the e2e fixtures
   would fail because the apps/web operator pages aren't there.
   Mitigation: the unit test additions in
-  [`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts)
+  [`tests/scripts/run-auth-e2e-dev-server.test.ts`](/tests/scripts/run-auth-e2e-dev-server.test.ts)
   cover both the positive (carve-out paths still apps/web) and
   negative (bare paths now apps/site) sides; the e2e wrappers
   in step 7 catch any miscalibration end-to-end.
@@ -786,38 +786,38 @@ risks.
 
 ## Related Docs
 
-- [`m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md) — umbrella;
+- [`m2-phase-2-5-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-plan.md) — umbrella;
   this PR's Status flip + the cross-sub-phase narrative this
   sub-phase consumes.
-- [`m2-phase-2-5-1-plan.md`](./m2-phase-2-5-1-plan.md) —
+- [`m2-phase-2-5-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-1-plan.md) —
   predecessor sub-phase (Landed); the rename + dispatcher swap
   + magic-link `next=` flip + test/fixture URL updates this
   sub-phase composes on top of.
 - 2.5.3 sub-phase plan — drafts after this sub-phase reaches
   `Landed` per the umbrella's "Just-in-time sub-phase drafting"
   rule.
-- [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
+- [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone; "Vercel rule-ordering misordering across 2.3, 2.4,
   2.5" cross-phase risk + "Cross-app smoke for bare-path
   retirement" cross-phase decision this sub-phase consumes.
-- [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md) — landed
+- [`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md) — landed
   precedent for the two-phase Status pattern; the
   "Production verification evidence" section structure this
   sub-phase's post-deploy flip mirrors.
-- [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) — landed
+- [`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) — landed
   precedent for an apps/web `vercel.json` edit composing with
   prior-phase edits; verifies the rule-ordering invariant in
   this sub-phase's Self-Review Audits.
-- [`site-scaffold-and-routing.md`](../../site-scaffold-and-routing.md)
+- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
   — M0 phase 0.3 plan; established the
   `/event/:slug/game/*` apps/web carve-out (rules 1–2) the new
   operator URLs match before reaching the cross-app rule.
-- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source.
-- [`docs/testing-tiers.md`](../../../testing-tiers.md) — production-
+- [`docs/testing-tiers.md`](/docs/testing-tiers.md) — production-
   smoke tier reference; the two-phase Plan-to-Landed Gate's
   exact-string Status invariant this sub-phase mirrors with a
   non-prod-smoke variant.
-- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules; Phase
+- [`AGENTS.md`](/AGENTS.md) — workflow rules; Phase
   Planning Sessions, Doc Currency Is a PR Gate, Verified-by
   annotations, exact-match label discipline.

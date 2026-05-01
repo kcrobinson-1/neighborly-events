@@ -7,9 +7,9 @@ Landed.
 ## Context
 
 M2 closed when phase 2.5.3 merged in [#133](https://github.com/kcrobinson-1/neighborly-events/pull/133): every Phase Status row in
-[`m2-admin-restructuring.md`](./m2-admin-restructuring.md) reads
+[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) reads
 `Landed`, the milestone doc's top-level Status reads `Landed`, and the
-[epic's M2 row](../../event-platform-epic.md#L19) reads `Landed`. The 14 M2
+[epic's M2 row](/docs/plans/event-platform-epic.md#L19) reads `Landed`. The 14 M2
 plan-doc files now sit in `docs/plans/` next to the active milestone
 docs (M3, M4) that future work drafts against. Holding closed-milestone
 plans in the active namespace makes the active set noisier with every
@@ -22,7 +22,7 @@ The 2.5.3 plan named this archive move as the follow-up that resolves
 its own deliberate option-3 link-rewrite bias: every M2-internal
 scoping-doc reference rewrote to plain-text path prose specifically
 because option-1 rewrites pointing at
-[`m2-admin-restructuring.md`](./m2-admin-restructuring.md) sections
+[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) sections
 would need re-resolution when the milestone doc itself archives. That
 follow-up is this PR.
 
@@ -43,7 +43,7 @@ surviving doc surfaces (epic, milestone-list-style trackers,
 `AGENTS.md`, `docs/open-questions.md`, `docs/backlog.md`) so
 post-archive readers reach the moved files. Remove the
 "Archive M2 plan docs" entry from
-[`docs/backlog.md`](../../../backlog.md) since this PR completes it.
+[`docs/backlog.md`](/docs/backlog.md) since this PR completes it.
 
 After the PR:
 
@@ -71,13 +71,13 @@ Single PR. No production behavior change. No code, test, config, or
 migration touched.
 
 **Out of scope for this PR — archive M0 / M1 plans.** The backlog entry
-is explicit: M0 ([`framework-decision.md`](../../framework-decision.md),
-[`site-scaffold-and-routing.md`](../../site-scaffold-and-routing.md)) and
-M1 ([`shared-auth-foundation.md`](../../shared-auth-foundation.md),
-[`shared-db-foundation.md`](../../shared-db-foundation.md),
-[`shared-events-foundation.md`](../../shared-events-foundation.md),
-[`shared-styles-foundation.md`](../../shared-styles-foundation.md),
-[`shared-urls-foundation.md`](../../shared-urls-foundation.md)) plans
+is explicit: M0 ([`framework-decision.md`](/docs/plans/framework-decision.md),
+[`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)) and
+M1 ([`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md),
+[`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md),
+[`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md),
+[`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md),
+[`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md)) plans
 archive when their respective milestones close. M0 and M1 are already
 landed per the epic's milestone status table, so they could move now —
 but bundling expands scope beyond the requested backlog item, mixes
@@ -119,12 +119,12 @@ triggered on.
   to disk to catch this if it slipped.
 - **Same-`docs/plans/` `./` links rewrite to `../../`.** Moved files
   also reference siblings in the *original* `docs/plans/` directory:
-  [`event-platform-epic.md`](../../event-platform-epic.md) (epic, stays),
-  [`shared-auth-foundation.md`](../../shared-auth-foundation.md),
-  [`shared-events-foundation.md`](../../shared-events-foundation.md),
-  [`shared-styles-foundation.md`](../../shared-styles-foundation.md),
-  [`shared-urls-foundation.md`](../../shared-urls-foundation.md), and
-  [`site-scaffold-and-routing.md`](../../site-scaffold-and-routing.md).
+  [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) (epic, stays),
+  [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md),
+  [`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md),
+  [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md),
+  [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md), and
+  [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md).
   Each of those `](./X.md)` links rewrites to `](../../X.md)`. The
   enumeration is closed — every `./` reference inside an M2 file
   either points at another M2 file (stays as `./`) or at one of the
@@ -194,19 +194,19 @@ move alongside.
 These four files retain references into the M2 set after the move and
 must rewrite each reference to the archive path.
 
-- **[`AGENTS.md`](../../../../AGENTS.md)** — single reference at line 256
+- **[`AGENTS.md`](/AGENTS.md)** — single reference at line 256
   citing the M2 milestone doc as a Mermaid-graph example. Updates from
   `docs/plans/m2-admin-restructuring.md` to
   `docs/plans/archive/m2/m2-admin-restructuring.md`. The example is
   still valid (the graph still demonstrates the contract); only the
   path resolves to the archived location. Verified by:
-  [`AGENTS.md:256`](../../../../AGENTS.md#L256).
-- **[`docs/open-questions.md`](../../../open-questions.md)** — single
+  [`AGENTS.md:256`](/AGENTS.md#L256).
+- **[`docs/open-questions.md`](/docs/open-questions.md)** — single
   reference at line 36 in the "Authoring And Publishing" section's
   resolution prose pointing at the M2 milestone doc as the resolution
   source. Updates to `./plans/archive/m2/m2-admin-restructuring.md`.
-  Verified by: [`docs/open-questions.md:36`](../../../open-questions.md#L36).
-- **[`docs/plans/event-platform-epic.md`](../../event-platform-epic.md)** —
+  Verified by: [`docs/open-questions.md:36`](/docs/open-questions.md#L36).
+- **[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)** —
   two prose-narrative references at lines 546 and 583 pointing at the
   M2 milestone doc. Both rewrite from `./m2-admin-restructuring.md`
   to `./archive/m2/m2-admin-restructuring.md`. The earlier draft of
@@ -214,13 +214,13 @@ must rewrite each reference to the archive path.
   status table at lines 15–20 has only `Milestone | Status` columns —
   no plan-link column exists on the M2 row, so there is no link to
   rewrite there. Verified by:
-  [`docs/plans/event-platform-epic.md:546,583`](../../event-platform-epic.md#L546)
+  [`docs/plans/event-platform-epic.md:546,583`](/docs/plans/event-platform-epic.md#L546)
   and `grep -nE 'm2-(admin-restructuring|phase-2-)' docs/plans/event-platform-epic.md`
   returning exactly those two hits.
-- **[`docs/backlog.md`](../../../backlog.md)** — the "Archive M2 plan docs"
+- **[`docs/backlog.md`](/docs/backlog.md)** — the "Archive M2 plan docs"
   entry at lines 194–211 removes entirely (this PR completes it).
   No other M2 references in the backlog survive the entry removal.
-  Verified by: [`docs/backlog.md:194`](../../../backlog.md#L194).
+  Verified by: [`docs/backlog.md:194`](/docs/backlog.md#L194).
 
 ### Modify + move (this plan, self-archive)
 
@@ -278,7 +278,7 @@ must rewrite each reference to the archive path.
   styles** — this PR is doc-only.
 - **Frozen PR / commit URL references** inside any moved file — those
   anchor specific git history (per the
-  [`docs/plans/repo-rename.md`](../../repo-rename.md) precedent) and stay
+  [`docs/plans/repo-rename.md`](/docs/plans/repo-rename.md) precedent) and stay
   verbatim.
 
 ## Execution Steps
@@ -286,10 +286,10 @@ must rewrite each reference to the archive path.
 1. **Pre-edit gate.** Confirm clean worktree, feature branch (this
    plan should already be on its own branch — `git mv` operations on
    `main` violate the Pre-Edit Gate). Confirm M2's terminal status
-   per [`m2-admin-restructuring.md`](./m2-admin-restructuring.md):
+   per [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md):
    every Phase Status row reads `Landed`, top-level Status reads
    `Landed`, and the
-   [epic M2 row](../../event-platform-epic.md#L19) reads `Landed`. If any
+   [epic M2 row](/docs/plans/event-platform-epic.md#L19) reads `Landed`. If any
    row reads otherwise, escalate — this PR is premature.
 2. **Baseline validation.** Run `npm run lint` and `npm run build:web`
    from a clean state. Both must pass before any edit. (Doc-only PRs
@@ -325,9 +325,9 @@ must rewrite each reference to the archive path.
    the closed-enumeration grep from step 3; the only `]( ./X.md)`
    link targets should be M2 siblings.
 7. **Surviving doc surface rewrites.** Edit
-   [`AGENTS.md`](../../../../AGENTS.md) line 256,
-   [`docs/open-questions.md`](../../../open-questions.md) line 36, and
-   [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md)
+   [`AGENTS.md`](/AGENTS.md) line 256,
+   [`docs/open-questions.md`](/docs/open-questions.md) line 36, and
+   [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
    lines 19, 546, and 583 per Contracts. Re-run the filename-anchored
    grep from step 3; every surviving link href containing an M2
    filename should either resolve under `docs/plans/archive/m2/`
@@ -340,7 +340,7 @@ must rewrite each reference to the archive path.
    missed.
 8. **Backlog entry removal + plan Status flip.** Delete the
    "Archive M2 plan docs" entry from
-   [`docs/backlog.md`](../../../backlog.md) (lines 194–211). Flip this
+   [`docs/backlog.md`](/docs/backlog.md) (lines 194–211). Flip this
    plan's Status from `Proposed` to `Landed` while the file is still
    at `docs/plans/archive-m2-plan-docs-plan.md`. The flip happens
    pre-self-archive so reviewers see the Status transition as a
@@ -365,14 +365,14 @@ must rewrite each reference to the archive path.
 11. **Code-review feedback loop.** Walk the diff against every
     Cross-Cutting Invariant and every Self-Review Audit named below.
     Apply fixes; commit review-fix changes separately per
-    [`AGENTS.md`](../../../../AGENTS.md) Review-Fix Rigor.
+    [`AGENTS.md`](/AGENTS.md) Review-Fix Rigor.
 12. **Plan-to-PR completion gate.** Walk every Goal, Cross-Cutting
     Invariant, Validation Gate command, and Self-Review Audit.
     Confirm each is satisfied or deferred with rationale **inside
     this plan** (which now lives at its archive path). Deferrals do
     not live in PR body or follow-up issues.
 13. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 characters (suggested:
     `docs: archive M2 plan docs + self-archive this plan`). Body
     fills every section (per memory: 9-section template). Validation
@@ -418,7 +418,7 @@ stale relative paths.
    under "Files To Touch — Modify + move (this plan, self-archive)."
    Single commit; same atomic move-and-rewrite rule as commit 2.
 6. **Review-fix commits.** As needed, kept distinct per
-   [`AGENTS.md`](../../../../AGENTS.md) Review-Fix Rigor.
+   [`AGENTS.md`](/AGENTS.md) Review-Fix Rigor.
 
 **Note on commit 1.** If this plan was added to `main` in a prior
 plan-drafting PR (matching the recent precedent of `7779949 docs(m2-2.5):
@@ -467,7 +467,7 @@ proof; the cross-check against the expected-hits enumeration is.
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../../../self-review-catalog.md).
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md).
 
 ### Runbook
 
@@ -507,7 +507,7 @@ Drawn from
 ### CI
 
 - **Rename-aware diff classification**
-  ([catalog §Rename-aware diff classification](../../../self-review-catalog.md#L354)).
+  ([catalog §Rename-aware diff classification](/docs/self-review-catalog.md#L354)).
   This PR's diff is mostly file moves with mechanical text edits.
   The classifier should mark the branch as docs-only — no code,
   no test, no config, no production behavior change. Any
@@ -516,22 +516,22 @@ Drawn from
 
 ## Documentation Currency PR Gate
 
-- **[`docs/plans/event-platform-epic.md`](../../event-platform-epic.md)** —
+- **[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)** —
   M2 row plan-link rewrites; prose-narrative milestone-doc references
   rewrite. Per Contracts.
-- **[`docs/open-questions.md`](../../../open-questions.md)** — resolution
+- **[`docs/open-questions.md`](/docs/open-questions.md)** — resolution
   reference rewrites. Per Contracts.
-- **[`docs/backlog.md`](../../../backlog.md)** — "Archive M2 plan docs"
+- **[`docs/backlog.md`](/docs/backlog.md)** — "Archive M2 plan docs"
   entry removes. Per Contracts.
-- **[`AGENTS.md`](../../../../AGENTS.md)** — Mermaid-example reference
+- **[`AGENTS.md`](/AGENTS.md)** — Mermaid-example reference
   rewrites. Per Contracts.
 - **This plan** — Status flips from `Proposed` to `Landed` per the
   regular Plan-to-PR Completion Gate.
-- **[`README.md`](../../../../README.md),
-  [`docs/architecture.md`](../../../architecture.md),
-  [`docs/dev.md`](../../../dev.md),
-  [`docs/product.md`](../../../product.md),
-  [`docs/operations.md`](../../../operations.md)** — no edit required.
+- **[`README.md`](/README.md),
+  [`docs/architecture.md`](/docs/architecture.md),
+  [`docs/dev.md`](/docs/dev.md),
+  [`docs/product.md`](/docs/product.md),
+  [`docs/operations.md`](/docs/operations.md)** — no edit required.
   Pre-edit grep confirms zero references to the M2 plan-doc set in
   these surfaces (M2's doc-currency tail in 2.5.3 already swept these
   for terminology, not plan-doc paths).
@@ -549,7 +549,7 @@ Drawn from
   `m2-phase-2-5-3-plan.md` lines 320 and 331) is a separate
   housekeeping task.
 - **Top-level epic Status flip.** Owned by M4's terminal PR per
-  [`event-platform-epic.md:23-24`](../../event-platform-epic.md#L23).
+  [`event-platform-epic.md:23-24`](/docs/plans/event-platform-epic.md#L23).
 - **Trust-boundary changes.** No SQL, no RLS, no Edge Function,
   no `shared/auth/` edit.
 - **Production-smoke fixture changes.** Doc-only PR.
@@ -599,7 +599,7 @@ Drawn from
   says "or equivalent." This plan picks the nested
   `docs/plans/archive/m2/` subfolder over the flat
   `docs/plans/archive/` (matching existing archived plans like
-  [`quiz-authoring-plan.md`](../quiz-authoring-plan.md))
+  [`quiz-authoring-plan.md`](/docs/plans/archive/quiz-authoring-plan.md))
   because the M2 set is large enough (14 files) that flattening
   would dominate the archive directory's listing and obscure
   unrelated archived plans, and because nesting reserves a slot for
@@ -622,23 +622,23 @@ Drawn from
 
 ## Related Docs
 
-- [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
+- [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; moves to archive in this PR. Source of M2's closed
   Status.
-- [`m2-phase-2-5-3-plan.md`](./m2-phase-2-5-3-plan.md) — M2's
+- [`m2-phase-2-5-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-3-plan.md) — M2's
   terminal sub-phase; "Backlog Impact" subsection adds the backlog
   entry this PR completes.
-- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
   epic; M2 row plan-link rewrites in this PR.
-- [`docs/backlog.md`](../../../backlog.md) — backlog entry removes in
+- [`docs/backlog.md`](/docs/backlog.md) — backlog entry removes in
   this PR.
-- [`docs/open-questions.md`](../../../open-questions.md) — resolution
+- [`docs/open-questions.md`](/docs/open-questions.md) — resolution
   reference rewrites in this PR.
-- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules; Doc Currency
+- [`AGENTS.md`](/AGENTS.md) — workflow rules; Doc Currency
   Is a PR Gate, Plan-to-PR Completion Gate. The Mermaid-graph
   example reference at line 256 rewrites in this PR.
-- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source.
-- [`repo-rename.md`](../../repo-rename.md) — precedent for doc-only
+- [`repo-rename.md`](/docs/plans/repo-rename.md) — precedent for doc-only
   textual-rewrite PRs that explicitly leave frozen URL references
   alone.

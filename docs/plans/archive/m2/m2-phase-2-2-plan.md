@@ -6,7 +6,7 @@ Landed.
 
 Followed the two-phase "Plan-to-Landed Gate For Plans That Touch
 Production Smoke" pattern from
-[`docs/testing-tiers.md`](../../../testing-tiers.md): the implementing
+[`docs/testing-tiers.md`](/docs/testing-tiers.md): the implementing
 PR ([#113](https://github.com/kcrobinson-1/neighborly-events/pull/113))
 plus a follow-up slug-resolution fix
 ([#114](https://github.com/kcrobinson-1/neighborly-events/pull/114))
@@ -72,9 +72,9 @@ contract against the production origin where the allow-list is
 configured correctly.
 
 The vitest matrix at
-[`tests/web/pages/EventAdminPage.test.tsx`](../../../../tests/web/pages/EventAdminPage.test.tsx)
+[`tests/web/pages/EventAdminPage.test.tsx`](/tests/web/pages/EventAdminPage.test.tsx)
 and
-[`tests/shared/auth/useOrganizerForEvent.test.ts`](../../../../tests/shared/auth/useOrganizerForEvent.test.ts)
+[`tests/shared/auth/useOrganizerForEvent.test.ts`](/tests/shared/auth/useOrganizerForEvent.test.ts)
 exercises the organizer-only path of the OR gate (organizer
 true + admin false → authorized) symmetrically with the
 admin-only path (organizer false + admin true → authorized) at
@@ -87,16 +87,16 @@ in production for any reason — at that point exercising the
 flow becomes free, and there's no current operational driver to
 seed it just for this verification.
 
-**Parent epic:** [`event-platform-epic.md`](../../event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M2, Phase 2.2. Sibling phases: 2.1 RLS broadening + Edge
 Function organizer gate — Landed
-([`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md));
+([`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md));
 2.3 `/auth/callback` and `/` migration — Proposed; 2.4 platform admin
 migration — Proposed; 2.5 `/game/*` URL migration — Proposed. The
 epic's M2 row stays `Proposed` until 2.5 also lands.
 
 **Hard dependency on 2.1 already-merged.** Per
-[`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
 "Cross-Phase Risks → Phase ordering violation," merging this phase
 before 2.1.1 + 2.1.2 ships a UI that *appears* organizer-authorized but
 returns zero rows on every read (RLS filters drafts and versions) and
@@ -108,7 +108,7 @@ plan assumes both are in `main` before the 2.2 PR opens.
 from (`docs/plans/scoping/m2-phase-2-2.md`, deleted in M2 phase
 2.5.3 batch deletion — see git history for the pre-deletion file
 inventory, contracts walkthrough, and Resolved Decisions section);
-[`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
 "Cross-Phase Decisions" §1, §3, and "Settled by default" for the
 audit-log-via-RPC, apps/site auth idiom, and combined-helper
 deliberation; the Resolved Decisions for the
@@ -164,8 +164,8 @@ triggered the rule.
   hard-deleted-event, signed-in-but-unassigned, and missing-`auth.users`-row
   cases all collapse to the same `role_gate` state. The role-gate copy
   does not distinguish them, mirroring the
-  [`authorizeRedemptions.ts`](../../../../apps/web/src/redemptions/authorizeRedemptions.ts)
-  / [`authorizeRedeem.ts`](../../../../apps/web/src/redeem/authorizeRedeem.ts)
+  [`authorizeRedemptions.ts`](/apps/web/src/redemptions/authorizeRedemptions.ts)
+  / [`authorizeRedeem.ts`](/apps/web/src/redeem/authorizeRedeem.ts)
   precedent.
 - **Per-branch error semantics for the composed RPCs.** The hook
   runs `is_organizer_for_event` and `is_root_admin` in parallel.
@@ -180,40 +180,40 @@ triggered the rule.
 ## Naming
 
 - New page component: `apps/web/src/pages/EventAdminPage.tsx`. Mirrors
-  [`EventRedemptionsPage.tsx`](../../../../apps/web/src/pages/EventRedemptionsPage.tsx)
-  / [`EventRedeemPage.tsx`](../../../../apps/web/src/pages/EventRedeemPage.tsx)
+  [`EventRedemptionsPage.tsx`](/apps/web/src/pages/EventRedemptionsPage.tsx)
+  / [`EventRedeemPage.tsx`](/apps/web/src/pages/EventRedeemPage.tsx)
   shape: route-level component takes `{ onNavigate, slug }`, owns the
   session / authorization state machine, renders an in-place
   `SignInForm` for signed-out callers, and delegates the authorized
   state to a workspace child.
 - New per-event workspace: `apps/web/src/admin/EventAdminWorkspace.tsx`.
   Composes the existing
-  [`AdminEventDetailsForm`](../../../../apps/web/src/admin/AdminEventDetailsForm.tsx),
-  [`AdminQuestionEditor`](../../../../apps/web/src/admin/AdminQuestionEditor.tsx),
-  and [`AdminPublishPanel`](../../../../apps/web/src/admin/AdminPublishPanel.tsx)
+  [`AdminEventDetailsForm`](/apps/web/src/admin/AdminEventDetailsForm.tsx),
+  [`AdminQuestionEditor`](/apps/web/src/admin/AdminQuestionEditor.tsx),
+  and [`AdminPublishPanel`](/apps/web/src/admin/AdminPublishPanel.tsx)
   for one slug-resolved draft.
 - New per-event hook: `apps/web/src/admin/useEventAdminWorkspace.ts`.
-  Per-event analog to [`useAdminDashboard`](../../../../apps/web/src/admin/useAdminDashboard.ts);
+  Per-event analog to [`useAdminDashboard`](/apps/web/src/admin/useAdminDashboard.ts);
   accepts a resolved `eventId`, seeds a single-draft dashboard state,
   and delegates the load/save/publish lifecycle to the existing
-  [`useSelectedDraft`](../../../../apps/web/src/admin/useSelectedDraft.ts)
+  [`useSelectedDraft`](/apps/web/src/admin/useSelectedDraft.ts)
   hook.
 - New shared auth hook: `shared/auth/useOrganizerForEvent.ts`. Returns
   a `UseOrganizerForEventState` discriminated union (`loading` /
   `authorized` / `role_gate` / `transient_error`).
 - New shared events helper: `loadDraftEventSummary(eventId)` in
-  [`shared/events/admin.ts`](../../../../shared/events/admin.ts). Reads
+  [`shared/events/admin.ts`](/shared/events/admin.ts). Reads
   one row from `game_event_admin_status` by event id and returns a
   `DraftEventSummary | null`. The existing
-  [`loadDraftEvent`](../../../../shared/events/admin.ts) does the same
+  [`loadDraftEvent`](/shared/events/admin.ts) does the same
   status-by-id read internally before fetching the draft content;
   the new helper exposes that read for callers that need only the
   summary.
 - New URL matcher: `matchEventAdminPath(pathname)` in
-  [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts), exported
-  through [`shared/urls/index.ts`](../../../../shared/urls/index.ts).
-  Mirrors [`matchAdminEventPath`](../../../../shared/urls/routes.ts) /
-  [`matchEventRedeemPath`](../../../../shared/urls/routes.ts) decoding
+  [`shared/urls/routes.ts`](/shared/urls/routes.ts), exported
+  through [`shared/urls/index.ts`](/shared/urls/index.ts).
+  Mirrors [`matchAdminEventPath`](/shared/urls/routes.ts) /
+  [`matchEventRedeemPath`](/shared/urls/routes.ts) decoding
   discipline (slash rejection, `decodeURIComponent` failure
   handling).
 - Test file naming follows the surface-not-phase convention
@@ -224,7 +224,7 @@ triggered the rule.
 ## Contracts
 
 **`routes.eventAdmin(slug: string): AppPath`.** Already exported by
-[`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) for
+[`shared/urls/routes.ts`](/shared/urls/routes.ts) for
 forward-compatibility (M1 phase 1.2). Shape unchanged; this phase
 adds the matcher and the route consumer.
 
@@ -300,9 +300,9 @@ match branch, not inside this component). State machine:
 
 **`EventAdminWorkspace({ eventId, slug, ... }): ReactNode`.**
 Per-event workspace. Composes
-[`AdminEventDetailsForm`](../../../../apps/web/src/admin/AdminEventDetailsForm.tsx),
-[`AdminQuestionEditor`](../../../../apps/web/src/admin/AdminQuestionEditor.tsx),
-and [`AdminPublishPanel`](../../../../apps/web/src/admin/AdminPublishPanel.tsx)
+[`AdminEventDetailsForm`](/apps/web/src/admin/AdminEventDetailsForm.tsx),
+[`AdminQuestionEditor`](/apps/web/src/admin/AdminQuestionEditor.tsx),
+and [`AdminPublishPanel`](/apps/web/src/admin/AdminPublishPanel.tsx)
 for one slug-resolved draft. No draft list, no create / duplicate
 buttons, no platform-admin "back to all events" link — only the
 single-event edit / publish / unpublish surface. Drives state via
@@ -317,7 +317,7 @@ mount and on `eventId` change:
    `status: "ready"`, `email: <session email>`, and
    `drafts: [<the one summary>]`.
 3. Delegates to
-   [`useSelectedDraft`](../../../../apps/web/src/admin/useSelectedDraft.ts)
+   [`useSelectedDraft`](/apps/web/src/admin/useSelectedDraft.ts)
    (existing hook) for the load / edit / save / publish / unpublish
    lifecycle. The synthetic dashboardState's `drafts` list is the
    `visibleDraftIdSet` `useSelectedDraft` keys on; this satisfies
@@ -333,7 +333,7 @@ the focused `loadDraftEventSummary` is a one-row read).
 
 **`loadDraftEventSummary(eventId: string): Promise<DraftEventSummary | null>`.**
 New focused read in
-[`shared/events/admin.ts`](../../../../shared/events/admin.ts). Selects
+[`shared/events/admin.ts`](/shared/events/admin.ts). Selects
 the same `game_event_admin_status` columns
 `listDraftEventSummaries` selects, filters by `event_id`, and
 returns `null` on no-match. The existing `loadDraftEvent` already
@@ -344,10 +344,10 @@ paths or behavior.
 
 **`shared/auth/useOrganizerForEvent` exports.** The new hook and
 its `UseOrganizerForEventState` type re-export through
-[`shared/auth/index.ts`](../../../../shared/auth/index.ts) so apps/web
+[`shared/auth/index.ts`](/shared/auth/index.ts) so apps/web
 consumes it via `import { useOrganizerForEvent } from "../auth"`
 (matching the existing `useAuthSession` re-export pattern through
-[`apps/web/src/auth/index.ts`](../../../../apps/web/src/auth/index.ts);
+[`apps/web/src/auth/index.ts`](/apps/web/src/auth/index.ts);
 see the apps/web binding-module pattern from M1 phase 1.3.1).
 
 **`apps/web/src/auth/index.ts` binding.** Re-export the new hook
@@ -364,19 +364,19 @@ following epic-level invariants apply:
   request, sign-out, the in-place sign-in form, and now the
   organizer role hook. No new Supabase client; no inline role
   predicate. Verified by:
-  [`shared/auth/index.ts`](../../../../shared/auth/index.ts) re-export
+  [`shared/auth/index.ts`](/shared/auth/index.ts) re-export
   list (the new hook lands here, not in `apps/web/src/auth/`).
 - **URL contract.** `/event/:slug/admin` is the permanent contract
   reserved by M0 phase 0.3 in
-  [`apps/web/vercel.json`](../../../../apps/web/vercel.json) lines 11–18.
+  [`apps/web/vercel.json`](/apps/web/vercel.json) lines 11–18.
   No other URL contract changes in this phase.
 - **Theme route scoping.** The route is under `/event/:slug/*`, so
   `<ThemeScope>` wrapping is required; centralized in
-  [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx)'s match
+  [`apps/web/src/App.tsx`](/apps/web/src/App.tsx)'s match
   branch per the M1 phase 1.5 invariant.
 - **Deferred ThemeScope wiring.** Through M3, `getThemeForSlug`
   returns the platform Sage Civic Theme for every slug (verified by
-  [`shared/styles/themes/index.ts`](../../../../shared/styles/themes/index.ts)
+  [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
   being an empty registry). Per-event admin renders Sage
   Civic-themed for any event including `madrona` until M4 phase 4.1
   registers Madrona's `Theme`. This is intentional, not a bug; the
@@ -429,7 +429,7 @@ following epic-level invariants apply:
 - `apps/web/src/admin/useEventAdminWorkspace.ts` — per-event hook.
   Calls `loadDraftEventSummary(eventId)` to seed a single-draft
   dashboard state, then composes
-  [`useSelectedDraft`](../../../../apps/web/src/admin/useSelectedDraft.ts)
+  [`useSelectedDraft`](/apps/web/src/admin/useSelectedDraft.ts)
   for load / edit / save / publish / unpublish.
 - `tests/web/pages/EventAdminPage.test.tsx` — Vitest coverage for:
   `missing_config` shell; `loading` shell; `signed_out` rendering
@@ -453,34 +453,34 @@ following epic-level invariants apply:
 
 ## Files to touch — modify
 
-- [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) — add
+- [`shared/urls/routes.ts`](/shared/urls/routes.ts) — add
   `matchEventAdminPath` mirroring the existing matchers.
-- [`shared/urls/validateNextPath.ts`](../../../../shared/urls/validateNextPath.ts)
+- [`shared/urls/validateNextPath.ts`](/shared/urls/validateNextPath.ts)
   — add the `matchEventAdminPath` allow-list branch.
-- [`shared/urls/index.ts`](../../../../shared/urls/index.ts) — export
+- [`shared/urls/index.ts`](/shared/urls/index.ts) — export
   `matchEventAdminPath`.
-- [`shared/auth/index.ts`](../../../../shared/auth/index.ts) — export
+- [`shared/auth/index.ts`](/shared/auth/index.ts) — export
   the new hook and its result type.
-- [`apps/web/src/auth/index.ts`](../../../../apps/web/src/auth/index.ts)
+- [`apps/web/src/auth/index.ts`](/apps/web/src/auth/index.ts)
   — re-export the new hook and result type from `shared/auth/`
   (mirrors the existing `useAuthSession` re-export pattern).
-- [`shared/events/admin.ts`](../../../../shared/events/admin.ts) — add
+- [`shared/events/admin.ts`](/shared/events/admin.ts) — add
   `loadDraftEventSummary(eventId): Promise<DraftEventSummary | null>`
   built on the existing `mapDraftSummary` helper and the same
   status-by-id read shape `loadDraftEvent` already uses.
-- [`shared/events/index.ts`](../../../../shared/events/index.ts) —
+- [`shared/events/index.ts`](/shared/events/index.ts) —
   export `loadDraftEventSummary`.
-- [`apps/web/src/lib/adminGameApi.ts`](../../../../apps/web/src/lib/adminGameApi.ts)
+- [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts)
   — re-export `loadDraftEventSummary` (binding-module pattern from
   M1 phase 1.4).
-- [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx) — add the
+- [`apps/web/src/App.tsx`](/apps/web/src/App.tsx) — add the
   `matchEventAdminPath` branch to `getPageContent` and wrap the
   `EventAdminPage` render in `<ThemeScope
   theme={getThemeForSlug(matched.slug)}>`. The match-branch wrap
   is the centralized ThemeScope site for the per-event admin route
   per the M1 phase 1.5 invariant; M4 phase 4.1 will add symmetric
   wraps for the existing game / redeem / redemptions branches.
-- [`apps/web/src/styles/_overrides.scss`](../../../../apps/web/src/styles)
+- [`apps/web/src/styles/_overrides.scss`](/apps/web/src/styles)
   (or the appropriate existing partial — confirmed at
   implementation time) — add `.theme-scope { display: contents; }`
   so the wrapper `<div>` does not introduce unintended layout flow
@@ -489,14 +489,14 @@ following epic-level invariants apply:
   ships the apps/web SCSS rule that satisfies it. (The exact
   partial is decided during implementation against the structure
   in
-  [`apps/web/src/styles/_tokens.scss`](../../../../apps/web/src/styles/_tokens.scss)
+  [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
   and its sibling partials; the rule lands in a partial that is
   unconditionally imported through
-  [`apps/web/src/styles.scss`](../../../../apps/web/src/styles.scss).)
-- [`docs/architecture.md`](../../../architecture.md) — add the new
+  [`apps/web/src/styles.scss`](/apps/web/src/styles.scss).)
+- [`docs/architecture.md`](/docs/architecture.md) — add the new
   per-event admin route to the frontend route inventory and to the
   Vercel routing topology table footnote.
-- [`docs/operations.md`](../../../operations.md) — add a one-line entry
+- [`docs/operations.md`](/docs/operations.md) — add a one-line entry
   documenting the new organizer-accessible authoring URL and the
   fact that organizer access is event-scoped (not platform-wide).
 - This plan — Status flips from `Proposed` to `Landed` in the
@@ -509,12 +509,12 @@ following epic-level invariants apply:
 - `supabase/functions/*` — no Edge Function change. The
   organizer-or-admin authorization gate shipped in 2.1.2's
   `authenticateEventOrganizerOrAdmin` helper migration.
-- [`apps/web/src/admin/useAdminDashboard.ts`](../../../../apps/web/src/admin/useAdminDashboard.ts),
-  [`apps/web/src/admin/AdminDashboardContent.tsx`](../../../../apps/web/src/admin/AdminDashboardContent.tsx),
-  [`apps/web/src/admin/AdminEventWorkspace.tsx`](../../../../apps/web/src/admin/AdminEventWorkspace.tsx),
-  [`apps/web/src/admin/AdminPageShell.tsx`](../../../../apps/web/src/admin/AdminPageShell.tsx),
-  [`apps/web/src/admin/draftCreation.ts`](../../../../apps/web/src/admin/draftCreation.ts),
-  [`apps/web/src/pages/AdminPage.tsx`](../../../../apps/web/src/pages/AdminPage.tsx)
+- [`apps/web/src/admin/useAdminDashboard.ts`](/apps/web/src/admin/useAdminDashboard.ts),
+  [`apps/web/src/admin/AdminDashboardContent.tsx`](/apps/web/src/admin/AdminDashboardContent.tsx),
+  [`apps/web/src/admin/AdminEventWorkspace.tsx`](/apps/web/src/admin/AdminEventWorkspace.tsx),
+  [`apps/web/src/admin/AdminPageShell.tsx`](/apps/web/src/admin/AdminPageShell.tsx),
+  [`apps/web/src/admin/draftCreation.ts`](/apps/web/src/admin/draftCreation.ts),
+  [`apps/web/src/pages/AdminPage.tsx`](/apps/web/src/pages/AdminPage.tsx)
   — kept verbatim. Phase 2.4 owns the platform-admin scaffolding
   shrink (deleting `AdminDashboardContent`, `AdminPageShell`, the
   `useAdminDashboard` draft-list / create / duplicate state, and
@@ -531,11 +531,11 @@ following epic-level invariants apply:
   2.5.3 batch deletion; see git history for the pre-deletion
   content) so phase 2.4's diff stays a clean surface-shrink
   rather than a mixed move/edit.
-- [`apps/web/vercel.json`](../../../../apps/web/vercel.json) — no edit.
+- [`apps/web/vercel.json`](/apps/web/vercel.json) — no edit.
   `/event/:slug/admin` and `/event/:slug/admin/:path*` were
   reserved for apps/web by M0 phase 0.3 (lines 11–18); the SPA
   fallback already routes them to `/index.html`.
-- [`apps/site/*`](../../../../apps/site) — no apps/site change. Phase 2.2
+- [`apps/site/*`](/apps/site) — no apps/site change. Phase 2.2
   is an apps/web addition; apps/site involvement begins in 2.3.
 - `shared/styles/*` — no shared/styles change. The `<ThemeScope>`
   component, `getThemeForSlug` resolver, and platform Theme all
@@ -548,48 +548,48 @@ following epic-level invariants apply:
    (not `main`). Confirm 2.1.1 + 2.1.2 are both in `main`
    (`git log --oneline main | grep -i "phase 2.1"` should show two
    merge commits before this branch's base). Read this plan, then
-   [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) and
+   [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) and
    the M1 phase 1.5.2 plan (the per-phase scoping doc that fed
    this plan, `docs/plans/scoping/m2-phase-2-2.md`, was deleted in
    M2 phase 2.5.3 batch deletion — see git history if needed)
-   ([`shared-styles-foundation.md`](../../shared-styles-foundation.md))
+   ([`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md))
    for the ThemeScope wrapping conventions before editing.
 2. **Baseline validation.** Run `npm run lint`,
    `npm run build:web`, `npm run build:site`, `npm test`,
    `npm run test:functions`, and the repo's pgTAP runner of record
-   (`npm run test:db` per [`docs/dev.md`](../../../dev.md)). All must
+   (`npm run test:db` per [`docs/dev.md`](/docs/dev.md)). All must
    pass before any edit. Capture a fresh UI-review snapshot of the
    existing `/admin/events/:eventId` deep editor for one fixture
    draft (mobile and desktop viewports) — this is the before pair
    for the redundant-entry-point comparison.
 3. **shared/urls extension.** Add `matchEventAdminPath` in
-   [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) and
-   extend [`shared/urls/validateNextPath.ts`](../../../../shared/urls/validateNextPath.ts)
+   [`shared/urls/routes.ts`](/shared/urls/routes.ts) and
+   extend [`shared/urls/validateNextPath.ts`](/shared/urls/validateNextPath.ts)
    to admit it. Export the matcher through
-   [`shared/urls/index.ts`](../../../../shared/urls/index.ts). Land the
+   [`shared/urls/index.ts`](/shared/urls/index.ts). Land the
    new test cases in `tests/shared/urls/routes.test.ts` and
    `tests/shared/urls/validateNextPath.test.ts` in the same
    commit; re-run `npm test` in scope-mode to confirm the new
    matcher tests pass and existing tests stay green.
 4. **shared/events read.** Add `loadDraftEventSummary(eventId)` in
-   [`shared/events/admin.ts`](../../../../shared/events/admin.ts). Reuse
+   [`shared/events/admin.ts`](/shared/events/admin.ts). Reuse
    the existing `mapDraftSummary` helper and the
    `game_event_admin_status` projection columns from
    `listDraftEventSummaries`. Export through
-   [`shared/events/index.ts`](../../../../shared/events/index.ts) and
+   [`shared/events/index.ts`](/shared/events/index.ts) and
    re-export from
-   [`apps/web/src/lib/adminGameApi.ts`](../../../../apps/web/src/lib/adminGameApi.ts).
+   [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts).
    No other consumer change.
 5. **shared/auth hook.** Implement
    `shared/auth/useOrganizerForEvent.ts` per the contract above.
    Cancellation discipline: a `let isCancelled = false;` flag set
    in the effect cleanup, mirrored against every async branch
    (event lookup, parallel RPC, retry timeout). Export through
-   [`shared/auth/index.ts`](../../../../shared/auth/index.ts); re-export
-   from [`apps/web/src/auth/index.ts`](../../../../apps/web/src/auth/index.ts).
+   [`shared/auth/index.ts`](/shared/auth/index.ts); re-export
+   from [`apps/web/src/auth/index.ts`](/apps/web/src/auth/index.ts).
    Land `tests/shared/auth/useOrganizerForEvent.test.ts` in the
    same commit. Tests use the existing `vitest` mock pattern from
-   [`tests/shared/auth/api.test.ts`](../../../../tests/shared/auth/api.test.ts)
+   [`tests/shared/auth/api.test.ts`](/tests/shared/auth/api.test.ts)
    for the Supabase client provider; no new test-harness scaffolding.
 6. **Per-event hook.** Implement
    `apps/web/src/admin/useEventAdminWorkspace.ts`. Synthesize the
@@ -608,7 +608,7 @@ following epic-level invariants apply:
    draft list, create / duplicate, and "back to all events"
    affordances. Reuse the existing message-kind and busy-flag
    helpers from
-   [`AdminEventWorkspace`](../../../../apps/web/src/admin/AdminEventWorkspace.tsx)
+   [`AdminEventWorkspace`](/apps/web/src/admin/AdminEventWorkspace.tsx)
    in place — extract a shared helper only if the duplication
    crosses the AGENTS.md "feature-time cleanup" threshold (more
    than three occurrences with diverging intent). The default is
@@ -617,18 +617,18 @@ following epic-level invariants apply:
 8. **Page component.** Implement
    `apps/web/src/pages/EventAdminPage.tsx`. The state-machine
    skeleton mirrors
-   [`EventRedemptionsPage.tsx`](../../../../apps/web/src/pages/EventRedemptionsPage.tsx)
+   [`EventRedemptionsPage.tsx`](/apps/web/src/pages/EventRedemptionsPage.tsx)
    — a top-level component handling the session state, a
    `SignedInEventAdminFlow` child handling the authorization
    state, and an authorized-only render of `EventAdminWorkspace`.
    Sign-in copy: per-event "Sign in to manage this event" framing,
    with a sub-copy line clarifying that organizer access is event-
    scoped. Sign-out wires through the same
-   [`signOut` adapter](../../../../apps/web/src/lib/authApi.ts) the
+   [`signOut` adapter](/apps/web/src/lib/authApi.ts) the
    platform admin uses.
 9. **App.tsx routing dispatch.** Add the `matchEventAdminPath`
    branch to `getPageContent` in
-   [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx). The match
+   [`apps/web/src/App.tsx`](/apps/web/src/App.tsx). The match
    branch returns
    `<ThemeScope theme={getThemeForSlug(matched.slug)}><EventAdminPage ... /></ThemeScope>`
    — the wrap is in the dispatcher, not in the page component, per
@@ -667,7 +667,7 @@ following epic-level invariants apply:
     signed-in user hitting the same URL sees the in-place
     role-gate. Capture mobile and desktop viewports per the AGENTS
     UI-review process. Use
-    [`scripts/ui-review/capture-ui-review.cjs`](../../../../scripts/ui-review/capture-ui-review.cjs)
+    [`scripts/ui-review/capture-ui-review.cjs`](/scripts/ui-review/capture-ui-review.cjs)
     or its admin variant
     (`npm run ui:review:capture:admin`) extended for the new route
     if the existing script does not already cover it; if it
@@ -682,12 +682,12 @@ following epic-level invariants apply:
     surfaces is the route-level chrome — the draft-detail
     components themselves are reused).
 15. **Documentation update.** Edit
-    [`docs/architecture.md`](../../../architecture.md) to add the new
+    [`docs/architecture.md`](/docs/architecture.md) to add the new
     route to the frontend inventory and the Vercel routing
     topology footnote. Edit
-    [`docs/operations.md`](../../../operations.md) for the
+    [`docs/operations.md`](/docs/operations.md) for the
     organizer-accessible authoring URL one-liner. Walk the
-    [`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate"
+    [`AGENTS.md`](/AGENTS.md) "Doc Currency Is a PR Gate"
     triggers: `docs/architecture.md` updates because the apps/web
     URL inventory grew; `docs/operations.md` updates because a new
     organizer-accessible URL exists; `docs/product.md` does not
@@ -698,20 +698,20 @@ following epic-level invariants apply:
     organizer-managed-agent-assignment unblock lands with 2.5);
     `docs/open-questions.md` does not update (the post-MVP
     authoring-ownership entry closes with 2.5);
-    [`event-platform-epic.md`](../../event-platform-epic.md) M2 row
+    [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) M2 row
     stays `Proposed` (its flip lands with 2.5).
 16. **Automated code-review feedback loop.** Walk the diff from a
     senior-reviewer stance against the Cross-Cutting Invariants
     above and each Self-Review Audit named below. Apply fixes in
     place; commit review-fix changes separately when that clarifies
-    history per [`AGENTS.md`](../../../../AGENTS.md) Review-Fix Rigor.
+    history per [`AGENTS.md`](/AGENTS.md) Review-Fix Rigor.
 17. **Plan-to-PR completion gate.** Walk every Goal,
     Cross-Cutting Invariant, Validation Gate command, and
     Self-Review Audit named in this plan. Confirm each is
     satisfied or explicitly deferred in this plan with rationale.
     Flip Status from `Proposed` to `Landed` in the same PR.
 18. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 characters. Validation section lists every
     command actually run. UX Review: include the
     redundant-entry-point comparison captures from step 14 (mobile
@@ -723,7 +723,7 @@ following epic-level invariants apply:
 
 ## Commit boundaries
 
-Per [`AGENTS.md`](../../../../AGENTS.md) "Planning Depth," commit slices
+Per [`AGENTS.md`](/AGENTS.md) "Planning Depth," commit slices
 named upfront:
 
 1. **shared/urls extension.** `matchEventAdminPath` + the
@@ -731,7 +731,7 @@ named upfront:
    in `tests/shared/urls/`. Single commit; tests land alongside the
    matcher.
 2. **shared/events seed read.** `loadDraftEventSummary` in
-   [`shared/events/admin.ts`](../../../../shared/events/admin.ts), the
+   [`shared/events/admin.ts`](/shared/events/admin.ts), the
    index export, the apps/web binding-module re-export. Single
    commit; the helper has no consumer until commit 4 below.
 3. **shared/auth organizer hook.** `useOrganizerForEvent` plus
@@ -797,9 +797,9 @@ named upfront:
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../../../self-review-catalog.md) and
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md) and
 matched to this phase's diff surfaces. The M2 paragraph in
-[`event-platform-epic.md`](../../event-platform-epic.md) already names
+[`event-platform-epic.md`](/docs/plans/event-platform-epic.md) already names
 the Platform-auth-gate, Silent-no-op-on-missing-lookup,
 Error-surfacing-for-user-initiated-mutations,
 Rename-aware-diff-classification, and CLI-tooling-pinning audits as
@@ -811,7 +811,7 @@ applicable.
   pairs with two configuration surfaces: the
   `validateNextPath` allow-list (extended in this phase) and the
   Supabase Auth dashboard's redirect-URL list (operator-managed,
-  per [`docs/operations.md`](../../../operations.md)). The dashboard's
+  per [`docs/operations.md`](/docs/operations.md)). The dashboard's
   list must include `/event/:slug/admin` for every environment
   before the magic-link round-trip works end-to-end. The PR body's
   "Remaining Risk" section names this as a deploy-time check the
@@ -866,33 +866,33 @@ applicable.
 
 ## Documentation Currency PR Gate
 
-Per [`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate," the
+Per [`AGENTS.md`](/AGENTS.md) "Doc Currency Is a PR Gate," the
 relevant doc updates this branch must carry:
 
-- [`docs/architecture.md`](../../../architecture.md) — frontend route
+- [`docs/architecture.md`](/docs/architecture.md) — frontend route
   inventory adds the per-event admin route; Vercel routing
   topology footnote covers the existing reservation. Trust-boundary
   text already reflects organizer write capability after 2.1.2; no
   re-edit required there.
-- [`docs/operations.md`](../../../operations.md) — adds a one-line entry
+- [`docs/operations.md`](/docs/operations.md) — adds a one-line entry
   documenting the new organizer-accessible authoring URL.
-- [`docs/product.md`](../../../product.md) — no change. The implemented
+- [`docs/product.md`](/docs/product.md) — no change. The implemented
   capability set surfaces to organizers only when 2.4 retires the
   legacy entry and surfaces a discoverable per-event admin URL;
   through 2.2 the route exists but is not surfaced in product UX.
-- [`docs/dev.md`](../../../dev.md) — no change. No new validation command;
+- [`docs/dev.md`](/docs/dev.md) — no change. No new validation command;
   the existing `npm run lint` / `npm test` / `npm run build:web`
   flow covers the new files unchanged.
-- [`docs/open-questions.md`](../../../open-questions.md) — no change. The
+- [`docs/open-questions.md`](/docs/open-questions.md) — no change. The
   post-MVP authoring-ownership entry closes with M2's terminal PR
   (2.5) per the epic's "Open Questions Resolved By This Epic"
   paragraph.
-- [`docs/backlog.md`](../../../backlog.md) — no change. The
+- [`docs/backlog.md`](/docs/backlog.md) — no change. The
   organizer-managed-agent-assignment unblock is recorded with M2's
   terminal PR (2.5).
-- [`event-platform-epic.md`](../../event-platform-epic.md) — M2 row
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — M2 row
   stays `Proposed`. Its flip lands with 2.5.
-- [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
+- [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   Phase Status table row for 2.2 updates from `not yet drafted` to
   the path of this plan when the plan-drafting commit lands; the
   same row updates from `Proposed` to `Landed` and gains a PR link
@@ -906,18 +906,18 @@ resolution path so reviewer attention does not relitigate them.
 
 - **Direct organizer INSERT on `game_event_audit_log` and
   `game_event_versions`.** Resolution in
-  [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Cross-Phase Decisions" §1: writes flow through
   `publish_game_event_draft()` / `unpublish_game_event()` invoked
   under service_role by the broadened Edge Function gate. 2.2
   consumes this transparently — the existing
-  [`publishDraftEvent`](../../../../shared/events/admin.ts) /
-  [`unpublishEvent`](../../../../shared/events/admin.ts) helpers call
+  [`publishDraftEvent`](/shared/events/admin.ts) /
+  [`unpublishEvent`](/shared/events/admin.ts) helpers call
   the broadened functions without knowing that the underlying
   authorization mechanism changed.
 - **Combined SQL helper RPC
   `is_admin_or_organizer_for_event(eventId)`.** Resolution in
-  [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Cross-Phase Decisions / Settled by default": no combined helper.
   `useOrganizerForEvent` composes `is_organizer_for_event` and
   `is_root_admin` client-side.
@@ -927,7 +927,7 @@ resolution path so reviewer attention does not relitigate them.
   but does not write to `event_role_assignments`.
 - **`/admin/events/:eventId` redirect to `/event/:slug/admin`.**
   Resolution in
-  [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Cross-Phase Decisions" §7: phase 2.4 removes the legacy URL
   with a 404, not a redirect. 2.2 keeps the legacy entry alive as
   a redundant entry point.
@@ -939,7 +939,7 @@ resolution path so reviewer attention does not relitigate them.
   rejects slash-bearing and undecodable paths; a separate format
   validator would be unjustified surface.
 - **Per-event organizer-redeem capability.** Resolution in
-  [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+  [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Cross-Phase Decisions" §2: the redeem RPC's
   `is_agent_for_event OR is_root_admin` gate stays unchanged
   through M2. 2.2 introduces no redemption surface.
@@ -1041,26 +1041,26 @@ resolution path so reviewer attention does not relitigate them.
 - "Organizer-managed agent assignment" stays *unblocked but not
   landed*. 2.2 does not change the unblock recorded by 2.1.1's
   `event_role_assignments` policies; the entry in
-  [`docs/backlog.md`](../../../backlog.md) is updated with M2's terminal
+  [`docs/backlog.md`](/docs/backlog.md) is updated with M2's terminal
   PR (2.5) per the milestone doc.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
-- [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
+- [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.
 - `docs/plans/scoping/m2-phase-2-2.md` — scoping doc this plan
   compressed from (deleted in M2 phase 2.5.3 batch deletion; see
   git history for the pre-deletion content).
-- [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md) — sibling phase
+- [`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md) — sibling phase
   whose RLS broadening + Edge Function gate this phase consumes.
-- [`shared-styles-foundation.md`](../../shared-styles-foundation.md) —
+- [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md) —
   M1 phase 1.5 plan; ThemeScope component contract and the
   centralization-in-`App.tsx` invariant 2.2 inherits.
-- [`docs/styling.md`](../../../styling.md) — themable-vs-structural token
+- [`docs/styling.md`](/docs/styling.md) — themable-vs-structural token
   classification this phase consumes (no new tokens added).
-- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source.
-- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules, Plan-to-PR
+- [`AGENTS.md`](/AGENTS.md) — workflow rules, Plan-to-PR
   Completion Gate, Doc Currency PR Gate.

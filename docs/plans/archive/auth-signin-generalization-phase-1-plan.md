@@ -12,8 +12,8 @@
 
 Phase 2 is now unblocked; its detail plan's Rollout Sequence step 1
 prerequisite check against `main` will pass.
-**Parent overview:** [`auth-signin-generalization-plan.md`](../auth-signin-generalization-plan.md)
-**Successor:** [`auth-signin-generalization-phase-2-plan.md`](./auth-signin-generalization-phase-2-plan.md)
+**Parent overview:** [`auth-signin-generalization-plan.md`](/docs/plans/auth-signin-generalization-plan.md)
+**Successor:** [`auth-signin-generalization-phase-2-plan.md`](/docs/plans/archive/auth-signin-generalization-phase-2-plan.md)
 lands the session hook, sign-in form, callback route, and admin-shell
 migration against the Phase 1 foundation.
 **Scope:** Phase 1 only — the inert auth primitive surface and the
@@ -116,7 +116,7 @@ export async function getAccessToken(): Promise<string>;
 ```
 
 - All helpers use the existing `getBrowserSupabaseClient()` from
-  [`supabaseBrowser.ts`](../../../apps/web/src/lib/supabaseBrowser.ts).
+  [`supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts).
 - `requestMagicLink` always composes
   `emailRedirectTo = new URL("/auth/callback?next=" + encodeURIComponent(next), window.location.origin).toString()`.
   No admin-specific behavior; `next` is typed as `AuthNextPath` —
@@ -282,13 +282,13 @@ admin consumer stay untouched.
 
    | Doc | Checked? | Change in Phase 1? | Why |
    |-----|----------|---------------------|-----|
-   | [`README.md`](../../../README.md) | yes | no | Phase 1 adds no setup step, env var, or user-facing flow. |
-   | [`AGENTS.md`](../../../AGENTS.md) | yes | no | No new agent conventions, planning rules, or debugging norms introduced. |
-   | [`docs/architecture.md`](../../architecture.md) | yes | no | Module enumeration at `:60-108` describes live surfaces. The Phase 1 files are inert and unconsumed; describing them alongside live code would mislead. Phase 2 adds them when they become load-bearing in the architecture. |
-   | [`docs/operations.md`](../../operations.md) | yes | no | No change to Supabase Auth URL settings, deploy surface, or platform-managed config yet. Phase 2 rewrites the `:162` Auth URL block when the new redirect URL goes live. |
-   | [`docs/dev.md`](../../dev.md) | yes | no | Dev loop unchanged; magic-link return URL still targets `/admin` until Phase 2. |
-   | [`apps/web/src/admin/README.md`](../../../apps/web/src/admin/README.md) | yes | no | Admin module untouched in Phase 1. |
-   | [`docs/self-review-catalog.md`](../../self-review-catalog.md) | yes | no | No new recurring audit pattern yet; catalog entry may land after Phase 2 ships per this plan's Self-Review Audits section. |
+   | [`README.md`](/README.md) | yes | no | Phase 1 adds no setup step, env var, or user-facing flow. |
+   | [`AGENTS.md`](/AGENTS.md) | yes | no | No new agent conventions, planning rules, or debugging norms introduced. |
+   | [`docs/architecture.md`](/docs/architecture.md) | yes | no | Module enumeration at `:60-108` describes live surfaces. The Phase 1 files are inert and unconsumed; describing them alongside live code would mislead. Phase 2 adds them when they become load-bearing in the architecture. |
+   | [`docs/operations.md`](/docs/operations.md) | yes | no | No change to Supabase Auth URL settings, deploy surface, or platform-managed config yet. Phase 2 rewrites the `:162` Auth URL block when the new redirect URL goes live. |
+   | [`docs/dev.md`](/docs/dev.md) | yes | no | Dev loop unchanged; magic-link return URL still targets `/admin` until Phase 2. |
+   | [`apps/web/src/admin/README.md`](/apps/web/src/admin/README.md) | yes | no | Admin module untouched in Phase 1. |
+   | [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) | yes | no | No new recurring audit pattern yet; catalog entry may land after Phase 2 ships per this plan's Self-Review Audits section. |
    | `docs/tracking/*` | yes | no | No activity-log entry required for an inert foundation PR; the PR body itself is the trace. |
 
    If any row would flip to "yes" during implementation, stop and add
@@ -371,7 +371,7 @@ on any input, including intentionally malformed strings.
 Vitest with `window.location.origin` stubbed to
 `https://example.test` and `getBrowserSupabaseClient` mocked via
 `vi.hoisted`. The suite mirrors the existing
-[`tests/web/lib/adminGameApi.test.ts`](../../../tests/web/lib/adminGameApi.test.ts)
+[`tests/web/lib/adminGameApi.test.ts`](/tests/web/lib/adminGameApi.test.ts)
 mock pattern for consistency.
 
 **`requestMagicLink` URL composition (required):**
@@ -398,7 +398,7 @@ No other test file is added in Phase 1.
 ## Self-Review Audits
 
 Run the applicable named audits from
-[`docs/self-review-catalog.md`](../../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Frontend/browser surface — error-surfacing for user-initiated
   mutations:** `requestMagicLink` and `signOut` must reject with a
@@ -443,7 +443,7 @@ No SQL audit applies; no migration, grant, or RPC changes.
   — or worse, a misplaced `//` could cross origins. URL composition
   is security-adjacent, so a deterministic unit suite is **required**
   in Phase 1, not optional. Landing file:
-  [`tests/web/lib/authApi.test.ts`](../../../tests/web/lib/authApi.test.ts).
+  [`tests/web/lib/authApi.test.ts`](/tests/web/lib/authApi.test.ts).
   Required assertions:
   - `emailRedirectTo` equals
     `"https://example.test/auth/callback?next=%2Fadmin"` for
@@ -482,7 +482,7 @@ first.
 ## Resolved Decisions
 
 All decisions in this plan are inherited from the
-[overview plan](../auth-signin-generalization-plan.md) § Resolved
+[overview plan](/docs/plans/auth-signin-generalization-plan.md) § Resolved
 Decisions and applied at the Phase 1 granularity:
 
 - Helper signatures and error copy are role-neutral.

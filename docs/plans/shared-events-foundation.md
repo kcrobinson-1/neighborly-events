@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.4. Sibling phases: 1.1 `shared/db/` — Landed,
 1.2 `shared/urls/` — Landed, 1.3 `shared/auth/` — Landed,
 1.5 `shared/styles/` — Proposed. The epic's M1 row stays `Proposed`
@@ -17,9 +17,9 @@ This plan flips to `Landed` when its single implementation PR merges.
 Stand up `shared/events/` as the canonical home for event-domain
 operations — public reads, admin reads, admin writes, and the
 projection types that thread through both — currently in
-[`apps/web/src/lib/gameContentApi.ts`](../../apps/web/src/lib/gameContentApi.ts)
+[`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts)
 and
-[`apps/web/src/lib/adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts).
+[`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts).
 After this phase lands, no app holds duplicate event-domain logic;
 both `apps/web` (today) and `apps/site` (M2 phase 2.4 platform admin,
 M3 phase 3.1 public landing pages) consume the same primitives.
@@ -48,7 +48,7 @@ first triggered the rule.
   or `process.env.*`, does not access `window`, does not hold a
   module-level singleton client, and does not import from
   `apps/web/...`. Per-app DI follows the
-  [`shared/auth/`](../../shared/auth) precedent: a
+  [`shared/auth/`](/shared/auth) precedent: a
   `configureSharedEvents(providers)` registration that each app
   invokes once at startup before any `shared/events/` symbol is
   consumed.
@@ -61,7 +61,7 @@ first triggered the rule.
   the fixture data.
 - **Admin operations stay authenticated through `shared/auth/`.**
   `getAccessToken()` from
-  [`shared/auth/api.ts`](../../shared/auth/api.ts) is the
+  [`shared/auth/api.ts`](/shared/auth/api.ts) is the
   cross-app primitive. `shared/events/admin.ts` imports it
   directly from `shared/auth/`; it does not depend on apps/web.
 - **Type narrowing preserved.** The `AdminEventStatus` literal
@@ -79,11 +79,11 @@ first triggered the rule.
   wiring (env-agnostic factory and types); sibling `shared/auth/`
   owns authentication. The URL builder
   `routes.eventLanding(slug)` from
-  [`shared/urls/`](../../shared/urls) is a URL concern, not an
+  [`shared/urls/`](/shared/urls) is a URL concern, not an
   event-domain concern; no naming conflict.
 - The DI entry point is `configureSharedEvents(providers)`,
   mirroring `configureSharedAuth(providers)` from
-  [`shared/auth/configure.ts`](../../shared/auth/configure.ts).
+  [`shared/auth/configure.ts`](/shared/auth/configure.ts).
   The provider shape is described in "Responsibility Split"
   below; treat the exact field names as implementer-resolved
   detail under the contract that they expose Supabase config,
@@ -111,7 +111,7 @@ relitigate them.
   `published_at IS NOT NULL` on PostgREST reads. Scheduled-publish
   remains post-epic per the parent epic's Out Of Scope and the
   archived
-  [`database-backed-quiz-content.md`](./archive/database-backed-quiz-content.md)
+  [`database-backed-quiz-content.md`](/docs/plans/archive/database-backed-quiz-content.md)
   follow-up note.
 
 ## Responsibility Split
@@ -139,7 +139,7 @@ relitigate them.
   `createFunctionUrl` helpers. Functions read providers through
   `readSharedEventsProviders()` and import `getAccessToken`
   directly from
-  [`shared/auth/`](../../shared/auth). No prototype-fallback
+  [`shared/auth/`](/shared/auth). No prototype-fallback
   branch — admin only works against real Supabase, same as
   today.
 - **`shared/events/configure.ts`** owns the DI surface:
@@ -150,28 +150,28 @@ relitigate them.
   getter, and (4) a `featuredGameSlug` getter (consumed by
   `compareGameSummaries`'s sort precedence). Mirrors the shape
   and ergonomics of
-  [`shared/auth/configure.ts`](../../shared/auth/configure.ts).
+  [`shared/auth/configure.ts`](/shared/auth/configure.ts).
 - **`shared/events/index.ts`** is the public barrel. Re-exports
   the read and admin functions, the projection types,
   `configureSharedEvents`, `_resetSharedEventsForTests`, and
   the `SharedEventsProviders` type.
 - **`shared/events/README.md`** is the ownership note in the same
   shape as
-  [`shared/auth/README.md`](../../shared/auth/README.md): what
+  [`shared/auth/README.md`](/shared/auth/README.md): what
   the module owns, the no-env / no-singleton constraint, the
   configure-once contract, and a link back to this plan.
-- **[`apps/web/src/lib/setupEvents.ts`](../../apps/web/src/lib/setupEvents.ts)** —
+- **[`apps/web/src/lib/setupEvents.ts`](/apps/web/src/lib/setupEvents.ts)** —
   new file, side-effect module. Calls `configureSharedEvents`
   once at startup with apps/web's Vite-coupled providers
   (`getBrowserSupabaseClient`, `getSupabaseConfig`,
   `getMissingSupabaseConfigMessage`, `featuredGameSlug`).
   Imported for side-effect from
-  [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx),
+  [`apps/web/src/main.tsx`](/apps/web/src/main.tsx),
   alongside the existing `setupAuth` import. Per the
   shared/auth precedent, tests do not import this module —
   shared/events tests call `configureSharedEvents` directly with
   mock providers.
-- **[`apps/web/src/lib/gameContentApi.ts`](../../apps/web/src/lib/gameContentApi.ts)** —
+- **[`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts)** —
   shrinks to a thin binding module that owns the
   prototype-fallback decision. Exports
   `loadPublishedGameBySlug` and `listPublishedGameSummaries` as
@@ -180,10 +180,10 @@ relitigate them.
   delegate to the shared function. Re-exports the
   `PublishedGameSummary` type from `shared/events/`. No
   PostgREST logic remains.
-- **[`apps/web/src/lib/adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts)** —
+- **[`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts)** —
   shrinks to a pure re-export shim from `shared/events/`.
   Mirrors the
-  [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
+  [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
   precedent: holds no logic of its own, exists so existing
   apps/web call sites can keep importing the admin functions
   and types from a stable apps/web path while the
@@ -205,54 +205,54 @@ relitigate them.
 - `shared/events/configure.ts` — `SharedEventsProviders` type,
   `configureSharedEvents`, `readSharedEventsProviders`, and
   `_resetSharedEventsForTests`. Modeled on
-  [`shared/auth/configure.ts`](../../shared/auth/configure.ts).
+  [`shared/auth/configure.ts`](/shared/auth/configure.ts).
 - `shared/events/index.ts` — public barrel.
 - `shared/events/README.md` — ownership note in the same shape as
-  [`shared/auth/README.md`](../../shared/auth/README.md) and
-  [`shared/db/README.md`](../../shared/db/README.md).
+  [`shared/auth/README.md`](/shared/auth/README.md) and
+  [`shared/db/README.md`](/shared/db/README.md).
 - `apps/web/src/lib/setupEvents.ts` — side-effect configuration
   module. Modeled on
-  [`apps/web/src/lib/setupAuth.ts`](../../apps/web/src/lib/setupAuth.ts).
+  [`apps/web/src/lib/setupAuth.ts`](/apps/web/src/lib/setupAuth.ts).
 - `tests/shared/events/published.test.ts` — focused tests for the
   public read surface (the fixture-fallback path stays tested at
   the apps/web binding-module layer; this file covers the
   remote-Supabase code paths with mocked fetch).
 - `tests/shared/events/admin.test.ts` — focused tests for the
   admin reads, writes, and projection mapping. The portions of
-  [`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts)
+  [`tests/web/lib/adminGameApi.test.ts`](/tests/web/lib/adminGameApi.test.ts)
   that exercise the moved functions relocate here, with imports
   pointed at `shared/events/` and `configureSharedEvents` called
   with mock providers in the suite's setup. The test runner's
   existing
-  [`vitest.config.ts`](../../vitest.config.ts) include glob
+  [`vitest.config.ts`](/vitest.config.ts) include glob
   (`tests/**/*.test.{ts,tsx}`) already covers `tests/shared/`,
   so no config change is required.
 
 ## Files to touch — modify
 
-- [`apps/web/src/lib/gameContentApi.ts`](../../apps/web/src/lib/gameContentApi.ts) —
+- [`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts) —
   shrinks to a binding module per the responsibility split.
   Owns the prototype-fallback decision; delegates remote work to
   `shared/events/published.ts`.
-- [`apps/web/src/lib/adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts) —
+- [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts) —
   shrinks to a pure re-export shim from `shared/events/`. Holds
   no logic of its own.
-- [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx) — adds
+- [`apps/web/src/main.tsx`](/apps/web/src/main.tsx) — adds
   the `setupEvents` side-effect import alongside the existing
   `setupAuth` import. The two configures are independent; order
   between them is not load-bearing.
-- [`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts) —
+- [`tests/web/lib/adminGameApi.test.ts`](/tests/web/lib/adminGameApi.test.ts) —
   the portions covering moved functions relocate to
   `tests/shared/events/admin.test.ts`. Whatever apps/web-only
   surface remains (binding-module wiring, if any) keeps a
   correspondingly trimmed test file; if nothing remains the
   file is deleted.
-- [`docs/architecture.md`](../architecture.md) — the shared-layer
+- [`docs/architecture.md`](/docs/architecture.md) — the shared-layer
   description gains a `shared/events/` bullet under the same
   heading the `shared/db/`, `shared/urls/`, and `shared/auth/`
   extractions added. The bullet names what the module owns and
   the configure-once DI contract.
-- [`docs/dev.md`](../dev.md) — extended only if existing prose
+- [`docs/dev.md`](/docs/dev.md) — extended only if existing prose
   names a per-app rule about event-data imports that should now
   include `shared/events/`. No new validation command in this
   phase.
@@ -261,45 +261,45 @@ relitigate them.
 
 ## Files intentionally not touched
 
-- [`shared/db/`](../../shared/db) — already owns the SDK-level
+- [`shared/db/`](/shared/db) — already owns the SDK-level
   Supabase wiring and the `Tables<"...">` types `shared/events/`
   consumes. No change.
-- [`shared/auth/`](../../shared/auth) — `getAccessToken` is
+- [`shared/auth/`](/shared/auth) — `getAccessToken` is
   imported by `shared/events/admin.ts` exactly as
-  [`apps/web/src/lib/adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts)
+  [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts)
   imports it today. No change to `shared/auth/`.
-- [`shared/urls/`](../../shared/urls),
-  [`shared/game-config/`](../../shared/game-config),
-  [`shared/redemption.ts`](../../shared/redemption.ts) — different
+- [`shared/urls/`](/shared/urls),
+  [`shared/game-config/`](/shared/game-config),
+  [`shared/redemption.ts`](/shared/redemption.ts) — different
   shared modules, no event-domain concerns. No change.
-- [`apps/site/`](../../apps/site) — does not consume
+- [`apps/site/`](/apps/site) — does not consume
   `shared/events/` in this phase. First cross-app consumer is
   M2 phase 2.4 (platform admin in apps/site) or M3 phase 3.1
   (event landing page lookup), whichever lands first. No
   apps/site source changes here.
-- [`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts) —
+- [`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts) —
   stays as the Vite-coupled adapter over `shared/db/` per the
   phase 1.1 boundary. No env-reading or singleton-lifecycle
   helpers move into `shared/events/`; the per-app provider
   pattern preserves that boundary.
-- [`supabase/functions/`](../../supabase/functions) — admin
+- [`supabase/functions/`](/supabase/functions) — admin
   authoring functions consumed by `shared/events/admin.ts` are
   unchanged. Out of scope.
-- [`apps/web/src/data/games.ts`](../../apps/web/src/data/games.ts) —
+- [`apps/web/src/data/games.ts`](/apps/web/src/data/games.ts) —
   the `featuredGameSlug` re-export and the
   `shared/game-config/sample-fixtures` indirection stay as
   fixture concerns. The apps/web binding module's
   prototype-fallback path imports them; `shared/events/` does
   not.
 - E2E spec files and fixtures under
-  [`tests/e2e/`](../../tests/e2e) — no `shared/events/` symbols
+  [`tests/e2e/`](/tests/e2e) — no `shared/events/` symbols
   consumed. No change.
 - Doc prose references to event-domain operations in
-  [`docs/architecture.md`](../architecture.md),
-  [`docs/operations.md`](../operations.md), and elsewhere —
+  [`docs/architecture.md`](/docs/architecture.md),
+  [`docs/operations.md`](/docs/operations.md), and elsewhere —
   describe the contract; not consumers.
 - Runtime identifiers preserved per
-  [`repo-rename.md`](./repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
 
 ## Execution steps
 
@@ -313,7 +313,7 @@ relitigate them.
    `SharedEventsProviders`, `configureSharedEvents`,
    `readSharedEventsProviders`, and
    `_resetSharedEventsForTests`. Model body on
-   [`shared/auth/configure.ts`](../../shared/auth/configure.ts).
+   [`shared/auth/configure.ts`](/shared/auth/configure.ts).
 4. **Create `shared/events/published.ts`.** Move
    `loadPublishedGameBySlug`, `listPublishedGameSummaries`,
    `PublishedGameSummary`, and the private helpers. Replace
@@ -332,7 +332,7 @@ relitigate them.
 7. **Create `apps/web/src/lib/setupEvents.ts`.** Side-effect
    module that calls `configureSharedEvents` with apps/web's
    Vite-coupled providers. Add the side-effect import to
-   [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx).
+   [`apps/web/src/main.tsx`](/apps/web/src/main.tsx).
 8. **Shrink the apps/web binding modules.**
    `apps/web/src/lib/gameContentApi.ts` becomes the
    prototype-fallback-aware binding module;
@@ -340,7 +340,7 @@ relitigate them.
    shim. Keep their existing top-of-file comments accurate to the
    new responsibility split.
 9. **Move and split the admin tests.** Move the portions of
-   [`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts)
+   [`tests/web/lib/adminGameApi.test.ts`](/tests/web/lib/adminGameApi.test.ts)
    covering moved functions to
    `tests/shared/events/admin.test.ts`. Update imports to
    `shared/events/`; call `configureSharedEvents` with mock
@@ -356,12 +356,12 @@ relitigate them.
     by "Files to touch — modify"). Any apps/web binding-module tests
     that remain are exercised by the full `npm test` run in step 12.
 11. **Documentation update.** Update
-    [`docs/architecture.md`](../architecture.md), the parent
+    [`docs/architecture.md`](/docs/architecture.md), the parent
     epic's milestone-status row if it should change (M1 stays
     `Proposed` until 1.5 also lands; this phase only flips its
     own plan's Status), and this plan's Status. Doc currency is
     a PR gate per
-    [`AGENTS.md`](../../AGENTS.md).
+    [`AGENTS.md`](/AGENTS.md).
 12. **Repeat full validation.** `npm run lint`,
     `npm run build:web`, `npm run build:site`, `npm test`,
     `npm run test:functions`. All must pass.
@@ -380,7 +380,7 @@ relitigate them.
     explicitly deferred in this plan with rationale. Flip the
     plan-level Status to `Landed` in the same PR.
 15. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 chars. Validation section lists the five
     standard commands. Target Shape Evidence section names the
     responsibility split and references this plan. UX Review
@@ -410,7 +410,7 @@ relitigate them.
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Rename-aware diff classification.** The phase moves the
   bulk of two `apps/web/src/lib/` files into `shared/events/`
@@ -440,23 +440,23 @@ Drawn from
 Named docs that must reflect the implemented state by the time
 the PR opens:
 
-- [`README.md`](../../README.md) — touched only if the
+- [`README.md`](/README.md) — touched only if the
   monorepo-structure prose names the new `shared/events/`
   directory at the layout level. If the existing README's
   `shared` bullet covers it without naming sub-directories, no
   edit is required.
-- [`docs/architecture.md`](../architecture.md) — updated to
+- [`docs/architecture.md`](/docs/architecture.md) — updated to
   add the `shared/events/` shared-layer bullet, the
   configure-once DI contract, and the
   prototype-fallback-stays-in-apps/web boundary.
-- [`docs/dev.md`](../dev.md) — updated only if existing prose
+- [`docs/dev.md`](/docs/dev.md) — updated only if existing prose
   names a per-app rule about event-data imports that should
   now include `shared/events/`.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   the phase 1.4 paragraph already reflects the implemented
   scope (updated in the same branch as this plan). M1 row
   stays `Proposed` until 1.5 also lands.
-- [`AGENTS.md`](../../AGENTS.md) — not touched by phase 1.4.
+- [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.4.
   The styling-token-discipline update is M1 phase 1.5.
 - This plan — Status flipped to `Landed` in the implementation
   PR.
@@ -496,7 +496,7 @@ Captured here so reviewer attention does not relitigate them.
   the `readSharedEventsProviders()` throw. Mitigation: same
   pattern as `shared/auth/` (already in production); the
   side-effect import in
-  [`apps/web/src/main.tsx`](../../apps/web/src/main.tsx) runs
+  [`apps/web/src/main.tsx`](/apps/web/src/main.tsx) runs
   before any React tree mounts, and the throw-on-unconfigured
   guard surfaces the bug loudly rather than producing
   undefined behaviour. Tests register their own providers in
@@ -534,7 +534,7 @@ Captured here so reviewer attention does not relitigate them.
   top-of-file comment in each binding module restates the
   responsibility split (read-side: prototype fallback only;
   admin: pure re-export); same precedent as
-  [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts).
+  [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts).
 
 ## Backlog Impact
 
@@ -544,28 +544,28 @@ the parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic; M1 milestone owns the foundation extraction.
   Sibling phase plans:
-  [`shared-db-foundation.md`](./shared-db-foundation.md),
-  [`shared-urls-foundation.md`](./shared-urls-foundation.md),
-  [`shared-auth-foundation.md`](./shared-auth-foundation.md).
-- [`shared-auth-foundation.md`](./shared-auth-foundation.md) —
+  [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md),
+  [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md),
+  [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md).
+- [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) —
   prior phase's plan. Established the `configureShared*`
   per-app DI pattern and the binding-module re-export shape
   this plan inherits.
-- [`shared-db-foundation.md`](./shared-db-foundation.md) —
+- [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) —
   earlier phase's plan. Established the
   Vite-coupled-adapter-over-shared-SDK boundary that this
   plan preserves rather than collapsing.
-- [`AGENTS.md`](../../AGENTS.md) — planning depth, plan-to-PR
+- [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR
   completion gate, doc currency, validation honesty, scope
   guardrails.
-- [`docs/dev.md`](../dev.md) — current contributor workflow.
-- [`docs/architecture.md`](../architecture.md) — current
+- [`docs/dev.md`](/docs/dev.md) — current contributor workflow.
+- [`docs/architecture.md`](/docs/architecture.md) — current
   shape with the two-app split and shared layer; updated by
   this plan to describe `shared/events/`.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at this phase's gate.
-- [`repo-rename.md`](./repo-rename.md) — runtime-identifier
+- [`repo-rename.md`](/docs/plans/repo-rename.md) — runtime-identifier
   preservation rules carry over here.

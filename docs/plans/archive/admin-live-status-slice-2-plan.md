@@ -2,7 +2,7 @@
 
 **Status:** Landed in commits `ca62089`, `8f1cac8`, and `9480c4c`
 
-**Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
+**Parent plan:** [admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md)
 
 **Scope:** Slice 2 only — replace the browser-side status inference with a
 server-owned admin event status read model exposed as a Postgres view,
@@ -20,7 +20,7 @@ not read-model cleanup.
 Slice 1 stopped the reload mismatch at the admin read boundary by deriving a
 per-event `isLive: boolean` from a second `game_events` query keyed on
 `published_at is not null`
-([apps/web/src/lib/adminGameApi.ts](../../../apps/web/src/lib/adminGameApi.ts)).
+([apps/web/src/lib/adminGameApi.ts](/apps/web/src/lib/adminGameApi.ts)).
 That fixed the bug but left three structural issues that the parent plan
 requires cleanup for before the Tier 1 backlog item can close:
 
@@ -401,7 +401,7 @@ Stop and report instead of editing if any baseline step fails.
 
 ## Named Self-Review Audits
 
-From [docs/self-review-catalog.md](../../self-review-catalog.md), applied at
+From [docs/self-review-catalog.md](/docs/self-review-catalog.md), applied at
 the commit boundary noted in parentheses:
 
 - **SQL — Rename-aware diff classification** (commit 1): walk every
@@ -544,8 +544,8 @@ has shipped.
 
 ## Related Docs
 
-- [docs/plans/admin-live-status-plan.md](./admin-live-status-plan.md)
-- [docs/plans/admin-live-status-slice-1-plan.md](./admin-live-status-slice-1-plan.md)
-- [docs/backlog.md](../../backlog.md)
-- [docs/architecture.md](../../architecture.md)
-- [docs/self-review-catalog.md](../../self-review-catalog.md)
+- [docs/plans/admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md)
+- [docs/plans/admin-live-status-slice-1-plan.md](/docs/plans/archive/admin-live-status-slice-1-plan.md)
+- [docs/backlog.md](/docs/backlog.md)
+- [docs/architecture.md](/docs/architecture.md)
+- [docs/self-review-catalog.md](/docs/self-review-catalog.md)

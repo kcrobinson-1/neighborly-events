@@ -38,45 +38,45 @@ For this project today, that means:
 
 ### GitHub
 
-- [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+- [`.github/workflows/ci.yml`](/.github/workflows/ci.yml)
   CI behavior and required validation logic
-- [`.github/workflows/release.yml`](../.github/workflows/release.yml)
+- [`.github/workflows/release.yml`](/.github/workflows/release.yml)
   production Supabase promotion flow after successful CI on `main`
-- [`.github/workflows/production-admin-smoke.yml`](../.github/workflows/production-admin-smoke.yml)
+- [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
   production admin smoke validation after successful release, with manual reruns
 
 ### Vercel
 
-- [`apps/web/vercel.json`](../apps/web/vercel.json)
+- [`apps/web/vercel.json`](/apps/web/vercel.json)
   SPA route rewrites for `/event/:slug/game` and the per-event admin
   route at `/event/:slug/admin` (organizer-or-admin authoring), plus
   proxy rewrites for apps/site-owned `/`, `/auth/callback`, `/admin*`,
   and event landing URLs
-- [`apps/web/package.json`](../apps/web/package.json)
+- [`apps/web/package.json`](/apps/web/package.json)
   frontend build commands
-- [`apps/web/vite.config.ts`](../apps/web/vite.config.ts)
+- [`apps/web/vite.config.ts`](/apps/web/vite.config.ts)
   Vite build behavior that determines what Vercel builds and serves
 
 ### Supabase
 
-- [`supabase/config.toml`](../supabase/config.toml)
+- [`supabase/config.toml`](/supabase/config.toml)
   Edge Function config that belongs in Supabase CLI configuration
-- [`supabase/migrations`](../supabase/migrations)
+- [`supabase/migrations`](/supabase/migrations)
   database schema, RPCs, and backend hardening
-- [`supabase/functions`](../supabase/functions)
+- [`supabase/functions`](/supabase/functions)
   Edge Function runtime code
 
 ### Contributor Setup Contract
 
-- [`apps/web/.env.example`](../apps/web/.env.example)
+- [`apps/web/.env.example`](/apps/web/.env.example)
   local frontend env contract
-- [`apps/site/.env.example`](../apps/site/.env.example)
+- [`apps/site/.env.example`](/apps/site/.env.example)
   local apps/site public Supabase env contract
-- [`README.md`](../README.md)
+- [`README.md`](/README.md)
   project entrypoint and quick-start guidance
-- [`docs/dev.md`](./dev.md)
+- [`docs/dev.md`](/docs/dev.md)
   workflow, validation, release, and troubleshooting guidance
-- [`docs/tracking/production-admin-smoke-tracking.md`](./tracking/production-admin-smoke-tracking.md)
+- [`docs/tracking/production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md)
   production admin smoke rollout policy, fixture ownership, and triage runbook
 
 ## Manually Maintained Settings
@@ -125,7 +125,7 @@ Phase 1 baseline settings for this repo's solo-operator workflow:
   - `Vercel` (Vercel deploy check) — keeps merges gated on a successful
     Vercel build for the same SHA; recorded as the Phase 1 Vercel-before-CI
     decision in
-    [`continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md)
+    [`continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md)
 - monitor `Release / Sync Supabase Production` as the post-CI production
   deployment gate; it runs after successful CI on `main` and should not be a
   pre-merge required branch check
@@ -187,7 +187,7 @@ Why manual for now:
 For a new deployment from a fork:
 
 1. Create a new Supabase project.
-2. Run the repo-backed Supabase bootstrap commands from [`dev.md`](./dev.md).
+2. Run the repo-backed Supabase bootstrap commands from [`dev.md`](/docs/dev.md).
 3. Create a new Vercel project for the `apps/web` app.
 4. Create a new Vercel project for the `apps/site` app and point the
    absolute rewrite destinations in `apps/web/vercel.json` at its
@@ -230,7 +230,7 @@ follow-up commit required by the Plan-to-Landed Gate), prefer
 walks the `CI` → `Release` → `Production Admin Smoke` chain, prints
 stage-by-stage progress, and emits a `SMOKE_URL=<run-url>` line on green
 smoke or the failed-step logs on any-stage failure — see
-[`dev.md`](./dev.md) "Watching The Post-Merge Chain."
+[`dev.md`](/docs/dev.md) "Watching The Post-Merge Chain."
 
 Otherwise (operator triage with no merge SHA, or follow-up on a
 `workflow_dispatch` rerun), start with GitHub Actions:
@@ -252,7 +252,7 @@ Interpretation:
   event state, or slug mapping
 
 Detailed smoke-specific triage lives in
-[`production-admin-smoke-tracking.md`](./tracking/production-admin-smoke-tracking.md).
+[`production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md).
 
 ### Site And Frontend Checks: Vercel
 
@@ -416,7 +416,7 @@ For this repo today:
 - treat `supabase/migrations/`, `supabase/functions/`, and `supabase/config.toml` as the backend source of truth
 - treat GitHub workflow files as the source of truth for CI and release automation
 - treat Vercel environment variable values and Supabase secret values as platform-managed
-- treat production smoke fixture settings as manually managed production-environment configuration described in [`production-admin-smoke-tracking.md`](./tracking/production-admin-smoke-tracking.md)
+- treat production smoke fixture settings as manually managed production-environment configuration described in [`production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md)
 - avoid manual production edits that do not get reconciled back into the repository
 
 ## Future Option

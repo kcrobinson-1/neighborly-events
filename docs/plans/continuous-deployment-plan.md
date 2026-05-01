@@ -14,7 +14,7 @@ Use this doc to track:
 - guardrails for frontend/backend compatibility during rollout
 
 This document is planning guidance, not a release checklist. Day-to-day release
-gates remain in [`release-readiness.md`](./release-readiness.md).
+gates remain in [`release-readiness.md`](/docs/plans/release-readiness.md).
 
 ## Current State
 
@@ -322,9 +322,9 @@ Given current scale and team size, avoid:
 ## Tracking And Ownership
 
 - Backlog tracker:
-  [`backlog.md` — Tier 2 decision on stable staging backend path](../backlog.md)
+  [`backlog.md` — Tier 2 decision on stable staging backend path](/docs/backlog.md)
 - Related open-question ownership:
-  [`open-questions.md` — Development And Release Workflow](../open-questions.md)
+  [`open-questions.md` — Development And Release Workflow](/docs/open-questions.md)
 
 ## External References (Best-Practice Inputs)
 

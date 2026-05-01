@@ -16,7 +16,7 @@ here in the same change.
 
 When a quality check pass runs against an upcoming release, the subset of these
 items that blocks the current release target is mirrored under
-[Release-Blocking Open Questions in `release-readiness.md`](./plans/release-readiness.md#release-blocking-open-questions).
+[Release-Blocking Open Questions in `release-readiness.md`](/docs/plans/release-readiness.md#release-blocking-open-questions).
 Do not duplicate the question body there; mirror the title and link back to
 this file.
 
@@ -31,35 +31,35 @@ including the event landing route model, and should be tracked there.
 No currently open questions in this section under the current tracking rule.
 Post-MVP authoring ownership resolved in M2 (organizer RLS broadening +
 authoring Edge Functions accept organizer callers); see
-[`event-platform-epic.md`](./plans/event-platform-epic.md) "Open Questions
+[`event-platform-epic.md`](/docs/plans/event-platform-epic.md) "Open Questions
 Resolved By This Epic" and the M2 milestone doc
-[`m2-admin-restructuring.md`](./plans/archive/m2/m2-admin-restructuring.md). Outstanding
-authoring follow-up work is tracked in [`backlog.md`](./backlog.md).
+[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md). Outstanding
+authoring follow-up work is tracked in [`backlog.md`](/docs/backlog.md).
 
 ## Reporting And Sponsor Measurement
 
 No currently open questions in this section under the current tracking rule.
 Recommended first metrics and sponsor-proof baseline are documented in
-[`analytics-strategy.md`](./plans/analytics-strategy.md), and implementation priority
-is tracked in [`backlog.md`](./backlog.md).
+[`analytics-strategy.md`](/docs/plans/analytics-strategy.md), and implementation priority
+is tracked in [`backlog.md`](/docs/backlog.md).
 
 ## Development And Release Workflow
 
 No currently open questions in this section under the current tracking rule.
 Workflow direction and remaining implementation are tracked in
-[`continuous-deployment-plan.md`](./plans/continuous-deployment-plan.md),
-[`dev.md`](./dev.md), and [`backlog.md`](./backlog.md).
+[`continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md),
+[`dev.md`](/docs/dev.md), and [`backlog.md`](/docs/backlog.md).
 
 ## Trust Boundary And Abuse Controls
 
 No currently open questions in this section under the current tracking rule.
 Trust-boundary and abuse-control planning now lives in
-[`security-and-abuse-plan.md`](./plans/security-and-abuse-plan.md), and concrete
-hardening work should be tracked via [`backlog.md`](./backlog.md).
+[`security-and-abuse-plan.md`](/docs/plans/security-and-abuse-plan.md), and concrete
+hardening work should be tracked via [`backlog.md`](/docs/backlog.md).
 
 ## Event Platform Epic — Phase 0.3 Verification
 
-Surfaced by [`framework-decision.md`](./plans/framework-decision.md) (Event
+Surfaced by [`framework-decision.md`](/docs/plans/framework-decision.md) (Event
 Platform Epic, M0 phase 0.2). Each item is a hypothesis from the
 documentation that M0 phase 0.3 must verify on the production domain
 before subsequent milestones depend on it.
@@ -103,5 +103,5 @@ under one domain. The proxy-rewrite path is lower-cost and simpler; the
 Microfrontends path adds CDN-level routing observability and per-project
 deploy independence (with dedicated pricing). M0 phase 0.3 chooses
 between them based on routing-feature needs surfaced during the
-scaffold, and updates [`docs/operations.md`](./operations.md) with the
+scaffold, and updates [`docs/operations.md`](/docs/operations.md) with the
 chosen topology.

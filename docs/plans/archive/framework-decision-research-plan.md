@@ -2,12 +2,12 @@
 
 ## Status
 
-Landed. Superseded by [`framework-decision.md`](../framework-decision.md),
+Landed. Superseded by [`framework-decision.md`](/docs/plans/framework-decision.md),
 which captures the chosen framework and rationale. This document is
 preserved in the archive as a methodology reference for future
 documentation-only research passes.
 
-**Parent epic:** [`event-platform-epic.md`](../event-platform-epic.md), Milestone
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md), Milestone
 M0, Phase 0.2. The parent epic uses the word "spike" for this phase, which
 historically implies a hands-on side-by-side build. This plan deliberately
 narrows that to **documentation and consensus research only** — no code is
@@ -77,7 +77,7 @@ In scope:
 - a decision doc capturing candidates, criteria, evidence sources, choice,
   and rationale, plus any open questions surfaced for later milestones
 - a small wording update to phase 0.2 in
-  [`event-platform-epic.md`](../event-platform-epic.md) so the epic
+  [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) so the epic
   reflects the research-only posture
 
 Out of scope:
@@ -437,10 +437,10 @@ commit boundary:
 
 ## Related Docs
 
-- [`event-platform-epic.md`](../event-platform-epic.md) — parent epic
-- [`docs/architecture.md`](../../architecture.md) — current SPA shape
-- [`docs/dev.md`](../../dev.md) — current contributor workflow baseline
-- [`docs/open-questions.md`](../../open-questions.md) — log destination for
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
+- [`docs/architecture.md`](/docs/architecture.md) — current SPA shape
+- [`docs/dev.md`](/docs/dev.md) — current contributor workflow baseline
+- [`docs/open-questions.md`](/docs/open-questions.md) — log destination for
   any new question the research opens
-- [`docs/self-review-catalog.md`](../../self-review-catalog.md) — audits
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) — audits
   named above

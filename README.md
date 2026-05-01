@@ -70,7 +70,7 @@ The codebase is intentionally small and split by responsibility:
   Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and any other
   event-scoped path not carved out for `apps/web`. Event landing is
   still a placeholder; the real landing page lands in M3 of
-  [the Event Platform Epic](./docs/plans/event-platform-epic.md).
+  [the Event Platform Epic](/docs/plans/event-platform-epic.md).
 - `shared`
   shared `game-config.ts` entrypoint plus `shared/game-config/` modules for DB mapping, quiz runtime shape, validation, scoring, and explicit sample fixtures
 - `supabase/functions`
@@ -92,35 +92,35 @@ Runtime responsibilities are:
 
 ## Documentation
 
-Start with [docs/README.md](./docs/README.md) for the documentation map.
+Start with [docs/README.md](/docs/README.md) for the documentation map.
 
 The docs intentionally call unresolved decisions out as open questions instead
 of guessing.
 
 The main docs are:
 
-- [Product Overview](./docs/product.md)
+- [Product Overview](/docs/product.md)
   why the product exists, who it serves, and what success looks like
-- [UX Philosophy and Experience](./docs/experience.md)
+- [UX Philosophy and Experience](/docs/experience.md)
   how the attendee, volunteer, and organizer flows should feel
-- [Architecture Notes](./docs/architecture.md)
+- [Architecture Notes](/docs/architecture.md)
   current system shape, trust boundaries, and runtime flow
-- [Database-backed Quiz Content](./docs/plans/archive/database-backed-quiz-content.md)
+- [Database-backed Quiz Content](/docs/plans/archive/database-backed-quiz-content.md)
   durable implementation reference for the published-content milestone
-- [Quiz Authoring Plan](./docs/plans/archive/quiz-authoring-plan.md)
+- [Quiz Authoring Plan](/docs/plans/archive/quiz-authoring-plan.md)
   proposed path for organizer/admin quiz creation, editing, preview, and publish
-- [Development Guide](./docs/dev.md)
+- [Development Guide](/docs/dev.md)
   local workflow, validation commands, troubleshooting, and release flow
-- [Testing Strategy](./docs/testing.md)
+- [Testing Strategy](/docs/testing.md)
   what should be tested across the site, shared logic, Supabase, and UX flows
-- [Operations Guide](./docs/operations.md)
+- [Operations Guide](/docs/operations.md)
   which settings are repo-managed versus manually maintained across GitHub,
   Vercel, and Supabase, plus the current live monitoring and log-triage runbook
-- [Open Questions](./docs/open-questions.md)
+- [Open Questions](/docs/open-questions.md)
   unresolved product, workflow, and operational decisions that should stay explicit
-- [Documentation Quality Checklist](./docs/tracking/documentation-quality-checklist.md)
+- [Documentation Quality Checklist](/docs/tracking/documentation-quality-checklist.md)
   action checklist for keeping the documentation set accurate and complete
-- [Release Readiness](./docs/plans/release-readiness.md)
+- [Release Readiness](/docs/plans/release-readiness.md)
   living release readiness plan, release gates, and senior-engineer quality-check methodology
 
 ## Quick Start
@@ -135,14 +135,14 @@ npm install
 
 If you have access to the shared Supabase project:
 
-1. Copy [apps/web/.env.example](./apps/web/.env.example) to `apps/web/.env`.
+1. Copy [apps/web/.env.example](/apps/web/.env.example) to `apps/web/.env`.
 2. Set:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
 
 3. If you need local `apps/site` auth callback work, copy
-   [apps/site/.env.example](./apps/site/.env.example) to
+   [apps/site/.env.example](/apps/site/.env.example) to
    `apps/site/.env.local` and set the matching Next.js variables:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -168,7 +168,7 @@ The admin authoring shell and authoring APIs also require:
 
 If you do not have backend access and only need frontend iteration:
 
-1. Copy [apps/web/.env.example](./apps/web/.env.example) to `apps/web/.env`.
+1. Copy [apps/web/.env.example](/apps/web/.env.example) to `apps/web/.env`.
 2. Set:
 
 - `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK=true`
@@ -206,11 +206,11 @@ For local contributor setup:
 - run `npm run test:setup:local` once to check Docker/Deno and install Playwright Chromium
 - run `npm run validate:local` to execute the full local validation flow, including the browser suite plus the local Supabase integration and database checks
 
-For contributor setup details, local workflow notes, and troubleshooting, use [docs/dev.md](./docs/dev.md).
+For contributor setup details, local workflow notes, and troubleshooting, use [docs/dev.md](/docs/dev.md).
 
 ### Creating Your Own Deployment From A Fork
 
-If you are launching your own copy, use the deployment instructions in [docs/dev.md](./docs/dev.md) together with the ownership guidance in [docs/operations.md](./docs/operations.md).
+If you are launching your own copy, use the deployment instructions in [docs/dev.md](/docs/dev.md) together with the ownership guidance in [docs/operations.md](/docs/operations.md).
 
 In short:
 
@@ -227,9 +227,9 @@ In short:
 
 This repo currently uses:
 
-- [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) for validation
-- [`.github/workflows/release.yml`](./.github/workflows/release.yml) for production Supabase promotion after successful CI on `main`
-- [`.github/workflows/production-admin-smoke.yml`](./.github/workflows/production-admin-smoke.yml) for post-release admin smoke validation against dedicated production smoke fixtures
+- [`.github/workflows/ci.yml`](/.github/workflows/ci.yml) for validation
+- [`.github/workflows/release.yml`](/.github/workflows/release.yml) for production Supabase promotion after successful CI on `main`
+- [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml) for post-release admin smoke validation against dedicated production smoke fixtures
 - Vercel Git integration to deploy the frontend from `main`
 
 Recommended release path:
@@ -246,7 +246,7 @@ Recommended release path:
    authoring functions, publish, unpublish, and public route state against
    dedicated smoke fixtures.
 
-Operational setting ownership lives in [docs/operations.md](./docs/operations.md).
+Operational setting ownership lives in [docs/operations.md](/docs/operations.md).
 
 ## Next Phase
 

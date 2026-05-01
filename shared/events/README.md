@@ -12,4 +12,4 @@ prototype fallback behavior, route building, or fixture lookup. Each app calls
 using any exported event API.
 
 The extraction landed through
-[`docs/plans/shared-events-foundation.md`](../../docs/plans/shared-events-foundation.md).
+[`docs/plans/shared-events-foundation.md`](/docs/plans/shared-events-foundation.md).

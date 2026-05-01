@@ -11,7 +11,7 @@ Use it when you need:
 - clarity on when to mock Supabase and when to run against a real local Supabase stack
 - a phased todo list for rolling out test coverage without overbuilding
 
-Current setup and release workflow still live in `dev.md`. System responsibilities and trust boundaries live in `architecture.md`. UX goals live in `experience.md`. Release gates that depend on test coverage live in [`release-readiness.md`](./plans/release-readiness.md), which links back into the Todo List in this file rather than duplicating it.
+Current setup and release workflow still live in `dev.md`. System responsibilities and trust boundaries live in `architecture.md`. UX goals live in `experience.md`. Release gates that depend on test coverage live in [`release-readiness.md`](/docs/plans/release-readiness.md), which links back into the Todo List in this file rather than duplicating it.
 
 ## Current State
 
@@ -35,7 +35,7 @@ Today the repo validation surface includes:
 - `deno check --no-lock supabase/functions/publish-draft/index.ts`
 - `deno check --no-lock supabase/functions/unpublish-event/index.ts`
 - `npm run ui:review:capture` for screenshot-based browser review
-- [`.github/workflows/production-admin-smoke.yml`](../.github/workflows/production-admin-smoke.yml)
+- [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
   for post-release and manual production admin smoke runs against dedicated smoke fixtures
 
 That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite (fallback mode plus trusted-backend mode), pgTAP coverage for the completion RPC, Deno coverage for the Edge Function trust boundary, and a real local Supabase integration test for the full session-plus-completion path.
@@ -78,7 +78,7 @@ Use this table to pick the smallest useful command for your change.
 
 For currently tracked testing gaps and sequencing, see the backlog-linked items in:
 
-- [`docs/backlog.md`](./backlog.md)
+- [`docs/backlog.md`](/docs/backlog.md)
 - [`docs/testing.md` — Todo List](#todo-list)
 
 ## Trust-Path Validation Strategy
@@ -129,7 +129,7 @@ Current production posture:
 Tracking:
 
 - rollout policy, ownership, and triage are now tracked in
-  [`production-admin-smoke-tracking.md`](./tracking/production-admin-smoke-tracking.md)
+  [`production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md)
 
 The desired end state is:
 
@@ -182,7 +182,7 @@ Recommended rollout status:
 6. [x] Update contributor workflow docs.
    `docs/dev.md` now names the command for admin-affecting changes.
 7. [x] Add production smoke after the local suite is stable.
-   Landed as [`.github/workflows/production-admin-smoke.yml`](../.github/workflows/production-admin-smoke.yml).
+   Landed as [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml).
    It keeps `workflow_dispatch` reruns, adds automatic post-release coverage,
    and retains a dedicated production smoke event so this remains separate from
    normal PR CI.

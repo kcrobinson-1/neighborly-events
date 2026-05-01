@@ -34,15 +34,15 @@ Env-agnostic Supabase Auth surface shared across `apps/web` and
   missing-config copy keyed off `import.meta.env.DEV`, etc.
 
 The apps/web setup lives in
-[`apps/web/src/lib/setupAuth.ts`](../../apps/web/src/lib/setupAuth.ts)
+[`apps/web/src/lib/setupAuth.ts`](/apps/web/src/lib/setupAuth.ts)
 and the apps/site setup lives in
-[`apps/site/lib/setupAuth.ts`](../../apps/site/lib/setupAuth.ts).
+[`apps/site/lib/setupAuth.ts`](/apps/site/lib/setupAuth.ts).
 Both call `configureSharedAuth` at client startup. apps/web keeps
 compatibility re-exports in
-[`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts)
-and [`apps/web/src/auth/index.ts`](../../apps/web/src/auth/index.ts);
+[`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts)
+and [`apps/web/src/auth/index.ts`](/apps/web/src/auth/index.ts);
 apps/site mounts its setup through
-[`apps/site/components/SharedClientBootstrap.tsx`](../../apps/site/components/SharedClientBootstrap.tsx).
+[`apps/site/components/SharedClientBootstrap.tsx`](/apps/site/components/SharedClientBootstrap.tsx).
 
 ## React DI mechanism
 
@@ -61,4 +61,4 @@ any call site reads.
 
 ## Plan reference
 
-[`docs/plans/shared-auth-foundation.md`](../../docs/plans/shared-auth-foundation.md).
+[`docs/plans/shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md).

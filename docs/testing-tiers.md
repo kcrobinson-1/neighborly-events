@@ -141,7 +141,7 @@ smoke as final verification, land in two phases:
    The run URL is durable external evidence; commit SHAs are not
    recorded because `git log` is authoritative for that. Run
    `npm run release:watch-smoke -- <merge-sha>` to capture the run URL
-   for the doc-only follow-up commit; see [`dev.md`](./dev.md) "Watching
+   for the doc-only follow-up commit; see [`dev.md`](/docs/dev.md) "Watching
    The Post-Merge Chain."
 
 This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to

@@ -2,7 +2,7 @@
 
 **Status:** Landed in commit `8374ac7`
 
-**Parent plan:** [admin-live-status-plan.md](./admin-live-status-plan.md)
+**Parent plan:** [admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md)
 
 **Scope:** Slice 1 only — add a current-live signal to admin reads that
 matches public-route availability, gate admin badges, counts, status labels,
@@ -19,10 +19,10 @@ Today a reload of `/admin` can show an event as `Live` with a working
 the unavailable state. Admin and public use two different definitions of live:
 
 - admin reads derive live status from `game_event_drafts.live_version_number`
-  ([apps/web/src/lib/adminGameApi.ts](../../../apps/web/src/lib/adminGameApi.ts)),
+  ([apps/web/src/lib/adminGameApi.ts](/apps/web/src/lib/adminGameApi.ts)),
   consumed across the workspace in
-  [apps/web/src/admin/AdminEventWorkspace.tsx](../../../apps/web/src/admin/AdminEventWorkspace.tsx)
-  and [apps/web/src/admin/AdminPublishPanel.tsx](../../../apps/web/src/admin/AdminPublishPanel.tsx)
+  [apps/web/src/admin/AdminEventWorkspace.tsx](/apps/web/src/admin/AdminEventWorkspace.tsx)
+  and [apps/web/src/admin/AdminPublishPanel.tsx](/apps/web/src/admin/AdminPublishPanel.tsx)
 - public routing derives availability from `game_events.published_at is not null`
 
 `public.unpublish_game_event` clears `game_events.published_at = null` but
@@ -35,7 +35,7 @@ read boundary without touching `live_version_number` semantics. Slice 2 will
 collapse the read model durably.
 
 The current admin in-memory state also manually clears `liveVersionNumber`
-after unpublish ([apps/web/src/admin/useSelectedDraft.ts](../../../apps/web/src/admin/useSelectedDraft.ts)
+after unpublish ([apps/web/src/admin/useSelectedDraft.ts](/apps/web/src/admin/useSelectedDraft.ts)
 around the save-flow update), which hides the bug until reload. The admin e2e
 assertions today go directly to `/admin/events/{id}` and only check the
 workspace detail label; they do not cover the event-list badge, the live
@@ -197,7 +197,7 @@ Unchanged. This slice is admin-read only.
 
 4. **`docs: mark slice 1 landed and reconcile the parent plan state.`**
    Flip the Slice 1 `Status:` line in
-   [admin-live-status-plan.md](./admin-live-status-plan.md) and in this file
+   [admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md) and in this file
    from `Proposed` to `Landed`, with the implementing commit SHAs recorded
    inline. Keep the parent plan marked `In progress` because Slice 2
    (read-model cleanup) and Slice 3 (non-live action UX) remain proposed.
@@ -231,7 +231,7 @@ moment.
 
 ## Named Self-Review Audits
 
-From [docs/self-review-catalog.md](../../self-review-catalog.md), applied at
+From [docs/self-review-catalog.md](/docs/self-review-catalog.md), applied at
 the commit boundary noted in parentheses:
 
 - **Frontend — Complete call-site coverage** (commit 2): walk every

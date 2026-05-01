@@ -1,9 +1,9 @@
 # Reward Redemption — Phase C-Visibility Execution Plan
 
 **Status:** Landed in commits `991c66c`, `ede58f7`.
-**Parent design:** [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+**Parent design:** [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
 **Predecessors:**
-[`reward-redemption-phase-c-1-plan.md`](./archive/reward-redemption-phase-c-1-plan.md)
+[`reward-redemption-phase-c-1-plan.md`](/docs/plans/archive/reward-redemption-phase-c-1-plan.md)
 — landed.
 **Scope:** Visibility-aware pause/resume only. Pause the
 `useAttendeeRedemptionStatus` poll while the tab is hidden, fire one
@@ -16,10 +16,10 @@ no backend change.
 ## Why This Phase Exists
 
 C.1 landed the polling spine but explicitly deferred Page Visibility
-API integration as a [Non-Goal](./archive/reward-redemption-phase-c-1-plan.md)
-and as the first item in its [Handoff After C.1](./archive/reward-redemption-phase-c-1-plan.md)
+API integration as a [Non-Goal](/docs/plans/archive/reward-redemption-phase-c-1-plan.md)
+and as the first item in its [Handoff After C.1](/docs/plans/archive/reward-redemption-phase-c-1-plan.md)
 list. The design's behavior contract in
-[`reward-redemption-mvp-design.md` §"visibility/offline/error retry behavior"](./reward-redemption-mvp-design.md)
+[`reward-redemption-mvp-design.md` §"visibility/offline/error retry behavior"](/docs/plans/reward-redemption-mvp-design.md)
 states that the attendee 5-second poll **must** pause on
 `document.visibilityState === "hidden"` and resume with one immediate
 refresh on `visibilitychange` to `"visible"`. The current hook polls
@@ -30,7 +30,7 @@ Function invocations, and a discoverable load pattern in any future
 event with thousands of attendees. The phase closes the gap between
 the design contract and the implementation, and removes the
 "Background-tab poll volume" risk called out explicitly in
-[C.1's Risks and Mitigations](./archive/reward-redemption-phase-c-1-plan.md).
+[C.1's Risks and Mitigations](/docs/plans/archive/reward-redemption-phase-c-1-plan.md).
 
 The phase is intentionally frontend-only and intentionally narrow. If
 implementation discovers it needs a backend, RPC, shared-type, or
@@ -40,7 +40,7 @@ expansion.
 ## Summary
 
 Extend the existing
-[`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](../../apps/web/src/redemptions/useAttendeeRedemptionStatus.ts)
+[`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](/apps/web/src/redemptions/useAttendeeRedemptionStatus.ts)
 hook with a Page Visibility API integration that:
 
 - registers a single `visibilitychange` listener on `document` inside
@@ -134,12 +134,12 @@ all.
   encapsulated in the hook.
 - Durable docs that describe the attendee polling surface
   (`docs/architecture.md`,
-  [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md))
+  [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md))
   are updated in the same PR to describe the visibility-aware behavior
   rather than the unconditional C.1 behavior.
 - This plan doc flips `Status` to `Landed in commits <SHA list>.` in
   the same PR that implements it.
-- [`docs/backlog.md`](../backlog.md) drops the "Visibility-aware
+- [`docs/backlog.md`](/docs/backlog.md) drops the "Visibility-aware
   attendee redemption polling" item in the same PR.
 
 ## Non-Goals
@@ -265,18 +265,18 @@ all.
 ### Hook ownership boundary
 
 - All visibility *runtime behavior* lives inside
-  [`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](../../apps/web/src/redemptions/useAttendeeRedemptionStatus.ts).
+  [`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](/apps/web/src/redemptions/useAttendeeRedemptionStatus.ts).
   No other runtime/source file under `apps/web/src/`,
   `supabase/functions/`, `supabase/migrations/`, or `shared/` changes
   in this phase, and no new file is added under
   `apps/web/src/redemptions/`.
 - This boundary is about runtime behavior, not the diff envelope. The
   PR is still expected to update the test file
-  ([`tests/web/redemptions/useAttendeeRedemptionStatus.test.ts`](../../tests/web/redemptions/useAttendeeRedemptionStatus.test.ts))
+  ([`tests/web/redemptions/useAttendeeRedemptionStatus.test.ts`](/tests/web/redemptions/useAttendeeRedemptionStatus.test.ts))
   and the durable docs named in § "Rollout Sequence" step 5
   (`docs/architecture.md`,
-  [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md),
-  [`docs/backlog.md`](../backlog.md), and this plan doc itself). Those
+  [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md),
+  [`docs/backlog.md`](/docs/backlog.md), and this plan doc itself). Those
   test and doc edits are required deliverables, not scope drift.
 
 ## Target Structure
@@ -365,17 +365,17 @@ all.
    Audits" against the implementation commits.
 5. **Documentation current-state gate.** Update in the same PR:
    - this plan doc — flip `Status` to `Landed in commits <SHA list>.`
-   - [`docs/architecture.md`](../architecture.md) — update the
+   - [`docs/architecture.md`](/docs/architecture.md) — update the
      attendee/completion description so the polling sentence reads as
      "5-second polling against `get-redemption-status` while the
      completion panel is mounted and the tab is visible, paused on
      hidden with one immediate refresh on resume, with one-time 401
      re-bootstrap"
-   - [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+   - [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
      — confirm the §"visibility/offline/error retry behavior" wording
      still matches the implementation; if it diverges, update the
      attendee bullet to point to the implementing plan
-   - [`docs/backlog.md`](../backlog.md) — remove the "Visibility-aware
+   - [`docs/backlog.md`](/docs/backlog.md) — remove the "Visibility-aware
      attendee redemption polling" Tier 4 entry, since the work has
      landed
 6. **Final validation.** On a clean tree, run `npm run lint`,
@@ -391,7 +391,7 @@ all.
 8. **PR preparation.** Open a PR against `main` using the required
    template. The PR body must say that:
    - the phase implements the visibility contract from
-     [`reward-redemption-mvp-design.md`](./reward-redemption-mvp-design.md)
+     [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
      §"visibility/offline/error retry behavior"
    - polling is paused on hidden, with one immediate refresh on
      hidden→visible, and is otherwise unchanged from C.1
@@ -491,7 +491,7 @@ assertion.
 ## Self-Review Audits
 
 Run the named audits from
-[`docs/self-review-catalog.md`](../self-review-catalog.md) that match
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md) that match
 this phase's surfaces, plus the plan-local audits listed below.
 
 - **Effect cleanup audit** (catalog). The diff modifies a `useEffect`
@@ -626,14 +626,14 @@ If this phase regresses in QA or live testing, rollback is a pure
 frontend revert of the hook diff:
 
 - revert
-  [`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](../../apps/web/src/redemptions/useAttendeeRedemptionStatus.ts)
+  [`apps/web/src/redemptions/useAttendeeRedemptionStatus.ts`](/apps/web/src/redemptions/useAttendeeRedemptionStatus.ts)
   to its C.1 shape
 - revert
-  [`tests/web/redemptions/useAttendeeRedemptionStatus.test.ts`](../../tests/web/redemptions/useAttendeeRedemptionStatus.test.ts)
+  [`tests/web/redemptions/useAttendeeRedemptionStatus.test.ts`](/tests/web/redemptions/useAttendeeRedemptionStatus.test.ts)
   to its C.1 shape
 - restore the backlog entry in
-  [`docs/backlog.md`](../backlog.md) and the prior wording in
-  [`docs/architecture.md`](../architecture.md)
+  [`docs/backlog.md`](/docs/backlog.md) and the prior wording in
+  [`docs/architecture.md`](/docs/architecture.md)
 - flip this plan's `Status` back to `Proposed` with a one-line
   rationale appended
 
@@ -674,7 +674,7 @@ auth helper is required.
 If this phase lands as planned, the attendee polling spine matches
 the design contract end-to-end and the "Background-tab poll volume"
 risk noted in C.1 is closed. The remaining backlog items from
-[C.1's "Handoff After C.1" list](./archive/reward-redemption-phase-c-1-plan.md)
+[C.1's "Handoff After C.1" list](/docs/plans/archive/reward-redemption-phase-c-1-plan.md)
 are unchanged in priority and ownership:
 
 - **Manual refresh affordance.** Promote next if telemetry or QA

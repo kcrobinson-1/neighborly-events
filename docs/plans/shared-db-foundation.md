@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.1. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases (1.2 `shared/urls/`,
 1.3 `shared/auth/`, 1.4 `shared/events/`, 1.5 `shared/styles/`) own
@@ -128,7 +128,7 @@ split is below). Behavior-preserving.
 
 ### Files to touch — modify
 
-- [`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts) —
+- [`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts) —
   narrow to the Vite adapter shape described above. The `createClient`
   call moves to `shared/db/client.ts`; this file imports the factory
   and binds it to the Vite config getter. Keeps the singleton.
@@ -136,37 +136,37 @@ split is below). Behavior-preserving.
   from `shared/db/` for any call site that imports them through this
   module today (avoids touching every call site for purely
   re-export-path reasons).
-- [`apps/web/src/lib/adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts) —
+- [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts) —
   imports unchanged in shape; verify the helpers it consumes still
   resolve through the adapter.
-- [`apps/web/src/lib/authApi.ts`](../../apps/web/src/lib/authApi.ts) —
+- [`apps/web/src/lib/authApi.ts`](/apps/web/src/lib/authApi.ts) —
   same.
-- [`apps/web/src/lib/gameApi.ts`](../../apps/web/src/lib/gameApi.ts) —
+- [`apps/web/src/lib/gameApi.ts`](/apps/web/src/lib/gameApi.ts) —
   same.
-- [`apps/web/src/lib/gameContentApi.ts`](../../apps/web/src/lib/gameContentApi.ts) —
+- [`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts) —
   same.
-- [`apps/web/src/redemptions/redemptionsData.ts`](../../apps/web/src/redemptions/redemptionsData.ts) —
+- [`apps/web/src/redemptions/redemptionsData.ts`](/apps/web/src/redemptions/redemptionsData.ts) —
   same.
-- [`apps/web/src/redemptions/authorizeRedemptions.ts`](../../apps/web/src/redemptions/authorizeRedemptions.ts) —
+- [`apps/web/src/redemptions/authorizeRedemptions.ts`](/apps/web/src/redemptions/authorizeRedemptions.ts) —
   same.
-- [`apps/web/src/redeem/authorizeRedeem.ts`](../../apps/web/src/redeem/authorizeRedeem.ts) —
+- [`apps/web/src/redeem/authorizeRedeem.ts`](/apps/web/src/redeem/authorizeRedeem.ts) —
   same.
-- [`tests/web/lib/adminGameApi.test.ts`](../../tests/web/lib/adminGameApi.test.ts) —
+- [`tests/web/lib/adminGameApi.test.ts`](/tests/web/lib/adminGameApi.test.ts) —
   the existing `vi.mock("../../../apps/web/src/lib/supabaseBrowser", …)`
   call still points at the adapter; confirm the mocked `getBrowserSupabaseClient`
   export still satisfies every code path. No test rewrite is intended;
   if the adapter narrows the export surface, the mock object narrows
   the same way.
-- [`docs/architecture.md`](../architecture.md) — describe the new
+- [`docs/architecture.md`](/docs/architecture.md) — describe the new
   `shared/db/` layer responsibility (factory + helpers, env-agnostic),
   the per-app adapter pattern, and the Vite/Next.js boundary the
   seam is designed to cross. The "Top-Level Layout" `shared` entry
   expands one bullet about `shared/db/`.
-- [`docs/dev.md`](../dev.md) — add a one-paragraph note that
+- [`docs/dev.md`](/docs/dev.md) — add a one-paragraph note that
   Supabase-using browser code goes through the per-app adapter, not
   through `shared/db/client.ts` directly. No new validation command
   in this subphase.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   update the Phase 1.1 paragraph to name subphases 1.1.1 and 1.1.2
   in place of the current "One PR." sentence. Update the Sizing
   Summary line for M1 from "5 phases (phase 1.5 contains 2
@@ -177,21 +177,21 @@ split is below). Behavior-preserving.
 
 ### Files intentionally not touched
 
-- [`shared/game-config/`](../../shared/game-config/) and
-  [`shared/redemption.ts`](../../shared/redemption.ts) — different
+- [`shared/game-config/`](/shared/game-config) and
+  [`shared/redemption.ts`](/shared/redemption.ts) — different
   shared modules; not consolidating in this phase. Their consumers'
   imports do not change.
-- [`apps/site/`](../../apps/site) — does not consume `shared/db/`
+- [`apps/site/`](/apps/site) — does not consume `shared/db/`
   until M1 phase 1.3. No `apps/site` source changes in 1.1.x.
-- [`supabase/functions/`](../../supabase/functions) — server-side
+- [`supabase/functions/`](/supabase/functions) — server-side
   Deno Supabase clients are a separate seam. Out of scope for the
   entire 1.1.x phase.
-- [`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts) —
+- [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts) —
   constructs a service-role client for fixture setup. Different concern
   from the browser factory; not migrated.
 - The generic PostgREST helpers `fetchPostgrestRows` and
   `createPostgrestUrl` in
-  [`apps/web/src/lib/gameContentApi.ts`](../../apps/web/src/lib/gameContentApi.ts).
+  [`apps/web/src/lib/gameContentApi.ts`](/apps/web/src/lib/gameContentApi.ts).
   The parent epic's Phase 1.1 paragraph mentions "any existing typed
   query helpers"; in practice the only candidates are these two, and
   their single consumer (`apps/web` published-content reads via raw
@@ -203,7 +203,7 @@ split is below). Behavior-preserving.
 - Runtime identifiers (`neighborly_session` cookie, `x-neighborly-session`
   header, `neighborly.local-*` storage keys, `@neighborly/web` workspace
   scope) — preserved per
-  [`repo-rename.md`](./repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
 
 ### Execution steps
 
@@ -247,7 +247,7 @@ split is below). Behavior-preserving.
     `Landed`. Plan-level Status stays `Proposed` until subphase
     1.1.2 lands.
 11. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](/.github/pull_request_template.md).
     Title under 70 chars. Validation section lists `npm run lint`,
     `npm test`, `npm run test:functions`, `npm run build:web`,
     `npm run build:site` — all run. Target Shape Evidence section
@@ -273,7 +273,7 @@ split is below). Behavior-preserving.
 ### Self-review audits
 
 Named in the parent epic for phase 1.1, drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md):
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 - **Rename-aware diff classification.** This subphase moves
   `createClient` and two helper functions out of
@@ -332,7 +332,7 @@ codebase.
     "id" | "event_code">` derived type, with the duplication removed.
   - `PublishedGameEventRow` / `PublishedGameQuestionRow` /
     `PublishedGameOptionRow` in
-    [`shared/game-config/db-content.ts`](../../shared/game-config/db-content.ts)
+    [`shared/game-config/db-content.ts`](/shared/game-config/db-content.ts)
     are intentionally **not** rewritten — `shared/game-config/` is a
     different shared module, and rewriting its types is not the
     scope of phase 1.1. The plan explicitly leaves them alone.
@@ -361,22 +361,22 @@ codebase.
 - `shared/db/index.ts` — re-export `Database` and selected helper
   types (`Tables`, `Views`, `Enums`) from
   `@supabase/supabase-js`.
-- [`apps/web/src/lib/supabaseBrowser.ts`](../../apps/web/src/lib/supabaseBrowser.ts) —
+- [`apps/web/src/lib/supabaseBrowser.ts`](/apps/web/src/lib/supabaseBrowser.ts) —
   thread `Database` parameter through the singleton accessor.
-- [`apps/web/src/lib/adminGameApi.ts`](../../apps/web/src/lib/adminGameApi.ts) —
+- [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts) —
   replace `DraftEventRow` and `DraftEventStatusRow` with derived
   generated types.
-- [`apps/web/src/redeem/authorizeRedeem.ts`](../../apps/web/src/redeem/authorizeRedeem.ts) —
+- [`apps/web/src/redeem/authorizeRedeem.ts`](/apps/web/src/redeem/authorizeRedeem.ts) —
   replace `RedeemEventRow` with the consolidated derived type from
   `shared/db/`.
-- [`apps/web/src/redemptions/authorizeRedemptions.ts`](../../apps/web/src/redemptions/authorizeRedemptions.ts) —
+- [`apps/web/src/redemptions/authorizeRedemptions.ts`](/apps/web/src/redemptions/authorizeRedemptions.ts) —
   replace `RedemptionsEventRow` with the same consolidated derived
   type. The two byte-identical duplicates collapse to one.
-- [`package.json`](../../package.json) — add `db:gen-types` script.
-- [`docs/dev.md`](../dev.md) — document `db:gen-types` and the regen
+- [`package.json`](/package.json) — add `db:gen-types` script.
+- [`docs/dev.md`](/docs/dev.md) — document `db:gen-types` and the regen
   workflow (when to run, where the output lands, what to do if the
   diff is large).
-- [`docs/architecture.md`](../architecture.md) — note that
+- [`docs/architecture.md`](/docs/architecture.md) — note that
   `shared/db/types.ts` is the generated source of truth for DB row
   shapes, and that `shared/game-config/db-content.ts`'s row types
   remain authoritative for the published-content surface during
@@ -389,15 +389,15 @@ codebase.
 
 ### Files intentionally not touched
 
-- [`shared/game-config/db-content.ts`](../../shared/game-config/db-content.ts) —
+- [`shared/game-config/db-content.ts`](/shared/game-config/db-content.ts) —
   the `PublishedGame*Row` types stay as hand-written. Rewriting them
   is out of scope for phase 1.1 (different shared module, different
   consumer split). A future phase may consolidate; this plan does
   not.
-- [`apps/web/src/redemptions/types.ts`](../../apps/web/src/redemptions/types.ts) —
+- [`apps/web/src/redemptions/types.ts`](/apps/web/src/redemptions/types.ts) —
   the `RedemptionRow` type is consumed by app-side rendering code
   that does not touch the Supabase client directly. Out of scope.
-- [`supabase/functions/`](../../supabase/functions) — Deno-side type
+- [`supabase/functions/`](/supabase/functions) — Deno-side type
   generation is a separate seam. Out of scope.
 
 ### Validation gate
@@ -438,19 +438,19 @@ Status flip to `Landed` requires every subphase row to read `Landed`.
 Across the two subphases, these named docs must reflect the
 implemented state by the time each subphase's PR opens:
 
-- [`README.md`](../../README.md) — touched only if the
+- [`README.md`](/README.md) — touched only if the
   monorepo-structure prose names the new `shared/db/` directory at
   the layout level. If the existing README's `shared` bullet covers
   it without naming sub-directories, no edit is required for 1.1.x.
-- [`docs/architecture.md`](../architecture.md) — updated in 1.1.1
+- [`docs/architecture.md`](/docs/architecture.md) — updated in 1.1.1
   (new shared layer responsibility) and 1.1.2 (generated types as
   source of truth).
-- [`docs/dev.md`](../dev.md) — updated in 1.1.1 (per-app adapter
+- [`docs/dev.md`](/docs/dev.md) — updated in 1.1.1 (per-app adapter
   pattern note) and 1.1.2 (`db:gen-types` workflow).
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   updated in 1.1.1 to name subphases 1.1.1 and 1.1.2 and update the
   Sizing Summary line for M1; M1 row stays `Proposed`.
-- [`AGENTS.md`](../../AGENTS.md) — not touched by phase 1.1. The
+- [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.1. The
   styling-token-discipline update is M1 phase 1.5.
 - This plan — each subphase's row flips on its own PR; plan-level
   Status flips to `Landed` in subphase 1.1.2's PR.
@@ -543,18 +543,18 @@ none. Backlog impact accumulates at the M1 gate per the parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent epic;
+- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic;
   M1 milestone owns the foundation extraction; sibling phases 1.2,
   1.3, 1.4, 1.5 own their own plans
-- [`AGENTS.md`](../../AGENTS.md) — planning depth, plan-to-PR
+- [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR
   completion gate, doc currency, validation honesty, scope guardrails
-- [`docs/dev.md`](../dev.md) — current contributor workflow;
+- [`docs/dev.md`](/docs/dev.md) — current contributor workflow;
   updated by this plan
-- [`docs/architecture.md`](../architecture.md) — current shape
+- [`docs/architecture.md`](/docs/architecture.md) — current shape
   with the two-app split; updated by this plan to describe the
   shared layer
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at every subphase's gate
-- [`repo-rename.md`](./repo-rename.md) — runtime-identifier
+- [`repo-rename.md`](/docs/plans/repo-rename.md) — runtime-identifier
   preservation rules carry over here (cookie names, header names,
   storage keys, workspace scope)

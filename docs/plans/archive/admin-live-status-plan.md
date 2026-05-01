@@ -85,7 +85,7 @@ This should land as a short sequence, not as one large cleanup PR.
 Status: Landed in commit `8374ac7`
 
 Execution plan:
-[admin-live-status-slice-1-plan.md](./admin-live-status-slice-1-plan.md).
+[admin-live-status-slice-1-plan.md](/docs/plans/archive/admin-live-status-slice-1-plan.md).
 
 Goal:
 
@@ -114,7 +114,7 @@ Acceptance bar:
 Status: Landed in commits `ca62089`, `8f1cac8`, and `9480c4c`
 
 Execution plan:
-[admin-live-status-slice-2-plan.md](./admin-live-status-slice-2-plan.md).
+[admin-live-status-slice-2-plan.md](/docs/plans/archive/admin-live-status-slice-2-plan.md).
 
 Goal:
 
@@ -141,7 +141,7 @@ Acceptance bar:
 Status: Landed (implementation commits: `f750be2`, `7630d88`, `bbc0c84`; production admin smoke verified at https://github.com/kcrobinson-1/neighborly-scavenger-game/actions/runs/24912902363/job/72961624016)
 
 Execution plan:
-[admin-live-status-slice-3-plan.md](./admin-live-status-slice-3-plan.md).
+[admin-live-status-slice-3-plan.md](/docs/plans/archive/admin-live-status-slice-3-plan.md).
 
 Goal:
 
@@ -207,8 +207,8 @@ Landed phase (Tier 5 post-release gate):
 
 ## Related Docs
 
-- [docs/backlog.md](../../backlog.md)
-- [docs/tracking/admin-ux-roadmap.md](../../tracking/admin-ux-roadmap.md)
-- [docs/operations.md](../../operations.md)
-- [docs/testing.md](../../testing.md)
-- [docs/testing-tiers.md](../../testing-tiers.md)
+- [docs/backlog.md](/docs/backlog.md)
+- [docs/tracking/admin-ux-roadmap.md](/docs/tracking/admin-ux-roadmap.md)
+- [docs/operations.md](/docs/operations.md)
+- [docs/testing.md](/docs/testing.md)
+- [docs/testing-tiers.md](/docs/testing-tiers.md)
