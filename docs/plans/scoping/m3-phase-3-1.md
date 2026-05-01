@@ -8,7 +8,8 @@ test event + SSR meta") per the M3 milestone doc
 [AGENTS.md](/AGENTS.md) "Phase Planning Sessions." This doc plus its
 sibling scoping docs delete in batch in M3 phase 3.3's PR per the
 milestone doc's "Phase Status" subsection. The durable contract for
-3.1 lives in [m3-phase-3-1-plan.md](/docs/plans/m3-phase-3-1-plan.md);
+3.1 (specifically 3.1.1) lives in
+[m3-phase-3-1-1-plan.md](/docs/plans/m3-phase-3-1-1-plan.md);
 this scoping doc is the input that plan compresses from.
 
 ## Phase summary in one paragraph
@@ -832,7 +833,7 @@ scoping doc. Listing them so the plan-drafter doesn't miss any.
 
 ## Plan structure handoff
 
-The plan at `docs/plans/m3-phase-3-1-plan.md` should match the
+The plan at `docs/plans/m3-phase-3-1-1-plan.md` should match the
 structure of recent landed plans (M2 phase 2.2 plan as the
 pattern reference) with sections in this order:
 
