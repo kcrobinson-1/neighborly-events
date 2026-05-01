@@ -125,36 +125,45 @@ operationally wrong for any change, because:
 - requiring a smoke run pre-merge conflates "is this PR mergeable" with
   "did this change reach production cleanly," which are different questions
 
-### Plan-to-Landed Gate For Plans That Touch Production Smoke
+### Plan-to-Landed Gate For Plans With Post-Release Validation
 
-Plans that extend production smoke assertions, or that depend on production
-smoke as final verification, land in two phases:
+Plans whose Validation Gate names a check that can only run post-release
+land in two phases. Tier 5 production smoke is the canonical case
+(structurally cannot run pre-merge — see "Tier 5 — Post-Release Production
+Smoke" above), and the same gate applies to any other plan whose
+validation genuinely requires post-release execution against the
+deployed origin.
 
 1. **Merge phase.** Tiers 1–4 pass. PR merges. The plan's Status is
-   `In progress pending prod smoke` — this exact string, not `Landed`
-   and not a paraphrase. One authoritative label keeps the carve-out
-   deterministic and plan-state queryable.
-2. **Landed phase.** `Release` deploys the change. The post-release
-   `Production Admin Smoke` run — automatic or release-owner-dispatched —
-   passes against production. The plan's Status flips to `Landed` in a
-   follow-up doc commit that records the production smoke run URL.
-   The run URL is durable external evidence; commit SHAs are not
-   recorded because `git log` is authoritative for that. Run
-   `npm run release:watch-smoke -- <merge-sha>` to capture the run URL
-   for the doc-only follow-up commit; see [`dev.md`](/docs/dev.md) "Watching
-   The Post-Merge Chain."
+   `In progress pending <validation-name>` — a stable, exact-match name
+   for the specific check, used consistently across the plan, not a
+   paraphrase. The canonical Tier 5 production smoke case uses exactly
+   `In progress pending prod smoke`. Existing precedent for non-smoke
+   names: `In progress pending deployed-origin verification`,
+   `In progress pending production cookie-boundary verification`. One
+   stable label per plan keeps the carve-out deterministic and
+   plan-state queryable; the shared `In progress pending` prefix lets
+   cross-plan queries find every post-release-pending plan at once.
+2. **Landed phase.** The post-release validation passes. The plan's
+   Status flips to `Landed` in a follow-up doc commit that records the
+   validation run URL. The run URL is durable external evidence; commit
+   SHAs are not recorded because `git log` is authoritative for that.
+   For the canonical Tier 5 case, run
+   `npm run release:watch-smoke -- <merge-sha>` to capture the
+   `Production Admin Smoke` run URL for the follow-up commit; see
+   [`dev.md`](/docs/dev.md) "Watching The Post-Merge Chain."
 
-This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to
-for plans that extend Tier 5 assertions. The implementing PR still leaves
-the plan in a named, non-drift state — `In progress pending prod smoke` —
-rather than a soft post-merge promise. The `Landed` flip lives in the
-follow-up doc commit that records the production smoke run URL, not in
-an issue or an unwritten agreement. Production verification is a
-release-owner activity downstream of the merge, so the status flip is
-too.
+This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to.
+The implementing PR leaves the plan in a named, non-drift state —
+`In progress pending <validation-name>` — rather than a soft post-merge
+promise. The `Landed` flip lives in the follow-up doc commit that
+records the validation run URL, not in an issue or an unwritten
+agreement. Post-release verification is a release-owner activity
+downstream of the merge, so the status flip is too.
 
-Plans that do **not** touch production smoke do not need this two-phase
-structure. Tier 1–4 handoff validation is sufficient.
+Plans whose Validation Gate can be fully satisfied pre-merge do not
+need this two-phase structure; the same-PR `Landed` flip applies (see
+AGENTS.md "Plan-to-PR Completion Gate").
 
 ## Which Tier Catches Which Class Of Regression
 

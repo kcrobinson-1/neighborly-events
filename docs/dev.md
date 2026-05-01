@@ -917,7 +917,8 @@ on `main`, prints stage-by-stage progress, and emits a load-bearing
 `SMOKE_URL=<run-url>` line on green smoke. Use it to capture the smoke
 run URL for the doc-only follow-up commit required by
 [`testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate For Plans
-That Touch Production Smoke" without leaving the terminal. Pass
+With Post-Release Validation" (the watcher targets the canonical Tier 5
+production smoke case) without leaving the terminal. Pass
 `--deadline-minutes <N>` to override the default 45-minute cap.
 
 The watcher shells out to `gh` and requires `gh >= 2.89.0` for stable

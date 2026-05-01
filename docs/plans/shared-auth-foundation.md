@@ -1292,5 +1292,5 @@ relationship lives in the parent epic, not this plan.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at every subphase's gate
 - [`docs/testing-tiers.md`](/docs/testing-tiers.md) — Tier 5
-  production smoke and the Plan-to-Landed Gate For Plans That
-  Touch Production Smoke
+  production smoke and the Plan-to-Landed Gate For Plans With
+  Post-Release Validation

@@ -7,8 +7,9 @@ Landed.
 ## Goal
 
 Replace the manual "paste the smoke run URL when it's green" step in the
-two-phase **Plan-to-Landed Gate For Plans That Touch Production Smoke**
-(per [`docs/testing-tiers.md`](/docs/testing-tiers.md)) with a focused
+two-phase **Plan-to-Landed Gate For Plans With Post-Release Validation**
+(per [`docs/testing-tiers.md`](/docs/testing-tiers.md); this watcher
+targets the canonical Tier 5 production smoke case) with a focused
 watcher script that, given a merge commit SHA:
 
 1. Watches the current static post-merge GitHub Actions chain
