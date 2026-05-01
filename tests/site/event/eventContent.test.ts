@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { harvestBlockPartyContent } from "../../../apps/site/events/harvest-block-party.ts";
+import { riversideJamContent } from "../../../apps/site/events/riverside-jam.ts";
 import {
   getEventContentBySlug,
   parseEventDate,
@@ -14,6 +15,12 @@ describe("getEventContentBySlug", () => {
     expect(getEventContentBySlug("harvest-block-party")).toBe(
       harvestBlockPartyContent,
     );
+  });
+
+  it("returns the registered content for the riverside-jam slug", () => {
+    // M3 phase 3.2 registers the second test event. Same
+    // referential-identity stance as the harvest case above.
+    expect(getEventContentBySlug("riverside-jam")).toBe(riversideJamContent);
   });
 
   it("returns null for unknown slugs", () => {
@@ -34,7 +41,10 @@ describe("getEventContentBySlug", () => {
 
 describe("registeredEventSlugs", () => {
   it("contains exactly the registered slugs", () => {
-    expect(registeredEventSlugs.sort()).toEqual(["harvest-block-party"]);
+    expect(registeredEventSlugs.sort()).toEqual([
+      "harvest-block-party",
+      "riverside-jam",
+    ]);
   });
 });
 

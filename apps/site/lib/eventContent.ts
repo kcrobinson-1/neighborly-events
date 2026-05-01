@@ -71,6 +71,7 @@ export type EventContent = {
 };
 
 import { harvestBlockPartyContent } from "../events/harvest-block-party.ts";
+import { riversideJamContent } from "../events/riverside-jam.ts";
 
 /**
  * Slug → content registry. M3 phase 3.1.1 registers the first test
@@ -80,6 +81,7 @@ import { harvestBlockPartyContent } from "../events/harvest-block-party.ts";
  */
 const eventContentBySlug: Record<string, EventContent> = {
   [harvestBlockPartyContent.slug]: harvestBlockPartyContent,
+  [riversideJamContent.slug]: riversideJamContent,
 };
 
 /**
