@@ -158,6 +158,53 @@ step count.
   plan. Plans attract code review; every bug in a code snippet inside a
   plan costs a review round on the plan doc itself before the
   implementation even starts, which is pure churn
+- **Code shapes in plans are directional pseudocode.** Whatever code-
+  shaped content the five-line rule above admits — a backticked
+  field-value pair, a one-line type signature, a short expression — is
+  *shape*, not source. It communicates contract structure (what field
+  exists where, what shape it takes, how it relates to other fields),
+  not exact syntax. The implementer translates shapes into
+  syntactically-correct code at PR time, against the surrounding prose
+  that frames the shape. Reviewers (human or automated) should focus
+  on shape-level questions — is the right field named? does the shape
+  match what the prose around it describes? is the contract self-
+  consistent? — not on syntax-level findings (template-literal quotes,
+  shell precedence, missing imports, semicolons). The five-line rule
+  caps how much code-shaped content lives here even under this
+  framing; this rule shifts the reviewer's stance on whatever content
+  the cap admits. AGENTS.md is not visible to automated reviewers
+  (Codex, similar bots) during PR review, so the framing must travel
+  inside the plan doc itself: each plan-drafting session **must**
+  include the boilerplate notice below, placed inside the `## Context`
+  section of the plan (either as a `### Reading this plan` subsection
+  at the end of Context, or as the first content immediately after
+  Context's prose ends — anywhere within the Context boundary so a
+  reader who jumps straight to Context encounters the framing before
+  any contract content). Verbatim boilerplate (copy-paste; do not
+  paraphrase, since the wording is the artifact reviewers anchor on):
+
+  > **Reading this plan: code shapes are directional pseudocode.**
+  >
+  > Inline code shapes in this plan (field-value pairs, type
+  > signatures, expressions, short snippets) communicate contract
+  > *shape* — what field exists where, what shape it takes, how it
+  > relates to other fields — not exact source. The implementer
+  > translates shapes into syntactically-correct code at PR time,
+  > against the surrounding prose. Reviewers (human or automated)
+  > should focus on shape-level questions (missing field, wrong
+  > relationship, contract self-inconsistent), not syntax-level ones
+  > (template-literal quotes, shell precedence, missing imports,
+  > semicolons). The five-line rule from AGENTS.md "Planning Depth"
+  > still caps how much code-shaped content lives here.
+
+  Existing landed phase plans (M2 phases 2.1 through 2.5, M3 phase
+  3.1.1) predate this rule and are not retroactively non-conforming.
+  M3 phase 3.1.2 is the in-flight case at land time — under the
+  same "may opt to add" carveout pattern recorded in the
+  [scoping owns / plan owns rule](#phase-planning-sessions), 3.1.2
+  opts in here as the first plan to carry the boilerplate, testing
+  the framing on the live case before the implementing PR opens.
+  Plans drafted from this point forward must include the boilerplate.
 - list the cross-cutting invariants that thread through multiple files
   in their own `## Cross-Cutting Invariants` subsection, distinct from
   per-file contracts. Per-file contracts describe what one module does;
@@ -290,13 +337,15 @@ before any per-phase planning.
   [`docs/plans/archive/m2/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   for a concrete example
 - **Anti-goal: do not scope any phase in this session.** Phase
-  scoping (file inventory, contracts, validation gate, self-review
-  audits, risks) belongs to the phase planning session for each
-  phase, against actually-merged earlier phases. Scoping any phase
-  in the milestone session — even the first — risks recording
-  assumptions that won't survive contact with merged code, and
-  produces confident-feeling artifacts that may or may not be
-  grounded. When phase A's scoping cites phase B's "Inputs From
+  scoping and plan-drafting (the per-phase deliberation,
+  contracts, file inventory, risks, and execution steps — split
+  between the scoping doc and the plan doc per "Phase Planning
+  Sessions → Scoping owns / plan owns" below) belong to the
+  phase planning session for each phase, against actually-merged
+  earlier phases. Scoping any phase in the milestone session —
+  even the first — risks recording assumptions that won't
+  survive contact with merged code, and produces
+  confident-feeling artifacts that may or may not be grounded. When phase A's scoping cites phase B's "Inputs From
   Siblings" section, both docs feel verified; neither is. Earlier
   drafts of this rule allowed first-phase scoping in the milestone
   session "so the milestone doc has at least one grounded scoping
@@ -350,31 +399,86 @@ implementing PR consumes. Run this session just-in-time before a
 phase's implementation starts, **after** prior phases have shipped
 (not in batch alongside their planning).
 
-- **Goal.** Produce two artifacts: a phase scoping doc
-  (`docs/plans/scoping/m<N>-phase-<X>-<Y>.md`, transient) covering
-  file inventory, contracts, cross-cutting invariants the phase
-  touches, validation gate, self-review audits, and risks; then a
-  phase plan doc (`docs/plans/m<N>-phase-<X>-<Y>-plan.md`, durable)
-  matching the structure of existing landed plans (Status, Goal,
-  Cross-Cutting Invariants, Files-to-touch, Execution steps, Commit
-  boundaries, Validation Gate, Self-Review Audits, Documentation
-  Currency, Out Of Scope, Risk Register)
+- **Goal.** Produce two artifacts that split ownership cleanly
+  rather than co-cover the same content: a phase scoping doc
+  (`docs/plans/scoping/m<N>-phase-<X>-<Y>.md`, transient — deletes
+  in batch with sibling scoping docs at the milestone-terminal PR)
+  and a phase plan doc
+  (`docs/plans/m<N>-phase-<X>-<Y>-plan.md`, durable — survives
+  the feature). The next bullet specifies what each owns; both
+  docs may carry a Status block and a one-paragraph phase summary
+  for orientation, and that is the only intentional overlap.
+- **Scoping owns / plan owns.** Because scoping deletes at
+  milestone-terminal PR, the durable plan must end up with
+  everything worth persisting in record after the feature
+  launches; restating the same content in scoping during the
+  scoping doc's lifetime burns drafting time and creates drift
+  risk every time one side updates without the other.
+  - **Scoping owns** the deliberation prose with rejected
+    alternatives (the "Decisions made at scoping time" section,
+    each decision carrying `Verified by:` code citations), the
+    open decisions to make at plan-drafting (handoff), the
+    plan-structure handoff, and the reality-check inputs the
+    plan must verify (handoff). This content has no audience
+    after the plan lands — exactly why it lives somewhere
+    transient.
+  - **Plan owns** Status (Proposed → Landed lifecycle), Context
+    preamble (per the rule below), Goal, Cross-Cutting
+    Invariants, Naming, Contracts (full final shape), Files to
+    touch (new / modify / intentionally not touched), Execution
+    Steps, Commit Boundaries, Validation Gate, Self-Review
+    Audits, Documentation Currency PR Gate, Out Of Scope (final,
+    not deliberation), Risk Register, and Backlog Impact.
+  - **Scoping does not restate plan-owned content.** Where a
+    scoping decision touches the file inventory, a contract, an
+    invariant, a validation procedure, or a risk, scoping
+    references the plan's section by name ("the `EventContent`
+    type defined in the plan…"); it does not duplicate the
+    artifact. The reality-check gate (named below) operates on
+    scoping's decisions — load-bearing technical claims that
+    reality-check verifies — not on duplicated contract text.
+  - Recurring trap from M3 phase 3.1's first drafts: scoping +
+    plan together ran ~4,300 lines because both docs carried the
+    full file inventory, full Contracts, full Cross-Cutting
+    Invariants, full Risk Register, and (in 3.1.2) full
+    Self-Review Audits — roughly 60% duplication for the same
+    coverage, with drift risk every time one side updated
+    without the other. Existing landed phase plans (M2 phases
+    2.1 through 2.5, M3 phase 3.1.1) predate this rule and are
+    not retroactively non-conforming. Live phase docs
+    mid-flight when this rule lands (M3 phase 3.1.2 is the
+    in-flight case at land time) are not retroactively
+    non-conforming either; the rule applies to phase planning
+    sessions opened from this point forward, though authors of
+    mid-flight scoping docs may opt to trim duplicated content
+    into "see the plan" references if the scoping has not yet
+    been promoted to a merged implementing PR
 - **Scoping precedes plan drafting; check before starting plan
   draft.** Before opening the plan doc to write, verify the
   scoping doc exists at
   `docs/plans/scoping/m<N>-phase-<X>-<Y>.md` with substantive
-  content (file inventory, contracts, validation surface, named
-  risks — not empty, not a stub, not a placeholder paragraph
-  saying "scoping pending"). If the scoping doc does not exist
-  or is a stub, do scoping first as its own artifact;
+  scoping-owned content per the rule above — at minimum, a
+  "Decisions made at scoping time" section with at least one
+  decision carrying a `Verified by:` code citation, plus
+  whichever of "Open decisions to make at plan-drafting,"
+  "Plan structure handoff," and "Reality-check inputs" the
+  phase needs. Not empty, not a stub, not a placeholder
+  paragraph saying "scoping pending." If the scoping doc does
+  not exist or is a stub, do scoping first as its own artifact;
   plan-drafting cannot start without it. Without scoping
   content, the reality-check gate below has nothing to operate
   on, and plan-drafting silently collapses into
   scoping-during-drafting — exactly what scoping exists to
-  separate from drafting. The check is a simple file-existence
-  + first-paragraph read, takes seconds, and protects against
-  the most common procedural skip when phase planning starts
-  in a fresh agent session that did not produce the scoping doc
+  separate from drafting. The substantive-content list named
+  here is the falsifier for that gate; it intentionally tracks
+  scoping's owned content per "Scoping owns / plan owns"
+  above, not the plan-owned content (file inventory, contracts,
+  validation surface, risks) that earlier drafts of this rule
+  asked scoping to also carry. The check is a simple
+  file-existence + first-paragraph read, takes seconds, and
+  protects against the most common procedural skip when phase
+  planning starts in a fresh agent session that did not produce
+  the scoping doc
 - **Plan opens with a plain-language context preamble.** Before any
   implementation specifics (file paths, framework names, function
   signatures, phase-numbering shorthand), the plan must contain
