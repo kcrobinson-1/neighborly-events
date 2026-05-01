@@ -8,7 +8,7 @@ Landed.
 Milestone M2, Phase 2.1. Sibling sub-phase: 2.1.1 — Landed (database
 RLS read-broadening + staffing-table writes). Sibling phases
 2.2 / 2.3 / 2.4 / 2.5 — Proposed; M2 row in
-[`event-platform-epic.md`](./event-platform-epic.md) stays `Proposed`
+[`event-platform-epic.md`](../../event-platform-epic.md) stays `Proposed`
 until 2.5 lands.
 
 This sub-phase plan flips Status to `Landed` when its implementation
@@ -74,7 +74,7 @@ walks each one against every changed file.
 - New helper file: `supabase/functions/_shared/event-organizer-auth.ts`.
 - Helper symbol: `authenticateEventOrganizerOrAdmin`.
 - Reuses the `AdminAuthResult` discriminated-union type from
-  [`_shared/admin-auth.ts`](../../supabase/functions/_shared/admin-auth.ts).
+  [`_shared/admin-auth.ts`](../../../../supabase/functions/_shared/admin-auth.ts).
 
 ## Contracts
 
@@ -115,7 +115,7 @@ author this event." Replaces the prior
 `eventId: string` parameter and forwards it as the request body
 field. Mirrors the existing `publishDraftEvent(eventId)` /
 `unpublishEvent(eventId)` shape. Single call site:
-[`apps/web/src/admin/AdminEventDetailsForm.tsx`](../../apps/web/src/admin/AdminEventDetailsForm.tsx)
+[`apps/web/src/admin/AdminEventDetailsForm.tsx`](../../../../apps/web/src/admin/AdminEventDetailsForm.tsx)
 `handleRegenerateEventCode` passes `draft.id` (already in scope on
 the form via the `draft` prop).
 
@@ -132,10 +132,10 @@ the helper's return value.
 
 **Existing helpers and config are unchanged.**
 `is_organizer_for_event(text)` and `is_root_admin()` ship in
-[`supabase/migrations/20260421000200_add_event_role_helpers.sql`](../../supabase/migrations/20260421000200_add_event_role_helpers.sql);
+[`supabase/migrations/20260421000200_add_event_role_helpers.sql`](../../../../supabase/migrations/20260421000200_add_event_role_helpers.sql);
 this sub-phase consumes them and adds no new SQL helper. The four
 authoring functions' `[functions.<name>] verify_jwt = false` entries
-in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
+in [`supabase/config.toml`](../../../../supabase/config.toml) stay as today.
 
 ## Files to touch — new
 
@@ -144,36 +144,36 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
 
 ## Files to touch — modify
 
-- [`supabase/functions/_shared/authoring-http.ts`](../../supabase/functions/_shared/authoring-http.ts)
+- [`supabase/functions/_shared/authoring-http.ts`](../../../../supabase/functions/_shared/authoring-http.ts)
   — drop `authenticateQuizAdmin` from `AuthoringHttpDependencies` and
   the call in `createAuthoringPostHandler`; drop `admin` from
   `AuthoringRequestContext`; add `supabaseClientKey` to the context.
-- [`supabase/functions/save-draft/index.ts`](../../supabase/functions/save-draft/index.ts)
+- [`supabase/functions/save-draft/index.ts`](../../../../supabase/functions/save-draft/index.ts)
   — extract eventId from `body.content.id`; call the new helper after
   payload validation; thread `userId` from the auth result into the
   persistence call.
-- [`supabase/functions/publish-draft/index.ts`](../../supabase/functions/publish-draft/index.ts)
+- [`supabase/functions/publish-draft/index.ts`](../../../../supabase/functions/publish-draft/index.ts)
   — extract eventId from `body.eventId`; same shape.
-- [`supabase/functions/unpublish-event/index.ts`](../../supabase/functions/unpublish-event/index.ts)
+- [`supabase/functions/unpublish-event/index.ts`](../../../../supabase/functions/unpublish-event/index.ts)
   — same.
-- [`supabase/functions/generate-event-code/index.ts`](../../supabase/functions/generate-event-code/index.ts)
+- [`supabase/functions/generate-event-code/index.ts`](../../../../supabase/functions/generate-event-code/index.ts)
   — add `eventId` payload requirement; same shape.
-- [`shared/events/admin.ts`](../../shared/events/admin.ts) —
+- [`shared/events/admin.ts`](../../../../shared/events/admin.ts) —
   `generateEventCode(eventId: string)` signature and body forwarding.
-- [`apps/web/src/admin/AdminEventDetailsForm.tsx`](../../apps/web/src/admin/AdminEventDetailsForm.tsx)
+- [`apps/web/src/admin/AdminEventDetailsForm.tsx`](../../../../apps/web/src/admin/AdminEventDetailsForm.tsx)
   — pass `draft.id` to `generateEventCode`.
-- [`tests/supabase/functions/save-draft.test.ts`](../../tests/supabase/functions/save-draft.test.ts)
+- [`tests/supabase/functions/save-draft.test.ts`](../../../../tests/supabase/functions/save-draft.test.ts)
   — migrate stubs from `authenticateQuizAdmin` to
   `authenticateEventOrganizerOrAdmin`.
-- [`tests/supabase/functions/publish-draft.test.ts`](../../tests/supabase/functions/publish-draft.test.ts)
+- [`tests/supabase/functions/publish-draft.test.ts`](../../../../tests/supabase/functions/publish-draft.test.ts)
   — same.
-- [`tests/supabase/functions/unpublish-event.test.ts`](../../tests/supabase/functions/unpublish-event.test.ts)
+- [`tests/supabase/functions/unpublish-event.test.ts`](../../../../tests/supabase/functions/unpublish-event.test.ts)
   — same.
-- [`tests/supabase/functions/generate-event-code.test.ts`](../../tests/supabase/functions/generate-event-code.test.ts)
+- [`tests/supabase/functions/generate-event-code.test.ts`](../../../../tests/supabase/functions/generate-event-code.test.ts)
   — same; also adds `eventId` to test payloads.
-- [`tests/supabase/functions/authoring-helpers.ts`](../../tests/supabase/functions/authoring-helpers.ts)
+- [`tests/supabase/functions/authoring-helpers.ts`](../../../../tests/supabase/functions/authoring-helpers.ts)
   — adapt the shared dependency factory to the migrated wrapper shape.
-- [`docs/architecture.md`](../architecture.md) — trust-boundary text
+- [`docs/architecture.md`](../../../architecture.md) — trust-boundary text
   and "Current Backend Surface" list reflect the broadened authoring
   gate (organizer-or-admin) on the four functions.
 - This plan — Status flips from `Proposed` to `Landed` in the
@@ -184,18 +184,18 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
 
 ## Files intentionally not touched
 
-- [`supabase/functions/_shared/admin-auth.ts`](../../supabase/functions/_shared/admin-auth.ts)
+- [`supabase/functions/_shared/admin-auth.ts`](../../../../supabase/functions/_shared/admin-auth.ts)
   — `authenticateQuizAdmin` is preserved as a reference; no remaining
   callers after this PR. Bearer-token reading stays duplicated rather
   than extracted, per the parent plan.
 - The migration `20260427010000_broaden_event_scoped_rls.sql` and the
   two pgTAP files
-  ([`authoring_reads_rls.test.sql`](../../supabase/tests/database/authoring_reads_rls.test.sql),
-  [`event_role_assignments_rls.test.sql`](../../supabase/tests/database/event_role_assignments_rls.test.sql))
+  ([`authoring_reads_rls.test.sql`](../../../../supabase/tests/database/authoring_reads_rls.test.sql),
+  [`event_role_assignments_rls.test.sql`](../../../../supabase/tests/database/event_role_assignments_rls.test.sql))
   — landed in 2.1.1.
-- [`supabase/config.toml`](../../supabase/config.toml) — the four
+- [`supabase/config.toml`](../../../../supabase/config.toml) — the four
   authoring functions already carry `verify_jwt = false`; no change.
-- [`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql`](../../supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
+- [`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql`](../../../../supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
   and the redeem / reverse Edge Functions — out of phase 2.1 entirely.
 - `apps/site/*`, `vercel.json`, other apps/web files beyond the one
   call-site change — no other consumer of the four authoring
@@ -206,7 +206,7 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
 1. **Pre-edit gate.** Confirm clean worktree and the 2.1.2
    implementation feature branch (not `main`, not a doc-only branch).
    Confirm Node and Deno versions match
-   [`mise.toml`](../../mise.toml) (`mise exec` if the shell isn't
+   [`mise.toml`](../../../../mise.toml) (`mise exec` if the shell isn't
    activated). Re-read 2.1.1's plan to confirm the database surface
    is in the expected post-2.1.1 state.
 2. **Baseline validation.** Run `npm run lint`, `npm run build:web`,
@@ -233,14 +233,14 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
    the function previously read `context.admin.userId`. Run
    `deno check --no-lock` per file as you go.
 6. **Update the apps/web side.** Edit
-   [`shared/events/admin.ts`](../../shared/events/admin.ts) so
+   [`shared/events/admin.ts`](../../../../shared/events/admin.ts) so
    `generateEventCode(eventId: string)` forwards `{ eventId }` as the
    request body. Edit
-   [`apps/web/src/admin/AdminEventDetailsForm.tsx`](../../apps/web/src/admin/AdminEventDetailsForm.tsx)
+   [`apps/web/src/admin/AdminEventDetailsForm.tsx`](../../../../apps/web/src/admin/AdminEventDetailsForm.tsx)
    so `handleRegenerateEventCode` passes `draft.id` to
    `generateEventCode`.
 7. **Migrate function tests.** Update each of the four test files
-   plus [`authoring-helpers.ts`](../../tests/supabase/functions/authoring-helpers.ts):
+   plus [`authoring-helpers.ts`](../../../../tests/supabase/functions/authoring-helpers.ts):
    replace `authenticateQuizAdmin` stubs with
    `authenticateEventOrganizerOrAdmin` stubs at the per-function
    dependency level; update expected error messages to the new
@@ -251,7 +251,7 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
    Surface" sections; reflect that the four authoring functions
    accept organizer JWTs (the broadened gate), the new helper file
    path, and the trust-boundary widening. Walk the Doc Currency PR
-   Gate triggers in [`AGENTS.md`](../../AGENTS.md): the trust-boundary
+   Gate triggers in [`AGENTS.md`](../../../../AGENTS.md): the trust-boundary
    text changes (organizer write capability is new); the Backend
    Surface list updates (organizer-or-admin gate on the four
    authoring functions). No operations / dev / open-questions /
@@ -261,14 +261,14 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
     senior-reviewer stance against the Cross-Cutting Invariants and
     each Self-Review Audit named below. Fix in place; commit
     review-fix changes separately when that clarifies history per
-    [`AGENTS.md`](../../AGENTS.md) Review-Fix Rigor.
+    [`AGENTS.md`](../../../../AGENTS.md) Review-Fix Rigor.
 11. **Plan-to-PR completion gate.** Walk every Goal, Cross-Cutting
     Invariant, Validation Gate command, and Self-Review Audit named
     in this plan. Confirm each is satisfied or explicitly deferred in
     this plan with rationale. Flip Status from `Proposed` to `Landed`
     on this plan AND on the parent 2.1 plan in the same PR.
 12. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
     Title under 70 characters. Validation section lists every command
     actually run. Target Shape Evidence: name the four migrated
     functions and the new helper file (1:1 mapping with the four
@@ -280,7 +280,7 @@ in [`supabase/config.toml`](../../supabase/config.toml) stay as today.
 
 ## Commit boundaries
 
-Per [`AGENTS.md`](../../AGENTS.md) "Planning Depth," commit slices
+Per [`AGENTS.md`](../../../../AGENTS.md) "Planning Depth," commit slices
 named upfront:
 
 1. **Helper + caller migration.** The new
@@ -331,7 +331,7 @@ named upfront:
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md) and
+[`docs/self-review-catalog.md`](../../../self-review-catalog.md) and
 matched to this sub-phase's diff surfaces. The SQL audits from the
 parent plan apply to 2.1.1's diff, not this one.
 
@@ -340,7 +340,7 @@ parent plan apply to 2.1.1's diff, not this one.
 - **Platform-auth-gate config audit.** Re-confirm during the diff
   walk that all four functions still carry
   `[functions.<name>] verify_jwt = false` in
-  [`supabase/config.toml`](../../supabase/config.toml). The entries
+  [`supabase/config.toml`](../../../../supabase/config.toml). The entries
   must remain present and unchanged.
 - **Error-surfacing for user-initiated mutations.** The forbidden
   branch's user-facing copy must surface honestly when the rejection
@@ -361,7 +361,7 @@ parent plan apply to 2.1.1's diff, not this one.
   one positional argument; grep apps/web for every call site and
   confirm each passes a valid `eventId`. Today there is exactly one
   call site
-  ([`AdminEventDetailsForm.tsx`](../../apps/web/src/admin/AdminEventDetailsForm.tsx));
+  ([`AdminEventDetailsForm.tsx`](../../../../apps/web/src/admin/AdminEventDetailsForm.tsx));
   the audit confirms no second caller has appeared since plan time.
 - **Type discipline.** `AuthoringGameDraftContent.id` is the source
   of truth for `save-draft`'s eventId — no separate field added.
@@ -388,10 +388,10 @@ parent plan apply to 2.1.1's diff, not this one.
 
 ## Documentation Currency PR Gate
 
-Per [`AGENTS.md`](../../AGENTS.md) "Doc Currency Is a PR Gate," the
+Per [`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate," the
 relevant doc updates this branch must carry:
 
-- [`docs/architecture.md`](../architecture.md) — trust-boundary text
+- [`docs/architecture.md`](../../../architecture.md) — trust-boundary text
   reflects organizer write capability via the broadened authoring
   functions; Backend Surface list reflects the broadened gates and
   the new shared helper file.
@@ -402,16 +402,16 @@ relevant doc updates this branch must carry:
 Intentionally not updated by 2.1.2 (recorded so reviewer attention
 doesn't relitigate them):
 
-- [`docs/operations.md`](../operations.md) — no operator runbook
+- [`docs/operations.md`](../../../operations.md) — no operator runbook
   change; the per-event admin URL contract is owned by 2.3 / 2.4.
-- [`docs/product.md`](../product.md) — no implemented capability
+- [`docs/product.md`](../../../product.md) — no implemented capability
   surfaces to users yet; the organizer-authoring path becomes
   user-reachable when the per-event admin UI lands in 2.2.
-- [`docs/dev.md`](../dev.md) — no new validation commands.
-- [`docs/open-questions.md`](../open-questions.md) — the post-MVP
+- [`docs/dev.md`](../../../dev.md) — no new validation commands.
+- [`docs/open-questions.md`](../../../open-questions.md) — the post-MVP
   authoring-ownership entry closes with M2's terminal PR (2.5),
   not 2.1.2's.
-- [`docs/backlog.md`](../backlog.md) — the
+- [`docs/backlog.md`](../../../backlog.md) — the
   organizer-managed-agent-assignment unblock is recorded with M2's
   terminal PR (2.5), not 2.1.2's.
 
@@ -467,7 +467,7 @@ doesn't relitigate them):
   unblocked but not landed by this epic") becomes implementable on
   top of 2.1.1's `event_role_assignments` broadening with no further
   authorization work needed from 2.1.2. The unblock is recorded in
-  [`docs/backlog.md`](../backlog.md) by M2's terminal PR (2.5), not
+  [`docs/backlog.md`](../../../backlog.md) by M2's terminal PR (2.5), not
   by this sub-phase.
 
 ## Related Docs
@@ -477,7 +477,7 @@ doesn't relitigate them):
   the parent Status to `Landed`.
 - [`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md) — sibling
   sub-phase that landed the database side.
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent
+- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.
@@ -490,7 +490,7 @@ doesn't relitigate them):
   deletion; see git history for the pre-deletion content). The
   consumer phase plan is
   [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md).
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
   audit name source.
-- [`AGENTS.md`](../../AGENTS.md) — workflow rules, Plan-to-PR
+- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules, Plan-to-PR
   Completion Gate, Doc Currency PR Gate.

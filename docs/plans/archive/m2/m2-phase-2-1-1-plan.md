@@ -8,7 +8,7 @@ Landed.
 Milestone M2, Phase 2.1. Sibling sub-phase: 2.1.2 Edge Function
 authorization migration + docs — Proposed (plan TBD). Sibling phases
 2.2 / 2.3 / 2.4 / 2.5 — Proposed; M2 row in
-[`event-platform-epic.md`](./event-platform-epic.md) stays `Proposed`
+[`event-platform-epic.md`](../../event-platform-epic.md) stays `Proposed`
 until 2.5 lands.
 
 This sub-phase plan flips Status to `Landed` when its implementation
@@ -110,17 +110,17 @@ with the helper itself.
   (`'SELECT,INSERT,DELETE'`) are banned because PostgreSQL's any-of
   semantics make them vacuous. Negative assertions are re-verified
   under the Supabase CLI baseline grants per the
-  [self-review catalog's Privilege-test vacuous-pass audit](../self-review-catalog.md).
+  [self-review catalog's Privilege-test vacuous-pass audit](../../../self-review-catalog.md).
 
 ## Naming
 
 - The new SQL migration is `20260427010000_broaden_event_scoped_rls.sql`.
   The next free slot after the latest migration
-  ([`20260423020000_add_game_event_admin_status_view.sql`](../../supabase/migrations/20260423020000_add_game_event_admin_status_view.sql))
+  ([`20260423020000_add_game_event_admin_status_view.sql`](../../../../supabase/migrations/20260423020000_add_game_event_admin_status_view.sql))
   under the repo's `YYYYMMDDHHMMSS_snake_case_description.sql`
   convention.
 - New pgTAP files name the surface, not the phase, per
-  [`AGENTS.md`](../../AGENTS.md) anti-patterns:
+  [`AGENTS.md`](../../../../AGENTS.md) anti-patterns:
   `authoring_reads_rls.test.sql` for the draft/version read
   broadening, and `event_role_assignments_rls.test.sql` for the
   staffing-table broadening.
@@ -187,7 +187,7 @@ read drafts" policy is dropped; a new "organizers and admins can
 read drafts" policy is created. INSERT, UPDATE, and DELETE policies
 on this table remain root-only via the existing "admins can …"
 policies — those policies are exercised by
-[`game_authoring_phase2_auth.test.sql`](../../supabase/tests/database/game_authoring_phase2_auth.test.sql)
+[`game_authoring_phase2_auth.test.sql`](../../../../supabase/tests/database/game_authoring_phase2_auth.test.sql)
 and are not modified or re-asserted in this sub-phase.
 
 **`game_event_versions` SELECT.** The existing root-only "admins can
@@ -222,7 +222,7 @@ view-definition change needed.
 **Existing SECURITY DEFINER helpers are unchanged.**
 `is_organizer_for_event(text)`, `is_agent_for_event(text)`, and
 `is_root_admin()` ship in
-[`supabase/migrations/20260421000200_add_event_role_helpers.sql`](../../supabase/migrations/20260421000200_add_event_role_helpers.sql);
+[`supabase/migrations/20260421000200_add_event_role_helpers.sql`](../../../../supabase/migrations/20260421000200_add_event_role_helpers.sql);
 this sub-phase consumes them and adds no new helper variant.
 
 ## Files to touch — new
@@ -239,7 +239,7 @@ this sub-phase consumes them and adds no new helper variant.
   the `game_event_drafts` and `game_event_versions` SELECT broadening
   plus the transitive read of `game_event_admin_status` via
   `security_invoker`. Reuses the role-switching pattern from
-  [`supabase/tests/database/redemption_rls.test.sql`](../../supabase/tests/database/redemption_rls.test.sql)
+  [`supabase/tests/database/redemption_rls.test.sql`](../../../../supabase/tests/database/redemption_rls.test.sql)
   (`set local role authenticated` plus
   `set_config('request.jwt.claims', ...)` per case). Role matrix:
   organizer-A own event, organizer-B own event, agent (denied;
@@ -269,19 +269,19 @@ touch in this PR.
 - `supabase/functions/_shared/event-organizer-auth.ts` — the new
   shared helper introduces with 2.1.2 alongside its four callers, so
   the helper and its consumers ship as one reviewable diff.
-- [`supabase/functions/save-draft/index.ts`](../../supabase/functions/save-draft/index.ts),
-  [`supabase/functions/publish-draft/index.ts`](../../supabase/functions/publish-draft/index.ts),
-  [`supabase/functions/unpublish-event/index.ts`](../../supabase/functions/unpublish-event/index.ts),
-  [`supabase/functions/generate-event-code/index.ts`](../../supabase/functions/generate-event-code/index.ts)
+- [`supabase/functions/save-draft/index.ts`](../../../../supabase/functions/save-draft/index.ts),
+  [`supabase/functions/publish-draft/index.ts`](../../../../supabase/functions/publish-draft/index.ts),
+  [`supabase/functions/unpublish-event/index.ts`](../../../../supabase/functions/unpublish-event/index.ts),
+  [`supabase/functions/generate-event-code/index.ts`](../../../../supabase/functions/generate-event-code/index.ts)
   — caller migration is 2.1.2.
-- [`supabase/functions/_shared/admin-auth.ts`](../../supabase/functions/_shared/admin-auth.ts)
+- [`supabase/functions/_shared/admin-auth.ts`](../../../../supabase/functions/_shared/admin-auth.ts)
   — `authenticateQuizAdmin` is preserved as-is and remains the gate
   for all four authoring functions until 2.1.2.
-- [`docs/architecture.md`](../architecture.md) — doc update lands in
+- [`docs/architecture.md`](../../../architecture.md) — doc update lands in
   2.1.2 so the trust-boundary text and Backend Surface list reflect
   the end-to-end organizer write capability (Edge Function gate +
   database read broadening) in one coherent edit.
-- [`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql`](../../supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
+- [`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql`](../../../../supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
   — the redeem RPC's gate stays
   `is_agent_for_event OR is_root_admin` per the resolved decision to
   defer organizer-redeem broadening
@@ -295,7 +295,7 @@ touch in this PR.
 1. **Pre-edit gate.** Confirm clean worktree and the 2.1.1
    implementation feature branch (not `main`, not the doc-only
    branch that landed this plan). Confirm Node and Deno versions
-   match [`mise.toml`](../../mise.toml) (`mise exec` if the shell
+   match [`mise.toml`](../../../../mise.toml) (`mise exec` if the shell
    isn't activated). Read the latest sibling-phase scoping docs to
    confirm none have moved.
 2. **Baseline validation.** Run `npm run lint`, `npm run build:web`,
@@ -316,7 +316,7 @@ touch in this PR.
    cleanly against the full local migration history.
 5. **Write `authoring_reads_rls.test.sql`.** Reuse the fixture
    pattern from
-   [`redemption_rls.test.sql`](../../supabase/tests/database/redemption_rls.test.sql):
+   [`redemption_rls.test.sql`](../../../../supabase/tests/database/redemption_rls.test.sql):
    `set local session_replication_role = 'replica'` for the duration
    of `auth.users`-FK-bypassing seeds, reset to `'origin'` before
    any trigger-dependent assertion (none in this file — all
@@ -336,7 +336,7 @@ touch in this PR.
    comma-separated privilege list.
 8. **Repeat full validation.** All baseline commands from step 2.
 9. **Documentation currency check.** Walk the Doc Currency PR Gate
-   triggers in [`AGENTS.md`](../../AGENTS.md). For 2.1.1 the
+   triggers in [`AGENTS.md`](../../../../AGENTS.md). For 2.1.1 the
    trust-boundary surface does not yet expose new user-reachable
    write behavior (Edge Functions still gate root-admin), so
    `docs/architecture.md` is intentionally untouched and lands with
@@ -348,14 +348,14 @@ touch in this PR.
     senior-reviewer stance against the Cross-Cutting Invariants and
     each Self-Review Audit named below. Fix in place; commit
     review-fix changes separately when that clarifies history per
-    [`AGENTS.md`](../../AGENTS.md) Review-Fix Rigor.
+    [`AGENTS.md`](../../../../AGENTS.md) Review-Fix Rigor.
 11. **Plan-to-PR completion gate.** Walk every Goal, Cross-Cutting
     Invariant, Validation Gate command, and Self-Review Audit named
     in this plan. Confirm each is satisfied or explicitly deferred
     in this plan with rationale. Flip Status from `Proposed` to
     `Landed` in the same PR.
 12. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
     Title under 70 characters. Validation section lists every
     command actually run. Target Shape Evidence: name the three
     tables the migration touches against the two test files'
@@ -368,7 +368,7 @@ touch in this PR.
 
 ## Commit boundaries
 
-Per [`AGENTS.md`](../../AGENTS.md) "Planning Depth," commit slices
+Per [`AGENTS.md`](../../../../AGENTS.md) "Planning Depth," commit slices
 named upfront:
 
 1. **Migration.** The single SQL migration (steps 3–4). Single
@@ -392,7 +392,7 @@ named upfront:
   regressed.
 - `npm run test:db` — pass on baseline; pass on final. The two new
   files plus every existing test file in
-  [`supabase/tests/database/`](../../supabase/tests/database/).
+  [`supabase/tests/database/`](../../../../supabase/tests/database/).
 - **Manual organizer read-path exercise — deferred to human
   reviewer pre-merge.** With the local Supabase running, assign an
   `organizer` row for a fixture user against a test event, sign
@@ -409,7 +409,7 @@ named upfront:
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md) and
+[`docs/self-review-catalog.md`](../../../self-review-catalog.md) and
 matched to this sub-phase's diff surfaces. The Edge Function audits
 from the parent plan's "Edge Functions & deployment config" section
 apply to 2.1.2's diff, not this one.
@@ -450,7 +450,7 @@ apply to 2.1.2's diff, not this one.
   `event_role_assignments.user_id → auth.users(id)` remains; the
   test fixture pattern reuses the existing replica-mode +
   synthetic-UUID approach from
-  [`redemption_rls.test.sql`](../../supabase/tests/database/redemption_rls.test.sql).
+  [`redemption_rls.test.sql`](../../../../supabase/tests/database/redemption_rls.test.sql).
   No FK reshape attempted in this sub-phase.
 
 ### CI & testing infrastructure
@@ -468,7 +468,7 @@ apply to 2.1.2's diff, not this one.
 
 ## Documentation Currency PR Gate
 
-Per [`AGENTS.md`](../../AGENTS.md) "Doc Currency Is a PR Gate," the
+Per [`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate," the
 relevant doc updates this branch must carry:
 
 - This plan — Status flips from `Proposed` to `Landed`.
@@ -476,18 +476,18 @@ relevant doc updates this branch must carry:
 Intentionally not updated by 2.1.1 (recorded so reviewer attention
 doesn't relitigate them):
 
-- [`docs/architecture.md`](../architecture.md) — trust-boundary text
+- [`docs/architecture.md`](../../../architecture.md) — trust-boundary text
   and Backend Surface list update with 2.2's per-event admin UI
   (which makes the read-broadening user-reachable) and 2.1.2's Edge
   Function migration (which makes organizer write capability
   user-reachable). 2.1.1 ships an unconsumed read-broadening — the
   capability exists at the database layer but no consumer surface
   reaches it yet.
-- [`docs/operations.md`](../operations.md),
-  [`docs/product.md`](../product.md),
-  [`docs/dev.md`](../dev.md),
-  [`docs/open-questions.md`](../open-questions.md),
-  [`docs/backlog.md`](../backlog.md) — no change in 2.1.1 per the
+- [`docs/operations.md`](../../../operations.md),
+  [`docs/product.md`](../../../product.md),
+  [`docs/dev.md`](../../../dev.md),
+  [`docs/open-questions.md`](../../../open-questions.md),
+  [`docs/backlog.md`](../../../backlog.md) — no change in 2.1.1 per the
   parent plan's Doc Currency walkthrough.
 
 ## Out Of Scope
@@ -562,9 +562,9 @@ resolution path so reviewer attention does not relitigate them.
   walks every assertion.
 - **`auth.users` FK fixture instability across Supabase CLI
   versions.** Documented in the
-  [self-review catalog's Supabase-owned-schema FK fragility entry](../self-review-catalog.md).
+  [self-review catalog's Supabase-owned-schema FK fragility entry](../../../self-review-catalog.md).
   Mitigation: reuse the
-  [`redemption_rls.test.sql`](../../supabase/tests/database/redemption_rls.test.sql)
+  [`redemption_rls.test.sql`](../../../../supabase/tests/database/redemption_rls.test.sql)
   fixture pattern verbatim — the same replica-mode + synthetic-UUID
   approach already proven against the current CLI pin.
 - **`game_event_admin_status` view returns wrong status if the
@@ -581,14 +581,14 @@ resolution path so reviewer attention does not relitigate them.
   unblocked but not landed by this epic") becomes implementable on
   top of this sub-phase's `event_role_assignments` broadening with
   no further authorization work. The unblock is recorded in
-  [`docs/backlog.md`](../backlog.md) by M2's terminal PR (2.5), not
+  [`docs/backlog.md`](../../../backlog.md) by M2's terminal PR (2.5), not
   by this sub-phase.
 
 ## Related Docs
 
 - [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md) — parent phase
   plan; this sub-phase compresses its database slice.
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent
+- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.
@@ -600,7 +600,7 @@ resolution path so reviewer attention does not relitigate them.
   in M2 phase 2.5.3 batch deletion; see git history for the
   pre-deletion content). The consumer phase plan is
   [`m2-phase-2-2-plan.md`](./m2-phase-2-2-plan.md).
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
   audit name source.
-- [`AGENTS.md`](../../AGENTS.md) — workflow rules, Plan-to-PR
+- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules, Plan-to-PR
   Completion Gate, Doc Currency PR Gate.

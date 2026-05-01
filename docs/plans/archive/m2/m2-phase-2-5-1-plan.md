@@ -29,7 +29,7 @@ not-found page during the gap until 2.5.2's vercel cutover.
 This sub-phase makes apps/web answer the new operator URLs
 (`/event/:slug/game/redeem` and `/event/:slug/game/redemptions`)
 and stops answering the bare paths. The
-[`shared/urls/`](../../shared/urls) builders and matchers rename
+[`shared/urls/`](../../../../shared/urls) builders and matchers rename
 in lockstep with the URL change so the M1 phase 1.2 deferral
 (builder name and URL aligned at every gate) closes here. The
 e2e fixtures and the magic-link `next=` emission flip to the new
@@ -54,10 +54,10 @@ the per-environment Supabase Auth dashboard redirect-URL allow-list
 (operational config, not a file edit).
 
 What this sub-phase doesn't touch:
-[`apps/web/vercel.json`](../../apps/web/vercel.json), the local
+[`apps/web/vercel.json`](../../../../apps/web/vercel.json), the local
 auth-e2e dev-server proxy
-([`scripts/testing/run-auth-e2e-dev-server.cjs`](../../scripts/testing/run-auth-e2e-dev-server.cjs)),
-its unit test, [`docs/operations.md`](../operations.md), or any
+([`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)),
+its unit test, [`docs/operations.md`](../../../operations.md), or any
 URL-ownership-shape doc — those are 2.5.2's surface. Doc currency
 for page-behavior + API-shape descriptions defers to 2.5.3.
 
@@ -139,28 +139,28 @@ their post-2.5 URLs verbatim.
 Each contract carries an inline "Verified by:" reference per
 AGENTS.md.
 
-**[`shared/urls/routes.ts`](../../shared/urls/routes.ts) (modify).**
+**[`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) (modify).**
 Rename builders and matchers per the Naming section. The matcher
 function bodies are byte-identical to today modulo the `suffix`
 constant; the prefix constant (`${routes.gamePrefix}/`), the
 slice/decode/validate pipeline, and the empty-slug + embedded-slash
 rejection branches stay verbatim. Update the `AppPath`
 literal-union members for the two routes. Verified by:
-[`shared/urls/routes.ts:8-9,35-38,132-206`](../../shared/urls/routes.ts#L8).
+[`shared/urls/routes.ts:8-9,35-38,132-206`](../../../../shared/urls/routes.ts#L8).
 
-**[`shared/urls/validateNextPath.ts`](../../shared/urls/validateNextPath.ts) (modify).**
+**[`shared/urls/validateNextPath.ts`](../../../../shared/urls/validateNextPath.ts) (modify).**
 Update the two matcher imports at lines 3–4 to the renamed names
 and the two allow-list branches at lines 58–64. Surrounding logic
 is unchanged. Verified by:
-[`shared/urls/validateNextPath.ts:1-9,58-64`](../../shared/urls/validateNextPath.ts#L1).
+[`shared/urls/validateNextPath.ts:1-9,58-64`](../../../../shared/urls/validateNextPath.ts#L1).
 
-**[`shared/urls/index.ts`](../../shared/urls/index.ts) (modify).**
+**[`shared/urls/index.ts`](../../../../shared/urls/index.ts) (modify).**
 Re-export the renamed matchers (`matchGameRedeemPath`,
 `matchGameRedemptionsPath`) in place of the old names. Other
 re-exports stay verbatim. Verified by:
-[`shared/urls/index.ts:12-22`](../../shared/urls/index.ts#L12).
+[`shared/urls/index.ts:12-22`](../../../../shared/urls/index.ts#L12).
 
-**[`shared/urls/README.md`](../../shared/urls/README.md) (modify).**
+**[`shared/urls/README.md`](../../../../shared/urls/README.md) (modify).**
 Update the `routes` builder list at line 13 (`eventRedeem(slug)` →
 `gameRedeem(slug)`, `eventRedemptions(slug)` →
 `gameRedemptions(slug)`) and the matcher list at line 18
@@ -169,17 +169,17 @@ Update the `routes` builder list at line 13 (`eventRedeem(slug)` →
 the "Operator-route renames" entry under "What is intentionally
 absent" at lines 49–52 — the deferral resolves in this PR. Verified
 by:
-[`shared/urls/README.md:13,18,49-52`](../../shared/urls/README.md#L13).
+[`shared/urls/README.md:13,18,49-52`](../../../../shared/urls/README.md#L13).
 
-**[`apps/web/src/App.tsx`](../../apps/web/src/App.tsx) (modify).**
+**[`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx) (modify).**
 Update the matcher imports at lines 9–10 and the two dispatch
 branches at lines 41–63. Page-component imports stay verbatim;
 the JSX inside each branch (the page render with the
 `key={matched.slug}` pattern) stays verbatim; no `<ThemeScope>`
 wrap added. Verified by:
-[`apps/web/src/App.tsx:1-15,40-63`](../../apps/web/src/App.tsx#L1).
+[`apps/web/src/App.tsx:1-15,40-63`](../../../../apps/web/src/App.tsx#L1).
 
-**[`apps/web/src/pages/EventRedeemPage.tsx`](../../apps/web/src/pages/EventRedeemPage.tsx) (modify).**
+**[`apps/web/src/pages/EventRedeemPage.tsx`](../../../../apps/web/src/pages/EventRedeemPage.tsx) (modify).**
 JSDoc URL strings at lines 101 and 358 update from
 `/event/:slug/redeem` to `/event/:slug/game/redeem`. The
 magic-link `next=` builder call at line 384 updates from
@@ -189,17 +189,17 @@ import on line 23
 imports the `routes` symbol, which does not rename — only the
 property access on `routes` at the call site changes. No behavior
 or prop change. Verified by:
-[`apps/web/src/pages/EventRedeemPage.tsx:23,101,358,384`](../../apps/web/src/pages/EventRedeemPage.tsx#L23).
+[`apps/web/src/pages/EventRedeemPage.tsx:23,101,358,384`](../../../../apps/web/src/pages/EventRedeemPage.tsx#L23).
 
-**[`apps/web/src/pages/EventRedemptionsPage.tsx`](../../apps/web/src/pages/EventRedemptionsPage.tsx) (modify).**
+**[`apps/web/src/pages/EventRedemptionsPage.tsx`](../../../../apps/web/src/pages/EventRedemptionsPage.tsx) (modify).**
 Mirror edit: JSDoc URL strings at lines 119 and 615 update to
 `/event/:slug/game/redemptions`; the magic-link `next=` builder
 call at line 645 updates to `routes.gameRedemptions(slug)`. The
 `routes` import is unchanged for the same reason as
 `EventRedeemPage.tsx`. Verified by:
-[`apps/web/src/pages/EventRedemptionsPage.tsx:119,615,645`](../../apps/web/src/pages/EventRedemptionsPage.tsx#L119).
+[`apps/web/src/pages/EventRedemptionsPage.tsx:119,615,645`](../../../../apps/web/src/pages/EventRedemptionsPage.tsx#L119).
 
-**[`tests/shared/urls/routes.test.ts`](../../tests/shared/urls/routes.test.ts) (modify).**
+**[`tests/shared/urls/routes.test.ts`](../../../../tests/shared/urls/routes.test.ts) (modify).**
 Update the matcher imports at lines 3–6 to the renamed names. In
 the "redeem routes" describe block at lines 61–83, update
 `routes.eventRedeem` → `routes.gameRedeem`,
@@ -212,16 +212,16 @@ contains a `/event/madrona-music-2026/redeem` rejection assertion
 at line 50 that updates to `/event/madrona-music-2026/game/redeem`
 — keep the rejection invariant. The "game routes" describe block
 at lines 10–26 is untouched. Verified by:
-[`tests/shared/urls/routes.test.ts:1-114`](../../tests/shared/urls/routes.test.ts#L1).
+[`tests/shared/urls/routes.test.ts:1-114`](../../../../tests/shared/urls/routes.test.ts#L1).
 
-**[`tests/shared/urls/validateNextPath.test.ts`](../../tests/shared/urls/validateNextPath.test.ts) (modify).**
+**[`tests/shared/urls/validateNextPath.test.ts`](../../../../tests/shared/urls/validateNextPath.test.ts) (modify).**
 Update the four allow-list assertions at lines 85–107: each pair
 (bare slug, URL-encoded slug) updates input + expected output to
 the `/game/`-prefixed form. The `rejectedInputs` list and the
 torture test are unchanged. Verified by:
-[`tests/shared/urls/validateNextPath.test.ts:85-107`](../../tests/shared/urls/validateNextPath.test.ts#L85).
+[`tests/shared/urls/validateNextPath.test.ts:85-107`](../../../../tests/shared/urls/validateNextPath.test.ts#L85).
 
-**[`tests/web/App.test.tsx`](../../tests/web/App.test.tsx) (modify).**
+**[`tests/web/App.test.tsx`](../../../../tests/web/App.test.tsx) (modify).**
 Update the redeem-route dispatch test's `pathname` mock at line 47
 from `/event/madrona-music-2026/redeem` to
 `/event/madrona-music-2026/game/redeem`. (The scoping doc named
@@ -229,44 +229,44 @@ line 73; the load-bearing target is the redeem-route `it` block,
 currently at lines 44–53. Reality-check at edit time and edit the
 URL literal inside the redeem-route `it` block.) The per-event
 admin `it` block at lines 55–76 is unchanged. Verified by:
-[`tests/web/App.test.tsx:44-53`](../../tests/web/App.test.tsx#L44).
+[`tests/web/App.test.tsx:44-53`](../../../../tests/web/App.test.tsx#L44).
 
-**[`tests/web/pages/EventRedeemPage.test.tsx`](../../tests/web/pages/EventRedeemPage.test.tsx) (modify).**
+**[`tests/web/pages/EventRedeemPage.test.tsx`](../../../../tests/web/pages/EventRedeemPage.test.tsx) (modify).**
 Update the `next` assertion at line 91 from
 `/event/madrona-music-2026/redeem` to
 `/event/madrona-music-2026/game/redeem`. Verified by:
-[`tests/web/pages/EventRedeemPage.test.tsx:91`](../../tests/web/pages/EventRedeemPage.test.tsx#L91).
+[`tests/web/pages/EventRedeemPage.test.tsx:91`](../../../../tests/web/pages/EventRedeemPage.test.tsx#L91).
 
-**[`tests/web/pages/EventRedemptionsPage.test.tsx`](../../tests/web/pages/EventRedemptionsPage.test.tsx) (modify).**
+**[`tests/web/pages/EventRedemptionsPage.test.tsx`](../../../../tests/web/pages/EventRedemptionsPage.test.tsx) (modify).**
 Mirror edit: update the `next` assertion at line 185 from
 `/event/madrona-music-2026/redemptions` to
 `/event/madrona-music-2026/game/redemptions`. Verified by:
-[`tests/web/pages/EventRedemptionsPage.test.tsx:185`](../../tests/web/pages/EventRedemptionsPage.test.tsx#L185).
+[`tests/web/pages/EventRedemptionsPage.test.tsx:185`](../../../../tests/web/pages/EventRedemptionsPage.test.tsx#L185).
 
-**[`tests/e2e/redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts) (modify).**
+**[`tests/e2e/redeem-auth-fixture.ts`](../../../../tests/e2e/redeem-auth-fixture.ts) (modify).**
 Update the `defaultRedirectUrl` constant at line 30 from
 `http://127.0.0.1:4173/auth/callback?next=/event/first-sample/redeem`
 to `http://127.0.0.1:4173/auth/callback?next=/event/first-sample/game/redeem`.
 The host part stays verbatim. Verified by:
-[`tests/e2e/redeem-auth-fixture.ts:29-30`](../../tests/e2e/redeem-auth-fixture.ts#L29).
+[`tests/e2e/redeem-auth-fixture.ts:29-30`](../../../../tests/e2e/redeem-auth-fixture.ts#L29).
 
-**[`tests/e2e/redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts) (modify).**
+**[`tests/e2e/redemptions-auth-fixture.ts`](../../../../tests/e2e/redemptions-auth-fixture.ts) (modify).**
 Mirror edit at line 30 (or line 31 — reality-check at edit time):
 update to `next=/event/first-sample/game/redemptions`. Verified by:
-[`tests/e2e/redemptions-auth-fixture.ts:29-31`](../../tests/e2e/redemptions-auth-fixture.ts#L29).
+[`tests/e2e/redemptions-auth-fixture.ts:29-31`](../../../../tests/e2e/redemptions-auth-fixture.ts#L29).
 
-**[`tests/e2e/mobile-smoke.redeem.spec.ts`](../../tests/e2e/mobile-smoke.redeem.spec.ts) (modify).**
+**[`tests/e2e/mobile-smoke.redeem.spec.ts`](../../../../tests/e2e/mobile-smoke.redeem.spec.ts) (modify).**
 Update the `page.goto` URL at line 18 and the `toHaveURL`
 assertion at line 24 from `/event/${fixture.eventSlug}/redeem` to
 `/event/${fixture.eventSlug}/game/redeem`. The fixture interface
 and other assertions stay verbatim. Verified by:
-[`tests/e2e/mobile-smoke.redeem.spec.ts:18,24`](../../tests/e2e/mobile-smoke.redeem.spec.ts#L18).
+[`tests/e2e/mobile-smoke.redeem.spec.ts:18,24`](../../../../tests/e2e/mobile-smoke.redeem.spec.ts#L18).
 
-**[`tests/e2e/mobile-smoke.redemptions.spec.ts`](../../tests/e2e/mobile-smoke.redemptions.spec.ts) (modify).**
+**[`tests/e2e/mobile-smoke.redemptions.spec.ts`](../../../../tests/e2e/mobile-smoke.redemptions.spec.ts) (modify).**
 Mirror edits: `page.goto` URL at line 12 and `toHaveURL` patterns
 at lines 21 and 77 update to the `/game/redemptions` shape.
 Verified by:
-[`tests/e2e/mobile-smoke.redemptions.spec.ts:12,21,77`](../../tests/e2e/mobile-smoke.redemptions.spec.ts#L12).
+[`tests/e2e/mobile-smoke.redemptions.spec.ts:12,21,77`](../../../../tests/e2e/mobile-smoke.redemptions.spec.ts#L12).
 
 **This plan (modify, terminal step).** Status flips from
 `Proposed` to `Landed` in the implementing PR per AGENTS.md
@@ -276,28 +276,28 @@ Verified by:
 
 ### Modify (shared)
 
-- [`shared/urls/routes.ts`](../../shared/urls/routes.ts)
-- [`shared/urls/validateNextPath.ts`](../../shared/urls/validateNextPath.ts)
-- [`shared/urls/index.ts`](../../shared/urls/index.ts)
-- [`shared/urls/README.md`](../../shared/urls/README.md)
+- [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts)
+- [`shared/urls/validateNextPath.ts`](../../../../shared/urls/validateNextPath.ts)
+- [`shared/urls/index.ts`](../../../../shared/urls/index.ts)
+- [`shared/urls/README.md`](../../../../shared/urls/README.md)
 
 ### Modify (apps/web)
 
-- [`apps/web/src/App.tsx`](../../apps/web/src/App.tsx)
-- [`apps/web/src/pages/EventRedeemPage.tsx`](../../apps/web/src/pages/EventRedeemPage.tsx)
-- [`apps/web/src/pages/EventRedemptionsPage.tsx`](../../apps/web/src/pages/EventRedemptionsPage.tsx)
+- [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx)
+- [`apps/web/src/pages/EventRedeemPage.tsx`](../../../../apps/web/src/pages/EventRedeemPage.tsx)
+- [`apps/web/src/pages/EventRedemptionsPage.tsx`](../../../../apps/web/src/pages/EventRedemptionsPage.tsx)
 
 ### Modify (tests)
 
-- [`tests/shared/urls/routes.test.ts`](../../tests/shared/urls/routes.test.ts)
-- [`tests/shared/urls/validateNextPath.test.ts`](../../tests/shared/urls/validateNextPath.test.ts)
-- [`tests/web/App.test.tsx`](../../tests/web/App.test.tsx)
-- [`tests/web/pages/EventRedeemPage.test.tsx`](../../tests/web/pages/EventRedeemPage.test.tsx)
-- [`tests/web/pages/EventRedemptionsPage.test.tsx`](../../tests/web/pages/EventRedemptionsPage.test.tsx)
-- [`tests/e2e/redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts)
-- [`tests/e2e/redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts)
-- [`tests/e2e/mobile-smoke.redeem.spec.ts`](../../tests/e2e/mobile-smoke.redeem.spec.ts)
-- [`tests/e2e/mobile-smoke.redemptions.spec.ts`](../../tests/e2e/mobile-smoke.redemptions.spec.ts)
+- [`tests/shared/urls/routes.test.ts`](../../../../tests/shared/urls/routes.test.ts)
+- [`tests/shared/urls/validateNextPath.test.ts`](../../../../tests/shared/urls/validateNextPath.test.ts)
+- [`tests/web/App.test.tsx`](../../../../tests/web/App.test.tsx)
+- [`tests/web/pages/EventRedeemPage.test.tsx`](../../../../tests/web/pages/EventRedeemPage.test.tsx)
+- [`tests/web/pages/EventRedemptionsPage.test.tsx`](../../../../tests/web/pages/EventRedemptionsPage.test.tsx)
+- [`tests/e2e/redeem-auth-fixture.ts`](../../../../tests/e2e/redeem-auth-fixture.ts)
+- [`tests/e2e/redemptions-auth-fixture.ts`](../../../../tests/e2e/redemptions-auth-fixture.ts)
+- [`tests/e2e/mobile-smoke.redeem.spec.ts`](../../../../tests/e2e/mobile-smoke.redeem.spec.ts)
+- [`tests/e2e/mobile-smoke.redemptions.spec.ts`](../../../../tests/e2e/mobile-smoke.redemptions.spec.ts)
 
 ### Modify (plan Status)
 
@@ -305,31 +305,31 @@ Verified by:
 
 ### Files intentionally not touched
 
-- [`apps/web/vercel.json`](../../apps/web/vercel.json) — owned by 2.5.2.
-- [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../scripts/testing/run-auth-e2e-dev-server.cjs)
+- [`apps/web/vercel.json`](../../../../apps/web/vercel.json) — owned by 2.5.2.
+- [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)
   and
-  [`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../tests/scripts/run-auth-e2e-dev-server.test.ts)
+  [`tests/scripts/run-auth-e2e-dev-server.test.ts`](../../../../tests/scripts/run-auth-e2e-dev-server.test.ts)
   — owned by 2.5.2.
-- [`docs/operations.md`](../operations.md),
-  [`docs/architecture.md`](../architecture.md),
-  [`docs/dev.md`](../dev.md) — URL-shape and page-behavior doc
+- [`docs/operations.md`](../../../operations.md),
+  [`docs/architecture.md`](../../../architecture.md),
+  [`docs/dev.md`](../../../dev.md) — URL-shape and page-behavior doc
   edits split across 2.5.2 and 2.5.3; this sub-phase only edits
-  [`shared/urls/README.md`](../../shared/urls/README.md) which
+  [`shared/urls/README.md`](../../../../shared/urls/README.md) which
   reads as part of the load-bearing module change.
-- [`docs/product.md`](../product.md),
-  [`README.md`](../../README.md),
-  [`docs/open-questions.md`](../open-questions.md),
-  [`docs/backlog.md`](../backlog.md) — owned by 2.5.3.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md)
+- [`docs/product.md`](../../../product.md),
+  [`README.md`](../../../../README.md),
+  [`docs/open-questions.md`](../../../open-questions.md),
+  [`docs/backlog.md`](../../../backlog.md) — owned by 2.5.3.
+- [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md)
   M2 row, [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md)
   Status — owned by 2.5.3.
 - M2 scoping docs (deleted in 2.5.3's batch deletion; see git
   history).
 - Edge Functions, migrations,
-  [`shared/auth/`](../../shared/auth),
-  [`shared/db/`](../../shared/db),
-  [`shared/events/`](../../shared/events),
-  [`shared/styles/`](../../shared/styles), apps/site source.
+  [`shared/auth/`](../../../../shared/auth),
+  [`shared/db/`](../../../../shared/db),
+  [`shared/events/`](../../../../shared/events),
+  [`shared/styles/`](../../../../shared/styles), apps/site source.
 
 ## Execution Steps
 
@@ -338,12 +338,12 @@ Verified by:
    "Hard dependencies on landed siblings" pre-conditions hold
    (the `routes.eventRedeem` / `routes.eventRedemptions` builders
    still exist in
-   [`shared/urls/routes.ts`](../../shared/urls/routes.ts) and the
+   [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) and the
    apps/web dispatcher still imports `matchEventRedeemPath` /
    `matchEventRedemptionsPath`). Re-read the umbrella's "Cross-
    Cutting Invariants" and this plan's Contracts section. Confirm
    no other PR is in flight against
-   [`shared/urls/routes.ts`](../../shared/urls/routes.ts).
+   [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts).
 2. **Baseline validation.** `npm run lint`, `npm test`,
    `npm run build:web`, `npm run build:site`,
    `npm run test:functions`. All must pass before any edit.
@@ -376,12 +376,12 @@ Verified by:
    `routes.home`. Captured in the PR's Validation section as a
    per-env check.
 5. **Shared/urls rename + apps/web consumer edits.** Edit
-   [`shared/urls/routes.ts`](../../shared/urls/routes.ts),
-   [`shared/urls/validateNextPath.ts`](../../shared/urls/validateNextPath.ts),
-   [`shared/urls/index.ts`](../../shared/urls/index.ts),
-   [`apps/web/src/App.tsx`](../../apps/web/src/App.tsx),
-   [`apps/web/src/pages/EventRedeemPage.tsx`](../../apps/web/src/pages/EventRedeemPage.tsx),
-   [`apps/web/src/pages/EventRedemptionsPage.tsx`](../../apps/web/src/pages/EventRedemptionsPage.tsx)
+   [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts),
+   [`shared/urls/validateNextPath.ts`](../../../../shared/urls/validateNextPath.ts),
+   [`shared/urls/index.ts`](../../../../shared/urls/index.ts),
+   [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx),
+   [`apps/web/src/pages/EventRedeemPage.tsx`](../../../../apps/web/src/pages/EventRedeemPage.tsx),
+   [`apps/web/src/pages/EventRedemptionsPage.tsx`](../../../../apps/web/src/pages/EventRedemptionsPage.tsx)
    per the Contracts section. Single commit per the build-
    sequencing constraint. `npm run build:web` confirms compilation.
 6. **Test updates.** Update all `tests/shared/urls/*`,
@@ -402,7 +402,7 @@ Verified by:
    merges.)
 9. **Local auth e2e exercise.** Run
    `npm run test:e2e:redeem` and `npm run test:e2e:redemptions`
-   ([`package.json:27-28`](../../package.json#L27)). The wrappers
+   ([`package.json:27-28`](../../../../package.json#L27)). The wrappers
    provision the local Supabase Docker stack, forward the local
    service-role key, start the auth-e2e dev-server proxy, and
    exercise the renamed routes through the magic-link round-trip.
@@ -417,7 +417,7 @@ Verified by:
     every Self-Review Audit. Confirm each is satisfied or
     deferred. Flip Status to `Landed`.
 13. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
     Title under 70 characters
     (suggested:
     `feat(m2-2.5.1): rename routes.gameRedeem* + retarget dispatcher`).
@@ -430,10 +430,10 @@ Verified by:
 
 1. **Shared rename + apps/web consumer edits.** Single commit
    per the build-sequencing constraint. Includes
-   [`shared/urls/routes.ts`](../../shared/urls/routes.ts),
-   [`shared/urls/validateNextPath.ts`](../../shared/urls/validateNextPath.ts),
-   [`shared/urls/index.ts`](../../shared/urls/index.ts),
-   [`apps/web/src/App.tsx`](../../apps/web/src/App.tsx), and the
+   [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts),
+   [`shared/urls/validateNextPath.ts`](../../../../shared/urls/validateNextPath.ts),
+   [`shared/urls/index.ts`](../../../../shared/urls/index.ts),
+   [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx), and the
    two page files.
 2. **Test updates.** Single commit; depends on commit 1's shared
    rename for the matcher imports. Includes all
@@ -455,7 +455,7 @@ Verified by:
 - pgTAP via `npm run test:db` — pass on baseline; pass on final
   (unchanged).
 - **`npm run test:e2e:redeem` and `npm run test:e2e:redemptions`
-  via the canonical wrappers** ([`package.json:27-28`](../../package.json#L27)).
+  via the canonical wrappers** ([`package.json:27-28`](../../../../package.json#L27)).
   Pre-merge load-bearing for the matcher rename and the
   magic-link `next=` swap.
 - **Local apps/web dev-server smoke (Execution step 8).** New
@@ -472,12 +472,12 @@ lands under the regular Tier 1–4 gate.
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md).
+[`docs/self-review-catalog.md`](../../../self-review-catalog.md).
 
 ### Frontend
 
 - **Rename-aware diff classification**
-  ([catalog §Rename-aware diff classification](../self-review-catalog.md#L354)).
+  ([catalog §Rename-aware diff classification](../../../self-review-catalog.md#L354)).
   This sub-phase renames `routes.eventRedeem` /
   `routes.eventRedemptions` and `matchEventRedeem*` /
   `matchEventRedemptions*` and rewrites URL string literals across
@@ -485,15 +485,15 @@ Drawn from
   diff is mechanical. **Reviewer attention should land on the
   small content edits**: the `AppPath` literal-union member
   changes, the matcher `suffix` constants
-  ([`shared/urls/routes.ts:136,174`](../../shared/urls/routes.ts#L136)),
+  ([`shared/urls/routes.ts:136,174`](../../../../shared/urls/routes.ts#L136)),
   the page-file JSDoc URL strings, and the magic-link `next=`
   builder swap. Use `git diff --name-status` and the
   rename-aware classifier per the catalog rule.
 - **Platform-auth-gate config audit**
-  ([catalog §Platform-auth-gate config audit](../self-review-catalog.md)).
+  ([catalog §Platform-auth-gate config audit](../../../self-review-catalog.md)).
   Two of the three independent allow-lists update in this
   sub-phase: `validateNextPath`'s allow-list (covered by
-  [`tests/shared/urls/validateNextPath.test.ts`](../../tests/shared/urls/validateNextPath.test.ts))
+  [`tests/shared/urls/validateNextPath.test.ts`](../../../../tests/shared/urls/validateNextPath.test.ts))
   and the Supabase Auth dashboard per environment (Execution
   step 4 manual). The third (apps/web/vercel.json) doesn't change
   in this sub-phase — rule 2's `/event/:slug/game/:path*` carve-out
@@ -515,7 +515,7 @@ Drawn from
 
 ## Documentation Currency PR Gate
 
-- [`shared/urls/README.md`](../../shared/urls/README.md) — `routes`
+- [`shared/urls/README.md`](../../../../shared/urls/README.md) — `routes`
   builder list, matcher list, "What is intentionally absent" entry
   per Contracts.
 - This plan — Status flips to `Landed`.
@@ -587,8 +587,8 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   and its post-deploy verification passes.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone; Phase Status row updates as each sub-phase ships.
-- [`shared-urls-foundation.md`](./shared-urls-foundation.md) —
+- [`shared-urls-foundation.md`](../../shared-urls-foundation.md) —
   M1 phase 1.2 plan; the deferral this sub-phase resolves.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
   audit name source.
-- [`AGENTS.md`](../../AGENTS.md) — workflow rules.
+- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules.

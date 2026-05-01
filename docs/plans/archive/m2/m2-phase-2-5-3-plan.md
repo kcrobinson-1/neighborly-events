@@ -27,16 +27,16 @@ this PR. As of plan-drafting,
 milestone doc
 ([`m2-admin-restructuring.md:50-53`](./m2-admin-restructuring.md#L50)),
 2.5.3's PR carries the M2-row flip in
-[`event-platform-epic.md:19`](./event-platform-epic.md#L19) and the
+[`event-platform-epic.md:19`](../../event-platform-epic.md#L19) and the
 top-level Status flip in
 [`m2-admin-restructuring.md:5`](./m2-admin-restructuring.md#L5).
 
 **Single PR.** Branch-test sketch — durable docs: 5 modifies
-([`docs/architecture.md`](../architecture.md),
-[`docs/dev.md`](../dev.md), [`docs/product.md`](../product.md),
-[`README.md`](../../README.md), [`docs/open-questions.md`](../open-questions.md));
-backlog: 1 modify ([`docs/backlog.md`](../backlog.md)); plans: 4
-modifies ([`docs/plans/event-platform-epic.md`](./event-platform-epic.md),
+([`docs/architecture.md`](../../../architecture.md),
+[`docs/dev.md`](../../../dev.md), [`docs/product.md`](../../../product.md),
+[`README.md`](../../../../README.md), [`docs/open-questions.md`](../../../open-questions.md));
+backlog: 1 modify ([`docs/backlog.md`](../../../backlog.md)); plans: 4
+modifies ([`docs/plans/event-platform-epic.md`](../../event-platform-epic.md),
 [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md),
 [`docs/plans/m2-phase-2-5-plan.md`](./m2-phase-2-5-plan.md), this
 file); link-rewrites: ~9 plan files touched to rewrite scoping-doc
@@ -61,7 +61,7 @@ URLs) or `eventRedeem(slug)` / `eventRedemptions(slug)` /
 `matchEventRedeemPath` / `matchEventRedemptionsPath` (pre-2.5.1
 builder/matcher names). 2.5.1's load-bearing module change kept its
 doc surface to
-[`shared/urls/README.md`](../../shared/urls/README.md); 2.5.2's
+[`shared/urls/README.md`](../../../../shared/urls/README.md); 2.5.2's
 load-bearing routing change kept its doc surface to URL-ownership
 shape (architecture topology table, dev rule walkthrough,
 operations dashboard prose). The umbrella's "Doc currency split
@@ -95,9 +95,9 @@ What this sub-phase touches:
 - **M2 closure surface** — the epic's M2 row,
   [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)'s
   top-level Status + Phase Status table 2.5 row,
-  [`docs/open-questions.md`](../open-questions.md)'s post-MVP
+  [`docs/open-questions.md`](../../../open-questions.md)'s post-MVP
   authoring-ownership entry, and
-  [`docs/backlog.md`](../backlog.md)'s organizer-managed agent
+  [`docs/backlog.md`](../../../backlog.md)'s organizer-managed agent
   assignment entry.
 - **M2 scoping batch deletion + link-rewrite** — the five M2
   scoping docs delete; every surviving link to them across the
@@ -110,13 +110,13 @@ What this sub-phase touches:
 
 What this sub-phase doesn't touch: any code, any test, any
 configuration, any Edge Function, any migration, any
-[`shared/urls/`](../../shared/urls) module file, any apps/web or
+[`shared/urls/`](../../../../shared/urls) module file, any apps/web or
 apps/site source, any production-smoke fixture,
-[`shared/urls/README.md`](../../shared/urls/README.md) (already
+[`shared/urls/README.md`](../../../../shared/urls/README.md) (already
 updated in 2.5.1 per the umbrella's "Doc currency split" — the
 routes/matcher list there reads the post-rename names verbatim
 per `git log` commit `c5e2994`), or
-[`docs/operations.md`](../operations.md) (the Supabase Auth
+[`docs/operations.md`](../../../operations.md) (the Supabase Auth
 dashboard prose updated in 2.5.2). No production behavior
 change beyond the already-shipped 2.5.1 + 2.5.2 cutover.
 
@@ -126,7 +126,7 @@ Land the doc-currency edits the umbrella's "Doc currency split"
 invariant assigned to this sub-phase, close the open-question and
 unblock the backlog entry per the epic's "Open Questions Resolved
 By This Epic"
-([`event-platform-epic.md:166-172`](./event-platform-epic.md#L166)),
+([`event-platform-epic.md:166-172`](../../event-platform-epic.md#L166)),
 delete the five M2 scoping docs in batch (with the link-rewrite
 contract from
 [`m2-phase-2-5-plan.md:579-648`](./m2-phase-2-5-plan.md#L579)
@@ -194,7 +194,7 @@ surface settled in 2.5.1; no code edits in 2.5.3).
 Each contract carries an inline "Verified by:" reference per
 AGENTS.md.
 
-**[`docs/architecture.md`](../architecture.md) (modify, page-behavior + auth-flow + runtime-flow surfaces).**
+**[`docs/architecture.md`](../../../architecture.md) (modify, page-behavior + auth-flow + runtime-flow surfaces).**
 Three surfaces update in this sub-phase per the umbrella's
 "Documentation Currency" subsection
 ([`m2-phase-2-5-plan.md:557-571`](./m2-phase-2-5-plan.md#L557)):
@@ -223,14 +223,14 @@ Three surfaces update in this sub-phase per the umbrella's
   to the post-rename URLs. Behavior prose stays verbatim.
 
 Verified by:
-[`docs/architecture.md:92-97`](../architecture.md#L92),
-[`docs/architecture.md:266-270`](../architecture.md#L266),
-[`docs/architecture.md:664-738`](../architecture.md#L664), and
-[`shared/urls/routes.ts:35-38,133,171`](../../shared/urls/routes.ts#L35)
+[`docs/architecture.md:92-97`](../../../architecture.md#L92),
+[`docs/architecture.md:266-270`](../../../architecture.md#L266),
+[`docs/architecture.md:664-738`](../../../architecture.md#L664), and
+[`shared/urls/routes.ts:35-38,133,171`](../../../../shared/urls/routes.ts#L35)
 (authoritative post-rename names per 2.5.1's `git log` commit
 `ac3b4ee`).
 
-**[`docs/dev.md`](../dev.md) (modify, routes-builder-list surface).**
+**[`docs/dev.md`](../../../dev.md) (modify, routes-builder-list surface).**
 Single surface updates in this sub-phase: the routes builder
 enumeration at lines 208–213. The list updates from `home`,
 `admin`, `adminEvent(id)`, `eventLanding(slug)`,
@@ -239,9 +239,9 @@ enumeration at lines 208–213. The list updates from `home`,
 `gamePrefix`, `eventLanding(slug)`, `eventAdmin(slug)`,
 `game(slug)`, `gameRedeem(slug)`, `gameRedemptions(slug)`,
 `authCallback`, mirroring
-[`shared/urls/routes.ts:25-40`](../../shared/urls/routes.ts#L25).
+[`shared/urls/routes.ts:25-40`](../../../../shared/urls/routes.ts#L25).
 The drop of `adminEvent(id)` corrects pre-existing drift —
-[`shared/urls/routes.ts`](../../shared/urls/routes.ts) no longer
+[`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) no longer
 exports `adminEvent` per 2.4.3's deletion (`git log` shows the
 removal landed in commit `bd8e2f4` for PR #126), and the dev.md
 list went stale at that point. Bundling this correction with the
@@ -249,10 +249,10 @@ list went stale at that point. Bundling this correction with the
 the same line that carries the stale `adminEvent(id)` reference;
 splitting would require revisiting the same line in a follow-up
 PR for no incremental review value. Verified by:
-[`docs/dev.md:208-213`](../dev.md#L208) and
-[`shared/urls/routes.ts:25-40`](../../shared/urls/routes.ts#L25).
+[`docs/dev.md:208-213`](../../../dev.md#L208) and
+[`shared/urls/routes.ts:25-40`](../../../../shared/urls/routes.ts#L25).
 
-**[`docs/product.md`](../product.md) (modify, capability-bullet surface).**
+**[`docs/product.md`](../../../product.md) (modify, capability-bullet surface).**
 Single bullet updates: the operator-route capability bullet at
 line 47, currently
 `an authenticated agent-facing redeem route at `/event/:slug/redeem` for fast booth-side code entry, and an authenticated organizer-facing monitoring + reversal route at `/event/:slug/redemptions` for dispute handling`,
@@ -261,9 +261,9 @@ updates to use `/event/:slug/game/redeem` and
 booth-side code entry," "for dispute handling," "list, filter,
 search, reverse with optional reason," "both direct-URL only
 until role seeding") stays verbatim. Verified by:
-[`docs/product.md:47`](../product.md#L47).
+[`docs/product.md:47`](../../../product.md#L47).
 
-**[`README.md`](../../README.md) (modify, capability-bullets + Repo Shape surfaces).**
+**[`README.md`](../../../../README.md) (modify, capability-bullets + Repo Shape surfaces).**
 Two surfaces update:
 
 - **Capability bullets** at lines 32–40. The redeem-route bullet
@@ -282,14 +282,14 @@ Two surfaces update:
   ([`m2-phase-2-5-plan.md:328-342`](./m2-phase-2-5-plan.md#L328)).
 
 Verified by:
-[`README.md:32-40`](../../README.md#L32) and
-[`README.md:63-67`](../../README.md#L63).
+[`README.md:32-40`](../../../../README.md#L32) and
+[`README.md:63-67`](../../../../README.md#L63).
 
-**[`docs/open-questions.md`](../open-questions.md) (modify, close authoring-ownership entry).**
+**[`docs/open-questions.md`](../../../open-questions.md) (modify, close authoring-ownership entry).**
 The "Post-MVP authoring ownership and permission management"
 section at lines 29–54 closes per the epic's "Open Questions
 Resolved By This Epic"
-([`event-platform-epic.md:166-172`](./event-platform-epic.md#L166)).
+([`event-platform-epic.md:166-172`](../../event-platform-epic.md#L166)).
 The resolution: M2's 2.1 RLS broadening + 2.1.2 Edge Function
 broadening landed full organizer write capability for
 event-scoped data through PostgREST + Edge Functions. The
@@ -301,10 +301,10 @@ questions remain, the parent section also reads "No currently
 open questions in this section under the current tracking rule"
 matching the existing pattern at lines 25–27, 58–61, 65–68, and
 72–75. Verified by:
-[`docs/open-questions.md:29-54`](../open-questions.md#L29) and
-[`docs/plans/event-platform-epic.md:166-172`](./event-platform-epic.md#L166).
+[`docs/open-questions.md:29-54`](../../../open-questions.md#L29) and
+[`docs/plans/event-platform-epic.md:166-172`](../../event-platform-epic.md#L166).
 
-**[`docs/backlog.md`](../backlog.md) (modify, unblock organizer-agent-assignment entry).**
+**[`docs/backlog.md`](../../../backlog.md) (modify, unblock organizer-agent-assignment entry).**
 The "Organizer-managed agent assignment" entry at lines 140–144
 unblocks. The current text reads
 `Blocked on the broader authoring ownership decision.`; that
@@ -330,20 +330,20 @@ direction confirmed; organizers have full event-scoped write
 access via M2's RLS broadening"), with the detail link pointing
 to [`docs/plans/event-platform-epic.md`](./plans/event-platform-epic.md)
 "Open Questions Resolved By This Epic." Verified by:
-[`docs/backlog.md:131-144`](../backlog.md#L131) and
-[`docs/plans/event-platform-epic.md:166-172`](./event-platform-epic.md#L166).
+[`docs/backlog.md:131-144`](../../../backlog.md#L131) and
+[`docs/plans/event-platform-epic.md:166-172`](../../event-platform-epic.md#L166).
 
-**[`docs/plans/event-platform-epic.md`](./event-platform-epic.md) (modify, M2 row flip).**
+**[`docs/plans/event-platform-epic.md`](../../event-platform-epic.md) (modify, M2 row flip).**
 The milestone status table row for M2 at line 19 flips from
 `Proposed` to `Landed`. The other rows (M0 Landed, M1 Landed, M3
 Proposed, M4 Proposed) stay verbatim. The top-level Status at
 line 5 (`Proposed.`) stays `Proposed.` — that flip is owned by
 M4's terminal PR per
-[`event-platform-epic.md:23-24`](./event-platform-epic.md#L23)
+[`event-platform-epic.md:23-24`](../../event-platform-epic.md#L23)
 ("When all five rows show `Landed`, the top-level Status above
 flips from `Proposed` to `Landed` in the same PR that lands M4").
 Verified by:
-[`docs/plans/event-platform-epic.md:5,15-24`](./event-platform-epic.md#L5).
+[`docs/plans/event-platform-epic.md:5,15-24`](../../event-platform-epic.md#L5).
 
 **[`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md) (modify, milestone-doc closure).**
 Three surfaces update:
@@ -430,7 +430,7 @@ path reference with explanatory prose) rather than walking each
 link case-by-case for option 1 vs. 2 vs. 3 selection. The bias is
 load-bearing: a follow-up PR archives the M2 plan-doc set
 post-2.5.3 (tracked in
-[`docs/backlog.md`](../backlog.md) under the new "Archive M2 plan
+[`docs/backlog.md`](../../../backlog.md) under the new "Archive M2 plan
 docs" entry this PR adds), and option-1 rewrites that point at
 [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
 sections will need re-resolution when the milestone doc itself
@@ -469,24 +469,24 @@ doc-only against an already-verified cutover).
 
 ### Modify (durable docs)
 
-- [`docs/architecture.md`](../architecture.md) — page-behavior
+- [`docs/architecture.md`](../../../architecture.md) — page-behavior
   route inventory + `shared/urls/` module description + auth-flow
   narrative + runtime-flow URL strings.
-- [`docs/dev.md`](../dev.md) — routes builder list (with stale
+- [`docs/dev.md`](../../../dev.md) — routes builder list (with stale
   `adminEvent(id)` correction).
-- [`docs/product.md`](../product.md) — operator-route capability
+- [`docs/product.md`](../../../product.md) — operator-route capability
   bullet URL strings.
-- [`README.md`](../../README.md) — capability bullets +
+- [`README.md`](../../../../README.md) — capability bullets +
   Repo Shape apps/web ownership prose.
-- [`docs/open-questions.md`](../open-questions.md) — close
+- [`docs/open-questions.md`](../../../open-questions.md) — close
   Post-MVP authoring-ownership entry.
-- [`docs/backlog.md`](../backlog.md) — close Post-MVP authoring
+- [`docs/backlog.md`](../../../backlog.md) — close Post-MVP authoring
   ownership decision entry; unblock organizer-managed agent
   assignment entry.
 
 ### Modify (plans + closure)
 
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md) —
   M2 row flip to `Landed`.
 - [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
   top-level Status flip + Phase Status table row flips for 2.5
@@ -519,9 +519,9 @@ doc-only against an already-verified cutover).
 
 - Any code, test, configuration, Edge Function, migration, or
   shell script — this sub-phase is doc-only.
-- [`shared/urls/`](../../shared/urls) (module + README) — already
+- [`shared/urls/`](../../../../shared/urls) (module + README) — already
   updated in 2.5.1 per umbrella's "Doc currency split."
-- [`docs/operations.md`](../operations.md) — Supabase Auth
+- [`docs/operations.md`](../../../operations.md) — Supabase Auth
   dashboard prose updated in 2.5.2 per umbrella's "Doc currency
   split."
 - The 2.5.1 + 2.5.2 sub-phase plans
@@ -544,9 +544,9 @@ doc-only against an already-verified cutover).
   blocks unchanged; only the link-rewrite contract touches their
   scoping-doc references where they exist.
 - Production-smoke fixtures
-  ([`scripts/testing/run-production-admin-smoke.cjs`](../../scripts/testing/run-production-admin-smoke.cjs)
+  ([`scripts/testing/run-production-admin-smoke.cjs`](../../../../scripts/testing/run-production-admin-smoke.cjs)
   and the production-admin-smoke playwright config at
-  [`playwright.production-admin-smoke.config.ts`](../../playwright.production-admin-smoke.config.ts))
+  [`playwright.production-admin-smoke.config.ts`](../../../../playwright.production-admin-smoke.config.ts))
   — out of scope for the entire 2.5 phase.
 
 ## Execution Steps
@@ -583,17 +583,17 @@ doc-only against an already-verified cutover).
    against the "Files To Touch" inventory; any survivor outside
    the inventory is a real miss and escalates before editing.
 4. **Page-behavior + builder-name doc edits.** Edit
-   [`docs/architecture.md`](../architecture.md),
-   [`docs/dev.md`](../dev.md), [`docs/product.md`](../product.md),
-   [`README.md`](../../README.md) per the Contracts section.
+   [`docs/architecture.md`](../../../architecture.md),
+   [`docs/dev.md`](../../../dev.md), [`docs/product.md`](../../../product.md),
+   [`README.md`](../../../../README.md) per the Contracts section.
    `npm run build:web` confirms no SCSS or asset reference broke.
    Re-grep the touched files for any remaining bare-path operator
    URL strings or pre-rename builder/matcher names; any survivor
    is either an intentional history reference (in a plan or
    archived doc) or a missed edit.
 5. **Open-question close + backlog unblock.** Edit
-   [`docs/open-questions.md`](../open-questions.md) and
-   [`docs/backlog.md`](../backlog.md) per the Contracts section.
+   [`docs/open-questions.md`](../../../open-questions.md) and
+   [`docs/backlog.md`](../../../backlog.md) per the Contracts section.
    Verify the cross-references between the two stay consistent
    (the backlog's detail-link targets either point to a
    surviving section or rewrite to a durable target like the
@@ -610,7 +610,7 @@ doc-only against an already-verified cutover).
    inventory table — durable surfaces have zero scoping-doc
    links.
 7. **Plan + milestone + epic Status flips.** Edit
-   [`docs/plans/event-platform-epic.md`](./event-platform-epic.md)
+   [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md)
    line 19 to flip M2 row from `Proposed` to `Landed`. Edit
    [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md)
    line 5 (top-level Status), line 43 (2.1 row drift correction
@@ -639,7 +639,7 @@ doc-only against an already-verified cutover).
     Self-Review Audit. Confirm each is satisfied or deferred
     with rationale.
 12. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
     Title under 70 characters (suggested:
     `docs(m2-2.5.3): close M2 — doc currency, scoping cleanup, status flips`).
     PR description names the M2 closure, the link-rewrite
@@ -654,13 +654,13 @@ doc-only against an already-verified cutover).
 ## Commit Boundaries
 
 1. **Page-behavior + builder-name doc edits.** Single commit
-   covering [`docs/architecture.md`](../architecture.md),
-   [`docs/dev.md`](../dev.md), [`docs/product.md`](../product.md),
-   [`README.md`](../../README.md). Mechanical text rewrites; no
+   covering [`docs/architecture.md`](../../../architecture.md),
+   [`docs/dev.md`](../../../dev.md), [`docs/product.md`](../../../product.md),
+   [`README.md`](../../../../README.md). Mechanical text rewrites; no
    structural change.
 2. **Open-question close + backlog unblock.** Single commit
-   covering [`docs/open-questions.md`](../open-questions.md) and
-   [`docs/backlog.md`](../backlog.md). Logically a single change
+   covering [`docs/open-questions.md`](../../../open-questions.md) and
+   [`docs/backlog.md`](../../../backlog.md). Logically a single change
    (close the question; record the consequence in backlog) so
    they belong together.
 3. **Link-rewrite contract walk.** Single commit covering all 8
@@ -709,7 +709,7 @@ from "intentional history."
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md).
+[`docs/self-review-catalog.md`](../../../self-review-catalog.md).
 
 ### Runbook
 
@@ -747,7 +747,7 @@ Drawn from
 ### CI
 
 - **Rename-aware diff classification**
-  ([catalog §Rename-aware diff classification](../self-review-catalog.md#L354)).
+  ([catalog §Rename-aware diff classification](../../../self-review-catalog.md#L354)).
   This sub-phase's diff is mostly mechanical text edits; the
   five scoping-doc deletions are pure deletes. The classifier
   should mark the branch as docs-only — no code, no test, no
@@ -755,24 +755,24 @@ Drawn from
 
 ## Documentation Currency PR Gate
 
-- [`docs/architecture.md`](../architecture.md) — page-behavior
+- [`docs/architecture.md`](../../../architecture.md) — page-behavior
   route inventory (lines 92–106), `shared/urls/` module
   description (lines 261–279), auth-flow narrative + runtime
   flow URL strings (lines 664–738) per Contracts.
-- [`docs/dev.md`](../dev.md) — routes builder list (lines
+- [`docs/dev.md`](../../../dev.md) — routes builder list (lines
   208–213) per Contracts.
-- [`docs/product.md`](../product.md) — operator-route capability
+- [`docs/product.md`](../../../product.md) — operator-route capability
   bullet (line 47) per Contracts.
-- [`README.md`](../../README.md) — capability bullets (lines
+- [`README.md`](../../../../README.md) — capability bullets (lines
   32–40) + Repo Shape apps/web ownership prose (lines 63–67) per
   Contracts.
-- [`docs/open-questions.md`](../open-questions.md) — Post-MVP
+- [`docs/open-questions.md`](../../../open-questions.md) — Post-MVP
   authoring-ownership entry (lines 29–54) closes per Contracts.
-- [`docs/backlog.md`](../backlog.md) — Post-MVP authoring
+- [`docs/backlog.md`](../../../backlog.md) — Post-MVP authoring
   ownership decision entry (lines 131–138) closes; organizer-
   managed agent assignment entry (lines 140–144) unblocks per
   Contracts.
-- [`docs/plans/event-platform-epic.md`](./event-platform-epic.md) —
+- [`docs/plans/event-platform-epic.md`](../../event-platform-epic.md) —
   M2 row flip per Contracts.
 - [`docs/plans/m2-admin-restructuring.md`](./m2-admin-restructuring.md) —
   top-level Status + Phase Status table 2.1 + 2.5 rows + scoping
@@ -782,8 +782,8 @@ Drawn from
   Related Docs per Contracts.
 - This plan — Status flips from `Proposed` to `Landed` per the
   regular Plan-to-PR Completion Gate.
-- [`docs/operations.md`](../operations.md),
-  [`shared/urls/README.md`](../../shared/urls/README.md) — no
+- [`docs/operations.md`](../../../operations.md),
+  [`shared/urls/README.md`](../../../../shared/urls/README.md) — no
   edit. URL-ownership-shape prose updated in 2.5.2; routes /
   matcher list updated in 2.5.1.
 
@@ -797,7 +797,7 @@ Scope.
 - **`shared/urls/README.md` re-edit.** Already current per 2.5.1.
 - **`docs/operations.md` re-edit.** Already current per 2.5.2.
 - **Top-level epic Status flip.** Owned by M4's terminal PR
-  per [`event-platform-epic.md:23-24`](./event-platform-epic.md#L23);
+  per [`event-platform-epic.md:23-24`](../../event-platform-epic.md#L23);
   this PR flips only the M2 row.
 - **Sibling plan Status edits.** Sibling sub-phase plans
   (2.5.1, 2.5.2, all 2.x) have already-`Landed` Status; this
@@ -890,14 +890,14 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
 
 - **Closes:** "Post-MVP authoring ownership and permission model"
   decision entry at
-  [`docs/backlog.md:131-138`](../backlog.md#L131) per the epic's
+  [`docs/backlog.md:131-138`](../../../backlog.md#L131) per the epic's
   "Open Questions Resolved By This Epic"
-  ([`event-platform-epic.md:166-172`](./event-platform-epic.md#L166)).
+  ([`event-platform-epic.md:166-172`](../../event-platform-epic.md#L166)).
 - **Unblocks:** "Organizer-managed agent assignment" entry at
-  [`docs/backlog.md:140-144`](../backlog.md#L140) per the
+  [`docs/backlog.md:140-144`](../../../backlog.md#L140) per the
   umbrella's "Backlog Impact" subsection.
 - **Adds:** "Archive M2 plan docs" entry under the `dev` tag in
-  [`docs/backlog.md`](../backlog.md). Scope: move the 14 M2
+  [`docs/backlog.md`](../../../backlog.md). Scope: move the 14 M2
   plan-doc files
   ([`m2-admin-restructuring.md`](./m2-admin-restructuring.md),
   [`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
@@ -936,7 +936,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   M2 milestone; top-level Status + Phase Status table flips in
   this PR. Link-rewrite contract receiver for option-1
   rewrites.
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent
+- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
   epic; M2 row flips in this PR; "Open Questions Resolved By
   This Epic" is the source of the open-question close + backlog
   unblock decisions.
@@ -948,12 +948,12 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) — Landed
   sibling phase plans; link-rewrite contract receivers for
   scoping-doc reference rewrites.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
   audit name source.
-- [`docs/testing-tiers.md`](../testing-tiers.md) — production-
+- [`docs/testing-tiers.md`](../../../testing-tiers.md) — production-
   smoke tier reference; the two-phase Plan-to-Landed Gate does
   not apply to this sub-phase per the umbrella's Status
   section.
-- [`AGENTS.md`](../../AGENTS.md) — workflow rules; Doc Currency
+- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules; Doc Currency
   Is a PR Gate, Plan-to-PR Completion Gate, Verified-by
   annotations.
