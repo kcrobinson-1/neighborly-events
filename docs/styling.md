@@ -231,9 +231,10 @@ The two candidates the plan named were:
 Option (a) is chosen because:
 
 1. **Theme author burden scales.** The epic ships 3–4 themes within
-   its own boundary (Sage Civic platform palette in 1.5.2; 2–3 test
-   event themes in M3 phase 3.2; Madrona in M4 phase 4.1) and many
-   more after. ~10 fields per theme vs ~30 compounds in author
+   its own boundary (Sage Civic platform palette in 1.5.2; two test
+   event themes in M3 phases 3.1 and 3.2 — see
+   [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); Madrona
+   in M4 phase 4.1) and many more after. ~10 fields per theme vs ~30 compounds in author
    ergonomics across that horizon.
 2. **Visual consistency by construction.** Brand-tied surfaces always
    derive from the corresponding brand base, so an author cannot

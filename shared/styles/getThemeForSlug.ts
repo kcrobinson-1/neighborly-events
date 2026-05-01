@@ -8,9 +8,12 @@ import type { Theme } from "./types.ts";
  * otherwise returns the platform Sage Civic Theme.
  *
  * In M1 phase 1.5.2 the registry is empty, so every slug resolves to
- * the platform Theme. Per-event themes register over time (test
- * events in M3 phase 3.2; Madrona in M4 phase 4.1) without changing
- * any consumer — the resolver picks them up by slug.
+ * the platform Theme. Per-event themes register over time (the
+ * first test event theme in M3 phase 3.1; the second in M3 phase
+ * 3.2; Madrona in M4 phase 4.1) without changing any consumer —
+ * the resolver picks them up by slug. See
+ * [m3-site-rendering.md](../../docs/plans/m3-site-rendering.md)
+ * for the M3 phase shape.
  */
 export function getThemeForSlug(slug: string): Theme {
   return themes[slug] ?? platformTheme;

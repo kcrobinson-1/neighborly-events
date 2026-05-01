@@ -351,8 +351,11 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   [`shared/styles/themes/platform.ts`](/shared/styles/themes/platform.ts),
   and the per-event registry at
   [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
-  (empty in M1 phase 1.5.2; M3 phase 3.2 adds test events; M4 phase
-  4.1 adds Madrona). apps/site's root layout consumes the platform
+  (empty in M1 phase 1.5.2; M3 phase 3.1 adds the first test event
+  theme alongside the rendering pipeline, M3 phase 3.2 adds the
+  second test event theme — see
+  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); M4
+  phase 4.1 adds Madrona). apps/site's root layout consumes the platform
   Theme via inline-style emission of CSS custom properties on
   `<html>` plus `next/font` for Inter (body) and Fraunces (heading);
   apps/web's `:root` block in

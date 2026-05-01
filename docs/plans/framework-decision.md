@@ -157,7 +157,8 @@ confidence tag, then a relative verdict.
   full unfurl/canonical/twitter/locale fields), file-based convention
   reduces boilerplate, `next/og` ships in-the-box, and streaming-bot
   detection is handled automatically. For an epic whose explicit goal
-  is "proper meta tags and link-unfurl previews" (M3 phase 3.4, M4
+  is "proper meta tags and link-unfurl previews" (M3 phase 3.1 per
+  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md), M4
   phase 4.3), this dimension materially favors Next.js.
 
 ### 4. Deploy cost on Vercel monorepo
@@ -338,9 +339,11 @@ layer we control, and the future flexibility argument cuts both ways
 
 The dimensions where Next.js wins (3 — SSR/SSG ergonomics, 4 — deploy
 cost / built-in batteries) are end-user-facing and directly serve the
-epic's goals. M3 phase 3.4's "SSR/SSG meta tags and unfurl validation"
-benefits from `generateMetadata`'s typed object and streaming-metadata
-bot detection. M4 phase 4.3's launch readiness benefits from `next/og`
+epic's goals. M3 phase 3.1's SSR meta and unfurl validation (per
+[m3-site-rendering.md](/docs/plans/m3-site-rendering.md); the
+original 4-phase epic estimate placed this in a since-superseded
+phase 3.4) benefits from `generateMetadata`'s typed object and
+streaming-metadata bot detection. M4 phase 4.3's launch readiness benefits from `next/og`
 for sponsor-logo OG images, `next/image` for sponsor-logo
 optimization, and `next/font` for build-time-downloaded webfont
 performance. Each of these is non-trivial to reproduce on RR7.
@@ -403,8 +406,10 @@ correct call when the alternative does not rise to "much more suited."
   test events for build-time prerendering; SSR handles dynamic slugs.
 - Per-event meta tags use `generateMetadata` with full `openGraph` and
   `twitter` fields. The doc gap on streaming-metadata behavior for
-  `facebookexternalhit` should be confirmed during M3 phase 3.4 unfurl
-  validation rather than treated as solved.
+  `facebookexternalhit` should be confirmed during M3 phase 3.1 unfurl
+  validation (per
+  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md)) rather
+  than treated as solved.
 - Per-event OG images use `next/og` `ImageResponse` at
   `app/event/[slug]/opengraph-image.tsx`. This was a major factor in
   the decision.
@@ -446,8 +451,11 @@ same PR that lands this decision.
 - **Streaming-metadata behavior for HTML-limited bots in production.**
   Next.js auto-detects `facebookexternalhit` and similar; the
   behavioral envelope (which bots, which fields) is not exhaustively
-  documented. M3 phase 3.4 owns validation against at least one
-  real unfurl client.
+  documented. M3 phase 3.1 owns validation against at least one
+  real unfurl client (per
+  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); the
+  original 4-phase epic estimate placed unfurl validation in a
+  since-superseded phase 3.4).
 - **Proxy-rewrite project vs. Vercel Microfrontends as the routing
   model.** The proxy-rewrite path is documented and lower-cost; the
   Microfrontends path is documented and adds CDN-level routing

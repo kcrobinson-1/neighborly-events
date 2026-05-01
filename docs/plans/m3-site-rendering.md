@@ -24,11 +24,16 @@ that epics should not be prescriptive about per-milestone phase
 shape, and a new "Scoping precedes plan drafting" check was
 added to phase planning. The epic's M3/M4 phase paragraphs were
 marked as pre-milestone-planning estimates accordingly. M3's
-epic paragraphs at
-[event-platform-epic.md:692–751](/docs/plans/event-platform-epic.md)
-are now superseded by this milestone doc; the epic's Sizing
-Summary line for M3 is updated to flag pre-milestone-planning
-estimate status.
+epic paragraphs (under the "### M3 — Site Rendering
+Infrastructure With Test Events" subsection of
+[event-platform-epic.md](/docs/plans/event-platform-epic.md))
+are preserved as pre-milestone-planning historical estimate and
+point to this milestone doc as canonical; the epic's Sizing
+Summary line for M3 is updated similarly. Note: the epic's M3
+paragraphs still describe the original 4-phase estimate including
+a Phase 3.4 that no longer exists under this milestone doc's
+3-phase canonical shape; treat those paragraphs as historical
+context, not current phase ownership.
 
 ## Goal
 
@@ -183,10 +188,29 @@ against every phase's actual changes.
   `/event/:slug/admin`) follow the epic's "Deferred ThemeScope
   wiring" invariant — game routes wrap in M4 phase 4.1, the
   per-event admin already wraps from M2 phase 2.2. M3 changes
-  nothing in apps/web. The
+  nothing in apps/web *source code*; the
   [`<ThemeScope>` source comment](/shared/styles/ThemeScope.tsx)
   already records "apps/site event landing wraps in M3 phase
-  3.1" as the M3 wiring site.
+  3.1" as the M3 wiring site. **One side effect to name:** the
+  shared theme registry that 3.1 and 3.2 populate is consumed
+  by both apps via
+  [`getThemeForSlug`](/shared/styles/getThemeForSlug.ts), so a
+  test slug registered for apps/site visibility also resolves
+  in apps/web's per-event admin ThemeScope. This is harmless
+  in practice — test events live as TS modules under
+  `apps/site/events/<slug>.ts` with no `game_events` DB row, so
+  apps/web admin's `is_organizer_for_event` check returns false
+  for any test slug and the route never resolves to a real
+  authoring shell. The epic's "no per-event Theme until M4"
+  framing in "Deferred ThemeScope wiring" is technically
+  narrowed by M3's test-theme registrations, but the practical
+  deferral for apps/web event-route shells (game, redeem,
+  redemptions — none of which wrap until M4 phase 4.1) is
+  unchanged. If a future apps/web admin consumer needs to
+  guarantee Sage-Civic-themed rendering for test slugs (e.g.,
+  for a contributor demo of admin-without-Madrona), that's a
+  separate registry-partitioning decision deferred to that
+  consumer's plan, not an M3 concern.
 - **Per-event SSR meta from one resolver.** 3.1's metadata
   generation reads from `EventContent` and produces title,
   description, og:image, twitter:card. 3.2's second test event
@@ -413,11 +437,35 @@ by the named phase; M3 is not complete until all are landed.
   infrastructure only. No backlog status changes expected
   inside M3.
 - [event-platform-epic.md](/docs/plans/event-platform-epic.md) —
-  the milestone doc PR (this PR) updates the epic's M3
-  paragraphs at lines 692–751 to match the 3-phase structure
-  and updates the Sizing Summary line for M3. The M3 row in
-  the epic's "Milestone Status" table flips to `Landed` in
-  3.3's PR per the Plan-to-PR Completion Gate.
+  the milestone doc PR (this PR) marks the epic's M3 phase
+  paragraphs as pre-milestone-planning historical estimate
+  (preserved as-is, not rewritten to match the new 3-phase
+  shape) and points readers to this milestone doc as canonical
+  for M3. The pre-existing paragraphs in the epic still describe
+  an original 4-phase estimate including a Phase 3.4 that no
+  longer exists in the canonical shape — treat them as
+  historical context, not current ownership. The Sizing Summary
+  line for M3 is updated similarly to flag estimate status. The
+  M3 row in the epic's "Milestone Status" table flips to
+  `Landed` in 3.3's PR per the Plan-to-PR Completion Gate.
+- **Cross-doc references to the original M3 phase shape** —
+  this PR updates references that named the old shape in
+  [docs/architecture.md](/docs/architecture.md),
+  [docs/styling.md](/docs/styling.md),
+  [docs/open-questions.md](/docs/open-questions.md), the
+  shared-registry source comments at
+  [shared/styles/themes/index.ts](/shared/styles/themes/index.ts) and
+  [shared/styles/getThemeForSlug.ts](/shared/styles/getThemeForSlug.ts),
+  and the broken `M3 phase 3.4` references in
+  [docs/plans/framework-decision.md](/docs/plans/framework-decision.md)
+  and [docs/plans/site-scaffold-and-routing.md](/docs/plans/site-scaffold-and-routing.md).
+  These are forward-looking guidance and code comments that
+  must be current. Landed plan docs that reference M3's phase
+  numbering for behavior whose ownership did not move (e.g.,
+  references to M3 phase 3.3 for cross-app navigation) are not
+  retroactively rewritten — git history preserves the original
+  numbering and those references remain accurate under the new
+  3-phase shape where 3.3 still owns cross-app navigation.
 - This doc — Status flips to `Landed` in 3.3's PR; phase status
   table rows update as each plan drafts and as each PR merges.
 
@@ -440,8 +488,11 @@ by the named phase; M3 is not complete until all are landed.
 ## Related Docs
 
 - [event-platform-epic.md](/docs/plans/event-platform-epic.md) —
-  parent epic; M3 paragraphs at lines 692–751 (rewritten in
-  this PR to match the 3-phase structure).
+  parent epic; M3 phase paragraphs (under the
+  "### M3 — Site Rendering Infrastructure With Test Events"
+  subsection) are preserved as pre-milestone-planning estimate
+  in this PR and point to this milestone doc as canonical, not
+  rewritten to the new 3-phase shape.
 - `docs/plans/scoping/m3-phase-3-1.md` — first phase scoping
   doc, produced by 3.1's phase planning session (not by this
   milestone session per AGENTS.md "Milestone Planning Sessions"
