@@ -277,6 +277,42 @@ decisions.
   split the plan along a phase boundary before merging partial work so
   each phase's Status can flip independently, rather than merging a
   partially-satisfied plan and tracking the remainder informally
+- **Call out estimate deviations in the PR body, and update the
+  plan to match what shipped.** When implementation diverges from
+  an estimate-shaped section of the plan ("Files intentionally not
+  touched" ended up touched, "Files to touch — new" missed a file,
+  contract bullets gained a requirement, intended commit boundaries
+  reshuffled, an execution step was unnecessary or had to be
+  split), two things must happen in the same PR:
+  - The **PR body** names the deviation explicitly under a
+    `## Estimate Deviations` heading inserted immediately after
+    `## Documentation` (or `N/A` if no deviations). Each entry is
+    one or two sentences naming the estimative section, the
+    actual outcome, and why the call was the right one — enough
+    that a reviewer can audit the deviation without reading the
+    diff cold. This is the rationale and audit trail.
+  - The **plan doc** is updated so its estimate-shaped sections
+    describe what actually shipped, not the pre-implementation
+    guess. Walk every estimate-shaped section ("Files to touch —
+    new / modify / intentionally not touched," per-module
+    Contracts, Execution steps, Commit boundaries) and reconcile
+    each against the merged diff. A plan that says "Files
+    intentionally not touched: X" after we shipped an X edit is
+    the same shape of drift the Status-flip rule already forbids
+    — the plan must describe the implemented system, not the
+    pre-implementation guess. The PR body says *why we deviated*;
+    the plan says *what shipped*.
+  Distinct from the rule-deviation path above: rule deviations
+  (a Cross-Cutting Invariant turning out to be wrong, a contract
+  that can't be satisfied, a Validation Gate command that doesn't
+  exercise what it claims) require the plan rule itself to be
+  rewritten in the same PR; estimate deviations require the
+  estimate-shaped section to be updated to match reality, plus
+  the PR-body callout. Pre-existing PR templates do not need the
+  Estimate Deviations heading until they are next edited; PRs
+  opened from this point forward must include the section, and
+  plan-implementing PRs must reconcile the plan with what shipped
+  per the bullet above
 
 ### Epic Drafting
 
@@ -606,6 +642,51 @@ phase's implementation starts, **after** prior phases have shipped
   (`m<N>-phase-<X>-<Y>-<Z>-plan.md`) or justify the size with
   concrete review-coherence reasoning. The milestone doc's PR-count
   estimate does not bind the phase plan
+- **Plan content is a mix of rules and estimates — label which is
+  which.** A plan doc carries two kinds of content: **rules** that
+  bind the implementation (Cross-Cutting Invariants, Contracts,
+  Validation Gate, Self-Review Audits, Out Of Scope deferrals) and
+  **estimates** of what the implementation will look like (file
+  inventory under "Files to touch — new / modify / intentionally
+  not touched," step counts, commit boundaries, sometimes
+  per-section LOC predictions). Estimates are the planner's best
+  guess at plan time about scope shape; reality during
+  implementation may surface that an estimate was wrong without
+  any rule being wrong. Plan authors **must** structure the doc
+  so the distinction is visible to both human reviewers and
+  implementing agents:
+  - Sections that bind (Cross-Cutting Invariants, Contracts,
+    Validation Gate, Goal, Self-Review Audits, Risk Register
+    mitigations, Out Of Scope) are rule-shaped by section name and
+    don't need extra labeling.
+  - Sections that estimate ("Files to touch — new," "Files to
+    touch — modify," "Files intentionally not touched," "Execution
+    steps" sequencing, "Commit boundaries") **must** carry a one-
+    line preface naming them as estimates of the expected shape,
+    explicitly admitting that implementation may revise them when
+    a structural call requires deviating. The list `Files
+    intentionally not touched` is the recurring trap — its name
+    reads as a hard prohibition but the underlying claim is
+    "we don't expect to need to touch these," not "implementation
+    must not touch these." Same for "intended commit boundaries":
+    the planner's split is an estimate of cohesive review chunks;
+    the implementer can refine.
+  - Implementers reading a plan: distinguish before deviating.
+    Deviating from a rule means the rule is wrong and the plan
+    needs to be revised in this PR before the deviation lands;
+    deviating from an estimate is normal and is handled via the
+    "Estimate Deviations" callout in the PR body (see
+    Plan-to-PR Completion Gate). When the call is unclear, ask.
+  - Recurring trap (M3 phase 3.1.2 implementation, 2026-05-01):
+    implementer initially read "Files intentionally not touched:
+    section components" as a hard ban and inlined a duplicated
+    25-line date formatter inside the new OG image helper rather
+    than extract it from `EventHeader.tsx` into a shared util
+    consumed by both. User correction landed mid-implementation;
+    the formatter was extracted in a follow-up commit. Pre-existing
+    plans drafted before this rule are not retroactively non-
+    conforming; plans drafted from this point forward must label
+    their estimative sections per the bullet above
 - **"Verified by:" annotations on technical claims.** Load-bearing
   technical claims in the plan **must** carry an inline "Verified
   by:" reference to the code citation that proves them — file path
@@ -1230,6 +1311,15 @@ ownership boundaries. For other changes, write `N/A`.
 
 List docs or checklist updates. If none are needed, explain why.
 
+## Estimate Deviations
+
+When implementation diverged from an estimate-shaped plan section
+("Files intentionally not touched" ended up touched, intended commit
+boundaries reshuffled, etc.), name the deviation, the actual outcome,
+and why the call was right. Rule deviations are not handled here —
+they require a plan-doc change in the same PR per AGENTS.md
+"Plan-to-PR Completion Gate." Write `N/A` if no estimate deviated.
+
 ## UX Review
 
 For UX, layout, interaction, or user-facing copy changes, include before/after
@@ -1253,6 +1343,15 @@ Name residual risk, blockers, or follow-up work. If none are known, say so.
 
 Section-specific rules:
 
+- **Estimate Deviations**: For plan-implementing PRs, name every place
+  the diff diverged from an estimate-shaped plan section ("Files
+  intentionally not touched" ended up touched, "Files to touch — new"
+  missed a file, intended commit boundaries reshuffled, etc.) per
+  AGENTS.md "Phase Planning Sessions → Plan content is a mix of rules
+  and estimates" and "Plan-to-PR Completion Gate → Call out estimate
+  deviations." Write `N/A` if no estimate deviated. Rule deviations
+  do not belong here — they require a same-PR plan-doc edit per the
+  Completion Gate.
 - **UX Review**: For PRs that create or materially modify UX, layout,
   interaction flow, or user-facing copy, follow the screenshot requirements in
   `docs/dev.md`: include uploaded screenshots or explicitly state why

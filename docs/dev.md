@@ -847,6 +847,23 @@ Set them in the apps/site Vercel project and in
 mirror the apps/web `VITE_SUPABASE_URL` and
 `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` values.
 
+apps/site's root layout also reads:
+
+- `NEXT_PUBLIC_SITE_ORIGIN`
+
+This is the canonical user-facing origin used as `metadataBase` for
+SSR-emitted `og:url`, `og:image`, and `twitter:image` URLs. It must be
+apps/web's hostname (not apps/site's), because apps/site sits behind an
+apps/web Vercel rewrite per
+[`apps/web/vercel.json`](/apps/web/vercel.json) — unfurl clicks should
+land on apps/web first so the proxy fires. In the apps/site Vercel
+project's Production environment, set the value to apps/web's primary
+custom-domain alias; for local dev, use the apps/web local origin you
+test against (typically `http://localhost:3000`). All three
+`NEXT_PUBLIC_*` vars above flow through the `env` block in
+[`apps/site/next.config.ts`](/apps/site/next.config.ts) per the
+documented Turbopack substitution-trap workaround.
+
 ### Cookie-boundary verification
 
 M0 phase 0.3 stood up the apps/site Vercel project with a

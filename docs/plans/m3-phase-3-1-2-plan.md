@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 3.1.2 is the second and terminal child of M3 phase 3.1 (the first
 child, 3.1.1, landed in
@@ -141,16 +141,43 @@ triggered the rule.
   introduces the source lookup; the lookup itself uses the
   literal `process.env.NEXT_PUBLIC_SITE_ORIGIN` form Next.js'
   substitution requires.
-- **Empty-env fallback uses logical-OR, not nullish-coalescing.**
-  The root layout reads
-  `process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000'`,
-  not `??`. The `env` block in `next.config.ts` substitutes empty
-  string (`""`) when the parent env is unset; `??` does not
-  short-circuit on `""` because empty-string is not nullish, so
-  `??` would let an empty `metadataBase` URL constructor argument
-  ship and the build hard-errors. The plan's load-bearing
-  falsifier for this invariant is the curl gate against an
-  empty-env build (see Validation Gate).
+- **Empty-env fallback uses logical-OR, not nullish-coalescing,
+  *and* the helper handles each `VERCEL_ENV` differently.** The
+  root layout's `resolveMetadataBaseOrigin()` helper reads
+  `process.env.NEXT_PUBLIC_SITE_ORIGIN`; when set it always wins.
+  On miss the helper branches on `process.env.VERCEL_ENV`:
+  - `"production"`: throws a named build-time error. The
+    canonical user-facing origin in production is apps/web's
+    hostname, which apps/site cannot derive from its own runtime
+    env (`VERCEL_URL` would resolve to apps/site's hostname per
+    the scoping doc rejection); the operator must set the var
+    on the apps/site Vercel project's Production environment.
+  - `"preview"`: derives from `process.env.VERCEL_BRANCH_URL`
+    (or `VERCEL_URL` as backup) and returns
+    `https://${branchUrl}`. The `VERCEL_URL` rejection above
+    only applies to production: in production apps/web's
+    canonical alias differs from apps/site's hostname; in
+    preview, apps/web's per-branch alias isn't knowable from
+    inside apps/site's build, so apps/site's own per-branch URL
+    is the right pragmatic shape — the PR's preview unfurls
+    render the PR's content (bypassing the apps/web rewrite
+    layer that only matters for production user traffic). The
+    operator can still pin a preview origin explicitly via the
+    env var if a particular preview needs to test against a
+    specific apps/web alias. If neither `VERCEL_BRANCH_URL` nor
+    `VERCEL_URL` is available (broken Vercel context), the
+    helper throws a named error directing the operator to set
+    the var explicitly.
+  - any other context (`VERCEL_ENV` unset — local dev, local
+    `next build`, GitHub CI): falls back to
+    `http://localhost:3000` so contributor builds stay green.
+  The fail-fast gate makes the production foot-gun structural
+  rather than procedural: a misconfigured production deploy
+  cannot ship localhost-shaped meta tags because the build
+  itself refuses to complete. The `||`-vs-`??` discipline still
+  applies inside the helper because the `env` block substitutes
+  `""` when the parent env is unset and `??` does not
+  short-circuit on empty string.
 - **OG and Twitter images render the same content.** Both
   file-convention routes import `EventOgImage` from
   `apps/site/lib/eventOgImage.tsx`. A future change to the visual
@@ -224,6 +251,11 @@ Behavior contract:
   function is pure and synchronous. Satori's built-in font
   fallback handles text rendering.
 - No client APIs, no hooks, no effects.
+- Date formatting reads from
+  [`apps/site/lib/eventDateFormat.ts`](/apps/site/lib/eventDateFormat.ts)'s
+  `formatHeroDateRange` — the same util the page header consumes.
+  The shared helper was added during 3.1.2 implementation; see
+  the "Files to touch — new" entry for `eventDateFormat.ts`.
 
 ### `apps/site/app/event/[slug]/opengraph-image.tsx`
 
@@ -251,6 +283,16 @@ Specialized Route Handler per Next.js 16 file convention. Exports:
   per-event surface (resolves slug to content, renders the
   per-event image); `alt` is the platform-level surface (one
   static value across all events).
+- `generateStaticParams(): Array<{ slug: string }>` — enumerates
+  every registered event slug from `registeredEventSlugs` so the
+  build prerenders one image per event. Without this, the route
+  is treated as Dynamic (`ƒ`) and rendered on every crawl,
+  defeating the static-optimization invariant. Added during
+  3.1.2 implementation (not in the original contract); the
+  static-optimization bullet below was right about the
+  *condition* (no Request-time API calls) but missed that
+  file-convention routes inheriting a dynamic segment also need
+  their own enumeration.
 
 Behavior contract:
 
@@ -279,10 +321,11 @@ Behavior contract:
 
 ### `apps/site/app/event/[slug]/twitter-image.tsx`
 
-Identical shape to `opengraph-image.tsx`. The default function
-calls the same `<EventOgImage>` element wrapped in
-`new ImageResponse(...)`. Auto-emits `<meta name="twitter:image*">`
-fields per
+Identical shape to `opengraph-image.tsx`, including the
+`generateStaticParams` export that enumerates registered slugs
+for build-time prerender. The default function calls the same
+`<EventOgImage>` element wrapped in `new ImageResponse(...)`.
+Auto-emits `<meta name="twitter:image*">` fields per
 [`opengraph-image.md` lines 47-52](/node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/01-metadata/opengraph-image.md).
 
 The two file-convention routes generate the same image bytes twice
@@ -308,22 +351,41 @@ The page route does **not** add `openGraph.images` or
 
 ### Root layout — `apps/site/app/layout.tsx`
 
-`metadata` export gains `metadataBase`. The single field added:
-`metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000')`.
+`metadata` export gains `metadataBase: new URL(resolveMetadataBaseOrigin())`,
+where `resolveMetadataBaseOrigin` is a small file-local helper.
 
 Behavior contract:
 
-- The `URL` constructor accepts a string. The argument is read
-  through Next.js' `env` substitution (the var is registered in
-  `next.config.ts`'s `env` block per the cross-cutting
-  invariant), so at build time the literal string substitutes
-  before bundling.
-- Local fallback `http://localhost:3000` keeps the build green
-  in dev and CI when the env var is unset. Production deploy
-  must set the var to apps/web's canonical origin via the
-  Vercel apps/site project's Production environment.
-- Logical-OR `||` (not `??`) per the cross-cutting invariant:
-  empty-string substitution must fall back to the dev URL.
+- `resolveMetadataBaseOrigin(): string` reads
+  `process.env.NEXT_PUBLIC_SITE_ORIGIN` (Next.js substitutes via
+  the `env` block per the Cross-Cutting Invariant) and returns
+  it when set.
+- On miss, the helper branches on `process.env.VERCEL_ENV`:
+  - `"production"`: throws a named `Error`
+    ("NEXT_PUBLIC_SITE_ORIGIN must be set on Vercel production
+    builds…"), which fails the `next build` so a misconfigured
+    production deploy cannot ship. Production requires the
+    operator to set the var to apps/web's canonical
+    custom-domain origin.
+  - `"preview"`: derives the origin from
+    `process.env.VERCEL_BRANCH_URL` (or `VERCEL_URL` as
+    backup) and returns `https://${branchUrl}` — apps/site's
+    own per-branch URL. Per the Cross-Cutting Invariant, this
+    is the right pragmatic shape for preview (apps/web's
+    per-branch alias isn't knowable from apps/site's build,
+    and the PR's preview unfurls should render the PR's
+    content, not production content). The operator can still
+    pin a preview origin via the env var if a specific preview
+    test needs to point at a specific apps/web alias. If both
+    Vercel URL vars are absent (broken Vercel context), the
+    helper throws a named error directing the operator to set
+    the env var explicitly.
+  - any other context (`VERCEL_ENV` unset — local dev, local
+    `next build`, GitHub CI): returns `http://localhost:3000`
+    so contributor builds stay green.
+- Logical-OR `||` discipline (not `??`) still applies inside
+  the helper because the `env` block substitutes `""` for unset
+  vars; the fail-fast gate is layered on top, not a replacement.
 
 ### `next.config.ts` env entry
 
@@ -392,14 +454,30 @@ invariants apply:
 
 ## Files to touch — new
 
+> Estimate-shaped, reconciled against what shipped per AGENTS.md
+> "Plan-to-PR Completion Gate → Call out estimate deviations and
+> update the plan to match what shipped." See the implementing
+> PR's `## Estimate Deviations` for rationale on additions below.
+
 - `apps/site/lib/eventOgImage.tsx` — `EventOgImage` React
   component per the contract above.
 - `apps/site/app/event/[slug]/opengraph-image.tsx` —
   file-convention OG image route per the contract.
 - `apps/site/app/event/[slug]/twitter-image.tsx` —
   file-convention Twitter image route per the contract.
+- `apps/site/lib/eventDateFormat.ts` — shared
+  `formatHeroDateRange` util consumed by both the page header
+  and the OG image so the two surfaces cannot drift on a
+  content change. Added during implementation (not in the
+  original estimate); the plan-time intent had the formatter
+  inlined in `EventOgImage` next to the existing copy in
+  `EventHeader.tsx`, but the duplication was deemed structurally
+  wrong and the helper extracted to a single source.
 
 ## Files to touch — modify
+
+> Estimate-shaped; reconciled against what shipped (see note
+> above the "new" list).
 
 - [`apps/site/app/layout.tsx`](/apps/site/app/layout.tsx) — add
   `metadataBase` field to the existing `metadata` export per the
@@ -411,6 +489,13 @@ invariants apply:
 - [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)
   — add `openGraph.url` field to the existing `openGraph` block
   in `generateMetadata`.
+- [`apps/site/components/event/EventHeader.tsx`](/apps/site/components/event/EventHeader.tsx)
+  — replace the file-private `formatHeroDateRange` helper with
+  an import from `apps/site/lib/eventDateFormat.ts`. Originally
+  estimated as not-touched (see "Files intentionally not
+  touched" below) on the assumption the OG image's date
+  formatter would be inlined; surfaced during implementation
+  as the right place for the shared helper.
 - [`docs/dev.md`](/docs/dev.md) "apps/site environment variables"
   section — document `NEXT_PUBLIC_SITE_ORIGIN`.
 - [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
@@ -420,7 +505,26 @@ invariants apply:
 - This plan — Status flips from `Proposed` to `Landed` in the
   implementing PR.
 
+Cross-cutting process artifacts updated in the same PR (not
+3.1.2-specific contract changes):
+- [`AGENTS.md`](/AGENTS.md) — adds the "Plan content is a mix of
+  rules and estimates" rule under Phase Planning Sessions and the
+  "Call out estimate deviations" rule under Plan-to-PR Completion
+  Gate. Triggered mid-implementation by the same `EventHeader.tsx`
+  deviation; landed in this PR rather than a follow-up so the
+  rule the plan now cites is in effect at land time.
+- [`.github/pull_request_template.md`](/.github/pull_request_template.md)
+  — adds the `## Estimate Deviations` section between
+  Documentation and UX Review.
+
 ## Files intentionally not touched
+
+> Estimate-shaped; reconciled against what shipped. The original
+> list included `apps/site/components/event/*` ("no section
+> component change"); implementation deviated on
+> `EventHeader.tsx` for the shared-helper extraction documented
+> above. The remaining entries below were estimated correctly —
+> nothing in the merged diff touches them.
 
 - [`apps/site/lib/eventContent.ts`](/apps/site/lib/eventContent.ts)
   — `EventContent` shape unchanged. Per the M3 milestone doc
@@ -432,9 +536,10 @@ invariants apply:
   per-event background-image override), it lands when a real
   consumer needs it.
 - `apps/site/events/harvest-block-party.ts` — no content change.
-- `apps/site/components/event/*` — no section component change.
-  The OG image is its own React tree; the page renderer is
-  unchanged.
+- Other `apps/site/components/event/*` files (besides
+  `EventHeader.tsx`, which was touched per the modify list
+  above) — no section component change. The OG image is its
+  own React tree; the page renderer is otherwise unchanged.
 - [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)'s
   page component (the default export) — only `generateMetadata`
   changes; the route component itself is unchanged.
@@ -886,18 +991,33 @@ resolution path so reviewer attention does not relitigate them.
 
 ## Risk Register
 
-- **Empty-env-var fallback ships to production.** If the
-  Vercel apps/site project's Production env does not set
-  `NEXT_PUBLIC_SITE_ORIGIN` (operator oversight), the
-  `process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000'`
-  expression resolves to localhost and every meta URL becomes
-  `http://localhost:3000/...`, which breaks unfurls silently.
-  Mitigation: the curl falsifier in the validation gate
-  catches the empty-env case during local verification; the
-  Slack unfurl capture against the Vercel deploy preview
-  catches it pre-merge as the consumer-end proof; the PR
-  body's pre-merge operator check (Execution step 15) names
-  the Vercel env-set as a load-bearing manual step.
+- **Empty-env-var fallback ships to production.** Originally
+  rated as a load-bearing risk mitigated by manual operator
+  vigilance. Codex flagged the silent-localhost-fallback shape
+  during PR #142 review as a P1; the implementing PR replaced
+  the inline `process.env || 'localhost'` expression with a
+  `resolveMetadataBaseOrigin()` helper that handles each
+  `VERCEL_ENV` distinctly: production throws when unset
+  (operator-set is required); preview auto-derives from
+  `VERCEL_BRANCH_URL` (apps/site's own per-branch URL) so
+  PR previews build without per-PR operator config; local
+  contexts fall back to `http://localhost:3000`.
+  The production risk is now structurally mitigated rather than
+  procedurally — a misconfigured production deploy fails the
+  build with a named error instead of silently shipping
+  `http://localhost:3000/...` meta tags. Preview deploys
+  produce stable, correct meta tags pointing at the PR's own
+  preview URL without needing operator input; the operator can
+  still pin a specific origin on the Preview env if a test
+  needs to target a specific apps/web alias. The PR body's
+  pre-merge operator check (Execution step 15) and the Slack
+  unfurl capture remain useful as defense-in-depth, but the
+  fail-fast gate is now the primary protection. The five
+  build-mode cases exercised in the implementing PR's
+  Validation section: no `VERCEL_ENV` → localhost; production
+  unset → throws; production set → uses var; preview unset
+  with `VERCEL_BRANCH_URL` → derives branch URL; preview unset
+  with no Vercel URL vars → throws.
 - **Turbopack substitution trap regression.** If the new
   `NEXT_PUBLIC_SITE_ORIGIN` lookup is added to source without
   the `next.config.ts` `env` block update, Turbopack rewrites

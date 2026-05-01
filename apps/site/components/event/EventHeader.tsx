@@ -1,53 +1,6 @@
-import { parseEventDate, type EventContent } from "../../lib/eventContent.ts";
+import type { EventContent } from "../../lib/eventContent.ts";
+import { formatHeroDateRange } from "../../lib/eventDateFormat.ts";
 import { routes } from "../../../../shared/urls/index.ts";
-
-const monthAbbreviations = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-/**
- * Formats an ISO `yyyy-mm-dd` date range into a human-readable
- * display string (e.g., "Sep 26-27, 2026" or "Sep 30 – Oct 1, 2026").
- * Falls back to the raw strings if either endpoint fails calendar
- * validity through `parseEventDate` so a content-author typo never
- * produces broken output like `undefined 5, 2026`.
- */
-function formatHeroDateRange(start: string, end: string): string {
-  const startDate = parseEventDate(start);
-  const endDate = parseEventDate(end);
-
-  if (!startDate || !endDate) {
-    return start === end ? start : `${start} – ${end}`;
-  }
-
-  const startMonthName = monthAbbreviations[startDate.month - 1];
-  const endMonthName = monthAbbreviations[endDate.month - 1];
-
-  if (start === end) {
-    return `${startMonthName} ${startDate.day}, ${startDate.year}`;
-  }
-
-  if (startDate.year !== endDate.year) {
-    return `${startMonthName} ${startDate.day}, ${startDate.year} – ${endMonthName} ${endDate.day}, ${endDate.year}`;
-  }
-
-  if (startDate.month !== endDate.month) {
-    return `${startMonthName} ${startDate.day} – ${endMonthName} ${endDate.day}, ${startDate.year}`;
-  }
-
-  return `${startMonthName} ${startDate.day}-${endDate.day}, ${startDate.year}`;
-}
 
 /**
  * Hero header — event name, optional tagline, formatted date range,

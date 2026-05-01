@@ -22,10 +22,15 @@ export function generateStaticParams() {
 /**
  * Per-event SSR metadata. Resolves the content module, returns `{}`
  * for unknown slugs so Next.js falls back to the layout's metadata.
- * For known slugs, emits text-only Open Graph fields (no `url`,
- * no `images`); `metadataBase`, `openGraph.url`, `openGraph.images`,
- * and `twitter:image` co-defer to M3 phase 3.1.2 (the canonical
- * origin source is the same decision og:image generation needs).
+ * For known slugs, emits text-only Open Graph fields plus
+ * `openGraph.url` as a relative path that resolves against the root
+ * layout's `metadataBase` (M3 phase 3.1.2). `og:image` and
+ * `twitter:image` are auto-emitted by the file-convention
+ * `opengraph-image.tsx` / `twitter-image.tsx` routes colocated in this
+ * segment — per the 3.1.2 cross-cutting invariant, this route does
+ * **not** also set `openGraph.images` or `twitter.images`, which would
+ * risk duplicate or unspecified-order emission per Next.js' segment
+ * cascade rules.
  *
  * `robots: { index: false, follow: false }` ships when
  * `content.testEvent === true` so the test event is server-rendered
@@ -54,6 +59,7 @@ export async function generateMetadata({
       description: content.meta.description,
       type: content.meta.openGraphType ?? "website",
       siteName: "Neighborly Events",
+      url: `/event/${slug}`,
     },
     twitter: {
       card: "summary_large_image",
