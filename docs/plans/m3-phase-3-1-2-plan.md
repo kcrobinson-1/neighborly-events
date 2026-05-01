@@ -224,6 +224,11 @@ Behavior contract:
   function is pure and synchronous. Satori's built-in font
   fallback handles text rendering.
 - No client APIs, no hooks, no effects.
+- Date formatting reads from
+  [`apps/site/lib/eventDateFormat.ts`](/apps/site/lib/eventDateFormat.ts)'s
+  `formatHeroDateRange` — the same util the page header consumes.
+  The shared helper was added during 3.1.2 implementation; see
+  the "Files to touch — new" entry for `eventDateFormat.ts`.
 
 ### `apps/site/app/event/[slug]/opengraph-image.tsx`
 
@@ -251,6 +256,16 @@ Specialized Route Handler per Next.js 16 file convention. Exports:
   per-event surface (resolves slug to content, renders the
   per-event image); `alt` is the platform-level surface (one
   static value across all events).
+- `generateStaticParams(): Array<{ slug: string }>` — enumerates
+  every registered event slug from `registeredEventSlugs` so the
+  build prerenders one image per event. Without this, the route
+  is treated as Dynamic (`ƒ`) and rendered on every crawl,
+  defeating the static-optimization invariant. Added during
+  3.1.2 implementation (not in the original contract); the
+  static-optimization bullet below was right about the
+  *condition* (no Request-time API calls) but missed that
+  file-convention routes inheriting a dynamic segment also need
+  their own enumeration.
 
 Behavior contract:
 
@@ -279,10 +294,11 @@ Behavior contract:
 
 ### `apps/site/app/event/[slug]/twitter-image.tsx`
 
-Identical shape to `opengraph-image.tsx`. The default function
-calls the same `<EventOgImage>` element wrapped in
-`new ImageResponse(...)`. Auto-emits `<meta name="twitter:image*">`
-fields per
+Identical shape to `opengraph-image.tsx`, including the
+`generateStaticParams` export that enumerates registered slugs
+for build-time prerender. The default function calls the same
+`<EventOgImage>` element wrapped in `new ImageResponse(...)`.
+Auto-emits `<meta name="twitter:image*">` fields per
 [`opengraph-image.md` lines 47-52](/node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/01-metadata/opengraph-image.md).
 
 The two file-convention routes generate the same image bytes twice
@@ -392,14 +408,30 @@ invariants apply:
 
 ## Files to touch — new
 
+> Estimate-shaped, reconciled against what shipped per AGENTS.md
+> "Plan-to-PR Completion Gate → Call out estimate deviations and
+> update the plan to match what shipped." See the implementing
+> PR's `## Estimate Deviations` for rationale on additions below.
+
 - `apps/site/lib/eventOgImage.tsx` — `EventOgImage` React
   component per the contract above.
 - `apps/site/app/event/[slug]/opengraph-image.tsx` —
   file-convention OG image route per the contract.
 - `apps/site/app/event/[slug]/twitter-image.tsx` —
   file-convention Twitter image route per the contract.
+- `apps/site/lib/eventDateFormat.ts` — shared
+  `formatHeroDateRange` util consumed by both the page header
+  and the OG image so the two surfaces cannot drift on a
+  content change. Added during implementation (not in the
+  original estimate); the plan-time intent had the formatter
+  inlined in `EventOgImage` next to the existing copy in
+  `EventHeader.tsx`, but the duplication was deemed structurally
+  wrong and the helper extracted to a single source.
 
 ## Files to touch — modify
+
+> Estimate-shaped; reconciled against what shipped (see note
+> above the "new" list).
 
 - [`apps/site/app/layout.tsx`](/apps/site/app/layout.tsx) — add
   `metadataBase` field to the existing `metadata` export per the
@@ -411,6 +443,13 @@ invariants apply:
 - [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)
   — add `openGraph.url` field to the existing `openGraph` block
   in `generateMetadata`.
+- [`apps/site/components/event/EventHeader.tsx`](/apps/site/components/event/EventHeader.tsx)
+  — replace the file-private `formatHeroDateRange` helper with
+  an import from `apps/site/lib/eventDateFormat.ts`. Originally
+  estimated as not-touched (see "Files intentionally not
+  touched" below) on the assumption the OG image's date
+  formatter would be inlined; surfaced during implementation
+  as the right place for the shared helper.
 - [`docs/dev.md`](/docs/dev.md) "apps/site environment variables"
   section — document `NEXT_PUBLIC_SITE_ORIGIN`.
 - [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
@@ -420,7 +459,26 @@ invariants apply:
 - This plan — Status flips from `Proposed` to `Landed` in the
   implementing PR.
 
+Cross-cutting process artifacts updated in the same PR (not
+3.1.2-specific contract changes):
+- [`AGENTS.md`](/AGENTS.md) — adds the "Plan content is a mix of
+  rules and estimates" rule under Phase Planning Sessions and the
+  "Call out estimate deviations" rule under Plan-to-PR Completion
+  Gate. Triggered mid-implementation by the same `EventHeader.tsx`
+  deviation; landed in this PR rather than a follow-up so the
+  rule the plan now cites is in effect at land time.
+- [`.github/pull_request_template.md`](/.github/pull_request_template.md)
+  — adds the `## Estimate Deviations` section between
+  Documentation and UX Review.
+
 ## Files intentionally not touched
+
+> Estimate-shaped; reconciled against what shipped. The original
+> list included `apps/site/components/event/*` ("no section
+> component change"); implementation deviated on
+> `EventHeader.tsx` for the shared-helper extraction documented
+> above. The remaining entries below were estimated correctly —
+> nothing in the merged diff touches them.
 
 - [`apps/site/lib/eventContent.ts`](/apps/site/lib/eventContent.ts)
   — `EventContent` shape unchanged. Per the M3 milestone doc
@@ -432,9 +490,10 @@ invariants apply:
   per-event background-image override), it lands when a real
   consumer needs it.
 - `apps/site/events/harvest-block-party.ts` — no content change.
-- `apps/site/components/event/*` — no section component change.
-  The OG image is its own React tree; the page renderer is
-  unchanged.
+- Other `apps/site/components/event/*` files (besides
+  `EventHeader.tsx`, which was touched per the modify list
+  above) — no section component change. The OG image is its
+  own React tree; the page renderer is otherwise unchanged.
 - [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)'s
   page component (the default export) — only `generateMetadata`
   changes; the route component itself is unchanged.

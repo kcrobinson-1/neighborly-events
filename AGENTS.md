@@ -277,24 +277,42 @@ decisions.
   split the plan along a phase boundary before merging partial work so
   each phase's Status can flip independently, rather than merging a
   partially-satisfied plan and tracking the remainder informally
-- **Call out estimate deviations in the PR body.** When implementation
-  diverges from an estimate-shaped section of the plan ("Files
-  intentionally not touched" ended up touched, "Files to touch —
-  new" missed a file, intended commit boundaries reshuffled, an
-  execution step was unnecessary or had to be split), the PR body
-  must name the deviation explicitly under a `## Estimate
-  Deviations` heading inserted immediately after `## Documentation`
-  (or write `N/A` if no deviations). Each entry is one or two
-  sentences naming the estimative section, the actual outcome, and
-  why the call was the right one — enough that a reviewer can audit
-  the deviation without reading the diff cold. This surfaces the
-  planner's wrong assumptions back to the next plan-drafting
-  session without forcing a heavyweight plan-doc edit for what was
-  a small structural call. Distinct from the rule-deviation path
-  above: rule deviations require a plan-doc change in the same PR;
-  estimate deviations require only the PR-body callout. Pre-existing
-  PR templates do not need the heading until they are next edited;
-  PRs opened from this point forward must include the section
+- **Call out estimate deviations in the PR body, and update the
+  plan to match what shipped.** When implementation diverges from
+  an estimate-shaped section of the plan ("Files intentionally not
+  touched" ended up touched, "Files to touch — new" missed a file,
+  contract bullets gained a requirement, intended commit boundaries
+  reshuffled, an execution step was unnecessary or had to be
+  split), two things must happen in the same PR:
+  - The **PR body** names the deviation explicitly under a
+    `## Estimate Deviations` heading inserted immediately after
+    `## Documentation` (or `N/A` if no deviations). Each entry is
+    one or two sentences naming the estimative section, the
+    actual outcome, and why the call was the right one — enough
+    that a reviewer can audit the deviation without reading the
+    diff cold. This is the rationale and audit trail.
+  - The **plan doc** is updated so its estimate-shaped sections
+    describe what actually shipped, not the pre-implementation
+    guess. Walk every estimate-shaped section ("Files to touch —
+    new / modify / intentionally not touched," per-module
+    Contracts, Execution steps, Commit boundaries) and reconcile
+    each against the merged diff. A plan that says "Files
+    intentionally not touched: X" after we shipped an X edit is
+    the same shape of drift the Status-flip rule already forbids
+    — the plan must describe the implemented system, not the
+    pre-implementation guess. The PR body says *why we deviated*;
+    the plan says *what shipped*.
+  Distinct from the rule-deviation path above: rule deviations
+  (a Cross-Cutting Invariant turning out to be wrong, a contract
+  that can't be satisfied, a Validation Gate command that doesn't
+  exercise what it claims) require the plan rule itself to be
+  rewritten in the same PR; estimate deviations require the
+  estimate-shaped section to be updated to match reality, plus
+  the PR-body callout. Pre-existing PR templates do not need the
+  Estimate Deviations heading until they are next edited; PRs
+  opened from this point forward must include the section, and
+  plan-implementing PRs must reconcile the plan with what shipped
+  per the bullet above
 
 ### Epic Drafting
 
