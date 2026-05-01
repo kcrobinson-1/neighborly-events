@@ -1,51 +1,104 @@
-import { cookies } from "next/headers";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { EventLandingPage } from "../../../components/event/EventLandingPage.tsx";
+import {
+  getEventContentBySlug,
+  registeredEventSlugs,
+} from "../../../lib/eventContent.ts";
+import { ThemeScope, getThemeForSlug } from "../../../../../shared/styles";
 
 /**
- * `@supabase/ssr`'s `createBrowserClient` writes the auth session as a
- * cookie named `sb-<project-ref>-auth-token` on the apps/web frontend
- * origin (and chunks the JWT into `auth-token.0`/`auth-token.1`/...
- * siblings when it exceeds the per-cookie size limit). The strict
- * pattern matches the unchunked form and any chunked sibling. No other
- * cookie family in this repo collides with the `sb-*-auth-token` shape.
+ * Static enumeration of every registered event slug so apps/site
+ * prerenders each event at `next build` time. Reads from
+ * `registeredEventSlugs` so the prerender list stays in sync with
+ * the registry by construction — adding a new event to
+ * `eventContentBySlug` automatically extends this set.
  */
-const AUTH_COOKIE_PATTERN = /^sb-[^-]+-auth-token(\.\d+)?$/;
+export function generateStaticParams() {
+  return registeredEventSlugs.map((slug) => ({ slug }));
+}
 
-export default async function EventPlaceholderPage({
+/**
+ * Per-event SSR metadata. Resolves the content module, returns `{}`
+ * for unknown slugs so Next.js falls back to the layout's metadata.
+ * For known slugs, emits text-only Open Graph fields (no `url`,
+ * no `images`); `metadataBase`, `openGraph.url`, `openGraph.images`,
+ * and `twitter:image` co-defer to M3 phase 3.1.2 (the canonical
+ * origin source is the same decision og:image generation needs).
+ *
+ * `robots: { index: false, follow: false }` ships when
+ * `content.testEvent === true` so the test event is server-rendered
+ * as `noindex, nofollow` before any client hydration. A client-side
+ * `<meta>` injection (e.g., a `useEffect` that appends to
+ * `document.head`) would silently regress this invariant; the curl
+ * falsifier in the plan's Validation Gate guards against that drift.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const content = getEventContentBySlug(slug);
+
+  if (!content) {
+    return {};
+  }
+
+  return {
+    title: content.meta.title,
+    description: content.meta.description,
+    openGraph: {
+      title: content.meta.title,
+      description: content.meta.description,
+      type: content.meta.openGraphType ?? "website",
+      siteName: "Neighborly Events",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: content.meta.title,
+      description: content.meta.description,
+    },
+    robots: content.testEvent
+      ? { index: false, follow: false }
+      : undefined,
+  };
+}
+
+/**
+ * Public event landing page. Server Component (no `'use client'`,
+ * no Request-time API calls — `cookies()`, `headers()`,
+ * `searchParams` would silently flip the route from SSG to SSR and
+ * defeat the unfurl-preview goal stated in the M3 milestone doc).
+ * Reads the content module, calls `notFound()` on miss (the 404
+ * renders outside `<ThemeScope>` against the platform Sage Civic
+ * `:root` defaults, by design — no slug means no Theme to resolve),
+ * otherwise wraps the rendered tree in `<ThemeScope>` exactly once
+ * with the per-event Theme.
+ *
+ * Theme resolution reads `content.themeSlug`, **not** the URL slug,
+ * so the `EventContent` contract permission for two events to
+ * share a Theme registered under one key actually works. Resolving
+ * via `slug` would silently fall back to the platform Theme for any
+ * event whose `themeSlug !== slug`, masking the contract violation
+ * behind `getThemeForSlug`'s defined platform fallback.
+ */
+export default async function Page({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const cookieStore = await cookies();
-  const authCookiePresent = cookieStore
-    .getAll()
-    .some((cookie) => AUTH_COOKIE_PATTERN.test(cookie.name));
+  const content = getEventContentBySlug(slug);
+
+  if (!content) {
+    notFound();
+  }
 
   return (
-    <main>
-      <h1>Event placeholder</h1>
-      <p>
-        Slug: <code>{slug}</code>
-      </p>
-      <p>
-        Served by <code>apps/site</code> (Next.js 16). The real event landing
-        page lands in M3 of the Event Platform Epic.
-      </p>
-      <h2>Cookie-boundary verification</h2>
-      <p>
-        Looking for any cookie matching{" "}
-        <code>sb-&lt;project-ref&gt;-auth-token</code> (or chunked siblings
-        like <code>.0</code>, <code>.1</code>) on this origin.
-      </p>
-      <p>
-        Auth cookie:{" "}
-        <strong>{authCookiePresent ? "present" : "not present"}</strong>
-      </p>
-      <p>
-        See{" "}
-        <code>docs/plans/shared-auth-foundation.md</code> subphase 1.3.2 for
-        the full verification procedure.
-      </p>
-    </main>
+    <ThemeScope theme={getThemeForSlug(content.themeSlug)}>
+      <EventLandingPage content={content} slug={slug} />
+    </ThemeScope>
   );
 }
