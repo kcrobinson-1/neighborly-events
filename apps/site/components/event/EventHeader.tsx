@@ -1,4 +1,4 @@
-import type { EventContent } from "../../lib/eventContent.ts";
+import { parseEventDate, type EventContent } from "../../lib/eventContent.ts";
 import { routes } from "../../../../shared/urls/index.ts";
 
 const monthAbbreviations = [
@@ -18,41 +18,35 @@ const monthAbbreviations = [
 
 /**
  * Formats an ISO `yyyy-mm-dd` date range into a human-readable
- * display string (e.g., "Sep 26-27, 2026" or "Sep 30 - Oct 1, 2026").
- * Treats the inputs as opaque calendar dates per the `EventContent`
- * contract — no `Date` parsing, no timezone math.
+ * display string (e.g., "Sep 26-27, 2026" or "Sep 30 – Oct 1, 2026").
+ * Falls back to the raw strings if either endpoint fails calendar
+ * validity through `parseEventDate` so a content-author typo never
+ * produces broken output like `undefined 5, 2026`.
  */
 function formatHeroDateRange(start: string, end: string): string {
-  const [startYear, startMonth, startDay] = start.split("-").map(Number);
-  const [endYear, endMonth, endDay] = end.split("-").map(Number);
+  const startDate = parseEventDate(start);
+  const endDate = parseEventDate(end);
 
-  if (
-    !Number.isFinite(startYear) ||
-    !Number.isFinite(startMonth) ||
-    !Number.isFinite(startDay) ||
-    !Number.isFinite(endYear) ||
-    !Number.isFinite(endMonth) ||
-    !Number.isFinite(endDay)
-  ) {
+  if (!startDate || !endDate) {
     return start === end ? start : `${start} – ${end}`;
   }
 
-  const startMonthName = monthAbbreviations[startMonth - 1];
-  const endMonthName = monthAbbreviations[endMonth - 1];
+  const startMonthName = monthAbbreviations[startDate.month - 1];
+  const endMonthName = monthAbbreviations[endDate.month - 1];
 
   if (start === end) {
-    return `${startMonthName} ${startDay}, ${startYear}`;
+    return `${startMonthName} ${startDate.day}, ${startDate.year}`;
   }
 
-  if (startYear !== endYear) {
-    return `${startMonthName} ${startDay}, ${startYear} – ${endMonthName} ${endDay}, ${endYear}`;
+  if (startDate.year !== endDate.year) {
+    return `${startMonthName} ${startDate.day}, ${startDate.year} – ${endMonthName} ${endDate.day}, ${endDate.year}`;
   }
 
-  if (startMonth !== endMonth) {
-    return `${startMonthName} ${startDay} – ${endMonthName} ${endDay}, ${startYear}`;
+  if (startDate.month !== endDate.month) {
+    return `${startMonthName} ${startDate.day} – ${endMonthName} ${endDate.day}, ${startDate.year}`;
   }
 
-  return `${startMonthName} ${startDay}-${endDay}, ${startYear}`;
+  return `${startMonthName} ${startDate.day}-${endDate.day}, ${startDate.year}`;
 }
 
 /**

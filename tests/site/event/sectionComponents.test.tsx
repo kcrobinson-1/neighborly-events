@@ -101,6 +101,21 @@ describe("EventHeader", () => {
     render(<EventHeader content={crossMonth} slug={crossMonth.slug} />);
     expect(screen.getByText("Sep 30 – Oct 1, 2026")).toBeTruthy();
   });
+
+  it("falls back to raw date strings when an endpoint fails calendar validity", () => {
+    // Guards against a content-author typo (e.g. month 13, Feb 30)
+    // rendering broken output like `undefined 5, 2026` in the hero.
+    const invalidContent: EventContent = {
+      ...baseContent,
+      hero: {
+        ...baseContent.hero,
+        dates: { start: "2026-13-05", end: "2026-13-06" },
+      },
+    };
+    render(<EventHeader content={invalidContent} slug={invalidContent.slug} />);
+    expect(screen.getByText("2026-13-05 – 2026-13-06")).toBeTruthy();
+    expect(screen.queryByText(/undefined/)).toBeNull();
+  });
 });
 
 describe("EventSchedule", () => {

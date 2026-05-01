@@ -9,10 +9,16 @@
  * the data lives on `EventContent`, not on a side channel.
  *
  * Date strings (`hero.dates.*`, `schedule.days[].date`,
- * `lineup[].setTimes[].day`) are treated as opaque ISO `yyyy-mm-dd`
- * strings by the rendering layer. No `Date` parsing, no timezone
- * math; if M4 surfaces a multi-timezone event, an optional
- * `timezone` field can land on `hero.dates` without a shape break.
+ * `lineup[].setTimes[].day`) are ISO `yyyy-mm-dd` calendar strings.
+ * The renderer never interprets them in a local timezone — display
+ * formatting builds output from parsed numeric components, not from
+ * a `Date` instance — so the date a content author writes is the
+ * date a reader sees regardless of viewer locale. Validation goes
+ * through `parseEventDate` (below), which uses `Date.UTC` for a
+ * round-trip calendar-validity check; that use is bounded to
+ * validation and never escapes into rendering. If M4 surfaces a
+ * multi-timezone event, an optional `timezone` field can land on
+ * `hero.dates` without a shape break.
  *
  * `lineup[].setTimes[].day` cross-references
  * `schedule.days[].date`, and `schedule.days[].sessions[].performerSlug`
@@ -92,3 +98,41 @@ export function getEventContentBySlug(slug: string): EventContent | null {
  * `eventContentBySlug` automatically extends the prerender set.
  */
 export const registeredEventSlugs = Object.keys(eventContentBySlug);
+
+/** Parsed ISO `yyyy-mm-dd` date as numeric calendar components. */
+export type EventDate = { year: number; month: number; day: number };
+
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Parses a strict ISO `yyyy-mm-dd` calendar string into its numeric
+ * components. Returns `null` for any string that does not match the
+ * pattern or that names a non-existent calendar date (out-of-range
+ * month, out-of-range day, or month-specific overflow such as
+ * Feb 30, Apr 31, or Feb 29 in a non-leap year).
+ *
+ * The `Date.UTC` round-trip is the calendar-validity check; using
+ * UTC avoids timezone shift, and we never read display values off
+ * the resulting `Date` — render output is built from the returned
+ * numeric components — so this stays consistent with the
+ * "renderer never interprets dates in a local timezone" property
+ * stated on `EventContent` above.
+ */
+export function parseEventDate(value: string): EventDate | null {
+  if (!ISO_DATE_PATTERN.test(value)) {
+    return null;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const utc = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    utc.getUTCFullYear() !== year ||
+    utc.getUTCMonth() !== month - 1 ||
+    utc.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  return { year, month, day };
+}
