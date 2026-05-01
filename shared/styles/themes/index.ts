@@ -1,5 +1,6 @@
 import type { Theme } from "../types.ts";
 import { harvestBlockPartyTheme } from "./harvest-block-party.ts";
+import { riversideJamTheme } from "./riverside-jam.ts";
 
 /**
  * Per-event Theme registry. Populated as per-event themes land:
@@ -17,4 +18,5 @@ import { harvestBlockPartyTheme } from "./harvest-block-party.ts";
  */
 export const themes: Record<string, Theme> = {
   "harvest-block-party": harvestBlockPartyTheme,
+  "riverside-jam": riversideJamTheme,
 };
