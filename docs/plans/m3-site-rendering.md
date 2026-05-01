@@ -70,7 +70,7 @@ collapses it for Madrona.
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
 | 3.1 | Rendering pipeline + first test event + SSR meta | [m3-phase-3-1-1-plan.md](/docs/plans/m3-phase-3-1-1-plan.md), [m3-phase-3-1-2-plan.md](/docs/plans/m3-phase-3-1-2-plan.md) | Landed | [#139](https://github.com/kcrobinson-1/neighborly-events/pull/139) (3.1.1) + 3.1.2 |
-| 3.2 | Second test event with distinct theme | — | Proposed | — |
+| 3.2 | Second test event with distinct theme | [m3-phase-3-2-plan.md](/docs/plans/m3-phase-3-2-plan.md) | Proposed | — |
 | 3.3 | Cross-app navigation verification + M3 closure | — | Proposed | — |
 
 Each row updates as the phase's plan drafts and as its PR merges.
