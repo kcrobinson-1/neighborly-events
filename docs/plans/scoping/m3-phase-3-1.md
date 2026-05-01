@@ -291,10 +291,13 @@ two client islands as noted. Naming follows
   presence-check from M1 phase 1.3.2). New shape: Server Component
   awaiting `params`, calling `getEventContentBySlug`, returning
   `notFound()` for unknown slugs, rendering
-  `<ThemeScope theme={getThemeForSlug(slug)}><EventLandingPage
-  content={...} slug={...} /></ThemeScope>`. Exports
-  `generateMetadata`. Exports `generateStaticParams` so the test
-  event(s) prerender at build time.
+  `<ThemeScope theme={getThemeForSlug(content.themeSlug)}><EventLandingPage
+  content={...} slug={...} /></ThemeScope>`. The `themeSlug` is
+  read off the resolved `EventContent` (not the URL slug) so the
+  contract permission for two events to share a Theme keyed under
+  one slug actually works. Exports `generateMetadata`. Exports
+  `generateStaticParams` so the test event(s) prerender at build
+  time.
 
   The placeholder's cookie-boundary presence-check is **deleted**.
   Its purpose (verifying the M1 phase 1.3.2 cookie adapter was
@@ -535,7 +538,10 @@ export default async function Page({ params }) {
   const content = getEventContentBySlug(slug);
   if (!content) notFound();
   return (
-    <ThemeScope theme={getThemeForSlug(slug)}>
+    // theme resolved via content.themeSlug (the registry key the
+    // content module names), not via the URL slug — events whose
+    // themeSlug !== slug share a Theme registered under one key.
+    <ThemeScope theme={getThemeForSlug(content.themeSlug)}>
       <EventLandingPage content={content} slug={slug} />
     </ThemeScope>
   );

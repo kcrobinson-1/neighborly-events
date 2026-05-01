@@ -153,6 +153,20 @@ triggered the rule.
   banned; if Madrona needs a section the test event doesn't,
   evolve `EventContent` once and let both events render the same
   component shape.
+- **Theme resolution reads `content.themeSlug`, not the URL
+  slug.** Every site that calls `getThemeForSlug` for a per-event
+  Theme passes `content.themeSlug` (read off the resolved
+  `EventContent`), not `params.slug`. The two are equal for the
+  first test event and would be equal for any one-event-per-Theme
+  registration, but the contract permits two events to share a
+  Theme registered under one key (e.g., a hypothetical seasonal
+  pair sharing one brand theme). Resolving via the URL slug
+  silently falls back to the platform Theme for any event with
+  `themeSlug !== slug`, masking the contract violation behind
+  `getThemeForSlug`'s defined platform fallback. The single
+  per-event call site in 3.1.1 lives in
+  `apps/site/app/event/[slug]/page.tsx`; 3.2 and M4 inherit the
+  rule.
 - **Static generation friendliness.** The page route does not
   call any Next.js Request-time API (`cookies()`, `headers()`,
   `searchParams`). `generateStaticParams` lists every registered
@@ -360,8 +374,17 @@ import { EventLandingPage } from "../../../components/event/EventLandingPage";
   rather than locking a choice early on a half-related axis.
 - Default export `Page({ params })` → awaits `params`, resolves
   content, calls `notFound()` if `null`, otherwise returns
-  `<ThemeScope theme={getThemeForSlug(slug)}><EventLandingPage
+  `<ThemeScope theme={getThemeForSlug(content.themeSlug)}><EventLandingPage
   content={content} slug={slug} /></ThemeScope>`.
+
+  Theme resolution uses **`content.themeSlug`**, not the URL
+  `slug`, so the contract permission for two events to share a
+  Theme registered under one key (named in the `EventContent`
+  type behavior contract above) actually works. Resolving via
+  `slug` would silently fall back to the platform Theme for any
+  event whose `themeSlug !== slug`, masking the
+  contract-violation behind `getThemeForSlug`'s defined platform
+  fallback.
 
 The route does NOT call `cookies()`, `headers()`, or
 `searchParams` to preserve SSG (see Cross-Cutting Invariants).
@@ -1037,6 +1060,24 @@ matched to this phase's diff surfaces.
   the captured output, a reviewer cannot distinguish
   "the noindex is server-rendered" from "the noindex was
   client-injected and the curl returned nothing."
+- **Theme-resolution-via-themeSlug audit.** Walk every
+  per-event call to `getThemeForSlug` in this phase's diff
+  and confirm it passes `content.themeSlug` (the field on
+  the resolved `EventContent`), not `params.slug`. The
+  trap: `getThemeForSlug` falls back to the platform Theme
+  on any unregistered key, so passing the URL slug to a
+  registry that's keyed under a different `themeSlug`
+  silently renders Sage Civic instead of the intended
+  Theme — no error, no log, the contract violation is
+  invisible at runtime. For 3.1.1 the single call site is
+  in `apps/site/app/event/[slug]/page.tsx`; the harvest
+  test event has `themeSlug === slug`, so a wrong call
+  passes the harvest-only UI-review captures unchanged
+  while breaking 3.2 + M4 silently. The audit is
+  diff-walk only — no vitest case, since the call site is
+  inside a Server Component that vitest doesn't render
+  (the build-time gate covers type shape, not behavior at
+  this seam).
 
 ### CI & testing infrastructure
 
