@@ -26,27 +26,61 @@ const fraunces = Fraunces({
 });
 
 /**
+ * Resolves the canonical user-facing origin used as `metadataBase`.
+ *
+ * On Vercel `production` and `preview` builds the env var **must** be
+ * set explicitly — both deploy types serve URLs that get unfurled and
+ * indexed, and silently shipping the dev fallback would emit broken
+ * `og:url` / `og:image` / `twitter:image` meta tags. We fail the
+ * build instead, surfacing the misconfiguration immediately rather
+ * than at the next post-deploy unfurl. Local `next dev`, local
+ * `next build`, and non-Vercel CI builds (where `VERCEL_ENV` is
+ * unset) fall through to a localhost dev origin so the build stays
+ * green for contributors.
+ *
+ * Auto-derivation from `VERCEL_URL` was rejected at scoping time
+ * (see `docs/plans/scoping/m3-phase-3-1-2.md` "metadataBase source"):
+ * apps/site sits behind apps/web's Vercel rewrite, so `VERCEL_URL`
+ * resolves to apps/site's hostname rather than apps/web's canonical
+ * user-facing origin. The env var must be operator-set to apps/web's
+ * primary alias.
+ *
+ * The env var reads through `next.config.ts`'s `env` block (the
+ * Turbopack substitution-trap workaround the Supabase pair also
+ * follows). The `||` fallback (not `??`) is deliberate: the `env`
+ * block substitutes `""` when the parent env is unset, and `??` does
+ * not short-circuit on empty string, so `?? "fallback"` would let
+ * `new URL("")` throw with an unhelpful generic error instead of the
+ * named one below.
+ */
+function resolveMetadataBaseOrigin(): string {
+  const origin = process.env.NEXT_PUBLIC_SITE_ORIGIN;
+  if (origin) return origin;
+
+  const vercelEnv = process.env.VERCEL_ENV;
+  if (vercelEnv === "production" || vercelEnv === "preview") {
+    throw new Error(
+      `NEXT_PUBLIC_SITE_ORIGIN must be set on Vercel ${vercelEnv} ` +
+        `builds. Set it to apps/web's canonical custom-domain origin ` +
+        `per docs/dev.md "apps/site environment variables." Falling ` +
+        `back to a dev origin would silently ship broken Open Graph ` +
+        `URLs to every consumer client.`,
+    );
+  }
+  return "http://localhost:3000";
+}
+
+/**
  * `metadataBase` is the canonical user-facing origin all URL-based
  * metadata fields (`og:image`, `og:url`, `twitter:image`) resolve
  * relative paths against. It is set **once** at the root layout per
  * Next.js' segment-cascade — adding it to a child route's
  * `generateMetadata` would shadow this value and break the
  * single-source-of-truth assumption the OG image pipeline depends on.
- *
- * The env var reads through `next.config.ts`'s `env` block (the
- * Turbopack substitution-trap workaround the Supabase pair also
- * follows). The fallback uses logical-OR, **not** nullish-coalescing:
- * the `env` block substitutes `""` when the parent env is unset, and
- * `??` does not short-circuit on empty string (only on `null` /
- * `undefined`), so `?? "fallback"` would let `new URL("")` throw at
- * build time. The plan's curl falsifier in M3 phase 3.1.2 catches the
- * regression class.
  */
 export const metadata: Metadata = {
   title: "Neighborly Events",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_ORIGIN || "http://localhost:3000",
-  ),
+  metadataBase: new URL(resolveMetadataBaseOrigin()),
 };
 
 /**

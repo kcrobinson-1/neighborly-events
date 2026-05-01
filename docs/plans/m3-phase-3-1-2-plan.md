@@ -141,16 +141,27 @@ triggered the rule.
   introduces the source lookup; the lookup itself uses the
   literal `process.env.NEXT_PUBLIC_SITE_ORIGIN` form Next.js'
   substitution requires.
-- **Empty-env fallback uses logical-OR, not nullish-coalescing.**
-  The root layout reads
-  `process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000'`,
-  not `??`. The `env` block in `next.config.ts` substitutes empty
-  string (`""`) when the parent env is unset; `??` does not
-  short-circuit on `""` because empty-string is not nullish, so
-  `??` would let an empty `metadataBase` URL constructor argument
-  ship and the build hard-errors. The plan's load-bearing
-  falsifier for this invariant is the curl gate against an
-  empty-env build (see Validation Gate).
+- **Empty-env fallback uses logical-OR, not nullish-coalescing,
+  *and* fails fast on Vercel deploys.** The root layout's
+  `resolveMetadataBaseOrigin()` helper reads
+  `process.env.NEXT_PUBLIC_SITE_ORIGIN`, returns it when set, and
+  on miss either (a) throws a named build-time error when
+  `process.env.VERCEL_ENV` is `production` or `preview`, or
+  (b) falls back to `http://localhost:3000` for local dev /
+  non-Vercel CI. The fail-fast gate makes the foot-gun structural
+  rather than procedural: a misconfigured Vercel deploy cannot
+  ship localhost-shaped meta tags because the build itself
+  refuses to complete. The `||`-vs-`??` discipline still applies
+  inside the helper (the `env` block substitutes `""` when the
+  parent env is unset, and `??` does not short-circuit on
+  empty-string), but the fail-fast gate is now the load-bearing
+  protection — local/CI builds keep their localhost fallback for
+  contributor ergonomics, Vercel deploys do not. Auto-derivation
+  from `VERCEL_URL` was rejected at scoping time per
+  `docs/plans/scoping/m3-phase-3-1-2.md` "metadataBase source"
+  because apps/site sits behind apps/web's Vercel rewrite — the
+  canonical user-facing origin is apps/web's hostname, not
+  apps/site's.
 - **OG and Twitter images render the same content.** Both
   file-convention routes import `EventOgImage` from
   `apps/site/lib/eventOgImage.tsx`. A future change to the visual
@@ -324,22 +335,34 @@ The page route does **not** add `openGraph.images` or
 
 ### Root layout — `apps/site/app/layout.tsx`
 
-`metadata` export gains `metadataBase`. The single field added:
-`metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000')`.
+`metadata` export gains `metadataBase: new URL(resolveMetadataBaseOrigin())`,
+where `resolveMetadataBaseOrigin` is a small file-local helper.
 
 Behavior contract:
 
-- The `URL` constructor accepts a string. The argument is read
-  through Next.js' `env` substitution (the var is registered in
-  `next.config.ts`'s `env` block per the cross-cutting
-  invariant), so at build time the literal string substitutes
-  before bundling.
-- Local fallback `http://localhost:3000` keeps the build green
-  in dev and CI when the env var is unset. Production deploy
-  must set the var to apps/web's canonical origin via the
-  Vercel apps/site project's Production environment.
-- Logical-OR `||` (not `??`) per the cross-cutting invariant:
-  empty-string substitution must fall back to the dev URL.
+- `resolveMetadataBaseOrigin(): string` reads
+  `process.env.NEXT_PUBLIC_SITE_ORIGIN` (Next.js substitutes via
+  the `env` block per the Cross-Cutting Invariant) and returns
+  it when set.
+- On miss, the helper inspects `process.env.VERCEL_ENV`. When it
+  is `"production"` or `"preview"`, the helper **throws** a
+  named `Error` ("NEXT_PUBLIC_SITE_ORIGIN must be set on Vercel
+  &lt;env&gt; builds…"), which fails the `next build` so a
+  misconfigured deploy cannot ship.
+- On any other context (`VERCEL_ENV` unset — local dev, local
+  `next build`, GitHub CI), the helper returns
+  `http://localhost:3000` so contributor builds stay green.
+- Production deploy still requires the operator to set the var
+  in the Vercel apps/site project's Production environment to
+  apps/web's canonical custom-domain origin; the difference is
+  that the misconfiguration now produces a loud build failure
+  pre-deploy rather than a silent post-deploy regression.
+- Logical-OR `||` discipline (not `??`) still applies inside
+  the helper because the `env` block substitutes `""` for unset
+  vars; the fail-fast gate is layered on top, not a replacement.
+- Auto-derivation from `VERCEL_URL` was rejected at scoping
+  time per `docs/plans/scoping/m3-phase-3-1-2.md`; see the
+  Cross-Cutting Invariant above.
 
 ### `next.config.ts` env entry
 
@@ -945,18 +968,24 @@ resolution path so reviewer attention does not relitigate them.
 
 ## Risk Register
 
-- **Empty-env-var fallback ships to production.** If the
-  Vercel apps/site project's Production env does not set
-  `NEXT_PUBLIC_SITE_ORIGIN` (operator oversight), the
-  `process.env.NEXT_PUBLIC_SITE_ORIGIN || 'http://localhost:3000'`
-  expression resolves to localhost and every meta URL becomes
-  `http://localhost:3000/...`, which breaks unfurls silently.
-  Mitigation: the curl falsifier in the validation gate
-  catches the empty-env case during local verification; the
-  Slack unfurl capture against the Vercel deploy preview
-  catches it pre-merge as the consumer-end proof; the PR
-  body's pre-merge operator check (Execution step 15) names
-  the Vercel env-set as a load-bearing manual step.
+- **Empty-env-var fallback ships to production.** Originally
+  rated as a load-bearing risk mitigated by manual operator
+  vigilance. Codex flagged the silent-localhost-fallback shape
+  during PR #142 review as a P1; the implementing PR replaced
+  the inline `process.env || 'localhost'` expression with a
+  `resolveMetadataBaseOrigin()` helper that **throws at build
+  time** when `VERCEL_ENV` is `production` or `preview` and the
+  var is unset. The risk is now structurally mitigated rather
+  than procedurally — a misconfigured Vercel deploy fails the
+  build with a named error instead of silently shipping
+  `http://localhost:3000/...` meta tags. The PR body's
+  pre-merge operator check (Execution step 15) and the Slack
+  unfurl capture remain useful as defense-in-depth, but the
+  fail-fast gate is now the primary protection. The four
+  build-mode cases (no `VERCEL_ENV` → fallback ok; production
+  unset → throws; production set → succeeds; preview unset →
+  throws) are exercised in the implementing PR's Validation
+  section.
 - **Turbopack substitution trap regression.** If the new
   `NEXT_PUBLIC_SITE_ORIGIN` lookup is added to source without
   the `next.config.ts` `env` block update, Turbopack rewrites
