@@ -504,28 +504,26 @@ invariants apply:
    (`/event/harvest-block-party/opengraph-image`,
    `/event/harvest-block-party/twitter-image`).
 9. **Server-rendered absolute-URL check (curl falsifier).**
-   Run the local production-build pair with the env var set
-   to a production-shaped value:
-
-   ```sh
-   cd apps/site && \
-     NEXT_PUBLIC_SITE_ORIGIN=https://example.test \
-     npx next build && \
-     NEXT_PUBLIC_SITE_ORIGIN=https://example.test \
-     npx next start &
-   SITE_PID=$!
-   sleep 4
-   curl -s http://localhost:3000/event/harvest-block-party | \
-     grep -oE '<meta (property|name)="(og:url|og:image|twitter:image)"[^>]*>'
-   kill $SITE_PID
-   ```
-
-   The grep must produce at least three lines, each with an
-   absolute URL value (`https://example.test/...` for `og:url`
-   and the image meta tags). Capture the curl output in the
-   PR body's Validation section. This is the falsifier for the
-   `metadataBase`-actually-applied claim and the empty-env
-   fallback regression risk.
+   With `NEXT_PUBLIC_SITE_ORIGIN` set to a production-shaped
+   value (e.g. `https://example.test`) for both phases, run
+   `next build` to completion in apps/site, then start
+   `next start` in the background, wait until the port is
+   listening before curling, curl the test event route's raw
+   HTML, grep for `og:url`, `og:image`, and `twitter:image`
+   meta tags, assert each carries an absolute URL value
+   (`https://example.test/...`, not `/...` and not the
+   localhost fallback), and kill the server. The wait-until-
+   listening step is load-bearing — backgrounding the whole
+   build-and-start pipeline and `sleep`-ing instead races the
+   build on slower machines and lets curl fire before the
+   server is ready, which silently passes the falsifier with
+   empty grep output rather than confirming the meta tags.
+   The actual shell lands in the implementing PR; this plan
+   names the contract, not the script. The grep output
+   (showing three lines with absolute URLs) is captured in
+   the PR body's Validation section. This is the falsifier
+   for the `metadataBase`-actually-applied claim and the
+   empty-env fallback regression risk.
 10. **OG image visual capture.** Open
     `http://localhost:3000/event/harvest-block-party/opengraph-image`
     in a browser against the same production-built `next start`
