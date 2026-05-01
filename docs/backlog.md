@@ -196,6 +196,16 @@ Execute in any order.
   agents have a consistent, documented path for uploading UX review images.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Add a stable PR screenshot upload path](/docs/tracking/dev-workflow-improvements.md)
 
+- [ ] **`infra` Investigate planning-doc location**
+  The `/docs/plans/archive/` set keeps growing, plan-only and
+  plan-archive-maintenance PRs inflate the repo PR count, and plan PRs need
+  different review than code PRs. Codex review against in-repo code and
+  Claude Code's single-repo model rule out moving the per-phase implementation
+  contract to a sibling repo; the open question is whether discussion-style
+  surfaces (epic framing, scoping back-and-forth, deferred decisions) can
+  move to GitHub Discussions or similar without losing their protective check.
+  Detail: [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
+
 - [ ] **`ux` Event details inline vs. dedicated route**
   Decide whether event details should remain in the selected workspace or move
   to a dedicated route once the page gets denser.
