@@ -183,6 +183,24 @@ PR that surfaces them.
 
 ## Milestone Structure
 
+**Phase-level paragraphs below are pre-milestone-planning estimates.**
+Per AGENTS.md "Epic Drafting," milestone planning sessions own the
+canonical phase shape, validation gate, documentation list, and
+self-review audit set for each milestone. The per-milestone paragraphs
+below predate the rule (M0/M1/M2) or were written before the milestone
+planning session ran (M3/M4); they are preserved as the estimate that
+informed each milestone planning session, not as binding specs. Where a
+milestone doc exists, that doc is canonical; the epic paragraph is
+historical record.
+
+- M0, M1, M2 — landed; per-phase paragraphs are historical record of
+  shipped work
+- M3 — milestone doc at
+  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md) is
+  canonical; the M3 paragraphs below are pre-milestone-planning estimate
+- M4 — no milestone doc yet; the M4 paragraphs below are estimates
+  pending its milestone planning session
+
 ### M0 — Framework Decision And Platform Skeleton
 
 **Goal.** Lock the framework choice for `apps/site`, rename the repo to
@@ -691,6 +709,16 @@ those dependencies are pinned).
 
 ### M3 — Site Rendering Infrastructure With Test Events
 
+**Milestone doc.** [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+is canonical for M3's phase shape (3 phases, not the 4 estimated below),
+phase sequencing, cross-phase invariants, cross-phase decisions, and
+milestone-level risks. The phase paragraphs below are the
+pre-milestone-planning estimate that informed the milestone session;
+the per-phase content described below was reorganized by the milestone
+session into the structure recorded in the milestone doc. Per AGENTS.md
+"Epic Drafting," consult the milestone doc for the canonical M3 plan;
+treat the paragraphs below as historical estimate.
+
 **Goal.** `apps/site` becomes capable of rendering any `/event/:slug` from
 data, with multi-theme rendering proven via test events, and SSR/SSG output
 verified for unfurl previews.
@@ -751,6 +779,14 @@ end-to-end), CLI / tooling pinning audit (any new dependencies introduced
 by `apps/site` page rendering or meta-tag handling are pinned).
 
 ### M4 — Madrona Launch
+
+**Milestone doc.** Not yet drafted — M4's milestone planning session
+runs after M3 lands. Per AGENTS.md "Epic Drafting," the phase
+paragraphs below are pre-milestone-planning estimates pending that
+session. Phase counts, per-phase content, validation gate, and
+documentation list will be re-derived against actually-merged M3 code
+when M4 milestone planning begins; the milestone doc that session
+produces will be canonical and will supersede the paragraphs below.
 
 **Goal.** Madrona Music in the Playfield goes live as the first public event
 on the platform.
@@ -880,15 +916,27 @@ boundaries inside a parent phase, not separate phases. A milestone's phase
 count is the count of `Phase X.N` entries in its body; subphases (`Phase
 X.N.M`) contribute to the PR count but not the phase count.
 
+**Counts below are pre-milestone-planning estimates for milestones that
+have not yet had their milestone planning session.** Per AGENTS.md "Epic
+Drafting," each milestone's actual phase count and PR count are
+re-derived by its milestone planning session against merged-in code.
+M0/M1/M2 counts are historical fact (those milestones landed). M3's
+count was re-derived by its milestone session — see
+[m3-site-rendering.md](/docs/plans/m3-site-rendering.md) for the
+canonical M3 shape. M4's count is pending its own milestone planning
+session.
+
 Phases per milestone, with PR counts:
 
-- M0 — 3 phases, 3 PRs
-- M1 — 5 phases (phase 1.1, phase 1.3, and phase 1.5 each contain 2 subphases as separate PRs), 8 PRs
-- M2 — 5 phases, 5 PRs
-- M3 — 4 phases, 4 PRs
-- M4 — 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR)
+- M0 — 3 phases, 3 PRs (landed)
+- M1 — 5 phases (phase 1.1, phase 1.3, and phase 1.5 each contain 2 subphases as separate PRs), 8 PRs (landed)
+- M2 — 5 phases, 5 PRs (landed; actually shipped 13 PRs once subphase splits were re-derived during phase planning — see [m2-admin-restructuring.md](/docs/plans/archive/m2/m2-admin-restructuring.md) phase status table)
+- M3 — pre-milestone-planning estimate: 4 phases, 4 PRs. Milestone-planning re-derived: 3 phases, 3 PRs (3.1 may split into 2). Canonical: [m3-site-rendering.md](/docs/plans/m3-site-rendering.md)
+- M4 — pre-milestone-planning estimate: 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR). Milestone planning pending.
 
-Epic total: 20 phases, 22 PRs.
+Epic total: pre-milestone-planning estimate of 20 phases, 22 PRs;
+actuals will diverge as each milestone planning session and each phase
+planning session re-derive against merged-in code.
 
 The above is written under the assumption "one engineer focused on the epic
 with no parallel tracks." Reader scales relative weight from the phase and

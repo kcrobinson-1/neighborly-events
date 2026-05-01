@@ -93,8 +93,10 @@ browser-side read in the other app.
 Next.js auto-detects `facebookexternalhit` and similar HTML-limited bots
 and serves them full `<head>` metadata at the cost of TTFB. The
 behavioral envelope (which bots, which fields) is not exhaustively
-documented. M3 phase 3.4 validates against at least one real unfurl
-client.
+documented. M3 phase 3.1 validates against at least one real unfurl
+client (per [m3-site-rendering.md](/docs/plans/m3-site-rendering.md);
+the original 4-phase epic estimate placed unfurl validation in a
+since-superseded phase 3.4).
 
 ### Proxy-rewrite project vs. Vercel Microfrontends
 

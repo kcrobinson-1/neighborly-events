@@ -565,7 +565,10 @@ Captured here so reviewer attention does not relitigate them.
   auth before the refresh-visibility question is testable.
 - **`EventContent` type and per-event content.** M3 phase 3.1.
 - **Per-event meta tags / OG images / unfurl previews.** M3
-  phase 3.4 and M4 phase 4.1.
+  phase 3.1 (per
+  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); the
+  original 4-phase epic estimate placed this in a since-superseded
+  phase 3.4) and M4 phase 4.1.
 - **Vercel Microfrontends migration.** Documented as the
   upgrade path if proxy-rewrite limitations surface; not adopted
   in this phase.
