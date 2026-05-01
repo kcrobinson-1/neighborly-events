@@ -33,7 +33,7 @@ Post-MVP authoring ownership resolved in M2 (organizer RLS broadening +
 authoring Edge Functions accept organizer callers); see
 [`event-platform-epic.md`](./plans/event-platform-epic.md) "Open Questions
 Resolved By This Epic" and the M2 milestone doc
-[`m2-admin-restructuring.md`](./plans/m2-admin-restructuring.md). Outstanding
+[`m2-admin-restructuring.md`](./plans/archive/m2/m2-admin-restructuring.md). Outstanding
 authoring follow-up work is tracked in [`backlog.md`](./backlog.md).
 
 ## Reporting And Sponsor Measurement

@@ -3,7 +3,7 @@
 ## Status
 
 Landed. Status mirrors the
-[epic milestone row](./event-platform-epic.md). Flipped to
+[epic milestone row](../../event-platform-epic.md). Flipped to
 `Landed` in M2 phase 2.5.3's PR alongside the epic M2-row flip.
 
 This milestone doc is the durable coordination artifact for M2:
@@ -397,9 +397,9 @@ emerges.
 ### 4. Local-dev story for `/auth/callback` fixtures [Resolved → local auth e2e proxy]
 
 **What was decided.** How local Playwright fixtures
-([admin-auth-fixture.ts](../../tests/e2e/admin-auth-fixture.ts),
-[redeem-auth-fixture.ts](../../tests/e2e/redeem-auth-fixture.ts),
-[redemptions-auth-fixture.ts](../../tests/e2e/redemptions-auth-fixture.ts))
+([admin-auth-fixture.ts](../../../../tests/e2e/admin-auth-fixture.ts),
+[redeem-auth-fixture.ts](../../../../tests/e2e/redeem-auth-fixture.ts),
+[redemptions-auth-fixture.ts](../../../../tests/e2e/redemptions-auth-fixture.ts))
 exercise the auth round-trip after 2.3 removes `/auth/callback`
 from apps/web's Vite dev origin.
 
@@ -574,7 +574,7 @@ recorded for completeness so plan authors don't re-derive them:
   signature change.
 - **apps/site primary Vercel project promotion** (2.3, 2.4).
   **Defer** to post-epic per
-  [site-scaffold-and-routing.md](./site-scaffold-and-routing.md)
+  [site-scaffold-and-routing.md](../../site-scaffold-and-routing.md)
   "Primary-project ownership flip." M2 stays on apps/web-primary
   proxy-rewrite.
 - **`vercel.json` and architecture-table edit composition with 2.3
@@ -611,7 +611,7 @@ level. Phase-level risks live in each plan's Risk Register.
   deferral explicitly so reviewers don't relitigate the decision.
 - **Vercel rule-ordering misordering across 2.3, 2.4, 2.5.** Three
   separate phases edit
-  [apps/web/vercel.json](../../apps/web/vercel.json). 2.3 adds
+  [apps/web/vercel.json](../../../../apps/web/vercel.json). 2.3 adds
   `/auth/callback` and `/` proxies; 2.4 adds `/admin*` proxies and
   removes the `/admin/:path*` SPA fallback; 2.5 deletes the
   bare-path operator carve-outs. A misorder at any stage sends
@@ -642,31 +642,31 @@ level. Phase-level risks live in each plan's Risk Register.
 The doc updates the M2 set must collectively make. Each is owned by
 the named phase; M2 is not complete until all are landed.
 
-- [docs/architecture.md](../architecture.md) — touched by every
+- [docs/architecture.md](../../../architecture.md) — touched by every
   phase. 2.1: organizer write capability + broadened
   authoring-function gates. 2.2: per-event admin route in the
   frontend route inventory + Vercel routing topology footnote.
   2.3: URL ownership shape + apps/site adapter modules. 2.4:
   apps/site `/admin` ownership + admin event workspace section
   rewritten. 2.5: URL prose + Vercel routing table renumbering.
-- [docs/operations.md](../operations.md) — owned by 2.4 (admin URL
+- [docs/operations.md](../../../operations.md) — owned by 2.4 (admin URL
   contract + Vercel routing topology) and 2.5 (operator URL
   references). Other phases don't touch operations.md.
-- [docs/product.md](../product.md) — owned by 2.5 (capability set
+- [docs/product.md](../../../product.md) — owned by 2.5 (capability set
   after M2 completes). Other phases don't touch product.md.
-- [docs/dev.md](../dev.md) — owned by 2.3 (apps/site adapter +
+- [docs/dev.md](../../../dev.md) — owned by 2.3 (apps/site adapter +
   local auth e2e proxy for auth-flow fixtures) and 2.5 (apps/web URL list
   + rule-precedence walk-through). Other phases don't touch dev.md.
-- [docs/open-questions.md](../open-questions.md) — owned by 2.5
+- [docs/open-questions.md](../../../open-questions.md) — owned by 2.5
   (closes the post-MVP authoring-ownership entry per the epic's
   "Open Questions Resolved By This Epic"). Other phases don't
   touch open-questions.md.
-- [docs/backlog.md](../backlog.md) — owned by 2.5 (marks
+- [docs/backlog.md](../../../backlog.md) — owned by 2.5 (marks
   "Organizer-managed agent assignment" unblocked). Other phases
   don't touch backlog.md.
-- [README.md](../../README.md) — touched by 2.5 if URL references
+- [README.md](../../../../README.md) — touched by 2.5 if URL references
   in the README mention bare-path operator URLs.
-- [event-platform-epic.md](./event-platform-epic.md) — M2 row flips
+- [event-platform-epic.md](../../event-platform-epic.md) — M2 row flips
   to `Landed` in 2.5's PR per the Plan-to-PR Completion Gate.
 - This doc — Status flips to `Landed` in 2.5's PR; phase status
   table rows update as each plan drafts and as each PR merges.
@@ -680,16 +680,16 @@ the named phase; M2 is not complete until all are landed.
 - **Unblocked by M2.** "Organizer-managed agent assignment"
   becomes implementable on top of 2.1's RLS broadening with no
   further authorization work. Marked in
-  [docs/backlog.md](../backlog.md) by M2's terminal PR (2.5);
+  [docs/backlog.md](../../../backlog.md) by M2's terminal PR (2.5);
   implementation lands as a focused post-epic follow-up.
 - **Opened by M2.** None planned. The epic's "Open Questions Newly
   Opened" section commits to logging any unresolved decisions in
-  [docs/open-questions.md](../open-questions.md) in the same PR
+  [docs/open-questions.md](../../../open-questions.md) in the same PR
   that surfaces them; M2 is not knowingly opening any.
 
 ## Related Docs
 
-- [event-platform-epic.md](./event-platform-epic.md) — parent
+- [event-platform-epic.md](../../event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [m2-phase-2-1-plan.md](./m2-phase-2-1-plan.md),
   [m2-phase-2-1-1-plan.md](./m2-phase-2-1-1-plan.md),
@@ -709,7 +709,7 @@ the named phase; M2 is not complete until all are landed.
   `docs/plans/scoping/m2-phase-2-5.md` — transient scoping docs
   deleted in batch by M2 phase 2.5.3 (see git history for the
   pre-deletion content).
-- [docs/self-review-catalog.md](../self-review-catalog.md) — audit
+- [docs/self-review-catalog.md](../../../self-review-catalog.md) — audit
   name source for per-phase Self-Review Audits sections.
-- [AGENTS.md](../../AGENTS.md) — workflow rules, Plan-to-PR
+- [AGENTS.md](../../../../AGENTS.md) — workflow rules, Plan-to-PR
   Completion Gate, Doc Currency PR Gate.

@@ -13,11 +13,11 @@ sub-phases**, each with its own plan doc, PR, and Status.
 
 Only sub-phase **2.4.2** ships under the two-phase **Plan-to-Landed
 Gate For Plans That Touch Production Smoke** from
-[`docs/testing-tiers.md`](../testing-tiers.md). Both 2.4.1 (purely
+[`docs/testing-tiers.md`](../../../testing-tiers.md). Both 2.4.1 (purely
 additive, production unchanged) and 2.4.3 (deletes already-unreachable
 code) land under the regular Tier 1–4 gate.
 
-**Parent epic:** [`event-platform-epic.md`](./event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](../../event-platform-epic.md),
 Milestone M2, Phase 2.4. Sibling phases: 2.1 RLS broadening — Landed
 ([`m2-phase-2-1-plan.md`](./m2-phase-2-1-plan.md),
 [`m2-phase-2-1-1-plan.md`](./m2-phase-2-1-1-plan.md),
@@ -32,14 +32,14 @@ URL migration — Proposed. The epic's M2 row stays `Proposed` until
 **Hard dependencies on landed siblings.** 2.2 (deep editor at
 `/event/:slug/admin`) is the navigation target for `Open workspace`
 post-cutover. 2.3 ships the apps/site adapter pair
-([`apps/site/lib/setupAuth.ts`](../../apps/site/lib/setupAuth.ts),
-[`apps/site/lib/supabaseBrowser.ts`](../../apps/site/lib/supabaseBrowser.ts)),
-the [`(authenticated)`](../../apps/site/app/(authenticated)/layout.tsx)
+([`apps/site/lib/setupAuth.ts`](../../../../apps/site/lib/setupAuth.ts),
+[`apps/site/lib/supabaseBrowser.ts`](../../../../apps/site/lib/supabaseBrowser.ts)),
+the [`(authenticated)`](../../../../apps/site/app/(authenticated)/layout.tsx)
 route group with
-[`SharedClientBootstrap`](../../apps/site/components/SharedClientBootstrap.tsx),
+[`SharedClientBootstrap`](../../../../apps/site/components/SharedClientBootstrap.tsx),
 and the cross-app proxy pattern in
-[`apps/web/vercel.json`](../../apps/web/vercel.json). 2.1.2 ships
-[`authenticateEventOrganizerOrAdmin`](../../supabase/functions/_shared/event-organizer-auth.ts)
+[`apps/web/vercel.json`](../../../../apps/web/vercel.json). 2.1.2 ships
+[`authenticateEventOrganizerOrAdmin`](../../../../supabase/functions/_shared/event-organizer-auth.ts)
 which the platform admin (root-only) passes through the
 `is_root_admin()` branch.
 
@@ -163,7 +163,7 @@ gives:
 
 The trade-off is three review rounds instead of one. The win is
 materially smaller per-PR diffs and a scoped smoke gate. Per
-[`AGENTS.md`](../../AGENTS.md) "Phase Planning Sessions" / "PR-count
+[`AGENTS.md`](../../../../AGENTS.md) "Phase Planning Sessions" / "PR-count
 predictions need a branch test," this is exactly the situation where
 splitting wins.
 
@@ -190,9 +190,9 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
   strings the e2e fixtures assert against** so 2.4.2's URL retarget
   is a pure URL-pattern diff — every other locator must still
   resolve. Enumerated from
-  [`tests/e2e/admin-workflow.admin.spec.ts`](../../tests/e2e/admin-workflow.admin.spec.ts)
+  [`tests/e2e/admin-workflow.admin.spec.ts`](../../../../tests/e2e/admin-workflow.admin.spec.ts)
   and
-  [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+  [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
   at plan-time:
 
   - `Game draft access` heading text
@@ -216,7 +216,7 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
   **best-effort fidelity** — implementer aims for "reads as the
   same product as apps/web" using apps/web's copy as the default,
   but exact-string match is not contracted (e.g.,
-  [`AdminEventWorkspace.tsx:286`](../../apps/web/src/admin/AdminEventWorkspace.tsx#L286)
+  [`AdminEventWorkspace.tsx:286`](../../../../apps/web/src/admin/AdminEventWorkspace.tsx#L286)
   renders `Duplicate draft`, not `Duplicate` — implementer chooses
   whichever reads better in apps/site idiom).
 
@@ -234,8 +234,8 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
   human-readable counterpart to the test-asserted-locator
   invariant; together they cover what automation alone can't.
 - **Deep-editor surface untouched.** apps/web's
-  [`EventAdminPage`](../../apps/web/src/pages/EventAdminPage.tsx) and
-  [`EventAdminWorkspace`](../../apps/web/src/admin/EventAdminWorkspace.tsx)
+  [`EventAdminPage`](../../../../apps/web/src/pages/EventAdminPage.tsx) and
+  [`EventAdminWorkspace`](../../../../apps/web/src/admin/EventAdminWorkspace.tsx)
   (the 2.2 per-event admin) plus their dependency set
   (`AdminEventDetailsForm`, `AdminQuestionEditor`, `AdminQuestionList`,
   `AdminQuestionFields`, `AdminOptionEditor`, `AdminPublishPanel`,
@@ -262,7 +262,7 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
     After 2.4.3, apps/web's URL footprint is purely event-scoped.
 - **shared/urls / apps/web `App.tsx` build-sequencing constraint
   inside 2.4.3.** The
-  [`shared/urls/routes.ts`](../../shared/urls/routes.ts) deprecation
+  [`shared/urls/routes.ts`](../../../../shared/urls/routes.ts) deprecation
   cannot land in a tip that still has apps/web `App.tsx` importing
   the deprecated symbols. Inside 2.4.3, the implementer locks the
   commit order at edit time so every commit's tip passes
@@ -275,19 +275,19 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
 ## Cross-Cutting Invariants Touched (epic-level)
 
 - **Auth integration.** Verified by:
-  [`shared/auth/configure.ts:35`](../../shared/auth/configure.ts#L35).
+  [`shared/auth/configure.ts:35`](../../../../shared/auth/configure.ts#L35).
   apps/site's adapter pair is wired by 2.3; 2.4.1 adds a
   `setupEvents` side-effect import alongside the existing
   `setupAuth` import in `<SharedClientBootstrap>`.
 - **URL contract.** Already covered above.
 - **Theme route scoping.** Verified by:
-  [`apps/site/app/layout.tsx:46-60`](../../apps/site/app/layout.tsx#L46).
+  [`apps/site/app/layout.tsx:46-60`](../../../../apps/site/app/layout.tsx#L46).
   The new `/admin` page is non-event-scoped, inherits the apps/site
   Sage Civic root-layout defaults, and does not wrap in
   `<ThemeScope>`. apps/web's `/event/:slug/admin` deep editor wraps
   as it already does in 2.2.
 - **Trust boundary.** Verified by:
-  [`supabase/functions/_shared/event-organizer-auth.ts:24-101`](../../supabase/functions/_shared/event-organizer-auth.ts#L24).
+  [`supabase/functions/_shared/event-organizer-auth.ts:24-101`](../../../../supabase/functions/_shared/event-organizer-auth.ts#L24).
   Authoring writes flow through Edge Functions gated on
   `is_organizer_for_event(eventId) OR is_root_admin()`; the platform
   admin passes through the `is_root_admin()` branch. Observable
@@ -296,19 +296,19 @@ invariants (e.g., bootstrap-seam idempotency, only relevant to
   `<SignInForm>` inline within its shell when signed-out; no
   `/signin` page is introduced.
 - **Token bucket discipline.** 2.4.1 extends
-  [`apps/site/app/globals.css`](../../apps/site/app/globals.css)
+  [`apps/site/app/globals.css`](../../../../apps/site/app/globals.css)
   with a scoped `.admin-shell` surface — see
   [`m2-phase-2-4-1-plan.md`](./m2-phase-2-4-1-plan.md) Contracts
   for the selector list and token-consumption record. The extension
   consumes themable values via `var(--…)` (brand color, typography,
   radius, focus ring) and keeps one-off layout dimensions local per
-  [`AGENTS.md`](../../AGENTS.md) "Styling Token Discipline." No
+  [`AGENTS.md`](../../../../AGENTS.md) "Styling Token Discipline." No
   structural-token surface introduced (apps/site has no SCSS). 2.4.2
   and 2.4.3 add no CSS / SCSS surface; 2.4.3's SCSS prune deletes
   apps/web platform-admin selectors only after grep-confirming zero
   surviving consumers. The apps/site brand color tokens themselves
   are emitted on `<html>` by
-  [`shared/styles/themeToStyle.ts`](../../shared/styles/themeToStyle.ts)
+  [`shared/styles/themeToStyle.ts`](../../../../shared/styles/themeToStyle.ts)
   via the apps/site root layout, unchanged.
 
 ## Out Of Scope
@@ -332,7 +332,7 @@ relitigate them.
 - **apps/site Vercel project primary-domain promotion.** Resolved
   in [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
   "Settled by default": defer post-epic per
-  [`site-scaffold-and-routing.md`](./site-scaffold-and-routing.md)
+  [`site-scaffold-and-routing.md`](../../site-scaffold-and-routing.md)
   "Primary-project ownership flip." M2 stays on apps/web-primary
   proxy-rewrite.
 - **`generate-event-code` payload contract.** Already shipped by
@@ -358,7 +358,7 @@ Cross-sub-phase risks. Sub-phase-local risks live in their
 respective plan docs.
 
 - **Cross-project proxy unverifiable pre-merge for `/admin*`.**
-  [`apps/web/vercel.json`](../../apps/web/vercel.json) destinations
+  [`apps/web/vercel.json`](../../../../apps/web/vercel.json) destinations
   are absolute production URLs, so any local `vercel dev` run for
   2.4.2 proxies `/admin` to *deployed* apps/site (still on main, no
   new `/admin` route at 2.4.2's pre-merge state — 2.4.1 will be
@@ -400,7 +400,7 @@ respective plan docs.
   trap that bit 2.3's first draft. Mitigation: 2.4.1's plan locks
   the contract to `window.location.assign(path)` /
   `window.location.replace(path)`; the
-  [`apps/site/app/(authenticated)/auth/callback/page.tsx`](../../apps/site/app/(authenticated)/auth/callback/page.tsx)
+  [`apps/site/app/(authenticated)/auth/callback/page.tsx`](../../../../apps/site/app/(authenticated)/auth/callback/page.tsx)
   precedent is the reviewer reference.
 - **2.4.2 reverted but 2.4.3 already merged.** If 2.4.2 reveals a
   production issue and is reverted, but 2.4.3 has somehow merged
@@ -414,7 +414,7 @@ respective plan docs.
 - **SCSS prune over-deletion in 2.4.3.** apps/web platform-admin
   SCSS selectors may overlap with deep-editor selectors that survive
   in
-  [`EventAdminWorkspace.tsx`](../../apps/web/src/admin/EventAdminWorkspace.tsx).
+  [`EventAdminWorkspace.tsx`](../../../../apps/web/src/admin/EventAdminWorkspace.tsx).
   Dropping a selector still consumed by the deep editor would
   silently regress the per-event admin page's appearance.
   Mitigation: 2.4.3's plan names the grep-audit procedure
@@ -433,7 +433,7 @@ respective plan docs.
 - "Organizer-managed agent assignment" stays *unblocked but not
   landed*. 2.4 does not change the unblock recorded by 2.1.1's
   `event_role_assignments` policies; the entry in
-  [`docs/backlog.md`](../backlog.md) is updated with M2's terminal
+  [`docs/backlog.md`](../../../backlog.md) is updated with M2's terminal
   PR (2.5).
 - No new backlog items expected. If the 2.4.2 post-release
   `Production Admin Smoke` run surfaces an issue with the
@@ -443,22 +443,22 @@ respective plan docs.
 ## Documentation Currency
 
 Doc edits distribute across sub-phases per
-[`AGENTS.md`](../../AGENTS.md) "Doc Currency Is a PR Gate":
+[`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate":
 
 - **2.4.1** — minimal doc surface. New shared/events module is
-  internal; if the [`shared/events/README.md`](../../shared/events/README.md)
+  internal; if the [`shared/events/README.md`](../../../../shared/events/README.md)
   documents the public surface, add the new helper there.
 - **2.4.2** — URL ownership shape edits. The Vercel routing
   topology and the URL ownership entries in
-  [`docs/architecture.md`](../architecture.md),
-  [`docs/operations.md`](../operations.md),
-  [`docs/dev.md`](../dev.md) update with the cutover. Auth e2e
+  [`docs/architecture.md`](../../../architecture.md),
+  [`docs/operations.md`](../../../operations.md),
+  [`docs/dev.md`](../../../dev.md) update with the cutover. Auth e2e
   proxy `isSiteRequest` widening documented in
-  [`docs/dev.md`](../dev.md). Plan Status flips to `In progress
+  [`docs/dev.md`](../../../dev.md). Plan Status flips to `In progress
   pending prod smoke` in 2.4.2's PR; flips to `Landed` in the
   doc-only follow-up commit.
 - **2.4.3** — apps/web module ownership edits. The
-  [`docs/architecture.md`](../architecture.md) apps/web admin
+  [`docs/architecture.md`](../../../architecture.md) apps/web admin
   module description rewrites to describe only the per-event deep
   editor. README route ownership currency-check.
 - **Umbrella (this doc)** — Status flips to `Landed` after all
@@ -469,7 +469,7 @@ Doc edits distribute across sub-phases per
 
 ## Related Docs
 
-- [`event-platform-epic.md`](./event-platform-epic.md) — parent
+- [`event-platform-epic.md`](../../event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](./m2-admin-restructuring.md) — M2
   milestone doc; Cross-Phase Decisions §3 / §6 / §7 / "Settled by
@@ -493,11 +493,11 @@ Doc edits distribute across sub-phases per
 - [`m2-phase-2-1-2-plan.md`](./m2-phase-2-1-2-plan.md) — sibling
   Landed plan; the Edge Function helper migration the platform
   admin's writes pass through unchanged.
-- [`docs/testing-tiers.md`](../testing-tiers.md) — Tier 5 production
+- [`docs/testing-tiers.md`](../../../testing-tiers.md) — Tier 5 production
   smoke and the two-phase Plan-to-Landed Gate; only 2.4.2 ships
   under this gate.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) — audit
+- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) — audit
   name source for sub-phase Self-Review Audits sections.
-- [`AGENTS.md`](../../AGENTS.md) — workflow rules; the new
+- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules; the new
   Phase-Planning context-preamble rule was added alongside this
   plan.

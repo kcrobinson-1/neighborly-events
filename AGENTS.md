@@ -253,7 +253,7 @@ before any per-phase planning.
   prose; the prose still carries rationale (which phase ships
   first and why, terminal-PR conventions, cross-phase coupling
   beyond hard dependencies). See the "Sequencing" section of
-  [`docs/plans/m2-admin-restructuring.md`](docs/plans/m2-admin-restructuring.md)
+  [`docs/plans/archive/m2/m2-admin-restructuring.md`](docs/plans/archive/m2/m2-admin-restructuring.md)
   for a concrete example
 - **Anti-goal: do not pre-scope every phase in batch.** Batch scoping
   cross-pollinates wrong assumptions across docs and produces

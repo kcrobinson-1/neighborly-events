@@ -543,7 +543,7 @@ reference 1.3.2's actual evidence run), CLI / tooling pinning audit
 
 ### M2 — Admin Restructuring And Authorization Broadening
 
-**Milestone doc.** [`m2-admin-restructuring.md`](./m2-admin-restructuring.md)
+**Milestone doc.** [`m2-admin-restructuring.md`](./archive/m2/m2-admin-restructuring.md)
 holds the M2 sequencing, cross-phase invariants, cross-phase
 decisions with rejected alternatives, and milestone-level risks.
 Per-phase plans live alongside it as they draft. The paragraphs
@@ -580,7 +580,7 @@ direct-INSERT denied via RLS — no RPC body changes. pgTAP coverage
 proves organizer reads succeed for their event and return zero rows
 for other events; agent and unrelated-authenticated reads stay
 denied; root-admin retains all powers. See
-[m2-admin-restructuring.md](./m2-admin-restructuring.md) "Cross-Phase
+[m2-admin-restructuring.md](./archive/m2/m2-admin-restructuring.md) "Cross-Phase
 Decisions" §1 for the full deliberation. Two PRs.
 
 **Phase 2.2 — Per-event admin route shell in apps/web at `/event/:slug/admin`.**

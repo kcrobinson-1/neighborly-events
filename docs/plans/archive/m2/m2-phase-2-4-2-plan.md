@@ -3,15 +3,15 @@
 ## Status
 
 Landed. **Two-phase Plan-to-Landed Gate For Plans That Touch
-Production Smoke** from [`docs/testing-tiers.md`](../testing-tiers.md).
+Production Smoke** from [`docs/testing-tiers.md`](../../../testing-tiers.md).
 Both trigger clauses applied: this PR (1) extended/modified production
 smoke assertions — the URL pattern in
-[`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+[`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
 changed from `/admin/events/${eventId}` to `/event/${eventSlug}/admin`
 — and (2) depended on production smoke as final verification — the
 apps/web → apps/site proxy for `/admin*` is unverifiable pre-merge by
 construction
-([`apps/web/vercel.json`](../../apps/web/vercel.json) destinations are
+([`apps/web/vercel.json`](../../../../apps/web/vercel.json) destinations are
 absolute production URLs).
 
 Implementing PR merged with Status `In progress pending prod smoke`;
@@ -112,9 +112,9 @@ These are sub-phase-local. See the umbrella for cross-sub-phase
 rules.
 
 - **Production smoke fixture URL retargeting.** The PR modifies
-  [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+  [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
   URL assertions but does not change the fixture setup
-  ([`tests/e2e/admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts)
+  ([`tests/e2e/admin-auth-fixture.ts`](../../../../tests/e2e/admin-auth-fixture.ts)
   unchanged) — `redirectTo` still points at
   `/auth/callback?next=/admin`, the magic-link round-trip semantics
   are unchanged, only the post-`Open workspace` URL shape changes.
@@ -129,7 +129,7 @@ rules.
   section as durable evidence the check ran.
 - **Auth-cookie boundary preserved.** Cookie is set host-only (no
   `Domain=` attribute, per
-  [`shared/db/client.ts:48-66`](../../shared/db/client.ts#L48)).
+  [`shared/db/client.ts:48-66`](../../../../shared/db/client.ts#L48)).
   The Vercel proxy-rewrite preserves the request host so
   `Set-Cookie` from apps/site lands on apps/web's frontend domain.
   This was verified end-to-end in M2 phase 2.3's deploy; the same
@@ -146,7 +146,7 @@ No new files in this PR. All edits are to files that already exist.
 
 **`apps/web/vercel.json` (modify).** Apply two changes to the
 rewrites array (current state per
-[`apps/web/vercel.json`](../../apps/web/vercel.json)):
+[`apps/web/vercel.json`](../../../../apps/web/vercel.json)):
 
 1. **Remove** the rule at array position 9: `{ "source":
    "/admin/:path*", "destination": "/index.html" }`.
@@ -206,10 +206,10 @@ assertion is removed. After the edits:
   `AdminEventWorkspace` per-event detail view (reachable from the
   legacy `/admin/events/:eventId` URL). Post-cutover, the
   `Open workspace` click lands on the apps/web deep editor
-  ([`EventAdminWorkspace`](../../apps/web/src/admin/EventAdminWorkspace.tsx)
+  ([`EventAdminWorkspace`](../../../../apps/web/src/admin/EventAdminWorkspace.tsx)
   at `/event/:slug/admin` from 2.2), which has different
   back-navigation chrome (`Back to demo overview` on
-  [`EventAdminPage`](../../apps/web/src/pages/EventAdminPage.tsx)
+  [`EventAdminPage`](../../../../apps/web/src/pages/EventAdminPage.tsx)
   rather than `Back to all events`). The focus check tested
   legacy-component layout and doesn't translate; coverage of the
   apps/site `/admin` keyboard-focus order is preserved by the
@@ -227,7 +227,7 @@ text, `aria-disabled="true"` + `aria-describedby` discipline,
 on apps/web deep-editor side, post-2.2, unchanged) all still
 resolve. Verified by: 2.4.1's local apps/site exercise diffs every
 state branch's visible copy + ARIA against
-[`apps/web/src/admin/AdminDashboardContent.tsx`](../../apps/web/src/admin/AdminDashboardContent.tsx);
+[`apps/web/src/admin/AdminDashboardContent.tsx`](../../../../apps/web/src/admin/AdminDashboardContent.tsx);
 when 2.4.1 lands as merged code, the fixture re-check at this
 sub-phase's pre-edit gate confirms the diff stayed clean.
 
@@ -256,7 +256,7 @@ untouched" invariant preserved). The earlier focus check at lines
 120-122 covers apps/site `/admin` keyboard navigation; the
 deep-editor's keyboard-focus order is a 2.2 concern, already
 shipped. Filed as a recurring trap in
-[`AGENTS.md`](../../AGENTS.md) "Phase Planning Sessions": when a
+[`AGENTS.md`](../../../../AGENTS.md) "Phase Planning Sessions": when a
 URL retarget changes which component renders, audit every
 assertion against the new component, not just URL strings.
 
@@ -270,7 +270,7 @@ retargeting as `admin-workflow.admin.spec.ts`:
 - Line 123: same pattern as line 72.
 
 Other assertions unchanged. The fixture
-([`admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts))
+([`admin-auth-fixture.ts`](../../../../tests/e2e/admin-auth-fixture.ts))
 is unchanged.
 
 **`scripts/ui-review/capture-ui-review.cjs` (modify).** Workspace
@@ -332,23 +332,23 @@ implementation time against the merged-in state of dev.md.
 
 ### Modify
 
-- [`apps/web/vercel.json`](../../apps/web/vercel.json) — proxy
+- [`apps/web/vercel.json`](../../../../apps/web/vercel.json) — proxy
   flip per Contracts.
-- [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../scripts/testing/run-auth-e2e-dev-server.cjs)
+- [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)
   — `isSiteRequest` widening + readiness probe retarget.
-- [`tests/e2e/admin-workflow.admin.spec.ts`](../../tests/e2e/admin-workflow.admin.spec.ts)
+- [`tests/e2e/admin-workflow.admin.spec.ts`](../../../../tests/e2e/admin-workflow.admin.spec.ts)
   — three URL assertions retarget.
-- [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+- [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
   — three URL assertions retarget.
-- [`scripts/ui-review/capture-ui-review.cjs`](../../scripts/ui-review/capture-ui-review.cjs)
+- [`scripts/ui-review/capture-ui-review.cjs`](../../../../scripts/ui-review/capture-ui-review.cjs)
   — workspace URL retargeting + local-run header comment.
-- [`docs/architecture.md`](../architecture.md) — URL ownership
+- [`docs/architecture.md`](../../../architecture.md) — URL ownership
   shape; Vercel routing topology table.
-- [`docs/operations.md`](../operations.md) — SPA rewrites list,
+- [`docs/operations.md`](../../../operations.md) — SPA rewrites list,
   `next=` allow-list example, smoke `curl` example context.
-- [`docs/dev.md`](../dev.md) — apps/web URL list, rule precedence
+- [`docs/dev.md`](../../../dev.md) — apps/web URL list, rule precedence
   walk-through, auth e2e proxy sub-section.
-- [`README.md`](../../README.md) — currency check; edit only if
+- [`README.md`](../../../../README.md) — currency check; edit only if
   lines still name `/admin` as apps/web-owned.
 - [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella) —
   Sub-phase Status table row for 2.4.2 updates to `In progress
@@ -365,24 +365,24 @@ implementation time against the merged-in state of dev.md.
 
 - Apps/site source — 2.4.1 owns the implementation. This PR does
   not edit
-  [`apps/site/app/(authenticated)/admin/page.tsx`](../../apps/site/app/(authenticated)/admin/page.tsx),
-  [`apps/site/lib/setupEvents.ts`](../../apps/site/lib/setupEvents.ts),
+  [`apps/site/app/(authenticated)/admin/page.tsx`](../../../../apps/site/app/(authenticated)/admin/page.tsx),
+  [`apps/site/lib/setupEvents.ts`](../../../../apps/site/lib/setupEvents.ts),
   or
-  [`apps/site/components/SharedClientBootstrap.tsx`](../../apps/site/components/SharedClientBootstrap.tsx).
+  [`apps/site/components/SharedClientBootstrap.tsx`](../../../../apps/site/components/SharedClientBootstrap.tsx).
   If 2.4.1's ARIA / copy needs adjustment to satisfy the e2e specs,
   the fix lands in 2.4.1 (re-opened) before 2.4.2 merges — not in
   2.4.2 itself.
 - Apps/web admin source — 2.4.3 owns the deletion. The legacy
   `AdminPage` etc. stay in source through this PR (dead code post-
   cutover but still compiled).
-- [`apps/web/src/App.tsx`](../../apps/web/src/App.tsx) — 2.4.3
+- [`apps/web/src/App.tsx`](../../../../apps/web/src/App.tsx) — 2.4.3
   removes the `/admin` and `/admin/events/:eventId` route branches.
   They remain through 2.4.2 — the apps/web SPA still has handlers
   for these URLs, but the proxy never forwards them to apps/web.
-- [`shared/urls/`](../../shared/urls) — 2.4.3.
+- [`shared/urls/`](../../../../shared/urls) — 2.4.3.
 - Edge Functions, migrations,
-  [`shared/auth/`](../../shared/auth),
-  [`shared/db/`](../../shared/db) — no change.
+  [`shared/auth/`](../../../../shared/auth),
+  [`shared/db/`](../../../../shared/db) — no change.
 
 ## Execution Steps
 
@@ -406,23 +406,23 @@ implementation time against the merged-in state of dev.md.
    SPA at this point) so the PR description has a before
    reference.
 3. **Vercel proxy flip.** Edit
-   [`apps/web/vercel.json`](../../apps/web/vercel.json) per the
+   [`apps/web/vercel.json`](../../../../apps/web/vercel.json) per the
    Contracts section: remove the `/admin/:path*` SPA rule, add
    `/admin` and `/admin/:path*` proxy-rewrites. `npm run lint`
    confirms JSON is well-formed (the lint script doesn't gate on
    JSON, but the file must parse for `vercel.json` to apply at
    deploy).
 4. **Auth e2e proxy retarget.** Edit
-   [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../scripts/testing/run-auth-e2e-dev-server.cjs)
+   [`scripts/testing/run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)
    `isSiteRequest()` and `handleReadyRequest()` per the Contracts
    section.
 5. **e2e spec URL retargeting.** Edit
-   [`tests/e2e/admin-workflow.admin.spec.ts`](../../tests/e2e/admin-workflow.admin.spec.ts)
+   [`tests/e2e/admin-workflow.admin.spec.ts`](../../../../tests/e2e/admin-workflow.admin.spec.ts)
    and
-   [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+   [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
    per the Contracts section. Three assertions per file.
 6. **UI review script retargeting.** Edit
-   [`scripts/ui-review/capture-ui-review.cjs`](../../scripts/ui-review/capture-ui-review.cjs)
+   [`scripts/ui-review/capture-ui-review.cjs`](../../../../scripts/ui-review/capture-ui-review.cjs)
    per the Contracts section. Add the inline comment header noting
    local runs need the auth e2e proxy origin for `/admin*`.
 7. **Manual side-by-side review (load-bearing pre-cutover check).**
@@ -461,7 +461,7 @@ implementation time against the merged-in state of dev.md.
      in 2.4.2 — keeps each PR's verb clean.
 8. **Local auth e2e exercise.** Run `npm run test:e2e:admin`. The
    wrapper script
-   ([`scripts/testing/run-admin-e2e-tests.cjs`](../../scripts/testing/run-admin-e2e-tests.cjs))
+   ([`scripts/testing/run-admin-e2e-tests.cjs`](../../../../scripts/testing/run-admin-e2e-tests.cjs))
    provisions a local Supabase Docker stack, resets the local DB,
    starts the local Edge Functions runtime, then invokes
    `npx playwright test -c playwright.admin.config.ts` with
@@ -502,11 +502,11 @@ implementation time against the merged-in state of dev.md.
    curl outputs in the PR validation section as the load-bearing
    fingerprint.
 10. **Documentation pass.** Edit
-    [`docs/architecture.md`](../architecture.md),
-    [`docs/operations.md`](../operations.md),
-    [`docs/dev.md`](../dev.md), and check
-    [`README.md`](../../README.md) per the Contracts section. Walk
-    the [`AGENTS.md`](../../AGENTS.md) "Doc Currency Is a PR Gate"
+    [`docs/architecture.md`](../../../architecture.md),
+    [`docs/operations.md`](../../../operations.md),
+    [`docs/dev.md`](../../../dev.md), and check
+    [`README.md`](../../../../README.md) per the Contracts section. Walk
+    the [`AGENTS.md`](../../../../AGENTS.md) "Doc Currency Is a PR Gate"
     triggers. Update the umbrella's Sub-phase Status table row for
     2.4.2 to `In progress pending prod smoke` (preparing for the
     in-progress flip in step 12).
@@ -528,11 +528,11 @@ implementation time against the merged-in state of dev.md.
     the post-release smoke run. Flip Status from `Proposed` to
     **`In progress pending prod smoke`** in the same PR — the
     rule's exact required string per
-    [`docs/testing-tiers.md`](../testing-tiers.md), not a
+    [`docs/testing-tiers.md`](../../../testing-tiers.md), not a
     paraphrase. The `Landed` flip lands in step 15's doc-only
     follow-up commit.
 14. **PR preparation.** Open the PR using
-    [`.github/pull_request_template.md`](../../.github/pull_request_template.md).
+    [`.github/pull_request_template.md`](../../../../.github/pull_request_template.md).
     Title under 70 characters
     (suggested: `feat(m2-2.4.2): flip /admin routing to apps/site`).
     Validation section lists every command actually run plus the
@@ -554,9 +554,9 @@ implementation time against the merged-in state of dev.md.
     Vercel deploys both apps to production, the release owner
     triggers (or waits for) the `Production Admin Smoke` workflow
     run per
-    [`docs/tracking/production-admin-smoke-tracking.md`](../tracking/production-admin-smoke-tracking.md).
+    [`docs/tracking/production-admin-smoke-tracking.md`](../../../tracking/production-admin-smoke-tracking.md).
     The workflow runs the modified
-    [`tests/e2e/admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+    [`tests/e2e/admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
     end-to-end on the production origin. The fixture cannot pass
     post-deploy unless the `apps/web/vercel.json` proxy correctly
     routes `/admin` to apps/site, the auth cookie lands on apps/web's
@@ -587,20 +587,20 @@ implementation time against the merged-in state of dev.md.
 ## Commit Boundaries
 
 1. **Vercel proxy flip + tooling retarget.**
-   [`apps/web/vercel.json`](../../apps/web/vercel.json) edit,
-   [`run-auth-e2e-dev-server.cjs`](../../scripts/testing/run-auth-e2e-dev-server.cjs)
+   [`apps/web/vercel.json`](../../../../apps/web/vercel.json) edit,
+   [`run-auth-e2e-dev-server.cjs`](../../../../scripts/testing/run-auth-e2e-dev-server.cjs)
    `isSiteRequest()` + ready-probe edits,
-   [`admin-workflow.admin.spec.ts`](../../tests/e2e/admin-workflow.admin.spec.ts)
-   + [`admin-production-smoke.spec.ts`](../../tests/e2e/admin-production-smoke.spec.ts)
+   [`admin-workflow.admin.spec.ts`](../../../../tests/e2e/admin-workflow.admin.spec.ts)
+   + [`admin-production-smoke.spec.ts`](../../../../tests/e2e/admin-production-smoke.spec.ts)
    URL retargeting,
-   [`capture-ui-review.cjs`](../../scripts/ui-review/capture-ui-review.cjs)
+   [`capture-ui-review.cjs`](../../../../scripts/ui-review/capture-ui-review.cjs)
    workspace URL retarget. Single commit; this is the load-bearing
    cutover commit. Bisect-friendly: any cutover regression localizes
    here.
 2. **Documentation pass.**
-   [`docs/architecture.md`](../architecture.md) /
-   [`docs/operations.md`](../operations.md) /
-   [`docs/dev.md`](../dev.md) edits + [`README.md`](../../README.md)
+   [`docs/architecture.md`](../../../architecture.md) /
+   [`docs/operations.md`](../../../operations.md) /
+   [`docs/dev.md`](../../../dev.md) edits + [`README.md`](../../../../README.md)
    currency check + the umbrella's Sub-phase Status row update +
    this plan's Status flip from `Proposed` to **`In progress
    pending prod smoke`**. Single commit. **Not** the `Landed`
@@ -653,7 +653,7 @@ implementation time against the merged-in state of dev.md.
   the load-bearing assertions.
 - **Post-release `Production Admin Smoke` run per Execution step
   15 — load-bearing gate, deferred to production by construction.**
-  Per [`docs/testing-tiers.md`](../testing-tiers.md) "Plan-to-
+  Per [`docs/testing-tiers.md`](../../../testing-tiers.md) "Plan-to-
   Landed Gate For Plans That Touch Production Smoke," 2.4.2 ships
   under the two-phase gate. Both trigger clauses apply (extends
   smoke assertions + depends on production smoke as final
@@ -663,9 +663,9 @@ implementation time against the merged-in state of dev.md.
   `Landed` after the smoke run is green and records the run URL
   inline.
 - Existing e2e fixtures
-  ([`admin-auth-fixture.ts`](../../tests/e2e/admin-auth-fixture.ts),
-  [`redeem-auth-fixture.ts`](../../tests/e2e/redeem-auth-fixture.ts),
-  [`redemptions-auth-fixture.ts`](../../tests/e2e/redemptions-auth-fixture.ts))
+  ([`admin-auth-fixture.ts`](../../../../tests/e2e/admin-auth-fixture.ts),
+  [`redeem-auth-fixture.ts`](../../../../tests/e2e/redeem-auth-fixture.ts),
+  [`redemptions-auth-fixture.ts`](../../../../tests/e2e/redemptions-auth-fixture.ts))
   — must continue to pass. Magic-link redirect URLs unchanged; the
   auth e2e proxy widens to route `/admin*` to apps/site so the
   round-trip resolves correctly post-cutover.
@@ -673,12 +673,12 @@ implementation time against the merged-in state of dev.md.
 ## Self-Review Audits
 
 Drawn from
-[`docs/self-review-catalog.md`](../self-review-catalog.md).
+[`docs/self-review-catalog.md`](../../../self-review-catalog.md).
 
 ### Frontend / e2e
 
 - **Rename-aware diff classification**
-  ([catalog §Rename-aware diff classification](../self-review-catalog.md#L354)).
+  ([catalog §Rename-aware diff classification](../../../self-review-catalog.md#L354)).
   The two e2e specs are not renamed; their URL assertions retarget.
   Reviewers see one Vercel proxy flip + e2e URL pattern updates +
   doc updates; not a refactor.
@@ -686,7 +686,7 @@ Drawn from
 ### CI / build
 
 - **Readiness-gate truthfulness audit**
-  ([catalog §Readiness-gate truthfulness audit](../self-review-catalog.md#L373)).
+  ([catalog §Readiness-gate truthfulness audit](../../../self-review-catalog.md#L373)).
   The auth e2e proxy's readiness check now probes apps/site at
   `/admin` (and a still-apps/web URL for the apps/web side). The
   audit confirms the probe actually exercises what it claims —
@@ -695,17 +695,17 @@ Drawn from
   apps/web URL against the apps/web dev server returns the SPA
   fallback. Both branches must succeed before Playwright starts.
 - **CLI / tooling pinning audit**
-  ([catalog §CLI / tooling pinning audit](../self-review-catalog.md#L331)).
+  ([catalog §CLI / tooling pinning audit](../../../self-review-catalog.md#L331)).
   No new dependencies in this PR. Audit confirms the lockfile
   doesn't drift.
 
 ### Runbook
 
 - **Platform-auth-gate config audit**
-  ([catalog §Platform-auth-gate config audit](../self-review-catalog.md#L446)).
+  ([catalog §Platform-auth-gate config audit](../../../self-review-catalog.md#L446)).
   Three configuration surfaces:
   - **`supabase/config.toml`** — re-confirmed unchanged
-    ([`supabase/config.toml:9-19`](../../supabase/config.toml#L9)).
+    ([`supabase/config.toml:9-19`](../../../../supabase/config.toml#L9)).
   - **Supabase Auth dashboard redirect-URL list** — `/auth/callback?next=/admin`
     is unchanged; only the resolving framework for `/admin`
     changes. No dashboard edit required. The PR description names
@@ -718,13 +718,13 @@ Drawn from
 
 ## Documentation Currency PR Gate
 
-- [`docs/architecture.md`](../architecture.md) — URL ownership
+- [`docs/architecture.md`](../../../architecture.md) — URL ownership
   shape; Vercel routing topology table.
-- [`docs/operations.md`](../operations.md) — SPA rewrites list,
+- [`docs/operations.md`](../../../operations.md) — SPA rewrites list,
   smoke `curl` example context, `next=` allow-list example.
-- [`docs/dev.md`](../dev.md) — apps/web URL list, rule precedence
+- [`docs/dev.md`](../../../dev.md) — apps/web URL list, rule precedence
   walk-through, auth e2e proxy sub-section.
-- [`README.md`](../../README.md) — currency check; edit only if
+- [`README.md`](../../../../README.md) — currency check; edit only if
   needed.
 - [`m2-phase-2-4-plan.md`](./m2-phase-2-4-plan.md) (umbrella) —
   Sub-phase Status row for 2.4.2 updates to `In progress pending
@@ -736,7 +736,7 @@ Drawn from
   prod smoke` in this PR; flips to `Landed` in the doc-only
   follow-up commit.
 - The 2.4.3 plan, the apps/web admin module ownership update in
-  [`docs/architecture.md`](../architecture.md), and SCSS prune
+  [`docs/architecture.md`](../../../architecture.md), and SCSS prune
   documentation are owned by 2.4.3, not this PR.
 
 ## Out Of Scope
@@ -780,7 +780,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   wiring," not "fix the new page"). The fix is small (string
   edit); the cost of the round-trip is real but bounded.
 - **Cookie-boundary regression.** Cookie set host-only by
-  [`shared/db/client.ts:48-66`](../../shared/db/client.ts#L48); the
+  [`shared/db/client.ts:48-66`](../../../../shared/db/client.ts#L48); the
   Vercel proxy preserves the request host. If a proxy implementation
   surprise rewrites the host, `Set-Cookie` lands on the apps/site
   domain instead of apps/web's frontend domain. Mitigation: the
@@ -813,10 +813,10 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
 - [`m2-phase-2-3-plan.md`](./m2-phase-2-3-plan.md) — Landed sibling;
   identity-fingerprint procedure for `vercel dev` rule-order
   checks; auth e2e proxy precedent.
-- [`docs/testing-tiers.md`](../testing-tiers.md) — Tier 5 production
+- [`docs/testing-tiers.md`](../../../testing-tiers.md) — Tier 5 production
   smoke and the two-phase Plan-to-Landed Gate.
-- [`docs/tracking/production-admin-smoke-tracking.md`](../tracking/production-admin-smoke-tracking.md)
+- [`docs/tracking/production-admin-smoke-tracking.md`](../../../tracking/production-admin-smoke-tracking.md)
   — production smoke workflow ownership.
-- [`docs/self-review-catalog.md`](../self-review-catalog.md) —
+- [`docs/self-review-catalog.md`](../../../self-review-catalog.md) —
   audit name source.
-- [`AGENTS.md`](../../AGENTS.md) — workflow rules.
+- [`AGENTS.md`](../../../../AGENTS.md) — workflow rules.

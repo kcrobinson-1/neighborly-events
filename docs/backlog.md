@@ -191,25 +191,6 @@ Execute in any order.
   rename, behavior-preserving.
   Detail: [`docs/tracking/code-refactor-checklist.md`](./tracking/code-refactor-checklist.md)
 
-- [ ] **`dev` Archive M2 plan docs**
-  M2 closed in phase 2.5.3. Move the 14 M2 plan files
-  (`m2-admin-restructuring.md`, `m2-phase-2-1-plan.md`,
-  `m2-phase-2-1-1-plan.md`, `m2-phase-2-1-2-plan.md`,
-  `m2-phase-2-2-plan.md`, `m2-phase-2-3-plan.md`,
-  `m2-phase-2-4-plan.md`, `m2-phase-2-4-1-plan.md`,
-  `m2-phase-2-4-2-plan.md`, `m2-phase-2-4-3-plan.md`,
-  `m2-phase-2-5-plan.md`, `m2-phase-2-5-1-plan.md`,
-  `m2-phase-2-5-2-plan.md`, `m2-phase-2-5-3-plan.md`) under a
-  `docs/plans/archive/m2/` (or equivalent) tree via `git mv` so
-  history is preserved, then rewrite cross-references from any
-  surviving doc surface that still points into the M2 set
-  (`docs/plans/event-platform-epic.md`, `README.md`, any other
-  doc that names an M2 plan path). Sibling milestones (M0
-  `framework-decision.md`, `site-scaffold-and-routing.md`; M1
-  foundation-extraction plans) are out of scope for this entry —
-  archive them when their respective milestones close.
-  Detail: [`docs/plans/m2-phase-2-5-3-plan.md` — Backlog Impact](./plans/m2-phase-2-5-3-plan.md)
-
 - [ ] **`dev` Stable PR screenshot upload path**
   Add `npm run ui:review:upload` backed by a scriptable durable provider so
   agents have a consistent, documented path for uploading UX review images.
