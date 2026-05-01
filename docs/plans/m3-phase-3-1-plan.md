@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 This plan covers M3 phase 3.1's first PR (3.1.1) under the split
 recorded in

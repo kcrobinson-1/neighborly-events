@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 80" role="img" aria-label="Maple Street Co-op">
+  <rect x="0" y="0" width="240" height="80" rx="8" fill="#fffaf2" stroke="#3a2616" stroke-width="2"/>
+  <text x="120" y="36" text-anchor="middle" font-family="Georgia, serif" font-size="18" font-weight="700" fill="#3a2616">Maple Street</text>
+  <text x="120" y="58" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#7a5b3f">Co-op</text>
+</svg>

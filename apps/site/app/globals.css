@@ -343,3 +343,335 @@ button {
     font-size: clamp(2.35rem, 16vw, 4.25rem);
   }
 }
+
+/*
+ * Event landing page rules. Consumed by the section components in
+ * `apps/site/components/event/*` rendered through `EventLandingPage`.
+ * Themable tokens (--bg, --primary, --accent, --text, --muted,
+ * --border, --surface, --radius-*, --font-*) flow in from
+ * `<ThemeScope>` set by `apps/site/app/event/[slug]/page.tsx` against
+ * the per-event Theme resolved via `getThemeForSlug(content.themeSlug)`.
+ *
+ * The `.test-event-disclaimer` rule intentionally bypasses themable
+ * surface tokens (fixed yellow/amber color recipe) so the banner
+ * reads as a platform-status banner across every per-event Theme.
+ */
+.event-shell {
+  display: grid;
+  gap: 48px;
+  width: min(100%, 960px);
+  margin-inline: auto;
+  padding: 56px 24px 96px;
+}
+
+.event-section-heading {
+  margin: 0 0 16px;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+}
+
+.test-event-disclaimer {
+  display: block;
+  padding: 14px 18px;
+  border-radius: var(--radius-control);
+  background: #fff3cd;
+  color: #5b3e00;
+  border: 1px solid #f0d68a;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.event-hero {
+  display: grid;
+  gap: 14px;
+  padding: 32px;
+  background: linear-gradient(
+    180deg,
+    var(--hero-start) 0%,
+    var(--hero-end) 100%
+  );
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--border-soft);
+}
+
+.event-hero-eyebrow {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.event-hero-title {
+  margin: 0;
+  font-size: clamp(2rem, 7vw, 3.5rem);
+  line-height: 1.05;
+}
+
+.event-hero-tagline {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.15rem;
+}
+
+.event-hero-location {
+  margin: 0;
+  color: var(--muted);
+}
+
+.event-cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 48px;
+  margin-top: 8px;
+  padding: 12px 22px;
+  background: var(--primary);
+  color: var(--white-warm);
+  border: 0;
+  border-radius: var(--radius-control);
+  font-weight: 700;
+  text-decoration: none;
+  line-height: 1;
+}
+
+.event-cta-button:hover {
+  background: color-mix(in srgb, var(--primary) 88%, #000000 12%);
+}
+
+.event-cta-button:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 3px;
+}
+
+.event-schedule-day {
+  margin-bottom: 24px;
+}
+
+.event-schedule-day-heading {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+}
+
+.event-schedule-sessions {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.event-schedule-session {
+  display: grid;
+  gap: 4px;
+  padding: 14px 16px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+}
+
+.event-schedule-session-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.event-schedule-time {
+  color: var(--secondary);
+  min-width: 88px;
+}
+
+.event-schedule-title {
+  color: var(--text);
+}
+
+.event-schedule-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.event-schedule-description-empty {
+  display: none;
+}
+
+.event-lineup-list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-lineup-item {
+  display: grid;
+  gap: 4px;
+  padding: 16px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+}
+
+.event-lineup-name {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.event-lineup-bio {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.event-lineup-set-times {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.event-sponsors-group {
+  margin-bottom: 20px;
+}
+
+.event-sponsors-tier-heading {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.event-sponsors-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-sponsors-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+  text-decoration: none;
+}
+
+.event-sponsors-link:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+.event-sponsors-logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.event-faq-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-faq-details {
+  padding: 14px 18px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+}
+
+.event-faq-summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text);
+  padding: 2px 0;
+  list-style: none;
+}
+
+.event-faq-summary::-webkit-details-marker {
+  display: none;
+}
+
+.event-faq-summary::before {
+  content: "+ ";
+  color: var(--secondary);
+  font-weight: 700;
+  margin-right: 4px;
+}
+
+.event-faq-details[open] .event-faq-summary::before {
+  content: "– ";
+}
+
+.event-faq-summary:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.event-faq-answer {
+  margin: 12px 0 0;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.event-cta {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 32px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+  text-align: center;
+}
+
+.event-cta-sublabel {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.event-footer {
+  display: grid;
+  gap: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.event-footer-attribution,
+.event-footer-home-link {
+  margin: 0;
+}
+
+.event-footer-home-link a {
+  color: var(--secondary);
+}
+
+@media (max-width: 640px) {
+  .event-shell {
+    gap: 36px;
+    padding: 36px 18px 64px;
+  }
+
+  .event-hero {
+    padding: 24px;
+  }
+
+  .event-cta {
+    padding: 24px;
+  }
+}
