@@ -25,8 +25,28 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
+/**
+ * `metadataBase` is the canonical user-facing origin all URL-based
+ * metadata fields (`og:image`, `og:url`, `twitter:image`) resolve
+ * relative paths against. It is set **once** at the root layout per
+ * Next.js' segment-cascade — adding it to a child route's
+ * `generateMetadata` would shadow this value and break the
+ * single-source-of-truth assumption the OG image pipeline depends on.
+ *
+ * The env var reads through `next.config.ts`'s `env` block (the
+ * Turbopack substitution-trap workaround the Supabase pair also
+ * follows). The fallback uses logical-OR, **not** nullish-coalescing:
+ * the `env` block substitutes `""` when the parent env is unset, and
+ * `??` does not short-circuit on empty string (only on `null` /
+ * `undefined`), so `?? "fallback"` would let `new URL("")` throw at
+ * build time. The plan's curl falsifier in M3 phase 3.1.2 catches the
+ * regression class.
+ */
 export const metadata: Metadata = {
   title: "Neighborly Events",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_ORIGIN || "http://localhost:3000",
+  ),
 };
 
 /**
