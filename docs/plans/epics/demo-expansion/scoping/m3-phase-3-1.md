@@ -204,7 +204,11 @@ fixed-content showcase artifacts the freeze is fine.
    Function (`get-test-event-draft` or similar) reads with
    `service_role` and returns DTOs the apps/web admin page
    consumes. Allowlist enforced inside the function. RLS
-   stays unchanged.
+   stays unchanged. Pattern (verify_jwt = false +
+   service-role read of an event-scoped table) is
+   established by `get-redemption-status`; the trust-
+   boundary gate would be slug-allowlist membership rather
+   than session-cookie ownership of a row.
 3. **Pre-published public views.** Materialized views
    (refreshed by trigger or on publish) expose the
    allowlisted draft content as anon-readable data. Apps/web
@@ -235,12 +239,28 @@ fixed-content showcase artifacts the freeze is fine.
   `published_at IS NOT NULL` for `game_events` /
   `game_questions` / `game_question_options` only
   ([supabase/migrations/20260418000000_rename_database_terminology_to_game.sql:158-209](/supabase/migrations/20260418000000_rename_database_terminology_to_game.sql)).
-- No precedent for unauthenticated Edge Function read shims
-  exists today: every existing function in
-  [supabase/functions/](/supabase/functions/) either takes a
-  bearer token or is a public-action endpoint
-  (`complete-game`, `issue-session`, `redeem-entitlement` —
-  the redeem RPC is the auth surface, not the function).
+- **One Edge Function read-shim precedent exists today.**
+  [`supabase/functions/get-redemption-status/index.ts`](/supabase/functions/get-redemption-status/index.ts)
+  is configured `verify_jwt = false` per
+  [supabase/config.toml:27-28](/supabase/config.toml),
+  authenticates the caller via signed session cookie
+  (`readVerifiedSession` from
+  [supabase/functions/_shared/session-cookie.ts](/supabase/functions/_shared/session-cookie.ts))
+  rather than a Supabase Auth JWT, mints a service-role
+  client, and reads `game_entitlements` scoped to
+  `(event_id, client_session_id)`. The pattern Q2's Edge
+  Function shim option would adopt — `verify_jwt = false`
+  + service-role read of an event-scoped table — is
+  established. The trust-boundary gating differs (the
+  existing shim gates on session-cookie ownership of one
+  row; a Q2 shim would gate on slug allowlist membership
+  for event-wide reads) and the per-row scoping discipline
+  doesn't transfer directly to admin draft reads, so the
+  pattern is precedent-but-not-template. The other
+  `verify_jwt = false` functions are public-action
+  endpoints (`complete-game`, `issue-session`,
+  `redeem-entitlement` — the SECURITY DEFINER RPC is the
+  auth surface, not the function), not read shims.
 
 ### Q3. Write-side contract for the admin authoring functions
 
@@ -341,11 +361,23 @@ walkthrough wants to *show*: "look at the workspace" vs
 
 **The decision.** What happens when an unauthenticated visitor
 on `/redeem` enters a code, or on `/redemptions` clicks
-Reverse. The two SECURITY DEFINER RPCs
-(`redeem_entitlement_by_code`,
-`reverse_entitlement_redemption`) gate on
-`is_agent_for_event(event_id) or is_root_admin()` per
-[supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:38-45](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql).
+Reverse. The two SECURITY DEFINER RPCs gate on **different**
+roles today:
+
+- `redeem_entitlement_by_code` gates on
+  `is_agent_for_event(p_event_id) or is_root_admin()` per
+  [supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:38-45](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql).
+- `reverse_entitlement_redemption` gates on
+  `is_organizer_for_event(p_event_id) or is_root_admin()` per
+  [supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql:35-42](/supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql).
+
+The split mirrors the live-event role model: agents redeem
+(volunteer-booth action), organizers reverse (admin-correction
+action). 3.1's bypass branch has to decide whether demo mode
+mimics agent-only (can redeem; can't reverse), organizer-only
+(can do both; matches Q3's authoring posture), or a third
+combination — and the answer can differ between the redeem
+keypad and the reverse-from-detail-sheet path.
 
 **Why it matters.** Same uniformity concern as Q3 but
 narrower: the RPCs are SECURITY DEFINER so the bypass branch
@@ -357,35 +389,53 @@ RPC also stamps `redeemed_by` / `redeemed_by_role` /
 **Product-owner framing.** This is what happens at the
 volunteer keypad when the partner enters a code, and what
 happens in the organizer monitoring view when they click
-Reverse on a redeemed entitlement:
+Reverse on a redeemed entitlement. Because the two RPCs
+gate on different real roles (agent for redeem, organizer
+for reverse), the demo can model either both paths as
+open or treat them asymmetrically:
 
-- **Reject** — keypad submit shows the role-gate message;
-  partner can't experience the redemption flow at all.
-  Inconsistent with most Q1 answers (a "functional" demo
-  that rejects the redeem path is the point of the demo
-  not working).
-- **Accept against real entitlements** — code redeems for
-  everyone; the row in the real `game_entitlements` table
-  flips. Realistic flow including the "code already
-  redeemed by another agent" message if a second partner
-  enters the same code. **Requires demo entitlement rows
-  to exist** (the keypad needs codes to enter — Q8 governs
-  whether M3 ships the seed or M4 does).
-- **Accept against sandbox entitlements** — partner enters
-  a code, sees success, sees the row appear in *their*
-  monitoring view; another partner sees the pre-redemption
-  baseline. Closest to a guided trial of the booth flow.
-- **Client-only** — keypad shows the success animation
-  with no DB change. Looks correct in the moment; partner
-  navigating to the monitoring view sees no record of
-  their redemption. Likely confusing.
+- **Reject (both paths)** — keypad submit and Reverse both
+  show the role-gate message; partner can't experience
+  either side of the booth flow. Inconsistent with most
+  Q1 answers.
+- **Accept (both paths)** — both RPCs admit unauth demo
+  callers; partner can redeem *and* reverse, exercising
+  the full agent-then-organizer correction flow.
+- **Accept redeem only** — partner can redeem at the
+  keypad (demo mimics an agent), but Reverse is gated.
+  The volunteer-booth pitch lands; the organizer-
+  correction pitch doesn't. Closest to a "be the
+  volunteer" experience.
+- **Accept reverse only** — partner can reverse but not
+  redeem. Inverted; useful only if the demo is pitched
+  to organizers reviewing existing redemptions rather
+  than to volunteers running the booth. Unlikely fit.
+
+For each accepted path, the storage-side options remain:
+- **Real entitlements** — operates on the actual
+  `game_entitlements` rows. Realistic, including the
+  "code already redeemed by another agent" message if a
+  second partner enters the same code. **Requires demo
+  entitlement rows to exist** (Q8 governs whether M3
+  ships the seed or M4 does).
+- **Sandbox entitlements** — operates on a per-session
+  mirror; partner sees the row appear in their own
+  monitoring view, another partner sees baseline.
+  Closest to a guided trial.
+- **Client-only** — UI shows success without DB change.
+  Looks right in the moment; partner navigating to the
+  monitoring view sees no record. Likely confusing.
 
 If Q1 is functional or sandbox, this is the question that
 decides whether the volunteer-booth pitch ("scan a code,
-prize hands out, organizer sees it land") works end-to-
-end or not.
+prize hands out, organizer sees it land, organizer
+reverses if a mistake was made") works end-to-end or
+truncates at one of the role boundaries.
 
-**Options surfaced.**
+**Options surfaced.** Each option below applies *per RPC*
+— 3.1 picks one for `redeem_entitlement_by_code` and one
+for `reverse_entitlement_redemption`, which may match or
+differ.
 
 1. **Reject** — short-circuit inside the RPC on (test-event
    slug membership AND `current_request_user_id() IS NULL`)
@@ -396,7 +446,9 @@ end or not.
    allowlisted. Redemption state mutates on the real
    entitlement rows. Audit fields stamp a sentinel
    (`redeemed_by_role = 'demo_visitor'` or null, with
-   `redeemed_by` null).
+   `redeemed_by` null). For the reverse path, the
+   `redemption_reversed_by_role` and `redemption_reversed_by`
+   columns face the same Q5 question.
 3. **Accept against sandbox entitlements.** RPC routes
    demo writes to mirror tables.
 4. **Client-only.** Apps/web fakes the redemption response
@@ -408,9 +460,10 @@ end or not.
 - The redeem RPC stamps `redeemed_by_role` as `'agent'` or
   `'root_admin'` per
   [supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:85](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql).
-  A new role value would need DB-type discipline (the
-  column may be a `check` constraint or enum — 3.1
-  reality-checks).
+  The reverse RPC stamps `redemption_reversed_by_role`
+  similarly. A new role value (e.g. `'demo_visitor'`) on
+  either column would need DB-type discipline (check
+  constraint or enum — 3.1 reality-checks).
 - The redemptions list query reads `game_entitlements`
   directly per
   [apps/web/src/redemptions/redemptionsData.ts:38-52](/apps/web/src/redemptions/redemptionsData.ts);
@@ -844,14 +897,18 @@ before the plan absorbs the answer.
   Q1's "demo signaling extends to apps/web" cross-phase
   invariant rides on the apps/site precedent at
   [apps/site/components/event/TestEventDisclaimer.tsx](/apps/site/components/event/TestEventDisclaimer.tsx).
-- **No precedent for unauthenticated Edge Function read
-  shims.** Scoping read all functions in
-  [supabase/functions/](/supabase/functions/) and confirmed
-  none take anon callers for *read* purposes (the public-
-  action exceptions — `complete-game`, `issue-session`,
-  `redeem-entitlement` — are write/auth surfaces).
-  Plan-drafting re-verifies; the absence is itself a
-  reality-check input for Q2.
+- **Existing Edge Function read-shim precedent.** Scoping
+  read all functions in
+  [supabase/functions/](/supabase/functions/) and found one
+  precedent for the `verify_jwt = false` + service-role
+  read pattern: `get-redemption-status` (gated by
+  session-cookie ownership of one
+  `(event_id, client_session_id)` row, not slug
+  allowlist). Plan-drafting re-verifies the function's
+  shape and confirms no other read shim has landed in the
+  meantime; the existing precedent is reality-check input
+  for Q2's "Edge Function shim" option, distinguishing
+  precedent-but-not-template from precedent-as-template.
 
 ## Spike candidates 3.1 may run
 
@@ -867,12 +924,15 @@ options that survive deliberation):
   helper** — confirm a Postgres-side allowlist helper
   composes cleanly with existing event-scoped policies and
   doesn't break pgTAP coverage or `game_event_admin_status`.
-- **Edge Function read shim** — confirm an unauthenticated
-  Function with `verify_jwt = false` can mint a service-role
+- **Edge Function read shim** — adapt `get-redemption-status`'s
+  shape to the admin draft path: confirm a `verify_jwt =
+  false` Function gated on slug-allowlist membership (rather
+  than session-cookie ownership) can mint a service-role
   client, query the allowlisted draft, and return DTOs
   apps/web's existing admin loader can consume without
   reshape. Confirm CORS posture on apps/web → Edge Function
-  cross-origin.
+  cross-origin. The base pattern is established; the
+  allowlist-gating layer is what the spike exercises.
 - **Static fixture import** — confirm apps/web can build-
   time-import a `harvest-block-party` draft module from
   `apps/site/events/` (or a new `shared/events/demo/` path)
