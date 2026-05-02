@@ -377,22 +377,29 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   and the per-event registry at
   [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
   (the registry holds the `harvest-block-party` and `riverside-jam`
-  test event Themes; M4 phase 4.1 adds Madrona). apps/site event
-  routes resolve per-event Themes through `<ThemeScope>` from M3
-  phase 3.1; apps/web event-route shells (`/event/:slug/game/*`)
-  render against apps/web's warm-cream `:root` defaults until M4
-  phase 4.1 wires their `<ThemeScope>` per the epic's "Deferred
-  ThemeScope wiring" invariant. apps/site's root layout consumes the platform
+  test event Themes; the future Madrona-launch epic adds Madrona).
+  apps/site event routes resolve per-event Themes through
+  `<ThemeScope>` from M3 phase 3.1; apps/web event-route shells
+  (`/event/:slug/{game,admin,game/redeem,game/redemptions}`) wrap
+  in `<ThemeScope>` from event-platform-epic M2 phase 2.2 (admin)
+  and demo-expansion epic M1 phase 1.1 (game, redeem,
+  redemptions). apps/site's root layout consumes the platform
   Theme via inline-style emission of CSS custom properties on
   `<html>` plus `next/font` for Inter (body) and Fraunces (heading);
   apps/web's `:root` block in
   [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
-  carries today's warm-cream values byte-identically until M4 phase
-  4.1 wires `<ThemeScope>` into apps/web event routes. Brand-tied
-  derived shades (`--primary-surface`, etc.) are computed in each
-  app's `:root` via `color-mix()` from the brand bases — they are
-  not Theme fields. `shared/styles/` reads no env, holds no
-  module-level singleton, and imports nothing app-specific.
+  carries today's warm-cream values as the source-of-truth for
+  apps/web defaults outside `<ThemeScope>` (the outer `.site-shell`
+  and any future non-event apps/web route). Brand-tied derived
+  shades (`--primary-surface`, etc.) are computed in each app's
+  `:root` via `color-mix()` from the brand bases — they are not
+  Theme fields. (Note: derived shades inherit the `:root`-
+  substituted value into `<ThemeScope>` descendants and do not
+  re-evaluate against the scope's brand-base override; closing
+  this gap is tracked in
+  [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md).)
+  `shared/styles/` reads no env, holds no module-level singleton,
+  and imports nothing app-specific.
 
 Together they contain:
 

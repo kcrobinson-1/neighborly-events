@@ -334,7 +334,9 @@ classification this doc binds.
    pick it up automatically. The first per-event apps/web routes
    wired to ThemeScope land in M2 phase 2.2 (per-event admin); the
    first apps/site event route lands in M3 phase 3.1; apps/web event
-   routes (game, redeem, redemptions) wire in M4 phase 4.1.
+   routes (game, redeem, redemptions) wire in demo-expansion epic M1
+   phase 1.1. apps/web is now fully ThemeScope-wrapped on
+   event-route shells.
 
 Brand-tied derived shades (`--primary-surface`,
 `--secondary-focus`, etc.) follow automatically from the brand bases
@@ -391,12 +393,17 @@ Radii (themable subset)
 
 apps/web keeps today's `$font-stack` (Avenir Next system stack) and
 today's chunky panel/card/control radii through 1.5.2. apps/web's
-`:root` is not Sage Civic-themed; per the parent epic's deferred
-ThemeScope wiring, apps/web's warm-cream `:root` defaults remain in
-place until M4 phase 4.1, when Madrona's Theme registers and
-ThemeScope wraps apps/web event routes. Sage Civic landing in
-apps/site in 1.5.2 is the only intentional visual change in that
-phase.
+`:root` is not Sage Civic-themed; apps/web event-route shells now
+wrap in `<ThemeScope>` (admin from event-platform-epic M2 phase
+2.2; game / redeem / redemptions from demo-expansion epic M1 phase
+1.1) and resolve per-event Themes from the registry for registered
+slugs. Non-test-event slugs continue to resolve to the platform
+Sage Civic Theme via `getThemeForSlug`'s fallback, so apps/web's
+warm-cream `:root` defaults remain in place for non-test-event
+slugs until a future per-event Theme registers (the future Madrona-
+launch epic owns Madrona's `Theme` registration). Sage Civic
+landing in apps/site in 1.5.2 was the only intentional visual
+change in that phase.
 
 ## Related Docs
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 This milestone doc is the durable coordination artifact for M1:
 restated goal, phase sequencing, cross-phase invariants worth
@@ -68,7 +68,7 @@ strictly a wrapping change at the apps/web routing layer.
 
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 1.1 | apps/web event-route ThemeScope wrapping + cross-app theme-continuity check | [m1-phase-1-1-plan.md](/docs/plans/epics/demo-expansion/m1-phase-1-1-plan.md) | Proposed | _pending_ |
+| 1.1 | apps/web event-route ThemeScope wrapping + cross-app theme-continuity check | [m1-phase-1-1-plan.md](/docs/plans/epics/demo-expansion/m1-phase-1-1-plan.md) | Landed | this PR |
 
 Phase planning resolved the phase as single-PR (scoping decision
 1 in

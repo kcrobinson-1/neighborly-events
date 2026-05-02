@@ -164,6 +164,19 @@ apply only on apps/site, not on apps/web, until M4 lands. This is an
 intentional interim state called out in M2 phase 2.2, M2 phase 2.5,
 M3 phase 3.3, and M4 phase 4.1.
 
+*Partial closure (2026-05-01).* Demo-expansion epic M1 phase 1.1
+wires `<ThemeScope>` into apps/web event-route shells (game,
+redeem, redemptions) ahead of the deferred-Madrona schedule, so
+the apps/web wrapping infrastructure now ships and resolves
+per-event Themes for the test events (`harvest-block-party`,
+`riverside-jam`). The invariant remains open for non-test-event
+slugs (Madrona) until the future Madrona-launch epic registers a
+non-test-event Theme — at which point the wrapping that
+demo-expansion M1 ships picks up the new Theme automatically. M4
+phase 4.1 below trims its scope accordingly: only Madrona's `Theme`
+registration remains; the wrapping is no longer M4 phase 4.1's
+deliverable.
+
 **Trust boundary.** Every backend write reachable from a public or
 origin-gated endpoint enforces authorization at the database layer (RLS or
 constraints), not only at the application layer. M2's broadening of
@@ -812,35 +825,32 @@ produces will be canonical and will supersede the paragraphs below.
 **Goal.** Madrona Music in the Playfield goes live as the first public event
 on the platform.
 
-**Phase 4.1 — Madrona theme palette definition and apps/web event-route
-ThemeScope wiring.**
+**Phase 4.1 — Madrona theme palette definition.**
 Hold the Madrona theme discussion as its own task at the start of M4:
 pick approximately ten color values, the typography choice, and the
 accent treatment for Madrona's brand. Create
 `shared/styles/themes/madrona.ts` (the file does not exist before M4 —
 M1 phase 1.5.2 deliberately deferred Madrona's `Theme` to this phase to
 avoid a placeholder-Madrona double pass) and register it in the
-`shared/styles/themes/` registry. In the same PR, wire
-`<ThemeScope theme={getThemeForSlug(slug)}>` into apps/web's
-event-route shells in the central
-[`App.tsx`](/apps/web/src/App.tsx) routing dispatcher
-(`GameRoutePage`, `EventRedeemPage` at its `/game/redeem` URL,
-`EventRedemptionsPage` at its `/game/redemptions` URL — both renamed
-in M2 phase 2.5). The placement is centralized per the M1 phase 1.5
-invariant; no per-page wrapping. **This is the brand-launch visual
-transition**: apps/web event routes shift from today's warm-cream
-values to Madrona's real palette at this PR's merge. The
-`<ThemeScope>` already-present on apps/web's per-event admin route
-from M2 phase 2.2, and on apps/site event routes from M3 phase 3.1,
-automatically pick up Madrona's `Theme` for `slug=madrona` once the
-registry entry lands — no per-consumer change required. UI-review
-captures cover the warm-cream → Madrona transition explicitly so the
-launch visual is signed off intentionally rather than landing as
-review surprise. The cross-app theme-continuity check deferred from
-M3 phase 3.3 lands here: a UI-review pair confirms that
-`/event/madrona` (apps/site) and `/event/madrona/game` (apps/web)
-render the same Madrona `Theme` once apps/web's `<ThemeScope>` is
-wired and the registry entry resolves for `slug=madrona`. One PR.
+`shared/styles/themes/` registry. **Apps/web event-route ThemeScope
+wiring is no longer this phase's deliverable** — demo-expansion epic
+M1 phase 1.1 (2026-05-01) shipped the wrap ahead of schedule, so the
+`<ThemeScope>` wraps already exist on `GameRoutePage`,
+`EventRedeemPage`, `EventRedemptionsPage`, and `EventAdminPage` in
+the central [`App.tsx`](/apps/web/src/App.tsx) routing dispatcher.
+Once Madrona's registry entry lands, the existing wraps automatically
+pick up Madrona's `Theme` for `slug=madrona` — no per-consumer change
+required. **This is the brand-launch visual transition**: apps/web
+event routes shift from today's warm-cream defaults (the
+`getThemeForSlug` fallback for unregistered slugs) to Madrona's real
+palette at this PR's merge. UI-review captures cover the warm-cream →
+Madrona transition explicitly so the launch visual is signed off
+intentionally rather than landing as review surprise. The cross-app
+theme-continuity check originally deferred from M3 phase 3.3 was
+satisfied for the test events by demo-expansion epic M1 phase 1.1; M4
+phase 4.1 extends it to `slug=madrona` with a UI-review pair
+confirming that `/event/madrona` (apps/site) and `/event/madrona/game`
+(apps/web) render the same Madrona `Theme`. One PR.
 
 **Phase 4.2 — Madrona event content authoring.**
 Author Madrona's event content as a TypeScript module at

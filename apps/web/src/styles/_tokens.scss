@@ -8,11 +8,19 @@
 // 2. **Themable — apps/web `:root` defaults.** Brand bases, brand-tied
 //    gradient stops and admin surfaces, typography, themable radii,
 //    plus brand-tied derived shades computed via `color-mix()` from
-//    the brand bases. Consumed in SCSS as `var(--…)`. Per the parent
-//    epic's deferred-ThemeScope-wiring invariant, apps/web routes
-//    render against these `:root` values until M4 phase 4.1; the
-//    block here is the source-of-truth for apps/web's defaults,
-//    deliberately independent of `shared/styles/themes/platform.ts`
+//    the brand bases. Consumed in SCSS as `var(--…)`. apps/web
+//    event-route shells (game, admin, redeem, redemptions) wrap in
+//    `<ThemeScope>` (admin from event-platform-epic M2 phase 2.2;
+//    game / redeem / redemptions from demo-expansion epic M1 phase
+//    1.1) and resolve per-event Themes from
+//    `shared/styles/themes/` for registered slugs (today: the test
+//    events `harvest-block-party` and `riverside-jam`). Non-test-
+//    event slugs continue to resolve to the platform Sage Civic
+//    Theme via `getThemeForSlug`'s fallback, so this `:root` block
+//    remains the source-of-truth for non-test-event apps/web
+//    defaults until a future per-event Theme registers (the future
+//    Madrona-launch epic owns Madrona's `Theme` registration).
+//    Deliberately independent of `shared/styles/themes/platform.ts`
 //    (apps/site's source-of-truth).
 
 // === 1. Structural — platform-shared SCSS variables ===
