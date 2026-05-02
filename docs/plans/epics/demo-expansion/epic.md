@@ -198,6 +198,11 @@ review surface proves large; milestone planning re-derives.
 
 ### M2 — Home-Page Rebuild
 
+**Milestone doc.** [`m2-home-page-rebuild.md`](/docs/plans/epics/demo-expansion/m2-home-page-rebuild.md)
+is canonical from the milestone planning session forward; the
+paragraphs below remain as the pre-milestone-planning estimate that
+informed that session.
+
 **Goal.** Rebuild `apps/site/app/page.tsx` from a stub admin-CTA into
 the demo entry point. Sections: hero with internal-honest framing,
 two-event showcase cards previewing distinct themes, end-to-end Harvest
