@@ -15,7 +15,7 @@ navigating from plan to history.
 | Milestone | First-Iteration Scope | Status |
 | --- | --- | --- |
 | M1 — apps/web ThemeScope wiring | In | Landed |
-| M2 — Home-page rebuild | In | Proposed |
+| M2 — Home-page rebuild | In | Landed |
 | M3 — Demo-mode auth bypass for test-event slugs | In | Proposed |
 | M4 — Role-door surfaces and redemption seeding | Out | Deferred |
 | M5 — Configuration tour | Out | Deferred |
