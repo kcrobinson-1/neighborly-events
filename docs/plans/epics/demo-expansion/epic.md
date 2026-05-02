@@ -219,6 +219,13 @@ M3 lands.
 
 ### M3 — Demo-Mode Auth Bypass For Test-Event Slugs
 
+**Milestone doc.** [`m3-demo-mode-auth-bypass.md`](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+is canonical from the milestone planning session forward; the
+paragraphs below remain as the pre-milestone-planning estimate
+that informed that session. The milestone doc keeps phase 3.1 as
+a doc-only decision phase and defers the 3.2+ phase split to
+3.1's outcome.
+
 **Goal.** Make admin / redeem / redemptions surfaces reachable on
 test-event slugs without sign-in. Real working UI, scoped strictly to
 `harvest-block-party` and `riverside-jam`. Surfaces become reachable in
