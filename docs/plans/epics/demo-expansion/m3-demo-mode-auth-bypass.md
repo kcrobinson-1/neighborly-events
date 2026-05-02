@@ -640,11 +640,18 @@ in some M3 phase's PR.
   M3-closing phase.**
 - [`docs/open-questions.md`](/docs/open-questions.md) —
   closes the "Demo-mode data-access semantics for test-event
-  slugs" question opened by the epic. **Owned by phase 3.1**
-  (the doc-only decision phase that resolves it; closure is a
-  deliverable of 3.1's PR, not the M3-closing PR, because
-  3.1 is when the decision lands and 3.1 is the natural
-  artifact-currency owner for that resolution).
+  slugs" entry under the "Demo Expansion Epic — M3 Demo-Mode
+  Data Access" section. The entry was added in the same PR as
+  this milestone doc per the repo convention "When the repo
+  leaves a decision unresolved, capture that uncertainty in
+  `docs/open-questions.md`," mirroring the precedent set by
+  the "Event Platform Epic — Phase 0.3 Verification" section.
+  **Owned by phase 3.1** (the doc-only decision phase that
+  resolves it; closure removes the entry from
+  `open-questions.md` and is a deliverable of 3.1's PR, not
+  the M3-closing PR, because 3.1 is when the decision lands
+  and 3.1 is the natural artifact-currency owner for that
+  resolution).
 - [`docs/styling.md`](/docs/styling.md) — only updated if
   M3's UI signaling for demo mode (banner / ribbon / etc. per
   the deferred decision above) introduces a new themable or
@@ -794,7 +801,9 @@ Capture."
   decisions.
 - [`docs/open-questions.md`](/docs/open-questions.md) —
   carries the "Demo-mode data-access semantics" question
-  phase 3.1 closes.
+  phase 3.1 closes, under the "Demo Expansion Epic — M3
+  Demo-Mode Data Access" section added by this milestone-doc
+  PR.
 - [`docs/backlog.md`](/docs/backlog.md) — priority-ordered
   follow-up; receives the post-epic items the epic Backlog
   Impact named.

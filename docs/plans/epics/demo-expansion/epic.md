@@ -164,7 +164,10 @@ reads. The choice cascades into M3+ implementation and into M4's
 seeded-codes / reset-story design. M3 phase planning records the
 decision and rationale; the
 [M3 milestone doc](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
-is canonical for the deferred-decision framing.
+is canonical for the deferred-decision framing, and the question is
+mirrored in [`docs/open-questions.md`](/docs/open-questions.md) under
+the "Demo Expansion Epic — M3 Demo-Mode Data Access" section so
+repo-level discovery surfaces it.
 
 **Configuration tour mechanism.** M5 owns this decision: annotated
 screenshots inline on the marketing page, a sub-route walkthrough,
