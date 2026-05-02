@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+In progress pending prod smoke.
 
 3.3 is the milestone-terminal phase of M3 ("Site Rendering
 Infrastructure With Test Events"). It carries no code changes; the

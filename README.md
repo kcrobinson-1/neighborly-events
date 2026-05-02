@@ -20,6 +20,9 @@ This repository currently includes:
 
 - a Vite + React attendee experience prototype
 - a static platform landing in `apps/site` plus published demo game routes
+- public event landing pages at `/event/:slug` rendered server-side by
+  `apps/site` from per-event TypeScript content modules under
+  `apps/site/events/`, proven against two test events on distinct Themes
 - database-backed published event and quiz content
 - a Supabase Auth-backed admin event workspace for private draft access plus
   draft create, duplicate, event-detail edit, question edit, answer-option
@@ -68,9 +71,7 @@ The codebase is intentionally small and split by responsibility:
   Platform landing, platform admin, auth callback, and public event
   landing pages built with Next.js 16 (App Router, server rendered).
   Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and any other
-  event-scoped path not carved out for `apps/web`. Event landing is
-  still a placeholder; the real landing page lands in M3 of
-  [the Event Platform Epic](/docs/plans/event-platform-epic.md).
+  event-scoped path not carved out for `apps/web`.
 - `shared`
   shared `game-config.ts` entrypoint plus `shared/game-config/` modules for DB mapping, quiz runtime shape, validation, scoring, and explicit sample fixtures
 - `supabase/functions`

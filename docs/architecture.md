@@ -29,8 +29,8 @@ The current implementation is:
   monorepo: `apps/web` (Vite + React SPA, attendee game and per-event
   admin), and `apps/site` (Next.js 16 App Router, static platform
   landing, auth callback, platform admin at `/admin*`, and SSR/SSG
-  public event landing pages — event landing remains a placeholder
-  until M3 of the Event Platform Epic). `apps/web` is the primary
+  public event landing pages rendered from per-event TypeScript
+  content modules). `apps/web` is the primary
   Vercel project owning the production custom domain; cross-app routing
   is implemented as proxy-rewrites in `apps/web/vercel.json` and is
   **transitional** until M2 inverts the URL ownership balance
@@ -62,9 +62,11 @@ Keep the game interaction local and fast, but make the completion state backend-
   The Next.js 16 App Router app for the platform landing, auth
   callback, platform admin, and public event landing pages. Owns `/`,
   `/auth/callback`, `/admin*`, `/event/:slug`, and any other
-  event-scoped path not carved out for `apps/web`. Event landing
-  remains a placeholder until M3 of
-  [the Event Platform Epic](/docs/plans/event-platform-epic.md).
+  event-scoped path not carved out for `apps/web`. Public event
+  landings render server-side from per-event TypeScript content
+  modules under [`apps/site/events/`](/apps/site/events) through a
+  single rendering template at
+  [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx).
 - `shared`
   Shared TypeScript domain logic used by both the browser and Supabase functions.
 - `supabase/functions`
@@ -222,6 +224,29 @@ grouped into a dedicated `apps/web/src/game/` module:
   routes in the `(authenticated)` group.
 - `apps/site/lib/supabaseBrowser.ts` and `apps/site/lib/setupAuth.ts`
   Next.js client adapter for `shared/db/` and `shared/auth/`.
+- `apps/site/app/event/[slug]/opengraph-image.tsx` and
+  `apps/site/app/event/[slug]/twitter-image.tsx`
+  File-convention metadata routes that prerender one image per
+  registered slug at build time via `next/og`'s `ImageResponse`.
+- `apps/site/app/event/[slug]/page.tsx`
+  Event landing route. `generateStaticParams` enumerates registered
+  slugs from `eventContentBySlug`; per-event metadata resolves from
+  the same registry; the page wraps in `<ThemeScope>` so the
+  registered Theme applies to the rendered shell.
+- `apps/site/components/event/`
+  Section components composed by `EventLandingPage` (header,
+  schedule, lineup, sponsors, FAQ, CTA, footer, plus
+  `TestEventDisclaimer` for noindex'd test events).
+- `apps/site/events/`
+  Directory of record for per-event TypeScript content modules;
+  one `<slug>.ts` file per registered event.
+- `apps/site/lib/eventContent.ts`
+  The `EventContent` TypeScript type, the `eventContentBySlug`
+  registry, and the `registeredEventSlugs` derivation consumed by
+  the rendering route and metadata routes.
+- `apps/site/lib/eventOgImage.tsx`
+  Shared OG / twitter image renderer consumed by both
+  file-convention metadata routes.
 
 ### Shared Domain Structure
 
@@ -351,11 +376,13 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   [`shared/styles/themes/platform.ts`](/shared/styles/themes/platform.ts),
   and the per-event registry at
   [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
-  (empty in M1 phase 1.5.2; M3 phase 3.1 adds the first test event
-  theme alongside the rendering pipeline, M3 phase 3.2 adds the
-  second test event theme — see
-  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); M4
-  phase 4.1 adds Madrona). apps/site's root layout consumes the platform
+  (the registry holds the `harvest-block-party` and `riverside-jam`
+  test event Themes; M4 phase 4.1 adds Madrona). apps/site event
+  routes resolve per-event Themes through `<ThemeScope>` from M3
+  phase 3.1; apps/web event-route shells (`/event/:slug/game/*`)
+  render against apps/web's warm-cream `:root` defaults until M4
+  phase 4.1 wires their `<ThemeScope>` per the epic's "Deferred
+  ThemeScope wiring" invariant. apps/site's root layout consumes the platform
   Theme via inline-style emission of CSS custom properties on
   `<html>` plus `next/font` for Inter (body) and Fraunces (heading);
   apps/web's `:root` block in
@@ -895,7 +922,7 @@ order ("first match wins"), so most-specific rules must come first.
 | 2 | `/event/:slug/game/:path*` | `apps/web` SPA | Permanent (event-scoped); covers `/game/redeem` and `/game/redemptions` operator routes |
 | 3 | `/event/:slug/admin` | `apps/web` SPA | Permanent (event-scoped); per-event admin shell |
 | 4 | `/event/:slug/admin/:path*` | `apps/web` SPA | Permanent (event-scoped) |
-| 5 | `/event/:slug` | `apps/site` Vercel project | Permanent (placeholder in 0.3; real landing page in M3) |
+| 5 | `/event/:slug` | `apps/site` Vercel project | Permanent (event-scoped landing) |
 | 6 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
 | 7 | `/event/:path*` (SPA fallback) | `apps/web` SPA | Transitional; narrows as event-scoped routes finalize |
 | 8 | `/_next/:path*` | `apps/site` Vercel project | Permanent; covers apps/site asset path resolution |
