@@ -19,7 +19,10 @@ The product is intended for community events like concerts, fairs, and neighborh
 This repository currently includes:
 
 - a Vite + React attendee experience prototype
-- a static platform landing in `apps/site` plus published demo game routes
+- an internal-partner demo home page at `/` in `apps/site` (hero +
+  two-event showcase + end-to-end Harvest narrative + three
+  Attendee/Organizer/Volunteer role-door cards) plus published demo
+  game routes
 - public event landing pages at `/event/:slug` rendered server-side by
   `apps/site` from per-event TypeScript content modules under
   `apps/site/events/`, proven against two test events on distinct Themes
@@ -68,8 +71,9 @@ The codebase is intentionally small and split by responsibility:
   the event-scoped `/event/:slug/game/*` and `/event/:slug/admin`
   namespaces.
 - `apps/site`
-  Platform landing, platform admin, auth callback, and public event
-  landing pages built with Next.js 16 (App Router, server rendered).
+  Internal-partner demo home page, platform admin, auth callback,
+  and public event landing pages built with Next.js 16 (App Router,
+  server rendered).
   Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and any other
   event-scoped path not carved out for `apps/web`.
 - `shared`

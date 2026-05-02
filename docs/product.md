@@ -35,7 +35,9 @@ Organizers configure the game, sell sponsored questions to local businesses, and
 
 Today the repo implements:
 
-- a demo-overview landing page at `/`
+- an internal-partner demo home page at `/` (hero + two-event
+  showcase + end-to-end Harvest narrative + Attendee/Organizer/
+  Volunteer role-door cards)
 - published attendee game routes at `/event/:slug/game`
 - backend-verified completion with one entitlement per event/session pair
 - attendee completion-screen polling that reflects redeemed vs

@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 This milestone doc is the durable coordination artifact for M2:
 restated goal, phase sequencing rationale, cross-phase invariants,
@@ -74,7 +74,7 @@ phase's plan drafts and as its PR merges.
 | --- | --- | --- | --- | --- |
 | 2.1 | Page structural rebuild + hero + two-event showcase | [m2-phase-2-1-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-1-plan.md) | Landed | this PR |
 | 2.2 | End-to-end Harvest narrative section | [m2-phase-2-2-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-2-plan.md) | Landed | this PR |
-| 2.3 | Three role-door entry points + M2 closure | [m2-phase-2-3-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-3-plan.md) | Proposed | _pending_ |
+| 2.3 | Three role-door entry points + M2 closure | [m2-phase-2-3-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-3-plan.md) | Landed | this PR |
 
 The 3-phase split above is the milestone session's working
 estimate; phase 2.1's planning session is responsible for

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { HarvestNarrative } from "../components/home/HarvestNarrative.tsx";
 import { HomeHero } from "../components/home/HomeHero.tsx";
+import { RoleDoors } from "../components/home/RoleDoors.tsx";
 import { TwoEventShowcase } from "../components/home/TwoEventShowcase.tsx";
 
 /**
@@ -23,6 +24,7 @@ export default function Home() {
       <HomeHero />
       <TwoEventShowcase />
       <HarvestNarrative />
+      <RoleDoors />
     </main>
   );
 }

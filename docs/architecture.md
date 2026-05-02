@@ -27,10 +27,10 @@ The current implementation is:
 
 - two frontend apps deployed as separate Vercel projects from one
   monorepo: `apps/web` (Vite + React SPA, attendee game and per-event
-  admin), and `apps/site` (Next.js 16 App Router, static platform
-  landing, auth callback, platform admin at `/admin*`, and SSR/SSG
-  public event landing pages rendered from per-event TypeScript
-  content modules). `apps/web` is the primary
+  admin), and `apps/site` (Next.js 16 App Router, internal-partner
+  demo home page at `/`, auth callback, platform admin at `/admin*`,
+  and SSR/SSG public event landing pages rendered from per-event
+  TypeScript content modules). `apps/web` is the primary
   Vercel project owning the production custom domain; cross-app routing
   is implemented as proxy-rewrites in `apps/web/vercel.json` and is
   **transitional** until M2 inverts the URL ownership balance
@@ -59,11 +59,11 @@ Keep the game interaction local and fast, but make the completion state backend-
   The attendee-facing Vite + React single-page application. Owns the
   `/event/:slug/game` and `/event/:slug/admin` namespaces.
 - `apps/site`
-  The Next.js 16 App Router app for the platform landing, auth
-  callback, platform admin, and public event landing pages. Owns `/`,
-  `/auth/callback`, `/admin*`, `/event/:slug`, and any other
-  event-scoped path not carved out for `apps/web`. Public event
-  landings render server-side from per-event TypeScript content
+  The Next.js 16 App Router app for the internal-partner demo home
+  page, auth callback, platform admin, and public event landing
+  pages. Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and
+  any other event-scoped path not carved out for `apps/web`. Public
+  event landings render server-side from per-event TypeScript content
   modules under [`apps/site/events/`](/apps/site/events) through a
   single rendering template at
   [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx).
@@ -208,7 +208,14 @@ grouped into a dedicated `apps/web/src/game/` module:
   component groups, admin UI, redeem UI, monitoring UI, and responsive
   rules.
 - `apps/site/app/page.tsx`
-  Static platform landing at `/`, with a CTA into `/admin`.
+  Internal-partner demo home page at `/` (noindex). Composes
+  `<HomeHero>`, `<TwoEventShowcase>`, `<HarvestNarrative>`, and
+  `<RoleDoors>` under a shared `home-shell`. Hero and role-doors
+  render under the platform Sage Civic Theme; showcase wraps each
+  card in its own `<ThemeScope>` for the per-event Theme; the
+  Harvest narrative section wraps once in Harvest's Theme. Role-door
+  cards hard-navigate into apps/web's gameplay, per-event admin, and
+  redemption-booth surfaces for the Harvest demo event.
 - `apps/site/app/(authenticated)/admin/page.tsx`
   Platform admin client route for `/admin*`. Hosts the in-place
   magic-link sign-in form, allowlist denial state, event-list

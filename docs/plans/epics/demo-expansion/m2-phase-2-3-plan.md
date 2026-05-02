@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed in this PR.
 
 ## Context
 
