@@ -191,7 +191,13 @@ structural call requires deviating, recorded in the PR body's
 
 ### New
 
-None expected.
+- [docs/plans/themescope-derived-shade-cascade.md](/docs/plans/themescope-derived-shade-cascade.md) —
+  focused follow-up plan added during M1 phase 1.1 implementation
+  to capture the empirically-verified derived-shade pinning at
+  `:root` (rule-deviation handling per AGENTS.md "Plan-to-PR
+  Completion Gate"). Not in the original estimate; ships with
+  this PR because the rule rewrite in the Risk Register entry
+  above requires a referenced follow-up.
 
 ### Modify
 
@@ -212,8 +218,12 @@ None expected.
   Milestone Status row update
 - [docs/plans/epics/demo-expansion/m1-themescope-wiring.md](/docs/plans/epics/demo-expansion/m1-themescope-wiring.md) —
   Status flip + Phase Status row update
-- [README.md](/README.md) — pending grep verification
-  (plan-drafting confirms whether an edit is needed)
+- [README.md](/README.md) — grep verified at implementation time;
+  no `ThemeScope` / `warm-cream` / `deferred-ThemeScope` mentions
+  in the README's capability description, so no edit needed.
+- [docs/backlog.md](/docs/backlog.md) — tier-5 entry added
+  pointing at the new follow-up plan above. Not in the original
+  estimate; same rule-deviation path as the new plan above.
 
 ### Intentionally not touched
 
