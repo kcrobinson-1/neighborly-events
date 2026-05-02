@@ -38,9 +38,20 @@ on first when evaluating the platform. After M2:
   link out to live surfaces in apps/web; targets that require auth
   carry honest "sign in or wait for demo mode" framing until M3
   lands the demo-mode bypass for test-event slugs
-- noindex stays in place on the home page (M2 ships no public
-  marketing surface; the home page is a demo entry point for an
-  internal-partner audience per the epic's invariants)
+- M2 **adds** noindex on the home page. Today's
+  [apps/site/app/page.tsx](/apps/site/app/page.tsx) ships no
+  robots metadata and the root layout
+  ([apps/site/app/layout.tsx](/apps/site/app/layout.tsx)) only
+  sets `title` + `metadataBase`, so `/` is currently indexable.
+  The only existing noindex implementation in apps/site lives on
+  `/event/[slug]` for test events. The epic's
+  [`Internal-partner audience`](/docs/plans/epics/demo-expansion/epic.md)
+  invariant asserts the home page stays noindex through this
+  epic; that assertion is unmet today and only becomes true when
+  M2 ships explicit `robots: { index: false, follow: false }`
+  metadata on the home-page route. Phase planning owns the exact
+  Next.js metadata-emit shape; the validation gate confirms it
+  with a fetch of `/`'s rendered HTML
 
 M2 does not introduce demo-mode auth bypass (M3's scope), does
 not add new test events beyond Harvest and Riverside (epic's "Out
@@ -94,12 +105,10 @@ Phase dependencies (`A --> B` means A blocks B / B depends on A):
 
 ```mermaid
 flowchart LR
-    M1[demo-expansion M1<br/>apps/web ThemeScope wiring]
     P21[2.1<br/>Structural rebuild<br/>+ hero + showcase]
     P22[2.2<br/>Harvest narrative<br/>section]
     P23[2.3<br/>Role-door entry<br/>points + M2 closure]
 
-    M1 --> P21
     P21 --> P22
     P21 --> P23
 ```
@@ -113,16 +122,21 @@ before 2.3 because 2.3 is the natural M2 closer (it carries the
 M2 row's flip to `Landed` per AGENTS.md "Plan-to-PR Completion
 Gate").
 
-**Inherited M1 dependency.** M1 (apps/web ThemeScope wiring) is
-not a strict dependency of M2 itself — M2 lives entirely in
-apps/site and does not edit apps/web. The arrow above is
-**recommended sequencing**: M2's two-event showcase cards and
-role-door entries link to apps/web event-route shells, and the
-"both apps render the same Theme for the same slug" capability
-M1 enabled is the visual story M2's showcase carries forward.
-Shipping M2 before M1 would have left a partner clicking from a
-themed apps/site card into an unthemed apps/web shell, which
-breaks the cross-app continuity check M1 just satisfied.
+**No upstream-milestone dependency.** M1 (apps/web ThemeScope
+wiring) is not a strict dependency of M2 — M2 lives entirely in
+apps/site and does not edit apps/web — so it does not appear as
+a node in the graph above (per AGENTS.md "blocks relationships
+are arrows," graph nodes are limited to ship-blockers). The
+demo-expansion epic recommends M2 ship after M1 because M2's
+two-event showcase cards and role-door entries link to apps/web
+event-route shells and the "both apps render the same Theme for
+the same slug" capability M1 enabled is the visual story M2's
+showcase carries forward; shipping M2 before M1 would have left
+a partner clicking from a themed apps/site card into an unthemed
+apps/web shell, which breaks the cross-app continuity check M1
+just satisfied. That is sequencing rationale, not blocking
+dependency, and it lives here in prose rather than as a graph
+arrow that would over-serialize phase planning's options.
 
 **Plan-drafting cadence.** Each phase's plan drafts just-in-time
 before its implementation, not in batch. Per AGENTS.md
@@ -180,14 +194,12 @@ guidance.
   keeps the SPA on apps/site and the apps/web Vercel rewrite
   layer never fires. Self-review walks every outbound link's
   navigation seam against this rule.
-- **No apps/web edits beyond the rewrite contract.** M2's diff
-  stays inside apps/site. The `apps/web/vercel.json` rewrite
-  contract that owns `/event/:slug/*` is unchanged; no new apps/
-  web routes ship in M2; no apps/web copy or component edit
-  ships in M2. If M2 phase planning surfaces an apps/web change
-  that is genuinely required (a copy fix on a role-door target,
-  for example), that change splits out as its own focused PR
-  rather than landing inside an M2 phase.
+
+The apps/site-only scope guard ("M2's diff stays inside apps/
+site, no apps/web routes / copy / component edits ship in M2")
+is named in the Goal section above as a scope clarification, not
+repeated here — it is a scope statement, not a relationship that
+must hold simultaneously at every call site.
 
 **Inherited from upstream invariants.** M2 also inherits the URL
 contract, theme route scoping, theme token discipline, in-place
@@ -234,14 +246,24 @@ does not re-derive them.
   type. The "single source of truth for event content" rule from
   [event-platform-epic.md](/docs/plans/event-platform-epic.md)
   binds.
-- **Theme resolution at the showcase / narrative level.** Each
-  showcase card or narrative-fragment that needs per-event Theme
-  rendering wraps its themed sub-tree in
-  `<ThemeScope theme={getThemeForSlug(slug)}>` per the same
-  centralized-wrap pattern apps/site `/event/[slug]` already
-  uses. Phase planning owns the exact wrap shape; the contract
-  is resolver-uniformity (same `getThemeForSlug` resolver used
-  everywhere, no inlined slug→theme maps).
+- **Theme resolution reads `content.themeSlug`, not the URL
+  slug.** Each showcase card or narrative-fragment that needs
+  per-event Theme rendering wraps its themed sub-tree in
+  `<ThemeScope theme={getThemeForSlug(content.themeSlug)}>` per
+  the contract the existing apps/site
+  [`/event/[slug]`](/apps/site/app/event/[slug]/page.tsx) already
+  honors (see the source comment naming "Theme resolution reads
+  `content.themeSlug`, **not** the URL slug, so the multi-event
+  case where two routes share a Theme registered under one key
+  actually works"). Resolving via the URL slug would silently
+  fall back to the platform Sage Civic Theme for any future
+  event whose `themeSlug` differs from `slug`, masking the
+  contract violation behind `getThemeForSlug`'s defined platform
+  fallback. Phase planning owns the exact wrap shape; the
+  contract is resolver-uniformity (same `getThemeForSlug`
+  resolver used everywhere, no inlined slug→theme maps) and
+  input-uniformity (`content.themeSlug` is the input, not URL
+  slug, not a parallel home-page-only mapping).
 - **Out-of-band assets.** No new icon set, illustration, image,
   or video ships in M2. The home page is text-and-color first;
   any visual asset addition surfaces as a phase-time scoping
