@@ -35,18 +35,24 @@ function getPageContent(
   const matchedGame = matchGamePath(pathname);
 
   if (matchedGame) {
-    return <GameRoutePage key={matchedGame.slug} onNavigate={navigate} slug={matchedGame.slug} />;
+    return (
+      <ThemeScope theme={getThemeForSlug(matchedGame.slug)}>
+        <GameRoutePage key={matchedGame.slug} onNavigate={navigate} slug={matchedGame.slug} />
+      </ThemeScope>
+    );
   }
 
   const matchedRedeem = matchGameRedeemPath(pathname);
 
   if (matchedRedeem) {
     return (
-      <EventRedeemPage
-        key={matchedRedeem.slug}
-        onNavigate={navigate}
-        slug={matchedRedeem.slug}
-      />
+      <ThemeScope theme={getThemeForSlug(matchedRedeem.slug)}>
+        <EventRedeemPage
+          key={matchedRedeem.slug}
+          onNavigate={navigate}
+          slug={matchedRedeem.slug}
+        />
+      </ThemeScope>
     );
   }
 
@@ -54,11 +60,13 @@ function getPageContent(
 
   if (matchedRedemptions) {
     return (
-      <EventRedemptionsPage
-        key={matchedRedemptions.slug}
-        onNavigate={navigate}
-        slug={matchedRedemptions.slug}
-      />
+      <ThemeScope theme={getThemeForSlug(matchedRedemptions.slug)}>
+        <EventRedemptionsPage
+          key={matchedRedemptions.slug}
+          onNavigate={navigate}
+          slug={matchedRedemptions.slug}
+        />
+      </ThemeScope>
     );
   }
 
