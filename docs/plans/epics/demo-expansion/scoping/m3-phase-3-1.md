@@ -491,9 +491,18 @@ differ.
   monitoring list.
 - For redeem to succeed against real entitlements, demo
   entitlement rows must exist for at least one
-  `verification_code`. The keypad accepts a 3-letter
-  suffix; the row needs to exist in `game_entitlements` for
-  the test event. Today no migration seeds these.
+  `verification_code`. The full code shape is
+  `<3-letter event prefix>-<4-digit suffix>` (e.g.
+  `ABC-1234`): the event prefix matches `/^[A-Z]{3}$/` per
+  [apps/web/src/redeem/authorizeRedeem.ts:19](/apps/web/src/redeem/authorizeRedeem.ts)
+  and resolves the slug; the keypad submits a 4-digit
+  numeric suffix per
+  [apps/web/src/redeem/RedeemKeypad.tsx:1-17](/apps/web/src/redeem/RedeemKeypad.tsx);
+  the redeem RPC concatenates them as
+  `v_event_code || '-' || p_code_suffix` per
+  [supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:62](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql).
+  At least one matching `game_entitlements` row needs to
+  exist for the test event. Today no migration seeds these.
 
 ### Q5. Anonymous-visitor identity for audit + write fields
 
