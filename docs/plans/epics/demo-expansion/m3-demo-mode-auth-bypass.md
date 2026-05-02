@@ -169,14 +169,16 @@ Phase dependencies (`A --> B` means A blocks B / B depends on A):
 
 ```mermaid
 flowchart LR
+    M2[M2<br/>Home-page rebuild<br/>+ role-door cards]
     P31[3.1<br/>Demo-mode<br/>data-access-semantics<br/>decision]
-    P32[3.2<br/>Implement bypass<br/>shape TBD by 3.1]
+    P32[3.2<br/>Implement bypass<br/>+ M3-closing<br/>copy revision]
 
+    M2 --> P32
     P31 --> P32
 ```
 
-**Hard dependency.** 3.2 (and any 3.3/3.4 that 3.1 elects to
-spawn) depends on 3.1 because 3.1 settles the data-access-
+**Hard dependency on 3.1.** 3.2 (and any 3.3/3.4 that 3.1 elects
+to spawn) depends on 3.1 because 3.1 settles the data-access-
 semantics contract — covering both the read-side mediation
 strategy (which is in scope under all three options because
 mounting the bypassed pages alone is not sufficient when the
@@ -191,23 +193,30 @@ reshapes mid-flight when 3.1's outcome arrives, which is the
 exact churn AGENTS.md "Defer rather than over-resolve" exists to
 prevent.
 
-**No upstream-milestone hard dependency.** M2 (home-page rebuild)
-is **not** a strict ship-blocker for the bypass mechanism itself —
-the three apps/web event-route surfaces are reachable by URL
-today and will be after M3 lands regardless of the home-page's
-state. Following M2 milestone doc's convention ("graph nodes are
-limited to ship-blockers"), M2 is therefore not a node in the
-graph above. The relationship that exists is a **closer-PR
-ship-order recommendation**: M3's closing PR includes the copy
-revision on M2's Organizer + Volunteer role-door cards, and that
-deliverable can only ship if M2's role-doors have already
-landed. If M2 ships before M3-closing (the expected order, since
-M2 is "about to land imminently" at M3-milestone-planning time),
-the copy revision is straightforward; if scheduling ever inverted
-the order, the closer responsibility for the M2 copy revision
-would transfer to whichever PR ships last via a plan revision in
-the same PR (not informally), exactly as the M2 milestone doc
-already documents for its own 2.2/2.3 ship-order constraint.
+**Upstream-milestone dependency on M2 is closer-scoped.** M2
+(home-page rebuild) is **not** a strict ship-blocker for the
+bypass mechanism — the three apps/web event-route surfaces are
+reachable by URL today and will be after M3 lands regardless of
+the home-page's state — but M2 **is** a strict ship-blocker for
+the M3-closing copy revision on M2's Organizer + Volunteer
+role-door cards, which is one of M3's closing-phase
+deliverables. The graph above shows `M2 --> P32` to make that
+narrower-than-the-whole-phase prerequisite explicit per
+AGENTS.md "Phase dependency graph" ("the upstream milestone
+appears as a dependency-only node so prerequisites are
+explicit"). The arrow's interpretation is "M2 blocks 3.2's
+closer-PR copy-revision deliverable," not "M2 blocks 3.2's
+bypass-mechanism work." If 3.1's outcome splits implementation
+into 3.2 + 3.3 (or 3.2 + 3.3 + 3.4), the M3-closing
+responsibility — and the M2 ship-order arrow with it —
+transfers to whichever phase ships last per the Phase Status
+section above; readers re-deriving the graph at that point
+should redraw the arrow's terminus accordingly. (M2 landed
+ahead of M3 milestone planning, so the constraint is satisfied
+in practice for the expected ship order; the arrow records the
+structural relationship the doc would still assert if scheduling
+ever inverted, exactly as the M2 milestone doc documents for
+its own 2.2/2.3 ship-order constraint.)
 
 **Plan-drafting cadence.** Phase 3.1's scoping doc and plan doc
 draft just-in-time at M3-start, **not in parallel with M2's
