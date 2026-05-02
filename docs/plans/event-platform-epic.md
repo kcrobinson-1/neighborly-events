@@ -17,7 +17,7 @@ plan to history.
 | M0 — Framework decision and platform skeleton | Landed |
 | M1 — Foundation extraction | Landed |
 | M2 — Admin restructuring and authorization broadening | Landed |
-| M3 — Site rendering infrastructure with test events | In progress pending prod smoke |
+| M3 — Site rendering infrastructure with test events | Landed |
 | M4 — Madrona launch | Proposed |
 
 When all five rows show `Landed`, the top-level Status above flips from

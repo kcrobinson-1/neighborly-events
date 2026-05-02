@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress pending prod smoke. Status mirrors the
+Landed. Status mirrors the
 [epic milestone row](/docs/plans/event-platform-epic.md). Flipped to
 `Landed` in M3 phase 3.3's PR alongside the epic M3-row flip.
 
@@ -71,7 +71,7 @@ collapses it for Madrona.
 | --- | --- | --- | --- | --- |
 | 3.1 | Rendering pipeline + first test event + SSR meta | [m3-phase-3-1-1-plan.md](/docs/plans/m3-phase-3-1-1-plan.md), [m3-phase-3-1-2-plan.md](/docs/plans/m3-phase-3-1-2-plan.md) | Landed | [#139](https://github.com/kcrobinson-1/neighborly-events/pull/139) (3.1.1) + 3.1.2 |
 | 3.2 | Second test event with distinct theme | [m3-phase-3-2-plan.md](/docs/plans/m3-phase-3-2-plan.md) | Landed | [#144](https://github.com/kcrobinson-1/neighborly-events/pull/144) |
-| 3.3 | Cross-app navigation verification + M3 closure | [m3-phase-3-3-plan.md](/docs/plans/m3-phase-3-3-plan.md) | In progress pending prod smoke | — |
+| 3.3 | Cross-app navigation verification + M3 closure | [m3-phase-3-3-plan.md](/docs/plans/m3-phase-3-3-plan.md) | Landed | [#146](https://github.com/kcrobinson-1/neighborly-events/pull/146) |
 
 Each row updates as the phase's plan drafts and as its PR merges.
 3.1 may split into 3.1.1 + 3.1.2 if scoping surfaces enough
