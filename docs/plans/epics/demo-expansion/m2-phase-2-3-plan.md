@@ -64,6 +64,25 @@ existing apps/web routes ([`/event/:slug/game`](/apps/web/src/pages/GamePage.tsx
 that the role-doors hard-navigate to via the apps/web Vercel
 rewrite layer.
 
+**Parallelism vs M2-closer responsibility.** Per
+[m2-home-page-rebuild.md §Sequencing](/docs/plans/epics/demo-expansion/m2-home-page-rebuild.md),
+2.2 and 2.3 are independent of each other in implementation
+work — neither phase touches the other's files or CSS scope —
+so plan-drafting and the implementation work itself may proceed
+on parallel branches if separate attention is available. **PR/
+merge order is constrained, however**: this plan binds 2.3 as
+the M2-closing PR, which means 2.3's PR opens only after 2.2 has
+merged to main. The constraint is the closer commitment (a
+milestone-doc design call), not a technical dependency: 2.3
+could implement against an apps/site main that doesn't yet
+include 2.2's narrative section — the role-doors would still
+work — but the cumulative-page validation capture and the
+"M2 is complete" framing both depend on 2.2 having already
+landed. If product pressure ever requires 2.3 to ship before
+2.2, the closer responsibility transfers to whichever phase
+ships last via a plan revision in the same PR (not informally);
+plan-time expectation is the recommended order holds.
+
 ## Goal
 
 Add the three role-door entry points and close the M2 milestone.
@@ -1059,14 +1078,22 @@ Plan-implementation-level risks not already covered:
   state has shifted (Attendee adopts caveat shape if gameplay
   has been gated; Organizer / Volunteer caveats no-op if
   bypass landed early outside this epic).
-- **2.2 ship-order skew.** The plan assumes 2.2's
-  implementation has landed before 2.3's PR opens (the
-  cumulative-page capture is meaningful only post-2.2).
+- **2.2 ship-order skew.** The plan binds 2.3 as the M2-closer
+  per the Context section's parallelism-vs-closer paragraph and
+  the milestone doc's Sequencing section. This means 2.3's PR
+  opens after 2.2 has merged to main. The constraint is the
+  closer commitment (closure-burden is in *this* plan; splitting
+  it across a PR shipping before 2.2 would split the closure
+  story), not a technical dependency on 2.2's section JSX.
   Mitigation: execution step 3's reality-check confirms 2.2
-  ship status; if 2.2 has not yet landed, the implementer
-  either (a) waits for 2.2 to merge before opening the PR, or
-  (b) splits the cumulative-page capture into a follow-up
-  doc-only PR after 2.2 lands and records the deviation. The
+  ship status before the PR opens; if 2.2 has not yet landed,
+  the implementer waits for 2.2 to merge. If product pressure
+  flips the order such that 2.3 must ship first, the closer
+  responsibility transfers to whichever phase ships last via a
+  plan revision in the same PR (not informally) — the revision
+  moves the closure-burden contracts (M2 closure documentation,
+  Status-flip and scoping-deletion) to the new closer's plan
+  and out of this plan; the role-door section remains here. The
   plan-time expectation is the recommended ship order holds
   (2.1 → 2.2 → 2.3).
 - **Sibling PR drift on the home page surface.** A sibling

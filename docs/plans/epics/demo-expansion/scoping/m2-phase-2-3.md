@@ -772,18 +772,20 @@ the `noindex, nofollow` emit still lands (same falsifier as
 2.1; reused unchanged).
 
 **2.2 land-order dependency.** The cumulative-page capture
-requires 2.2 to have landed. If 2.3 ships before 2.2 for any
-reason (the milestone doc's recommended order is 2.1 → 2.2 →
-2.3, but 2.2 and 2.3 are independent and may plan-draft in
-parallel), the cumulative-page capture is N/A and the page-
-length-sprawl risk transfers to whichever phase ships last.
-Plan-drafting names this as a precondition: "open this PR after
-2.2 has merged to main." If product pressure flips the order,
-the plan is revised to either (a) defer the cumulative-page
-capture to a separate doc-only PR after 2.2 lands, or (b)
-transfer M2 closure responsibility to whichever phase ships
-last. The default expectation is the recommended ship order
-holds.
+requires 2.2 to have landed. The milestone doc binds 2.3 as
+the M2-closer (PR/merge order is constrained even though
+plan-drafting and implementation work may proceed in parallel
+branches per the milestone doc's tightened "Hard dependencies"
+prose). Plan-drafting names this as a precondition: "open this
+PR after 2.2 has merged to main." If product pressure ever
+requires 2.3 to ship before 2.2, the closer responsibility
+transfers to whichever phase ships last via a plan revision in
+the same PR (not informally) — the revision moves the closure-
+burden contracts (M2 closure documentation, Status-flip and
+scoping-deletion) to the new closer's plan; the cumulative-
+page capture either defers to a doc-only follow-up after 2.2
+lands or moves to the new closer's validation gate. The
+default expectation is the recommended ship order holds.
 
 **Verified by:**
 [apps/site/components/home/EventShowcaseCard.tsx:35-37](/apps/site/components/home/EventShowcaseCard.tsx)
