@@ -74,7 +74,7 @@ phase's plan drafts and as its PR merges.
 | --- | --- | --- | --- | --- |
 | 2.1 | Page structural rebuild + hero + two-event showcase | [m2-phase-2-1-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-1-plan.md) | Landed | this PR |
 | 2.2 | End-to-end Harvest narrative section | [m2-phase-2-2-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-2-plan.md) | Proposed | _pending_ |
-| 2.3 | Three role-door entry points + M2 closure | _pending_ | Plan-pending | _pending_ |
+| 2.3 | Three role-door entry points + M2 closure | [m2-phase-2-3-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-3-plan.md) | Proposed | _pending_ |
 
 The 3-phase split above is the milestone session's working
 estimate; phase 2.1's planning session is responsible for
@@ -116,11 +116,24 @@ flowchart LR
 **Hard dependencies.** 2.2 and 2.3 each depend on 2.1 because
 2.1 ships the page-level shell and section-composition idiom that
 2.2 and 2.3's sections plug into. 2.2 and 2.3 are independent of
-each other and could draft / implement in parallel if separate
-attention is available; the recommended ship order puts 2.2
-before 2.3 because 2.3 is the natural M2 closer (it carries the
-M2 row's flip to `Landed` per AGENTS.md "Plan-to-PR Completion
-Gate").
+each other in *implementation work* — neither phase touches the
+other's files (each adds its own component family under
+`apps/site/components/home/`) or CSS scope (each adds its own
+`.home-narrative` / `.home-roles*` selectors under the shared
+`.home-shell` scope). Plan-drafting and the implementation work
+itself may therefore proceed on parallel branches if separate
+attention is available. **PR/merge order is constrained,
+however**: 2.3's PR opens after 2.2 has merged to main, because
+2.3 is the natural M2 closer and carries the closure burden
+(milestone-doc Phase Status flips, milestone-doc top-level
+Status flip, epic Milestone Status table flip, doc currency
+across README + architecture + product, batch deletion of the
+three transient scoping docs) per AGENTS.md "Plan-to-PR
+Completion Gate." This is a milestone-doc commitment, not a
+technical dependency — if product pressure ever requires 2.3 to
+ship before 2.2, the closure responsibility transfers via a
+plan revision in the same PR (not informally), and the ship-
+order constraint relaxes accordingly.
 
 **No upstream-milestone dependency.** M1 (apps/web ThemeScope
 wiring) is not a strict dependency of M2 — M2 lives entirely in
