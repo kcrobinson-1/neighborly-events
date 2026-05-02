@@ -1,8 +1,43 @@
-# Planning Doc Location Investigation
+# Planning Doc Location
 
 ## Status
 
-Proposed (investigation).
+Two concerns recorded here:
+
+- **In-repo layout convention** — settled 2026-05-01. See "In-Repo Layout
+  Convention" below.
+- **Whether discussion-style surfaces move out of the code repo** — open
+  investigation. See "Goal" through "Risk Register" below.
+
+## In-Repo Layout Convention
+
+Effective 2026-05-01, in-repo plan docs follow this layout:
+
+- `docs/plans/<name>.md` — cross-cutting plans not bound to a single epic
+  (analytics, security, release-readiness, framework decisions, repo rename,
+  the `shared-*-foundation` set, etc.).
+- `docs/plans/epics/<epic-slug>/epic.md` — the epic-level overview for an
+  epic-scoped body of work.
+- `docs/plans/epics/<epic-slug>/<descriptive-name>-plan.md` — per-phase
+  implementation contracts inside an epic. Filenames keep a descriptive
+  prefix (e.g. `m1-theming-plan.md`) so they remain searchable globally
+  rather than collapsing to bare `phase-1.md` collisions across epics.
+- `docs/plans/epics/<epic-slug>/scoping/` — pre-phase scoping notes for the
+  epic, when useful.
+- `docs/plans/archive/` — existing archive for superseded plans, unchanged.
+  New epics adopt the in-place-as-archive pattern: once an epic is `Landed`,
+  its `docs/plans/epics/<slug>/` folder remains in place as the durable
+  record without bulk-moving into `archive/`.
+
+Plans authored before this convention (the `event-platform-epic.md` set and
+its M0–M3 phase plans) stay in their existing flat locations under
+`docs/plans/`. Migration is deferred and would be a separate refactor that
+does not block in-flight work.
+
+The cross-cutting vs. epic-scoped split applies only to plan docs; this
+convention does not change archive policy, the per-phase implementation
+contract location ruled in by the hard constraints below, or the
+discussion-style-surface investigation that follows.
 
 ## Goal
 
