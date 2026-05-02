@@ -356,14 +356,21 @@ walkthrough wants to *show*: "look at the workspace" vs
   `publish_game_event_draft` / `unpublish_game_event` RPCs
   which insert audit-log rows under service_role. Audit log
   inserts assume an authenticated `user_id`.
-- `generate-event-code` projects an event code on the row
-  per
-  [supabase/migrations/20260418060000_project_event_code_on_publish.sql](/supabase/migrations/20260418060000_project_event_code_on_publish.sql)
-  — locked after publish per
+- `generate-event-code` does **not** persist anything: it
+  calls the pure `generate_random_event_code()` RPC
+  ([supabase/migrations/20260418040000_backfill_event_code.sql:63-87](/supabase/migrations/20260418040000_backfill_event_code.sql))
+  to do rejection-sampling over the 17,576-code space and
+  returns a candidate 3-letter string to the caller. The
+  chosen code persists later via the save-draft path
+  (writes `game_event_drafts.event_code`); projection onto
+  `game_events.event_code` happens at publish per
+  [supabase/migrations/20260418060000_project_event_code_on_publish.sql](/supabase/migrations/20260418060000_project_event_code_on_publish.sql);
+  immutability is enforced after publish per
   [supabase/migrations/20260418050000_lock_event_code_after_publish.sql](/supabase/migrations/20260418050000_lock_event_code_after_publish.sql).
-  A "functional" answer to Q1 that publishes a test event
-  pins its code **in the environment where the publish RPC
-  executes**. The lock is enforced by a runtime trigger on
+  A "functional" answer to Q1 that *publishes* a test event
+  (not merely Generate Code on its own) pins its code **in
+  the environment where the publish RPC executes**. The
+  lock is enforced by a runtime trigger on
   `game_event_drafts`, not by migration history; running
   migrations applies the trigger DDL but does not execute
   publishes. The blast radius is therefore environment-
@@ -396,12 +403,39 @@ mimics agent-only (can redeem; can't reverse), organizer-only
 combination — and the answer can differ between the redeem
 keypad and the reverse-from-detail-sheet path.
 
-**Why it matters.** Same uniformity concern as Q3 but
-narrower: the RPCs are SECURITY DEFINER so the bypass branch
-lives inside the RPC body, not in an Edge Function gate. The
-RPC also stamps `redeemed_by` / `redeemed_by_role` /
-`redemption_reversed_by` audit fields from
-`current_request_user_id()`.
+**Why it matters.** Bypass for redeem and reverse is
+**two-layer**, not single-layer:
+
+1. The Edge Functions
+   ([redeem-entitlement/index.ts:178-191](/supabase/functions/redeem-entitlement/index.ts),
+   [reverse-entitlement-redemption/index.ts:204-217](/supabase/functions/reverse-entitlement-redemption/index.ts))
+   call `authenticateRedemptionOperator` and return 401
+   *before* invoking the RPC. An unauthenticated visitor is
+   rejected at this layer; the RPC is never called.
+2. The RPCs themselves then run their own role check
+   (`is_agent_for_event` for redeem,
+   `is_organizer_for_event` for reverse), with `or
+   is_root_admin()` as the override branch.
+
+A bypass that only patches the RPC body leaves
+`/game/redeem` and `/game/redemptions` blocked at the Edge
+Function 401 — the RPC change has no caller. 3.1 has to
+decide what each layer does on test-event slugs:
+
+- The Edge Function: skip `authenticateRedemptionOperator`
+  for allowlisted slugs, call the RPC without forwarding a
+  bearer token (or forward a synthesized one), or call a
+  different RPC variant.
+- The RPC: short-circuit the `is_agent_for_event` /
+  `is_organizer_for_event` check on allowlisted events
+  when `current_request_user_id()` is null, or accept the
+  synthesized identity the Edge Function forwards.
+
+Same SECURITY DEFINER-ness still applies: the RPC stamps
+`redeemed_by` / `redeemed_by_role` /
+`redemption_reversed_by` / `redemption_reversed_by_role`
+audit fields from `current_request_user_id()`, which Q5
+governs.
 
 **Product-owner framing.** This is what happens at the
 volunteer keypad when the partner enters a code, and what
@@ -449,19 +483,25 @@ prize hands out, organizer sees it land, organizer
 reverses if a mistake was made") works end-to-end or
 truncates at one of the role boundaries.
 
-**Options surfaced.** Each option below applies *per RPC*
-— 3.1 picks one for `redeem_entitlement_by_code` and one
-for `reverse_entitlement_redemption`, which may match or
-differ.
+**Options surfaced.** Each option below applies *per RPC
+path* (Edge Function + RPC body together) — 3.1 picks one
+for redeem and one for reverse, which may match or differ.
+Each option implies coordinated edits at *both* the Edge
+Function (the 401-returning auth gate) and the RPC body
+(the role check).
 
-1. **Reject** — short-circuit inside the RPC on (test-event
-   slug membership AND `current_request_user_id() IS NULL`)
-   and return `not_authorized`. UI behaves as today's
+1. **Reject** — Edge Function still 401s allowlisted-slug
+   unauth callers, OR the EF lets them through and the RPC
+   short-circuits on (allowlisted slug AND
+   `current_request_user_id() IS NULL`) returning
+   `not_authorized`. Either way, UI behaves as today's
    role-gate.
-2. **Accept against real entitlements.** RPC widens its
-   guard to admit unauthenticated callers when the event is
-   allowlisted. Redemption state mutates on the real
-   entitlement rows. Audit fields stamp a sentinel
+2. **Accept against real entitlements.** Edge Function
+   skips `authenticateRedemptionOperator` for allowlisted
+   slugs and forwards the request to the RPC; the RPC
+   widens its role check to admit the unauth caller when
+   the event is allowlisted. Redemption state mutates on
+   real entitlement rows. Audit fields stamp a sentinel
    (`redeemed_by_role = 'demo_visitor'` or null, with
    `redeemed_by` null). For the reverse path, the
    `redemption_reversed_by_role` and `redemption_reversed_by`
@@ -497,7 +537,9 @@ differ.
   [apps/web/src/redeem/authorizeRedeem.ts:19](/apps/web/src/redeem/authorizeRedeem.ts)
   and resolves the slug; the keypad submits a 4-digit
   numeric suffix per
-  [apps/web/src/redeem/RedeemKeypad.tsx:1-17](/apps/web/src/redeem/RedeemKeypad.tsx);
+  [apps/web/src/redeem/RedeemKeypad.tsx:1-17](/apps/web/src/redeem/RedeemKeypad.tsx)
+  with the submit-eligibility regex `/^\d{4}$/` enforced in
+  [apps/web/src/redeem/useRedeemKeypadState.ts:7,21](/apps/web/src/redeem/useRedeemKeypadState.ts);
   the redeem RPC concatenates them as
   `v_event_code || '-' || p_code_suffix` per
   [supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:62](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql).
