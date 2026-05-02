@@ -231,9 +231,19 @@ fixed-content showcase artifacts the freeze is fine.
   comment block on the id-as-event-identifier pattern.)
 - `game_event_admin_status` is a `security_invoker = true`
   view per the existing migration's own comments
-  ([supabase/migrations/20260427010000_broaden_event_scoped_rls.sql:25-29](/supabase/migrations/20260427010000_broaden_event_scoped_rls.sql))
-  — broadening the view's SELECT requires broadening the
-  underlying tables' SELECT, not the view itself.
+  ([supabase/migrations/20260427010000_broaden_event_scoped_rls.sql:25-29](/supabase/migrations/20260427010000_broaden_event_scoped_rls.sql)).
+  Broadening anon read access to the view requires **two
+  changes, not one**:
+  (a) broaden the underlying tables' SELECT so the
+  invoker-scoped runtime check passes for anon, AND
+  (b) `grant select on public.game_event_admin_status to
+  anon` — the view's privilege grants currently revoke from
+  `anon` and grant only to `authenticated` /
+  `service_role` per
+  [supabase/migrations/20260423020000_add_game_event_admin_status_view.sql:53-58](/supabase/migrations/20260423020000_add_game_event_admin_status_view.sql).
+  Patching only (a) leaves the view object's privilege check
+  rejecting anon callers before the underlying-table policies
+  even evaluate.
 - **Anon-readable RLS on event-scoped tables exists as
   precedent.** Anon SELECT is already admitted on
   `game_events`, `game_questions`, and `game_question_options`
@@ -247,28 +257,53 @@ fixed-content showcase artifacts the freeze is fine.
   admit anon reads at all — `game_event_drafts`,
   `game_event_versions`, `game_entitlements`. The mechanism
   transfers; the predicate logic is novel.
-- **One Edge Function read-shim precedent exists today.**
-  [`supabase/functions/get-redemption-status/index.ts`](/supabase/functions/get-redemption-status/index.ts)
-  is configured `verify_jwt = false` per
-  [supabase/config.toml:27-28](/supabase/config.toml),
-  authenticates the caller via signed session cookie
-  (`readVerifiedSession` from
-  [supabase/functions/_shared/session-cookie.ts](/supabase/functions/_shared/session-cookie.ts))
-  rather than a Supabase Auth JWT, mints a service-role
-  client, and reads `game_entitlements` scoped to
-  `(event_id, client_session_id)`. The pattern Q2's Edge
-  Function shim option would adopt — `verify_jwt = false`
-  + service-role read of an event-scoped table — is
-  established. The trust-boundary gating differs (the
-  existing shim gates on session-cookie ownership of one
-  row; a Q2 shim would gate on slug allowlist membership
-  for event-wide reads) and the per-row scoping discipline
-  doesn't transfer directly to admin draft reads, so the
-  pattern is precedent-but-not-template. The other
-  `verify_jwt = false` functions are public-action
-  endpoints (`complete-game`, `issue-session`,
-  `redeem-entitlement` — the SECURITY DEFINER RPC is the
-  auth surface, not the function), not read shims.
+- **Edge Function trust-boundary inventory.** Every Edge
+  Function in this repo is configured `verify_jwt = false`
+  per
+  [supabase/config.toml](/supabase/config.toml) — none use
+  Supabase platform JWT verification. Each function
+  implements its own auth boundary, splitting into three
+  shapes:
+
+  1. **Custom bearer-token auth + service-role write/RPC**
+     — the four authoring functions (`save-draft`,
+     `generate-event-code`, `publish-draft`,
+     `unpublish-event`) gate on
+     `authenticateEventOrganizerOrAdmin`
+     ([supabase/functions/_shared/event-organizer-auth.ts](/supabase/functions/_shared/event-organizer-auth.ts));
+     the two redemption mutations (`redeem-entitlement`,
+     `reverse-entitlement-redemption`) gate on
+     `authenticateRedemptionOperator`
+     ([supabase/functions/_shared/redemption-operator-auth.ts](/supabase/functions/_shared/redemption-operator-auth.ts)).
+     Both helpers require a real Supabase Auth bearer
+     token; the function then mints a service-role client
+     to call the RPC.
+  2. **Custom session-cookie auth + service-role read**
+     — `get-redemption-status` reads `game_entitlements`
+     scoped to `(event_id, client_session_id)` after
+     `readVerifiedSession`
+     ([supabase/functions/_shared/session-cookie.ts](/supabase/functions/_shared/session-cookie.ts))
+     verifies a signed cookie. This is the closest existing
+     precedent for Q2's "Edge Function read shim" option
+     in shape: `verify_jwt = false` + custom auth +
+     service-role read of an event-scoped table.
+  3. **No-caller-auth public actions** —
+     `complete-game` and `issue-session` accept
+     unauthenticated requests and don't authenticate the
+     caller at all (the security model is in the action
+     itself: `complete-game` writes only what the request
+     payload asserts; `issue-session` mints a fresh
+     identifier).
+
+  For Q2's Edge Function shim option specifically: shape (1)
+  shows the custom-auth + service-role architecture is well-
+  established across six functions; shape (2) is the
+  closest read-shim template but its per-row gating
+  (session-cookie ownership) doesn't transfer to event-wide
+  admin draft reads — a Q2 shim would gate on slug
+  allowlist membership instead. The pattern is precedent-
+  but-not-template; the architecture is well-precedented;
+  the trust-boundary predicate is novel.
 
 ### Q3. Write-side contract for the admin authoring functions
 
@@ -965,18 +1000,19 @@ before the plan absorbs the answer.
   Q1's "demo signaling extends to apps/web" cross-phase
   invariant rides on the apps/site precedent at
   [apps/site/components/event/TestEventDisclaimer.tsx](/apps/site/components/event/TestEventDisclaimer.tsx).
-- **Existing Edge Function read-shim precedent.** Scoping
-  read all functions in
-  [supabase/functions/](/supabase/functions/) and found one
-  precedent for the `verify_jwt = false` + service-role
-  read pattern: `get-redemption-status` (gated by
-  session-cookie ownership of one
-  `(event_id, client_session_id)` row, not slug
-  allowlist). Plan-drafting re-verifies the function's
-  shape and confirms no other read shim has landed in the
-  meantime; the existing precedent is reality-check input
-  for Q2's "Edge Function shim" option, distinguishing
-  precedent-but-not-template from precedent-as-template.
+- **Edge Function trust-boundary inventory.** Scoping read
+  every entry in [supabase/config.toml](/supabase/config.toml)
+  and confirmed all 9 functions are `verify_jwt = false`,
+  splitting into three auth shapes: custom bearer-token (6
+  functions: the 4 authoring + 2 redemption mutations),
+  custom session-cookie (`get-redemption-status` — the
+  closest read-shim precedent, gated by session-cookie
+  ownership of one row rather than slug allowlist), and
+  no-caller-auth public actions (`complete-game`,
+  `issue-session`). Plan-drafting re-verifies the inventory
+  hasn't shifted; the breakdown is reality-check input for
+  Q2's "Edge Function shim" option (architecture
+  well-precedented; trust-boundary predicate novel).
 
 ## Spike candidates 3.1 may run
 
