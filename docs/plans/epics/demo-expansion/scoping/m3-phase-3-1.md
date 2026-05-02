@@ -88,6 +88,41 @@ contract, the seam with M4 (seeded codes / monitoring /
 reset), and the M3-closing copy revision on M2's role doors
 all cascade from this answer.
 
+**Product-owner framing.** This is the question that decides
+what walking up to the demo *feels like*. The three options
+correspond to three partner pitches:
+
+- **Read-only browse** — "Here's what the product looks
+  like; click through to see the surfaces." A partner can
+  navigate the admin workspace, see the schedule and
+  question list, browse a redemptions monitoring view, but
+  every Save / Publish / Redeem / Reverse button shows an
+  inline "demo mode is read-only" notice. Closest to a
+  product gallery: low risk of confusion, low engagement,
+  no muscle-memory for what using the product *feels* like.
+- **Functional with persistence and reset** — "Here's the
+  product; try it for real, but heads-up that other people
+  are doing the same demo and state shares with them until
+  someone resets it." A partner can author a question, see
+  it land, mark a redemption, see it appear in the
+  monitoring list. Highest fidelity to the live-event
+  experience; also highest "why is there a question called
+  'lol test 47' here" surprise.
+- **Sandbox-ephemeral** — "Here's your own private demo;
+  use it as if it were real, and your edits clear when you
+  leave." A partner authors a question and sees it land in
+  *their* schedule; another partner in another tab sees a
+  pristine baseline. Closest to a guided trial: high
+  fidelity, no shared-state surprise, but the multi-
+  operator dimension of a real event (concurrent agents
+  redeeming codes) doesn't exercise unless 3.1 explicitly
+  models it (see Q7).
+
+The partner-facing pitch the product owner finds most
+compelling is the answer to Q1; engineering can implement
+any of the three, but only the product owner can decide
+which experience the demo is selling.
+
 **Options surfaced.**
 
 1. **Read-only browse.** Bypassed surfaces render with real
@@ -141,6 +176,21 @@ matches neither branch; the read returns zero rows even when
 the slug is allowlisted. Mounting the page without solving
 the read is "necessary but not sufficient" per the milestone
 doc.
+
+**Product-owner framing.** **No product-visible difference
+across the options — defer to engineering.** The five
+candidate mechanisms (anon-RLS broadening, Edge Function
+shim, public views, static fixtures, hybrid) all produce
+the same partner experience: the admin page mounts and
+shows the test event's draft content. The differences are
+in trust-boundary surface, build-time vs. runtime data
+freshness, and review surface — engineering's call.
+Caveat: if engineering picks **static fixtures** the demo
+content stops tracking real edits to the test events
+(content freezes at the build that shipped the fixture);
+that is a product question worth flagging if the test
+events evolve frequently, but if the test events are
+fixed-content showcase artifacts the freeze is fine.
 
 **Options surfaced.**
 
@@ -208,6 +258,38 @@ behavior (Save works but Publish 403s, etc.). It also feeds
 into the M3/M4 seam: if writes persist, M4's reset story
 becomes more urgent.
 
+**Product-owner framing.** This is what happens when the
+partner clicks Save / Publish / Unpublish / Generate Code
+in the bypassed admin workspace. Each option is a
+different demo-experience:
+
+- **Reject** — Clicking Save shows "demo mode is read-only"
+  inline. Partner sees the workspace but learns from the
+  first click that nothing they do persists. Honest;
+  slightly disappointing if they expected to "try
+  authoring."
+- **Accept against same tables (functional)** — Save
+  actually writes to the real test event's draft. The next
+  visitor sees the partner's edits. Partner experiences
+  authoring "for real," with the surprise that their work
+  is shared. Q5 governs whether the audit log credits them
+  by name or as "(unknown)."
+- **Accept against parallel-state schema (sandbox)** —
+  Save writes to a private mirror keyed by the partner's
+  session. Looks identical to real authoring within their
+  session; clears when the session ends. Closest to a
+  guided product trial.
+- **Accept against client-only state** — Save updates the
+  on-screen form but reload loses everything. **Risk: the
+  partner doesn't realize their work didn't persist until
+  they refresh** — false-impression failure mode.
+
+The Q1 answer constrains this: read-only browse forces
+Reject; functional / sandbox each have a matching write
+option. Worth picking the experience the demo's authoring
+walkthrough wants to *show*: "look at the workspace" vs
+"try authoring a question."
+
 **Options surfaced.**
 
 1. **Reject (read-only).** All four functions short-circuit
@@ -272,6 +354,37 @@ RPC also stamps `redeemed_by` / `redeemed_by_role` /
 `redemption_reversed_by` audit fields from
 `current_request_user_id()`.
 
+**Product-owner framing.** This is what happens at the
+volunteer keypad when the partner enters a code, and what
+happens in the organizer monitoring view when they click
+Reverse on a redeemed entitlement:
+
+- **Reject** — keypad submit shows the role-gate message;
+  partner can't experience the redemption flow at all.
+  Inconsistent with most Q1 answers (a "functional" demo
+  that rejects the redeem path is the point of the demo
+  not working).
+- **Accept against real entitlements** — code redeems for
+  everyone; the row in the real `game_entitlements` table
+  flips. Realistic flow including the "code already
+  redeemed by another agent" message if a second partner
+  enters the same code. **Requires demo entitlement rows
+  to exist** (the keypad needs codes to enter — Q8 governs
+  whether M3 ships the seed or M4 does).
+- **Accept against sandbox entitlements** — partner enters
+  a code, sees success, sees the row appear in *their*
+  monitoring view; another partner sees the pre-redemption
+  baseline. Closest to a guided trial of the booth flow.
+- **Client-only** — keypad shows the success animation
+  with no DB change. Looks correct in the moment; partner
+  navigating to the monitoring view sees no record of
+  their redemption. Likely confusing.
+
+If Q1 is functional or sandbox, this is the question that
+decides whether the volunteer-booth pitch ("scan a code,
+prize hands out, organizer sees it land") works end-to-
+end or not.
+
 **Options surfaced.**
 
 1. **Reject** — short-circuit inside the RPC on (test-event
@@ -325,6 +438,32 @@ decide whether null-stamping is acceptable, whether a
 sentinel UUID is allocated, or whether a synthesized
 session-scoped identity gets created.
 
+**Product-owner framing.** **Mostly technical, with one
+labeling decision the product owner should weigh in on.**
+The technical part — whether identity is null / sentinel
+UUID / session token / Supabase anon-auth — is engineering's
+call. The product-visible part is what the partner sees in
+the monitoring view's "redeemed by" / "saved by" columns:
+
+- **"(unknown)"** — null-stamp option; columns render
+  blank or as a placeholder. Looks like missing data.
+- **"Demo visitor"** — sentinel option; one shared label
+  identifies all bypass-branch writes. Honest about demo
+  status, doesn't distinguish between visitors.
+- **"Visitor #abc12"** — session-token option; per-visitor
+  pseudonym. Distinguishes one demo visitor's actions from
+  another's in the monitoring view; useful if Q1 is
+  functional and the partner wants to see a multi-operator
+  monitoring scenario.
+- **"Demo Volunteer"** (or whatever the anon auth.users
+  row is named) — anon-auth option; looks like a real
+  volunteer, no demo signal in this column.
+
+If Q1 is read-only or Q3/Q4 are reject, this question
+becomes moot — there are no writes to attribute. Otherwise
+the product owner picks the labeling story; engineering
+implements.
+
 **Options surfaced.**
 
 1. **Null-stamp.** Audit fields go null for demo writes.
@@ -365,6 +504,38 @@ of the partner-runnable experience including reset, but
 3.1's choice constrains what M4 can build. A "functional"
 answer with no reset story means a partner walks into demo
 state shaped by the previous partner's actions.
+
+**Product-owner framing.** This is the question of "what
+state does a partner walk into when they open the demo
+fresh?" Each option translates to a distinct partner
+arrival experience:
+
+- **No reset** — Day 1 of demo: clean. Day 30: 200
+  fictional questions named "test 1" through "lol
+  whatever," 47 reversed redemptions, schedule item titled
+  "asdf." The demo becomes unusable for new partners
+  unless we never advertise it functionally.
+- **Manual operator reset** — An internal-team member runs
+  a script before each scheduled partner meeting. Works
+  for "we're walking Acme through the demo on Tuesday"
+  scenarios; doesn't work for partner self-service ("hey
+  here's the URL, take a look").
+- **On-demand reset endpoint** — A "Reset demo" button
+  visible to the partner. Clean state on click. Empowering;
+  also: trivially easy for one partner to reset mid-
+  walkthrough for another partner if Q7 is shared-state.
+- **Cron** — Scheduled reset (nightly / hourly). Predictable
+  baseline; awkward if a partner is mid-walkthrough at the
+  reset boundary.
+- **Per-session sandbox** — State vanishes when the
+  partner leaves; "reset" is "open a new tab." Most
+  natural feel for self-service trials; loses the
+  multi-operator dimension of a real event entirely.
+
+The product owner's choice here strongly affects whether
+the demo URL is something we hand to a partner ("here, try
+it") or something we drive ourselves in scheduled walk-
+throughs.
 
 **Options surfaced.**
 
@@ -407,6 +578,36 @@ state in real time. Sandbox-ephemeral isolates per-session.
 Read-only browse is uniform across visitors. The partner's
 demo experience changes materially across the three.
 
+**Product-owner framing.** The "two partners on the demo
+at once" scenario isn't hypothetical — it happens whenever
+we send the URL to two stakeholders or run two parallel
+walkthroughs. Each option produces a different surprise:
+
+- **Shared real-time state** — Partner A authors a
+  question; Partner B hits reload and sees it. Most
+  realistic to a real event (where multiple agents *do*
+  redeem codes concurrently). Partner B may wonder "did
+  *I* add that?" — needs visible signaling that state is
+  shared.
+- **Per-session isolated state** — Each partner has their
+  own copy. Friendly individual experience; loses the
+  "watch redemptions land in real time as agents redeem"
+  pitch entirely (because there's only ever one agent
+  per session — the partner themselves).
+- **Mixed (shared reads, isolated writes)** — Partner A
+  sees their own writes plus the seeded baseline; Partner
+  B sees the seeded baseline plus *their* writes. Each
+  experiences "I'm authoring against a populated event"
+  without colliding. Halfway position.
+- **Stateless** — Read-only path: no concurrency surprise
+  because nothing mutates.
+
+If the demo's pitch includes the live-event multi-operator
+moment (an organizer watching agents redeem in real time),
+shared or mixed is required. If the pitch is "use the
+admin workspace as if you were authoring," isolated or
+mixed is friendlier.
+
 **Options surfaced.**
 
 1. **Shared real-time state.** Visitor A's edits appear on
@@ -446,6 +647,38 @@ seeded, the bypassed surfaces mount but stay empty. 3.1's
 3.2+ phase-split derivation has to pick where the seam
 falls.
 
+**Product-owner framing.** This is "what does the partner
+actually see when M3 ships, before M4?" question — and
+it's surprisingly load-bearing for whether M3 is
+demo-able on its own:
+
+- **Strict M3/M4 split** — Partner clicks Organizer door,
+  page mounts and shows: "Harvest Block Party — 0
+  questions, 0 prizes, 0 schedule items." Clicks Volunteer
+  door: "Enter a code" keypad with no codes to enter and
+  no entitlements. Clicks Redemptions: empty list.
+  Reaches the surfaces (which is what M3 promises)
+  but the partner experience is "this looks broken." Needs
+  M4 to be presentable.
+- **Minimum-seed-in-M3** — M3 absorbs the smallest seed
+  set (a published test event with a handful of questions,
+  prizes, entitlement rows). Partner sees a populated
+  workspace and can experience the read-side surfaces
+  meaningfully even before M4. M4 still owns reset +
+  richer pre-population.
+- **M3-absorbs-M4** — M3 ships everything together. Demo
+  is fully runnable when M3 lands. Cancels M4 as a
+  separate milestone (which has its own implications for
+  scoping cadence).
+
+This question matters because it decides whether shipping
+M3 in isolation buys the project anything *demo-able* or
+just an architectural foundation for M4. The product owner
+is best positioned to say whether "an empty admin
+workspace that signed-out partners can reach" is
+sufficiently valuable to ship before M4, or whether M3
+should wait or absorb seeds.
+
 **Options surfaced.**
 
 1. **Strict M3/M4 split.** M3 ships bypass + functional
@@ -484,6 +717,18 @@ fragments the trust-boundary surface. The cross-phase
 invariant "Real events never receive bypass" binds every
 mediation site individually; non-uniform patterns multiply
 the assertion surface.
+
+**Product-owner framing.** **No product-visible difference
+— defer to engineering.** Whether one mechanism handles
+all reads or three different mechanisms handle each
+surface's read is invisible to the partner. The trade-off
+is review surface, trust-boundary assertions, and
+maintenance — engineering's call. (Marginal operational
+note: an Edge Function shim adds a network round-trip vs.
+direct PostgREST; if engineering picks a non-uniform
+pattern that puts an Edge Function on a frequently-loaded
+surface, perceived load time may differ slightly. Worth
+asking engineering to flag if so.)
 
 **Options surfaced.**
 
