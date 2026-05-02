@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { HarvestNarrative } from "../components/home/HarvestNarrative.tsx";
 import { HomeHero } from "../components/home/HomeHero.tsx";
 import { TwoEventShowcase } from "../components/home/TwoEventShowcase.tsx";
 
@@ -21,6 +22,7 @@ export default function Home() {
     <main className="home-shell">
       <HomeHero />
       <TwoEventShowcase />
+      <HarvestNarrative />
     </main>
   );
 }
