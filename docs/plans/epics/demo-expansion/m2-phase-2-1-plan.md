@@ -334,10 +334,13 @@ mix of rules and estimates"; the implementer may refine.
    + `npm run build:web` confirm green.
 10. **Open draft PR.** Vercel produces the apps/site preview URL
     on push.
-11. **Multi-theme capture.** Capture the desktop rendering of
-    `/` showing both showcase cards in one frame; attach to PR
-    body's Validation section with the brand-color falsifier
-    sentence per the validation-gate procedure.
+11. **Multi-theme captures (desktop + narrow viewport).** Two
+    captures of `/`: one at desktop showing both showcase cards
+    side-by-side, one at narrow viewport showing the cards
+    stacked into a single column. Both attach to PR body's
+    Validation section with the brand-color falsifier sentence
+    per the validation-gate procedure; the narrow-viewport
+    capture additionally exercises the responsive grid contract.
 12. **Noindex curl falsifier.**
     `curl -s -L <preview-url>/ | grep -i 'name="robots"'` —
     confirm the response carries
@@ -378,9 +381,11 @@ The validation procedure that proves this PR ships its goal:
 - `npm run build:web` — green per the PR-template default; the
   diff does not touch apps/web but the build runs as a regression
   guard.
-- **Multi-theme capture in PR body's Validation section.**
-  One desktop screenshot of `/` showing both showcase cards in
-  the same frame. The PR body names the brand-color falsifier:
+- **Multi-theme capture in PR body's Validation section
+  (desktop).** One desktop-viewport screenshot of `/` (≥720px,
+  or whatever breakpoint the implementer settles on) showing
+  both showcase cards side-by-side in the same frame. The PR
+  body names the brand-color falsifier:
   *"the Harvest card's brand surface (border / button / eyebrow)
   reads in a pumpkin family
   ([`#b85c1c`](/shared/styles/themes/harvest-block-party.ts) and
@@ -391,6 +396,18 @@ The validation procedure that proves this PR ships its goal:
   defaults — or both rendering in the same per-event Theme — is
   the falsifier that the per-card `<ThemeScope>` wrap is not
   applying."*
+- **Narrow-viewport capture in PR body's Validation section.**
+  One narrow-viewport screenshot of `/` (≤480px, or a
+  representative mobile baseline) showing the showcase stacked
+  into a single column. The same brand-color falsifier from the
+  desktop capture applies — both Themes must remain visibly
+  distinct after the layout change. The narrow-viewport
+  falsifier adds: *"cards remain side-by-side at narrow width
+  (responsive contract regression), or one card overflows the
+  viewport, or one card disappears at narrow width."* This
+  capture exercises the responsive grid contract named in the
+  Files-to-touch CSS estimate; without it, the responsive
+  behavior is shipped but unverified.
 - **Noindex curl falsifier.**
   `curl -s -L <preview-url>/ | grep -i 'name="robots"'` returns
   `<meta name="robots" content="noindex, nofollow" />`. Output
