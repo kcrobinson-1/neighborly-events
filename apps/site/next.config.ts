@@ -33,6 +33,15 @@ import type { NextConfig } from "next";
  * on apps/web's SPA. Without these rewrites the navigations 404
  * on apps/site origin.
  *
+ * `/assets/:path*` is also rewritten because apps/web's Vite build
+ * emits its hashed JS/CSS bundles as root-relative `/assets/...`
+ * references inside the SPA's `index.html`. Proxying only the HTML
+ * routes without `/assets/*` would return 200 for the document but
+ * 404 for every script and stylesheet, leaving the proxied pages
+ * blank or unhydrated in a real browser. apps/site has no native
+ * `/assets/*` route of its own (Next.js puts its build output under
+ * `/_next/*`), so the rewrite is collision-free.
+ *
  * The destination origin is hardcoded to apps/web's auto-generated
  * Vercel host, matching the precedent in `apps/web/vercel.json`
  * (which hardcodes apps/site's host the same way). Asymmetry vs.
@@ -68,6 +77,10 @@ const nextConfig: NextConfig = {
       {
         source: "/event/:slug/admin/:path*",
         destination: `${APPS_WEB_ORIGIN}/event/:slug/admin/:path*`,
+      },
+      {
+        source: "/assets/:path*",
+        destination: `${APPS_WEB_ORIGIN}/assets/:path*`,
       },
     ];
   },
