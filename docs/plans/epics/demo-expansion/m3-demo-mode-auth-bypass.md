@@ -107,7 +107,7 @@ rows fill in as each phase's plan drafts and as its PR merges.
 
 | Phase | Title (estimate) | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 3.1 | Demo-mode data-access-semantics decision (doc-only) | _pending phase planning_ | Proposed | _pending_ |
+| 3.1 | Demo-mode data-access-semantics decision (doc-only) | [scoping](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-1.md) (in progress); plan _pending_ | Proposed | _pending_ |
 | 3.2 | Implement chosen demo-mode bypass + M3 closure | _pending 3.1_ | Proposed | _pending_ |
 
 The 3.2-as-single-row estimate is the milestone session's working
