@@ -234,11 +234,19 @@ fixed-content showcase artifacts the freeze is fine.
   ([supabase/migrations/20260427010000_broaden_event_scoped_rls.sql:25-29](/supabase/migrations/20260427010000_broaden_event_scoped_rls.sql))
   — broadening the view's SELECT requires broadening the
   underlying tables' SELECT, not the view itself.
-- No precedent for anon-readable RLS policies on event-scoped
-  tables exists today: anon SELECT today is gated to
-  `published_at IS NOT NULL` for `game_events` /
-  `game_questions` / `game_question_options` only
-  ([supabase/migrations/20260418000000_rename_database_terminology_to_game.sql:158-209](/supabase/migrations/20260418000000_rename_database_terminology_to_game.sql)).
+- **Anon-readable RLS on event-scoped tables exists as
+  precedent.** Anon SELECT is already admitted on
+  `game_events`, `game_questions`, and `game_question_options`
+  with the predicate `published_at IS NOT NULL` per
+  [supabase/migrations/20260418000000_rename_database_terminology_to_game.sql:158-209](/supabase/migrations/20260418000000_rename_database_terminology_to_game.sql).
+  The policy-shape mechanism (anon SELECT with a `using`
+  predicate scoped on a row-level attribute) is established;
+  Q2's anon-RLS option would add a *new* anon predicate
+  (slug-allowlist membership via a helper like
+  `is_test_event_id(text)`) on tables that don't currently
+  admit anon reads at all — `game_event_drafts`,
+  `game_event_versions`, `game_entitlements`. The mechanism
+  transfers; the predicate logic is novel.
 - **One Edge Function read-shim precedent exists today.**
   [`supabase/functions/get-redemption-status/index.ts`](/supabase/functions/get-redemption-status/index.ts)
   is configured `verify_jwt = false` per
@@ -354,8 +362,17 @@ walkthrough wants to *show*: "look at the workspace" vs
   — locked after publish per
   [supabase/migrations/20260418050000_lock_event_code_after_publish.sql](/supabase/migrations/20260418050000_lock_event_code_after_publish.sql).
   A "functional" answer to Q1 that publishes a test event
-  permanently pins its code in every environment that runs
-  the migration history.
+  pins its code **in the environment where the publish RPC
+  executes**. The lock is enforced by a runtime trigger on
+  `game_event_drafts`, not by migration history; running
+  migrations applies the trigger DDL but does not execute
+  publishes. The blast radius is therefore environment-
+  local: a demo publish in production pins production's
+  row, leaves local / staging untouched. Still significant
+  if 3.1 picks a functional path that publishes against the
+  real `game_events` table in any environment users see —
+  recoverable only by direct SQL operating below the
+  trigger guard.
 
 ### Q4. Write-side contract for the redeem and reverse RPCs
 
