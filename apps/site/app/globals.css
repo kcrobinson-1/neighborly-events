@@ -837,6 +837,84 @@ button {
   font-size: 0.95rem;
 }
 
+/*
+ * Home-page narrative section. The whole section wraps in a single
+ * <ThemeScope> resolving Harvest's Theme, so brand-bearing surfaces
+ * here (section eyebrow, persona top-border, persona eyebrow) read
+ * in Harvest's pumpkin family. Rules consume only brand bases
+ * (--primary, --secondary, --accent, --bg, --text, --muted,
+ * --surface-card) — never derived shades (--primary-surface,
+ * --secondary-focus, --accent-shade) which pin to apps/site :root
+ * and would silently regress the wrap.
+ */
+.home-narrative {
+  display: grid;
+  gap: 24px;
+}
+
+.home-narrative-eyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-narrative-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.home-narrative-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  max-width: 64ch;
+}
+
+.home-narrative-personas {
+  display: grid;
+  gap: 24px;
+  margin-top: 4px;
+}
+
+.narrative-persona {
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 3px solid var(--primary);
+}
+
+.narrative-persona-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.narrative-persona-heading {
+  margin: 0;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
+  line-height: 1.2;
+}
+
+.narrative-persona-prose {
+  display: grid;
+  gap: 10px;
+}
+
+.narrative-persona-prose p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 64ch;
+}
+
 @media (max-width: 640px) {
   .home-shell {
     padding: 48px 18px;
@@ -845,5 +923,9 @@ button {
 
   .home-showcase-card {
     padding: 20px;
+  }
+
+  .home-narrative-personas {
+    gap: 20px;
   }
 }
