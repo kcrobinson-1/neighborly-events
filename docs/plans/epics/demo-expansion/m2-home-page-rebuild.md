@@ -72,7 +72,7 @@ phase's plan drafts and as its PR merges.
 
 | Phase | Title (estimate) | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 2.1 | Page structural rebuild + hero + two-event showcase | _pending_ | Plan-pending | _pending_ |
+| 2.1 | Page structural rebuild + hero + two-event showcase | [m2-phase-2-1-plan.md](/docs/plans/epics/demo-expansion/m2-phase-2-1-plan.md) | Proposed | _pending_ |
 | 2.2 | End-to-end Harvest narrative section | _pending_ | Plan-pending | _pending_ |
 | 2.3 | Three role-door entry points + M2 closure | _pending_ | Plan-pending | _pending_ |
 
