@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed at M3 — M4 deferred 2026-05-01.
 
 ## Milestone Status
 
@@ -18,10 +18,21 @@ plan to history.
 | M1 — Foundation extraction | Landed |
 | M2 — Admin restructuring and authorization broadening | Landed |
 | M3 — Site rendering infrastructure with test events | Landed |
-| M4 — Madrona launch | Proposed |
+| M4 — Madrona launch | Deferred |
 
-When all five rows show `Landed`, the top-level Status above flips from
-`Proposed` to `Landed` in the same PR that lands M4.
+M0–M3 landed as recorded above; M4 (Madrona launch) was deferred
+2026-05-01 to a future sibling epic. The demo-expansion epic intervenes
+between this epic and Madrona's relaunch (see
+[`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md));
+a future Madrona-launch epic will own the deferred M4 work when its
+scoping begins. The top-level Status above is flipped to
+`Landed at M3 — M4 deferred` in this PR; closure does not depend on M4.
+Reframing of Goal, Why This Epic, Backlog Impact, and Sizing Summary
+sections to reflect "epic finished without Madrona" is intentionally out
+of scope for the change that recorded the deferral; those sections
+remain as historical record of the original plan and a separate
+follow-up may revisit them once the demo-expansion or Madrona-launch
+epic motivates the rewrite.
 
 ## Purpose
 
@@ -779,6 +790,16 @@ end-to-end), CLI / tooling pinning audit (any new dependencies introduced
 by `apps/site` page rendering or meta-tag handling are pinned).
 
 ### M4 — Madrona Launch
+
+**Status.** Deferred 2026-05-01. Madrona launch is moving to its own
+future sibling epic; the demo-expansion epic
+([`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md))
+intervenes between this epic and Madrona's relaunch. The phase
+paragraphs below remain as historical record of the
+pre-milestone-planning estimate at the time of deferral; they are not
+a canonical plan for Madrona launch. The Madrona-launch epic will
+draft fresh content against actually-merged code when its scoping
+begins.
 
 **Milestone doc.** Not yet drafted — M4's milestone planning session
 runs after M3 lands. Per AGENTS.md "Epic Drafting," the phase

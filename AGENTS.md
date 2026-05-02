@@ -312,6 +312,26 @@ written before this rule are not retroactively non-conforming;
 the rule applies to epic drafting and to milestone planning
 PRs from this point forward.
 
+Path conventions for plan docs follow the in-repo plan layout
+(see
+[`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)).
+Going-forward shape: an epic gets its own folder
+`docs/plans/epics/<epic-slug>/`, with the epic-level doc at
+`docs/plans/epics/<epic-slug>/epic.md` and per-milestone /
+per-phase plans nested inside (paths named in "Milestone
+Planning Sessions" and "Phase Planning Sessions" below). Per-epic
+milestone numbering is canonical: each epic counts from M1
+independently, and sibling epics may reuse the same milestone
+numbers without collision because the path's epic segment
+disambiguates. Pre-convention epics
+(`docs/plans/event-platform-epic.md` and its M0–M3 phase plans)
+stay in their existing flat locations under `docs/plans/`;
+retroactive migration is deferred and out of scope unless
+specifically planned. The path templates in the rules below name
+both shapes — the going-forward epic-folder shape and the
+pre-convention flat shape — so authors of either pick the right
+one for the epic they're working in.
+
 ### Milestone Planning Sessions
 
 A milestone planning session establishes durable cross-phase
@@ -319,12 +339,15 @@ coordination for a multi-phase milestone (M2, M3, M4 in the Event
 Platform Epic). Run this session once at the start of a milestone,
 before any per-phase planning.
 
-- **Goal.** Produce the milestone doc
-  (`docs/plans/m<N>-<short-slug>.md`): restated milestone goal, phase
+- **Goal.** Produce the milestone doc: restated milestone goal, phase
   sequencing with dependency rationale, cross-phase invariants that
   thread multiple phases, cross-phase decisions that lock contracts
   between phases, milestone-level risks, doc-currency map across the
-  milestone set
+  milestone set. Path follows the epic's in-repo plan layout (see
+  the path-conventions paragraph in "Epic Drafting" above):
+  `docs/plans/epics/<epic-slug>/m<N>-<short-slug>.md` for epics under
+  the epic-folder convention, or `docs/plans/m<N>-<short-slug>.md` for
+  pre-convention epics
 - **Phase dependency graph.** The milestone doc's "Sequencing"
   section opens with a Mermaid `flowchart LR` block: each phase
   is a node, "blocks" relationships are arrows (an `A --> B`
@@ -406,13 +429,19 @@ phase's implementation starts, **after** prior phases have shipped
 
 - **Goal.** Produce two artifacts that split ownership cleanly
   rather than co-cover the same content: a phase scoping doc
-  (`docs/plans/scoping/m<N>-phase-<X>-<Y>.md`, transient — deletes
-  in batch with sibling scoping docs at the milestone-terminal PR)
-  and a phase plan doc
-  (`docs/plans/m<N>-phase-<X>-<Y>-plan.md`, durable — survives
-  the feature). The next bullet specifies what each owns; both
-  docs may carry a Status block and a one-paragraph phase summary
-  for orientation, and that is the only intentional overlap.
+  (transient — deletes in batch with sibling scoping docs at the
+  milestone-terminal PR) and a phase plan doc (durable — survives
+  the feature). Paths follow the epic's in-repo plan layout (see
+  the path-conventions paragraph in "Epic Drafting" above): for
+  epics under the epic-folder convention, scoping at
+  `docs/plans/epics/<epic-slug>/scoping/m<N>-phase-<X>-<Y>.md` and
+  plan at `docs/plans/epics/<epic-slug>/m<N>-phase-<X>-<Y>-plan.md`;
+  for pre-convention epics, scoping at
+  `docs/plans/scoping/m<N>-phase-<X>-<Y>.md` and plan at
+  `docs/plans/m<N>-phase-<X>-<Y>-plan.md`. The next bullet
+  specifies what each owns; both docs may carry a Status block and
+  a one-paragraph phase summary for orientation, and that is the
+  only intentional overlap.
 - **Scoping owns / plan owns.** Because scoping deletes at
   milestone-terminal PR, the durable plan must end up with
   everything worth persisting in record after the feature
@@ -460,9 +489,10 @@ phase's implementation starts, **after** prior phases have shipped
     been promoted to a merged implementing PR
 - **Scoping precedes plan drafting; check before starting plan
   draft.** Before opening the plan doc to write, verify the
-  scoping doc exists at
-  `docs/plans/scoping/m<N>-phase-<X>-<Y>.md` with substantive
-  scoping-owned content per the rule above — at minimum, a
+  scoping doc exists at this phase's canonical scoping path per
+  the epic's in-repo plan layout (paths named in the "Goal"
+  bullet above) with substantive scoping-owned content per the
+  rule above — at minimum, a
   "Decisions made at scoping time" section with at least one
   decision carrying a `Verified by:` code citation, plus
   whichever of "Open decisions to make at plan-drafting,"
