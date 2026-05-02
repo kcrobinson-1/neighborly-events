@@ -514,6 +514,35 @@ phase's implementation starts, **after** prior phases have shipped
   protects against the most common procedural skip when phase
   planning starts in a fresh agent session that did not produce
   the scoping doc
+- **Doc-only decision phases satisfy the substantive-content
+  gate via cited open-question constraints, not resolved
+  decisions.** When the whole phase output is the decision
+  artifact — no code ships, no contracts get implemented; the
+  durable plan doc IS the recorded decisions plus rejected
+  alternatives — the scoping doc may surface the decision space
+  without resolving any decisions at scoping-doc-open time.
+  Decisions resolve through the collaborative deliberation that
+  constitutes the phase, then absorb back into the durable
+  artifact. The protective intent of the rule above (prevent
+  stub-scoping → drafting collapse) holds, but is satisfied
+  differently: the scoping doc must carry code-grounded
+  `Verified by:` citations on the constraints that bound each
+  open question, and on the reality-check inputs the resolution
+  will rest on. Citation-free constraints, generic "TBD"
+  placeholders, or open-question sections that don't decompose
+  the decision space against actual code still fail the gate —
+  the carve-out is for decision-deferral, not for skipping the
+  code grounding. Code-shipping phases do not get this carve-
+  out: the decision-resolved-at-scoping-time bar still applies
+  because the plan-drafting step that scoping precedes is real
+  for them. Demo-expansion phase 3.1
+  ([scoping/m3-phase-3-1.md](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-1.md))
+  is the canonical example: doc surfaces nine open questions
+  with multi-citation constraints per question and resolves
+  none at scoping time, by deliberate user direction; the
+  closing PR will land the decisions into the durable
+  artifact (either by promoting the scoping doc or by drafting
+  a thin plan that links to it for the deliberation prose)
 - **Plan opens with a plain-language context preamble.** Before any
   implementation specifics (file paths, framework names, function
   signatures, phase-numbering shorthand), the plan must contain

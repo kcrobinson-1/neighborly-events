@@ -43,20 +43,27 @@ milestone doc as 3.2+'s to own and stay out of 3.1's scope.
 
 ## Why this scoping doc surfaces questions instead of resolving them
 
-Scoping convention is to record decisions made at scoping time
-with rejected alternatives. Phase 3.1 is unusual: the *whole
-phase* is a decision-making exercise, so its scoping doc is the
-place to frame the questions before working through them. This
-doc therefore opens with **Open questions for 3.1 to resolve**
-rather than a "Decisions made at scoping time" list. Each
-question carries the constraints from current code that bound
-the answer space, the candidate options surfaced by the
+Phase 3.1 is a doc-only decision phase: its whole output is the
+decision artifact (no code ships). The repo convention for
+doc-only decision phases — recently amended to cover this case
+— is that the scoping doc may surface the decision space without
+resolving any decisions at scoping-doc-open time, provided the
+constraints bounding each open question are grounded in
+code-cited `Verified by:` references. Decisions resolve through
+collaborative deliberation that constitutes the phase, then
+absorb back into the durable artifact.
+
+This doc therefore opens with **Open questions for 3.1 to
+resolve** rather than a "Decisions made at scoping time" list.
+Each question carries the constraints from current code that
+bound the answer space, the candidate options surfaced by the
 milestone doc (or this scoping pass), and the evidence the
-decision should weigh — but the resolution column stays empty
-until we work through them together. Resolved questions move
-into the plan doc as the decision lands, with rejected
-alternatives preserved in this scoping doc until milestone
-close.
+decision should weigh. The resolution column stays empty until
+the discussion lands; resolved questions update this doc in
+place, with rejected alternatives preserved until milestone
+close. The phase-closing PR will then either promote this
+scoping doc to the durable plan or draft a thin plan that
+links here for deliberation prose.
 
 ## Open questions for 3.1 to resolve
 
@@ -851,9 +858,18 @@ should wait or absorb seeds.
 
 **Constraints.**
 
-- The Q3 publish-locks-event-code constraint applies: any
-  `game_events` seed run via migration permanently pins the
-  test-event codes in every environment.
+- A `game_events` seed shipped via migration propagates to
+  every environment that runs migration history (that's how
+  migrations work). If the seed also publishes the event
+  (sets `live_version_number`), the lock-on-publish trigger
+  from Q3 governs subsequent direct UPDATEs to `event_code`
+  in each environment. Revising codes after that requires
+  either a runtime path the trigger guard accepts, or a
+  later migration that drops the trigger, updates, and
+  recreates — both possible, neither routine. The blast-
+  radius concern is that the seed propagates everywhere
+  *and* (if it publishes) restricts in-place revision; not
+  that the codes are absolutely permanent.
 - The milestone doc lists M4's deliverables explicitly
   ([m3-demo-mode-auth-bypass.md goal section, lines 86-91](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md));
   a Q8 answer that absorbs them into M3 has to revise that
