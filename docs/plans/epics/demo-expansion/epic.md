@@ -154,11 +154,20 @@ PR that surfaces them.
 
 ## Open Questions Newly Opened
 
-**Demo-mode write semantics for test-event slugs.** M3's first phase
-owns this decision: read-only browse, functional with persistence and
-reset, or sandbox-ephemeral. The choice cascades into M3+
-implementation and into M4's seeded-codes / reset-story design. M3
-phase planning records the decision and rationale.
+**Demo-mode data-access semantics for test-event slugs.** M3's first
+phase owns this decision: read-only browse, functional with persistence
+and reset, or sandbox-ephemeral. The decision covers reads as well as
+writes — removing the page-level auth interception is necessary but
+not sufficient for the bypassed surfaces to render, because the data
+each surface fetches is RLS-gated and currently denies anonymous
+reads. The choice cascades into M3+ implementation and into M4's
+seeded-codes / reset-story design. M3 phase planning records the
+decision and rationale; the
+[M3 milestone doc](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+is canonical for the deferred-decision framing, and the question is
+mirrored in [`docs/open-questions.md`](/docs/open-questions.md) under
+the "Demo Expansion Epic — M3 Demo-Mode Data Access" section so
+repo-level discovery surfaces it.
 
 **Configuration tour mechanism.** M5 owns this decision: annotated
 screenshots inline on the marketing page, a sub-route walkthrough,
@@ -218,6 +227,13 @@ auth-gated surfaces with the "sign in or wait for demo mode" copy until
 M3 lands.
 
 ### M3 — Demo-Mode Auth Bypass For Test-Event Slugs
+
+**Milestone doc.** [`m3-demo-mode-auth-bypass.md`](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+is canonical from the milestone planning session forward; the
+paragraphs below remain as the pre-milestone-planning estimate
+that informed that session. The milestone doc keeps phase 3.1 as
+a doc-only decision phase and defers the 3.2+ phase split to
+3.1's outcome.
 
 **Goal.** Make admin / redeem / redemptions surfaces reachable on
 test-event slugs without sign-in. Real working UI, scoped strictly to
@@ -349,15 +365,21 @@ focuses on the per-component theme rendering surface, and any token gaps
 surfaced are recorded as themable/structural classification follow-ups
 in `docs/styling.md`.
 
-**Demo-mode write semantics blast radius.** Whichever of read-only /
-functional-with-reset / sandbox-ephemeral is chosen in M3 phase 3.1
-cascades into M4's seeded-codes design. Choosing
+**Demo-mode data-access semantics blast radius.** Whichever of
+read-only / functional-with-reset / sandbox-ephemeral is chosen in M3
+phase 3.1 cascades into M4's seeded-codes design. Choosing
 write-back-to-real-tables-with-flag introduces ongoing reset-cron
 operational concerns; choosing sandbox-ephemeral introduces a parallel
-state model; choosing read-only narrows demo fidelity. Mitigation: M3
-phase 3.1 is doc-only, lets the decision marinate before any code
-commits, and records rejected alternatives so future-us has the context
-to revisit.
+state model; choosing read-only narrows demo fidelity. Read-side
+mediation is in scope for all three options (the bypassed pages' data
+fetches are RLS-gated today) and adds its own blast radius — anon
+RLS broadening on `game_event_drafts` / `game_entitlements` would
+need allowlist-scoped helper-function predicates to avoid extending to
+real events, and Edge-Function-mediated reads would establish the
+first unauthenticated-Edge-Function precedent in the codebase.
+Mitigation: M3 phase 3.1 is doc-only, lets the decision marinate
+before any code commits, and records rejected alternatives so future-us
+has the context to revisit.
 
 **M4–M6 deferral creep.** Deferred milestones can drift from the shape
 that was assumed at first-iteration scoping. Mitigation: a

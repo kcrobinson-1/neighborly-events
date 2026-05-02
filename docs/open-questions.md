@@ -107,3 +107,28 @@ deploy independence (with dedicated pricing). M0 phase 0.3 chooses
 between them based on routing-feature needs surfaced during the
 scaffold, and updates [`docs/operations.md`](/docs/operations.md) with the
 chosen topology.
+
+## Demo Expansion Epic — M3 Demo-Mode Data Access
+
+Surfaced by [`demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md)
+"Open Questions Newly Opened" and canonically framed by
+[`demo-expansion/m3-demo-mode-auth-bypass.md`](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+"Cross-Phase Decisions → Deferred to phase-time." Phase 3.1 of M3
+owns the resolution.
+
+### Demo-mode data-access semantics for test-event slugs
+
+The demo-mode auth bypass M3 lands on the test-event slugs
+(`harvest-block-party`, `riverside-jam`) removes the page-level
+`SignInForm` interception, but the bypassed surfaces' data fetches
+(admin's `loadDraftEvent` against `game_event_drafts`, redemptions'
+list query against `game_entitlements`) are RLS-gated and currently
+deny anonymous reads. Phase 3.1 settles which of three options
+governs reads and writes: read-only browse, functional with
+persistence and reset, or sandbox-ephemeral. The decision cascades
+into M3's implementation phase shape, the read-mediation pattern
+(anon-RLS broadening scoped by allowlist, Edge Function read shim,
+pre-published public views, or another), and M4's seeded-codes /
+reset-story design. Phase 3.1's PR records the chosen semantics,
+rationale, and rejected alternatives in its plan doc, and removes
+this entry from `open-questions.md` in the same PR.
