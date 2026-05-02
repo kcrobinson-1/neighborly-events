@@ -191,6 +191,18 @@ Execute in any order.
   rename, behavior-preserving.
   Detail: [`docs/tracking/code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md)
 
+- [ ] **`ux` ThemeScope derived-shade cascade**
+  Brand-tied derived shades (`--primary-surface`, `--secondary-focus`, etc.)
+  defined on `:root` via `color-mix()` do not re-evaluate per `<ThemeScope>`
+  — only the brand bases (`--primary`, `--secondary`, `--accent`) carry the
+  per-event Theme to descendants. Result on test-event apps/web routes
+  (Harvest game / redeem / redemptions wrapped in demo-expansion epic M1
+  phase 1.1, plus the M2 phase 2.2 admin route): dominant brand colors apply
+  but tinted surface backgrounds, focus rings, and glows stay warm-cream.
+  Move the derivation into `themeToStyle` so each `<ThemeScope>` emits its
+  own derived shades.
+  Detail: [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md)
+
 - [ ] **`dev` Stable PR screenshot upload path**
   Add `npm run ui:review:upload` backed by a scriptable durable provider so
   agents have a consistent, documented path for uploading UX review images.

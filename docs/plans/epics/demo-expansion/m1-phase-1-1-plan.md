@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 ## Context
 
@@ -250,10 +250,12 @@ mix of rules and estimates"; the implementer may refine.
 3. **Reality-check re-run.** Re-verify the inputs named in
    [scoping/m1-phase-1-1.md §Reality-check inputs](/docs/plans/epics/demo-expansion/scoping/m1-phase-1-1.md):
    App.tsx shape, registry contents, getThemeForSlug fallback,
-   ThemeScope source comment, doc paragraph locations, color-mix
-   derived-shade cascade (manual check on
-   `/event/harvest-block-party/admin` confirming Harvest's
-   derived shades render correctly today).
+   ThemeScope source comment, doc paragraph locations. The color-
+   mix derived-shade cascade input is **superseded** — empirical
+   browser behavior is the opposite of what the scoping doc and
+   the Risk Register entry below originally claimed (see the Risk
+   Register entry "Color-mix derived-shade cascade pinning at
+   `:root`" for the corrected behavior and the follow-up plan).
 4. **Wrap diff in App.tsx.** Three additions per wrap-shape
    contract.
 5. **Source-comment updates.** ThemeScope.tsx wiring-sites
@@ -439,17 +441,33 @@ Plan-implementation-level risks not already covered:
   PR's verification claims. Mitigation: the validation gate
   documents the PR-preview-vs-prod-apps/site comparison
   explicitly so a reviewer can audit the procedure.
-- **Color-mix derived-shade regression at runtime.** The
-  reality-check confirms CSS spec lazy-evaluation of
-  `var()`-bearing custom properties causes brand-tied derived
-  shades (e.g., `--primary-surface`) computed in `:root` to
-  re-evaluate against an inner-scope `--primary` override. The
-  admin wrap on `/event/:slug/admin` is the existence proof —
-  it has shipped since M2 phase 2.2 and Harvest renders its
-  derived shades correctly today. Mitigation: step 3's reality-
-  check re-run includes a manual check on
-  `/event/harvest-block-party/admin` to confirm the existence
-  proof still holds at plan-drafting time.
+- **Color-mix derived-shade cascade pinning at `:root`.**
+  Empirical browser behavior contradicts the original scoping
+  assumption. When a custom property's value contains `var()`,
+  the substitution happens at the declaration site and the
+  inherited computed value is the substituted form. So
+  `--primary-surface: color-mix(in srgb, var(--primary) 12%,
+  transparent)` declared on `:root` substitutes against
+  `:root`'s `--primary` (warm-cream `#d96b2b`) and inherits the
+  warm-cream-substituted value to descendants — including
+  inside `<ThemeScope>`. Verified empirically on
+  `/event/harvest-block-party/game` after M1's wrap landed:
+  `var(--primary)` resolves to Harvest pumpkin (`#b85c1c`)
+  correctly; `var(--primary-surface)` resolves to
+  `color-mix(in srgb, #d96b2b 12%, transparent)` (warm-cream).
+  The M2 phase 2.2 admin wrap has the same partial-Theme-
+  honesty behavior; M1 inherits it rather than introducing it.
+
+  Mitigation: M1 ships the wrap as planned (visible-Theme-
+  honesty for direct brand-base consumers — buttons, links,
+  headings, page background — is achieved, matching the admin
+  precedent). The derived-shade re-evaluation question becomes
+  a focused follow-up at
+  [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md),
+  unblocked by M1 and tracked in
+  [`docs/backlog.md`](/docs/backlog.md). Per AGENTS.md
+  "Plan-to-PR Completion Gate," this rule rewrite ships in
+  M1's PR alongside the wrap; the derived-shade fix does not.
 
 ## Backlog Impact
 
