@@ -25,15 +25,21 @@ strictly to `harvest-block-party` and `riverside-jam`. After M3:
 - `/event/harvest-block-party/admin`,
   `/event/harvest-block-party/game/redeem`,
   `/event/harvest-block-party/game/redemptions`, and the same three
-  paths under `/event/riverside-jam/...`, all render their primary
-  UI for an unauthenticated visitor — no `SignInForm` interception,
-  no role-gate banner. `Verified by:`
+  paths under `/event/riverside-jam/...`, mount for an
+  unauthenticated visitor — no `SignInForm` interception, no
+  role-gate banner. `Verified by:`
   [apps/web/src/App.tsx:21-70](/apps/web/src/App.tsx) for today's
   dispatcher; the three pages each gate inline today via
   `useAuthSession()` + a per-event role hook
   ([useOrganizerForEvent.ts:113-177](/shared/auth/useOrganizerForEvent.ts),
   [authorizeRedeem.ts:83-103](/apps/web/src/redeem/authorizeRedeem.ts),
-  [authorizeRedemptions.ts:83-103](/apps/web/src/redemptions/authorizeRedemptions.ts))
+  [authorizeRedemptions.ts:83-103](/apps/web/src/redemptions/authorizeRedemptions.ts)).
+  Mounting the page is necessary but not sufficient for primary
+  UI to populate — the data each surface fetches (admin's
+  `loadDraftEvent` against `game_event_drafts`, redemptions'
+  list query against `game_entitlements`) is RLS-gated and
+  currently denies anonymous reads, so the read-mediation
+  strategy phase 3.1 settles is part of what M3 ships
 - `/event/:slug/game` is unchanged — the gameplay route is already
   public and was not auth-gated to begin with (`Verified by:`
   [apps/web/src/App.tsx:35-42](/apps/web/src/App.tsx))
@@ -51,12 +57,16 @@ strictly to `harvest-block-party` and `riverside-jam`. After M3:
   change. The bypass branch is allowlist-membership-gated only —
   no environment flag, no URL parameter, no header asserted by the
   client substitutes for slug membership
-- the M3 implementation phase(s) ship the demo-mode write
-  semantics that **phase 3.1 settles**. Whether bypassed surfaces
-  accept writes (and how those writes are mediated, persisted, or
-  isolated) is the open decision phase 3.1 owns; the milestone
-  goal locks the reachability commitment but not the write-side
-  contract
+- the M3 implementation phase(s) ship the demo-mode data-access
+  semantics that **phase 3.1 settles**. The decision covers both
+  the read side (how RLS-gated data reaches the unauthenticated
+  visitor — anon-RLS broadening scoped by allowlist, an Edge
+  Function read shim, pre-published public views, or another
+  mediation 3.1 picks) and the write side (whether bypassed
+  surfaces accept writes at all, and how those writes are
+  mediated, persisted, or isolated). The milestone goal locks
+  the reachability commitment and the data-access-semantics
+  decision ownership but not the contract content
 - M2's role-door copy on Organizer + Volunteer cards (shipped by
   M2 phase 2.3 with "Sign in or wait for demo mode" framing per
   the M2 cross-phase invariant) is **revised in the M3-closing
@@ -90,53 +100,59 @@ Pre-implementation estimate per AGENTS.md "Plan content is a mix
 of rules and estimates." The 3.1 row is settled at milestone-
 planning time (the epic locks 3.1 as a doc-only decision phase);
 the 3.2 row is a single-row placeholder that may split into 3.2.x
-sub-phases or grow to 3.3, 3.4 once 3.1 settles write semantics
-and the implementation surface is grounded against that decision.
-Phase numbering reflects the recommended ship order; rows fill in
-as each phase's plan drafts and as its PR merges.
+sub-phases or grow to 3.3, 3.4 once 3.1 settles data-access
+semantics and the implementation surface is grounded against that
+decision. Phase numbering reflects the recommended ship order;
+rows fill in as each phase's plan drafts and as its PR merges.
 
 | Phase | Title (estimate) | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 3.1 | Demo-mode write-semantics decision (doc-only) | _pending phase planning_ | Proposed | _pending_ |
+| 3.1 | Demo-mode data-access-semantics decision (doc-only) | _pending phase planning_ | Proposed | _pending_ |
 | 3.2 | Implement chosen demo-mode bypass + M3 closure | _pending 3.1_ | Proposed | _pending_ |
 
 The 3.2-as-single-row estimate is the milestone session's working
 guess; phase 3.1's planning + plan-drafting is responsible for
 re-deriving the row count against the actual implementation
-surface that the chosen write semantics imply. Plausible
+surface that the chosen data-access semantics imply. Plausible
 alternative shapes 3.1 should consider when re-deriving:
 
 - **1-implementation-phase shape (3.2 alone).** Likely if 3.1
   chooses **read-only browse**: the bypass surfaces add an
   `isTestEventSlug(slug)` short-circuit in the three apps/web
-  page components' auth state machines, the Edge Function side
-  rejects writes for demo-event mutations with a 403 "demo mode
-  is read-only" branch, and no RLS broadening, no new tables, no
-  seeded data, no reset story is needed. Cohesive single PR
-  because the read-only contract is internally consistent and
-  the diff stays inside one review surface.
+  page components' auth state machines, ship the read-side
+  mediation 3.1 settles (the data each surface fetches is
+  RLS-gated today and needs *some* mediation regardless of the
+  chosen semantics — anon-RLS broadening scoped by allowlist,
+  an Edge Function read shim, pre-published public views, or
+  another approach 3.1 picks), and the Edge Function write side
+  rejects demo-event mutations with a 403 "demo mode is
+  read-only" branch. No seeded write-state, no reset story, no
+  parallel-write tables are needed. Cohesive single PR because
+  the read-mediation pattern threads all three surfaces
+  uniformly and writes are uniformly rejected.
 - **2-implementation-phase shape (3.2 + 3.3).** Likely if 3.1
   chooses **functional-with-persistence-and-reset**: 3.2 ships
-  the route-level bypass + allowlist constant + Edge Function
-  test-event mediation; 3.3 ships RLS broadening (or
-  service-role mediation), seeded data migrations, the reset
-  story documentation, and the M3-closing copy revisions. Split
-  because RLS / SECURITY DEFINER changes are a distinct review
-  surface from route-level guard wiring and warrant focused
-  review attention. Per AGENTS.md "Cross-phase coordination is
-  thin," cross-phase assumptions get written down at 3.2's plan-
-  drafting time and verified at 3.3's plan-drafting time rather
-  than batch-coordinated up front.
+  the route-level bypass + allowlist constant; 3.3 ships
+  read-side AND write-side mediation (RLS broadening scoped by
+  allowlist, or service-role Edge Function shims for both reads
+  and writes), seeded write-state migrations, the reset story
+  documentation, and the M3-closing copy revisions. Split
+  because mediation surface (RLS / SECURITY DEFINER changes) is
+  a distinct review surface from route-level guard wiring and
+  warrants focused review attention. Per AGENTS.md "Cross-phase
+  coordination is thin," cross-phase assumptions get written
+  down at 3.2's plan-drafting time and verified at 3.3's
+  plan-drafting time rather than batch-coordinated up front.
 - **3-implementation-phase shape (3.2 + 3.3 + 3.4).** Likely if
   3.1 chooses **sandbox-ephemeral**: 3.2 wires the route-level
   bypass + allowlist; 3.3 introduces the parallel-state schema
-  (likely `demo_*` mirror tables or session-scoped storage) and
-  the Edge Function fork that routes demo writes to that schema;
-  3.4 ships the M3 closure (copy revisions + doc currency).
-  Split because new-table introduction is a distinct migration
-  review surface, and forking Edge Function write paths is a
-  distinct trust-boundary review surface from the route-level
-  bypass.
+  (likely `demo_*` mirror tables or session-scoped storage)
+  plus the Edge Function fork that routes demo reads and demo
+  writes through that schema; 3.4 ships the M3 closure (copy
+  revisions + doc currency). Split because new-table
+  introduction is a distinct migration review surface, and
+  forking Edge Function read/write paths is a distinct
+  trust-boundary review surface from the route-level bypass.
 
 The phase planning session for 3.1 should run AGENTS.md "PR-count
 predictions need a branch test" once 3.1's plan drafts; the
@@ -153,22 +169,27 @@ Phase dependencies (`A --> B` means A blocks B / B depends on A):
 
 ```mermaid
 flowchart LR
-    P31[3.1<br/>Demo-mode<br/>write-semantics<br/>decision]
+    P31[3.1<br/>Demo-mode<br/>data-access-semantics<br/>decision]
     P32[3.2<br/>Implement bypass<br/>shape TBD by 3.1]
 
     P31 --> P32
 ```
 
 **Hard dependency.** 3.2 (and any 3.3/3.4 that 3.1 elects to
-spawn) depends on 3.1 because 3.1 settles the write-semantics
-contract that 3.2's implementation translates into route guards,
-RLS / Edge-Function mediation, seeded data, and reset story (or
-explicitly the absence of each, in the read-only case). 3.2's
-contracts cannot be plan-drafted before 3.1's decision lands;
-plan-drafting against an unsettled write-semantics decision would
-produce a contract that reshapes mid-flight when 3.1's outcome
-arrives, which is the exact churn AGENTS.md "Defer rather than
-over-resolve" exists to prevent.
+spawn) depends on 3.1 because 3.1 settles the data-access-
+semantics contract — covering both the read-side mediation
+strategy (which is in scope under all three options because
+mounting the bypassed pages alone is not sufficient when the
+data fetches downstream are RLS-gated) and the write-side
+contract — that 3.2's implementation translates into route
+guards, RLS / Edge-Function mediation, seeded data, and reset
+story (or explicitly the absence of each, where the chosen
+semantics permits). 3.2's contracts cannot be plan-drafted
+before 3.1's decision lands; plan-drafting against an unsettled
+data-access-semantics decision would produce a contract that
+reshapes mid-flight when 3.1's outcome arrives, which is the
+exact churn AGENTS.md "Defer rather than over-resolve" exists to
+prevent.
 
 **No upstream-milestone hard dependency.** M2 (home-page rebuild)
 is **not** a strict ship-blocker for the bypass mechanism itself —
@@ -205,7 +226,7 @@ Recommended cadence: M2 lands → 3.1 scoping + plan drafts → 3.1
 PR merges → 3.2+ scoping + plan drafts in turn.
 
 **Cross-phase coordination is thin.** 3.1 produces a written
-write-semantics decision with rationale and rejected
+data-access-semantics decision with rationale and rejected
 alternatives. 3.2's plan-drafting reads that decision, runs its
 own reality-check pass against the apps/web routing dispatcher
 and the affected Edge Functions, and produces the per-phase
@@ -221,21 +242,34 @@ silently when one phase drifts. Self-review walks each one
 against every phase's actual changes. **2–4 invariants** per
 AGENTS.md guidance.
 
-- **Test-event allowlist consumed everywhere, declared once.**
-  The two slugs (`harvest-block-party`, `riverside-jam`) live
-  in a single shared constant introduced by M3 (the file path
+- **Test-event allowlist has a single source of truth, exposed
+  to every guard site by an enforced path.** The two slugs
+  (`harvest-block-party`, `riverside-jam`) live in a single
+  shared TypeScript constant introduced by M3 (the file path
   and symbol shape are deferred to phase planning per the
-  decision below). Every guard site — the three apps/web page
-  components' auth-bypass branches, any Edge Function that
-  mediates test-event writes, any SQL helper function that
-  evaluates test-event-slug membership for RLS purposes —
-  imports from that one constant. Per-site slug literal
-  duplication (a hard-coded `"harvest-block-party"` string at
-  any new guard site) is a regression of the epic-level
-  invariant and a self-review failure. The risk this invariant
-  protects against is named in the epic Risk Register: a code
-  path that resolves "is this a test event" inconsistently
-  between guard sites silently extends bypass to real events.
+  decision below). Every TypeScript guard site — the three
+  apps/web page components' auth-bypass branches, any Edge
+  Function that mediates test-event reads or writes — imports
+  directly from that constant. SQL guard sites (any helper
+  function that evaluates test-event-slug membership for RLS
+  purposes) cannot import TypeScript at runtime and consume
+  the allowlist via a derived SQL representation by **one of
+  two enforced paths**: either build-time codegen of the SQL
+  representation from the TypeScript source, or a hand-
+  mirrored SQL constant whose value-by-value agreement with
+  the TypeScript source is asserted by an exact-match test
+  that fails CI on drift. Either path satisfies the invariant;
+  what fails it is a per-site slug literal duplication — a
+  hard-coded `"harvest-block-party"` string at any new
+  TypeScript guard site, or a SQL constant whose values are
+  not pinned to the TypeScript source by an enforced check.
+  The risk this invariant protects against is named in the
+  epic Risk Register: a code path that resolves "is this a
+  test event" inconsistently between guard sites silently
+  extends bypass to real events. Phase 3.2+ picks the SQL
+  ingest path and ships the enforcement check; this invariant
+  binds the property that *one* of the two paths is taken,
+  not which.
 - **Real events never receive bypass under any code path.**
   Every guard site's bypass branch is gated on slug membership
   in the shared allowlist and **only** on slug membership. No
@@ -373,46 +407,70 @@ here so phase planning has a complete picture of what is open
 at milestone-start; the phase that owns each decision is
 named.
 
-- **Demo-mode write semantics — read-only / functional-with-
-  reset / sandbox-ephemeral.** The headline open question of
-  M3, opened by the epic and named for resolution here.
-  **Owned by phase 3.1** (doc-only). Reality-check inputs:
-  today's mutation surfaces on the three bypass-target pages
-  (`save-draft`, `publish-draft`, `unpublish-event` for
-  admin; `redeem-entitlement` for redeem; `reverse-entitlement-
+- **Demo-mode data-access semantics — read-only /
+  functional-with-reset / sandbox-ephemeral.** The headline open
+  question of M3, opened by the epic (the epic-level wording
+  "write semantics" framed the decision narrower than the
+  actual decision space — see
+  [Open Questions Newly Opened](/docs/plans/epics/demo-expansion/epic.md#open-questions-newly-opened)
+  for the broadened framing) and named for resolution here. The
+  decision covers reads as well as writes because removing the
+  page-level `SignInForm` interception is necessary but not
+  sufficient for the bypassed surfaces to render — the data
+  each surface fetches (admin's `loadDraftEvent` against
+  `game_event_drafts`, redemptions' list query against
+  `game_entitlements`) is RLS-gated and currently denies
+  anonymous reads. **Owned by phase 3.1** (doc-only).
+  Reality-check inputs: today's read paths on the three
+  bypass-target pages and today's mutation surfaces
+  (`save-draft`, `publish-draft`, `unpublish-event` for admin;
+  `redeem-entitlement` for redeem; `reverse-entitlement-
   redemption` for redemptions, per the Edge Function inventory
   surfaced during milestone planning); the RLS posture on
   `game_event_drafts` and `game_entitlements` (no anon-role
-  policies today; writes flow through SECURITY DEFINER RPCs);
-  the absence of any existing precedent for unauthenticated
-  Edge Function mediation in `supabase/functions/`. Phase 3.1
-  reality-checks each option against the Edge Function and RLS
-  shape and records the chosen semantics, rationale, and
-  rejected alternatives.
+  policies today on either reads or writes; writes flow through
+  SECURITY DEFINER RPCs); the absence of any existing precedent
+  for unauthenticated Edge Function mediation in
+  `supabase/functions/`. Phase 3.1 reality-checks each option's
+  read-side **and** write-side implications against the RLS +
+  Edge Function shape and records the chosen semantics,
+  rationale, and rejected alternatives.
 - **3.2+ phase split.** Whether the bypass implementation
   ships as a single PR (3.2 alone), a 2-PR split (3.2 routing
   guards + 3.3 RLS / mediation / seed / closer), or a 3-PR
   split (3.2 routing guards + 3.3 parallel-state introduction
   + 3.4 closer). **Owned by phase 3.1** because the answer
-  cascades from 3.1's chosen write semantics. The Phase Status
-  alternatives above are the working option set; 3.1's plan-
-  drafting re-derives against the actual implementation
+  cascades from 3.1's chosen data-access semantics. The Phase
+  Status alternatives above are the working option set; 3.1's
+  plan-drafting re-derives against the actual implementation
   surface.
-- **Allowlist constant location, symbol name, and consumption
-  pattern.** Where the shared allowlist module lives
-  (`shared/config/`, `shared/events/`, co-located with the
-  theme registry under `shared/styles/themes/`, or another
-  location consistent with the existing shared-module
-  conventions), what symbol it exports (a `readonly` array
-  literal, a `Set`, a typed predicate function), and how guard
-  sites consume it (direct import, indirection through a
-  helper). **Owned by phase 3.2** (the first implementation
-  phase that introduces the constant). Reality-check inputs:
-  existing shared-module shape under `shared/`; existing
-  conventions for cross-app shared constants used by both
-  apps/web and Edge Functions (because both consume the
-  allowlist if 3.1 chooses an option that requires Edge
-  Function mediation).
+- **Allowlist constant location, TypeScript consumption
+  pattern, and SQL ingest path.** Where the shared TypeScript
+  module lives (`shared/config/`, `shared/events/`,
+  co-located with the theme registry under
+  `shared/styles/themes/`, or another location consistent
+  with the existing shared-module conventions), what symbol
+  it exports (a `readonly` array literal, a `Set`, a typed
+  predicate function), how TypeScript guard sites consume it
+  (direct import, indirection through a helper), AND the SQL
+  ingest path (build-time codegen of a SQL function or array
+  from the TypeScript source, or a hand-mirrored SQL constant
+  whose agreement with the TypeScript source is asserted by an
+  exact-match CI test). The SQL-ingest sub-decision is only
+  in scope if 3.1's chosen mediation pattern introduces SQL
+  helper functions evaluating test-event-slug membership; if
+  3.1 picks an Edge-Function-mediated approach that keeps RLS
+  unchanged, no SQL ingest is needed and the sub-decision
+  collapses. **Owned by phase 3.2+** (the first implementation
+  phase that introduces the constant; SQL ingest path owned by
+  whichever phase introduces the SQL helper, if any).
+  Reality-check inputs: existing shared-module shape under
+  `shared/`; existing conventions for cross-app shared
+  constants used by both apps/web and Edge Functions; any
+  existing SQL-helper-derived-from-TS pattern in
+  `supabase/migrations/` (and the absence of such a pattern if
+  none exists, in which case this is a novel mechanism per
+  AGENTS.md "Spike before plan for novel mechanisms").
 - **Demo-mode signaling pattern in UI.** The exact shape of
   the "you are in demo mode" signpost on bypass-rendered
   surfaces — a top-of-page banner, a ribbon adjacent to the
@@ -491,12 +549,17 @@ Register.
   one of the three surfaces end-to-end — so dealbreakers
   surface during 3.1, not during 3.2 implementation.
 - **RLS broadening accidentally extends to non-test events.**
-  Specific to write-semantics options that introduce RLS
-  changes (the functional-with-reset and sandbox-ephemeral
-  options surfaced during milestone planning both touch the
-  RLS surface). A `USING` predicate that intends to scope a
-  new policy to test events but evaluates incorrectly against
-  the row's `event_id → slug` resolution silently grants the
+  Applies to any option whose chosen mediation pattern
+  introduces RLS changes — which the milestone-session
+  research surfaced as likely for at least the read side under
+  all three options (read-only browse, functional-with-reset,
+  and sandbox-ephemeral all need *some* read mediation, and
+  RLS broadening is one of the candidate patterns), unless
+  3.1 picks an Edge-Function-mediated-reads or
+  pre-published-public-views approach that keeps RLS
+  unchanged. A `USING` predicate that intends to scope a new
+  policy to test events but evaluates incorrectly against the
+  row's `event_id → slug` resolution silently grants the
   permission to all events. Mitigation: if 3.1 chooses an
   option with RLS changes, phase 3.2+ introduces a SQL helper
   function (likely `is_test_event_slug(event_id)` or
@@ -504,10 +567,12 @@ Register.
   the canonical slug, and returns true only on allowlist
   membership; pgTAP coverage (deferred decision above) walks
   the predicate against a non-test event row and asserts
-  false. The helper function consumes the same shared
-  allowlist constant per the first invariant, exposed to SQL
-  via a generated migration or a manual mirror — phase 3.2+
-  decides which.
+  false. The helper function consumes the shared allowlist via
+  one of the two SQL ingest paths the first cross-phase
+  invariant frames (build-time codegen from the TypeScript
+  source, or a hand-mirrored SQL constant pinned to the
+  TypeScript source by an exact-match CI test); phase 3.2+
+  picks which path.
 - **Copy contract revision missed at M3 closure.** The fourth
   cross-phase invariant binds the role-door copy revision as
   part of M3's closing PR. The risk is that the closer phase
@@ -574,9 +639,9 @@ in some M3 phase's PR.
   exact paragraphs by greping the doc. **Owned by the
   M3-closing phase.**
 - [`docs/open-questions.md`](/docs/open-questions.md) —
-  closes the "Demo-mode write semantics for test-event slugs"
-  question opened by the epic. **Owned by phase 3.1** (the
-  doc-only decision phase that resolves it; closure is a
+  closes the "Demo-mode data-access semantics for test-event
+  slugs" question opened by the epic. **Owned by phase 3.1**
+  (the doc-only decision phase that resolves it; closure is a
   deliverable of 3.1's PR, not the M3-closing PR, because
   3.1 is when the decision lands and 3.1 is the natural
   artifact-currency owner for that resolution).
@@ -647,7 +712,7 @@ Capture."
   implementable on top of M3's bypass + allowlist
   infrastructure. M4's seam — seeded codes, pre-populated
   monitoring, reset story — depends on M3 having settled the
-  write-semantics contract that M4 builds against. The
+  data-access-semantics contract that M4 builds against. The
   "second-iteration scoping pass against what M1–M3 actually
   delivered" flagged in the epic Risk Register reopens M4
   with the implementation grounded against M3's settled
@@ -667,10 +732,11 @@ Capture."
 - [`docs/plans/epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md) —
   parent epic; M3 paragraph at the "M3 — Demo-Mode Auth
   Bypass For Test-Event Slugs" section. The epic's "Open
-  Questions Newly Opened" → "Demo-mode write semantics for
-  test-event slugs" entry is the open question phase 3.1
-  resolves; the epic's Risk Register entry "Demo-mode write
-  semantics blast radius" frames the trade-space 3.1 walks.
+  Questions Newly Opened" → "Demo-mode data-access semantics
+  for test-event slugs" entry is the open question phase 3.1
+  resolves; the epic's Risk Register entry "Demo-mode
+  data-access semantics blast radius" frames the trade-space
+  3.1 walks.
 - [`docs/plans/epics/demo-expansion/m1-themescope-wiring.md`](/docs/plans/epics/demo-expansion/m1-themescope-wiring.md) —
   predecessor milestone; supplied the apps/web ThemeScope
   wiring infrastructure M3's bypass-rendered surfaces
@@ -727,8 +793,8 @@ Capture."
   if M3's UI demo-mode signaling introduces token-level
   decisions.
 - [`docs/open-questions.md`](/docs/open-questions.md) —
-  carries the "Demo-mode write semantics" question phase 3.1
-  closes.
+  carries the "Demo-mode data-access semantics" question
+  phase 3.1 closes.
 - [`docs/backlog.md`](/docs/backlog.md) — priority-ordered
   follow-up; receives the post-epic items the epic Backlog
   Impact named.
