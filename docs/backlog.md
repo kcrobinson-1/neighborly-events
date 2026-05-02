@@ -58,6 +58,21 @@ Reduce deployment risk and contributor friction before the live event.
   policy changes cannot widen access silently.
   Detail: [`docs/plans/archive/admin-live-status-plan.md`](/docs/plans/archive/admin-live-status-plan.md)
 
+- [ ] **`decision` Canonical user-facing origin for the platform**
+  `apps/web/vercel.json` defines apps/web as canonical with rewrites
+  proxying `/`, `/event/:slug`, `/admin*`, `/auth/callback`, and `/_next/*`
+  to apps/site, but apps/web's `/` rewrite isn't actually firing — the
+  Vite SPA's `dist/index.html` preempts it — so visitors land on apps/site
+  origin directly (preview URL or auto-generated host) where cross-app
+  role-door links 404 on routes that exist only in apps/web. Symmetric
+  rewrites in `apps/site/next.config.ts` mirroring apps/web's cross-app
+  rules landed as the cheap unblock; this entry tracks the deeper design
+  question of which origin is canonical and how to enforce it — fix
+  apps/web's `/` rewrite, redirect direct apps/site access to apps/web,
+  or formally adopt apps/site as canonical with full reverse proxy for
+  apps/web routes.
+  Detail: [`docs/architecture.md`](/docs/architecture.md)
+
 ---
 
 ## Tier 3 — Admin Authoring Polish

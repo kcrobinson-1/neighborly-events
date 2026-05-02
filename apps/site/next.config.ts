@@ -23,6 +23,35 @@ import type { NextConfig } from "next";
  * URL value, so the auth callback page failed to construct a Supabase
  * client and dropped to its timeout-state UI.
  */
+/**
+ * Cross-app proxy rewrites mirroring `apps/web/vercel.json`'s
+ * apps/site rewrites in reverse direction. Visitors on apps/site
+ * origin (preview URLs, the auto-generated `*.vercel.app` host, or
+ * any domain mapped to the apps/site Vercel project) clicking the
+ * home-page role-door links land on `/event/:slug/game`,
+ * `/event/:slug/admin`, or their sub-paths — routes that exist only
+ * on apps/web's SPA. Without these rewrites the navigations 404
+ * on apps/site origin.
+ *
+ * `/assets/:path*` is also rewritten because apps/web's Vite build
+ * emits its hashed JS/CSS bundles as root-relative `/assets/...`
+ * references inside the SPA's `index.html`. Proxying only the HTML
+ * routes without `/assets/*` would return 200 for the document but
+ * 404 for every script and stylesheet, leaving the proxied pages
+ * blank or unhydrated in a real browser. apps/site has no native
+ * `/assets/*` route of its own (Next.js puts its build output under
+ * `/_next/*`), so the rewrite is collision-free.
+ *
+ * The destination origin is hardcoded to apps/web's auto-generated
+ * Vercel host, matching the precedent in `apps/web/vercel.json`
+ * (which hardcodes apps/site's host the same way). Asymmetry vs.
+ * the documented "apps/web is canonical" topology is tracked in
+ * `docs/backlog.md` under "Canonical-origin design conversation"
+ * — this rewrite is the cheapest unblock for the home-page
+ * broken-links symptom, not a settled design.
+ */
+const APPS_WEB_ORIGIN = "https://neighborly-scavenger-game-web.vercel.app";
+
 const nextConfig: NextConfig = {
   output: "standalone",
   env: {
@@ -30,6 +59,30 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ?? "",
     NEXT_PUBLIC_SITE_ORIGIN: process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "",
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/event/:slug/game",
+        destination: `${APPS_WEB_ORIGIN}/event/:slug/game`,
+      },
+      {
+        source: "/event/:slug/game/:path*",
+        destination: `${APPS_WEB_ORIGIN}/event/:slug/game/:path*`,
+      },
+      {
+        source: "/event/:slug/admin",
+        destination: `${APPS_WEB_ORIGIN}/event/:slug/admin`,
+      },
+      {
+        source: "/event/:slug/admin/:path*",
+        destination: `${APPS_WEB_ORIGIN}/event/:slug/admin/:path*`,
+      },
+      {
+        source: "/assets/:path*",
+        destination: `${APPS_WEB_ORIGIN}/assets/:path*`,
+      },
+    ];
   },
 };
 
