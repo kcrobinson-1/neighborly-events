@@ -272,19 +272,38 @@ fixed-content showcase artifacts the freeze is fine.
   implements its own auth boundary, splitting into three
   shapes:
 
-  1. **Custom bearer-token auth + service-role write/RPC**
-     — the four authoring functions (`save-draft`,
-     `generate-event-code`, `publish-draft`,
-     `unpublish-event`) gate on
-     `authenticateEventOrganizerOrAdmin`
-     ([supabase/functions/_shared/event-organizer-auth.ts](/supabase/functions/_shared/event-organizer-auth.ts));
-     the two redemption mutations (`redeem-entitlement`,
-     `reverse-entitlement-redemption`) gate on
-     `authenticateRedemptionOperator`
-     ([supabase/functions/_shared/redemption-operator-auth.ts](/supabase/functions/_shared/redemption-operator-auth.ts)).
-     Both helpers require a real Supabase Auth bearer
-     token; the function then mints a service-role client
-     to call the RPC.
+  1. **Custom bearer-token auth, two distinct client
+     models** — six functions gate on a Supabase Auth
+     bearer token at the Edge Function entry, but split on
+     how they then talk to Postgres:
+     - **Service-role client.** The four authoring
+       functions (`save-draft`, `generate-event-code`,
+       `publish-draft`, `unpublish-event`) gate on
+       `authenticateEventOrganizerOrAdmin`
+       ([supabase/functions/_shared/event-organizer-auth.ts](/supabase/functions/_shared/event-organizer-auth.ts))
+       and then mint a service-role client (`createServiceRoleClient`
+       at [supabase/functions/save-draft/index.ts:64-65](/supabase/functions/save-draft/index.ts))
+       to write tables / call regular RPCs. The Edge
+       Function gate IS the authorization; the DB call
+       runs with full privileges.
+     - **Publishable/anon client + forwarded JWT.** The two
+       redemption mutations (`redeem-entitlement`,
+       `reverse-entitlement-redemption`) gate on
+       `authenticateRedemptionOperator`
+       ([supabase/functions/_shared/redemption-operator-auth.ts](/supabase/functions/_shared/redemption-operator-auth.ts))
+       and then create a client with the publishable / anon
+       key plus an `Authorization: Bearer ${token}` header
+       that forwards the caller's JWT
+       ([redeem-entitlement/index.ts:47-57](/supabase/functions/redeem-entitlement/index.ts),
+       [reverse-entitlement-redemption/index.ts:44-59](/supabase/functions/reverse-entitlement-redemption/index.ts)).
+       The SECURITY DEFINER RPCs execute under the caller's
+       identity — `current_request_user_id()` returns the
+       caller's UUID, and the RPC's own role helpers
+       (`is_agent_for_event` / `is_organizer_for_event` /
+       `is_root_admin`) gate the mutation. The RPCs **revoke
+       service-role execute explicitly**
+       ([20260421000300_add_redeem_entitlement_rpc.sql:107-111](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)),
+       so a service-role client cannot call them at all.
   2. **Custom session-cookie auth + service-role read or
      write** — two functions gate on `readVerifiedSession`
      ([supabase/functions/_shared/session-cookie.ts](/supabase/functions/_shared/session-cookie.ts))
@@ -480,6 +499,22 @@ decide what each layer does on test-event slugs:
   `is_organizer_for_event` check on allowlisted events
   when `current_request_user_id()` is null, or accept the
   synthesized identity the Edge Function forwards.
+
+**Service-role is not an option** for these RPCs. The
+migrations that create `redeem_entitlement_by_code` and
+`reverse_entitlement_redemption` explicitly `revoke
+execute ... from service_role` and grant only to `anon,
+authenticated`
+([20260421000300_add_redeem_entitlement_rpc.sql:107-111](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)).
+This is intentional: the RPCs derive auth from
+`current_request_user_id()`, and a service-role client
+would resolve that to null and fall through to
+`not_authorized`. So bypass options that route through a
+service-role client (the way the four authoring functions
+do) are off the table; the bypass has to use the same
+publishable-key + JWT-forward client model the live
+redemption path uses, with either a synthesized token or
+no token at all.
 
 Same SECURITY DEFINER-ness still applies: the RPC stamps
 `redeemed_by` / `redeemed_by_role` /
@@ -1027,16 +1062,25 @@ before the plan absorbs the answer.
 - **Edge Function trust-boundary inventory.** Scoping read
   every entry in [supabase/config.toml](/supabase/config.toml)
   and confirmed all 9 functions are `verify_jwt = false`,
-  splitting into three auth shapes: custom bearer-token (6
-  functions: the 4 authoring + 2 redemption mutations),
-  custom session-cookie auth that 401s on missing/invalid
-  cookie (2 functions: `get-redemption-status` for reads,
-  `complete-game` for writes — both pattern-match Q2's
-  read-shim shape; per-caller gating doesn't transfer to
-  event-wide reads), and no-caller-auth public actions (1
-  function: `issue-session`, the session-bootstrap
-  endpoint). Plan-drafting re-verifies the inventory
-  hasn't shifted; the breakdown is reality-check input for
+  splitting into three auth shapes with two distinct
+  client models inside the bearer-token shape:
+  - Custom bearer-token + service-role client (4 authoring
+    functions: save-draft, generate-event-code,
+    publish-draft, unpublish-event).
+  - Custom bearer-token + publishable-key client with
+    forwarded JWT (2 redemption mutations: redeem-entitlement,
+    reverse-entitlement-redemption — RPCs revoke service-role
+    execute, so service-role isn't an option).
+  - Custom session-cookie auth that 401s on missing /
+    invalid cookie (2 functions: `get-redemption-status`
+    for reads, `complete-game` for writes — pattern-match
+    Q2's read-shim shape; per-caller gating doesn't transfer
+    to event-wide reads).
+  - No-caller-auth public action (1 function:
+    `issue-session`, the session-bootstrap endpoint).
+
+  Plan-drafting re-verifies the inventory hasn't shifted;
+  the breakdown is reality-check input for
   Q2's "Edge Function shim" option (architecture
   well-precedented; trust-boundary predicate novel).
 
