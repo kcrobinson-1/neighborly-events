@@ -18,12 +18,19 @@ Effective 2026-05-01, in-repo plan docs follow this layout:
   the `shared-*-foundation` set, etc.).
 - `docs/plans/epics/<epic-slug>/epic.md` — the epic-level overview for an
   epic-scoped body of work.
-- `docs/plans/epics/<epic-slug>/<descriptive-name>-plan.md` — per-phase
-  implementation contracts inside an epic. Filenames keep a descriptive
-  prefix (e.g. `m1-theming-plan.md`) so they remain searchable globally
-  rather than collapsing to bare `phase-1.md` collisions across epics.
-- `docs/plans/epics/<epic-slug>/scoping/` — pre-phase scoping notes for the
-  epic, when useful.
+- `docs/plans/epics/<epic-slug>/m<N>-<short-slug>.md` — milestone doc
+  (durable; only present when a milestone needs cross-phase coordination
+  beyond the milestone shells in `epic.md`; see AGENTS.md "Milestone
+  Planning Sessions"). Per-epic milestone numbering: each epic counts
+  from M1 independently, and sibling epics may reuse the same milestone
+  numbers without collision because the path's epic segment disambiguates.
+- `docs/plans/epics/<epic-slug>/m<N>-phase-<X>-<Y>-plan.md` — per-phase
+  plan doc (durable; survives the feature; see AGENTS.md "Phase Planning
+  Sessions"). Sub-phase plans add another segment:
+  `m<N>-phase-<X>-<Y>-<Z>-plan.md`.
+- `docs/plans/epics/<epic-slug>/scoping/m<N>-phase-<X>-<Y>.md` — phase
+  scoping doc (transient; deletes in batch with sibling scoping docs at
+  the milestone-terminal PR; see AGENTS.md "Phase Planning Sessions").
 - `docs/plans/archive/` — existing archive for superseded plans, unchanged.
   New epics adopt the in-place-as-archive pattern: once an epic is `Landed`,
   its `docs/plans/epics/<slug>/` folder remains in place as the durable
