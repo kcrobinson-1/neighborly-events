@@ -285,32 +285,40 @@ fixed-content showcase artifacts the freeze is fine.
      Both helpers require a real Supabase Auth bearer
      token; the function then mints a service-role client
      to call the RPC.
-  2. **Custom session-cookie auth + service-role read**
-     — `get-redemption-status` reads `game_entitlements`
-     scoped to `(event_id, client_session_id)` after
-     `readVerifiedSession`
+  2. **Custom session-cookie auth + service-role read or
+     write** — two functions gate on `readVerifiedSession`
      ([supabase/functions/_shared/session-cookie.ts](/supabase/functions/_shared/session-cookie.ts))
-     verifies a signed cookie. This is the closest existing
-     precedent for Q2's "Edge Function read shim" option
-     in shape: `verify_jwt = false` + custom auth +
-     service-role read of an event-scoped table.
-  3. **No-caller-auth public actions** —
-     `complete-game` and `issue-session` accept
-     unauthenticated requests and don't authenticate the
-     caller at all (the security model is in the action
-     itself: `complete-game` writes only what the request
-     payload asserts; `issue-session` mints a fresh
-     identifier).
+     and return 401 when the signed cookie is missing or
+     invalid. `get-redemption-status`
+     ([supabase/functions/get-redemption-status/index.ts](/supabase/functions/get-redemption-status/index.ts))
+     reads `game_entitlements` scoped to
+     `(event_id, client_session_id)`; `complete-game`
+     ([supabase/functions/complete-game/index.ts:84-96](/supabase/functions/complete-game/index.ts))
+     writes via the `complete_game_and_award_entitlement`
+     SECURITY DEFINER RPC. Both pattern-match Q2's "Edge
+     Function read shim" option in shape: `verify_jwt =
+     false` + custom auth + service-role client touching
+     event-scoped data.
+  3. **No-caller-auth public actions** — `issue-session`
+     ([supabase/functions/issue-session/index.ts](/supabase/functions/issue-session/index.ts))
+     accepts unauthenticated requests by design (it's the
+     session-bootstrap endpoint — it can't require what it
+     issues). It calls `readVerifiedSession` to detect an
+     existing session for reuse, but does not 401 on its
+     absence; instead it mints a fresh session.
 
   For Q2's Edge Function shim option specifically: shape (1)
   shows the custom-auth + service-role architecture is well-
-  established across six functions; shape (2) is the
-  closest read-shim template but its per-row gating
-  (session-cookie ownership) doesn't transfer to event-wide
-  admin draft reads — a Q2 shim would gate on slug
-  allowlist membership instead. The pattern is precedent-
-  but-not-template; the architecture is well-precedented;
-  the trust-boundary predicate is novel.
+  established across six functions; shape (2) is the closest
+  read-shim template with two existing functions
+  (`get-redemption-status` for reads, `complete-game` for
+  writes) using the same verify_jwt-false + session-cookie +
+  service-role triad. Their per-caller gating
+  (session-cookie ownership of one row / one game session)
+  doesn't transfer to event-wide admin draft reads — a Q2
+  shim would gate on slug allowlist membership instead. The
+  pattern is precedent-but-not-template; the architecture is
+  well-precedented; the trust-boundary predicate is novel.
 
 ### Q3. Write-side contract for the admin authoring functions
 
@@ -1021,11 +1029,13 @@ before the plan absorbs the answer.
   and confirmed all 9 functions are `verify_jwt = false`,
   splitting into three auth shapes: custom bearer-token (6
   functions: the 4 authoring + 2 redemption mutations),
-  custom session-cookie (`get-redemption-status` — the
-  closest read-shim precedent, gated by session-cookie
-  ownership of one row rather than slug allowlist), and
-  no-caller-auth public actions (`complete-game`,
-  `issue-session`). Plan-drafting re-verifies the inventory
+  custom session-cookie auth that 401s on missing/invalid
+  cookie (2 functions: `get-redemption-status` for reads,
+  `complete-game` for writes — both pattern-match Q2's
+  read-shim shape; per-caller gating doesn't transfer to
+  event-wide reads), and no-caller-auth public actions (1
+  function: `issue-session`, the session-bootstrap
+  endpoint). Plan-drafting re-verifies the inventory
   hasn't shifted; the breakdown is reality-check input for
   Q2's "Edge Function shim" option (architecture
   well-precedented; trust-boundary predicate novel).
