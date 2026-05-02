@@ -96,8 +96,16 @@ this phase's diff.
   narrative section's outer element. Mirrors the existing
   `.home-hero` / `.home-showcase` convention 2.1 introduced at
   [`globals.css:685–849`](/apps/site/app/globals.css). The
-  selector is a direct child of `.home-shell` and inherits the
-  `.home-shell > section` width-auto-center rule.
+  section is a *grandchild* of `.home-shell` because the
+  section-level `<ThemeScope>` wrap (see Contracts below) emits a
+  `<div className="theme-scope">` between `.home-shell` and the
+  section, so 2.1's `.home-shell > section` width-auto-center
+  rule does **not** match the narrative section by structural
+  inheritance — the rule must be extended to cover the wrapped
+  case (`.home-shell > section, .home-shell > .theme-scope`)
+  inside this phase's CSS, otherwise the section renders at full
+  shell width on desktop instead of the centered `min(100%, 1080px)`
+  contract the hero and showcase honor.
 - **Persona subsection** — one of three blocks inside
   `.home-narrative` describing what an attendee, organizer, or
   volunteer does. Plan-drafting estimate: each subsection

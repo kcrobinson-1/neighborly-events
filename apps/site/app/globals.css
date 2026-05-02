@@ -690,7 +690,17 @@ button {
   align-content: start;
 }
 
-.home-shell > section {
+/*
+ * Width-auto-center contract for top-level home sections. Matches a
+ * direct `<section>` child (hero, showcase) and a `<ThemeScope>`
+ * wrapper that contains a section (narrative — wraps in a single
+ * section-level `<ThemeScope>` so brand-bearing surfaces resolve to
+ * Harvest's Theme; the wrapper emits a `<div className="theme-scope">`
+ * between `.home-shell` and the section, so the wrapper itself
+ * carries the width contract on behalf of the section it wraps).
+ */
+.home-shell > section,
+.home-shell > .theme-scope {
   width: min(100%, 1080px);
   margin-inline: auto;
 }
