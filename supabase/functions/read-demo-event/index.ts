@@ -28,16 +28,20 @@ export type DemoAdminPayload = {
   updatedAt: string;
 };
 
+/**
+ * Public response shape for `surface: "redemptions"`.
+ *
+ * `read-demo-event` runs with `verify_jwt = false` and answers any
+ * caller on an allowlisted slug, so the response cannot include
+ * operator PII (`redeemed_by`, `redemption_note`,
+ * `redemption_reversed_by`, the per-actor role labels). The demo
+ * monitoring view only renders verification code, status, and
+ * activity timestamp — exactly the fields surfaced here.
+ */
 export type DemoRedemptionRow = {
-  event_id: string;
   id: string;
   redeemed_at: string | null;
-  redeemed_by: string | null;
-  redeemed_by_role: "agent" | "root_admin" | null;
-  redemption_note: string | null;
   redemption_reversed_at: string | null;
-  redemption_reversed_by: string | null;
-  redemption_reversed_by_role: "organizer" | "root_admin" | null;
   redemption_status: "redeemed" | "unredeemed";
   verification_code: string;
 };
@@ -59,18 +63,17 @@ type EventLookupRow = {
 
 const REDEMPTIONS_FETCH_LIMIT = 500;
 
+// Operator identifiers and free-text notes are intentionally excluded
+// because the demo Edge Function is publicly reachable
+// (`verify_jwt = false` + allowlist gate) and surfacing them would
+// leak PII to unauthenticated visitors. Mirrors the field set the
+// DemoModeRedemptionsView actually renders.
 const REDEMPTION_ROW_COLUMNS = [
   "id",
-  "event_id",
   "verification_code",
   "redemption_status",
   "redeemed_at",
-  "redeemed_by",
-  "redeemed_by_role",
-  "redemption_note",
   "redemption_reversed_at",
-  "redemption_reversed_by",
-  "redemption_reversed_by_role",
 ].join(",");
 
 export type ReadDemoEventHandlerDependencies = {
@@ -461,9 +464,22 @@ export function createReadDemoEventHandler(
       );
     }
 
+    // Defense-in-depth whitelist. The default loader's SELECT already
+    // restricts the column set, but a future loader change must not be
+    // able to leak operator PII through the public response. Mapping
+    // each row to the explicit DemoRedemptionRow shape pins the public
+    // contract regardless of what the loader returned.
+    const safeRows: DemoRedemptionRow[] = (data ?? []).map((row) => ({
+      id: row.id,
+      redeemed_at: row.redeemed_at,
+      redemption_reversed_at: row.redemption_reversed_at,
+      redemption_status: row.redemption_status,
+      verification_code: row.verification_code,
+    }));
+
     return jsonResponse(
       200,
-      { rows: data ?? [] },
+      { rows: safeRows },
       origin,
       dependencies.createCorsHeaders,
     );

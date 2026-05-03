@@ -25,28 +25,16 @@ const ADMIN_FIXTURE: DemoAdminPayload = {
 
 const REDEMPTIONS_FIXTURE: DemoRedemptionRow[] = [
   {
-    event_id: "event-1",
     id: "row-2",
     redeemed_at: "2026-04-21T13:00:00.000Z",
-    redeemed_by: "agent@example.com",
-    redeemed_by_role: "agent",
-    redemption_note: null,
     redemption_reversed_at: null,
-    redemption_reversed_by: null,
-    redemption_reversed_by_role: null,
     redemption_status: "redeemed",
     verification_code: "EVT-0002",
   },
   {
-    event_id: "event-1",
     id: "row-1",
     redeemed_at: "2026-04-21T12:00:00.000Z",
-    redeemed_by: "agent@example.com",
-    redeemed_by_role: "agent",
-    redemption_note: null,
     redemption_reversed_at: null,
-    redemption_reversed_by: null,
-    redemption_reversed_by_role: null,
     redemption_status: "redeemed",
     verification_code: "EVT-0001",
   },
@@ -274,6 +262,58 @@ Deno.test("read-demo-event returns 200 with redemption rows for a test slug", as
   assertEquals(await response.json(), { rows: REDEMPTIONS_FIXTURE });
 });
 
+Deno.test("read-demo-event redemptions response excludes operator PII columns", async () => {
+  // Privacy regression guard. read-demo-event runs publicly
+  // (`verify_jwt = false`) and must not surface operator
+  // identifiers / free-text notes to unauthenticated callers, even
+  // if a future loader implementation accidentally selects them.
+  const rowWithLeakedPiiAttempt = {
+    id: "row-leak",
+    redeemed_at: "2026-04-21T13:00:00.000Z",
+    redeemed_by: "agent-leak@example.com",
+    redeemed_by_role: "agent",
+    redemption_note: "leaked free-text",
+    redemption_reversed_at: null,
+    redemption_reversed_by: "organizer-leak@example.com",
+    redemption_reversed_by_role: "organizer",
+    redemption_status: "redeemed",
+    verification_code: "LEAK-0001",
+  };
+
+  const handler = buildHandler({
+    loadRedemptionsPayload: async () => ({
+      data: [rowWithLeakedPiiAttempt as unknown as DemoRedemptionRow],
+      error: null,
+    }),
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({
+        slug: "harvest-block-party",
+        surface: "redemptions",
+      }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  const body = await response.json() as { rows: Array<Record<string, unknown>> };
+  const row = body.rows[0];
+
+  // Whitelist assertion: only the five non-PII fields are exposed.
+  assertEquals(
+    Object.keys(row).sort(),
+    [
+      "id",
+      "redeemed_at",
+      "redemption_reversed_at",
+      "redemption_status",
+      "verification_code",
+    ],
+  );
+});
+
 Deno.test("mergeRedemptionSlices sorts re-redeemed rows by the newer of redeemed_at / redemption_reversed_at", () => {
   // Row A: re-redeemed (redeemed → reversed → redeemed again) —
   // redeemed_at is later than redemption_reversed_at. The redeemed
@@ -283,28 +323,16 @@ Deno.test("mergeRedemptionSlices sorts re-redeemed rows by the newer of redeemed
   // older reversal stamp and surface B above A; the corrected
   // newer-of-the-two sort puts A first.
   const reRedeemedRow: DemoRedemptionRow = {
-    event_id: "event-1",
     id: "row-a",
     redeemed_at: "2026-04-21T15:00:00.000Z",
-    redeemed_by: "agent@example.com",
-    redeemed_by_role: "agent",
-    redemption_note: null,
     redemption_reversed_at: "2026-04-21T13:00:00.000Z",
-    redemption_reversed_by: "organizer@example.com",
-    redemption_reversed_by_role: "organizer",
     redemption_status: "redeemed",
     verification_code: "RE-A",
   };
   const plainRedeemedRow: DemoRedemptionRow = {
-    event_id: "event-1",
     id: "row-b",
     redeemed_at: "2026-04-21T14:00:00.000Z",
-    redeemed_by: "agent@example.com",
-    redeemed_by_role: "agent",
-    redemption_note: null,
     redemption_reversed_at: null,
-    redemption_reversed_by: null,
-    redemption_reversed_by_role: null,
     redemption_status: "redeemed",
     verification_code: "RE-B",
   };

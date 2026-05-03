@@ -4,8 +4,10 @@ import {
   computeActivityTimestamp,
   isRowCurrentlyReversed,
 } from "./activityTimestamp";
-import { fetchDemoModeRead } from "../lib/fetchDemoModeRead";
-import type { RedemptionRow } from "./types";
+import {
+  fetchDemoModeRead,
+  type DemoModeRedemptionRow,
+} from "../lib/fetchDemoModeRead";
 
 type DemoModeRedemptionsViewProps = {
   slug: TestEventSlug;
@@ -13,7 +15,7 @@ type DemoModeRedemptionsViewProps = {
 
 type LoadState =
   | { status: "loading" }
-  | { rows: RedemptionRow[]; status: "ready" }
+  | { rows: DemoModeRedemptionRow[]; status: "ready" }
   | { message: string; status: "error" };
 
 function formatTimestamp(value: string | null): string {
@@ -31,7 +33,7 @@ function formatTimestamp(value: string | null): string {
   }
 }
 
-function resolveStatusLabel(row: RedemptionRow): string {
+function resolveStatusLabel(row: DemoModeRedemptionRow): string {
   if (row.redemption_status === "redeemed") {
     return "Redeemed";
   }

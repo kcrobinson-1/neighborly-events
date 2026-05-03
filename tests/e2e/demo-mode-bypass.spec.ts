@@ -16,28 +16,16 @@ const SAMPLE_ADMIN_PAYLOAD = {
 
 const SAMPLE_REDEMPTION_ROWS = [
   {
-    event_id: "harvest-event-id",
     id: "row-2",
     redeemed_at: "2026-04-21T13:00:00.000Z",
-    redeemed_by: "agent@example.com",
-    redeemed_by_role: "agent" as const,
-    redemption_note: null,
     redemption_reversed_at: null,
-    redemption_reversed_by: null,
-    redemption_reversed_by_role: null,
     redemption_status: "redeemed" as const,
     verification_code: "HAR-0002",
   },
   {
-    event_id: "harvest-event-id",
     id: "row-1",
     redeemed_at: "2026-04-21T12:00:00.000Z",
-    redeemed_by: "agent@example.com",
-    redeemed_by_role: "agent" as const,
-    redemption_note: null,
     redemption_reversed_at: null,
-    redemption_reversed_by: null,
-    redemption_reversed_by_role: null,
     redemption_status: "redeemed" as const,
     verification_code: "HAR-0001",
   },

@@ -1,5 +1,4 @@
 import type { TestEventSlug } from "../../../../shared/events/testEventAllowlist";
-import type { RedemptionRow } from "../redemptions/types";
 import {
   createSupabaseAuthHeaders,
   getMissingSupabaseConfigMessage,
@@ -24,6 +23,22 @@ export type DemoEventAdminSummary = {
   updatedAt: string;
 };
 
+/**
+ * Mirror of the demo-redemption row the read-demo-event Edge Function
+ * returns for `surface: "redemptions"`. Strictly narrower than the
+ * authenticated `RedemptionRow`: operator identifiers and free-text
+ * notes are intentionally absent because read-demo-event is publicly
+ * reachable (`verify_jwt = false` + allowlist gate) and surfacing
+ * those fields would leak operator PII to unauthenticated visitors.
+ */
+export type DemoModeRedemptionRow = {
+  id: string;
+  redeemed_at: string | null;
+  redemption_reversed_at: string | null;
+  redemption_status: "redeemed" | "unredeemed";
+  verification_code: string;
+};
+
 type AdminFetchArgs = {
   slug: TestEventSlug;
   surface: "admin";
@@ -37,7 +52,7 @@ type RedemptionsFetchArgs = {
 type FetchArgs = AdminFetchArgs | RedemptionsFetchArgs;
 
 type RedemptionsResponseBody = {
-  rows: RedemptionRow[];
+  rows: DemoModeRedemptionRow[];
 };
 
 const DEFAULT_DEMO_READ_ERROR_MESSAGE =
@@ -49,10 +64,10 @@ export async function fetchDemoModeRead(
 ): Promise<DemoEventAdminSummary | null>;
 export async function fetchDemoModeRead(
   args: RedemptionsFetchArgs,
-): Promise<RedemptionRow[]>;
+): Promise<DemoModeRedemptionRow[]>;
 export async function fetchDemoModeRead(
   args: FetchArgs,
-): Promise<DemoEventAdminSummary | RedemptionRow[] | null> {
+): Promise<DemoEventAdminSummary | DemoModeRedemptionRow[] | null> {
   const { enabled, supabaseClientKey, supabaseUrl } = getSupabaseConfig();
 
   if (!enabled) {
