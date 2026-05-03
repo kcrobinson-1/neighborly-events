@@ -270,7 +270,7 @@ jobs:
             isolated_log="${RUNNER_TEMP}/step_isolated.log"
             tail_log="${RUNNER_TEMP}/log_tail.txt"
 
-            gh run view --log-failed --job "$job_id" > "$raw_log" || true
+            gh run view --repo "$OWNER_REPO" --log-failed --job "$job_id" > "$raw_log" || true
 
             if [ -n "$step_name" ]; then
               awk -F'\t' -v s="$step_name" '$2 == s' "$raw_log" > "$isolated_log" || true

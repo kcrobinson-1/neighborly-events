@@ -150,6 +150,18 @@ The Ubuntu runner image is the source of `gh`; the pin is enforced
 at runtime so a runner-image regression below 2.89.0 fails loudly
 instead of silently parsing a different JSON shape.
 
+**Repo context on every gh subcommand that needs one.** The
+reporter job does not check out the repository, so `gh` has no
+local git remote to infer the target repo from. Every `gh`
+subcommand that resolves a repo target (`gh run view`, `gh pr
+comment`, etc.) must pass `--repo "$OWNER_REPO"` explicitly. `gh
+api` calls that hit an absolute path (`repos/${OWNER_REPO}/…`) do
+not need the flag because the path itself names the repo. Without
+explicit `--repo`, the call returns "no default remote" and the
+surrounding `|| true` swallows the failure into an empty log,
+producing a comment with no diagnostic content — exactly the
+outcome the reporter exists to prevent.
+
 ### Failed-step identification
 
 The reporter calls
