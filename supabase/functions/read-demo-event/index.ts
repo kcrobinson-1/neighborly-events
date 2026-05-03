@@ -111,12 +111,30 @@ function mapAdminStatusRow(row: AdminStatusRow): DemoAdminPayload {
   };
 }
 
+function computeActivityTimestamp(row: DemoRedemptionRow): string | null {
+  // Newer of the two timestamps. A re-redeemed row (redeemed → reversed
+  // → redeemed again) carries values in both fields because the
+  // redeem_entitlement_by_code RPC updates redeemed_* without clearing
+  // redemption_reversed_*. `redemption_reversed_at ?? redeemed_at` would
+  // sort such rows by the older reversal time and risk dropping them
+  // from the top-N cap. Mirrors apps/web/src/redemptions/activityTimestamp.ts.
+  const redeemedAt = row.redeemed_at;
+  const reversedAt = row.redemption_reversed_at;
+  if (redeemedAt === null) {
+    return reversedAt;
+  }
+  if (reversedAt === null) {
+    return redeemedAt;
+  }
+  return reversedAt > redeemedAt ? reversedAt : redeemedAt;
+}
+
 function compareRowsByActivity(
   first: DemoRedemptionRow,
   second: DemoRedemptionRow,
 ): number {
-  const firstTs = first.redemption_reversed_at ?? first.redeemed_at;
-  const secondTs = second.redemption_reversed_at ?? second.redeemed_at;
+  const firstTs = computeActivityTimestamp(first);
+  const secondTs = computeActivityTimestamp(second);
 
   if (firstTs === null && secondTs === null) {
     return second.id.localeCompare(first.id);
@@ -136,7 +154,7 @@ function compareRowsByActivity(
   return second.id.localeCompare(first.id);
 }
 
-function mergeRedemptionSlices(
+export function mergeRedemptionSlices(
   redeemed: DemoRedemptionRow[],
   reversed: DemoRedemptionRow[],
   cap: number,

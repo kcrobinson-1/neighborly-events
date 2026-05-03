@@ -4,6 +4,7 @@ import {
   defaultReadDemoEventHandlerDependencies,
   type DemoAdminPayload,
   type DemoRedemptionRow,
+  mergeRedemptionSlices,
   validateReadDemoEventPayload,
 } from "../../../supabase/functions/read-demo-event/index.ts";
 import { createOriginRequest } from "./helpers.ts";
@@ -271,6 +272,53 @@ Deno.test("read-demo-event returns 200 with redemption rows for a test slug", as
 
   assertEquals(response.status, 200);
   assertEquals(await response.json(), { rows: REDEMPTIONS_FIXTURE });
+});
+
+Deno.test("mergeRedemptionSlices sorts re-redeemed rows by the newer of redeemed_at / redemption_reversed_at", () => {
+  // Row A: re-redeemed (redeemed → reversed → redeemed again) —
+  // redeemed_at is later than redemption_reversed_at. The redeemed
+  // slice contains it. Row B: a plain redeemed row whose redeemed_at
+  // falls between A's reversal and re-redeem timestamps. A naive
+  // `redemption_reversed_at ?? redeemed_at` sort would rank A by its
+  // older reversal stamp and surface B above A; the corrected
+  // newer-of-the-two sort puts A first.
+  const reRedeemedRow: DemoRedemptionRow = {
+    event_id: "event-1",
+    id: "row-a",
+    redeemed_at: "2026-04-21T15:00:00.000Z",
+    redeemed_by: "agent@example.com",
+    redeemed_by_role: "agent",
+    redemption_note: null,
+    redemption_reversed_at: "2026-04-21T13:00:00.000Z",
+    redemption_reversed_by: "organizer@example.com",
+    redemption_reversed_by_role: "organizer",
+    redemption_status: "redeemed",
+    verification_code: "RE-A",
+  };
+  const plainRedeemedRow: DemoRedemptionRow = {
+    event_id: "event-1",
+    id: "row-b",
+    redeemed_at: "2026-04-21T14:00:00.000Z",
+    redeemed_by: "agent@example.com",
+    redeemed_by_role: "agent",
+    redemption_note: null,
+    redemption_reversed_at: null,
+    redemption_reversed_by: null,
+    redemption_reversed_by_role: null,
+    redemption_status: "redeemed",
+    verification_code: "RE-B",
+  };
+
+  // Both rows live in the redeemed slice; the reversed slice holds
+  // only the prior reversal record of A, which dedupes to the
+  // redeemed-slice copy via the by-id dedupe in mergeRedemptionSlices.
+  const merged = mergeRedemptionSlices(
+    [reRedeemedRow, plainRedeemedRow],
+    [reRedeemedRow],
+    500,
+  );
+
+  assertEquals(merged.map((row) => row.id), ["row-a", "row-b"]);
 });
 
 Deno.test("read-demo-event returns 404 when the admin lookup is empty", async () => {
