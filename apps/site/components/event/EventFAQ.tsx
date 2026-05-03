@@ -5,7 +5,8 @@ import type { EventContent } from "../../lib/eventContent.ts";
  * pair so expand/collapse works without JavaScript and meets
  * keyboard accessibility expectations out of the box. Default
  * marker, focus ring, and content layout are normalized in
- * `globals.css` so browser defaults don't surprise the reader.
+ * `app/styles/_event.scss` so browser defaults don't surprise the
+ * reader.
  */
 export function EventFAQ({ faq }: { faq: EventContent["faq"] }) {
   return (
