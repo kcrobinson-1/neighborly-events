@@ -33,7 +33,10 @@ import {
 } from "../redemptions/useRedemptionsList";
 import { useRedemptionsFilters } from "../redemptions/useRedemptionsFilters";
 import { useReverseRedemption } from "../redemptions/useReverseRedemption";
+import { DemoModeRedemptionsView } from "../redemptions/DemoModeRedemptionsView";
 import type { RedemptionRow as RedemptionRowType } from "../redemptions/types";
+import { DemoModeBanner } from "../demo/DemoModeBanner";
+import { isTestEventSlug } from "../../../../shared/events/testEventAllowlist";
 import { routes, type AuthNextPath } from "../../../../shared/urls";
 
 const DEFAULT_DETAIL_REFRESH_ERROR =
@@ -691,6 +694,18 @@ export function EventRedemptionsPage(
   }
 
   if (sessionState.status === "signed_out") {
+    if (isTestEventSlug(slug)) {
+      return (
+        <RedemptionsShell
+          onNavigateHome={() => onNavigate(routes.home)}
+          title="Review redemptions"
+        >
+          <DemoModeBanner slug={slug} surface="redemptions" />
+          <DemoModeRedemptionsView slug={slug} />
+        </RedemptionsShell>
+      );
+    }
+
     return (
       <RedemptionsShell
         onNavigateHome={() => onNavigate(routes.home)}

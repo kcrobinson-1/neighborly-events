@@ -132,7 +132,7 @@ drafts and as its PR merges.
 | Phase | Title (estimate) | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
 | 3.1 | Demo-mode data-access-semantics decision (doc-only) | [m3-phase-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md) | Landed | this PR |
-| 3.2 | Demo-mode bypass — read side | [m3-phase-3-2-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-2-plan.md) | Proposed | _pending_ |
+| 3.2 | Demo-mode bypass — read side | [m3-phase-3-2-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-2-plan.md) | Landed | this PR |
 | 3.3 | Demo-mode bypass — write side + M3 closure | _pending 3.3 phase planning_ | Proposed | _pending_ |
 
 The 3.2-as-single-row estimate did not hold. Phase 3.2's

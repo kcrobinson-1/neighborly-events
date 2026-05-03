@@ -12,8 +12,11 @@ import {
   type SignInFormCopy,
 } from "../auth";
 import { requestMagicLink, signOut as signOutAuth } from "../lib/authApi";
+import { DemoModeAdminView } from "../admin/DemoModeAdminView";
 import { EventAdminWorkspace } from "../admin/EventAdminWorkspace";
 import { useEventAdminWorkspace } from "../admin/useEventAdminWorkspace";
+import { DemoModeBanner } from "../demo/DemoModeBanner";
+import { isTestEventSlug } from "../../../../shared/events/testEventAllowlist";
 import { routes, type AuthNextPath } from "../../../../shared/urls";
 
 type EventAdminPageProps = {
@@ -388,6 +391,22 @@ export function EventAdminPage({ onNavigate, slug }: EventAdminPageProps) {
   }
 
   if (sessionState.status === "signed_out") {
+    if (isTestEventSlug(slug)) {
+      return (
+        <EventAdminShell
+          isSignedIn={false}
+          isSigningOut={false}
+          onNavigateHome={onNavigateHome}
+          onSignOut={handleSignOut}
+          signOutError={null}
+          title="Manage this event"
+        >
+          <DemoModeBanner slug={slug} surface="admin" />
+          <DemoModeAdminView slug={slug} />
+        </EventAdminShell>
+      );
+    }
+
     return (
       <EventAdminShell
         isSignedIn={false}

@@ -1,6 +1,19 @@
 import type { RedemptionRow } from "./types";
 
 /**
+ * Structural subset of RedemptionRow needed to compute activity
+ * timestamps. Demo-mode read-only views (M3 phase 3.2) consume this
+ * type instead of the full RedemptionRow so the demo Edge Function
+ * does not need to leak operator PII fields (`redeemed_by`,
+ * `redemption_note`, `redemption_reversed_by`) to unauthenticated
+ * visitors.
+ */
+export type RedemptionActivityFields = Pick<
+  RedemptionRow,
+  "redeemed_at" | "redemption_reversed_at"
+>;
+
+/**
  * Returns the newer of a row's redemption activity timestamps.
  *
  * A re-redeemed row (redeemed → reversed → redeemed again) carries values
@@ -14,7 +27,9 @@ import type { RedemptionRow } from "./types";
  * Both columns are ISO-8601 strings, so lexicographic comparison matches
  * chronological order.
  */
-export function computeActivityTimestamp(row: RedemptionRow): string | null {
+export function computeActivityTimestamp(
+  row: RedemptionActivityFields,
+): string | null {
   const redeemedAt = row.redeemed_at;
   const reversedAt = row.redemption_reversed_at;
 
@@ -28,7 +43,9 @@ export function computeActivityTimestamp(row: RedemptionRow): string | null {
 }
 
 /** True when the row is currently in the reversed state (status unredeemed with reversal metadata). */
-export function isRowCurrentlyReversed(row: RedemptionRow): boolean {
+export function isRowCurrentlyReversed(
+  row: Pick<RedemptionRow, "redemption_status" | "redemption_reversed_at">,
+): boolean {
   return (
     row.redemption_status === "unredeemed" &&
     row.redemption_reversed_at !== null

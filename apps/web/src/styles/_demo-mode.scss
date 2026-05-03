@@ -1,0 +1,70 @@
+@use "./mixins" as *;
+@use "./tokens" as *;
+
+/*
+ * Demo-mode banner + read-only variant rules.
+ *
+ * The banner mirrors the visual semantics of apps/site's
+ * `TestEventDisclaimer` (`role="note"`, fixed amber color recipe
+ * that opts out of themable surface tokens) so the demo signal
+ * reads consistently across both apps and stays legible regardless
+ * of the per-event ThemeScope wraps M1 phase 1.1 added.
+ */
+.demo-mode-banner {
+  display: block;
+  margin-bottom: $space-4;
+  padding: 14px 18px;
+  border-radius: var(--radius-control);
+  background: #fff3cd;
+  color: #5b3e00;
+  border: 1px solid #f0d68a;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.demo-mode-stack {
+  @include stack(16px);
+}
+
+.demo-mode-stack p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.demo-mode-summary-list {
+  display: grid;
+  gap: $space-3;
+  margin: 0;
+}
+
+.demo-mode-summary-row {
+  display: grid;
+  grid-template-columns: minmax(160px, max-content) 1fr;
+  gap: $space-4;
+  padding: $space-3 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.demo-mode-summary-row:last-child {
+  border-bottom: 0;
+}
+
+.demo-mode-summary-row dt {
+  margin: 0;
+  font-weight: $font-weight-bold;
+  color: var(--muted);
+}
+
+.demo-mode-summary-row dd {
+  margin: 0;
+  color: var(--text);
+}
+
+.demo-mode-redemptions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: $space-3;
+}
