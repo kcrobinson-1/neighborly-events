@@ -1191,11 +1191,21 @@ the error might be.
 
 - If CI logs are accessible (local run, attached output, pasted excerpt), read
   them before making any change.
-- If CI logs are not accessible from inside the session, stop after at most
-  one speculative attempt and ask the human for the log content before
+- For a failing PR CI run, the canonical source of post-CI debugging context
+  is the automated `Report CI Failure To PR` comment posted by the
+  `report-ci-failure` job in `.github/workflows/ci.yml`. The comment names
+  the failing step, links to the run, and carries a tail of failed-step
+  output. Read that comment first and reason from its content. Note that
+  the reporter shipped without a pre-merge throwaway-failure exercise, so
+  if a real CI failure produces no comment or a malformed comment, treat
+  it as a same-day patch surface on the reporter rather than a stable
+  contract — the underlying failure is still on the Actions tab.
+- If the failure-comment is genuinely missing or its content is not
+  readable from the session for any reason, stop after at most one
+  speculative attempt and ask the human for the log content before
   continuing. Stacked guess-and-push attempts pollute the PR history with
-  commits that later need to be reverted and waste both agent time and human
-  review attention.
+  commits that later need to be reverted and waste both agent time and
+  human review attention.
 - When you do push a fix whose connection to the observed failure is not
   directly traceable to a specific line of error output, say so in the commit
   body and flag that the commit may need to be reverted if the real cause
