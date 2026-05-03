@@ -122,31 +122,45 @@ events.
 Pre-implementation estimate per AGENTS.md "Plan content is a mix
 of rules and estimates." The 3.1 row is settled at milestone-
 planning time (the epic locks 3.1 as a doc-only decision phase);
-the 3.2 row is a single-row placeholder that may split into 3.2.x
-sub-phases or grow to 3.3, 3.4 once 3.1 settles data-access
-semantics and the implementation surface is grounded against that
-decision. Phase numbering reflects the recommended ship order;
-rows fill in as each phase's plan drafts and as its PR merges.
+the 3.2 + 3.3 split was settled at 3.2's plan-drafting time
+(branch-test analysis at
+[`scoping/m3-phase-3-2.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-2.md)
+decision 1, summarized below the table). Phase numbering reflects
+the recommended ship order; rows fill in as each phase's plan
+drafts and as its PR merges.
 
 | Phase | Title (estimate) | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
 | 3.1 | Demo-mode data-access-semantics decision (doc-only) | [m3-phase-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md) | Landed | this PR |
-| 3.2 | Implement chosen demo-mode bypass + M3 closure | _pending 3.2 phase planning_ | Proposed | _pending_ |
+| 3.2 | Demo-mode bypass — read side | [m3-phase-3-2-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-2-plan.md) | Proposed | _pending_ |
+| 3.3 | Demo-mode bypass — write side + M3 closure | _pending 3.3 phase planning_ | Proposed | _pending_ |
 
-The 3.2-as-single-row estimate held: phase 3.1 settled the
-data-access semantics to read-only browse and the 3.2+ phase
-split to "1 PR working estimate with 2-PR fallback along a
-read-side / write-side seam, picked by 3.2's branch test"
-(canonical record at
+The 3.2-as-single-row estimate did not hold. Phase 3.2's
+plan-drafting ran AGENTS.md "PR-count predictions need a branch
+test" against actually-merged code and picked the 2-shape: the
+read-side / write-side seam pre-authorized by phase 3.1
+(`Verified by:`
 [`m3-phase-3-1-plan.md`](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)
-Contracts items 1 and 7). The three plausible shapes the
-milestone session offered to 3.1 are kept below as historical
-reference for the trade-space 3.1 walked; the 1-implementation-
-phase shape is the chosen working estimate and the 2-shape
-seam (read-side in 3.2, write-side + closer in 3.3) is the
-pre-authorized fallback. The 3-shape (sandbox-ephemeral) is
-not in scope for M3 — it remains a live candidate for
-second-iteration M4–M6 scoping.
+Contracts item 7). The branch-test analysis is recorded
+canonically at
+[`scoping/m3-phase-3-2.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-2.md)
+decision 1; in summary, an Option-A 1-PR shape would touch
+~11 distinct subsystems (well above the AGENTS.md >5 split
+threshold) including heterogeneous concerns spanning route
+guards, server auth gates, novel apps/web noindex emit, and
+cross-app M2 copy revision. The 2-shape splits along the
+natural seam: 3.2 ships the read side (allowlist + page bypass
++ Edge Function read shim + read-rendering disclaimer cue +
+allowlist enforcement assertions); 3.3 ships the write side
+(mutation Edge Function 403 short-circuits + mutation-control
+disabled-state UI + apps/web noindex emit) plus the M3 closer
+(M2 role-door copy revision in apps/site + full M3-closing doc
+currency). The three plausible shapes the milestone session
+offered to 3.1 are kept below as historical reference for the
+trade-space 3.1 walked; the 2-shape is the chosen ship order.
+The 3-shape (sandbox-ephemeral) remains not in scope for M3
+— it stays a live candidate for second-iteration M4–M6
+scoping.
 
 - **1-implementation-phase shape (3.2 alone).** Likely if 3.1
   chooses **read-only browse**: the bypass surfaces add an
@@ -186,15 +200,16 @@ second-iteration M4–M6 scoping.
   forking Edge Function read/write paths is a distinct
   trust-boundary review surface from the route-level bypass.
 
-Phase 3.2's plan-drafting runs AGENTS.md "PR-count predictions
-need a branch test" against actually-merged code and picks
-between the 1-shape and the 2-shape; the milestone doc's
-row-count estimate does not bind it. The M3-closing
-responsibility (milestone-doc Phase Status flips, milestone-doc
-top-level Status flip, epic Milestone Status table flip, doc
-currency across README + architecture + product + operations,
-copy revision on M2's role-doors) travels with whichever phase
-ships last. The open-questions.md closure for the
+Phase 3.2's plan-drafting ran AGENTS.md "PR-count predictions
+need a branch test" against actually-merged code and picked
+the 2-shape per the canonical analysis at
+[`scoping/m3-phase-3-2.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-2.md)
+decision 1. The M3-closing responsibility (milestone-doc Phase
+Status flips for the 3.3 row, milestone-doc top-level Status
+flip, epic Milestone Status table flip, doc currency across
+README + architecture + product + operations, copy revision on
+M2's role-doors) travels with phase 3.3 because 3.3 ships
+last. The open-questions.md closure for the
 "Demo-mode data-access semantics" entry already shipped in
 phase 3.1's PR per the Documentation Currency assignment
 below.
@@ -207,27 +222,36 @@ Phase dependencies (`A --> B` means A blocks B / B depends on A):
 flowchart LR
     M2[M2<br/>Home-page rebuild<br/>+ role-door cards]
     P31[3.1<br/>Demo-mode<br/>data-access-semantics<br/>decision]
-    P32[3.2<br/>Implement bypass<br/>+ M3-closing<br/>copy revision]
+    P32[3.2<br/>Demo-mode bypass<br/>read side]
+    P33[3.3<br/>Demo-mode bypass<br/>write side<br/>+ M3 closure]
 
-    M2 --> P32
     P31 --> P32
+    P32 --> P33
+    M2 --> P33
 ```
 
-**Hard dependency on 3.1.** 3.2 (and any 3.3/3.4 that 3.1 elects
-to spawn) depends on 3.1 because 3.1 settles the data-access-
-semantics contract — covering both the read-side mediation
-strategy (which is in scope under all three options because
-mounting the bypassed pages alone is not sufficient when the
-data fetches downstream are RLS-gated) and the write-side
-contract — that 3.2's implementation translates into route
-guards, RLS / Edge-Function mediation, seeded data, and reset
-story (or explicitly the absence of each, where the chosen
-semantics permits). 3.2's contracts cannot be plan-drafted
-before 3.1's decision lands; plan-drafting against an unsettled
-data-access-semantics decision would produce a contract that
-reshapes mid-flight when 3.1's outcome arrives, which is the
-exact churn AGENTS.md "Defer rather than over-resolve" exists to
-prevent.
+**Hard dependency on 3.1.** 3.2 (and 3.3) depend on 3.1 because
+3.1 settles the data-access-semantics contract — covering both
+the read-side mediation strategy (which is in scope under all
+three options because mounting the bypassed pages alone is not
+sufficient when the data fetches downstream are RLS-gated) and
+the write-side contract — that 3.2's implementation translates
+into route guards and Edge-Function-mediated reads, and that
+3.3's implementation translates into write-side rejection,
+mutation-control UI, and the M3 closer. Plan-drafting against
+an unsettled data-access-semantics decision would have produced
+a contract that reshapes mid-flight when 3.1's outcome arrives,
+which is the exact churn AGENTS.md "Defer rather than
+over-resolve" exists to prevent. **Hard dependency between 3.2
+and 3.3.** 3.3 depends on 3.2 because 3.3's plan-drafting reads
+3.2's merged code per AGENTS.md "Phase Planning Sessions"
+cadence ("plan-drafting runs against actually-merged earlier
+phases") — the read-only render path 3.2 lands is the surface
+3.3's mutation-control disabled-state shape decision is made
+against per
+[`m3-phase-3-1-plan.md` Contracts item 6](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)
++ AGENTS.md "Bans on surface require rendering the
+consequence."
 
 **Upstream-milestone dependency on M2 is closer-scoped.** M2
 (home-page rebuild) is **not** a strict ship-blocker for the
@@ -235,24 +259,20 @@ bypass mechanism — the three apps/web event-route surfaces are
 reachable by URL today and will be after M3 lands regardless of
 the home-page's state — but M2 **is** a strict ship-blocker for
 the M3-closing copy revision on M2's Organizer + Volunteer
-role-door cards, which is one of M3's closing-phase
-deliverables. The graph above shows `M2 --> P32` to make that
+role-door cards, which is the M3-closer's deliverable. With the
+2-shape split settled at 3.2's plan-drafting time, the M3-closer
+is phase 3.3, so the graph shows `M2 --> P33` to make the
 narrower-than-the-whole-phase prerequisite explicit per
 AGENTS.md "Phase dependency graph" ("the upstream milestone
 appears as a dependency-only node so prerequisites are
-explicit"). The arrow's interpretation is "M2 blocks 3.2's
-closer-PR copy-revision deliverable," not "M2 blocks 3.2's
-bypass-mechanism work." If 3.1's outcome splits implementation
-into 3.2 + 3.3 (or 3.2 + 3.3 + 3.4), the M3-closing
-responsibility — and the M2 ship-order arrow with it —
-transfers to whichever phase ships last per the Phase Status
-section above; readers re-deriving the graph at that point
-should redraw the arrow's terminus accordingly. (M2 landed
-ahead of M3 milestone planning, so the constraint is satisfied
-in practice for the expected ship order; the arrow records the
-structural relationship the doc would still assert if scheduling
-ever inverted, exactly as the M2 milestone doc documents for
-its own 2.2/2.3 ship-order constraint.)
+explicit"). The arrow's interpretation is "M2 blocks 3.3's
+closer-PR copy-revision deliverable," not "M2 blocks 3.3's
+write-side bypass work." (M2 landed ahead of M3 milestone
+planning, so the constraint is satisfied in practice for the
+expected ship order; the arrow records the structural
+relationship the doc would still assert if scheduling ever
+inverted, exactly as the M2 milestone doc documents for its
+own 2.2/2.3 ship-order constraint.)
 
 **Plan-drafting cadence.** Phase 3.1's scoping doc and plan doc
 draft just-in-time at M3-start, **not in parallel with M2's
@@ -268,17 +288,25 @@ contract that this milestone doc binds M3 to revise on close);
 plan-drafting against an unmerged M2 phase 2.3 introduces the
 same churn risk as plan-drafting 3.2 against unsettled 3.1.
 Recommended cadence: M2 lands → 3.1 scoping + plan drafts → 3.1
-PR merges → 3.2+ scoping + plan drafts in turn.
+PR merges → 3.2 scoping + plan drafts → 3.2 PR merges → 3.3
+scoping + plan drafts → 3.3 PR merges (closes M3). Each plan
+drafts against the previous phase's actually-merged code.
 
 **Cross-phase coordination is thin.** 3.1 produces a written
 data-access-semantics decision with rationale and rejected
 alternatives. 3.2's plan-drafting reads that decision, runs its
 own reality-check pass against the apps/web routing dispatcher
 and the affected Edge Functions, and produces the per-phase
-contracts. Cross-phase invariants below name what every phase's
-self-review walks against; cross-phase decisions below name what
-this milestone session locks (vs. defers to the phase that owns
-each decision).
+contracts. 3.3's plan-drafting reads 3.2's merged read-rendering
+surface (the read-only render path, the `DemoModeBanner`, the
+shared allowlist module) and binds the mutation-control
+disabled-state shape, the apps/web noindex emit mechanism, the
+write-side 403 short-circuit branches, the M2 role-door copy
+revision, and the M3-closing doc-currency map against actual
+merged code. Cross-phase invariants below name what every
+phase's self-review walks against; cross-phase decisions below
+name what this milestone session locks (vs. defers to the phase
+that owns each decision).
 
 ## Cross-Phase Invariants
 
