@@ -1,0 +1,20 @@
+/*
+ * Cross-shell responsive overrides. The `.landing-shell`,
+ * `.auth-callback-shell`, and `.admin-shell` rules live in
+ * `_signin.scss` / `_admin.scss` but share a 640px breakpoint, so
+ * the override stays here to match the apps/web `_responsive.scss`
+ * convention. Per-surface responsive rules (event, home) stay
+ * colocated with their owning partial.
+ */
+@media (max-width: 640px) {
+  .landing-shell,
+  .auth-callback-shell,
+  .admin-shell {
+    padding: 48px 18px;
+  }
+
+  .landing-shell h1,
+  .auth-callback-shell h1 {
+    font-size: clamp(2.35rem, 16vw, 4.25rem);
+  }
+}

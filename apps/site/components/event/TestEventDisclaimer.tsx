@@ -1,7 +1,8 @@
 /**
  * Banner shown above the hero when `EventContent.testEvent` is true.
  * The banner lives inside `<ThemeScope>` but its CSS rule
- * (`.test-event-disclaimer` in globals.css) opts out of themable
+ * (`.test-event-disclaimer` in `app/styles/_event.scss`) opts out
+ * of themable
  * surface tokens explicitly so it reads as a platform-status banner
  * across every per-event Theme.
  */

@@ -1,0 +1,380 @@
+/*
+ * Home-page shell scoped under `.home-shell`. Distinct from
+ * `.landing-shell` (which today still groups with `.auth-callback-shell`
+ * and `.admin-shell` for the sign-in / admin layouts) so the home-page
+ * rebuild can diverge without touching the shared sign-in selectors.
+ */
+.home-shell {
+  min-height: 100svh;
+  padding: 72px 24px;
+  display: grid;
+  gap: 56px;
+  align-content: start;
+}
+
+/*
+ * Width-auto-center contract for top-level home sections. Matches a
+ * direct `<section>` child (hero, showcase) and a `<ThemeScope>`
+ * wrapper that contains a section (narrative — wraps in a single
+ * section-level `<ThemeScope>` so brand-bearing surfaces resolve to
+ * Harvest's Theme; the wrapper emits a `<div className="theme-scope">`
+ * between `.home-shell` and the section, so the wrapper itself
+ * carries the width contract on behalf of the section it wraps).
+ */
+.home-shell > section,
+.home-shell > .theme-scope {
+  width: min(100%, 1080px);
+  margin-inline: auto;
+}
+
+.home-hero {
+  display: grid;
+  gap: 16px;
+  width: min(100%, 720px);
+}
+
+.home-hero-eyebrow {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-hero-title {
+  margin: 0;
+  font-size: clamp(2.5rem, 9vw, 4.5rem);
+  line-height: 0.96;
+}
+
+.home-hero-lead {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.5;
+  max-width: 56ch;
+}
+
+.home-hero-honesty {
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: rgba(35, 42, 38, 0.04);
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.home-hero-honesty strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.home-showcase {
+  display: grid;
+  gap: 24px;
+}
+
+.home-showcase-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.home-showcase-copy {
+  margin: 0;
+  color: var(--muted);
+  max-width: 64ch;
+}
+
+.home-showcase-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .home-showcase-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/*
+ * Showcase card. Brand-tied surfaces (top border, eyebrow, link
+ * affordance, hover ring, focus outline) read brand bases
+ * (`--primary`, `--secondary`, `--accent`) that re-evaluate inside
+ * `<ThemeScope>`; derived shades (`--primary-surface`, etc.) pin to
+ * apps/site `:root` substitution per the M1-recorded empirical
+ * finding and are not used here.
+ */
+.home-showcase-card {
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  border-top: 6px solid var(--primary);
+  box-shadow: 0 0 0 1px rgba(35, 42, 38, 0.08),
+    0 1px 2px rgba(35, 42, 38, 0.04);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.home-showcase-card:hover {
+  box-shadow:
+    0 0 0 1px var(--primary),
+    0 4px 16px rgba(35, 42, 38, 0.10);
+  transform: translateY(-2px);
+}
+
+.home-showcase-card:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 3px;
+}
+
+.home-showcase-card-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-showcase-card-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  line-height: 1.1;
+}
+
+.home-showcase-card-tagline {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+}
+
+.home-showcase-card-location {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.home-showcase-card-link {
+  margin-top: 4px;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+/*
+ * Home-page narrative section. The whole section wraps in a single
+ * <ThemeScope> resolving Harvest's Theme, so brand-bearing surfaces
+ * here (section eyebrow, persona top-border, persona eyebrow) read
+ * in Harvest's pumpkin family. Rules consume only brand bases
+ * (--primary, --secondary, --accent, --bg, --text, --muted,
+ * --surface-card) — never derived shades (--primary-surface,
+ * --secondary-focus, --accent-shade) which pin to apps/site :root
+ * and would silently regress the wrap.
+ */
+.home-narrative {
+  display: grid;
+  gap: 24px;
+}
+
+.home-narrative-eyebrow {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-narrative-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.home-narrative-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.5;
+  max-width: 64ch;
+}
+
+.home-narrative-personas {
+  display: grid;
+  gap: 24px;
+  margin-top: 4px;
+}
+
+.narrative-persona {
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 3px solid var(--primary);
+}
+
+.narrative-persona-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.narrative-persona-heading {
+  margin: 0;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
+  line-height: 1.2;
+}
+
+.narrative-persona-prose {
+  display: grid;
+  gap: 10px;
+}
+
+.narrative-persona-prose p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.55;
+  max-width: 64ch;
+}
+
+/*
+ * Role-doors section. Three persona cards (Attendee / Organizer /
+ * Volunteer) link into apps/web role-shaped surfaces. Renders under
+ * the apps/site root layout's platform Sage Civic Theme — no
+ * `<ThemeScope>` wrap. Brand-bearing surfaces read brand bases
+ * (`--primary`, `--secondary`, `--accent`) only; derived shades are
+ * not used per the apps/site brand-token discipline.
+ */
+.home-roles {
+  display: grid;
+  gap: 24px;
+}
+
+.home-roles-eyebrow {
+  margin: 0;
+  color: var(--secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.home-roles-title {
+  margin: 0;
+  font-size: clamp(1.75rem, 5vw, 2.25rem);
+  line-height: 1.15;
+}
+
+.home-roles-copy {
+  margin: 0;
+  color: var(--muted);
+  max-width: 64ch;
+}
+
+.home-roles-grid {
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 720px) {
+  .home-roles-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.home-roles-card {
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  border-top: 6px solid var(--primary);
+  box-shadow: 0 0 0 1px rgba(35, 42, 38, 0.08),
+    0 1px 2px rgba(35, 42, 38, 0.04);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.home-roles-card:hover {
+  box-shadow:
+    0 0 0 1px var(--primary),
+    0 4px 16px rgba(35, 42, 38, 0.10);
+  transform: translateY(-2px);
+}
+
+.home-roles-card:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 3px;
+}
+
+.home-roles-card-eyebrow {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.home-roles-card-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 1.85rem);
+  line-height: 1.1;
+}
+
+.home-roles-card-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.home-roles-card-caveat {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-card);
+  background: rgba(35, 42, 38, 0.04);
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.home-roles-card-link {
+  margin-top: 4px;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 640px) {
+  .home-shell {
+    padding: 48px 18px;
+    gap: 40px;
+  }
+
+  .home-showcase-card {
+    padding: 20px;
+  }
+
+  .home-narrative-personas {
+    gap: 20px;
+  }
+
+  .home-roles-card {
+    padding: 20px;
+  }
+}

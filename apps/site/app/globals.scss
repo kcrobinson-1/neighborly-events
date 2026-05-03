@@ -1,0 +1,25 @@
+/*
+ * apps/site global styles entrypoint. The CSS custom properties the
+ * partials below consume (--bg, --text, --font-body, --font-heading,
+ * etc.) are set as inline style on the <html> element by
+ * app/layout.tsx via `themeToStyle(platformTheme)` from
+ * shared/styles/. Adding a route outside the platform Theme (M3
+ * wraps event landing in <ThemeScope>) overrides them on the
+ * wrapped subtree.
+ *
+ * Brand-tied derived shades (--primary-surface, etc.) are not
+ * declared here yet — apps/site's placeholder routes do not consume
+ * them. A future event-landing route that needs them would add a
+ * derivation block in :root.
+ *
+ * Partials are split by surface to keep each file tractable; mirror
+ * apps/web/src/styles.scss. The split is structural-only — no
+ * semantic changes vs. the prior single-file globals.css.
+ */
+
+@use "./styles/base";
+@use "./styles/signin";
+@use "./styles/admin";
+@use "./styles/event";
+@use "./styles/home";
+@use "./styles/responsive";

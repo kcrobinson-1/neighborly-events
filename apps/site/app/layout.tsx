@@ -4,7 +4,7 @@ import { Fraunces, Inter } from "next/font/google";
 
 import { platformTheme, themeToStyle } from "../../../shared/styles";
 
-import "./globals.css";
+import "./globals.scss";
 
 /**
  * Inter (body) and Fraunces (heading) loaded as variable fonts via
