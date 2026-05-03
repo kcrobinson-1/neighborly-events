@@ -43,14 +43,6 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
-- [ ] **`infra` Surface CI step logs in PR comments on failure**
-  AI coding agents working inside a session can't authenticate to the Actions
-  logs API, so a failing PR CI run leaves the agent without the real
-  diagnostic. Add an `if: failure()` step to the CI workflow that tails the
-  first failing step and posts it as a PR comment, so PR activity webhooks
-  relay the log back into the session automatically.
-  Detail: [`docs/tracking/dev-workflow-improvements.md` — Surface CI step logs in PR comments on failure](/docs/tracking/dev-workflow-improvements.md)
-
 - [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**
   Slice 2 added view grant checks, but its pgTAP file still relies on underlying
   `game_event_drafts` RLS coverage for the “authenticated but not allowlisted

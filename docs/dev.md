@@ -1001,6 +1001,29 @@ Important boundary:
 - the release workflow promotes code and migrations, not Supabase Edge Function
   secret values
 
+### CI failure-comment reporter
+
+When the `Lint, Tests, Build, and Supabase Checks` job in
+[`.github/workflows/ci.yml`](/.github/workflows/ci.yml) fails on a
+`pull_request` event, a sibling `report-ci-failure` job posts a single PR
+comment naming the first failing step, linking to the failed job's run
+page, and inlining a tail of failed-step output inside a collapsed
+`<details>` block. The comment is the canonical source of post-CI
+debugging context for AI coding agents working in the PR — PR activity
+webhooks relay it back into the session without any browser navigation.
+The reporter is scoped to `pull_request` only (no comments on `main`
+push failures), is skipped on docs-only PRs, and produces no comment
+when CI passes. The reporter shells out to the runner-preinstalled `gh`
+CLI and enforces a runtime `gh >= 2.89.0` pre-flight to keep its JSON
+parsing stable.
+
+The reporter shipped without a pre-merge throwaway-failure exercise. The
+first real failing PR after the reporter merged is the de facto first
+exercise; if that comment is missing, malformed, or names the wrong
+step, treat it as a same-day patch surface on the reporter rather than a
+stable contract. The underlying CI failure is still visible on the
+Actions tab while the reporter is being patched.
+
 ## Integration Troubleshooting
 
 For live site, admin, Supabase Edge Function, or database triage during an

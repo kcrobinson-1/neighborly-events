@@ -138,54 +138,29 @@ would have shipped silently.
 
 ### Surface CI step logs in PR comments on failure
 
-Status: open
+Status: landed.
 
-Value:
+Implemented as the `report-ci-failure` job in
+[`.github/workflows/ci.yml`](/.github/workflows/ci.yml). The job runs on
+`pull_request` failures only, skips docs-only PRs, looks up the failing
+`Lint, Tests, Build, and Supabase Checks` job and its first failed step,
+isolates that step's log via the tab-delimited `gh run view --log-failed`
+prefix, tails 200 lines, and posts the result as a PR comment. The
+implementation contract and design rationale live in
+[`docs/plans/surface-ci-failure-logs.md`](/docs/plans/surface-ci-failure-logs.md).
+Resolved open questions:
 
-- AI coding agents working inside a session cannot authenticate to the GitHub
-  Actions logs API, so when a PR CI run fails with a test error, the agent has
-  no direct way to see the actual failing assertion, stack trace, or SQL error.
-  Without that context, the next fix has to be a guess, and a blind guess tends
-  to stack more speculative commits that later need to be reverted.
-- Copying log output into chat every failure works as a short-term fallback but
-  is high-friction for the human and easy to forget across sessions.
-- One automated comment per failing CI run keeps the real diagnostic visible in
-  the PR thread, where PR activity webhooks already relay it back to the agent.
+- Comment-per-failure (not edit-in-place). Every failure produces a new
+  comment, which refires the PR-activity webhook the agent's session
+  listens for and avoids marker-coordination foot-guns under
+  interleaving runs.
+- No log-content redaction in v1. Current CI jobs only touch ephemeral
+  Supabase and Playwright; the redaction question is reopened if a
+  future CI step starts handling production credentials.
+- `gh pr comment` posts via the GitHub issue-comments endpoint, so the
+  reporter job grants `issues: write` (load-bearing) alongside
+  `pull-requests: write` for intent.
 
-Recommended shape:
-
-- add a final step to the `Lint, Tests, Build, and Supabase Checks` job in
-  `.github/workflows/ci.yml` that runs on `if: failure()`
-- use `actions/github-script` (or equivalent) with the automatically provided
-  `GITHUB_TOKEN` to fetch the current run's job logs
-- tail the last ~200 lines of the first failing step so the comment stays small
-- post the tail as a PR comment scoped to `pull_request` events only, so push
-  builds on `main` do not produce comments
-- prefix the comment with the failing step name and link to the job URL
-- do not attempt to distinguish flakes from real failures in the first version;
-  every failure gets a comment
-
-Open questions:
-
-- Should the comment be edited in place across subsequent runs on the same PR
-  head, or should each new failure produce a new comment? Latter is simpler;
-  former reduces thread noise but adds coordination.
-- Should any content be redacted before posting? Current CI jobs run against
-  local ephemeral Supabase and do not touch production secrets, so leakage risk
-  is low; revisit if a future step starts handling real credentials.
-
-Steps to complete:
-
-1. Draft the new workflow step in `.github/workflows/ci.yml`.
-2. Test by opening a throwaway PR with a deliberately failing assertion and
-   confirm a useful log tail lands as a comment.
-3. Update `AGENTS.md` to point at the PR comment as the canonical source of
-   post-CI debugging context, replacing the current "ask the human to paste the
-   log" fallback.
-
-Minimum validation:
-
-- a throwaway failing PR produces a comment that includes the failing step
-  name, a job-URL link, and a readable log tail
-- a passing PR produces no comment
-- `npm run lint`
+The reporter shipped without a pre-merge throwaway-failure exercise.
+First real failing PR after merge is the first exercise; a malformed
+or missing comment is a same-day patch surface, not a stable contract.
