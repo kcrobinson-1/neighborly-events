@@ -64,9 +64,9 @@ shared TypeScript module under
 components in [`apps/web/src/pages/`](/apps/web/src/pages/), a
 new apps/web component for the demo-mode banner, three new
 read-only variant components for the per-surface render path, a
-new Edge Function under `supabase/functions/demo-mode-read/`
+new Edge Function under `supabase/functions/read-demo-event/`
 (working directory name; final spelling per the Naming section),
-a new `[functions.demo-mode-read]` `verify_jwt = false` block in
+a new `[functions.read-demo-event]` `verify_jwt = false` block in
 [`supabase/config.toml`](/supabase/config.toml) (`Verified by:`
 [`supabase/config.toml:1-29`](/supabase/config.toml) — every
 existing function declares the same block), and three test
@@ -184,42 +184,52 @@ surface):
   guard-site name; every TypeScript guard site this phase
   introduces consumes the predicate, not the tuple, except
   test fixtures that need to enumerate.
-- **`demo-mode-read`** — the new Edge Function (working name;
-  the working name is **noun-verb**, which does not match
-  `supabase/functions/`'s prevailing verb-first convention —
-  `Verified by:` the existing 9 function names
-  [`supabase/functions/`](/supabase/functions/) — `complete-game`,
-  `generate-event-code`, `get-redemption-status`, `issue-session`,
-  `publish-draft`, `redeem-entitlement`,
+- **`read-demo-event`** — the new Edge Function. The verb-first
+  pattern matches `supabase/functions/`'s prevailing convention
+  (`Verified by:`
+  [`supabase/functions/`](/supabase/functions/) listing —
+  `complete-game`, `generate-event-code`, `get-redemption-status`,
+  `issue-session`, `publish-draft`, `redeem-entitlement`,
   `reverse-entitlement-redemption`, `save-draft`,
-  `unpublish-event`, all of which lead with the verb. **Final
-  spelling owned by plan-drafting**, with the constraint that the
-  final name follows the verb-first pattern; candidates include
-  `read-demo-mode-data`, `get-demo-event-data`, or similar.
+  `unpublish-event`, all of which lead with a verb). The verb
+  `read-` is more specific than `get-` for read-only operations;
+  the noun `demo-event` describes the data being fetched.
   Validates allowlist server-side, dispatches by `surface`
   discriminator, returns RLS-gated reads with service-role
   privileges.
-- **`DemoModeBanner`** — the new apps/web component (working
-  name; final spelling plan-time) rendered at the top of the
-  bypass branch in each of the three shells. Carries the
-  "you're viewing a demo of X for Y" copy contract.
+- **`DemoModeBanner`** — the new apps/web component rendered
+  at the top of the bypass branch in each of the three shells.
+  Carries the "you're viewing a demo of X for Y" copy contract.
+  Lives at `apps/web/src/demo/DemoModeBanner.tsx` (per Files To
+  Touch).
 - **`DemoModeAdminView` / `DemoModeRedeemView` /
-  `DemoModeRedemptionsView`** — working names for the three
-  per-surface read-only variant components (final spellings
-  plan-time). Each renders the data-only subset of its
+  `DemoModeRedemptionsView`** — the three per-surface read-only
+  variant components. Each renders the data-only subset of its
   signed-in counterpart's content. Mounts inside the existing
   shell (`EventAdminShell` / `RedeemShell` / `RedemptionsShell`)
-  alongside the `DemoModeBanner`.
-- **`fetchDemoModeRead`** — working name for the apps/web
-  client-side helper that invokes `demo-mode-read`.
-  Per-surface variants (`fetchDemoModeAdmin`,
-  `fetchDemoModeRedemptions`) are an alternative shape;
-  plan-drafting picks against the call-site shape.
-- **`not_in_demo_allowlist`** — working error code returned
-  by `demo-mode-read` when the request's `slug` is not in
-  the allowlist. Distinct from `demo_mode_read_only` (3.3's
+  alongside the `DemoModeBanner`. Co-located with their feature
+  dirs per Files To Touch.
+- **`fetchDemoModeRead`** — single apps/web client-side helper
+  that invokes `read-demo-event`. Single-function-with-
+  discriminator shape mirrors the Edge Function's
+  `surface: "admin" | "redemptions"` discriminator; per-surface
+  fetcher variants (`fetchDemoModeAdmin`,
+  `fetchDemoModeRedemptions`) are explicitly rejected because
+  the discriminator-shape minimizes call-site duplication and
+  matches the server-side dispatch shape. Lives at
+  `apps/web/src/lib/fetchDemoModeRead.ts`.
+- **`not_in_demo_allowlist`** — error code returned by
+  `read-demo-event` when the request's `slug` is not in the
+  allowlist. Distinct from `demo_mode_read_only` (3.3's
   write-rejection error code per
   [`m3-phase-3-1-plan.md` Contracts item 5](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)).
+- **`invalid_request_body`** — error code returned by
+  `read-demo-event` when the request body fails schema
+  validation (missing `slug`, missing `surface`, unknown
+  `surface` value). Distinct from `not_in_demo_allowlist`
+  because the validation-vs-authorization seam is observable to
+  the client and the Deno test contract asserts the two as
+  separate cases.
 
 ## Contracts
 
@@ -288,10 +298,12 @@ New file `shared/events/testEventAllowlist.ts` exports:
 - `isTestEventSlug(slug: string): slug is TestEventSlug` —
   predicate with type guard
 
-The two slug literals appear **only** in this file. Every
-TypeScript guard site introduced by this phase imports
-`isTestEventSlug` (not the tuple) and consumes the predicate,
-so the slug-literal-comparison code path lives at one site.
+**Every new bypass-eligibility guard site introduced by this
+phase imports `isTestEventSlug` from this module and consumes
+the predicate** (not the tuple, except test fixtures that need
+to enumerate); no new guard site repeats the slug literals.
+This binds the location of slug-literal-comparison code paths
+that ask "is this slug bypass-eligible" to exactly one file.
 Existing slug literal occurrences cataloged during scoping
 (`Verified by:`
 [`shared/styles/themes/index.ts:20-21`](/shared/styles/themes/index.ts),
@@ -317,8 +329,8 @@ guard sites, not pre-existing content references.
 
 ### Edge Function read shim contract
 
-New Edge Function `supabase/functions/demo-mode-read/` (or final
-naming per plan-drafting) following the structural shape of
+New Edge Function `supabase/functions/read-demo-event/`
+following the structural shape of
 [`get-redemption-status/index.ts`](/supabase/functions/get-redemption-status/index.ts)
 verbatim — dependency-injection-shaped handler factory, CORS
 handling via `_shared/cors.ts`, `verify_jwt = false` declaration
@@ -330,46 +342,86 @@ serviceRoleKey)` for service-role reads.
 ```
 {
   "slug": string,
-  "surface": "admin" | "redemptions",
-  "payload": <surface-specific>
+  "surface": "admin" | "redemptions"
 }
 ```
 
-**Allowlist gate:**
+The body is intentionally minimal: `slug` and `surface` are the
+only fields the function consumes. No per-surface `payload`
+sub-object is needed because each surface's dispatch reads
+exclusively from the event the slug resolves to (admin: the
+draft + published metadata for that event; redemptions: the
+redemption list for that event).
 
-The function's first validation step (after method and CORS
-checks) is `isTestEventSlug(payload.slug)`. If false, return
-HTTP 403 with body:
+**Validation pipeline (ordering is contractual):**
 
-```
-{
-  "error": "not_in_demo_allowlist",
-  "message": "Demo-mode reads are only available for test events."
-}
-```
+1. **HTTP method + CORS check.** Reject non-POST with HTTP 405;
+   reject disallowed origins with HTTP 403; respond to
+   `OPTIONS` with the CORS preflight body. Mirrors
+   [`get-redemption-status/index.ts:128-150`](/supabase/functions/get-redemption-status/index.ts).
+2. **Environment-variable check.** Reject with HTTP 500 if
+   `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` are missing.
+   Mirrors
+   [`get-redemption-status/index.ts:152-163`](/supabase/functions/get-redemption-status/index.ts).
+3. **Request body schema validation.** Parse the JSON body and
+   verify `slug` is a non-empty string and `surface` is exactly
+   `"admin"` or `"redemptions"`. If validation fails, return
+   HTTP 400 with body
+   `{ "error": "invalid_request_body", "message": "..." }`.
+   Mirrors the per-function validator pattern at
+   [`get-redemption-status/index.ts:83-100`](/supabase/functions/get-redemption-status/index.ts)
+   (the `validateGetRedemptionStatusPayload` helper). **This step
+   precedes the allowlist gate** so malformed bodies cannot
+   short-circuit to the 403 path — a 400 (malformed body) and
+   a 403 (well-formed body, non-test slug) are observably
+   different cases the test contract asserts as distinct.
+4. **Allowlist gate.** Evaluate `isTestEventSlug(slug)`. If
+   false, return HTTP 403 with body
+   `{ "error": "not_in_demo_allowlist", "message": "Demo-mode
+   reads are only available for test events." }`. The validated
+   `slug` from step 3 is a non-empty string, so the predicate
+   call is well-defined.
+5. **Per-surface dispatch.** Resolve the event via service-role
+   client and return the surface-specific payload (below).
 
-**Per-surface dispatch:**
+**Per-surface dispatch and response payload:**
 
 - `surface: "admin"` — resolves slug to event_id against
-  `game_event_drafts`, then loads the draft data and the
-  published event metadata. Response payload mirrors the data
-  shape `useEventAdminWorkspace`'s `loadDraftEvent`-style
-  fetcher returns today (exact shape bound at plan-drafting
-  time after re-reading
-  [`useEventAdminWorkspace`](/apps/web/src/admin/useEventAdminWorkspace.ts)).
+  `game_event_drafts` (the draft id doubles as the event id per
+  [`save-draft/index.ts:332-334`](/supabase/functions/save-draft/index.ts)
+  comment "the draft id doubles as the event id —
+  `game_event_drafts.id = game_events.id =
+  event_role_assignments.event_id`"), then calls
+  `loadDraftEventSummary(eventId)` from
+  [`apps/web/src/lib/adminGameApi.ts`](/apps/web/src/lib/adminGameApi.ts)
+  via service-role client. Response payload is exactly the
+  `DraftEventSummary` shape exported from
+  [`useEventAdminWorkspace.ts:3-4`](/apps/web/src/admin/useEventAdminWorkspace.ts)
+  (`import { loadDraftEventSummary, type DraftEventSummary }
+  from "../lib/adminGameApi"`). The shape is shared between
+  the apps/web fetcher and the read shim by importing the
+  type from `apps/web/src/lib/adminGameApi.ts` on both sides.
 - `surface: "redemptions"` — resolves slug to event_id against
-  `game_events` (anon-allowed for published events; the
-  service-role client is used uniformly), then runs the merged
-  redemption-list query
-  ([`fetchRedemptionSlices`](/apps/web/src/redemptions/redemptionsData.ts:33-70)
-  return shape: `RedemptionRow[]` capped at
-  `REDEMPTIONS_FETCH_LIMIT`).
+  `game_events` (anon-allowed for published events per
+  [`m3-phase-3-1-plan.md` Contracts item 4](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md);
+  the service-role client is used uniformly), then runs the
+  merged redemption-list query mirroring
+  [`fetchRedemptionSlices` at redemptionsData.ts:33-70](/apps/web/src/redemptions/redemptionsData.ts).
+  Response payload is `RedemptionRow[]` (the type from
+  [`apps/web/src/redemptions/types.ts`](/apps/web/src/redemptions/types.ts))
+  capped at `REDEMPTIONS_FETCH_LIMIT` (`Verified by:`
+  [`redemptionsData.ts:5`](/apps/web/src/redemptions/redemptionsData.ts)
+  — `export const REDEMPTIONS_FETCH_LIMIT = 500`), sorted per
+  the same `mergeRedemptionSlices` semantics.
 
 **Response on success:** HTTP 200 with the per-surface payload
-shape. **Response on read failure:** HTTP 500 with a generic
-error body (matching
+shape above.
+
+**Response on read failure** (the underlying DB query errors):
+HTTP 500 with body
+`{ "error": "read_failed", "message": "..." }`, matching
 [`get-redemption-status/index.ts:206-211`](/supabase/functions/get-redemption-status/index.ts)
-precedent).
+precedent of logging and returning a generic error.
 
 The function does **not** consume any caller credential
 (neither Supabase user JWT nor the signed session cookie
@@ -490,7 +542,7 @@ Three independent test layers, each ships in this phase's PR:
    - `isTestEventSlug("harvest-block-partyy") === false`
      (regression coverage against suffix-match drift)
 2. **Deno Edge Function test**
-   `tests/supabase/functions/demo-mode-read.test.ts` (or
+   `tests/supabase/functions/read-demo-event.test.ts` (or
    `<final-name>.test.ts` if the function is renamed per the
    Naming section). The convention is per-function-test-file at
    the directory root, `Verified by:`
@@ -508,18 +560,29 @@ Three independent test layers, each ships in this phase's PR:
      expected payload shape (mocked DB response)
    - Request with malformed body (missing slug, missing
      surface, unknown surface value) returns HTTP 400
-3. **Playwright e2e fixture** under
-   `tests/e2e/demo-mode-bypass/` (new per-feature directory;
-   the convention is per-feature subdirectories at
-   [`tests/e2e/`](/tests/e2e) — 12 existing siblings). Three
-   scenarios:
+3. **Playwright e2e spec** at
+   `tests/e2e/demo-mode-bypass.spec.ts`, run via the new
+   `npm run test:e2e:demo-mode-bypass` wrapper backed by the
+   new `playwright.demo-mode-bypass.config.ts` (per Files To
+   Touch). The spec uses Playwright **route mocks** to
+   intercept the `read-demo-event` Edge Function call and
+   return a deterministic `DraftEventSummary` /
+   `RedemptionRow[]` payload — no live Supabase backend or
+   Docker stack is provisioned, because the assertions exercise
+   apps/web's auth-state-machine + bypass-branch render path,
+   not the read shim's behavior (which is covered by the Deno
+   test in layer 2). Three scenarios:
    - Visiting `/event/<some-real-slug>/admin` while signed-out
      renders `SignInForm` (no bypass branch fires; the existing
-     auth-state-machine path is unchanged).
+     auth-state-machine path is unchanged). No route mock
+     needed — the page never reaches a network call in the
+     `signed_out` branch.
    - Visiting `/event/harvest-block-party/admin` while
-     signed-out renders the bypass branch with the
-     `DemoModeBanner` present (asserted via locator on the
-     banner's `role="note"` and the banner copy — `Verified by:`
+     signed-out (with the `read-demo-event` route mocked to
+     return a sample `DraftEventSummary`) renders the bypass
+     branch with the `DemoModeBanner` present (asserted via
+     locator on the banner's `role="note"` and the banner copy
+     — `Verified by:`
      [`apps/site/components/event/TestEventDisclaimer.tsx:13`](/apps/site/components/event/TestEventDisclaimer.tsx)
      for the role this phase's banner mirrors).
    - Mutation controls are absent on the bypass-rendered
@@ -581,13 +644,13 @@ requires deviating, recorded in the PR body's
   module per the allowlist-module contract.
 - `tests/shared/events/testEventAllowlist.test.ts` — Vitest
   unit test per the enforcement-assertion contract layer 1.
-- `supabase/functions/demo-mode-read/index.ts` — the new Edge
+- `supabase/functions/read-demo-event/index.ts` — the new Edge
   Function read shim per the read-shim contract. The path may
   vary if `supabase/functions/` uses a different per-function
   layout (some functions split test-only fixtures into
   subdirectories); plan-drafting confirms against the existing
   shape.
-- `tests/supabase/functions/demo-mode-read.test.ts` — Deno
+- `tests/supabase/functions/read-demo-event.test.ts` — Deno
   Edge Function test per the enforcement-assertion contract
   layer 2.
 - `apps/web/src/demo/DemoModeBanner.tsx` (working path) — the new
@@ -613,17 +676,44 @@ requires deviating, recorded in the PR body's
   redemptions read-only variant per the variant contract;
   co-located with `redemptionsData` and `authorizeRedemptions`.
 - `apps/web/src/lib/fetchDemoModeRead.ts` — apps/web client-side
-  helper that invokes `demo-mode-read`. `apps/web/src/lib/`
+  helper that invokes `read-demo-event`. `apps/web/src/lib/`
   hosts the existing API client helpers (`Verified by:`
   [`apps/web/src/lib/`](/apps/web/src/lib) listing —
   `adminGameApi.ts`, `authApi.ts`, `gameApi.ts`,
   `gameContentApi.ts`, `supabaseBrowser.ts`, etc.) and is the
   natural home.
-- `tests/e2e/demo-mode-bypass/` — new Playwright fixture
-  directory per the enforcement-assertion contract layer 3.
-  The exact file shape (one spec file, multiple) follows
-  `tests/e2e/`'s existing per-feature shape; plan-drafting
-  confirms.
+- `tests/e2e/demo-mode-bypass.spec.ts` — new Playwright spec
+  per the enforcement-assertion contract layer 3. Filename ends
+  in `demo-mode-bypass.spec.ts` so the new
+  `playwright.demo-mode-bypass.config.ts` (below) `testMatch`
+  pattern picks it up. Single-file shape because the three
+  scenarios are small and cohesive; if implementation grows the
+  surface, plan-time may split into multiple
+  `*.demo-mode-bypass.spec.ts` files matching the same pattern.
+- `playwright.demo-mode-bypass.config.ts` — new Playwright
+  config for the bypass test suite. Required because the
+  existing five Playwright configs use narrow `testMatch`
+  patterns that don't match the new spec (`Verified by:`
+  [`playwright.config.ts:7`](/playwright.config.ts) =
+  `**/mobile-smoke.spec.ts`,
+  [`playwright.admin.config.ts:8`](/playwright.admin.config.ts)
+  = `**/*.admin.spec.ts`,
+  [`playwright.redeem.config.ts:19`](/playwright.redeem.config.ts)
+  = `**/mobile-smoke.redeem.spec.ts`,
+  [`playwright.redemptions.config.ts:19`](/playwright.redemptions.config.ts)
+  = `**/mobile-smoke.redemptions.spec.ts`,
+  [`playwright.attendee-trusted-backend.config.ts:7`](/playwright.attendee-trusted-backend.config.ts)
+  = `**/mobile-smoke.trusted-backend.spec.ts`). New config
+  mirrors `playwright.admin.config.ts` shape with these
+  divergences: `testMatch: "**/*.demo-mode-bypass.spec.ts"`,
+  `webServer.command: "npm run dev:web:test"`, no Supabase
+  Docker provisioning (the test uses Playwright route mocks
+  for the `read-demo-event` response — see the
+  enforcement-assertion contract update below). No wrapper
+  script under `scripts/testing/` is needed because the
+  bypass tests have no backend dependency to provision; the
+  npm script invokes `playwright test
+  --config=playwright.demo-mode-bypass.config.ts` directly.
 - `apps/web/src/styles/_demo-mode.scss` (or partial inclusion
   in an existing partial; plan-drafting picks) — SCSS for the
   demo-mode banner and read-only variants per the visual
@@ -644,7 +734,7 @@ requires deviating, recorded in the PR body's
 - [`apps/web/src/pages/EventRedemptionsPage.tsx`](/apps/web/src/pages/EventRedemptionsPage.tsx) —
   bypass branch insertion per the bypass-branch contract.
 - [`supabase/config.toml`](/supabase/config.toml) —
-  `[functions.demo-mode-read] verify_jwt = false` declaration
+  `[functions.read-demo-event] verify_jwt = false` declaration
   added, mirroring the existing 9 declarations.
 - [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md`](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md) —
   Phase Status table grows from 1 row to 2 rows per the
@@ -652,6 +742,13 @@ requires deviating, recorded in the PR body's
   prose paragraph updates accordingly. Status flip on the
   3.2 row from `Proposed` → `Landed` happens in this same
   PR at merge time.
+- [`package.json`](/package.json) — add a new script entry
+  `"test:e2e:demo-mode-bypass": "playwright test
+  --config=playwright.demo-mode-bypass.config.ts"`, sibling to
+  the existing `test:e2e:admin` / `:redeem` / `:redemptions` /
+  `:attendee:trusted-backend` entries (`Verified by:`
+  [`package.json` `scripts`](/package.json) — the existing
+  pattern of one npm script per Playwright config).
 
 ### Intentionally not touched
 
@@ -751,7 +848,7 @@ and estimates"; the implementer may refine.
    `tests/shared/events/testEventAllowlist.test.ts` per
    enforcement-assertion contract layer 1. Run Vitest.
 5. **Edge Function read shim + Deno test.** Create
-   `supabase/functions/demo-mode-read/index.ts` mirroring the
+   `supabase/functions/read-demo-event/index.ts` mirroring the
    `get-redemption-status` DI pattern; add the `[functions.demo-
    mode-read]` block to `supabase/config.toml`. Create the Deno
    test per layer 2. Run `npm run test:functions` (or the
@@ -772,12 +869,16 @@ and estimates"; the implementer may refine.
    AGENTS.md "Bans on surface require rendering the
    consequence," the absence of mutation controls is
    verified visually before declaring 3.2 complete.
-8. **e2e fixture.** Create the Playwright fixture per layer 3.
-   Run via the canonical wrapper (plan-drafting picks against
-   `package.json` `scripts` per AGENTS.md "Prefer existing
-   wrapper scripts" — likely a new wrapper for the bypass
-   suite, or composition into one of `:admin`, `:redeem`,
-   `:redemptions`).
+8. **e2e spec + Playwright config + npm script.** Create
+   `playwright.demo-mode-bypass.config.ts` mirroring
+   [`playwright.admin.config.ts`](/playwright.admin.config.ts)
+   shape with `testMatch: "**/*.demo-mode-bypass.spec.ts"`.
+   Add the `test:e2e:demo-mode-bypass` script to
+   [`package.json`](/package.json). Create
+   `tests/e2e/demo-mode-bypass.spec.ts` with the three scenarios
+   from the enforcement-assertion contract layer 3, using
+   Playwright route mocks for the `read-demo-event` call. Run
+   `npm run test:e2e:demo-mode-bypass`.
 9. **Status flips.** This plan's Status `Proposed` → `Landed`;
    the milestone-doc Phase Status table's 3.2 row Status
    `Proposed` → `Landed` and PR column updated with this PR's
@@ -788,9 +889,7 @@ and estimates"; the implementer may refine.
    implementer does not re-edit the table shape.
 10. **Validation pre-PR.** Re-run `npm run lint`,
     `npm run build:web`, `npm run test`, `npm run test:functions`,
-    and the new e2e fixture (via `npm run test:e2e` or its
-    feature-scoped wrapper — plan-drafting confirms the canonical
-    invocation). All green.
+    and `npm run test:e2e:demo-mode-bypass`. All green.
 11. **Open PR.** Vercel produces preview URL on push. PR body
     names the Validation Gate procedure outcomes, the
     `## Estimate Deviations` callout (or `N/A`), and the
@@ -820,7 +919,7 @@ a mix of rules and estimates":
   Self-contained; reviewable as a one-file plus one-test
   surface.
 - **Commit 2 — Edge Function read shim + Deno test +
-  config.toml.** `supabase/functions/demo-mode-read/`,
+  config.toml.** `supabase/functions/read-demo-event/`,
   `supabase/config.toml` declaration, Deno test fixture.
   Reviewable as a coherent server-side surface.
 - **Commit 3 — apps/web bypass branches + variants + banner +
@@ -828,8 +927,11 @@ a mix of rules and estimates":
   the four new components (banner + three variants), the
   client helper, the SCSS partial. Reviewable as the apps/web
   read-rendering surface.
-- **Commit 4 — Playwright e2e fixture.** The new fixture
-  directory under `tests/e2e/`.
+- **Commit 4 — Playwright e2e infra + spec.** The new
+  `playwright.demo-mode-bypass.config.ts`, the
+  `test:e2e:demo-mode-bypass` script entry in `package.json`,
+  and `tests/e2e/demo-mode-bypass.spec.ts`. Reviewable as a
+  cohesive testing-infra surface.
 - **Commit 5 — Status flips.** Doc-only commit:
   - Plan doc Status `Proposed` → `Landed`.
   - Milestone-doc Phase Status table 3.2 row Status
@@ -862,13 +964,14 @@ The validation procedure that proves this PR ships its goal:
 - **Deno Edge Function test** (`npm run test:functions` or
   whichever wrapper exists per `package.json` `scripts` —
   plan-drafting confirms) — green. The new
-  `demo-mode-read.test.ts` passes; no existing function
+  `read-demo-event.test.ts` passes; no existing function
   test regresses.
-- **Playwright e2e fixture** (the canonical wrapper for the
-  new fixture — plan-drafting picks against `package.json`
-  `scripts` and `scripts/testing/`) — green. Both scenarios
-  pass: the bypass-fires-on-test-slug positive case and the
-  bypass-does-not-fire-on-real-slug negative case.
+- **`npm run test:e2e:demo-mode-bypass`** (new wrapper; runs
+  `playwright test --config=playwright.demo-mode-bypass.config.ts`)
+  — green. All three scenarios pass: the
+  bypass-fires-on-test-slug positive case, the
+  bypass-does-not-fire-on-real-slug negative case, and the
+  mutation-controls-absent assertion.
 - **Manual visual check on Vercel preview deployment.**
   Visit `/event/harvest-block-party/admin`,
   `/event/harvest-block-party/game/redeem`, and
@@ -1227,9 +1330,9 @@ M3-closing-phase deliverable per
   conjunct discriminates against.
 - [`supabase/functions/get-redemption-status/index.ts`](/supabase/functions/get-redemption-status/index.ts) —
   the unauthenticated-Edge-Function precedent the new
-  `demo-mode-read` shim mirrors.
+  `read-demo-event` shim mirrors.
 - [`supabase/config.toml`](/supabase/config.toml) — the file
-  the new `[functions.demo-mode-read]` declaration extends.
+  the new `[functions.read-demo-event]` declaration extends.
 - [`apps/web/src/redemptions/redemptionsData.ts`](/apps/web/src/redemptions/redemptionsData.ts) —
   the existing redemptions fetcher whose return shape the
   read shim's `surface: "redemptions"` payload mirrors.

@@ -110,11 +110,12 @@ actual scope.
   [`m3-phase-3-1-plan.md`](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)
   Contracts item 7 pre-authorized after milestone-session
   trade-off analysis; 3.2 ships a coherent intermediate state
-  (bypass-rendered surfaces with disabled mutation controls,
-  defended on the server by today's existing 401 path until 3.3
-  hardens to structured 403). Con: two review rounds for one
-  capability; cross-phase coordination cost (3.3's plan-drafting
-  reads 3.2's merged code).
+  (bypass-rendered surfaces with data-only views — no mutation
+  controls present per decision 5 — defended on the server by
+  today's existing 401 path until 3.3 hardens to structured
+  403). Con: two review rounds for one capability; cross-phase
+  coordination cost (3.3's plan-drafting reads 3.2's merged
+  code).
 - *Option C.* Pro: maximum review focus per PR. Con: 3.4 would
   carry only "noindex + copy revision + doc currency," which is
   too small to justify a third PR; the M3-closer fits naturally
@@ -187,13 +188,16 @@ visitor signed in normally").
 **Came down to.** Whether 3.2 ships an internally-coherent
 intermediate state on its own, or whether 3.3 is needed for the
 state to be honest. The intermediate state is coherent: bypass-
-rendered surfaces show read-only data, mutation controls are
-visibly disabled (3.2 picks the disabled-with-tooltip shape per
-decision 4 below), and any direct write attempt that defeats
-the disabled state still gets rejected by today's 401 (until 3.3
-hardens to structured 403). The disclaimer cue makes the demo
-status honest. So 3.2 is shippable as a coherent state, and the
-branch test forces the split.
+rendered surfaces show read-only data via data-only variant
+components that contain no mutation controls (per decision 5
+below — the disabled-state shape is deferred to 3.3 by stripping
+mutation controls entirely from 3.2's render path), today's
+existing 401 from the unmodified mutation Edge Functions still
+rejects any direct write attempt that bypasses the (absent)
+client UI (until 3.3 hardens to structured 403), and the
+disclaimer cue makes the demo status honest. So 3.2 is
+shippable as a coherent state, and the branch test forces the
+split.
 
 **Resolution.** **Option B (2-PR split: 3.2 read side, 3.3 write
 side + closer).** 3.2's plan binds the read-side scope; 3.3's
