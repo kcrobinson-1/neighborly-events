@@ -212,9 +212,12 @@ decisions.
   itself** with written rationale. Deferrals live in the plan, not in
   the PR body, not in an issue, not as an unwritten promise
 - flip the plan's Status line from `Proposed` / `In progress` to
-  `Landed` in the same PR that implements it. Do not record commit
-  SHAs in the Status block — `git log` and `git blame` are
-  authoritative for navigating from plan to history, and recording
+  `Landed` in the same PR that implements it. Plans in active
+  multi-pass drafting may carry an interim `In draft` Status before
+  `Proposed`; the `In draft` → `Proposed` flip is gated by the
+  promotion-gate rule under "Phase Planning Sessions" below. Do not
+  record commit SHAs in the Status block — `git log` and `git blame`
+  are authoritative for navigating from plan to history, and recording
   SHAs creates a chicken-and-egg problem (the SHA isn't known until
   after merge, which forces a follow-up commit whose only purpose is
   to record the previous commit's SHA). Same-PR flip is the default
@@ -727,6 +730,48 @@ phase's implementation starts, **after** prior phases have shipped
     plans drafted before this rule are not retroactively non-
     conforming; plans drafted from this point forward must label
     their estimative sections per the bullet above
+- **`In draft` → `Proposed` promotion gate.** Plan-drafting is not
+  required to be a single pass. A multi-pass session can lay out the
+  plan's structure with explicit deferrals, then resolve them, then
+  flip Status. While the plan is in the resolution-pending phase, it
+  carries Status `In draft`; flipping to `Proposed` claims the plan
+  is ready for code review — contracts are decision-complete, the
+  doc is internally coherent, and load-bearing claims are verified.
+  The flip is the natural moment for a comprehensive self-review pass:
+  - **Read end-to-end as a coherent whole.** Re-read the full plan
+    + scoping doc in order. Look for contradictions between sections
+    (a contract claim that conflicts with a Risk Register mitigation,
+    a decision in the scoping doc whose framing no longer matches a
+    later decision's resolution, a Files To Touch entry that
+    contradicts a contract, a multi-step contract whose ordering
+    doesn't match its own test contract).
+  - **Decision-completeness on Contracts.** Walk Contracts for
+    deferral phrases ("plan-drafting picks," "final spelling at plan
+    time," "shape decided later," or any deferral that names
+    plan-drafting itself as the resolver). Each must be resolved
+    concretely, explicitly authorized by another rule (e.g., "Bans
+    on surface require rendering the consequence" authorizes UX-copy
+    deferral to render-time), or moved to the scoping doc's "Open
+    decisions to make at plan-drafting" handoff. Plan-drafting is
+    the moment that produced the plan; a contract that defers to
+    "plan-drafting" defers to a moment that does not exist.
+  - **Walk the broadened `Verified by:` rule against every
+    load-bearing claim.** The rule is named below; the promotion
+    gate is when it gets applied universally rather than to whichever
+    claims happened to feel "technical" during drafting.
+  - **Re-confirm the scoping doc's reality-check inputs against
+    current code.** Line numbers, file existence, configuration
+    shapes, and other inputs that drift from scoping → plan-drafting
+    are reflected in the plan; stale references are updated.
+
+  Failures surface either as resolutions (apply edits before
+  flipping) or as plan-blockers that the user must triage before
+  the flip happens. A plan flipped to `Proposed` without this walk
+  is the same shape of drift as a plan flipped to `Landed` without
+  satisfying its Validation Gate — the Status claim is wrong. Plans
+  drafted before this rule are not retroactively non-conforming;
+  plans drafted from this point forward run the gate before the
+  `Proposed` flip.
 - **"Verified by:" annotations on load-bearing claims.** Load-bearing
   claims in the plan about the codebase or supporting services
   (including SQL contracts, RPC behavior, TypeScript / Edge Function
