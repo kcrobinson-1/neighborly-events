@@ -181,3 +181,130 @@ jobs:
         with:
           name: playwright-test-results
           path: tmp/playwright/test-results*
+
+  report-ci-failure:
+    name: Report CI Failure To PR
+    needs: [detect-scope, validate]
+    if: failure() && github.event_name == 'pull_request' && needs.detect-scope.outputs.docs_only != 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      issues: write
+      pull-requests: write
+      actions: read
+      contents: read
+
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      OWNER_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.run_id }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      VALIDATE_JOB_NAME: "Lint, Tests, Build, and Supabase Checks"
+
+    steps:
+      - name: Verify gh CLI version >= 2.89.0
+        run: |
+          set -euo pipefail
+          version="$(gh --version | awk 'NR==1 {print $3}')"
+          required="2.89.0"
+          lowest="$(printf '%s\n%s\n' "$required" "$version" | sort -V | head -n1)"
+          if [ "$lowest" != "$required" ]; then
+            echo "gh CLI is $version; reporter requires >= $required" >&2
+            exit 1
+          fi
+          echo "gh CLI $version satisfies >= $required"
+
+      - name: Identify failing validate job and first failed step
+        id: failure
+        run: |
+          set -euo pipefail
+          jobs_json="$(gh api "repos/${OWNER_REPO}/actions/runs/${RUN_ID}/jobs?per_page=100")"
+
+          failed_job="$(printf '%s' "$jobs_json" | jq --arg name "$VALIDATE_JOB_NAME" '
+            .jobs
+            | map(select(.name == $name and .conclusion == "failure"))
+            | .[0] // null
+          ')"
+
+          : > "${RUNNER_TEMP}/job_id.txt"
+          : > "${RUNNER_TEMP}/job_name.txt"
+          : > "${RUNNER_TEMP}/step_name.txt"
+
+          if [ "$failed_job" = "null" ] || [ -z "$failed_job" ]; then
+            echo "mode=degraded" >> "$GITHUB_OUTPUT"
+            echo "job_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=ok" >> "$GITHUB_OUTPUT"
+            job_url="$(printf '%s' "$failed_job" | jq -r '.html_url')"
+            echo "job_url=$job_url" >> "$GITHUB_OUTPUT"
+            printf '%s' "$failed_job" | jq -r '.id' > "${RUNNER_TEMP}/job_id.txt"
+            printf '%s' "$failed_job" | jq -r '.name' > "${RUNNER_TEMP}/job_name.txt"
+            printf '%s' "$failed_job" | jq -r '
+              [.steps[] | select(.conclusion == "failure")][0].name // ""
+            ' > "${RUNNER_TEMP}/step_name.txt"
+          fi
+
+      - name: Build comment body
+        id: body
+        run: |
+          set -euo pipefail
+          mode="${{ steps.failure.outputs.mode }}"
+          job_url="${{ steps.failure.outputs.job_url }}"
+
+          body_file="${RUNNER_TEMP}/comment_body.md"
+          : > "$body_file"
+
+          if [ "$mode" = "degraded" ]; then
+            printf 'CI failed before validation — [run logs](%s)\n\n' "$job_url" >> "$body_file"
+            printf '<details>\n<summary>No failing %s job in this run</summary>\n\n' "$VALIDATE_JOB_NAME" >> "$body_file"
+            printf '```\n' >> "$body_file"
+            printf 'See the linked run page for the failure detail.\n' >> "$body_file"
+            printf '```\n\n</details>\n' >> "$body_file"
+          else
+            job_id="$(cat "${RUNNER_TEMP}/job_id.txt")"
+            job_name="$(cat "${RUNNER_TEMP}/job_name.txt")"
+            step_name="$(cat "${RUNNER_TEMP}/step_name.txt")"
+
+            raw_log="${RUNNER_TEMP}/job_failed.log"
+            isolated_log="${RUNNER_TEMP}/step_isolated.log"
+            tail_log="${RUNNER_TEMP}/log_tail.txt"
+
+            gh run view --log-failed --job "$job_id" > "$raw_log" || true
+
+            if [ -n "$step_name" ]; then
+              awk -F'\t' -v s="$step_name" '$2 == s' "$raw_log" > "$isolated_log" || true
+            else
+              : > "$isolated_log"
+            fi
+
+            if [ -s "$isolated_log" ]; then
+              tail -n 200 "$isolated_log" > "$tail_log"
+              summary="Last 200 lines of failed-step output"
+            else
+              tail -n 200 "$raw_log" > "$tail_log" || true
+              if [ -n "$step_name" ]; then
+                summary="Last 200 lines from failed steps in \`$job_name\` — first failed step was \`$step_name\` but its output could not be isolated"
+              else
+                summary="Last 200 lines from failed steps in \`$job_name\`"
+              fi
+            fi
+
+            if [ -n "$step_name" ]; then
+              printf 'CI failed: `%s` in `%s` — [run logs](%s)\n\n' "$step_name" "$job_name" "$job_url" >> "$body_file"
+            else
+              printf 'CI failed in `%s` — [run logs](%s)\n\n' "$job_name" "$job_url" >> "$body_file"
+            fi
+
+            printf '<details>\n<summary>%s</summary>\n\n' "$summary" >> "$body_file"
+            printf '```\n' >> "$body_file"
+            cat "$tail_log" >> "$body_file"
+            printf '\n```\n\n</details>\n' >> "$body_file"
+          fi
+
+          echo "body_file=$body_file" >> "$GITHUB_OUTPUT"
+
+      - name: Post PR comment
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --repo "$OWNER_REPO" --body-file "${{ steps.body.outputs.body_file }}"
