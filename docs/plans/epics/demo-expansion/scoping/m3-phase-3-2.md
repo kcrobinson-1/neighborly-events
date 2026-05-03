@@ -495,23 +495,40 @@ of that walk.
 **Resolution.** **Option A.** A new apps/web component (working
 name `DemoModeBanner`; final naming owned by plan-drafting)
 renders at the top of the bypass branch in each of the three
-shells. Copy contract: "You're viewing a demo of [admin |
-redemption booth | redemption monitoring] for [Harvest Block
-Party | Riverside Jam]. Mutation controls are read-only.
-[Sign in](#) for the real workspace." Exact wording owned by
-plan-drafting against rendered components per AGENTS.md "Bans
-on surface require rendering the consequence."
+shells. Copy contract carries the demo-status declaration
+(per-surface + per-event) and the read-only signal; **no
+in-banner sign-in link**. A first draft of the Copy contract
+included a `[Sign in](#)` affordance pointing at "the real
+workspace," but plan-drafting reality-check refuted that
+shape: each page's `SignInForm` renders inline at the same
+slug-scoped URL when `sessionState.status === "signed_out"`
+(`Verified by:`
+[`EventAdminPage.tsx:390-408`](/apps/web/src/pages/EventAdminPage.tsx),
+[`EventRedeemPage.tsx:432-447`](/apps/web/src/pages/EventRedeemPage.tsx),
+[`EventRedemptionsPage.tsx:693-707`](/apps/web/src/pages/EventRedemptionsPage.tsx)),
+not via redirect to a separate sign-in route, so a link to
+"the real workspace" would navigate to the URL the visitor is
+already on, satisfy the bypass-branch trigger predicate again,
+and re-render the bypass branch — a no-op loop. apps/web
+exposes no non-slug-scoped sign-in landing
+(`Verified by:`
+[`apps/web/src/App.tsx`](/apps/web/src/App.tsx) — only the
+four event-route shells), so the sign-in affordance has no
+escape destination on apps/web today. Resolution: drop the
+in-banner link; visitors who want to sign in do so out-of-band.
+Exact wording on the demo-status copy is owned by plan-drafting
+against rendered components per AGENTS.md "Bans on surface
+require rendering the consequence."
 
 The 3.3 mutation-control disabled-state treatment (per decision 5
 below) layers onto the read-rendering surface this banner
-introduces — the banner's "mutation controls are read-only"
-sentence is what 3.3's disabled controls visually instantiate.
+introduces.
 
 **Verified by:**
-apps/site `TestEventDisclaimer` precedent referenced in
-[`m3-demo-mode-auth-bypass.md` Cross-Phase Decisions → Deferred
-to phase-time → "Demo-mode signaling pattern in UI" reality-check
-inputs](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md);
+[`apps/site/components/event/TestEventDisclaimer.tsx`](/apps/site/components/event/TestEventDisclaimer.tsx)
+(the apps/site precedent — uses `role="note"` and a
+`test-event-disclaimer` className; this phase's apps/web banner
+ports the same semantic shape);
 [`apps/web/src/styles/`](/apps/web/src/styles) (existing SCSS
 partial conventions the new component composes against);
 [`EventAdminPage.tsx:67-107`](/apps/web/src/pages/EventAdminPage.tsx),
@@ -519,9 +536,8 @@ partial conventions the new component composes against);
 `RedeemShell`,
 [`EventRedemptionsPage.tsx`](/apps/web/src/pages/EventRedemptionsPage.tsx)
 `RedemptionsShell` (the three shells the banner mounts inside;
-verified during reality-check that each carries a `<section
-className="panel">` body suitable for top-of-shell banner
-insertion).
+each carries a `<section className="panel">` body suitable for
+top-of-shell banner insertion).
 
 ### 5. Mutation-control disabled-state shape on bypass-rendered surfaces — deferred to phase 3.3 [Resolved → Defer to 3.3]
 

@@ -10,11 +10,20 @@ The demo-expansion epic surfaces two test events
 (`harvest-block-party`, `riverside-jam`) to internal partners
 through a marketing/demo experience. M2's home page surfaces
 role-door cards into apps/web's authenticated surfaces — admin
-authoring, redemption booth, redemption monitoring — with copy
-that says "sign in or wait for demo mode" because those surfaces
-require auth today. M3 makes those three surfaces reachable for
-unauthenticated visitors on the test slugs only, so a partner
-walking the role doors can see the full platform shape end-to-end.
+authoring, redemption booth, redemption monitoring — with
+"Sign in to manage this event (or wait for demo-mode access in
+M3)" copy on the Organizer card and the parallel "Sign in to
+redeem codes (or wait for demo-mode access in M3)" copy on the
+Volunteer card (`Verified by:`
+[`apps/site/components/home/RoleDoors.tsx:52,59`](/apps/site/components/home/RoleDoors.tsx)).
+Those surfaces require auth today (`Verified by:`
+[`apps/web/src/pages/EventAdminPage.tsx:390-408`](/apps/web/src/pages/EventAdminPage.tsx),
+[`apps/web/src/pages/EventRedeemPage.tsx:432-447`](/apps/web/src/pages/EventRedeemPage.tsx),
+[`apps/web/src/pages/EventRedemptionsPage.tsx:693-707`](/apps/web/src/pages/EventRedemptionsPage.tsx)
+— each page's `signed_out` branch renders `SignInForm`). M3
+makes those three surfaces reachable for unauthenticated visitors
+on the test slugs only, so a partner walking the role doors can
+see the full platform shape end-to-end.
 
 This phase ships the **read side** of that bypass. The settled
 data-access semantics from
@@ -30,9 +39,13 @@ The phase is a coherent shippable state on its own: bypass-
 rendered surfaces show read-only data, mutation controls are
 absent from the read-only render path (decision 5 in
 [scoping/m3-phase-3-2.md](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-2.md)),
-and any direct mutation attempt from a hypothetical script
-defeats today's existing 401 — exactly the same trust boundary
-real events have today.
+and any direct mutation attempt from a hypothetical script gets
+today's existing 401 from the mutation Edge Functions'
+`authenticateEventOrganizerOrAdmin` /
+`authenticateRedemptionOperator` gates (`Verified by:`
+[`supabase/functions/redeem-entitlement/index.ts:178-191`](/supabase/functions/redeem-entitlement/index.ts),
+[`supabase/functions/save-draft/index.ts:351-361`](/supabase/functions/save-draft/index.ts))
+— exactly the same trust boundary real events have today.
 
 The **write side** — the five mutation Edge Functions'
 `demo_mode_read_only` 403 short-circuit branches, the apps/web
@@ -46,17 +59,22 @@ Contracts item 7 and confirmed by this phase's branch test in
 decision 1.
 
 Surfaces this phase touches at the conceptual level: a new
-shared TypeScript module under `shared/events/`, three apps/web
-page components in `apps/web/src/pages/`, a new apps/web
-component for the demo-mode banner, three new read-only variant
-components for the per-surface render path, a new Edge Function
-under `supabase/functions/demo-mode-read/`, the
-`supabase/config.toml` declaration for the new function, and
-three test surfaces (Vitest unit test, Deno function test,
-Playwright e2e fixture). Doc surface is intentionally narrow:
-this phase edits only the milestone doc's Phase Status table to
-grow it from one row to two; the broader M3-closing doc-currency
-map is 3.3's responsibility.
+shared TypeScript module under
+[`shared/events/`](/shared/events/), three apps/web page
+components in [`apps/web/src/pages/`](/apps/web/src/pages/), a
+new apps/web component for the demo-mode banner, three new
+read-only variant components for the per-surface render path, a
+new Edge Function under `supabase/functions/demo-mode-read/`
+(working directory name; final spelling per the Naming section),
+a new `[functions.demo-mode-read]` `verify_jwt = false` block in
+[`supabase/config.toml`](/supabase/config.toml) (`Verified by:`
+[`supabase/config.toml:1-29`](/supabase/config.toml) — every
+existing function declares the same block), and three test
+surfaces (Vitest unit test, Deno function test, Playwright e2e
+fixture). Doc surface is intentionally narrow: this phase edits
+only the milestone doc's Phase Status table to grow it from one
+row to two; the broader M3-closing doc-currency map is 3.3's
+responsibility.
 
 ## Goal
 
@@ -79,9 +97,15 @@ bypass branch never fires on a non-test slug. After this PR:
   behavior unchanged).
 - Signed-in visitors on test slugs continue through the
   existing `useOrganizerForEvent` / `authorizeRedeem` /
-  `authorizeRedemptions` role gates — the bypass branch is
-  AND-gated on `sessionState.status === "signed_out"`, mirroring
-  the server-side rejection trigger from
+  `authorizeRedemptions` role gates (`Verified by:`
+  [`shared/auth/useOrganizerForEvent.ts:113-177`](/shared/auth/useOrganizerForEvent.ts),
+  [`apps/web/src/redeem/authorizeRedeem.ts:83-103`](/apps/web/src/redeem/authorizeRedeem.ts),
+  [`apps/web/src/redemptions/authorizeRedemptions.ts:83-103`](/apps/web/src/redemptions/authorizeRedemptions.ts))
+  — the bypass branch is AND-gated on
+  `sessionState.status === "signed_out"` (`Verified by:`
+  [`shared/auth/useAuthSession.ts:9`](/shared/auth/useAuthSession.ts)
+  — the discriminant), mirroring the server-side rejection
+  trigger from
   [`m3-phase-3-1-plan.md` Contracts item 5](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md).
 - The bypass-rendered surface carries a top-of-page demo-mode
   disclaimer banner that names the demo status honestly.
@@ -161,8 +185,17 @@ surface):
   introduces consumes the predicate, not the tuple, except
   test fixtures that need to enumerate.
 - **`demo-mode-read`** — the new Edge Function (working name;
-  final spelling owned by plan-drafting against
-  `supabase/functions/`'s prevailing verb-noun convention).
+  the working name is **noun-verb**, which does not match
+  `supabase/functions/`'s prevailing verb-first convention —
+  `Verified by:` the existing 9 function names
+  [`supabase/functions/`](/supabase/functions/) — `complete-game`,
+  `generate-event-code`, `get-redemption-status`, `issue-session`,
+  `publish-draft`, `redeem-entitlement`,
+  `reverse-entitlement-redemption`, `save-draft`,
+  `unpublish-event`, all of which lead with the verb. **Final
+  spelling owned by plan-drafting**, with the constraint that the
+  final name follows the verb-first pattern; candidates include
+  `read-demo-mode-data`, `get-demo-event-data`, or similar.
   Validates allowlist server-side, dispatches by `surface`
   discriminator, returns RLS-gated reads with service-role
   privileges.
@@ -216,7 +249,12 @@ scoping snapshot read 2026-05-03):
   bypass branch sits before the existing `signed_out` block;
   composes inside `EventAdminShell` with `isSignedIn={false}`,
   `isSigningOut={false}`, and the existing `onNavigateHome`
-  callback.
+  callback (`Verified by:`
+  [`EventAdminPage.tsx:42-67`](/apps/web/src/pages/EventAdminPage.tsx)
+  for `EventAdminShellProps`;
+  [`EventAdminPage.tsx:352`](/apps/web/src/pages/EventAdminPage.tsx)
+  for the `onNavigateHome` callback shape the existing branches
+  pass).
 - [`EventRedeemPage.tsx:432-447`](/apps/web/src/pages/EventRedeemPage.tsx) —
   bypass branch sits before the existing `signed_out` block;
   composes inside `RedeemShell` with the existing
@@ -255,23 +293,27 @@ TypeScript guard site introduced by this phase imports
 `isTestEventSlug` (not the tuple) and consumes the predicate,
 so the slug-literal-comparison code path lives at one site.
 Existing slug literal occurrences cataloged during scoping
-(`shared/styles/themes/index.ts:20-21`,
-`apps/site/lib/eventContent.ts:73-74`,
-`apps/site/events/harvest-block-party.ts`,
-`apps/site/events/riverside-jam.ts`,
-`apps/site/components/home/HarvestNarrative.tsx`,
-`apps/site/components/home/TwoEventShowcase.tsx`,
-`apps/site/components/home/RoleDoors.tsx`) are **content-shaped
-references** (theme registry, content registry, narrative
-references, the M2 home-page hardcoded `DEMO_EVENT_SLUG` in
-[RoleDoors.tsx:25](/apps/site/components/home/RoleDoors.tsx) which
-the
-[RoleDoors.tsx file comment lines 8-12](/apps/site/components/home/RoleDoors.tsx)
-deliberately keeps hardcoded so future test-event additions
-require an explicit home-page edit) and are **not allowlist
-guard sites**; this phase does not refactor them to consume the
-allowlist. The Cross-Phase Invariant binds new guard sites,
-not pre-existing content references.
+(`Verified by:`
+[`shared/styles/themes/index.ts:20-21`](/shared/styles/themes/index.ts),
+[`apps/site/lib/eventContent.ts:73-74`](/apps/site/lib/eventContent.ts),
+[`apps/site/events/harvest-block-party.ts:14`](/apps/site/events/harvest-block-party.ts),
+[`apps/site/events/riverside-jam.ts:20`](/apps/site/events/riverside-jam.ts),
+[`apps/site/components/home/HarvestNarrative.tsx:1`](/apps/site/components/home/HarvestNarrative.tsx)
+(import path),
+[`apps/site/components/home/TwoEventShowcase.tsx:1-2`](/apps/site/components/home/TwoEventShowcase.tsx)
+(import paths),
+[`apps/site/components/home/RoleDoors.tsx:25`](/apps/site/components/home/RoleDoors.tsx))
+are **content-shaped references** (theme registry, content
+registry, narrative references, and the M2 home-page hardcoded
+`DEMO_EVENT_SLUG` at
+[`RoleDoors.tsx:25`](/apps/site/components/home/RoleDoors.tsx)
+which
+[`RoleDoors.tsx:8-12`](/apps/site/components/home/RoleDoors.tsx)
+file comment deliberately keeps hardcoded so future test-event
+additions require an explicit home-page edit) and are **not
+allowlist guard sites**; this phase does not refactor them to
+consume the allowlist. The Cross-Phase Invariant binds new
+guard sites, not pre-existing content references.
 
 ### Edge Function read shim contract
 
@@ -358,22 +400,44 @@ rendering the consequence"):
 
 > You're viewing a demo of [the event-authoring workspace |
 > the redemption booth | redemption monitoring] for [Harvest
-> Block Party | Riverside Jam]. This is read-only. [Sign in](#)
-> to manage this event for real.
+> Block Party | Riverside Jam]. This is read-only.
 
 Per-event copy uses the event's display name from the existing
 content module (apps/site `events/<slug>.ts` is not consumed by
 apps/web today; the display name is hardcoded in the banner's
 copy or resolved through a small lookup helper — plan-drafting
-picks). The "Sign in" link points at the page's existing
-`SignInForm` URL (the same `/event/<slug>/<surface>?next=…`
-pattern the rest of the platform uses, unchanged).
+picks).
+
+**No "Sign in" link in the banner copy — audit blocker
+resolved by removal.** A first draft of this contract bound the
+banner's "Sign in" affordance to the page's existing `SignInForm`
+URL. That URL is the slug-scoped page URL the visitor is already
+on (`Verified by:`
+[`EventAdminPage.tsx:390-408`](/apps/web/src/pages/EventAdminPage.tsx),
+[`EventRedeemPage.tsx:432-447`](/apps/web/src/pages/EventRedeemPage.tsx),
+[`EventRedemptionsPage.tsx:693-707`](/apps/web/src/pages/EventRedemptionsPage.tsx)
+— each page renders `SignInForm` inline at the same slug-scoped
+URL when `sessionState.status === "signed_out"`, not via a
+redirect to a separate sign-in route). Clicking such a link
+would navigate to the same URL, satisfy the bypass-branch
+trigger predicate again (`isTestEventSlug(slug) && signed_out`),
+and re-render the bypass branch — a no-op loop. apps/web exposes
+no non-slug-scoped sign-in landing today; route-topology survey
+of [`apps/web/src/App.tsx`](/apps/web/src/App.tsx) confirms only
+the four event-route shells. Resolution: the banner ships
+**without** an in-banner sign-in link. A visitor who wants to
+sign in does so out-of-band (a different browser tab, a
+different role-door entry path that lands on a non-bypass surface,
+etc.). 3.3's plan-drafting may revisit if write-side UX
+introduces a sign-in escape requirement.
 
 **Visual contract:** ports the apps/site
-`TestEventDisclaimer` semantic shape (alert role, distinct
-background tone signaling caution-without-warning) into apps/web
-SCSS. Plan-drafting reads the apps/site component at plan-time
-and binds the visual contract against the on-disk shape.
+`TestEventDisclaimer` semantic shape (`role="note"`, distinct
+background tone signaling supplementary information without
+alerting urgency) into apps/web SCSS (`Verified by:`
+[`apps/site/components/event/TestEventDisclaimer.tsx:9-13`](/apps/site/components/event/TestEventDisclaimer.tsx)).
+Plan-drafting reads the apps/site component at plan-time and
+binds the visual contract against the on-disk shape.
 
 ### Per-surface read-only variant component contracts
 
@@ -385,8 +449,12 @@ input fields that drive mutations) are absent.
 - **`DemoModeAdminView`** — renders the published event title
   + description + a preview of the draft questions / prizes /
   schedule data. Reads via `fetchDemoModeRead({ slug, surface:
-  "admin" })`. Loading state matches the existing
-  `EventAdminShell` loading shape.
+  "admin" })`. Loading state matches the existing admin-page
+  loading shape (`Verified by:`
+  [`EventAdminPage.tsx:371-388`](/apps/web/src/pages/EventAdminPage.tsx)
+  — the existing `sessionState.status === "loading"` branch
+  renders `EventAdminShell` with a disabled "Restoring session..."
+  button).
 - **`DemoModeRedeemView`** — renders the keypad-shell layout
   with no input affordance and a brief explanation that
   redemption codes are read-only in demo mode. No fetch; the
@@ -406,7 +474,12 @@ variant components are unconditional renderers).
 Three independent test layers, each ships in this phase's PR:
 
 1. **Vitest unit test**
-   `tests/shared/events/testEventAllowlist.test.ts`. Asserts:
+   `tests/shared/events/testEventAllowlist.test.ts` (new path;
+   `tests/shared/events/` is an existing directory per `Verified
+   by:`
+   [`tests/shared/`](/tests/shared) — sibling subdirectories
+   `auth/`, `events/`, `game-config/`, `styles/`, `urls/`).
+   Asserts:
    - `TEST_EVENT_SLUGS` contains exactly
      `["harvest-block-party", "riverside-jam"]` and no other
      entries
@@ -417,10 +490,13 @@ Three independent test layers, each ships in this phase's PR:
    - `isTestEventSlug("harvest-block-partyy") === false`
      (regression coverage against suffix-match drift)
 2. **Deno Edge Function test**
-   `tests/supabase/functions/demo-mode-read.test.ts` (or the
-   path matching the existing convention; plan-drafting
-   confirms by inspecting `tests/supabase/functions/`'s
-   shape). Asserts:
+   `tests/supabase/functions/demo-mode-read.test.ts` (or
+   `<final-name>.test.ts` if the function is renamed per the
+   Naming section). The convention is per-function-test-file at
+   the directory root, `Verified by:`
+   [`tests/supabase/functions/`](/tests/supabase/functions) —
+   `complete-game.test.ts`, `save-draft.test.ts`,
+   `redeem-entitlement.test.ts`, etc. Asserts:
    - Request with `slug: "madrona-launch-day"` (or any
      non-test slug) returns HTTP 403 with body
      `{ "error": "not_in_demo_allowlist", ... }`
@@ -433,44 +509,63 @@ Three independent test layers, each ships in this phase's PR:
    - Request with malformed body (missing slug, missing
      surface, unknown surface value) returns HTTP 400
 3. **Playwright e2e fixture** under
-   `tests/e2e/demo-mode-bypass/` (plan-drafting confirms the
-   path against the existing `tests/e2e/` shape). Two
+   `tests/e2e/demo-mode-bypass/` (new per-feature directory;
+   the convention is per-feature subdirectories at
+   [`tests/e2e/`](/tests/e2e) — 12 existing siblings). Three
    scenarios:
    - Visiting `/event/<some-real-slug>/admin` while signed-out
      renders `SignInForm` (no bypass branch fires; the existing
-     auth-state-machine path is unchanged)
+     auth-state-machine path is unchanged).
    - Visiting `/event/harvest-block-party/admin` while
      signed-out renders the bypass branch with the
      `DemoModeBanner` present (asserted via locator on the
-     banner's `role="alert"` and the banner copy)
+     banner's `role="note"` and the banner copy — `Verified by:`
+     [`apps/site/components/event/TestEventDisclaimer.tsx:13`](/apps/site/components/event/TestEventDisclaimer.tsx)
+     for the role this phase's banner mirrors).
+   - Mutation controls are absent on the bypass-rendered
+     surface — assert by-locator-absence on Save buttons,
+     publish/unpublish toggles, redeem submit, and the
+     reverse-row affordance on the rendered admin and
+     redemptions surfaces. The locator-absence assertion is
+     load-bearing for the per-phase invariant "Bypass-rendered
+     read-only render path contains no mutation controls"
+     (Cross-Cutting Invariants above) and the Risk Register
+     "visual review false-pass" mitigation.
 
 ### Milestone-doc Phase Status table edit contract
 
-This phase's PR edits
+The milestone-doc edit grows
 [`m3-demo-mode-auth-bypass.md` Phase Status table](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
-to grow it from one row (3.2 alone) to two rows (3.2 + 3.3) per
+from one row (3.2 alone) to two rows (3.2 + 3.3) per
 [`m3-phase-3-1-plan.md` Contracts item 7](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)'s
 "the milestone doc's Phase Status table grows accordingly at
-3.2's plan-drafting time" instruction. Pre-edit row state and
-post-edit row state:
+3.2's plan-drafting time" instruction. **The edit was applied
+at plan-drafting time** (this planning session) and is
+committed alongside this plan + the scoping doc. The
+implementation PR does not re-edit the table; it only flips the
+3.2 row's Status from `Proposed` → `Landed` at merge time per
+AGENTS.md "Plan-to-PR Completion Gate."
 
-- **Pre-edit (current state):** one 3.2 row with title
-  "Implement chosen demo-mode bypass + M3 closure," Plan
-  column `_pending 3.2 phase planning_`, Status `Proposed`,
-  PR `_pending`.
-- **Post-edit (this phase's milestone-doc edit):** two rows.
-  3.2 row with title "Demo-mode bypass — read side," Plan
-  column linking to
-  `m3-phase-3-2-plan.md` (this file), Status `Proposed`, PR
-  `_pending`. 3.3 row with title "Demo-mode bypass — write
-  side + M3 closure," Plan column `_pending 3.3 phase
-  planning_`, Status `Proposed`, PR `_pending`. The post-table
-  prose paragraph naming the M3-closing responsibility
-  ("travels with whichever phase ships last") is updated to
-  refer to 3.3 explicitly now that the split is settled.
+Post-edit row state (canonical at the milestone doc; restated
+here for orientation):
 
-When this PR merges, 3.2's Status flips `Proposed` → `Landed`
-in the same PR per AGENTS.md "Plan-to-PR Completion Gate."
+- 3.2 row title "Demo-mode bypass — read side," Plan column
+  links to this file, Status `Proposed` (flips to `Landed` at
+  implementation-PR merge), PR `_pending` (filled in at
+  implementation-PR open).
+- 3.3 row title "Demo-mode bypass — write side + M3 closure,"
+  Plan column `_pending 3.3 phase planning_`, Status `Proposed`,
+  PR `_pending`. 3.3's plan-drafting fills these in.
+
+The post-table prose paragraph naming the M3-closing
+responsibility ("travels with whichever phase ships last") was
+updated to refer to 3.3 explicitly now that the split is
+settled. The Sequencing-section Mermaid diagram was redrawn at
+plan-drafting time to reflect `P31 → P32 → P33` and `M2 → P33`
+(per
+[`m3-demo-mode-auth-bypass.md` Sequencing](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)'s
+own instruction that the arrow's terminus redraws when the
+ship-order phase changes).
 
 ## Files To Touch
 
@@ -495,28 +590,48 @@ requires deviating, recorded in the PR body's
 - `tests/supabase/functions/demo-mode-read.test.ts` — Deno
   Edge Function test per the enforcement-assertion contract
   layer 2.
-- `apps/web/src/components/DemoModeBanner.tsx` (final path
-  plan-time) — the new banner component per the banner
-  contract.
-- `apps/web/src/admin/DemoModeAdminView.tsx` (final path
-  plan-time) — admin read-only variant per the variant
-  contract.
+- `apps/web/src/demo/DemoModeBanner.tsx` (working path) — the new
+  banner component per the banner contract. apps/web/src/ is
+  feature-organized — `admin/`, `auth/`, `data/`, `game/`,
+  `lib/`, `pages/`, `redeem/`, `redemptions/`, `styles/`,
+  `types/` (`Verified by:`
+  [`apps/web/src/`](/apps/web/src) listing) — with **no shared
+  `components/` directory**. Banner is shared across the three
+  bypass-using pages, so a new `demo/` top-level dir grouping
+  demo-mode-specific shared UI fits the prevailing convention;
+  alternative `apps/web/src/pages/DemoModeBanner.tsx`
+  (co-located with the page files that mount it) also fits.
+  Plan-drafting picks; the existing convention rules out
+  `components/`.
+- `apps/web/src/admin/DemoModeAdminView.tsx` — admin read-only
+  variant per the variant contract; co-located with
+  `EventAdminWorkspace` and the admin auth helpers.
 - `apps/web/src/redeem/DemoModeRedeemView.tsx` — redeem
-  read-only variant per the variant contract.
+  read-only variant per the variant contract; co-located with
+  `authorizeRedeem`.
 - `apps/web/src/redemptions/DemoModeRedemptionsView.tsx` —
-  redemptions read-only variant per the variant contract.
-- `apps/web/src/lib/fetchDemoModeRead.ts` (final path
-  plan-time) — apps/web client-side helper that invokes
-  `demo-mode-read`.
+  redemptions read-only variant per the variant contract;
+  co-located with `redemptionsData` and `authorizeRedemptions`.
+- `apps/web/src/lib/fetchDemoModeRead.ts` — apps/web client-side
+  helper that invokes `demo-mode-read`. `apps/web/src/lib/`
+  hosts the existing API client helpers (`Verified by:`
+  [`apps/web/src/lib/`](/apps/web/src/lib) listing —
+  `adminGameApi.ts`, `authApi.ts`, `gameApi.ts`,
+  `gameContentApi.ts`, `supabaseBrowser.ts`, etc.) and is the
+  natural home.
 - `tests/e2e/demo-mode-bypass/` — new Playwright fixture
   directory per the enforcement-assertion contract layer 3.
   The exact file shape (one spec file, multiple) follows
   `tests/e2e/`'s existing per-feature shape; plan-drafting
   confirms.
 - `apps/web/src/styles/_demo-mode.scss` (or partial inclusion
-  in an existing partial; plan-drafting picks) — SCSS for
-  the demo-mode banner and read-only variants per the
-  visual contract.
+  in an existing partial; plan-drafting picks) — SCSS for the
+  demo-mode banner and read-only variants per the visual
+  contract. The per-feature partial pattern is established
+  (`Verified by:`
+  [`apps/web/src/styles/`](/apps/web/src/styles) — sibling
+  partials `_admin.scss`, `_redeem.scss`, `_game.scss`,
+  `_layout.scss`, etc.).
 
 ### Modify
 
@@ -571,11 +686,12 @@ the "Estimate Deviations" callout.
   in M3" → revised copy) is phase 3.3's deliverable per the
   milestone-doc Cross-Phase Invariant 4 and the
   [milestone-doc Sequencing](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
-  arrow `M2 --> P32` framing (which now points at 3.3 because
-  the M3-closing responsibility lands with the last-shipping
-  phase per
-  [`m3-phase-3-1-plan.md` Contracts item 7](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)).
-  3.2 does not touch this file.
+  `M2 --> P33` arrow (redrawn at this plan's drafting time per
+  the milestone-doc instruction "if 3.1's outcome splits
+  implementation into 3.2 + 3.3 (or 3.2 + 3.3 + 3.4), the
+  M3-closing responsibility — and the M2 ship-order arrow with
+  it — transfers to whichever phase ships last"). 3.2 does not
+  touch this file.
 - The five mutation Edge Functions (`save-draft`,
   `publish-draft`, `unpublish-event`, `redeem-entitlement`,
   `reverse-entitlement-redemption`) — the
@@ -587,10 +703,13 @@ the "Estimate Deviations" callout.
   3.3 picks whether to carry slug in the request body for the
   403 differentiation pattern; 3.2 does not edit mutation paths.
 - All apps/web head-tag handling — the noindex emit for
-  bypass-rendered routes is 3.3's deliverable. apps/web has
-  no existing head-tag injection mechanism (verified during
-  scoping reality-check); 3.3 picks the mechanism per AGENTS.md
-  "Spike before plan for novel mechanisms."
+  bypass-rendered routes is 3.3's deliverable. apps/web has no
+  existing head-tag injection mechanism (`Verified by:`
+  [`apps/web/index.html`](/apps/web/index.html) — only the
+  static head tags ship today; no `document.title` mutations,
+  no react-helmet, no `<meta>` injection in apps/web source);
+  3.3 picks the mechanism per AGENTS.md "Spike before plan for
+  novel mechanisms."
 - `README.md`, `docs/architecture.md`, `docs/product.md`,
   `docs/operations.md`, `docs/styling.md`, `docs/backlog.md`
   — the M3-closing doc-currency map is 3.3's responsibility per
@@ -659,18 +778,24 @@ and estimates"; the implementer may refine.
    wrapper scripts" — likely a new wrapper for the bypass
    suite, or composition into one of `:admin`, `:redeem`,
    `:redemptions`).
-9. **Milestone-doc Phase Status table edit.** Grow the table
-   from 1 row to 2 rows per the milestone-doc edit contract.
-10. **Status flip.** This plan's Status `Proposed` → `Landed`
-    in the same PR.
-11. **Validation pre-PR.** Re-run `npm run lint`,
-    `npm run build:web`, `npm run test`, the Deno function
-    runner, and the new e2e fixture. All green.
-12. **Open PR.** Vercel produces preview URL on push. PR body
+9. **Status flips.** This plan's Status `Proposed` → `Landed`;
+   the milestone-doc Phase Status table's 3.2 row Status
+   `Proposed` → `Landed` and PR column updated with this PR's
+   number. The milestone-doc Phase Status **table-shape** edit
+   (1 row → 2 rows) was already applied at plan-drafting time
+   per the milestone-doc edit contract above and is committed
+   in this same PR alongside this plan + the scoping doc; the
+   implementer does not re-edit the table shape.
+10. **Validation pre-PR.** Re-run `npm run lint`,
+    `npm run build:web`, `npm run test`, `npm run test:functions`,
+    and the new e2e fixture (via `npm run test:e2e` or its
+    feature-scoped wrapper — plan-drafting confirms the canonical
+    invocation). All green.
+11. **Open PR.** Vercel produces preview URL on push. PR body
     names the Validation Gate procedure outcomes, the
     `## Estimate Deviations` callout (or `N/A`), and the
     Self-Review Audit findings.
-13. **Self-review pass.** Walk the audits named in
+12. **Self-review pass.** Walk the audits named in
     "Self-Review Audits" below; AGENTS.md "Plan-to-PR
     Completion Gate" walk; the four milestone-doc Cross-Phase
     Invariants walked against this PR's diff per the milestone
@@ -683,7 +808,7 @@ and estimates"; the implementer may refine.
     contract) is satisfied by 3.3, not by this phase, and the
     walk records "the invariant binds 3.3, not 3.2" rather
     than asserting it is unrelated.
-14. **PR ready for review.**
+13. **PR ready for review.**
 
 ## Commit Boundaries
 
@@ -705,8 +830,19 @@ a mix of rules and estimates":
   read-rendering surface.
 - **Commit 4 — Playwright e2e fixture.** The new fixture
   directory under `tests/e2e/`.
-- **Commit 5 — milestone-doc Phase Status edit + Status flip.**
-  Doc-only commit; separable from the code review.
+- **Commit 5 — Status flips.** Doc-only commit:
+  - Plan doc Status `Proposed` → `Landed`.
+  - Milestone-doc Phase Status table 3.2 row Status
+    `Proposed` → `Landed`; PR column populated with this PR's
+    number.
+  Note: the milestone-doc Phase Status table-shape edit (1 row
+  → 2 rows) and the Sequencing-section Mermaid redraw landed at
+  plan-drafting time and are committed alongside this plan + the
+  scoping doc; that work is **not** part of Commit 5. If
+  plan-drafting artifacts are committed in this same PR (the
+  m1-phase-1-1 precedent), Commits 1–4 are preceded by a
+  planning commit set; if planning artifacts shipped in a prior
+  PR, Commit 1 begins the implementation diff.
 - **Optional Commit 6+ — review-fix commits.** Per AGENTS.md
   "PR-sized work, name the intended commit boundaries before
   editing when practical, and keep review-fix commits distinct
@@ -792,13 +928,17 @@ time:
   The audit walks: are loading states rendered? Are error
   states rendered with falsifiable copy? Is there an effect-
   cleanup path if the component unmounts mid-fetch?
-- **Cross-app destination navigation audit** — the
-  `DemoModeBanner`'s "Sign in" link points at the existing
-  page's `SignInForm` URL. The audit walks: is the link
-  destination in-app (the same apps/web SPA route, so a
-  client-side `<a>` is correct), or cross-app (would need
-  hard-navigation per AGENTS.md "Cross-app destinations need
-  hard navigation")?
+- **Navigation-affordance audit** — the `DemoModeBanner` ships
+  with no in-banner sign-in link per the banner contract's
+  loop-link resolution. The audit walks: do the bypass-rendered
+  read-only variants contain any links or navigation
+  affordances at all? For each that exists (e.g., the existing
+  "Back to demo overview" link in `EventAdminShell`), confirm
+  the destination URL does not satisfy the bypass-branch
+  predicate (`isTestEventSlug(slug) && signed_out`) — i.e., the
+  destination escapes the bypass surface rather than looping
+  back into it. AGENTS.md "Cross-app destinations need hard
+  navigation" applies to any cross-app destination link.
 - **CI / testing infrastructure audit** — three new test
   surfaces. The audit walks: do the tests run via the
   canonical wrapper scripts? Is the fixture directory at the
@@ -814,7 +954,7 @@ anticipated, the discovery is recorded and walked, not absorbed
 silently.
 
 The implementer also walks the milestone-doc-level invariants
-(per the Execution Steps step 13 self-review pass):
+(per the Execution Steps step 12 self-review pass):
 
 - **Cross-Phase Invariant 1 — single source of truth** — the
   bypass branches, the Edge Function allowlist gate, and the

@@ -469,8 +469,9 @@ phase's implementation starts, **after** prior phases have shipped
     references the plan's section by name ("the `EventContent`
     type defined in the plan…"); it does not duplicate the
     artifact. The reality-check gate (named below) operates on
-    scoping's decisions — load-bearing technical claims that
-    reality-check verifies — not on duplicated contract text.
+    scoping's decisions — load-bearing claims about the codebase or
+    supporting services that reality-check verifies — not on
+    duplicated contract text.
   - Recurring trap from M3 phase 3.1's first drafts: scoping +
     plan together ran ~4,300 lines because both docs carried the
     full file inventory, full Contracts, full Cross-Cutting
@@ -572,32 +573,43 @@ phase's implementation starts, **after** prior phases have shipped
   from this point forward
 - **Reality-check gate between scoping and plan.** Before promoting
   the scoping doc to plan-drafting, do a forced reality-check pass on
-  every load-bearing technical claim. For SQL contracts: read the
-  actual migration files for named tables, policies, RPCs; confirm
-  the predicates, grants, and constraints exist as scoped. For RPC
-  behavior claims: read the function body — if the scoping says
-  "widen the X gate," confirm the gate exists. For PostgreSQL
-  semantics claims: write one sentence that would falsify the claim
-  and check whether it falsifies (recurring trap: PostgreSQL applies
-  SELECT during UPDATE/DELETE, so write policies don't fire if the
-  row isn't SELECT-visible). For TypeScript / Edge Function
-  contracts: read the function signature and at least one real call
-  site. For *validation-procedure* claims ("`vercel dev` will
-  validate X," "the existing fixture covers Y," "`npm test` will
-  catch Z"), trace whether the procedure actually exercises the
-  surface it claims. For dev-tool semantics specifically (Vercel
-  CLI, Next.js dev server, Vite, Playwright), read the project's
-  actual config (`vercel.json`, `next.config.ts`, `vite.config.ts`)
-  before claiming runtime behavior — these tools are
-  config-dependent and general knowledge will not catch
-  project-specific overrides. Recurring trap: `apps/web/vercel.json`
-  destinations are absolute production URLs, so `vercel dev`
-  proxies to deployed apps/site rather than the branch's local
-  Next.js dev server; "vercel dev validates the new local routes"
-  was a wrong claim because the config's absolute destinations were
-  never checked. If the reality-check finds a discrepancy, fix the
-  scoping before drafting the plan; do not carry wrong premises
-  into plan time
+  every load-bearing claim about the codebase or supporting services.
+  For SQL contracts: read the actual migration files for named
+  tables, policies, RPCs; confirm the predicates, grants, and
+  constraints exist as scoped. For RPC behavior claims: read the
+  function body — if the scoping says "widen the X gate," confirm
+  the gate exists. For PostgreSQL semantics claims: write one
+  sentence that would falsify the claim and check whether it
+  falsifies (recurring trap: PostgreSQL applies SELECT during
+  UPDATE/DELETE, so write policies don't fire if the row isn't
+  SELECT-visible). For TypeScript / Edge Function contracts: read
+  the function signature and at least one real call site. For URL
+  contracts and route topology: confirm any URL the plan names is a
+  distinct route the platform actually serves (not an inline-
+  conditional render at the same URL); when an affordance points at
+  "where the user does X today," verify that X has a URL distinct
+  from the affordance's render site. For *validation-procedure*
+  claims ("`vercel dev` will validate X," "the existing fixture
+  covers Y," "`npm test` will catch Z"), trace whether the procedure
+  actually exercises the surface it claims. For dev-tool semantics
+  specifically (Vercel CLI, Next.js dev server, Vite, Playwright),
+  read the project's actual config (`vercel.json`, `next.config.ts`,
+  `vite.config.ts`) before claiming runtime behavior — these tools
+  are config-dependent and general knowledge will not catch
+  project-specific overrides. For external-service-behavior claims
+  (Vercel rewrites / CDN ordering, Supabase RLS / auth / config
+  semantics, Next.js framework conventions, Deno / Vite / Playwright
+  runtime semantics, any other vendored or hosted dependency the
+  codebase consumes but does not contain proof of), read the
+  upstream / vendor documentation; "I think Vercel does X" is not a
+  reality-check, "the Vercel docs at <URL> say X" is. Recurring
+  trap: `apps/web/vercel.json` destinations are absolute production
+  URLs, so `vercel dev` proxies to deployed apps/site rather than
+  the branch's local Next.js dev server; "vercel dev validates the
+  new local routes" was a wrong claim because the config's absolute
+  destinations were never checked. If the reality-check finds a
+  discrepancy, fix the scoping before drafting the plan; do not
+  carry wrong premises into plan time
 - **When a URL retarget changes which component renders, re-audit
   every assertion the test makes after the retarget — not just URL
   strings.** A test's locator inventory before and after a URL
@@ -715,15 +727,30 @@ phase's implementation starts, **after** prior phases have shipped
     plans drafted before this rule are not retroactively non-
     conforming; plans drafted from this point forward must label
     their estimative sections per the bullet above
-- **"Verified by:" annotations on technical claims.** Load-bearing
-  technical claims in the plan **must** carry an inline "Verified
-  by:" reference to the code citation that proves them — file path
-  and line number, not "per scoping doc" or "per epic." Claims that
-  cannot carry a verification reference are re-phrased as assumptions
-  (clearly tagged as such) or removed. This is not formatting
-  preference — it is the protective check this section exists to
-  enforce, so the reality-check gate above does not get rolled back
-  during plan-drafting
+- **"Verified by:" annotations on load-bearing claims.** Load-bearing
+  claims in the plan about the codebase or supporting services
+  (including SQL contracts, RPC behavior, TypeScript / Edge Function
+  contracts, validation-procedure claims, dev-tool semantics, URL
+  contracts and route topology, copy that names artifacts or
+  destinations, framework / vendor behavior — Vercel rewrites and
+  CDN ordering, Supabase RLS / auth / config semantics, Next.js
+  conventions, Deno / Vite / Playwright runtime semantics — and any
+  other claim asserting something specific about how the codebase or
+  an external service behaves) **must** carry an inline "Verified
+  by:" reference to the source that proves them. Acceptable sources:
+  a code citation (file path + line number, not "per scoping doc" or
+  "per epic"), generated test output, an already-merged sibling
+  artifact, or the upstream / vendor documentation URL for claims
+  about external-service behavior the codebase doesn't contain proof
+  of. Claims that cannot carry a verification reference are
+  re-phrased as assumptions (clearly tagged as such) or removed.
+  This is not formatting preference — it is the protective check
+  this section exists to enforce, so the reality-check gate above
+  does not get rolled back during plan-drafting. The trigger
+  enumeration is illustrative, not exhaustive: the rule binds any
+  load-bearing claim about the codebase or supporting services, and
+  agents do not get to argue "my claim isn't on the list, so the
+  rule doesn't apply"
 - **Quote labels whose enforcement depends on exact-match
   matching, with line citations.** When a plan references a label
   whose value is checked or queried by exact-string match (Status
@@ -844,10 +871,12 @@ phase's implementation starts, **after** prior phases have shipped
   honest than committing to a contract neither side has built yet
 - **Anti-pattern: planning artifacts that only cite each other.** If
   the plan, scoping doc, and milestone doc all cite each other for
-  the same technical claim, the claim is unverified. Fluent
+  the same load-bearing claim, the claim is unverified. Fluent
   cross-doc citation is not verification. Each load-bearing claim
   needs at least one citation to actual code, generated test
-  output, or already-merged sibling artifact
+  output, an already-merged sibling artifact, or upstream / vendor
+  documentation for external-service-behavior claims the codebase
+  doesn't contain proof of
 
 ### Scope Guardrails
 
