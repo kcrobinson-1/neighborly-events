@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.get-redemption-status]
 verify_jwt = false
+
+[functions.read-demo-event]
+verify_jwt = false
