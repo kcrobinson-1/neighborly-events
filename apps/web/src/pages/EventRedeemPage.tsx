@@ -16,10 +16,13 @@ import {
   authorizeRedeem,
   type RedeemAuthorizationResult,
 } from "../redeem/authorizeRedeem";
+import { DemoModeRedeemView } from "../redeem/DemoModeRedeemView";
 import { RedeemKeypad } from "../redeem/RedeemKeypad";
 import { RedeemResultCard } from "../redeem/RedeemResultCard";
 import { useRedeemSubmit } from "../redeem/useRedeemSubmit";
 import { useRedeemKeypadState } from "../redeem/useRedeemKeypadState";
+import { DemoModeBanner } from "../demo/DemoModeBanner";
+import { isTestEventSlug } from "../../../../shared/events/testEventAllowlist";
 import { routes, type AuthNextPath } from "../../../../shared/urls";
 
 type EventRedeemPageProps = {
@@ -430,6 +433,18 @@ export function EventRedeemPage({ onNavigate, slug }: EventRedeemPageProps) {
   }
 
   if (sessionState.status === "signed_out") {
+    if (isTestEventSlug(slug)) {
+      return (
+        <RedeemShell
+          onNavigateHome={() => onNavigate(routes.home)}
+          title="Redeem event codes"
+        >
+          <DemoModeBanner slug={slug} surface="redeem" />
+          <DemoModeRedeemView />
+        </RedeemShell>
+      );
+    }
+
     return (
       <RedeemShell
         onNavigateHome={() => onNavigate(routes.home)}
