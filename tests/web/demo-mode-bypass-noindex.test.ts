@@ -10,32 +10,41 @@ import { TEST_EVENT_SLUGS } from "../../shared/events/testEventAllowlist";
  * server (`npm run dev:web:test`), which cannot emit Vercel `headers`
  * — so the platform-emit guarantee is layered as: this test asserts
  * `apps/web/vercel.json` is shape-correct, and the manual `curl -sI`
- * step in the plan's Validation Gate confirms the Vercel platform
+ * step in the M3 plan's Validation Gate confirms the Vercel platform
  * honors the config. Together they form the noindex acceptance gate.
  *
- * Each bypass surface (admin, redeem, redemptions) is covered by a
- * pair of `headers` entries: one for the bare path and one for the
- * `/:path*` variant. The pair mirrors the rewrites in the same
- * config (`/event/:slug/admin` + `/event/:slug/admin/:path*`) so
- * trailing-slash URLs (`/event/foo/admin/`) and any sub-path under
- * the bypass route receive the noindex header. A single bare-path
- * entry would leave the trailing-slash variant uncovered because
- * path-to-regexp matches sources literally.
+ * Per the post-M3 `test-event-noindex-uniformity` decision (Option B),
+ * the apps/web headers config collapses to a single catchall entry
+ * covering every URL under a test-event slug. The catchall is the
+ * load-bearing slug-list hand-mirror surface; one regex constraint
+ * expression (`:slug(harvest-block-party|riverside-jam)`) appearing
+ * in one source, byte-equivalent to `TEST_EVENT_SLUGS`.
  *
  * The test reads `apps/web/vercel.json` as text + JSON and asserts:
- *   - exactly six `headers` entries (bare + `:path*` for each of
- *     the three bypass surfaces),
- *   - each entry emits `X-Robots-Tag: noindex, nofollow` and only
+ *   - exactly one `headers` entry,
+ *   - that entry emits `X-Robots-Tag: noindex, nofollow` and only
  *     that header,
- *   - each entry's `source` starts with `/event/:slug(` and the
- *     `:slug(...)` regex-constraint group is byte-equivalent to
+ *   - the entry's `source` is the catchall shape
+ *     `/event/:slug(...)/:path*`,
+ *   - the `:slug(...)` regex-constraint group is byte-equivalent to
  *     `TEST_EVENT_SLUGS` (after sorting both sides),
- *   - the six entry suffixes form the expected paired set
- *     ({/admin, /admin/:path*, /game/redeem, /game/redeem/:path*,
- *     /game/redemptions, /game/redemptions/:path*}),
- *   - no other entry in `headers` carries `X-Robots-Tag` (no drift
- *     onto the gameplay route, the home page, the auth callback,
- *     or any non-test surface).
+ *   - the catchall covers all the bypass surfaces and the gameplay
+ *     route under a test slug (positive coverage walk against
+ *     concrete test paths).
+ *
+ * Failure modes the test catches:
+ *   - slug additions to `TEST_EVENT_SLUGS` not reflected in the
+ *     vercel.json regex,
+ *   - accidental non-test-event-slug additions to the regex
+ *     constraint,
+ *   - header key/value typos,
+ *   - drift away from the catchall shape (e.g., reverting to a
+ *     surface-enumerated list without explicit re-decision).
+ *
+ * Failure modes outside scope (covered by the manual curl step):
+ *   - the Vercel platform deciding to ignore the config,
+ *   - rewrite-vs-headers precedence regressions on the platform
+ *     side.
  */
 
 type VercelHeaderEntry = {
@@ -51,14 +60,37 @@ type VercelConfig = {
 const VERCEL_JSON_PATH = resolve(__dirname, "../../apps/web/vercel.json");
 const NOINDEX_VALUE = "noindex, nofollow";
 const SLUG_REGEX_GROUP = /:slug\(([^)]+)\)/;
+const EXPECTED_SOURCE_SHAPE = /^\/event\/:slug\([^)]+\)\/:path\*$/;
 
-const EXPECTED_SUFFIXES = [
-  "/admin",
-  "/admin/:path*",
-  "/game/redeem",
-  "/game/redeem/:path*",
-  "/game/redemptions",
-  "/game/redemptions/:path*",
+/**
+ * Concrete test paths that must all be covered by the single catchall.
+ * Spans bypass surfaces (admin, redeem, redemptions), the gameplay
+ * route, trailing-slash variants, and a future-bypass-surface placeholder.
+ * Any drift away from the catchall shape would leave one of these
+ * uncovered; the suffix-shape assertion is the load-bearing falsifier.
+ */
+const PATHS_THAT_MUST_INHERIT_NOINDEX = [
+  "/event/harvest-block-party/admin",
+  "/event/harvest-block-party/admin/",
+  "/event/harvest-block-party/admin/sub-path",
+  "/event/harvest-block-party/game",
+  "/event/harvest-block-party/game/",
+  "/event/harvest-block-party/game/redeem",
+  "/event/harvest-block-party/game/redemptions",
+  "/event/harvest-block-party/future-surface",
+  "/event/riverside-jam/admin",
+  "/event/riverside-jam/game",
+];
+
+/**
+ * Concrete paths the catchall must NOT cover. Real-event slugs and
+ * non-test-event paths stay indexable by virtue of the regex
+ * constraint excluding their slugs.
+ */
+const PATHS_THAT_MUST_NOT_INHERIT_NOINDEX = [
+  "/event/madrona-launch-day/admin",
+  "/event/madrona-launch-day/game",
+  "/event/madrona-launch-day/game/redeem",
 ];
 
 function loadVercelConfig(): VercelConfig {
@@ -66,70 +98,90 @@ function loadVercelConfig(): VercelConfig {
   return JSON.parse(raw) as VercelConfig;
 }
 
-function extractSourceSuffix(source: string): string {
-  const match = source.match(/\/event\/:slug\([^)]+\)(.+)$/);
-  return match ? match[1] : "";
+function getCatchallSlugRegexLiteral(): string | null {
+  const config = loadVercelConfig();
+  if (!config.headers || config.headers.length !== 1) {
+    return null;
+  }
+  const match = config.headers[0].source.match(SLUG_REGEX_GROUP);
+  return match ? match[1] : null;
+}
+
+/**
+ * Synthesizes the runtime regex the Vercel platform compiles for the
+ * catchall source. The vercel.json `source` uses path-to-regexp; for
+ * the assertion-side we emulate the relevant subset:
+ *   - `:slug(...)` is the inline regex-constrained named param,
+ *   - `:path*` is zero-or-more path segments after a separator.
+ *
+ * The synthesis is deliberately conservative: it MUST match what
+ * Vercel matches; it MAY accept slightly more, in which case the
+ * positive-coverage assertions still pass and the negative ones
+ * still fail correctly because the slug regex constraint is the
+ * authoritative gate.
+ */
+function buildCatchallMatcher(): RegExp | null {
+  const slugRegex = getCatchallSlugRegexLiteral();
+  if (slugRegex === null) {
+    return null;
+  }
+  // Mirrors `/event/:slug(<slugRegex>)/:path*` semantics:
+  //   - leading literal `/event/`
+  //   - slug constraint (group 1)
+  //   - optional trailing `/` + zero or more path segments (group 2)
+  return new RegExp(`^/event/(${slugRegex})(?:/.*)?$`);
 }
 
 describe("apps/web/vercel.json demo-mode noindex headers", () => {
-  it("declares exactly six headers entries (bare + :path* per bypass surface)", () => {
+  it("declares exactly one headers entry (single catchall per Option B)", () => {
     const config = loadVercelConfig();
     expect(Array.isArray(config.headers)).toBe(true);
-    expect(config.headers).toHaveLength(EXPECTED_SUFFIXES.length);
+    expect(config.headers).toHaveLength(1);
   });
 
-  it("each entry emits X-Robots-Tag: noindex, nofollow as its only header", () => {
+  it("emits X-Robots-Tag: noindex, nofollow as the entry's only header", () => {
     const config = loadVercelConfig();
-    for (const entry of config.headers ?? []) {
-      expect(entry.headers).toHaveLength(1);
-      expect(entry.headers[0]).toEqual({
-        key: "X-Robots-Tag",
-        value: NOINDEX_VALUE,
-      });
+    const entry = (config.headers ?? [])[0];
+    expect(entry.headers).toHaveLength(1);
+    expect(entry.headers[0]).toEqual({
+      key: "X-Robots-Tag",
+      value: NOINDEX_VALUE,
+    });
+  });
+
+  it("uses the catchall source shape /event/:slug(...)/:path*", () => {
+    const config = loadVercelConfig();
+    const entry = (config.headers ?? [])[0];
+    expect(entry.source).toMatch(EXPECTED_SOURCE_SHAPE);
+  });
+
+  it("the :slug(...) regex constraint is byte-equivalent to TEST_EVENT_SLUGS", () => {
+    const captured = getCatchallSlugRegexLiteral();
+    expect(captured, "catchall source must contain :slug(...)").not.toBeNull();
+    const sortedActual = (captured as string).split("|").sort().join("|");
+    const sortedExpected = [...TEST_EVENT_SLUGS].sort().join("|");
+    expect(sortedActual).toBe(sortedExpected);
+  });
+
+  it("matches every test-event apps/web URL that must inherit noindex", () => {
+    const matcher = buildCatchallMatcher();
+    expect(matcher).not.toBeNull();
+    for (const path of PATHS_THAT_MUST_INHERIT_NOINDEX) {
+      expect(
+        (matcher as RegExp).test(path),
+        `catchall must cover ${path}`,
+      ).toBe(true);
     }
   });
 
-  it("each entry's source starts with /event/:slug(", () => {
-    const config = loadVercelConfig();
-    for (const entry of config.headers ?? []) {
-      expect(entry.source.startsWith("/event/:slug(")).toBe(true);
-    }
-  });
-
-  it("covers the bare + :path* pair for each of the three bypass surfaces", () => {
-    const config = loadVercelConfig();
-    const suffixes = (config.headers ?? [])
-      .map((entry) => extractSourceSuffix(entry.source))
-      .sort();
-    expect(suffixes).toEqual([...EXPECTED_SUFFIXES].sort());
-  });
-
-  it("each :slug(...) regex constraint is byte-equivalent to TEST_EVENT_SLUGS", () => {
-    const config = loadVercelConfig();
-    const expected = [...TEST_EVENT_SLUGS].sort().join("|");
-    for (const entry of config.headers ?? []) {
-      const match = entry.source.match(SLUG_REGEX_GROUP);
-      expect(match, `entry source "${entry.source}" should contain :slug(...)`)
-        .not.toBeNull();
-      const captured = (match as RegExpMatchArray)[1];
-      const sorted = captured.split("|").sort().join("|");
-      expect(sorted).toBe(expected);
-    }
-  });
-
-  it("does not attach X-Robots-Tag to any other surface", () => {
-    const config = loadVercelConfig();
-    const sourcesWithNoindex = (config.headers ?? [])
-      .filter((entry) =>
-        entry.headers.some((header) => header.key === "X-Robots-Tag")
-      )
-      .map((entry) => entry.source);
-    for (const source of sourcesWithNoindex) {
-      expect(source.startsWith("/event/:slug(")).toBe(true);
-      // Negative: no entry should target the bare gameplay route.
-      // /game alone (without /redeem or /redemptions) must not match.
-      expect(source).not.toMatch(/\/event\/:slug\([^)]+\)\/game$/);
-      expect(source).not.toMatch(/\/event\/:slug\([^)]+\)\/game\/:path\*$/);
+  it("does not match non-test-event URLs (real-event slugs stay indexable)", () => {
+    const matcher = buildCatchallMatcher();
+    expect(matcher).not.toBeNull();
+    for (const path of PATHS_THAT_MUST_NOT_INHERIT_NOINDEX) {
+      expect(
+        (matcher as RegExp).test(path),
+        `catchall must NOT cover ${path}`,
+      ).toBe(false);
     }
   });
 });
