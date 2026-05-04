@@ -502,7 +502,7 @@ that map. No phase-level additions.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   predecessor epic. "Deferred ThemeScope wiring" invariant
   partial-closure footnoted in this PR.
-- [`m3-phase-3-3-plan.md`](/docs/plans/m3-phase-3-3-plan.md) —
+- [`m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md) —
   cross-app verification precedent.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   M2 phase 2.2 admin-wrap precedent (single-PR shape, source

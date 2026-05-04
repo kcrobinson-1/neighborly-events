@@ -927,7 +927,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
 - [`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md) — Landed sibling;
   apps/site adapter pair, `(authenticated)` route group, and
   `<SharedClientBootstrap>` precedent this sub-phase extends.
-- [`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md) —
+- [`shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md) —
   M1 phase 1.4 plan; binding-module pattern for the
   `apps/web/src/admin/draftCreation.ts` shim.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —

@@ -61,4 +61,4 @@ any call site reads.
 
 ## Plan reference
 
-[`docs/plans/shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md).
+[`docs/plans/archive/m1/shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md).

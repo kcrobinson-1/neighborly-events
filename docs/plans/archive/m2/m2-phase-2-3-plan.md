@@ -747,7 +747,7 @@ epic-level invariants apply:
    fed this plan, `docs/plans/scoping/m2-phase-2-3.md`, was deleted
    in M2 phase 2.5.3 batch deletion — see git history if needed),
    and the M1 phase 1.3.2 cookie-boundary verification record in
-   [`docs/plans/shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
+   [`docs/plans/archive/m1/shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md)
    so the post-deploy verification step has a precedent to follow.
 2. **Baseline validation.** Run `npm run lint`, `npm test`,
    `npm run test:functions`, `npm run build:web`, and
@@ -1347,7 +1347,7 @@ resolution path so reviewer attention does not relitigate them.
 - **apps/site Vercel project primary-domain promotion.** Resolved
   in [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Cross-Phase Decisions / Settled by default": defer post-epic
-  per [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+  per [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   "Primary-project ownership flip." M2 stays on apps/web-primary
   proxy-rewrite.
 - **New Tier 5 production smoke fixture.** No new fixture lands
@@ -1588,10 +1588,10 @@ resolution path so reviewer attention does not relitigate them.
   [`m2-phase-2-1-2-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-2-plan.md) — Landed
   M2 phase 2.1 set; precedent for the plan-doc structure this
   plan inherits.
-- [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) —
+- [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md) —
   M1 phase 1.3 plan; cookie-boundary verification record from
   1.3.2 is the precedent for Execution step 18.
-- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+- [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   — M0 phase 0.3 plan; original Vercel two-project topology
   decision and the deferred apps/site primary-domain promotion.
 - [`docs/testing-tiers.md`](/docs/testing-tiers.md) — Tier 5

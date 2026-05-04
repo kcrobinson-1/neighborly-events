@@ -12,7 +12,7 @@
 
 Phase 2 is now unblocked; its detail plan's Rollout Sequence step 1
 prerequisite check against `main` will pass.
-**Parent overview:** [`auth-signin-generalization-plan.md`](/docs/plans/auth-signin-generalization-plan.md)
+**Parent overview:** [`auth-signin-generalization-plan.md`](/docs/plans/archive/auth-signin-generalization-plan.md)
 **Successor:** [`auth-signin-generalization-phase-2-plan.md`](/docs/plans/archive/auth-signin-generalization-phase-2-plan.md)
 lands the session hook, sign-in form, callback route, and admin-shell
 migration against the Phase 1 foundation.
@@ -482,7 +482,7 @@ first.
 ## Resolved Decisions
 
 All decisions in this plan are inherited from the
-[overview plan](/docs/plans/auth-signin-generalization-plan.md) § Resolved
+[overview plan](/docs/plans/archive/auth-signin-generalization-plan.md) § Resolved
 Decisions and applied at the Phase 1 granularity:
 
 - Helper signatures and error copy are role-neutral.

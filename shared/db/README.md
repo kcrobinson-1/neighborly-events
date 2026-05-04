@@ -31,4 +31,4 @@ and
 
 ## Plan reference
 
-[`docs/plans/shared-db-foundation.md`](/docs/plans/shared-db-foundation.md).
+[`docs/plans/archive/m1/shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md).

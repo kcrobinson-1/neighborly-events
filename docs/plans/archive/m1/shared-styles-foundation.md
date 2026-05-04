@@ -7,10 +7,10 @@ Landed.
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.5. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases:
-[`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) (1.1, Landed),
-[`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) (1.2, Landed),
-[`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) (1.3, Landed),
-[`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md) (1.4, Landed).
+[`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) (1.1, Landed),
+[`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md) (1.2, Landed),
+[`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md) (1.3, Landed),
+[`shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md) (1.4, Landed).
 
 This plan flips to `Landed` after both subphases below land. Each subphase
 is its own PR; each subphase's status row inside this plan flips when its
@@ -28,7 +28,7 @@ those surfaces with different attention; bundling them dilutes both.
 
 This plan inherits the **production cookie-boundary verification gate**
 named in the epic's M1 validation section. That gate was already
-satisfied in [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
+satisfied in [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md)
 subphase 1.3.2 against the real frontend-origin auth cookie; nothing in
 phase 1.5 touches authentication, so the gate is asserted-still-satisfied
 rather than re-run. Subphase 1.5.2's PR cites the existing 1.3.2 evidence
@@ -481,7 +481,7 @@ section that this phase touches must reflect the implemented state by the
   self-review audits per surface
 - [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic
-- [`docs/plans/framework-decision.md`](/docs/plans/framework-decision.md) —
+- [`docs/plans/archive/m0/framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) —
   Next.js 16 App Router decision; describes `shared/styles/` as
   universal (the `<ThemeScope>` component matches that spec)
 - [`shared/auth/README.md`](/shared/auth/README.md),

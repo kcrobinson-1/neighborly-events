@@ -587,7 +587,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   and its post-deploy verification passes.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone; Phase Status row updates as each sub-phase ships.
-- [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) —
+- [`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md) —
   M1 phase 1.2 plan; the deferral this sub-phase resolves.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source.

@@ -59,7 +59,7 @@ hardening work should be tracked via [`backlog.md`](/docs/backlog.md).
 
 ## Event Platform Epic — Phase 0.3 Verification
 
-Surfaced by [`framework-decision.md`](/docs/plans/framework-decision.md) (Event
+Surfaced by [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) (Event
 Platform Epic, M0 phase 0.2). Each item is a hypothesis from the
 documentation that M0 phase 0.3 must verify on the production domain
 before subsequent milestones depend on it.
@@ -94,7 +94,7 @@ Next.js auto-detects `facebookexternalhit` and similar HTML-limited bots
 and serves them full `<head>` metadata at the cost of TTFB. The
 behavioral envelope (which bots, which fields) is not exhaustively
 documented. M3 phase 3.1 validates against at least one real unfurl
-client (per [m3-site-rendering.md](/docs/plans/m3-site-rendering.md);
+client (per [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md);
 the original 4-phase epic estimate placed unfurl validation in a
 since-superseded phase 3.4).
 

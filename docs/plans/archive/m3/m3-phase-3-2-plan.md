@@ -17,7 +17,7 @@ authoritative).
 
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M3, Phase 3.2.
-**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md).
+**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phases:** 3.1 (rendering pipeline + first test event +
 SSR meta, split into 3.1.1 + 3.1.2) — Landed; 3.3 (cross-app
 navigation verification + M3 closure) — Proposed.
@@ -412,7 +412,7 @@ invariants apply:
   `:root` defaults until M4 phase 4.1 wires apps/web event-route
   ThemeScope. The M3 milestone doc names this asymmetry and
   permits it for noindex'd test events
-  ([m3-site-rendering.md lines 357-370](/docs/plans/m3-site-rendering.md)).
+  ([m3-site-rendering.md lines 357-370](/docs/plans/archive/m3/m3-site-rendering.md)).
   3.2 inherits the deferral; no apps/web change is in scope.
 
 ## Files to touch — new
@@ -455,7 +455,7 @@ invariants apply:
   — add the per-slug case for `riverside-jam` and update the
   `registeredEventSlugs.sort()` tripwire expectation per the
   contract.
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   — Phase Status table's 3.2 row: `Plan` column gets the link to
   this plan; `Status` column flips from `Proposed` to `Landed`;
   `PR` column gets the 3.2 PR number.
@@ -536,11 +536,11 @@ invariants apply:
   [`docs/open-questions.md`](/docs/open-questions.md),
   [`docs/backlog.md`](/docs/backlog.md) — no change. All owned by
   M3 phase 3.3 per
-  [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)'s
+  [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)'s
   "Documentation Currency" section.
-- [`docs/plans/m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md)
+- [`docs/plans/archive/m3/m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md)
   and
-  [`docs/plans/m3-phase-3-1-2-plan.md`](/docs/plans/m3-phase-3-1-2-plan.md)
+  [`docs/plans/archive/m3/m3-phase-3-1-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-2-plan.md)
   — no edit. Both already `Landed`; 3.2 does not retroactively
   edit sibling plans.
 - [`docs/plans/scoping/m3-phase-3-2.md`](/docs/plans/scoping/m3-phase-3-2.md)
@@ -559,7 +559,7 @@ invariants apply:
    as ancestor of this branch's base — already verified by the
    M3 milestone doc's Phase Status table). Read this plan, then
    the M3 milestone doc
-   ([`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)),
+   ([`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)),
    the scoping doc
    ([`docs/plans/scoping/m3-phase-3-2.md`](/docs/plans/scoping/m3-phase-3-2.md)),
    the 3.1.1 and 3.1.2 plans (for the rendering and image-pipeline
@@ -672,7 +672,7 @@ invariants apply:
 11. **Documentation update.** Walk
     [`AGENTS.md`](/AGENTS.md) "Doc Currency Is a PR Gate"
     triggers:
-    - [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+    - [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
       — flip the 3.2 Phase Status row's `Status` column from
       `Proposed` to `Landed`; populate the `Plan` column with the
       link to this plan; populate the `PR` column with the 3.2
@@ -698,9 +698,9 @@ invariants apply:
       and
       [`docs/plans/scoping/m3-phase-3-1-2.md`](/docs/plans/scoping/m3-phase-3-1-2.md)
       — no edit. Same batch-deletion in 3.3.
-    - [`docs/plans/m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md)
+    - [`docs/plans/archive/m3/m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md)
       and
-      [`docs/plans/m3-phase-3-1-2-plan.md`](/docs/plans/m3-phase-3-1-2-plan.md)
+      [`docs/plans/archive/m3/m3-phase-3-1-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-2-plan.md)
       — no edit.
 12. **Automated code-review feedback loop.** Walk the diff from a
     senior-reviewer stance against the Cross-Cutting Invariants
@@ -763,7 +763,7 @@ with the registry edit that trips it" rule is the binding shape.
    the per-event meta tags, the disclaimer banner, and the
    `noindex` robots meta.
 4. **Documentation update.** Files: this plan (Status flip),
-   [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+   [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
    (Phase Status row update). Single commit.
 5. **Review-fix commits.** As needed during step 12 of execution,
    kept distinct from the substantive implementation commits per
@@ -898,7 +898,7 @@ matched to this phase's diff surfaces.
 Per [`AGENTS.md`](/AGENTS.md) "Doc Currency Is a PR Gate," the
 relevant doc updates this branch must carry:
 
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   Phase Status table — Phase 3.2 row's `Status` column flips
   from `Proposed` to `Landed`; `Plan` column gets the link to
   this plan; `PR` column gets the 3.2 PR number.
@@ -917,9 +917,9 @@ relevant doc updates this branch must carry:
 - [`docs/backlog.md`](/docs/backlog.md) — no change.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   M3 row — stays `Proposed`. Flips to `Landed` only in 3.3's PR.
-- [`docs/plans/m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md)
+- [`docs/plans/archive/m3/m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md)
   and
-  [`docs/plans/m3-phase-3-1-2-plan.md`](/docs/plans/m3-phase-3-1-2-plan.md)
+  [`docs/plans/archive/m3/m3-phase-3-1-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-2-plan.md)
   — no edit. Both already `Landed`; 3.2 does not retroactively
   edit sibling plans.
 - [`docs/plans/scoping/m3-phase-3-2.md`](/docs/plans/scoping/m3-phase-3-2.md)
@@ -1135,14 +1135,14 @@ the milestone closes.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic; M3 phase paragraphs are pre-milestone-planning
   estimate per the milestone doc.
-- [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md) —
+- [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —
   M3 milestone doc; cross-phase invariants, decisions, risks.
   3.2's PR flips the Phase Status table's 3.2 row to `Landed`.
-- [`m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md) —
+- [`m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md) —
   3.1.1 plan (rendering pipeline + first test event + basic SSR
   meta). 3.2 inherits the rendering contracts and the
   `EventContent` shape unchanged.
-- [`m3-phase-3-1-2-plan.md`](/docs/plans/m3-phase-3-1-2-plan.md) —
+- [`m3-phase-3-1-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-2-plan.md) —
   3.1.2 plan (per-event OG image, twitter-image, `metadataBase`,
   `openGraph.url`, unfurl verification). 3.2 inherits the
   image pipeline and unfurl-validation procedure unchanged.
@@ -1157,7 +1157,7 @@ the milestone closes.
   3.1's scoping docs; record the slug + theme conventions and the
   image-pipeline decisions 3.2 inherits. Same batch-deletion in
   3.3.
-- [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
+- [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
   — M1 phase 1.5 plan; ThemeScope contract and `getThemeForSlug`
   resolver. The procedure for adding a new theme rooted there.
 - [`docs/styling.md`](/docs/styling.md) — themable / structural

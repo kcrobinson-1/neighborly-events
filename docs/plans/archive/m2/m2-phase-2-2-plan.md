@@ -552,7 +552,7 @@ following epic-level invariants apply:
    the M1 phase 1.5.2 plan (the per-phase scoping doc that fed
    this plan, `docs/plans/scoping/m2-phase-2-2.md`, was deleted in
    M2 phase 2.5.3 batch deletion — see git history if needed)
-   ([`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md))
+   ([`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md))
    for the ThemeScope wrapping conventions before editing.
 2. **Baseline validation.** Run `npm run lint`,
    `npm run build:web`, `npm run build:site`, `npm test`,
@@ -1055,7 +1055,7 @@ resolution path so reviewer attention does not relitigate them.
   git history for the pre-deletion content).
 - [`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md) — sibling phase
   whose RLS broadening + Edge Function gate this phase consumes.
-- [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md) —
+- [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md) —
   M1 phase 1.5 plan; ThemeScope component contract and the
   centralization-in-`App.tsx` invariant 2.2 inherits.
 - [`docs/styling.md`](/docs/styling.md) — themable-vs-structural token

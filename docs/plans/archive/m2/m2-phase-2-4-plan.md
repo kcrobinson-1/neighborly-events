@@ -332,7 +332,7 @@ relitigate them.
 - **apps/site Vercel project primary-domain promotion.** Resolved
   in [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   "Settled by default": defer post-epic per
-  [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+  [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   "Primary-project ownership flip." M2 stays on apps/web-primary
   proxy-rewrite.
 - **`generate-event-code` payload contract.** Already shipped by

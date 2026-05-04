@@ -147,7 +147,7 @@ Implemented as the `report-ci-failure` job in
 isolates that step's log via the tab-delimited `gh run view --log-failed`
 prefix, tails 200 lines, and posts the result as a PR comment. The
 implementation contract and design rationale live in
-[`docs/plans/surface-ci-failure-logs.md`](/docs/plans/surface-ci-failure-logs.md).
+[`docs/plans/archive/surface-ci-failure-logs.md`](/docs/plans/archive/surface-ci-failure-logs.md).
 Resolved open questions:
 
 - Comment-per-failure (not edit-in-place). Every failure produces a new

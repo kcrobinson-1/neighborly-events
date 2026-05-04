@@ -788,7 +788,7 @@ and event-scoped non-game/admin URLs to `apps/site`.
 The transitional routing contract is documented in
 [`docs/architecture.md`](/docs/architecture.md#vercel-routing-topology) and
 the implementing plan is
-[`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md).
+[`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md).
 
 In short, the rule precedence inside `apps/web/vercel.json` is:
 
@@ -876,7 +876,7 @@ phase 1.3.2** when implementation surfaced a planning-time bug: the
 (`*.supabase.co`), not on the apps/web frontend domain, so it is
 never readable by Next.js `cookies()` in apps/site routes regardless
 of the rewrite topology. See
-[`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+[`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
 "Verification Evidence" for the full analysis.
 
 M1 phase 1.3.2 introduced `@supabase/ssr`'s frontend-origin cookie

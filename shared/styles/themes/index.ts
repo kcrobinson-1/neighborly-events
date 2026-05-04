@@ -8,7 +8,7 @@ import { riversideJamTheme } from "./riverside-jam.ts";
  * (`harvest-block-party`) alongside the rendering pipeline; M3
  * phase 3.2 adds the second test event theme to prove multi-theme
  * rendering; M4 phase 4.1 adds Madrona at `madrona`. See
- * [m3-site-rendering.md](../../../docs/plans/m3-site-rendering.md)
+ * [m3-site-rendering.md](../../../docs/plans/archive/m3/m3-site-rendering.md)
  * for the M3 phase shape. Slug → Theme. Any slug not present here
  * resolves to the platform Theme via `getThemeForSlug`.
  *

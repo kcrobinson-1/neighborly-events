@@ -7,8 +7,8 @@ Landed.
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M1, Phase 1.3. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases:
-[`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) (1.1, Landed),
-[`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) (1.2,
+[`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) (1.1, Landed),
+[`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md) (1.2,
 Landed), 1.4 `shared/events/`, 1.5 `shared/styles/` — each owns its
 own plan.
 
@@ -28,7 +28,7 @@ with different attention; bundling them dilutes both.
 
 This plan inherits the **production cookie-boundary verification gate**
 originally scoped to M0 phase 0.3. See
-[`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+[`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
 "Verification Evidence" for why that gate was deferred. The gate is
 the readiness criterion for subphase 1.3.2 only; subphase 1.3.1 has no
 production-verification dependency.
@@ -105,7 +105,7 @@ not only the file that first triggered the rule.
   Plan-to-Landed per
   [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
   Gate For Plans That Touch Production Smoke." Same pattern
-  [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+  [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   used.
 
 ## Decisions Resolved In This Plan
@@ -128,7 +128,7 @@ recorded here so reviewer attention does not relitigate them.
   to `neighborly_*` was considered for naming-family consistency
   with the existing `neighborly_session` cookie and
   `x-neighborly-session` header (preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md)). Rejected: the default is
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md)). Rejected: the default is
   a stable Supabase contract that `@supabase/ssr`'s
   `createServerClient` (used in M2 phase 2.3 and 2.4) reads by
   default, so overriding the name would force apps/site to know
@@ -445,7 +445,7 @@ decision belongs to phase 1.4's plan, not this one.
 - Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*` storage
   keys, `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md).
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md).
 
 ### Execution steps
 
@@ -788,7 +788,7 @@ None.
   env reading unchanged. The factory it calls now uses
   `@supabase/ssr` internally, but the adapter doesn't see the
   difference.
-- [`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md) —
+- [`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md) —
   the M0 phase 0.3 plan stays as historical record. Its
   Verification Evidence subsection documents why the original
   `neighborly_session` gate was unworkable; that record is
@@ -803,7 +803,7 @@ None.
 - Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*` storage
   keys, `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md).
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md).
 
 ### Execution steps
 
@@ -1064,7 +1064,7 @@ implemented state by the time each subphase's PR opens:
   inheritance from M0 phase 0.3 once the gate is satisfied).
   M1 row stays `Proposed` throughout (phases 1.4 and 1.5
   remain).
-- [`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md) —
+- [`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md) —
   not touched in 1.3.x. The M0 phase 0.3 deferral language
   is historical record.
 - [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.3
@@ -1152,7 +1152,7 @@ Captured here so reviewer attention does not relitigate them.
 - **Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*`
   storage keys, `@neighborly/web` workspace scope).**
-  Preserved per [`repo-rename.md`](/docs/plans/repo-rename.md).
+  Preserved per [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md).
 
 ## Risk Register
 
@@ -1266,19 +1266,19 @@ relationship lives in the parent epic, not this plan.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic; M1 milestone owns the foundation extraction;
   sibling phases 1.1, 1.2, 1.4, 1.5 own their own plans
-- [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) —
+- [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) —
   sibling phase 1.1 plan; precedent for module layout, README
   ownership note, per-app adapter pattern, two-subphase
   structure with different risk profiles
-- [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) —
+- [`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md) —
   sibling phase 1.2 plan; precedent for `tests/shared/`
   migration and Vitest include-glob expansion
-- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md) —
+- [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md) —
   sibling phase 0.3 plan; cookie-boundary verification gate
   inherited from there; "Verification Evidence" subsection
   documents why the M0 attempt was unworkable and why the
   gate folded into M1 phase 1.3.2
-- [`repo-rename.md`](/docs/plans/repo-rename.md) —
+- [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) —
   runtime-identifier preservation rules govern which cookie
   and storage names this plan may not change
 - [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR

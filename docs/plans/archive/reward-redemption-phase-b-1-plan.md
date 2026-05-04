@@ -4,7 +4,7 @@
 **Parent overview:** [`reward-redemption-phase-b-plan.md`](/docs/plans/archive/reward-redemption-phase-b-plan.md)
 **Parent design:** [`reward-redemption-mvp-design.md`](/docs/plans/reward-redemption-mvp-design.md)
 **Predecessors (all landed):**
-[`auth-signin-generalization-plan.md`](/docs/plans/auth-signin-generalization-plan.md),
+[`auth-signin-generalization-plan.md`](/docs/plans/archive/auth-signin-generalization-plan.md),
 [`reward-redemption-phase-a-2b-plan.md`](/docs/plans/archive/reward-redemption-phase-a-2b-plan.md),
 [`event-code-prerequisite-plan.md`](/docs/plans/archive/event-code-prerequisite-plan.md).
 **Scope:** Phase B.1 only — the `/event/:slug/redeem` mobile operator

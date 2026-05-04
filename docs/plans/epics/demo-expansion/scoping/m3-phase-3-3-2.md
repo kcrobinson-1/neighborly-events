@@ -456,7 +456,7 @@ matching `/event/<test-slug>/{admin,game/redeem,game/redemptions}`
   visible in the initial HTML response — apps/web client-side
   injection is *strictly weaker* than apps/site's mechanism.
   Con: the milestone doc invariant inherited from
-  [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+  [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   binds noindex on test events; if apps/web's mechanism is
   weaker than apps/site's, the invariant says "test events
   are noindex" but the surfaces *aren't*, which is the
@@ -580,7 +580,7 @@ array);
 (the apps/site `generateMetadata` server-emit precedent —
 specifically the `robots: content.testEvent ? { index: false, follow: false } : undefined`
 pattern at parity strength);
-[`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+[`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
 (the inherited test-event noindex invariant);
 [`m3-demo-mode-auth-bypass.md` Cross-Phase Decisions → "noindex emit shape on apps/web bypass-rendered routes"](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
 (the strength-of-guarantee framing this decision resolves);
