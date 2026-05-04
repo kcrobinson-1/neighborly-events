@@ -44,6 +44,13 @@ This repository currently includes:
   detail sheet) with in-sheet reversal through the trusted reverse
   redemption Edge Function, still intentionally undiscoverable in app
   navigation
+- a read-only demo-mode bypass on the auth-gated event surfaces
+  (`/event/:slug/admin`, `/event/:slug/game/redeem`,
+  `/event/:slug/game/redemptions`) for the two test-event slugs
+  (`harvest-block-party`, `riverside-jam`), reaching internal-partner
+  demos without sign-in; mutations stay rejected server-side and the
+  apps/web edge emits `X-Robots-Tag: noindex, nofollow` on the
+  bypass-eligible URL paths
 - attendee completion-screen polling against the trusted
   `get-redemption-status` endpoint, so the volunteer redeem action is
   reflected back on the attendee screen within a few seconds while the

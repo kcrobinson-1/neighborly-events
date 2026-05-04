@@ -57,7 +57,19 @@ Keep the game interaction local and fast, but make the completion state backend-
 
 - `apps/web`
   The attendee-facing Vite + React single-page application. Owns the
-  `/event/:slug/game` and `/event/:slug/admin` namespaces.
+  `/event/:slug/game` and `/event/:slug/admin` namespaces. The three
+  auth-gated event surfaces (`/event/:slug/admin`,
+  `/event/:slug/game/redeem`, `/event/:slug/game/redemptions`) reach
+  a read-only demo-mode bypass when the slug is in the
+  `TEST_EVENT_SLUGS` allowlist at
+  [`shared/events/testEventAllowlist.ts`](/shared/events/testEventAllowlist.ts);
+  the bypass renders read shims via the `read-demo-event` Edge
+  Function and surfaces an inline read-only callout at the
+  affordance position. The apps/web edge emits
+  `X-Robots-Tag: noindex, nofollow` on the six bypass-eligible URL
+  paths via [`apps/web/vercel.json`](/apps/web/vercel.json) `headers`,
+  parallel to the apps/site `generateMetadata` `robots` emit on
+  test-event landings.
 - `apps/site`
   The Next.js 16 App Router app for the internal-partner demo home
   page, auth callback, platform admin, and public event landing
@@ -243,7 +255,16 @@ grouped into a dedicated `apps/web/src/game/` module:
 - `apps/site/components/event/`
   Section components composed by `EventLandingPage` (header,
   schedule, lineup, sponsors, FAQ, CTA, footer, plus
-  `TestEventDisclaimer` for noindex'd test events).
+  `TestEventDisclaimer` for noindex'd test events). Test-event
+  landings emit `<meta name="robots">` server-side via
+  `generateMetadata` at
+  [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)
+  (`robots: { index: false, follow: false }`); the parallel
+  apps/web edge mechanism (`X-Robots-Tag: noindex, nofollow` via
+  `apps/web/vercel.json` `headers`) covers the three demo-mode
+  bypass-rendered surfaces (`/event/:slug/admin`,
+  `/event/:slug/game/redeem`, `/event/:slug/game/redemptions`) on
+  the same test-event slugs at parity strength.
 - `apps/site/events/`
   Directory of record for per-event TypeScript content modules;
   one `<slug>.ts` file per registered event.
@@ -866,6 +887,25 @@ The current implementation uses:
   `public.event_role_assignments` for the given event id. Consumed by
   `authenticateEventOrganizerOrAdmin` and by the broadened RLS policies
   installed in M2 phase 2.1.1.
+- `read-demo-event`
+  Public-by-design Edge Function (`verify_jwt = false`) that backs
+  the apps/web demo-mode bypass. Gates on
+  [`shared/events/testEventAllowlist.ts`](/shared/events/testEventAllowlist.ts)
+  `isTestEventSlug` so only the two test-event slugs pass through;
+  returns a strictly narrower payload than the authenticated
+  surfaces (no operator identifiers, no free-text notes) for the
+  `admin` and `redemptions` surfaces.
+- `evaluateDemoModeRejection` at
+  [`supabase/functions/_shared/demo-mode-rejection.ts`](/supabase/functions/_shared/demo-mode-rejection.ts)
+  Centralizes the write-side rejection on the five mutation Edge
+  Functions (save-draft, publish-draft, unpublish-event,
+  generate-event-code, reverse-entitlement-redemption); short-
+  circuits any test-event-slug request with a structured 403
+  `{ error: "demo_mode_read_only" }` body before the write reaches
+  the database. Together with the `TEST_EVENT_SLUGS` allowlist it is
+  the load-bearing security mechanism that keeps the bypass read-
+  only on the server side; the apps/web `X-Robots-Tag` headers
+  cover the surface-discoverability layer in parallel.
 
 There is still no custom general-purpose application API beyond those bounded
 surfaces, and that is intentional. The system exposes only the reads and

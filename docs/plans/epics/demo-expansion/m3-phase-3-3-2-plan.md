@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 The promotion-gate self-review walked the plan + scoping doc
 end-to-end on 2026-05-03 and resolved each plan-drafting

@@ -158,6 +158,23 @@ prioritization before starting.
   proof, aggregate event totals, or question-level reporting.
   Detail: [`docs/open-questions.md` — Reporting And Sponsor Measurement](/docs/open-questions.md)
 
+- [ ] **`decision` Demo-mode generalization beyond the test-event allowlist**
+  M3 shipped a read-only demo-mode bypass scoped to the two
+  `TEST_EVENT_SLUGS` (`harvest-block-party`, `riverside-jam`). The
+  generalization question — how (and whether) demo-mode access
+  extends past the hand-curated allowlist to a wider set of events
+  or to a per-organizer opt-in — is deferred until partner feedback
+  exposes a concrete need.
+  Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+
+- [ ] **`decision` Production-friendly demo-mode for partner-onboarding scenarios**
+  Today's M3 bypass is internal-partner-shaped (read-only, two test
+  slugs, `noindex`). A production-friendly variant — partner-shareable
+  demo state, real-feeling write affordances against scratch tables,
+  and a reset story — is a separate scoping pass once partner
+  feedback shapes the requirements.
+  Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+
 ---
 
 ## Tier 5 — Code Health And Tooling
