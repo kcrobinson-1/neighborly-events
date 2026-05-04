@@ -2,7 +2,19 @@
 
 ## Status
 
-In progress pending prod smoke.
+Landed.
+
+Post-release `Production Deployed-Surface Smoke` run on the hot-fix
+merge SHA `533a326` passed both phases (admin + redemption operator):
+[run 25345598914](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25345598914).
+The original PR #177 merge SHA `6b449f6` smoke run
+([25344866968](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25344866968))
+caught a fabricated `redemption_reversal_reason` column in
+`assertReversalPersisted`; PR #178 corrected it to the actual
+`redemption_note` column per
+[`supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql`](/supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql).
+The Plan-to-Landed gate's "next successful auto-run on the hot-fix
+merge SHA is the Tier 5 evidence" path closed cleanly.
 
 This is a Tier 1 follow-up from the 2026-05-04 release-readiness
 pass; G3 was recorded **not met** because the deployed-surface
