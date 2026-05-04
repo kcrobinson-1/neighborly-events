@@ -18,13 +18,17 @@ plan to history.
 | M1 — Foundation extraction | Landed |
 | M2 — Admin restructuring and authorization broadening | Landed |
 | M3 — Site rendering infrastructure with test events | Landed |
-| M4 — Madrona launch | Moved to [`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md) |
+| M4 — Madrona launch | Deferred 2026-05-01 to a sibling epic; superseded 2026-05-04 by [`epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md) (demo-build phase) with launch readiness reassigned to a future Madrona-launch sibling |
 
 M0–M3 landed as recorded above; M4 (Madrona launch) was deferred
-2026-05-01 and moved to its own sibling epic at
-[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md).
-The demo-expansion epic intervenes between this epic and Madrona's
-relaunch (see
+2026-05-01 to a sibling epic stub, which was superseded 2026-05-04 by
+[`epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md)
+(demo-build phase: Theme registration, content authoring, end-to-end
+attendee journey through a stakeholder-shareable demo URL); launch
+readiness (volunteer training, QR posters, production smoke run, real
+attendee operations) is reassigned to a future Madrona-launch sibling
+epic. The demo-expansion epic intervenes between this epic and
+Madrona's demo-build (see
 [`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md)).
 The top-level Status above is flipped to `Landed` in this PR; closure
 does not depend on M4. Reframing of Goal, Why This Epic, Backlog
@@ -33,14 +37,15 @@ Madrona" is intentionally out of scope for this change; those sections
 remain as historical record of the original plan. M4-specific content
 (the original phase 4.1/4.2/4.3 paragraphs, validation gate,
 documentation list, self-review audits, and the "Madrona content
-authoring time" risk) carried forward into
-[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md)
-under its "Pre-Milestone-Planning Historical Estimate" section so the
-Madrona-launch epic is self-contained; the M4 section below now holds
-only a pointer. Per AGENTS.md "Epic Drafting," that carried-forward
-content is pre-milestone-planning estimate; the Madrona-launch epic's
-milestone planning session re-derives phase shape against
-actually-merged code.
+authoring time" risk) was carried forward at the time of deferral into
+the predecessor `epics/madrona-launch/` stub's "Pre-Milestone-Planning
+Historical Estimate" section; that stub has since been deleted as part
+of the supersession, and the historical paragraphs now live in git
+history rather than in an active epic doc. The M4 section below now
+holds only a pointer. Per AGENTS.md "Epic Drafting," the historical
+paragraphs are pre-milestone-planning estimate; the demo-build epic
+re-derives milestone shape against actually-merged code at each
+milestone planning session.
 
 ## Purpose
 
@@ -179,13 +184,12 @@ the apps/web wrapping infrastructure now ships and resolves
 per-event Themes for the test events (`harvest-block-party`,
 `riverside-jam`). The invariant remains open for non-test-event
 slugs (Madrona) until the
-[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
 registers a non-test-event Theme — at which point the wrapping
 that demo-expansion M1 ships picks up the new Theme
-automatically. The Madrona-launch epic's phase 4.1 (carried
-forward from this epic's original M4 phase 4.1) trims its scope
-accordingly: only Madrona's `Theme` registration remains; the
-wrapping is no longer phase 4.1's deliverable.
+automatically. The demo-build epic's M1 trims the original M4
+phase 4.1 scope accordingly: only Madrona's `Theme` registration
+remains; the wrapping is no longer M1's deliverable.
 
 **Trust boundary.** Every backend write reachable from a public or
 origin-gated endpoint enforces authorization at the database layer (RLS or
@@ -814,17 +818,23 @@ by `apps/site` page rendering or meta-tag handling are pinned).
 
 ### M4 — Madrona Launch
 
-**Status.** Deferred 2026-05-01 and moved to its own sibling epic at
-[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md).
-The phase paragraphs that originally lived here (Goal, Phase 4.1
-Madrona theme palette definition, Phase 4.2 Madrona event content
-authoring, Phase 4.3 Launch readiness, Validation gate,
-Documentation, Self-review audits) carried forward verbatim into the
-new epic's "Pre-Milestone-Planning Historical Estimate" section so
-readers do not need to bounce back here for M4-specific content. Per
-AGENTS.md "Epic Drafting," those paragraphs are pre-milestone-planning
-estimate; the Madrona-launch epic's milestone planning session
-re-derives phase shape against actually-merged code.
+**Status.** Deferred 2026-05-01 to a sibling epic stub; that stub was
+superseded 2026-05-04 by
+[`epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md),
+which scopes the demo-build phase (Theme registration, content
+authoring, stakeholder-shareable demo URL) and reassigns
+launch-readiness scope (volunteer training, QR posters, production
+smoke, real attendee operations) to a future Madrona-launch sibling
+epic. The phase paragraphs that originally lived here (Goal, Phase
+4.1 Madrona theme palette definition, Phase 4.2 Madrona event
+content authoring, Phase 4.3 Launch readiness, Validation gate,
+Documentation, Self-review audits) were carried into the
+deferred-sibling stub's "Pre-Milestone-Planning Historical Estimate"
+section at the time of deferral and now live in git history. Per
+AGENTS.md "Epic Drafting," that historical content is
+pre-milestone-planning estimate; the demo-build epic re-derives
+milestone shape against actually-merged code at each milestone
+planning session.
 
 ## Backlog Impact
 
@@ -895,7 +905,7 @@ Phases per milestone, with PR counts:
 - M1 — 5 phases (phase 1.1, phase 1.3, and phase 1.5 each contain 2 subphases as separate PRs), 8 PRs (landed)
 - M2 — 5 phases, 5 PRs (landed; actually shipped 13 PRs once subphase splits were re-derived during phase planning — see [m2-admin-restructuring.md](/docs/plans/archive/m2/m2-admin-restructuring.md) phase status table)
 - M3 — pre-milestone-planning estimate: 4 phases, 4 PRs. Milestone-planning re-derived: 3 phases, 3 PRs (3.1 may split into 2). Canonical: [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md)
-- M4 — moved to [`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md); see that epic's Sizing estimate (3 phases, 2 PRs as carried forward) and milestone planning for re-derived counts
+- M4 — superseded by [`epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md); see that epic's Sizing Summary (3 milestones, 4–7 PRs estimated) and per-milestone planning sessions for re-derived counts. Launch-readiness scope is reassigned to a future Madrona-launch sibling.
 
 Epic total: pre-milestone-planning estimate of 20 phases, 22 PRs;
 actuals will diverge as each milestone planning session and each phase
@@ -924,9 +934,11 @@ PR-deliverable subphase 1.5.1, isolated for review attention before code
 migration begins.
 
 **Madrona content authoring time** moved with the M4 phase paragraphs
-to
-[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md);
-that risk is now owned by the Madrona-launch epic.
+on 2026-05-01 to a deferred sibling stub; that stub was superseded
+2026-05-04 by
+[`epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md).
+Madrona content authoring is the demo-build epic's M3 scope; ongoing
+risk is owned there.
 
 **M2 RLS edge cases.** Trust-boundary work tends to surface unanticipated
 cases during pgTAP authoring. Mitigation: M2 phase 2.1 lands as its own PR

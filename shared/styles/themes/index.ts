@@ -7,7 +7,9 @@ import { riversideJamTheme } from "./riverside-jam.ts";
  * M3 phase 3.1.1 added the first test event theme
  * (`harvest-block-party`) alongside the rendering pipeline; M3
  * phase 3.2 adds the second test event theme to prove multi-theme
- * rendering; M4 phase 4.1 adds Madrona at `madrona`. See
+ * rendering; the
+ * [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
+ * adds Madrona at `madrona` in its M1. See
  * [m3-site-rendering.md](../../../docs/plans/archive/m3/m3-site-rendering.md)
  * for the M3 phase shape. Slug → Theme. Any slug not present here
  * resolves to the platform Theme via `getThemeForSlug`.

@@ -98,7 +98,7 @@ What remains as future product work:
 - Payments or billing infrastructure  
 
 ## Context of First Use
-Initial deployment: Madrona Music in the Playfield (Seattle neighborhood concert series)
+Initial deployment target: Madrona Music in the Playfield (Seattle neighborhood concert series). A demo-build phase precedes the live deployment: the [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md) builds a stakeholder-shareable demo of the Madrona experience, and a future Madrona-launch sibling epic owns the live event launch (volunteer training, QR poster production, production smoke run, real attendee operations).
 
 This event will serve as the primary validation environment for:
 - Participation rate
