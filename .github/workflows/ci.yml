@@ -151,29 +151,21 @@ jobs:
         if: needs.detect-scope.outputs.docs_only != 'true'
         run: npm run build:site
 
-      - name: Check issue-session function
+      - name: Check Edge Functions (deno check)
         if: needs.detect-scope.outputs.docs_only != 'true'
-        run: deno check --no-lock supabase/functions/issue-session/index.ts
-
-      - name: Check complete-game function
-        if: needs.detect-scope.outputs.docs_only != 'true'
-        run: deno check --no-lock supabase/functions/complete-game/index.ts
-
-      - name: Check save-draft function
-        if: needs.detect-scope.outputs.docs_only != 'true'
-        run: deno check --no-lock supabase/functions/save-draft/index.ts
-
-      - name: Check generate-event-code function
-        if: needs.detect-scope.outputs.docs_only != 'true'
-        run: deno check --no-lock supabase/functions/generate-event-code/index.ts
-
-      - name: Check publish-draft function
-        if: needs.detect-scope.outputs.docs_only != 'true'
-        run: deno check --no-lock supabase/functions/publish-draft/index.ts
-
-      - name: Check unpublish-event function
-        if: needs.detect-scope.outputs.docs_only != 'true'
-        run: deno check --no-lock supabase/functions/unpublish-event/index.ts
+        shell: bash
+        run: |
+          shopt -s nullglob
+          fns=(supabase/functions/*/index.ts)
+          if [ ${#fns[@]} -eq 0 ]; then
+            echo "::error::No Edge Functions matched supabase/functions/*/index.ts"
+            exit 1
+          fi
+          for fn in "${fns[@]}"; do
+            echo "::group::deno check $fn"
+            deno check --no-lock "$fn"
+            echo "::endgroup::"
+          done
 
       - name: Upload Playwright artifacts on failure
         if: failure() && needs.detect-scope.outputs.docs_only != 'true'
