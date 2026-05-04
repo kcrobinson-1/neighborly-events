@@ -16,7 +16,7 @@ navigating from plan to history.
 | --- | --- | --- |
 | M1 — apps/web ThemeScope wiring | In | Landed |
 | M2 — Home-page rebuild | In | Landed |
-| M3 — Demo-mode auth bypass for test-event slugs | In | Proposed |
+| M3 — Demo-mode auth bypass for test-event slugs | In | Landed |
 | M4 — Role-door surfaces and redemption seeding | Out | Deferred |
 | M5 — Configuration tour | Out | Deferred |
 | M6 — Behind-the-scenes, roadmap, polish, epic close | Out | Deferred |

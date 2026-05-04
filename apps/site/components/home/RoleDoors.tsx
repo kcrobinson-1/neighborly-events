@@ -19,8 +19,9 @@ import { RoleDoorCard } from "./RoleDoorCard.tsx";
  * Per-role auth-state copy honors the milestone-doc invariant:
  * Attendee target (`routes.game`) is public, no caveat; Organizer
  * (`routes.eventAdmin`) and Volunteer (`routes.gameRedeem`) are
- * auth-gated, so each card carries a sign-in caveat with the
- * M3-bypass-pending parenthetical M3's PR will revise.
+ * auth-gated, so each card carries a sign-in caveat that names
+ * the demo-mode bypass option M3 shipped (sign in for full
+ * write access, or browse the read-only demo without signing in).
  */
 const DEMO_EVENT_SLUG = "harvest-block-party";
 
@@ -34,8 +35,8 @@ export function RoleDoors() {
       <p className="home-roles-copy">
         The platform is shaped around three personas. Each card
         opens the live Harvest Block Party surface for that role on
-        apps/web; auth-gated targets name the sign-in requirement
-        until demo-mode access ships.
+        apps/web; auth-gated targets name the sign-in requirement,
+        and offer a read-only demo-mode browse without signing in.
       </p>
       <div className="home-roles-grid">
         <RoleDoorCard
@@ -49,14 +50,14 @@ export function RoleDoors() {
           title="Organizer"
           description="Author Harvest's questions, prizes, and schedule from the per-event admin workspace."
           href={routes.eventAdmin(DEMO_EVENT_SLUG)}
-          authCaveat="Sign in to manage this event (or wait for demo-mode access in M3)."
+          authCaveat="Sign in to manage this event, or browse the read-only demo without signing in."
         />
         <RoleDoorCard
           eyebrow="Auth-gated"
           title="Volunteer"
           description="Run the redemption booth: confirm attendee codes and hand out prizes during the event."
           href={routes.gameRedeem(DEMO_EVENT_SLUG)}
-          authCaveat="Sign in to redeem codes (or wait for demo-mode access in M3)."
+          authCaveat="Sign in to redeem codes, or browse the read-only booth demo without signing in."
         />
       </div>
     </section>

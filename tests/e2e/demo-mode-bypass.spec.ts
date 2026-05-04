@@ -130,6 +130,19 @@ test.describe("demo-mode bypass — read side", () => {
       page.getByRole("heading", { name: "Sign in to manage this event" }),
     ).toHaveCount(0);
 
+    // Read-only callout names the absent affordances + the resolution.
+    const calloutRegion = page.getByRole("region", {
+      name: "Read-only authoring affordances",
+    });
+    await expect(calloutRegion).toBeVisible();
+    await expect(calloutRegion).toContainText(
+      "Authoring is read-only in demo mode.",
+    );
+    await expect(calloutRegion).toContainText(
+      /Save changes, Publish draft, Unpublish/,
+    );
+    await expect(calloutRegion).toContainText("Sign in to manage this event.");
+
     // Mutation controls absent on the bypass-rendered admin surface.
     await expect(page.getByRole("button", { name: /Save changes/ })).toHaveCount(0);
     await expect(page.getByRole("button", { name: /Publish draft/ })).toHaveCount(0);
@@ -180,6 +193,19 @@ test.describe("demo-mode bypass — read side", () => {
 
     await expect(page.getByText("HAR-0001")).toBeVisible();
     await expect(page.getByText("HAR-0002")).toBeVisible();
+
+    // Read-only callout names the absent affordances + the resolution.
+    const calloutRegion = page.getByRole("region", {
+      name: "Read-only redemption affordances",
+    });
+    await expect(calloutRegion).toBeVisible();
+    await expect(calloutRegion).toContainText(
+      "Redemption monitoring is read-only in demo mode.",
+    );
+    await expect(calloutRegion).toContainText(/Reverse this redemption/);
+    await expect(calloutRegion).toContainText(
+      "Sign in to manage redemptions.",
+    );
 
     // Mutation controls absent on the bypass-rendered redemptions surface.
     // The detail-sheet "View" buttons, "Reverse this redemption" affordance,
