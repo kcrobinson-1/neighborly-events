@@ -601,7 +601,7 @@ The command:
 
 Manual execution path:
 
-1. Open the `Production Admin Smoke` workflow in GitHub Actions.
+1. Open the `Production Deployed-Surface Smoke` workflow in GitHub Actions.
 2. Use `Run workflow` (`workflow_dispatch`) on `main`.
 3. Confirm the `production` environment has all required smoke vars and
    secrets documented in [`operations.md`](/docs/operations.md).
@@ -929,7 +929,7 @@ The intended release path is:
 ### Watching The Post-Merge Chain
 
 `npm run release:watch-smoke -- <merge-sha>` watches the static
-`CI` → `Release` → `Production Admin Smoke` chain keyed to a merge commit
+`CI` → `Release` → `Production Deployed-Surface Smoke` chain keyed to a merge commit
 on `main`, prints stage-by-stage progress, and emits a load-bearing
 `SMOKE_URL=<run-url>` line on green smoke. Use it to capture the smoke
 run URL for the doc-only follow-up commit required by

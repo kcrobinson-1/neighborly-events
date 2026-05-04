@@ -200,7 +200,7 @@ when a gate counts as met:
 | --- | --- | --- | --- |
 | G1 | Trust-path behavior is validated against real Supabase, not mocks only | `npm run test:supabase` passes locally; pgTAP confirms entitlement uniqueness, request idempotency, verification-code stability, redemption idempotency (`redeem_entitlement` / `reverse_entitlement_redemption` RPCs), and event-scoped role helpers (`is_agent_for_event`, `is_organizer_for_event`, `is_root_admin`) | [testing.md — Trust-Path Validation Strategy](/docs/testing.md) |
 | G2 | Attendee mobile flow works end to end in a real browser | `npm run test:e2e` passes and the captured mobile smoke sequence covers intro → answer → completion → direct route load on `/event/:slug/game` | [testing.md — UX And End-To-End Browser Flow](/docs/testing.md) |
-| G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | `npm run test:e2e:admin:production-smoke` has passed for the release candidate commit (via `Production Admin Smoke` workflow or manual run); the smoke run exercises the cross-app `apps/web` → `apps/site` `/admin` rewrite, and the live-event redemption surfaces on a non-test slug have been walked manually or via `npm run test:e2e:redeem` / `npm run test:e2e:redemptions` against the same backend before attendees arrive. Extending `production-admin-smoke.yml` to exercise the redemption operator path on the deployed surface is tracked in [`backlog.md`](/docs/backlog.md) Tier 1 ("Add redemption operator path to deployed-surface smoke"); until that lands, the local-runner exercise satisfies the redemption-side evidence requirement. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
+| G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | Both phases of the `Production Deployed-Surface Smoke` workflow have passed for the release candidate commit (`npm run test:e2e:admin:production-smoke` followed by `npm run test:e2e:redemption:production-smoke` against deployed Supabase + the deployed apps/web origin, automatic on release or via `workflow_dispatch`). The admin phase exercises the cross-app `apps/web` → `apps/site` `/admin` rewrite. The redemption phase exercises the agent redeem path (`/event/:slug/game/redeem`), the organizer list/filter/sheet path (`/event/:slug/game/redemptions`), and the organizer reverse-redemption path against the dedicated production smoke event. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
 | G4 | Completion, starts, and redemption instrumentation is in place for the event | `game_starts`, `game_completions`, `game_entitlements`, and the redemption columns/RPCs populate correctly in a local Supabase run; the production Supabase project has every migration through `20260427010000_broaden_event_scoped_rls.sql` applied before attendees arrive | [analytics-strategy.md — Phase 1 Implementation Plan](/docs/plans/analytics-strategy.md) and [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) |
 | G5 | Release-blocking open questions are either decided or explicitly deferred | Each item mirrored under the **Release-blocking open questions** subheading of the current pass entry in [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) has a linked decision or a recorded post-event deferral, per the mirror contract in [Release-Blocking Open Questions](#release-blocking-open-questions) below; the pass also confirms that no item in [open-questions.md](/docs/open-questions.md) that should be release-blocking is missing from that mirror | [open-questions.md](/docs/open-questions.md) |
 | G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/plans/analytics-strategy.md) and this doc |
@@ -263,11 +263,13 @@ How to run:
    live (non-test) event to exercise the redemption-operator path on
    `/event/:slug/game/redeem` and the volunteer queue on
    `/event/:slug/game/redemptions`, including reverse-redemption.
-5. After merge and deploy, confirm the `Production Admin Smoke` workflow has
-   run successfully against the release commit (or trigger a `workflow_dispatch`
-   rerun). The smoke run also implicitly exercises the cross-app `/admin`
-   rewrite from `apps/web/vercel.json` to `apps/site`. See
-   [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md).
+5. After merge and deploy, confirm both phases of the `Production
+   Deployed-Surface Smoke` workflow ran successfully against the release
+   commit (or trigger a `workflow_dispatch` rerun). The admin phase
+   implicitly exercises the cross-app `/admin` rewrite from
+   `apps/web/vercel.json` to `apps/site`; the redemption phase
+   exercises the deployed redeem and redemptions operator surfaces.
+   See [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md).
 6. Walk the [Proposed Test Inventory in testing.md](/docs/testing.md) against the
    current repo and list any item that is no longer representative of the
    shipped behavior. This is the step that catches "tests passed but coverage
@@ -437,8 +439,9 @@ Current posture (refreshed 2026-05-04):
   `apps/web/vercel.json` to `apps/site` adds a routing surface that can fail
   independently of either app's deploy)
 - no alerting or uptime monitor is configured by the repo; the
-  `Production Admin Smoke` workflow plus `release.yml` post-merge promotion
-  are the closest equivalents and run only after release, not continuously
+  `Production Deployed-Surface Smoke` workflow plus `release.yml`
+  post-merge promotion are the closest equivalents and run only after
+  release, not continuously
 
 How to run:
 

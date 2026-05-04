@@ -100,11 +100,13 @@ GitHub `production` environment; secrets and environment variables live
 there, not on contributor laptops. Full ownership model and env var list in
 `docs/tracking/production-admin-smoke-tracking.md`.
 
-What runs: `Production Admin Smoke`
+What runs: `Production Deployed-Surface Smoke`
 (`.github/workflows/production-admin-smoke.yml`), which invokes
-`npm run test:e2e:admin:production-smoke` against
+`npm run test:e2e:admin:production-smoke` followed by
+`npm run test:e2e:redemption:production-smoke` against
 `PRODUCTION_SMOKE_BASE_URL` — the deployed web origin. It mutates only a
-dedicated smoke event and dedicated smoke admin/denied accounts.
+dedicated smoke event, dedicated smoke admin/denied accounts, and
+dedicated smoke redeem-agent / redemptions-organizer accounts.
 
 When it runs: automatically via `workflow_run` on successful `Release`
 completion against `main`, or manually via `workflow_dispatch` for reruns
@@ -150,8 +152,9 @@ deployed origin.
    SHAs are not recorded because `git log` is authoritative for that.
    For the canonical Tier 5 case, run
    `npm run release:watch-smoke -- <merge-sha>` to capture the
-   `Production Admin Smoke` run URL for the follow-up commit; see
-   [`dev.md`](/docs/dev.md) "Watching The Post-Merge Chain."
+   `Production Deployed-Surface Smoke` run URL for the follow-up
+   commit; see [`dev.md`](/docs/dev.md) "Watching The Post-Merge
+   Chain."
 
 This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to.
 The implementing PR leaves the plan in a named, non-drift state —

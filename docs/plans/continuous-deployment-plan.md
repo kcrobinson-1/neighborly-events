@@ -197,8 +197,9 @@ Production deployment gate:
 
 Conditional/operational checks (not always required on every push):
 
-- `Production Admin Smoke / Smoke Admin On Production` (post-deploy confidence
-  gate for production health)
+- `Production Deployed-Surface Smoke / Smoke Admin On Production`
+  (post-deploy confidence gate for production health; runs admin
+  authoring + redemption operator phases on the dedicated smoke event)
 
 Docs-only trigger policy:
 
@@ -239,8 +240,8 @@ these platform and proof-run steps:
   - allow owner force-push if preserving docs-history cleanup remains useful
   - require `Lint, Tests, Build, and Supabase Checks / Lint, Tests, Build, and Supabase Checks`
 - configure or verify the GitHub `production` environment:
-  - confirm `Release` and `Production Admin Smoke` use the `production`
-    environment
+  - confirm `Release` and `Production Deployed-Surface Smoke` use the
+    `production` environment
   - confirm release secrets exist: `SUPABASE_ACCESS_TOKEN`,
     `SUPABASE_DB_PASSWORD`, and `SUPABASE_PROJECT_REF`
   - confirm production smoke vars and secrets exist, including
@@ -274,8 +275,8 @@ these platform and proof-run steps:
   - confirm `Release / Sync Supabase Production` runs only after successful `CI`
   - confirm release checks out and deploys the validated target SHA
   - push a docs-only change and confirm `CI` and Supabase release do not run
-  - run `Production Admin Smoke / Smoke Admin On Production` after a release
-    and confirm it passes
+  - run `Production Deployed-Surface Smoke / Smoke Admin On Production`
+    after a release and confirm both phases pass
 - test the operator runbook once:
   - trigger production smoke manually from GitHub Actions
   - confirm smoke failure artifacts would upload on failure

@@ -17,7 +17,7 @@ const STAGES = [
   },
   {
     key: "smoke",
-    workflowName: "Production Admin Smoke",
+    workflowName: "Production Deployed-Surface Smoke",
     workflowFile: "production-admin-smoke.yml",
     event: "workflow_run",
   },

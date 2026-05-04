@@ -54,8 +54,9 @@ The workflow runs in the GitHub `production` environment.
 Current release-readiness status:
 
 - GitHub `production` environment settings are configured.
-- `Production Admin Smoke` passed on the release-readiness branch in run
-  `24541137250`.
+- `Production Deployed-Surface Smoke` (renamed from `Production Admin
+  Smoke` when the redemption operator phase landed) passed its admin
+  phase on the release-readiness branch in run `24541137250`.
 - Fixture emails and event identifiers have built-in defaults. Use the optional
   fixture override variables below only when the default dedicated smoke fixture
   needs to change.
@@ -161,7 +162,7 @@ Status: enabled in repo.
 
 ## Failure Triage Runbook
 
-Start in GitHub Actions job logs for `Production Admin Smoke`.
+Start in GitHub Actions job logs for `Production Deployed-Surface Smoke`.
 
 1. **Readiness failure before Playwright starts**
    - likely deployment propagation or base URL misconfiguration
@@ -195,10 +196,135 @@ Escalation owner order:
 - fixture rotation and retention automation for smoke identities/event
 - broader remote smoke matrix only if operationally justified
 
+## Operator Phase (Redemption)
+
+The workflow runs a second phase after the admin phase that exercises
+the redemption operator surfaces (`/event/:slug/game/redeem`,
+`/event/:slug/game/redemptions`, including reverse-redemption) on the
+same dedicated smoke event the admin phase mutates. The phase landed
+to close the 2026-05-04 release-readiness pass G3 redemption gap and
+runs against deployed Supabase + the deployed apps/web origin.
+
+### Scope
+
+In scope for the redemption phase:
+
+1. Agent magic-link auth, suffix entry, and successful redemption
+   round-trip on `/event/:slug/game/redeem`.
+2. Re-redeem of the same code returns `Already redeemed` and
+   service-role read-back confirms `redemption_status = "redeemed"`.
+3. Organizer magic-link auth, list rendering, Redeemed-chip narrowing,
+   suffix-search narrowing, and detail-sheet open/close on
+   `/event/:slug/game/redemptions`.
+4. Organizer reverses a redeemed row from the detail sheet and
+   service-role read-back confirms `redemption_status = "unredeemed"`,
+   `redemption_reversed_by_role = "organizer"`, and the reason string
+   round-trips.
+
+Out of scope for the redemption phase:
+
+- demo-mode bypass surfaces (the smoke event is not in the test-event
+  allowlist; bypass paths are covered separately by the Tier 2 backlog
+  item "Wire demo-mode bypass Playwright suite into PR CI")
+- real-event-slug redemption coverage (smoke only mutates the
+  dedicated `production-smoke-event` slug; never touches a real-event
+  row)
+- multi-user role-matrix beyond one agent + one organizer
+
+### Fixture Identities
+
+Two dedicated smoke identities are managed alongside the admin and
+denied-admin identities:
+
+- `production-smoke-redeem-agent@example.com` — receives the
+  `agent` role on the dedicated smoke event via
+  `event_role_assignments`. Never `admin_users` allowlisted.
+  Override via `PRODUCTION_SMOKE_REDEEM_AGENT_EMAIL`.
+- `production-smoke-redemptions-organizer@example.com` — receives
+  the `organizer` role on the dedicated smoke event via
+  `event_role_assignments`. Never `admin_users` allowlisted.
+  Override via `PRODUCTION_SMOKE_REDEMPTIONS_ORGANIZER_EMAIL`.
+
+The role-assignments are scoped to the dedicated smoke event id, so
+these identities have no privileges on real-event slugs.
+
+### Environment Variables
+
+The redemption phase's optional fixture override variables (all
+prefixed `PRODUCTION_SMOKE_REDEEM_*` or
+`PRODUCTION_SMOKE_REDEMPTIONS_*`) are catalogued in
+[`operations.md`](/docs/operations.md) under the GitHub `production`
+environment vars list. Defaults match the dedicated identities and
+the local-fixture suffix conventions (`0427` for redeem;
+`0701` / `0702` / `0703` for redeemed-by-me / redeemed-by-other /
+reversed-by-me).
+
+### State Coupling Between Phases
+
+The admin phase ends with the dedicated smoke event unpublished
+(reset for deterministic publish-assertion). The redemption phase
+fixture re-publishes via the service-role client at start and seeds
+its entitlement rows. After the redemption phase, the event remains
+published — that's an acceptable terminal state because the
+dedicated smoke event is internal-only and never user-facing.
+Re-running the admin phase later resets to unpublished again.
+
+Implication for contributors running smoke locally: do not run the
+redemption smoke locally while a workflow run is in flight against
+the same Supabase project. The workflow's
+`concurrency: production-admin-smoke cancel-in-progress: false`
+serializes runs within GitHub Actions but cannot serialize against
+out-of-band local invocations. (Tier 5 production smoke env vars
+should not be on contributor laptops anyway per
+[`testing-tiers.md`](/docs/testing-tiers.md) Anti-Patterns.)
+
+### Risks And Mitigations
+
+| Risk | Why it matters | Mitigation in current implementation | Deferred follow-up |
+| --- | --- | --- | --- |
+| Deployed CORS regression breaks credentialed fetch | The fixture/spec rely on the deployed Edge Functions emitting `Access-Control-Allow-Credentials: true` and an exact-origin Allow-Origin via `supabase/functions/_shared/cors.ts` | Source-level audit during the implementing PR confirmed the shared helper emits credentialed CORS for deployed origins in `ALLOWED_ORIGINS`; the post-merge run is the deployed-end observation | Add a Playwright `page.route` proxy mirroring the local-Supabase Kong workaround if the deployed CORS shape ever regresses |
+| Fixture state coupling produces flakes | Admin ends with event unpublished; redemption re-publishes; a misordered or partially-failed run could observe transient state | Workflow concurrency lock; redemption fixture's `ensurePublishedSmokeEvent` is idempotent; contributor docs warn against local invocations during workflow runs | Tighten if observed in practice |
+| Magic-link leakage in workflow logs | Two new magic links per run; one missing mask exposes a one-time auth token in public logs | The shared `maskValueForGitHubActions` helper masks both links before Playwright uses them, mirroring the admin fixture | Stricter artifact scrubbing if new attachments are introduced |
+| Role-assignment scope drift | Smoke identities receiving `admin_users` rows would silently broaden their access | Self-review audit asserts these identities live in `event_role_assignments` only; smoke runs never touch `admin_users` for them | Periodic service-role read of `admin_users` to confirm |
+
+### Failure Triage Runbook (Redemption Phase)
+
+In addition to the admin-phase triage above:
+
+7. **Redeem-route or redemptions-route readiness failure before
+   Playwright starts**
+   - likely deployment propagation or apps/web SPA route registration
+   - validate `PRODUCTION_SMOKE_BASE_URL` and that
+     `/event/<slug>/game/redeem` and `…/redemptions` return
+     2xx/3xx via curl
+8. **Agent or organizer auth/redirect failure**
+   - likely Supabase Auth Site URL / redirect mismatch; confirm
+     `PRODUCTION_SMOKE_REDEEM_REDIRECT_URL` and
+     `PRODUCTION_SMOKE_REDEMPTIONS_REDIRECT_URL` are
+     allowlisted on the deployed Supabase project
+9. **Redeem call fails with CORS error in the spec network trace**
+   - likely deployed CORS regression; check
+     `supabase/functions/_shared/cors.ts` and the deployed
+     `ALLOWED_ORIGINS` setting
+10. **Reversal fails or persisted state mismatch**
+    - likely RLS regression on `game_entitlements` or role-helper
+      predicate drift; inspect
+      `supabase/migrations/20260421000200_add_event_role_helpers.sql`
+      and `supabase/migrations/20260421000500_add_redemption_rls_policies.sql`
+      for recent changes; check Edge Function logs for
+      `redeem-entitlement` and `reverse-entitlement-redemption`
+
 ## Related Files
 
-- workflow: `.github/workflows/production-admin-smoke.yml`
-- runner: `scripts/testing/run-production-admin-smoke.cjs`
-- config: `playwright.production-admin-smoke.config.ts`
-- spec: `tests/e2e/admin-production-smoke.spec.ts`
-- fixture helper: `tests/e2e/admin-auth-fixture.ts`
+- workflow: `.github/workflows/production-admin-smoke.yml` (display
+  name: `Production Deployed-Surface Smoke`)
+- admin-phase runner: `scripts/testing/run-production-admin-smoke.cjs`
+- admin-phase config: `playwright.production-admin-smoke.config.ts`
+- admin-phase spec: `tests/e2e/admin-production-smoke.spec.ts`
+- admin-phase fixture: `tests/e2e/admin-auth-fixture.ts`
+- redemption-phase runner: `scripts/testing/run-production-redemption-smoke.cjs`
+- redemption-phase config: `playwright.production-redemption-smoke.config.ts`
+- redemption-phase spec: `tests/e2e/redemption-production-smoke.spec.ts`
+- redemption-phase fixture: `tests/e2e/redemption-production-smoke-fixture.ts`
+- post-merge chain watcher: `scripts/release/post-merge-smoke-watch.cjs`
+- shared CORS helper (audited for deployed credentialed-CORS): `supabase/functions/_shared/cors.ts`
