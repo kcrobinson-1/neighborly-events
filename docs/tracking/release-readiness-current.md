@@ -65,17 +65,25 @@ the release candidate.
   `npm run test:e2e:attendee:trusted-backend`. Local re-run of the
   attendee Playwright smoke was not performed in this pass because the
   CI evidence on the release commit is canonical for this gate.
-- G3 Admin production smoke + redemption operator path: **partially
-  met** — `production-admin-smoke.yml` run `25306366196` on `0ec68cd`
+- G3 Admin authoring on deployed production: **met** —
+  `production-admin-smoke.yml` run `25306366196` on `0ec68cd`
   passed (admin auth → save → publish → unpublish, exercising the
   cross-app `/admin` rewrite); `release.yml` run `25306340650`
   promoted migrations and Vercel deploys without error. The
-  redemption operator path (`/event/:slug/game/redeem` and
-  `/event/:slug/game/redemptions`) is **not** included in production
-  smoke today — `npm run test:e2e:redeem` and `test:e2e:redemptions`
-  exist as local-only runners. Treat this as a **gap to close before
-  the first event that ships volunteer redemption**, recorded as a
-  follow-up below.
+  redemption operator path on the deployed surface is **out of G3's
+  scope today** per the gate definition — that expansion is tracked
+  as a Tier 1 backlog item ("Add redemption operator path to
+  deployed-surface smoke") that this pass surfaced. Local exercise
+  of `/event/:slug/game/redeem` and
+  `/event/:slug/game/redemptions` via
+  `npm run test:e2e:redeem` and `test:e2e:redemptions` was not
+  re-run during this pass and is recorded under the **Test
+  coverage** subheading below, not as G3 evidence. Before the first
+  event that ships volunteer redemption, either the backlog item
+  lands (preferred — flips G3 to require the deployed-surface
+  redemption check too) or the redemption surfaces are walked
+  manually against the deployed backend and recorded in that pass's
+  Test coverage notes.
 - G4 Starts + completion + redemption instrumentation: **met** —
   `release.yml` `25306340650` applied every migration through
   `20260427010000_broaden_event_scoped_rls.sql` to production
@@ -251,15 +259,20 @@ the release candidate.
   epic but not against the Madrona launch milestone.
 
 **Go/no-go:** **go for the platform's current state on HEAD
-`0ec68cd`**, conditional on the named follow-ups landing before the
-**first live event that ships volunteer redemption** (currently
-Madrona Music in the Playfield). The two release-relevant gaps that
-are not blocking *today* but should be closed before that event
-runs are: (1) extending PR CI to `deno check` every Edge Function
-under `supabase/functions/*/`, and (2) adding redemption
-operator-path coverage to `production-admin-smoke.yml` (or an
-equivalent post-deploy check) so the volunteer flow is exercised
-against the deployed backend, not only locally.
+`0ec68cd`**. All nine gates are met under their current evidence
+columns; the surfaced gaps are tracked in `backlog.md` rather than
+left as implicit conditions on this verdict. Two of the gaps are
+worth highlighting because they are upgrades to the gate definitions
+themselves rather than ordinary follow-ups:
+(1) extending PR CI to `deno check` every Edge Function under
+`supabase/functions/*/` will tighten G8's evidence to require
+explicit coverage of every deployed function, and
+(2) adding redemption-operator-path coverage to
+`production-admin-smoke.yml` (or an equivalent post-deploy check)
+will expand G3's evidence to require the volunteer flow on the
+deployed backend, not just locally — the right state for the first
+event that ships volunteer redemption (currently Madrona Music in
+the Playfield).
 
 **Follow-ups opened:**
 

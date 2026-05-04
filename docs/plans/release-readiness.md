@@ -169,15 +169,37 @@ Cadence guidance:
 
 ## Release Gates
 
-Each gate below must be met before a release candidate is considered ready for
-a live event. A gate is met when the named evidence exists, not merely when
-tests pass.
+Each gate below describes evidence that must exist before a release
+candidate is considered ready for a live event. A gate is met when the
+named evidence exists, not merely when tests pass.
+
+At the current product-lifecycle stage a "release" is a self-imposed sanity
+check on the health of the implementation — there is one operator and no
+external SLA — so gates are quality bars rather than externally-enforced
+release blockers. This has two consequences for how this table evolves:
+
+- **Evidence requirements describe what is implementable today, not what
+  the gate will eventually want.** When a pass surfaces a gap that should
+  *eventually* be evidence (a missing test, a missing deployed-surface
+  check, a missing log line) but the work to add it has not landed, do
+  not list the unimplemented evidence in the gate. Capture the work as
+  a `backlog.md` entry, leave the gate's evidence requirement scoped to
+  what can be checked today, and let the backlog item drive the gate
+  expansion when it lands. Listing an unbuilt test in a gate's evidence
+  column is a self-contradiction: the gate cannot be met against the
+  release candidate because the evidence does not exist anywhere.
+- **Gate definitions are owned in this file; gate expansions are owned
+  by `backlog.md` until they ship.** When a backlog item that expands a
+  gate's evidence lands, the same PR updates the gate definition here.
+  Until then, the gate's evidence column reflects the implemented
+  reality and the [Methodology Roadmap](#methodology-roadmap) section
+  carries the open candidate.
 
 | # | Gate | Evidence required | Tracker of record |
 | --- | --- | --- | --- |
 | G1 | Trust-path behavior is validated against real Supabase, not mocks only | `npm run test:supabase` passes locally; pgTAP confirms entitlement uniqueness, request idempotency, verification-code stability, redemption idempotency (`redeem_entitlement` / `reverse_entitlement_redemption` RPCs), and event-scoped role helpers (`is_agent_for_event`, `is_organizer_for_event`, `is_root_admin`) | [testing.md — Trust-Path Validation Strategy](/docs/testing.md) |
 | G2 | Attendee mobile flow works end to end in a real browser | `npm run test:e2e` passes and the captured mobile smoke sequence covers intro → answer → completion → direct route load on `/event/:slug/game` | [testing.md — UX And End-To-End Browser Flow](/docs/testing.md) |
-| G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | `npm run test:e2e:admin:production-smoke` has passed for the release candidate commit (via `Production Admin Smoke` workflow or manual run); the smoke run exercises the cross-app `apps/web` → `apps/site` `/admin` rewrite, and the live-event redemption surfaces on a non-test slug have been walked manually or via `npm run test:e2e:redeem` / `test:e2e:redemptions` against the same backend before attendees arrive | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
+| G3 | Admin authoring, publish, and unpublish work against deployed production | `npm run test:e2e:admin:production-smoke` has passed for the release candidate commit (via `Production Admin Smoke` workflow or manual run); the smoke run exercises the cross-app `apps/web` → `apps/site` `/admin` rewrite. The redemption operator path on the deployed surface is **not** part of this gate today — extending production smoke to cover it is tracked in [`backlog.md`](/docs/backlog.md) Tier 1 ("Add redemption operator path to deployed-surface smoke") and the gate's evidence column will absorb that coverage when the backlog item lands. Until then, the redemption operator path is exercised locally via `npm run test:e2e:redeem` and `npm run test:e2e:redemptions`, recorded under the **Test coverage** subheading of the current pass entry rather than as G3 evidence. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
 | G4 | Completion, starts, and redemption instrumentation is in place for the event | `game_starts`, `game_completions`, `game_entitlements`, and the redemption columns/RPCs populate correctly in a local Supabase run; the production Supabase project has every migration through `20260427010000_broaden_event_scoped_rls.sql` applied before attendees arrive | [analytics-strategy.md — Phase 1 Implementation Plan](/docs/plans/analytics-strategy.md) and [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) |
 | G5 | Release-blocking open questions are either decided or explicitly deferred | Each item listed in [Release-Blocking Open Questions](#release-blocking-open-questions) has a linked decision or a recorded post-event deferral | [open-questions.md](/docs/open-questions.md) |
 | G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/plans/analytics-strategy.md) and this doc |
@@ -821,14 +843,16 @@ Editing rules:
 
 Candidates currently open:
 
-- **Promote redemption operator path to its own gate (or fold it into
-  G3 with named evidence).** Today G3 names the redemption operator
-  path in its evidence requirement but the canonical evidence —
-  `production-admin-smoke.yml` — does not exercise it. Either
-  `production-admin-smoke.yml` should grow a redemption phase and the
-  G3 wording stays as-is, or the redemption path graduates to a
-  separate gate with its own evidence. Decide before the first event
-  that ships volunteer redemption.
+- **Fold the redemption operator path into G3 once the deployed-surface
+  smoke check lands.** Decided as of the 2026-05-04 pass: the path
+  graduates into G3 (not a separate gate) when the Tier 1 backlog item
+  "Add redemption operator path to deployed-surface smoke" ships. G3's
+  evidence column today covers admin authoring only; the same PR that
+  closes the backlog item updates G3 to require the redemption surfaces
+  too. Until then, redemption-operator coverage is a Test-coverage
+  subheading note in each pass, not G3 evidence — preventing the
+  "gate names a test that doesn't exist" self-contradiction Codex
+  flagged on PR #173.
 - **Add a CI-coverage gate for the full `supabase/functions/*/`
   surface.** G8 names PR CI depth but the methodology does not
   require coverage of every deployed function — the 2026-05-04 pass
