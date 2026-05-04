@@ -65,25 +65,23 @@ the release candidate.
   `npm run test:e2e:attendee:trusted-backend`. Local re-run of the
   attendee Playwright smoke was not performed in this pass because the
   CI evidence on the release commit is canonical for this gate.
-- G3 Admin authoring on deployed production: **met** —
-  `production-admin-smoke.yml` run `25306366196` on `0ec68cd`
-  passed (admin auth → save → publish → unpublish, exercising the
-  cross-app `/admin` rewrite); `release.yml` run `25306340650`
-  promoted migrations and Vercel deploys without error. The
-  redemption operator path on the deployed surface is **out of G3's
-  scope today** per the gate definition — that expansion is tracked
-  as a Tier 1 backlog item ("Add redemption operator path to
-  deployed-surface smoke") that this pass surfaced. Local exercise
-  of `/event/:slug/game/redeem` and
-  `/event/:slug/game/redemptions` via
-  `npm run test:e2e:redeem` and `test:e2e:redemptions` was not
-  re-run during this pass and is recorded under the **Test
-  coverage** subheading below, not as G3 evidence. Before the first
-  event that ships volunteer redemption, either the backlog item
-  lands (preferred — flips G3 to require the deployed-surface
-  redemption check too) or the redemption surfaces are walked
-  manually against the deployed backend and recorded in that pass's
-  Test coverage notes.
+- G3 Admin production smoke + redemption operator path: **not met**
+  — admin half is satisfied
+  (`production-admin-smoke.yml` run `25306366196` on `0ec68cd`
+  passed admin auth → save → publish → unpublish, exercising the
+  cross-app `/admin` rewrite; `release.yml` run `25306340650`
+  promoted migrations and Vercel deploys without error). Redemption
+  half is **not satisfied for this pass** — the deployed-surface
+  smoke does not exercise the redemption operator path, and
+  `npm run test:e2e:redeem` / `test:e2e:redemptions` were not
+  re-run locally during this pass. Two paths to met for a future
+  pass: (a) Tier 1 backlog item "Add redemption operator path to
+  deployed-surface smoke" lands and `production-admin-smoke.yml`
+  starts covering the redemption surfaces, or (b) the next pass
+  walks the redemption surfaces manually on a non-test slug against
+  the deployed backend, or runs `test:e2e:redeem` /
+  `test:e2e:redemptions` locally against the same backend, and
+  records that as G3 evidence.
 - G4 Starts + completion + redemption instrumentation: **met** —
   `release.yml` `25306340650` applied every migration through
   `20260427010000_broaden_event_scoped_rls.sql` to production
@@ -116,30 +114,38 @@ the release candidate.
   gate language in
   [`release-readiness.md`](/docs/plans/release-readiness.md) to
   match.
-- G8 PR CI depth: **met with one residual gap** — `ci.yml` covers
-  lint, unit, Deno function tests, local Supabase integration +
-  pgTAP, attendee-trusted-backend Playwright smoke, both `build:web`
-  and `build:site`, and Deno checks for issue-session, complete-game,
-  save-draft, generate-event-code, publish-draft, and
-  unpublish-event. **Gap: PR CI does not run `deno check` against
-  `read-demo-event`, `get-redemption-status`, `redeem-entitlement`,
-  or `reverse-entitlement-redemption`.** Locally re-confirmed all 10
-  type-check cleanly on HEAD, so this is a coverage gap rather than a
-  current breakage. Recorded as a Tier 1 follow-up: extend `ci.yml`
-  to deno-check every function under `supabase/functions/*/index.ts`
-  rather than naming each one explicitly.
-- G9 Demo-mode bypass containment: **met for the manually-walked
-  evidence; not yet automated in PR CI** —
-  `evaluateDemoModeRejection` is wired into save-draft, publish-draft,
-  unpublish-event, redeem-entitlement, and
-  reverse-entitlement-redemption, with Deno tests covering each
-  function's three demo-mode branches (rejection, defer-to-401,
-  defer-to-auth-gate) — confirmed via local
-  `npm run test:functions`. The catchall `X-Robots-Tag` header in
-  [`apps/web/vercel.json`](/apps/web/vercel.json) was unified for all
-  test-event paths in PR #172. The Playwright suite
-  `playwright.demo-mode-bypass.config.ts` exists and runs locally on
-  demand but is not part of `ci.yml`. Recorded as a Tier 2 follow-up.
+- G8 PR CI depth: **not met** — `ci.yml` covers lint, unit, Deno
+  function tests, local Supabase integration + pgTAP,
+  attendee-trusted-backend Playwright smoke, both `build:web` and
+  `build:site`, and `deno check` for `issue-session`,
+  `complete-game`, `save-draft`, `generate-event-code`,
+  `publish-draft`, and `unpublish-event`. The G8 evidence column
+  requires Deno function tests "over every function in
+  `supabase/functions/*/`," and `ci.yml` skips `read-demo-event`,
+  `get-redemption-status`, `redeem-entitlement`, and
+  `reverse-entitlement-redemption`. Locally re-confirmed all 10
+  type-check cleanly on HEAD, so the underlying code is healthy;
+  the gate is unmet because the *gate evidence is named CI
+  coverage*, and the four functions are silently skipped in CI.
+  Tier 1 backlog item "Cover every Edge Function in PR CI `deno
+  check`" closes this; G8 will flip to met once that lands.
+- G9 Demo-mode bypass containment: **not met** — the gate's evidence
+  column requires `npm run test:e2e:demo-mode-bypass` to pass on the
+  release candidate, and that suite was not run for this pass (it is
+  not in `ci.yml` and was not re-run locally because it requires a
+  local Supabase stack that this pass did not bring up). Backend
+  rejection coverage is satisfied (`evaluateDemoModeRejection` is
+  wired into save-draft, publish-draft, unpublish-event,
+  redeem-entitlement, and reverse-entitlement-redemption, with Deno
+  tests covering each function's three demo-mode branches —
+  confirmed via local `npm run test:functions`), and the catchall
+  `X-Robots-Tag` header in
+  [`apps/web/vercel.json`](/apps/web/vercel.json) was unified for
+  all test-event paths in PR #172, but the Playwright e2e proof the
+  gate names is missing. Tier 2 backlog item "Wire demo-mode bypass
+  Playwright suite into PR CI" closes this; until then a future pass
+  must run the suite locally against the release candidate and
+  record the result as G9 evidence to flip back to met.
 
 **Test coverage:**
 
@@ -258,21 +264,26 @@ the release candidate.
   verification questions remain open against the event-platform
   epic but not against the Madrona launch milestone.
 
-**Go/no-go:** **go for the platform's current state on HEAD
-`0ec68cd`**. All nine gates are met under their current evidence
-columns; the surfaced gaps are tracked in `backlog.md` rather than
-left as implicit conditions on this verdict. Two of the gaps are
-worth highlighting because they are upgrades to the gate definitions
-themselves rather than ordinary follow-ups:
-(1) extending PR CI to `deno check` every Edge Function under
-`supabase/functions/*/` will tighten G8's evidence to require
-explicit coverage of every deployed function, and
-(2) adding redemption-operator-path coverage to
-`production-admin-smoke.yml` (or an equivalent post-deploy check)
-will expand G3's evidence to require the volunteer flow on the
-deployed backend, not just locally — the right state for the first
-event that ships volunteer redemption (currently Madrona Music in
-the Playfield).
+**Go/no-go:** **no-go for HEAD `0ec68cd`** against the methodology's
+"every gate met" bar. Three gates are unmet for this pass:
+
+- **G3** — redemption operator path against the deployed backend was
+  not exercised this pass (admin smoke covers admin, not redemption;
+  local `test:e2e:redeem` / `test:e2e:redemptions` were not re-run).
+- **G8** — PR CI's `deno check` step skips four of the ten Edge
+  Functions (`read-demo-event`, `get-redemption-status`,
+  `redeem-entitlement`, `reverse-entitlement-redemption`).
+- **G9** — `npm run test:e2e:demo-mode-bypass` was not run for the
+  release candidate (not in `ci.yml`, not re-run locally).
+
+A no-go at this product-lifecycle stage is a truthful self-report,
+not an externally-enforced block — there is one operator and no
+external SLA. The three Tier-1/2 backlog items that close these
+gaps are already open
+([backlog.md](/docs/backlog.md)); the next pass flips to go when
+either those items land or the gates' manual / local-runner
+fallbacks are exercised against the release candidate and recorded
+as evidence in that pass entry.
 
 **Follow-ups opened:**
 
