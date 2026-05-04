@@ -1,7 +1,41 @@
 const http = require("node:http");
 const net = require("node:net");
-const { spawn } = require("node:child_process");
+const { spawn, execSync } = require("node:child_process");
 
+/**
+ * Auth e2e runtime topology
+ * ------------------------
+ * Playwright's webServer calls this script. The browser origin stays
+ * at http://127.0.0.1:4173 — the same host:port the fixture
+ * `redirectTo` URLs hardcode — but apps/site (`/auth/callback`,
+ * `/admin`, the home `/` shell) and apps/web (the SPA mounted at
+ * `/event/:slug/game/*` and `/event/:slug/admin/*`) do not run on the
+ * same dev server. apps/web (Vite) is spawned on 4174, apps/site
+ * (Next.js dev) is spawned on 3000, and a thin proxy on 4173 routes
+ * `/auth/callback`, `/_next/*`, `/`, and bare `/event/:slug` URLs to
+ * apps/site and everything else (including the carved-out
+ * `/event/:slug/game/*` + `/event/:slug/admin/*` SPA routes) to
+ * apps/web. This mirrors the production topology where apps/web is
+ * the canonical frontend host and `/auth/callback` is rewritten to
+ * apps/site.
+ *
+ * The post-magic-link assertion in
+ * tests/e2e/mobile-smoke.redeem.spec.ts and
+ * tests/e2e/mobile-smoke.redemptions.spec.ts depends on this proxy
+ * being live — without it `/auth/callback` 404s into the apps/web
+ * SPA fallback and the AuthCallbackPage never hydrates to consume
+ * the URL hash.
+ *
+ * Port collisions are a hard failure here, not a fall-back. Next.js
+ * dev silently picks a different port when 3000 is taken (and Vite
+ * with `--strictPort` exits, but its child process error reaches us
+ * later than a useful diagnostic), so an orphan `next dev` from a
+ * sibling worktree on :3000 would leave the proxy talking to the
+ * wrong source tree — chunks would 404, the Next page would never
+ * hydrate, and the suite would time out at "Signing you in…". The
+ * pre-flight check below refuses to start in that state and names
+ * the conflicting PID.
+ */
 const host = "127.0.0.1";
 const proxyPort = 4173;
 const webPort = 4174;
@@ -9,6 +43,50 @@ const sitePort = 3000;
 const siteOrigin = `http://${host}:${sitePort}`;
 const webOrigin = `http://${host}:${webPort}`;
 const readyPath = "/__auth-e2e-ready";
+
+function describePortOwner(port) {
+  try {
+    const output = execSync(`lsof -nP -iTCP:${port} -sTCP:LISTEN`, {
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+    return output || "unknown owner";
+  } catch {
+    return "unknown owner (lsof unavailable or no listener reported)";
+  }
+}
+
+function ensurePortFree(port, label) {
+  return new Promise((resolve, reject) => {
+    const probe = net.createServer();
+    probe.once("error", (error) => {
+      if (error.code === "EADDRINUSE") {
+        reject(
+          new Error(
+            `[auth-e2e-dev] ${label} port ${port} is already in use. ` +
+              `A common cause is a stale \`next dev\` / \`vite\` from a ` +
+              `sibling worktree — the proxy would silently talk to that ` +
+              `process and the suite would time out at "Signing you in…". ` +
+              `Free the port and retry.\nListener:\n${describePortOwner(port)}`,
+          ),
+        );
+        return;
+      }
+      reject(error);
+    });
+    probe.once("listening", () => {
+      probe.close(() => resolve());
+    });
+    probe.listen(port, host);
+  });
+}
+
+async function ensureRequiredPortsFree() {
+  await ensurePortFree(proxyPort, "proxy");
+  await ensurePortFree(webPort, "apps/web Vite");
+  await ensurePortFree(sitePort, "apps/site Next.js");
+}
 
 const children = new Set();
 let server = null;
@@ -204,7 +282,9 @@ const siteEnv = {
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.VITE_SUPABASE_URL ?? "",
 };
 
-function main() {
+async function main() {
+  await ensureRequiredPortsFree();
+
   startProcess(
     "npm",
     [
@@ -252,7 +332,10 @@ function main() {
 }
 
 if (require.main === module) {
-  main();
+  main().catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
 }
 
 module.exports = {
