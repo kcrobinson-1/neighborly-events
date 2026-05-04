@@ -41,7 +41,7 @@ describe("App", () => {
     cleanup();
   });
 
-  it("renders the event redeem route with the selected slug", () => {
+  it("renders the event redeem route with the selected slug", async () => {
     mockUsePathnameNavigation.mockReturnValue({
       navigate: vi.fn(),
       pathname: "/event/madrona-music-2026/game/redeem",
@@ -49,7 +49,9 @@ describe("App", () => {
 
     render(<App />);
 
-    expect(screen.getByText("Event Redeem Page: madrona-music-2026")).toBeTruthy();
+    expect(
+      await screen.findByText("Event Redeem Page: madrona-music-2026"),
+    ).toBeTruthy();
   });
 
   it("renders the per-event admin route inside a ThemeScope wrapper", () => {

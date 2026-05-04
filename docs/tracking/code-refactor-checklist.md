@@ -163,7 +163,7 @@ Rules for this checklist:
   Validation: `npm run test:db` and a repo-wide grep for each old filename
   (none are expected to be referenced outside the file itself).
 
-- [ ] Code-split the redemption-MVP pages out of the apps/web SPA bundle.
+- [x] Code-split the redemption-MVP pages out of the apps/web SPA bundle.
   The 2026-05-04 release-readiness pass measured
   `apps/web/dist/assets/index-*.js` at 518.91 kB / gzip 142.85 kB —
   +59.70 kB raw / +14.03 kB gzip vs. the 2026-04-16 baseline (459.21 kB
