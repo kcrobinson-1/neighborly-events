@@ -343,34 +343,48 @@ drift between guard sites"](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-b
 
 **Resolution.** **Option B.** New helper at
 `supabase/functions/_shared/demo-mode-rejection.ts` with
-working signature
+signature
 `evaluateDemoModeRejection(args: { request, eventId,
-supabaseAdmin }): Promise<Response | null>`. Returns `null`
-if the request is not in demo mode (continue to the existing
-auth gate); returns a `Response` (HTTP 403, JSON body
-`{ "error": "demo_mode_read_only", "message": "..." }`,
-appropriate CORS headers) otherwise. Each mutation function
-calls it after request-body validation and before the
-existing auth-gate call (decision 4 normalizes the 2
-auth-first redemption functions to fit this shape).
+supabaseAdmin }): Promise<DemoModeRejectionBody | null>`,
+plus exported type
+`DemoModeRejectionBody = { error: "demo_mode_read_only";
+message: string }`. Returns `null` if the request is not in
+demo mode (continue to the existing auth gate); returns the
+body otherwise (caller wraps with HTTP 403 using its own
+response composition — see Plan-doc Contracts "Per-function
+helper invocation" for why the helper returns body-not-
+Response). Each mutation function calls it after request-body
+validation and before the existing auth-gate call (decision 4
+normalizes the 2 auth-first redemption functions to fit this
+shape).
 
 The helper:
 
-1. Resolves slug via `supabaseAdmin.from("game_events")
+1. Reads the `Authorization` header for a Bearer token. If
+   present, returns `null` (caller continues to its existing
+   auth gate; demo-mode rejection does not apply to
+   authenticated callers). The Bearer-token check matches
+   `readBearerToken` in `event-organizer-auth.ts:5-14`,
+   `redemption-operator-auth.ts:14-23`, and
+   `admin-auth.ts:7-15` — predicate symmetry with the auth
+   gates is the load-bearing property (checking more would
+   shift status codes on requests the auth gate rejects
+   anyway; checking less would silently miss future
+   auth-context shapes). Signed session cookies are out of
+   scope — the mutation functions don't recognize them as
+   auth context (those live in the player-session functions
+   `complete-game`, `issue-session`, `get-redemption-status`).
+   The Bearer check fires *first* as a cheap escape hatch so
+   most authenticated requests skip the DB SELECT entirely.
+2. Resolves slug via `supabaseAdmin.from("game_events")
    .select("slug").eq("id", eventId).maybeSingle()`. On
    missing row or query error, returns `null` (defer to the
    existing auth gate's missing-event handling).
-2. Checks `isTestEventSlug(resolvedSlug)`. If false, returns
+3. Checks `isTestEventSlug(resolvedSlug)`. If false, returns
    `null`.
-3. Checks no-auth-context: no `Authorization` JWT AND no
-   signed session cookie verifiable via
-   `_shared/session-cookie.ts:136`'s `readVerifiedSession`.
-   If either present, returns `null`.
-4. Else, returns the structured 403 `Response`.
-
-The helper's exact signature, parameter ordering, and message
-text are final-resolved at plan-drafting time against on-disk
-`_shared/` conventions.
+4. Else, returns the rejection body
+   `{ error: "demo_mode_read_only", message: "Demo mode —
+   sign in to make changes." }`.
 
 **Verified by:**
 [`m3-phase-3-1-plan.md` Contracts item 5](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)
@@ -380,10 +394,17 @@ text are final-resolved at plan-drafting time against on-disk
 (no per-site duplication);
 [`supabase/functions/_shared/`](/supabase/functions/_shared/)
 existing per-concern helper conventions;
-[`supabase/functions/_shared/session-cookie.ts:136`](/supabase/functions/_shared/session-cookie.ts)
-(the `readVerifiedSession` helper for the auth-context check);
+[`supabase/functions/_shared/event-organizer-auth.ts:64`](/supabase/functions/_shared/event-organizer-auth.ts),
+[`supabase/functions/_shared/redemption-operator-auth.ts:14-23`](/supabase/functions/_shared/redemption-operator-auth.ts),
+[`supabase/functions/_shared/admin-auth.ts:7`](/supabase/functions/_shared/admin-auth.ts)
+(the auth gates' `readBearerToken` shape the helper's
+`noAuthContext` predicate mirrors);
 [`get-redemption-status/index.ts:44-49`](/supabase/functions/get-redemption-status/index.ts)
-(service-role-client construction precedent).
+(service-role-client construction precedent — separately,
+this is one of the player-session functions whose
+`readVerifiedSession` use is what the helper deliberately
+does NOT mirror, since session-cookie auth is not part of
+the mutation functions' auth surface).
 
 ### 4. Auth-vs-parse ordering normalization — reorder the two redemption functions to parse → demo-rejection → auth, matching the three authoring functions [Resolved → Option B]
 
@@ -480,13 +501,16 @@ functions.
   functions; one helper shape; partner-honesty signal is
   consistent. Pro: the reorder is itself a worthwhile
   trust-boundary edit — `redeem-entitlement` and
-  `reverse-entitlement-redemption` today parse their payloads
-  *after* the auth gate, which means an authenticated caller
-  can probe the auth-gate response without sending a valid
-  payload (the 401 fires before payload validation). Moving
-  parse before auth surfaces the payload-validation 400 to
-  authenticated callers who pass invalid payloads, which is
-  the more honest response. Con: the reorder is a
+  `reverse-entitlement-redemption` today reject every anon
+  caller with the auth gate's 401 regardless of payload shape,
+  hiding payload-validation outcomes behind authentication.
+  Moving parse before auth surfaces the payload-validation
+  400 to **anon** callers with invalid payloads (today they
+  see 401; after reorder they see 400), which is the more
+  honest response shape. Authenticated callers' outcomes are
+  unchanged: today they already see 400 for invalid payloads
+  (auth succeeds, then validation fails); after the reorder
+  they still see 400 (parse fails first). Con: the reorder is a
   trust-boundary edit on two functions that have shipped in
   the auth-first shape — review attention has to confirm the
   reorder doesn't open any new attack surface (specifically
@@ -633,10 +657,13 @@ existing per-function test file gains assertions:
   NOT returned.
 - **For the two reordered functions only** (`redeem-
   entitlement`, `reverse-entitlement-redemption`): also
-  asserts the new payload-validation 400 fires for an
-  authenticated caller passing an invalid payload (the case
-  the reorder newly exposes — previously the 401 fired
-  first; now the 400 fires after parse before auth).
+  asserts the new payload-validation 400 fires for an **anon**
+  caller passing an invalid payload (the case the reorder
+  newly exposes — today anon callers see 401 regardless of
+  payload shape because auth ran first; after the reorder
+  parse runs first and surfaces the 400). Authenticated
+  callers with invalid payloads already see 400 today;
+  unchanged.
 
 The helper's unit-level coverage is implicit through the
 five integration paths; a separate unit test file is unnecessary.
@@ -813,9 +840,16 @@ scoping and plan":
   `_shared/redemption-operator-auth.ts`,
   `_shared/session-cookie.ts`, `_shared/doctor-check-anchor.ts`
   on 2026-05-03. Plan-drafting confirms the new helper file
-  is consistent and that `readVerifiedSession` at
-  [`_shared/session-cookie.ts:136`](/supabase/functions/_shared/session-cookie.ts)
-  is the canonical no-auth-context check.
+  is consistent with the per-concern shape and that the
+  auth-context predicate matches `readBearerToken` in the
+  three Bearer-only auth gates the mutation functions use
+  (`event-organizer-auth.ts:14`, `redemption-operator-auth.ts:14`,
+  `admin-auth.ts:7`). `readVerifiedSession` in
+  `_shared/session-cookie.ts:136` is intentionally NOT
+  consumed; that helper is a player-session-functions
+  surface (`complete-game`, `issue-session`,
+  `get-redemption-status`) and the mutation functions don't
+  share it.
 - **Payload validators on the two redemption functions.**
   `validateRedeemPayload` and `validateReversePayload` are
   cheap shape checks per scoping inference; plan-drafting

@@ -2,23 +2,16 @@
 
 ## Status
 
-In draft.
+Proposed.
 
-This plan is in active multi-pass drafting per AGENTS.md
-"`In draft` → `Proposed` promotion gate." Pending items before
-the `In draft` → `Proposed` flip:
-
-- Comprehensive promotion-gate self-review (read end-to-end as
-  coherent whole; resolve every "plan-drafting picks" deferral;
-  walk the `Verified by:` rule across load-bearing claims;
-  re-confirm scoping reality-check inputs against current
-  code).
-
-3.3.1 is server-only — no novel client-side mechanisms, no
-investigation work pending. After the promotion-gate walk,
-this plan flips `In draft` → `Proposed`. The implementing PR
-flips `Proposed` → `Landed` per AGENTS.md "Plan-to-PR
-Completion Gate." No commit SHAs in the Status block.
+The promotion-gate self-review walked the plan + scoping doc
+end-to-end on 2026-05-03 and resolved each plan-drafting
+deferral, including a load-bearing factoring change to the
+helper shape (returns body-not-Response so the helper composes
+against both CORS patterns the five mutation functions use)
+surfaced during the walk. The implementing PR flips Status to
+`Landed` per AGENTS.md "Plan-to-PR Completion Gate." No commit
+SHAs in the Status block.
 
 ## Context
 
@@ -79,8 +72,11 @@ ordering. Specifically:
   403; anon caller on a non-test slug → existing 401; signed-in
   caller on a test slug → continues to existing auth gate.
   The two reordered functions also gain assertions that an
-  authenticated caller passing an invalid payload now sees the
-  payload-validation 400 (newly surfaced by the reorder).
+  **anon** caller passing an invalid payload now sees the
+  payload-validation 400 (newly surfaced by the reorder;
+  previously the 401 fired first because auth ran before
+  parse, so anon callers never reached payload validation
+  regardless of payload shape).
 - The milestone doc's Phase Status table grows from the single
   3.3 row to two rows (3.3.1 + 3.3.2); the 3.3.1 row Status
   flips `Proposed` → `Landed` with PR column populated; the
@@ -148,19 +144,41 @@ surface):
   `supabase/functions/_shared/demo-mode-rejection.ts`. Async
   function; accepts the request, the validated `eventId`, and
   a service-role Supabase admin client; returns either `null`
-  (continue to the existing auth gate) or a `Response` (the
-  structured 403). Final spelling owned by plan-drafting
-  against the on-disk `_shared/` conventions; the working name
-  is bound.
+  (caller continues to its existing auth gate) or a
+  `DemoModeRejectionBody` (the rejection-body shape; caller
+  wraps with its own HTTP 403 response composition).
+- **`DemoModeRejectionBody`** — the exported type
+  `{ error: "demo_mode_read_only"; message: string }`. The
+  `error` field is bound; the `message` field is plan-bound
+  to "Demo mode — sign in to make changes." per Contracts
+  "Helper shape" step 4.
 - **`demo_mode_read_only`** — the structured-error-body
   `error` field. Final spelling matches the 3.1-named
   contract (`Verified by:`
   [`m3-phase-3-1-plan.md` Contracts item 5](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md));
   unchanged here.
 - **`noAuthContext`** (working) — the helper's internal
-  predicate name for "no `Authorization` JWT AND no signed
-  session cookie." May or may not be exported; plan-drafting
-  decides against the helper's actual factoring.
+  predicate name for "no `Authorization` Bearer token in the
+  request headers." This mirrors exactly what the existing
+  auth gates the helper composes against accept as auth
+  context — `event-organizer-auth.ts:64`,
+  `redemption-operator-auth.ts:14-23`, and `admin-auth.ts:7`
+  all read auth via `readBearerToken` only; signed session
+  cookies are not part of the mutation Edge Functions' auth
+  surface (those are checked by the player-session functions
+  `complete-game`, `issue-session`, `get-redemption-status`
+  via `readVerifiedSession`, none of which are in this
+  phase's diff). Predicate symmetry between the helper's
+  no-auth-context check and the auth gates' positive auth
+  check is the load-bearing property — if the helper checked
+  *more* than the auth gate (e.g., also rejected callers
+  carrying a player session cookie), demo-mode rejection
+  would fire on requests the auth gate would have rejected
+  with 401 anyway, leaking nothing useful and shifting the
+  status code; if the helper checked *less*, a future auth-
+  context shape (e.g., adding session-cookie auth to a
+  mutation function) would silently let demo-mode rejection
+  miss the new shape.
 
 ## Contracts
 
@@ -168,43 +186,108 @@ surface):
 
 The shared helper at
 `supabase/functions/_shared/demo-mode-rejection.ts` exports an
-async function with the working signature
+async function with the signature
 `evaluateDemoModeRejection(args: { request: Request; eventId:
-string; supabaseAdmin: SupabaseClient }): Promise<Response |
-null>`. The helper:
+string; supabaseAdmin: SupabaseClient }): Promise<DemoModeRejectionBody | null>`,
+plus the `DemoModeRejectionBody` type
+`{ error: "demo_mode_read_only"; message: string }` exported
+alongside the function. Returning `null` means "not in demo
+mode — caller continues to its existing auth gate"; returning
+a body means "demo mode rejection — caller wraps with HTTP
+403 using its own response composition."
 
-1. **Resolves slug from `eventId`** via
+The body-not-Response return type is the **load-bearing
+factoring decision** of this helper. The five mutation
+functions today use two different CORS-response patterns:
+
+- The three authoring functions (`save-draft`,
+  `publish-draft`, `unpublish-event`) use the
+  `_shared/authoring-http.ts` wrapper which provides
+  `context.jsonResponse(status, body)` —
+  CORS handled internally by the wrapper.
+- The two redemption functions (`redeem-entitlement`,
+  `reverse-entitlement-redemption`) use a function-local
+  `jsonResponse(status, body, origin, createCorsHeaders)`
+  helper with explicit `origin` extraction and the injected
+  `dependencies.createCorsHeaders` factory.
+
+A `Response`-returning helper would need either a
+CORS-formatter callback in its arguments (couples the helper
+to CORS) or an in-helper duplicate of the wrapper's behavior
+(couples the helper to one of the two patterns and leaves the
+other functions unable to use it without re-wrapping). The
+body-only return punts response composition to the caller,
+which already knows its own pattern. Each call site composes
+~3 lines: `const demoBody = await evaluateDemoModeRejection(...);
+if (demoBody) return <function's existing 403 wrapper>(demoBody);`
+
+The helper:
+
+1. **Reads the `Authorization` header for a Bearer token.**
+   Returns `null` if a Bearer token is present (caller
+   continues to its existing auth gate; demo-mode rejection
+   does not apply to authenticated callers). The Bearer-token
+   check matches `readBearerToken` in
+   [`event-organizer-auth.ts:5-14`](/supabase/functions/_shared/event-organizer-auth.ts),
+   [`redemption-operator-auth.ts:14-23`](/supabase/functions/_shared/redemption-operator-auth.ts),
+   and [`admin-auth.ts:7-15`](/supabase/functions/_shared/admin-auth.ts) —
+   the helper either inlines the same shape or imports a
+   shared `readBearerToken` extracted at implementation time
+   (per the existing helpers' "Bearer-token reading is
+   duplicated rather than extracted from `admin-auth.ts` so
+   the two helpers stay independently auditable" comment at
+   [`event-organizer-auth.ts:20-22`](/supabase/functions/_shared/event-organizer-auth.ts),
+   the duplication-vs-extraction trade is conscious; the
+   implementing PR picks against that comment's reasoning).
+2. **Resolves slug from `eventId`** via
    `supabaseAdmin.from("game_events").select("slug").eq("id",
    eventId).maybeSingle()`. If the row is missing or the query
    errors, returns `null` — defer to the existing auth gate's
    missing-event handling.
-2. **Checks allowlist membership** via `isTestEventSlug` from
+3. **Checks allowlist membership** via `isTestEventSlug` from
    `shared/events/testEventAllowlist.ts`. If false, returns
    `null`.
-3. **Checks no-auth-context** — defined as the AND of: no
-   `Authorization` header bearing a JWT, AND no signed session
-   cookie verifiable via `_shared/session-cookie.ts`'s
-   `readVerifiedSession`. If either auth context is present,
-   returns `null`.
-4. **Else, returns the structured 403 `Response`** with JSON
-   body `{ "error": "demo_mode_read_only", "message": "Demo
-   mode — sign in to make changes." }` and the appropriate
-   CORS headers (per `_shared/cors.ts` conventions).
+4. **Else, returns the rejection body**
+   `{ error: "demo_mode_read_only", message: "Demo mode —
+   sign in to make changes." }`.
 
-The helper's exact signature, parameter ordering, and import
-paths are final-resolved at plan-drafting time against on-disk
-`_shared/` conventions. The working signature above is what the
-plan binds; deviations are PR-body-flagged per AGENTS.md
-"Estimate Deviations."
+The Bearer-token check fires **first** as a cheap escape
+hatch — most authenticated requests skip the DB SELECT
+entirely. The DB SELECT only fires when no Bearer is present,
+which already implies the request would fail the auth gate.
+
+The signature and behavior above are the final contract —
+plan-drafting confirmed during the promotion-gate walk. The
+implementing PR may adjust naming for stylistic consistency
+with sibling helpers; those adjustments surface in the PR
+body's `## Estimate Deviations` section per AGENTS.md
+"Plan-to-PR Completion Gate"; the behavior is bound and may
+not change without a plan amendment.
 
 ### Per-function helper invocation
 
 Every mutation Edge Function invokes
 `evaluateDemoModeRejection` at the **same logical position**:
 after request-body parse + validation, before the existing
-auth-gate call. If the helper returns a `Response`, the
-function returns that response. If it returns `null`, the
-function continues to its existing auth gate unchanged.
+auth-gate call. If the helper returns a body, the function
+wraps it with HTTP 403 using its own response composition
+(per the Helper-shape "body-not-Response" rationale above):
+
+- The three authoring functions (`save-draft`,
+  `publish-draft`, `unpublish-event`) call
+  `context.jsonResponse(403, demoBody)` — the
+  `_shared/authoring-http.ts` wrapper handles CORS
+  internally.
+- The two redemption functions (`redeem-entitlement`,
+  `reverse-entitlement-redemption`) call the function-local
+  `jsonResponse(403, demoBody, origin, dependencies.createCorsHeaders)`
+  — the same shape the existing 401 paths in those functions
+  already use (`Verified by:`
+  [`redeem-entitlement/index.ts:184-191`](/supabase/functions/redeem-entitlement/index.ts),
+  [`reverse-entitlement-redemption/index.ts:210-216`](/supabase/functions/reverse-entitlement-redemption/index.ts)).
+
+If the helper returns `null`, the function continues to its
+existing auth gate unchanged.
 
 The five call sites (line numbers are scoping-snapshot
 estimates re-verified at plan-drafting):
@@ -277,16 +360,21 @@ parse-first. Reorder mechanics:
 
 The reorder is **safe** because:
 
-- `validateRedeemPayload` and `validateReversePayload` are
-  cheap shape checks (plan-drafting reads each to confirm).
-  They do not perform CPU-amplification-class work pre-auth
-  the way `save-draft`'s `parseAuthoringGameDraftContent`
-  would — `save-draft`'s explicit CPU-amplification boundary
-  at [line 332-339](/supabase/functions/save-draft/index.ts)
-  is the load-bearing reasoning for keeping
-  `parseAuthoringGameDraftContent` post-auth there; no
-  analogous expensive parse exists in the redemption
-  validators.
+- `validateRedeemPayload`
+  ([`redeem-entitlement/index.ts:86-110`](/supabase/functions/redeem-entitlement/index.ts))
+  and `validateReversePayload`
+  ([`reverse-entitlement-redemption/index.ts:95-135`](/supabase/functions/reverse-entitlement-redemption/index.ts))
+  are pure shape checks: typeof guards, regex match
+  (`^[0-9]{4}$` on the four-digit code suffix), and trim. No
+  database reads, no parse-tree walks, no allocation of
+  meaningful size. They do NOT perform CPU-amplification-
+  class work pre-auth the way `save-draft`'s
+  `parseAuthoringGameDraftContent` would —
+  [`save-draft/index.ts:332-339`](/supabase/functions/save-draft/index.ts)'s
+  explicit CPU-amplification-boundary comment is the load-
+  bearing reasoning for keeping `parseAuthoringGameDraftContent`
+  post-auth there; no analogous expensive parse exists in the
+  redemption validators.
 - The existing 401 path is preserved — for an unauthenticated
   caller on a non-test slug, the helper returns `null` and
   the auth gate fires the existing 401. The only behavior
@@ -320,9 +408,13 @@ Each existing per-function Deno test under
 - **`tests/supabase/functions/unpublish-event.test.ts`** —
   same three.
 - **`tests/supabase/functions/redeem-entitlement.test.ts`** —
-  the same three plus a fourth: signed-in caller with invalid
+  the same three plus a fourth: **anon** caller with invalid
   payload → 400 fires (the case the reorder newly exposes;
-  previously the 401 fired before payload validation).
+  previously the 401 fired first because auth ran before parse,
+  so anon callers never reached payload validation; today
+  authenticated callers with invalid payloads already see 400
+  because auth succeeds first then validation runs, so the
+  authenticated case is unchanged).
 - **`tests/supabase/functions/reverse-entitlement-redemption.test.ts`**
   — same four assertions.
 
@@ -359,9 +451,10 @@ integration paths; a separate unit test file is unnecessary.
 
 Atomic with this phase's implementing PR:
 
-- This plan: `In draft` → `Proposed` (pre-PR, after the
-  promotion-gate self-review) → `Landed` (in the implementing
-  PR's Status edit per AGENTS.md "Plan-to-PR Completion Gate").
+- This plan: `Proposed` → `Landed` (in the implementing
+  PR's Status edit per AGENTS.md "Plan-to-PR Completion Gate";
+  the `In draft` → `Proposed` flip was completed on 2026-05-03
+  during the promotion-gate self-review).
 - `m3-demo-mode-auth-bypass.md` Phase Status table 3.3.1 row
   Status: `Proposed` → `Landed` with PR column populated.
 
@@ -426,11 +519,15 @@ PR's `## Estimate Deviations` section.
   allowlist; consumed by the helper via import. Not modified.
 - `supabase/functions/_shared/event-organizer-auth.ts`,
   `supabase/functions/_shared/redemption-operator-auth.ts`,
-  `supabase/functions/_shared/session-cookie.ts`,
   `supabase/functions/_shared/cors.ts`,
   `supabase/functions/_shared/authoring-http.ts` —
-  existing helpers; the new helper consumes them but does not
-  modify them.
+  existing helpers; the new helper consumes the CORS helper
+  for response shaping and reads the same `Authorization`
+  header pattern the auth gates do, but does not modify
+  them. `_shared/session-cookie.ts` is intentionally NOT
+  consumed — the mutation Edge Functions don't accept signed
+  session cookies as auth context, so the helper doesn't
+  check them.
 - `supabase/functions/read-demo-event/index.ts` — the 3.2
   read shim; unchanged.
 - All apps/web files — 3.3.2's scope; 3.3.1 is server-only.
@@ -597,8 +694,10 @@ Likely-relevant audits (estimate, per scoping decision
   pre-auth gating (analogous to `save-draft`'s
   CPU-amplification boundary); confirm no payload field
   carries auth-relevant state that the auth gate consumes;
-  confirm the new payload-validation 400 surfaces correctly
-  for authenticated callers.
+  confirm the newly-surfaced payload-validation 400 fires for
+  anon callers with invalid payloads on the two reordered
+  functions (previously they received 401 because auth ran
+  before parse).
 - **Allowlist-drift audit.** The helper consumes
   `isTestEventSlug` from the shared module; confirm no
   per-site slug literals are introduced anywhere in the diff
@@ -637,8 +736,11 @@ This phase explicitly does NOT ship:
 
 - **The apps/web mutation-control disabled-state UI.** Owned
   by 3.3.2.
-- **The apps/web noindex emit.** Owned by 3.3.2 (with spike
-  per AGENTS.md "Spike before plan for novel mechanisms").
+- **The apps/web noindex emit.** Owned by 3.3.2; mechanism
+  choice depends on the strength-of-guarantee question
+  3.3.2's scoping resolves first per the milestone-doc
+  Cross-Phase Decisions → "noindex emit shape on apps/web
+  bypass-rendered routes" entry.
 - **The Playwright e2e fixture extension.** Owned by 3.3.2.
 - **The M2 role-door copy revision in apps/site.** Owned by
   3.3.2; the M2 copy stays as shipped until 3.3.2 lands.
@@ -680,50 +782,53 @@ plan-implementation-level risks named here.
   redemption functions.** The two redemption functions are
   reordered from auth-first to parse-first; the new ordering
   exposes payload-validation work to unauthenticated callers.
-  Mitigation: scoping confirmed `validateRedeemPayload` and
-  `validateReversePayload` are cheap shape checks (no
-  CPU-amplification, no auth-relevant state); plan-drafting
-  re-confirms by reading each validator end-to-end; the
+  Mitigation: confirmed at plan-drafting that
+  `validateRedeemPayload`
+  ([`redeem-entitlement/index.ts:86-110`](/supabase/functions/redeem-entitlement/index.ts))
+  and `validateReversePayload`
+  ([`reverse-entitlement-redemption/index.ts:95-135`](/supabase/functions/reverse-entitlement-redemption/index.ts))
+  are pure shape checks (typeof + regex + trim) with no
+  CPU-amplification and no auth-relevant state; the
   Self-Review "Auth-vs-parse-ordering audit" walks the reorder
   specifically. The risk surfaces if a future change to either
-  validator introduces expensive work — the audit lives in
-  `docs/self-review-catalog.md` so future changes are gated.
-- **Helper's slug-resolution SELECT drifts from the auth
-  gate's event resolution.** The new helper SELECTs `slug`
-  from `game_events`; the existing auth gates may also SELECT
-  from `game_events` for their own predicates. If the two
-  SELECTs target different rows or different consistency
-  views, the demo-mode predicate could mis-match the
-  auth-gate's view. Mitigation: both SELECTs use service-
-  role privileges (bypassing RLS); `game_events.id` is the
-  canonical primary key; the lookup is deterministic.
-  Plan-drafting confirms by reading the existing auth-gate
-  helpers.
-- **Transient SELECT failure on `game_events` defers to the
-  existing auth gate, which could grant access.** The helper
-  returns `null` on missing-row or query-error to defer to the
-  existing auth gate. If the auth gate's behavior on a
-  transient failure is to fail-open (granting access), this
-  composition would silently extend bypass. Mitigation: the
-  existing auth-gate helpers' transient-failure semantics are
-  documented per the
+  validator introduces expensive work — the audit's existence
+  in `docs/self-review-catalog.md` is the trip-wire that
+  future changes are gated against.
+- **Transient SELECT failure on `game_events` interacts with
+  the existing auth gate's failure semantics.** The helper
+  returns `null` on missing-row or query-error, deferring to
+  the auth gate. Confirmed at plan-drafting that both auth-
+  gate helpers fail-closed: `authenticateEventOrganizerOrAdmin`
+  ([`event-organizer-auth.ts:30-101`](/supabase/functions/_shared/event-organizer-auth.ts))
+  returns `unauthenticated` on missing/invalid token, and
+  `forbidden` on RPC error per its explicit per-branch
+  treatment comment at lines 69-75; `authenticateRedemptionOperator`
+  ([`redemption-operator-auth.ts:26-58`](/supabase/functions/_shared/redemption-operator-auth.ts))
+  returns `unauthenticated` on token-validation failure with
+  no fail-open path. So the helper-returns-null → auth-gate
+  composition is safe: a transient SELECT failure on
+  `game_events` defers to the auth gate, which then either
+  authenticates the caller normally (real auth context
+  present) or rejects with 401/403 (no auth context). Per
+  the
   [composed-auth memory rule](/Users/kyle/.claude/projects/-Users-kyle-workspace-neighborly-scavenger-game/memory/feedback_composed_auth_error_semantics.md);
-  plan-drafting confirms each auth gate fail-closes (returns
-  401 on internal error, not 200). The Self-Review
-  "Composed-predicate auth-shape audit" walks the transient-
-  failure-per-branch case.
-- **The structured 403 response shape conflicts with existing
-  CORS handling.** The helper's response builds CORS headers
-  via `_shared/cors.ts`. Mitigation: the existing 401
-  responses on the same functions already use the CORS helper
-  (`Verified by:` plan-drafting reads each function's existing
-  401-response shape); the new 403 mirrors it.
-- **Helper signature drift between scoping snapshot and
-  plan-drafting.** Scoping named the working signature; plan-
-  drafting may adjust against on-disk `_shared/` conventions.
-  Mitigation: the contract binds the *behavior*, not the
-  signature; the signature change surfaces in the plan's
-  Naming section.
+  the Self-Review "Composed-predicate auth-shape audit"
+  walks this branch explicitly.
+- **CORS-pattern divergence between the authoring trio and
+  the redemption pair leaves one of the function-pattern
+  groups un-CORS'd by the new 403.** The five mutation
+  functions use two different CORS-response patterns
+  (authoring trio uses `context.jsonResponse` from the
+  `authoring-http.ts` wrapper; redemption pair uses a local
+  `jsonResponse` with explicit `origin` +
+  `dependencies.createCorsHeaders`). Mitigation: the helper
+  returns the rejection body only — not a `Response` — so each
+  call site composes its own 403 wrapping using its existing
+  per-function CORS pattern (per Contracts "Per-function
+  helper invocation"). The implementation walks each call
+  site against the existing 401 path's response composition
+  and mirrors the same shape with status 403 and the demo-
+  mode body.
 
 ## Backlog Impact
 
@@ -791,9 +896,12 @@ and the epic's
 - [`shared/events/testEventAllowlist.ts`](/shared/events/testEventAllowlist.ts) —
   the 3.2-shipped allowlist; consumed by
   `evaluateDemoModeRejection`.
-- [`supabase/functions/_shared/session-cookie.ts`](/supabase/functions/_shared/session-cookie.ts)
-  — `readVerifiedSession` is the no-auth-context check the
-  helper composes against.
+- [`supabase/functions/_shared/event-organizer-auth.ts`](/supabase/functions/_shared/event-organizer-auth.ts),
+  [`supabase/functions/_shared/redemption-operator-auth.ts`](/supabase/functions/_shared/redemption-operator-auth.ts),
+  [`supabase/functions/_shared/admin-auth.ts`](/supabase/functions/_shared/admin-auth.ts) —
+  the auth gates the helper composes before; their
+  `readBearerToken` shape is what the helper's
+  `noAuthContext` predicate mirrors.
 - [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts) —
   CORS helper the new helper's 403 response composes against.
 - [`get-redemption-status/index.ts`](/supabase/functions/get-redemption-status/index.ts) —
