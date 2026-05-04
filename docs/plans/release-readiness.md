@@ -683,55 +683,60 @@ How to run:
    - still open and not release-blocking for the current target — leave
      as-is
    - still open and release-blocking for the current target — mirror it
-     into the list below under
-     [Release-Blocking Open Questions](#release-blocking-open-questions),
-     with a link back to the canonical entry
+     into the **Release-blocking open questions** subheading of the
+     current pass entry in
+     [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md),
+     with a link back to the canonical entry, per the contract under
+     [Release-Blocking Open Questions](#release-blocking-open-questions)
+     below
    - answered in code, docs, or platform configuration — remove or update the
      entry in `open-questions.md` in the same PR
 2. Confirm any new unresolved decision surfaced during this pass is captured
    in `open-questions.md` before the pass closes, per
    [AGENTS.md](/AGENTS.md).
 3. For each decision listed in `backlog.md` as `decision`, confirm whether it
-   is expected to be decided before the release target. If yes, mirror under
-   [Release-Blocking Open Questions](#release-blocking-open-questions).
+   is expected to be decided before the release target. If yes, mirror it
+   into the current pass entry under the same **Release-blocking open
+   questions** subheading.
 
 Where findings live:
 
 - canonical tracking is [open-questions.md](/docs/open-questions.md)
-- release-blocking mirror lives in this doc only as a short reference list,
-  refreshed at each pass
+- release-blocking mirror lives in the **Release-blocking open
+  questions** subheading of the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md);
+  the [Release-Blocking Open Questions](#release-blocking-open-questions)
+  subsection in this file owns the contract, not the data
 
 Release bar (see G5):
 
-- every question listed under
-  [Release-Blocking Open Questions](#release-blocking-open-questions) is
-  either decided (and linked to the decision) or explicitly deferred with a
-  named owner and post-event plan
+- every question mirrored in the current pass entry's **Release-blocking
+  open questions** subheading is either decided (and linked to the
+  decision) or explicitly deferred with a named owner and post-event plan
 
 #### Release-Blocking Open Questions
 
-This subsection is refreshed at each quality check pass. The contents are a
-filtered view of [open-questions.md](/docs/open-questions.md) — items that block
-the current release target go here. Everything else stays in the canonical
-tracker.
+This subsection owns the **contract** for how items from
+[open-questions.md](/docs/open-questions.md) are mirrored as release
+blockers. The actual list — which can be empty — lives in the
+**Release-blocking open questions** subheading of the current pass entry
+in
+[`release-readiness-current.md`](/docs/tracking/release-readiness-current.md),
+not here, so that data and mirror cannot drift across passes.
 
-Refresh instructions:
+Mirror contract:
 
-- do not invent new entries here; mirror an entry from
-  [open-questions.md](/docs/open-questions.md) and link back
-- remove an entry when the underlying question is decided, answered in code,
-  or explicitly deferred past the current release target
-- if an entry has been deferred, record the deferral decision and owner
-  directly in [open-questions.md](/docs/open-questions.md), then remove it from
-  this list
-
-The list below was refreshed during the 2026-05-04 pass.
-
-- _no entries currently block the release target;
-  [open-questions.md](/docs/open-questions.md) lists no items as
-  release-blocking, and the residual M0 phase 0.3 verification questions
-  about cross-app cookie/token behavior are tracked against the
-  event-platform epic, not the Madrona launch milestone_
+- only items already present in
+  [open-questions.md](/docs/open-questions.md) qualify; do not invent
+  new entries during a pass
+- mirror the title and a link back to the canonical entry; do not
+  duplicate the question body
+- drop a mirrored entry when the underlying question is decided,
+  answered in code, or explicitly deferred past the current release
+  target
+- if an entry is deferred, record the deferral decision and owner
+  directly in [open-questions.md](/docs/open-questions.md); the next
+  pass entry will then naturally drop the mirror
 
 ## Pass Template
 

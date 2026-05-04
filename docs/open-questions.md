@@ -14,11 +14,14 @@ Use it when:
 If a question is answered in code, docs, or platform setup, update or remove it
 here in the same change.
 
-When a quality check pass runs against an upcoming release, the subset of these
-items that blocks the current release target is mirrored under
+When a quality check pass runs against an upcoming release, the subset of
+these items that blocks the current release target is mirrored under the
+**Release-blocking open questions** subheading of the current pass entry in
+[`release-readiness-current.md`](/docs/tracking/release-readiness-current.md);
+the contract for the mirror is defined under
 [Release-Blocking Open Questions in `release-readiness.md`](/docs/plans/release-readiness.md#release-blocking-open-questions).
-Do not duplicate the question body there; mirror the title and link back to
-this file.
+Do not duplicate the question body in the mirror; mirror the title and link
+back to this file.
 
 ## Product And Live Event Operation
 
