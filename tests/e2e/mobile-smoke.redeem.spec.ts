@@ -1,3 +1,14 @@
+/**
+ * The post-magic-link assertion below crosses an app boundary:
+ * `/auth/callback` is hosted by apps/site (Next.js) and the redeem
+ * SPA route by apps/web (Vite). Both run behind the proxy spawned by
+ * scripts/testing/run-auth-e2e-dev-server.cjs at
+ * http://127.0.0.1:4173, the same origin the fixture's redirect URL
+ * hardcodes. If the redeem suite hangs at "Signing you in…", the
+ * usual cause is a port collision (orphan `next dev` from a sibling
+ * worktree on :3000) — the proxy script's preflight names the
+ * conflicting PID.
+ */
 import { expect, test } from "@playwright/test";
 import {
   assertRedeemOutcomePersisted,

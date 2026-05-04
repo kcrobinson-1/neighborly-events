@@ -1,4 +1,17 @@
 import { expect, test } from "@playwright/test";
+/**
+ * The post-magic-link assertions below cross an app boundary:
+ * `/auth/callback` is hosted by apps/site (Next.js) and the
+ * redemptions SPA route by apps/web (Vite). Both run behind the
+ * proxy spawned by scripts/testing/run-auth-e2e-dev-server.cjs at
+ * http://127.0.0.1:4173, the same origin the fixture's redirect URL
+ * hardcodes. The unauthenticated direct-navigation block earlier in
+ * each test exercises only the apps/web SPA and does not depend on
+ * apps/site being reachable. If the suite hangs at "Signing you in…"
+ * after the magic-link goto, the usual cause is a port collision
+ * (orphan `next dev` from a sibling worktree on :3000) — the proxy
+ * script's preflight names the conflicting PID.
+ */
 import {
   ensureRedemptionsE2eFixture,
   installRedemptionsFunctionProxy,
