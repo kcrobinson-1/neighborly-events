@@ -8,6 +8,7 @@ import {
   adminUserId,
   createAuthoringHttpDependencies,
   createAuthoringRequest,
+  noopEvaluateDemoModeRejection,
   sampleDraft,
 } from "./authoring-helpers.ts";
 
@@ -37,6 +38,7 @@ Deno.test("save-draft rejects missing authentication", async () => {
       status: "unauthenticated",
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => {
       throw new Error("saveDraft should not be called");
     },
@@ -60,6 +62,7 @@ Deno.test("save-draft rejects authenticated callers who are neither organizer no
       status: "forbidden",
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => {
       throw new Error("saveDraft should not be called");
     },
@@ -88,6 +91,7 @@ Deno.test("save-draft rejects payloads without content.id before authentication"
       );
     },
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     parseAuthoringGameDraftContent: () => {
       parseCalls += 1;
       throw new Error(
@@ -121,6 +125,7 @@ Deno.test("save-draft rejects malformed draft content before persistence", async
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => {
       saveCalls += 1;
       return { data: null, error: null };
@@ -156,6 +161,7 @@ Deno.test("save-draft upserts the normalized draft and returns a safe summary", 
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async (input) => {
       capturedInput = input;
 
@@ -203,6 +209,7 @@ Deno.test("save-draft passes supplied event codes to persistence", async () => {
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async (input) => {
       capturedEventCode = input.eventCode;
 
@@ -237,6 +244,7 @@ Deno.test("save-draft rejects invalid event codes before persistence", async () 
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => {
       saveCalls += 1;
       return { data: null, error: null };
@@ -263,6 +271,7 @@ Deno.test("save-draft rejects slug changes on published events as 422", async ()
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => ({
       data: null,
       error: {
@@ -291,6 +300,7 @@ Deno.test("save-draft rejects event code changes on published events as 422", as
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => ({
       data: null,
       error: {
@@ -319,6 +329,7 @@ Deno.test("save-draft reports slug conflicts as 409", async () => {
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => ({
       data: null,
       error: {
@@ -347,6 +358,7 @@ Deno.test("save-draft reports event code conflicts as 409", async () => {
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     saveDraft: async () => ({
       data: null,
       error: {
@@ -367,4 +379,97 @@ Deno.test("save-draft reports event code conflicts as 409", async () => {
       'duplicate key value violates unique constraint "game_event_drafts_event_code_key"',
     error: "That code is already used by another event. Try a different one.",
   });
+});
+
+Deno.test("save-draft returns the demo-mode 403 short-circuit before authentication when helper rejects", async () => {
+  let authCalls = 0;
+  let saveCalls = 0;
+  const handler = createSaveDraftHandler({
+    ...defaultSaveDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => {
+      authCalls += 1;
+      throw new Error(
+        "authenticateEventOrganizerOrAdmin should not be called once the demo-mode helper rejects",
+      );
+    },
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: async () => ({
+      error: "demo_mode_read_only",
+      message: "Demo mode — sign in to make changes.",
+    }),
+    saveDraft: async () => {
+      saveCalls += 1;
+      return { data: null, error: null };
+    },
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ content: sampleDraft }),
+  );
+
+  assertEquals(response.status, 403);
+  assertEquals(await response.json(), {
+    error: "demo_mode_read_only",
+    message: "Demo mode — sign in to make changes.",
+  });
+  assertEquals(authCalls, 0);
+  assertEquals(saveCalls, 0);
+});
+
+Deno.test("save-draft preserves the existing 401 when the demo-mode helper defers (anon caller on a non-allowlist slug)", async () => {
+  const handler = createSaveDraftHandler({
+    ...defaultSaveDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => ({
+      error: "Authentication is required to author this event.",
+      status: "unauthenticated",
+    }),
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    saveDraft: async () => {
+      throw new Error("saveDraft should not be called");
+    },
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ content: sampleDraft }),
+  );
+
+  assertEquals(response.status, 401);
+  assertEquals(await response.json(), {
+    error: "Authentication is required to author this event.",
+  });
+});
+
+Deno.test("save-draft falls through to the existing auth gate when the demo-mode helper defers (signed-in caller on an allowlist slug)", async () => {
+  let authCalls = 0;
+  const handler = createSaveDraftHandler({
+    ...defaultSaveDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => {
+      authCalls += 1;
+      return {
+        status: "ok",
+        userId: adminUserId,
+      };
+    },
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    saveDraft: async (input) => ({
+      data: {
+        event_code: "TST",
+        id: input.content.id,
+        last_published_version_number: null,
+        name: input.content.name,
+        slug: input.content.slug,
+        updated_at: "2026-05-03T12:00:00.000Z",
+      },
+      error: null,
+    }),
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ content: sampleDraft }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(authCalls, 1);
 });

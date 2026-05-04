@@ -9,6 +9,10 @@ import {
   createAuthoringPostHandler,
   defaultAuthoringHttpDependencies,
 } from "../_shared/authoring-http.ts";
+import {
+  type DemoModeRejectionBody,
+  evaluateDemoModeRejection as evaluateDemoModeRejectionImpl,
+} from "../_shared/demo-mode-rejection.ts";
 import { authenticateEventOrganizerOrAdmin } from "../_shared/event-organizer-auth.ts";
 
 type DraftSaveRequestBody = {
@@ -53,6 +57,12 @@ const MAX_EVENT_CODE_GENERATION_ATTEMPTS = 20;
 export type SaveDraftHandlerDependencies = {
   authenticateEventOrganizerOrAdmin: typeof authenticateEventOrganizerOrAdmin;
   authoringHttp: AuthoringHttpDependencies;
+  evaluateDemoModeRejection: (
+    request: Request,
+    eventId: string,
+    supabaseUrl: string,
+    serviceRoleKey: string,
+  ) => Promise<DemoModeRejectionBody | null>;
   parseAuthoringGameDraftContent: typeof parseAuthoringGameDraftContent;
   saveDraft: (
     input: DraftSavePersistenceInput,
@@ -203,6 +213,17 @@ export const defaultSaveDraftHandlerDependencies: SaveDraftHandlerDependencies =
   {
     authenticateEventOrganizerOrAdmin,
     authoringHttp: defaultAuthoringHttpDependencies,
+    evaluateDemoModeRejection: (
+      request,
+      eventId,
+      supabaseUrl,
+      serviceRoleKey,
+    ) =>
+      evaluateDemoModeRejectionImpl({
+        eventId,
+        request,
+        supabaseAdmin: createServiceRoleClient(supabaseUrl, serviceRoleKey),
+      }),
     parseAuthoringGameDraftContent,
     saveDraft,
 };
@@ -346,6 +367,17 @@ export function createSaveDraftHandler(
             error: "Draft content is invalid.",
           },
         );
+      }
+
+      const demoBody = await dependencies.evaluateDemoModeRejection(
+        request,
+        rawContentId,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+      );
+
+      if (demoBody) {
+        return context.jsonResponse(403, demoBody);
       }
 
       const auth = await dependencies.authenticateEventOrganizerOrAdmin(

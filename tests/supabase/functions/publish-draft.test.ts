@@ -7,6 +7,7 @@ import {
   adminUserId,
   createAuthoringHttpDependencies,
   createAuthoringRequest,
+  noopEvaluateDemoModeRejection,
   sampleDraft,
 } from "./authoring-helpers.ts";
 
@@ -18,6 +19,7 @@ Deno.test("publish-draft rejects missing drafts", async () => {
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     loadDraft: async () => ({ data: null, error: null }),
     publishDraft: async () => {
       throw new Error("publishDraft should not be called");
@@ -44,6 +46,7 @@ Deno.test("publish-draft rejects invalid draft content before publishing", async
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     loadDraft: async () => ({
       data: {
         content: {
@@ -85,6 +88,7 @@ Deno.test("publish-draft calls the transactional RPC after authorization and sha
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     loadDraft: async () => ({
       data: {
         content: sampleDraft,
@@ -129,6 +133,112 @@ Deno.test("publish-draft calls the transactional RPC after authorization and sha
   });
 });
 
+Deno.test("publish-draft returns the demo-mode 403 short-circuit before authentication when helper rejects", async () => {
+  let authCalls = 0;
+  let publishCalls = 0;
+  const handler = createPublishDraftHandler({
+    ...defaultPublishDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => {
+      authCalls += 1;
+      throw new Error(
+        "authenticateEventOrganizerOrAdmin should not be called once the demo-mode helper rejects",
+      );
+    },
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: async () => ({
+      error: "demo_mode_read_only",
+      message: "Demo mode — sign in to make changes.",
+    }),
+    loadDraft: async () => {
+      throw new Error("loadDraft should not be called");
+    },
+    publishDraft: async () => {
+      publishCalls += 1;
+      return { data: null, error: null };
+    },
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ eventId: sampleDraft.id }),
+  );
+
+  assertEquals(response.status, 403);
+  assertEquals(await response.json(), {
+    error: "demo_mode_read_only",
+    message: "Demo mode — sign in to make changes.",
+  });
+  assertEquals(authCalls, 0);
+  assertEquals(publishCalls, 0);
+});
+
+Deno.test("publish-draft preserves the existing 401 when the demo-mode helper defers (anon caller on a non-allowlist slug)", async () => {
+  const handler = createPublishDraftHandler({
+    ...defaultPublishDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => ({
+      error: "Authentication is required to author this event.",
+      status: "unauthenticated",
+    }),
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    loadDraft: async () => {
+      throw new Error("loadDraft should not be called");
+    },
+    publishDraft: async () => {
+      throw new Error("publishDraft should not be called");
+    },
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ eventId: sampleDraft.id }),
+  );
+
+  assertEquals(response.status, 401);
+  assertEquals(await response.json(), {
+    error: "Authentication is required to author this event.",
+  });
+});
+
+Deno.test("publish-draft falls through to the existing auth gate when the demo-mode helper defers (signed-in caller on an allowlist slug)", async () => {
+  let authCalls = 0;
+  const handler = createPublishDraftHandler({
+    ...defaultPublishDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => {
+      authCalls += 1;
+      return {
+        status: "ok",
+        userId: adminUserId,
+      };
+    },
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    loadDraft: async () => ({
+      data: {
+        content: sampleDraft,
+        id: sampleDraft.id,
+        name: sampleDraft.name,
+        slug: sampleDraft.slug,
+      },
+      error: null,
+    }),
+    publishDraft: async () => ({
+      data: {
+        event_id: sampleDraft.id,
+        published_at: "2026-05-03T12:00:00.000Z",
+        slug: sampleDraft.slug,
+        version_number: 1,
+      },
+      error: null,
+    }),
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ eventId: sampleDraft.id }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(authCalls, 1);
+});
+
 Deno.test("publish-draft reports slug collisions as 409", async () => {
   const handler = createPublishDraftHandler({
     ...defaultPublishDraftHandlerDependencies,
@@ -137,6 +247,7 @@ Deno.test("publish-draft reports slug collisions as 409", async () => {
       userId: adminUserId,
     }),
     authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     loadDraft: async () => ({
       data: {
         content: sampleDraft,

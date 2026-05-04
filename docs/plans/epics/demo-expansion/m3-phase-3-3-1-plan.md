@@ -2,14 +2,14 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 The promotion-gate self-review walked the plan + scoping doc
 end-to-end on 2026-05-03 and resolved each plan-drafting
 deferral, including a load-bearing factoring change to the
 helper shape (returns body-not-Response so the helper composes
 against both CORS patterns the five mutation functions use)
-surfaced during the walk. The implementing PR flips Status to
+surfaced during the walk. The implementing PR flipped Status to
 `Landed` per AGENTS.md "Plan-to-PR Completion Gate." No commit
 SHAs in the Status block.
 
@@ -473,12 +473,33 @@ implementation time.
 ### New
 
 - `supabase/functions/_shared/demo-mode-rejection.ts` — the
-  new `evaluateDemoModeRejection` helper.
+  new `evaluateDemoModeRejection` helper, plus the exported
+  `DemoModeRejectionBody` type and the structural
+  `DemoModeRejectionSupabaseAdmin = Pick<ReturnType<typeof
+  createClient>, "from">` type alias used to type the
+  `supabaseAdmin` parameter (the alias avoids the lint
+  `no-explicit-any` triggered by `SupabaseClient<any, any,
+  any>`; behavior unchanged).
+- `tests/supabase/functions/demo-mode-rejection.test.ts` —
+  six-case helper unit-test file (Bearer present, allowlist +
+  anon, non-allowlist + anon, missing row, transient query
+  error, non-Bearer Authorization). Added during
+  implementation: the per-function tests stub
+  `evaluateDemoModeRejection` so they cannot make real network
+  calls under the project's `--allow-env --no-lock` Deno test
+  permissions, which means the plan's "implicit through the
+  five integration paths" coverage claim does not hold; the
+  unit-test file restores direct coverage of the helper's own
+  logic.
 - `docs/plans/epics/demo-expansion/m3-phase-3-3-1-plan.md` —
-  this file.
+  this file. Originally introduced in PR #166 at the
+  `In draft` → `Proposed` promotion gate; this PR's edit is
+  the Status flip to `Landed` plus the estimate reconciliation
+  in this section.
 - `docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-1.md`
-  — the scoping doc, created during this planning session
-  before the plan drafted.
+  — the scoping doc, also introduced in PR #166. Not edited
+  by this PR; deletes in batch at 3.3.2's PR per
+  Documentation Currency PR Gate.
 
 ### Modify
 
@@ -501,10 +522,20 @@ implementation time.
   payload-400 case.
 - `tests/supabase/functions/reverse-entitlement-redemption.test.ts`
   — same four-assertion extension.
+- `tests/supabase/functions/authoring-helpers.ts` — exports a
+  shared `noopEvaluateDemoModeRejection` constant the three
+  authoring tests share. Added during implementation; not in
+  the original Files To Touch estimate. The DRY constant
+  replaces three otherwise-identical inline async-no-op stubs
+  added at the new `evaluateDemoModeRejection` dependency
+  property across `save-draft.test.ts`, `publish-draft.test.ts`,
+  and `unpublish-event.test.ts`.
 - `docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md`
-  — Phase Status table row growth + 3.3.1 row Status flip +
-  Sequencing paragraph addition per Contracts "Doc-currency
-  edits."
+  — 3.3.1 row Status flip (`Proposed` → `Landed`) + PR column
+  populated. The Phase Status table row growth (3.3 → 3.3.1 +
+  3.3.2) and the Sequencing paragraph addition naming the
+  3.3.1/3.3.2 split shipped with the scoping doc in PR #166;
+  this PR does not re-grow the row or re-add the prose.
 
 ### Intentionally not touched
 

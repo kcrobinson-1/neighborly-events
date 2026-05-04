@@ -9,6 +9,10 @@ import {
   createAuthoringPostHandler,
   defaultAuthoringHttpDependencies,
 } from "../_shared/authoring-http.ts";
+import {
+  type DemoModeRejectionBody,
+  evaluateDemoModeRejection as evaluateDemoModeRejectionImpl,
+} from "../_shared/demo-mode-rejection.ts";
 import { authenticateEventOrganizerOrAdmin } from "../_shared/event-organizer-auth.ts";
 
 type PublishDraftRequestBody = {
@@ -37,6 +41,12 @@ type SupabasePersistenceResult<T> = {
 export type PublishDraftHandlerDependencies = {
   authenticateEventOrganizerOrAdmin: typeof authenticateEventOrganizerOrAdmin;
   authoringHttp: AuthoringHttpDependencies;
+  evaluateDemoModeRejection: (
+    request: Request,
+    eventId: string,
+    supabaseUrl: string,
+    serviceRoleKey: string,
+  ) => Promise<DemoModeRejectionBody | null>;
   loadDraft: (
     eventId: string,
     supabaseUrl: string,
@@ -93,6 +103,21 @@ export const defaultPublishDraftHandlerDependencies:
   PublishDraftHandlerDependencies = {
     authenticateEventOrganizerOrAdmin,
     authoringHttp: defaultAuthoringHttpDependencies,
+    evaluateDemoModeRejection: (
+      request,
+      eventId,
+      supabaseUrl,
+      serviceRoleKey,
+    ) =>
+      evaluateDemoModeRejectionImpl({
+        eventId,
+        request,
+        supabaseAdmin: createClient(supabaseUrl, serviceRoleKey, {
+          auth: {
+            persistSession: false,
+          },
+        }),
+      }),
     loadDraft,
     parseAuthoringGameDraftContent,
     publishDraft,
@@ -168,6 +193,17 @@ export function createPublishDraftHandler(
           400,
           { error: "Invalid publish payload." },
         );
+      }
+
+      const demoBody = await dependencies.evaluateDemoModeRejection(
+        request,
+        payload.eventId,
+        context.supabaseUrl,
+        context.serviceRoleKey,
+      );
+
+      if (demoBody) {
+        return context.jsonResponse(403, demoBody);
       }
 
       const auth = await dependencies.authenticateEventOrganizerOrAdmin(

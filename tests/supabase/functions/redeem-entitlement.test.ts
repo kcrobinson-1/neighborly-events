@@ -3,12 +3,17 @@ import type {
   RedeemEntitlementRequest,
   RedeemEntitlementRpcResponse,
 } from "../../../shared/redemption.ts";
+import type { DemoModeRejectionBody } from "../../../supabase/functions/_shared/demo-mode-rejection.ts";
 import {
   createRedeemEntitlementHandler,
   defaultRedeemHandlerDependencies,
   validateRedeemPayload,
 } from "../../../supabase/functions/redeem-entitlement/index.ts";
 import { createOriginRequest } from "./helpers.ts";
+
+const noopEvaluateDemoModeRejection = async (): Promise<
+  DemoModeRejectionBody | null
+> => null;
 
 Deno.test("validateRedeemPayload trims ids and requires a 4-digit suffix", () => {
   assertEquals(
@@ -115,6 +120,7 @@ Deno.test("redeem-entitlement returns 401 when operator auth is missing", async 
     getServiceRoleKey: () => "service-role-key",
     getSupabaseClientKey: () => "publishable-key",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
   });
 
   const response = await handler(
@@ -141,6 +147,7 @@ Deno.test("redeem-entitlement returns 401 when operator auth is invalid", async 
     getServiceRoleKey: () => "service-role-key",
     getSupabaseClientKey: () => "publishable-key",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
   });
 
   const response = await handler(
@@ -169,6 +176,7 @@ Deno.test("redeem-entitlement rejects malformed payloads before persistence", as
     getServiceRoleKey: () => "service-role-key",
     getSupabaseClientKey: () => "publishable-key",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     redeemEntitlement: async () => {
       redeemCalls += 1;
       return { data: null, error: null };
@@ -215,6 +223,7 @@ Deno.test("redeem-entitlement returns 200 for redeem success outcomes", async ()
       getServiceRoleKey: () => "service-role-key",
       getSupabaseClientKey: () => "publishable-key",
       getSupabaseUrl: () => "http://127.0.0.1:54321",
+      evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
       redeemEntitlement: async () => ({
         data: outcome,
         error: null,
@@ -264,6 +273,7 @@ Deno.test("redeem-entitlement maps RPC failure outcomes to HTTP statuses", async
       getServiceRoleKey: () => "service-role-key",
       getSupabaseClientKey: () => "publishable-key",
       getSupabaseUrl: () => "http://127.0.0.1:54321",
+      evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
       redeemEntitlement: async () => ({
         data: testCase.result,
         error: null,
@@ -297,6 +307,7 @@ Deno.test("redeem-entitlement treats persistence errors and null-data paths as i
     getServiceRoleKey: () => "service-role-key",
     getSupabaseClientKey: () => "publishable-key",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     redeemEntitlement: async () => ({
       data: null,
       error: { message: "rpc failed" },
@@ -333,6 +344,7 @@ Deno.test("redeem-entitlement forwards the caller bearer token into the RPC clie
     getServiceRoleKey: () => "service-role-key",
     getSupabaseClientKey: () => "publishable-key",
     getSupabaseUrl: () => "http://127.0.0.1:54321",
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
     redeemEntitlement: async (input, token, supabaseUrl, supabaseClientKey) => {
       capturedInput = input;
       capturedKey = supabaseClientKey;
@@ -369,4 +381,147 @@ Deno.test("redeem-entitlement forwards the caller bearer token into the RPC clie
   assertEquals(capturedToken, "user-token");
   assertEquals(capturedUrl, "http://127.0.0.1:54321");
   assertEquals(capturedKey, "publishable-key");
+});
+
+Deno.test("redeem-entitlement returns the demo-mode 403 short-circuit before authentication when helper rejects", async () => {
+  let authCalls = 0;
+  let redeemCalls = 0;
+  const handler = createRedeemEntitlementHandler({
+    ...defaultRedeemHandlerDependencies,
+    authenticateRedemptionOperator: async () => {
+      authCalls += 1;
+      throw new Error(
+        "authenticateRedemptionOperator should not be called once the demo-mode helper rejects",
+      );
+    },
+    evaluateDemoModeRejection: async () => ({
+      error: "demo_mode_read_only",
+      message: "Demo mode — sign in to make changes.",
+    }),
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSupabaseClientKey: () => "publishable-key",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    redeemEntitlement: async () => {
+      redeemCalls += 1;
+      return { data: null, error: null };
+    },
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({ codeSuffix: "0427", eventId: "event-1" }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 403);
+  assertEquals(await response.json(), {
+    error: "demo_mode_read_only",
+    message: "Demo mode — sign in to make changes.",
+  });
+  assertEquals(authCalls, 0);
+  assertEquals(redeemCalls, 0);
+});
+
+Deno.test("redeem-entitlement preserves the existing 401 when the demo-mode helper defers (anon caller on a non-allowlist slug)", async () => {
+  const handler = createRedeemEntitlementHandler({
+    ...defaultRedeemHandlerDependencies,
+    authenticateRedemptionOperator: async () => ({
+      error: "Operator authentication is required.",
+      status: "unauthenticated",
+    }),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSupabaseClientKey: () => "publishable-key",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({ codeSuffix: "0427", eventId: "event-1" }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 401);
+  assertEquals(await response.json(), {
+    error: "Operator authentication is required.",
+  });
+});
+
+Deno.test("redeem-entitlement falls through to the existing auth gate when the demo-mode helper defers (signed-in caller on an allowlist slug)", async () => {
+  let authCalls = 0;
+  const handler = createRedeemEntitlementHandler({
+    ...defaultRedeemHandlerDependencies,
+    authenticateRedemptionOperator: async () => {
+      authCalls += 1;
+      return {
+        status: "ok",
+        token: "user-token",
+        userId: "user-1",
+      };
+    },
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSupabaseClientKey: () => "publishable-key",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    redeemEntitlement: async () => ({
+      data: {
+        outcome: "success",
+        redeemed_at: "2026-05-03T12:00:00.000Z",
+        redeemed_by_role: "agent",
+        result: "redeemed_now",
+      },
+      error: null,
+    }),
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({ codeSuffix: "0427", eventId: "event-1" }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(authCalls, 1);
+});
+
+Deno.test("redeem-entitlement surfaces the payload-validation 400 for an anon caller with an invalid payload (newly exposed by parse-then-auth reorder)", async () => {
+  let authCalls = 0;
+  let demoCalls = 0;
+  const handler = createRedeemEntitlementHandler({
+    ...defaultRedeemHandlerDependencies,
+    authenticateRedemptionOperator: async () => {
+      authCalls += 1;
+      throw new Error(
+        "authenticateRedemptionOperator should not be called when payload validation rejects first",
+      );
+    },
+    evaluateDemoModeRejection: async () => {
+      demoCalls += 1;
+      throw new Error(
+        "evaluateDemoModeRejection should not be called when payload validation rejects first",
+      );
+    },
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSupabaseClientKey: () => "publishable-key",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({ codeSuffix: "42A", eventId: "event-1" }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 400);
+  assertEquals(await response.json(), { error: "Invalid redeem payload." });
+  assertEquals(authCalls, 0);
+  assertEquals(demoCalls, 0);
 });
