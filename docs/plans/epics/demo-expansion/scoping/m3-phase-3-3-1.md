@@ -898,9 +898,3 @@ scoping and plan":
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit catalog plan-drafting walks against this phase's
   diff surface.
-- [`AGENTS.md`](/AGENTS.md) — Phase Planning Sessions, "PR-count
-  predictions need a branch test" (and "PR-count predictions
-  are not contracts"), "Scoping owns / plan owns,"
-  "Reality-check gate between scoping and plan,"
-  "Plan-to-PR Completion Gate," "Plan content is a mix of
-  rules and estimates."

@@ -685,8 +685,9 @@ Likely-relevant audits (estimate, per scoping decision
   helper returns `null` to defer to the existing auth gate;
   the audit confirms this branch is documented and that the
   transient-failure case doesn't accidentally bypass the
-  rejection (per the
-  [composed-auth memory rule](/Users/kyle/.claude/projects/-Users-kyle-workspace-neighborly-scavenger-game/memory/feedback_composed_auth_error_semantics.md)).
+  rejection. Composed predicates over multiple async calls
+  must name per-branch error treatment so transient failures
+  on one branch don't silently grant or silently deny.
 - **Auth-vs-parse-ordering audit.** The two redemption
   functions reorder parse above auth. The audit walks each
   reorder for trust-boundary regressions: confirm no
@@ -809,11 +810,9 @@ plan-implementation-level risks named here.
   composition is safe: a transient SELECT failure on
   `game_events` defers to the auth gate, which then either
   authenticates the caller normally (real auth context
-  present) or rejects with 401/403 (no auth context). Per
-  the
-  [composed-auth memory rule](/Users/kyle/.claude/projects/-Users-kyle-workspace-neighborly-scavenger-game/memory/feedback_composed_auth_error_semantics.md);
-  the Self-Review "Composed-predicate auth-shape audit"
-  walks this branch explicitly.
+  present) or rejects with 401/403 (no auth context). The
+  Self-Review "Composed-predicate auth-shape audit" walks
+  this transient-failure-per-branch case explicitly.
 - **CORS-pattern divergence between the authoring trio and
   the redemption pair leaves one of the function-pattern
   groups un-CORS'd by the new 403.** The five mutation
@@ -909,10 +908,3 @@ and the epic's
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit catalog plan-drafting walks against this phase's diff
   surface.
-- [`AGENTS.md`](/AGENTS.md) — Phase Planning Sessions, "PR-count
-  predictions need a branch test" (and "PR-count predictions
-  are not contracts"), "Scoping owns / plan owns,"
-  "Reality-check gate between scoping and plan,"
-  "Plan-to-PR Completion Gate,"
-  "`In draft` → `Proposed` promotion gate,"
-  "Plan content is a mix of rules and estimates."
