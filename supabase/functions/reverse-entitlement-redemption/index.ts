@@ -6,6 +6,10 @@ import type {
   ReverseEntitlementRedemptionRpcResponse,
 } from "../../../shared/redemption.ts";
 import {
+  type DemoModeRejectionBody,
+  evaluateDemoModeRejection as evaluateDemoModeRejectionImpl,
+} from "../_shared/demo-mode-rejection.ts";
+import {
   authenticateRedemptionOperator,
   type RedemptionOperatorAuthResult,
 } from "../_shared/redemption-operator-auth.ts";
@@ -20,6 +24,12 @@ type ReverseHandlerDependencies = {
     serviceRoleKey: string,
   ) => Promise<RedemptionOperatorAuthResult>;
   createCorsHeaders: typeof createCorsHeaders;
+  evaluateDemoModeRejection: (
+    request: Request,
+    eventId: string,
+    supabaseUrl: string,
+    serviceRoleKey: string,
+  ) => Promise<DemoModeRejectionBody | null>;
   getAllowedOrigin: typeof getAllowedOrigin;
   getServiceRoleKey: () => string | undefined;
   getSupabaseClientKey: () => string | undefined;
@@ -38,6 +48,16 @@ type ReverseHandlerDependencies = {
 export const defaultReverseHandlerDependencies: ReverseHandlerDependencies = {
   authenticateRedemptionOperator,
   createCorsHeaders,
+  evaluateDemoModeRejection: (request, eventId, supabaseUrl, serviceRoleKey) =>
+    evaluateDemoModeRejectionImpl({
+      eventId,
+      request,
+      supabaseAdmin: createClient(supabaseUrl, serviceRoleKey, {
+        auth: {
+          persistSession: false,
+        },
+      }),
+    }),
   getAllowedOrigin,
   getServiceRoleKey: () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
   getSupabaseClientKey: () =>
@@ -201,6 +221,35 @@ export function createReverseEntitlementRedemptionHandler(
       );
     }
 
+    const payload = validateReversePayload(
+      await request.json().catch(() => null),
+    );
+
+    if (!payload) {
+      return jsonResponse(
+        400,
+        { error: "Invalid redemption reversal payload." },
+        origin,
+        dependencies.createCorsHeaders,
+      );
+    }
+
+    const demoBody = await dependencies.evaluateDemoModeRejection(
+      request,
+      payload.eventId,
+      supabaseUrl,
+      serviceRoleKey,
+    );
+
+    if (demoBody) {
+      return jsonResponse(
+        403,
+        demoBody,
+        origin,
+        dependencies.createCorsHeaders,
+      );
+    }
+
     const auth = await dependencies.authenticateRedemptionOperator(
       request,
       supabaseUrl,
@@ -211,19 +260,6 @@ export function createReverseEntitlementRedemptionHandler(
       return jsonResponse(
         401,
         { error: auth.error },
-        origin,
-        dependencies.createCorsHeaders,
-      );
-    }
-
-    const payload = validateReversePayload(
-      await request.json().catch(() => null),
-    );
-
-    if (!payload) {
-      return jsonResponse(
-        400,
-        { error: "Invalid redemption reversal payload." },
         origin,
         dependencies.createCorsHeaders,
       );
