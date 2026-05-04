@@ -133,7 +133,8 @@ drafts and as its PR merges.
 | --- | --- | --- | --- | --- |
 | 3.1 | Demo-mode data-access-semantics decision (doc-only) | [m3-phase-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md) | Landed | this PR |
 | 3.2 | Demo-mode bypass — read side | [m3-phase-3-2-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-2-plan.md) | Landed | this PR |
-| 3.3 | Demo-mode bypass — write side + M3 closure | _pending 3.3 phase planning_ | Proposed | _pending_ |
+| 3.3.1 | Demo-mode bypass — write-side server rejection | [m3-phase-3-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-3-1-plan.md) | Proposed | _pending_ |
+| 3.3.2 | Demo-mode bypass — client UI + noindex + M3 closer | _pending 3.3.2 phase planning_ | Proposed | _pending_ |
 
 The 3.2-as-single-row estimate did not hold. Phase 3.2's
 plan-drafting ran AGENTS.md "PR-count predictions need a branch
@@ -161,6 +162,30 @@ trade-space 3.1 walked; the 2-shape is the chosen ship order.
 The 3-shape (sandbox-ephemeral) remains not in scope for M3
 — it stays a live candidate for second-iteration M4–M6
 scoping.
+
+The 3.3-as-single-row estimate also did not hold. Phase
+3.3's plan-drafting (this scoping session, 2026-05-03) ran
+AGENTS.md "PR-count predictions need a branch test" against
+actually-merged 3.2 code and picked a 2-shape along a server
+/ client+closer seam: 3.3.1 isolates the trust-boundary work
+(the new shared `evaluateDemoModeRejection` helper, helper
+wiring across the five mutation Edge Functions, and the
+auth-vs-parse ordering normalization on the two redemption
+functions that today authenticate before parsing payload),
+and 3.3.2 ships the browser-shape work (apps/web mutation-
+control disabled-state UI, the apps/web noindex hook +
+emit, the Playwright e2e fixture extension, the apps/site
+M2 role-door copy revision, the M3 doc-currency map, and
+the M3 milestone-doc + epic Status flips). The branch-test
+analysis is recorded canonically at
+[`scoping/m3-phase-3-3-1.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-1.md)
+decision 1; the load-bearing reason for splitting (versus
+the original 3.1-pre-authorized 1-PR shape) is that the
+auth-vs-parse-ordering reorder on the two redemption
+functions is subtle trust-boundary work that benefits from
+review attention undiluted by frontend / noindex / doc-
+closure noise. 3.3.2's plan-drafting runs after 3.3.1
+merges per AGENTS.md "Phase Planning Sessions" cadence.
 
 - **1-implementation-phase shape (3.2 alone).** Likely if 3.1
   chooses **read-only browse**: the bypass surfaces add an
@@ -204,12 +229,21 @@ Phase 3.2's plan-drafting ran AGENTS.md "PR-count predictions
 need a branch test" against actually-merged code and picked
 the 2-shape per the canonical analysis at
 [`scoping/m3-phase-3-2.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-2.md)
-decision 1. The M3-closing responsibility (milestone-doc Phase
-Status flips for the 3.3 row, milestone-doc top-level Status
-flip, epic Milestone Status table flip, doc currency across
-README + architecture + product + operations, copy revision on
-M2's role-doors) travels with phase 3.3 because 3.3 ships
-last. The open-questions.md closure for the
+decision 1. Phase 3.3's plan-drafting (2026-05-03) ran the
+same branch test and split phase 3.3 into 3.3.1 (server
+write-rejection) + 3.3.2 (client UI + noindex + M3 closer)
+per the canonical analysis at
+[`scoping/m3-phase-3-3-1.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-1.md)
+decision 1. The M3-closing responsibility (milestone-doc
+Phase Status flip for the 3.3.2 row, milestone-doc top-level
+Status flip, epic Milestone Status table flip, doc currency
+across README + architecture + product + operations, copy
+revision on M2's role-doors) travels with phase 3.3.2
+because 3.3.2 ships last. Phase 3.3.1's PR flips only its
+own row Status and its own plan Status; it does not touch
+the milestone-doc top Status, the epic Milestone Status
+table, or any of the closer doc-currency targets. The
+open-questions.md closure for the
 "Demo-mode data-access semantics" entry already shipped in
 phase 3.1's PR per the Documentation Currency assignment
 below.
@@ -223,32 +257,40 @@ flowchart LR
     M2[M2<br/>Home-page rebuild<br/>+ role-door cards]
     P31[3.1<br/>Demo-mode<br/>data-access-semantics<br/>decision]
     P32[3.2<br/>Demo-mode bypass<br/>read side]
-    P33[3.3<br/>Demo-mode bypass<br/>write side<br/>+ M3 closure]
+    P331[3.3.1<br/>Demo-mode bypass<br/>write-side server<br/>rejection]
+    P332[3.3.2<br/>Demo-mode bypass<br/>client UI + noindex<br/>+ M3 closer]
 
     P31 --> P32
-    P32 --> P33
-    M2 --> P33
+    P32 --> P331
+    P331 --> P332
+    M2 --> P332
 ```
 
-**Hard dependency on 3.1.** 3.2 (and 3.3) depend on 3.1 because
-3.1 settles the data-access-semantics contract — covering both
-the read-side mediation strategy (which is in scope under all
-three options because mounting the bypassed pages alone is not
-sufficient when the data fetches downstream are RLS-gated) and
-the write-side contract — that 3.2's implementation translates
-into route guards and Edge-Function-mediated reads, and that
-3.3's implementation translates into write-side rejection,
-mutation-control UI, and the M3 closer. Plan-drafting against
-an unsettled data-access-semantics decision would have produced
-a contract that reshapes mid-flight when 3.1's outcome arrives,
-which is the exact churn AGENTS.md "Defer rather than
-over-resolve" exists to prevent. **Hard dependency between 3.2
-and 3.3.** 3.3 depends on 3.2 because 3.3's plan-drafting reads
-3.2's merged code per AGENTS.md "Phase Planning Sessions"
-cadence ("plan-drafting runs against actually-merged earlier
-phases") — the read-only render path 3.2 lands is the surface
-3.3's mutation-control disabled-state shape decision is made
-against per
+**Hard dependency on 3.1.** 3.2, 3.3.1, and 3.3.2 all depend on
+3.1 because 3.1 settles the data-access-semantics contract —
+covering both the read-side mediation strategy (which is in
+scope under all three options because mounting the bypassed
+pages alone is not sufficient when the data fetches downstream
+are RLS-gated) and the write-side contract — that 3.2's
+implementation translates into route guards and Edge-Function-
+mediated reads, that 3.3.1's implementation translates into
+the server-side write rejection across the five mutation
+functions, and that 3.3.2's implementation translates into the
+client-side disabled-state UI + noindex emit + M3 closer.
+Plan-drafting against an unsettled data-access-semantics
+decision would have produced a contract that reshapes mid-
+flight when 3.1's outcome arrives, which is the exact churn
+AGENTS.md "Defer rather than over-resolve" exists to prevent.
+**Hard dependency between 3.2 and 3.3.1.** 3.3.1's plan-
+drafting reads 3.2's merged code per AGENTS.md "Phase Planning
+Sessions" cadence; the allowlist module 3.2 ships is the
+predicate input to the new helper. **Hard dependency between
+3.3.1 and 3.3.2.** 3.3.2's plan-drafting reads 3.3.1's merged
+code per the same cadence — the structured 403 error shape
+3.3.1 lands is what 3.3.2's client error handler switches on,
+and the read-only render path 3.2 + 3.3.1 left in place is the
+surface 3.3.2's mutation-control disabled-state shape decision
+is made against per
 [`m3-phase-3-1-plan.md` Contracts item 6](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)
 + AGENTS.md "Bans on surface require rendering the
 consequence."
@@ -259,20 +301,19 @@ bypass mechanism — the three apps/web event-route surfaces are
 reachable by URL today and will be after M3 lands regardless of
 the home-page's state — but M2 **is** a strict ship-blocker for
 the M3-closing copy revision on M2's Organizer + Volunteer
-role-door cards, which is the M3-closer's deliverable. With the
-2-shape split settled at 3.2's plan-drafting time, the M3-closer
-is phase 3.3, so the graph shows `M2 --> P33` to make the
-narrower-than-the-whole-phase prerequisite explicit per
-AGENTS.md "Phase dependency graph" ("the upstream milestone
-appears as a dependency-only node so prerequisites are
-explicit"). The arrow's interpretation is "M2 blocks 3.3's
-closer-PR copy-revision deliverable," not "M2 blocks 3.3's
-write-side bypass work." (M2 landed ahead of M3 milestone
-planning, so the constraint is satisfied in practice for the
-expected ship order; the arrow records the structural
-relationship the doc would still assert if scheduling ever
-inverted, exactly as the M2 milestone doc documents for its
-own 2.2/2.3 ship-order constraint.)
+role-door cards, which is the M3-closer's deliverable. With
+the 2-shape split for 3.3 settled at 3.3's plan-drafting time
+(2026-05-03), the M3-closer is phase 3.3.2, so the graph shows
+`M2 --> P332` to make the narrower-than-the-whole-phase
+prerequisite explicit per AGENTS.md "Phase dependency graph"
+("the upstream milestone appears as a dependency-only node so
+prerequisites are explicit"). The arrow's interpretation is
+"M2 blocks 3.3.2's closer-PR copy-revision deliverable," not
+"M2 blocks 3.3.1's server-side write rejection." (M2 landed
+ahead of M3 milestone planning, so the constraint is satisfied
+in practice for the expected ship order; the arrow records the
+structural relationship the doc would still assert if
+scheduling ever inverted.)
 
 **Plan-drafting cadence.** Phase 3.1's scoping doc and plan doc
 draft just-in-time at M3-start, **not in parallel with M2's
@@ -288,8 +329,9 @@ contract that this milestone doc binds M3 to revise on close);
 plan-drafting against an unmerged M2 phase 2.3 introduces the
 same churn risk as plan-drafting 3.2 against unsettled 3.1.
 Recommended cadence: M2 lands → 3.1 scoping + plan drafts → 3.1
-PR merges → 3.2 scoping + plan drafts → 3.2 PR merges → 3.3
-scoping + plan drafts → 3.3 PR merges (closes M3). Each plan
+PR merges → 3.2 scoping + plan drafts → 3.2 PR merges → 3.3.1
+scoping + plan drafts → 3.3.1 PR merges → 3.3.2 scoping + plan
+drafts → 3.3.2 PR merges (closes M3). Each plan
 drafts against the previous phase's actually-merged code.
 
 **Cross-phase coordination is thin.** 3.1 produces a written
@@ -574,14 +616,57 @@ named.
 - **noindex emit shape on apps/web bypass-rendered routes.**
   apps/web is a Vite + React SPA per [`docs/architecture.md`](/docs/architecture.md);
   its head-tag emit pattern differs from apps/site's Next.js
-  metadata API. Whether bypass routes inject `<meta
-  name="robots" content="noindex,nofollow">` via a per-page
-  effect, a dispatcher-level head-manager, or another shape is
-  phase-time. **Owned by phase 3.2+.** Reality-check inputs:
-  current apps/web head-tag handling (search for existing
-  `document.title` mutations, react-helmet usage, or any meta-
-  tag injection pattern); the apps/site noindex-emit shape
-  for cross-app consistency reference.
+  metadata API. **Owned by phase 3.3.2.** The load-bearing
+  question 3.3.2's scoping must answer is **strength of
+  guarantee, not implementation feasibility.** Two cases:
+  - *If noindex on bypass routes is a soft demo-hygiene
+    signal* — the cost of a missed tag is partner confusion
+    or one stray search result during the demo window — then
+    a client-side mechanism (a `useNoindex()` hook calling
+    `useEffect` to append a robots `<meta>`, or react-helmet-
+    async, or an equivalent) is appropriate. Appending a meta
+    tag after React renders is ordinary DOM behavior; no
+    pre-plan spike is needed to prove the mechanism works.
+    The implementing PR's automated coverage (a Playwright
+    assertion of meta-tag presence on a bypass route + a
+    negative assertion on a non-bypass route) catches
+    implementation regressions; a missed tag is a normal
+    bugfix, not a launch blocker.
+  - *If noindex on bypass routes is a hard invariant
+    equivalent to apps/site's server-rendered metadata* — the
+    cost of a missed tag is a search engine indexing the
+    test-event surfaces, which violates the trust boundary
+    the milestone is supposed to protect — then a client-side
+    hook is the **wrong class of solution**. Crawlers that
+    skip JS, fetch the route before React mounts, or honor
+    only response headers will miss the tag; the SPA's
+    initial HTML emits no robots tag regardless of route. In
+    this case the investigation focuses on a server-delivered
+    mechanism: an `X-Robots-Tag: noindex, nofollow` response
+    header set by Vercel for path patterns matching
+    `/event/<test-slug>/*`, a Vercel rewrite to a
+    pre-rendered shell with the tag baked in, or moving the
+    bypass-target shells to apps/site's Next.js metadata API
+    where server-rendered emit is native.
+  3.3.2's scoping resolves the strength-of-guarantee question
+  first (against the partner audience the noindex protects
+  and the consequence of a missed tag); the implementation
+  mechanism falls out of that answer. Reality-check inputs
+  for the strength question: the
+  [`docs/architecture.md`](/docs/architecture.md)
+  trust-boundary section's existing language about
+  test-event noindex; the apps/site noindex-emit shape
+  (which IS server-rendered, providing one anchor for "what
+  hard-invariant noindex looks like in this codebase"); the
+  epic's Out Of Scope statement on public indexing of test
+  events for the partner-vs-public threat model. Reality-
+  check inputs for the implementation mechanism (whichever
+  class is picked): current apps/web head-tag handling
+  (search for existing `document.title` mutations,
+  react-helmet usage, or any meta-tag injection pattern);
+  current apps/web Vercel deploy config for header / rewrite
+  precedent; the apps/site `generateMetadata` shape for
+  cross-app consistency reference.
 - **Test-event-allowlist enforcement assertion.** The epic
   Risk Register names "pgTAP or equivalent assertions that
   allowlist membership is honored uniformly" as the
