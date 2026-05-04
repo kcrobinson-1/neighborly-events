@@ -133,7 +133,7 @@ drafts and as its PR merges.
 | --- | --- | --- | --- | --- |
 | 3.1 | Demo-mode data-access-semantics decision (doc-only) | [m3-phase-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md) | Landed | this PR |
 | 3.2 | Demo-mode bypass — read side | [m3-phase-3-2-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-2-plan.md) | Landed | this PR |
-| 3.3.1 | Demo-mode bypass — write-side server rejection | [m3-phase-3-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-3-1-plan.md) | Proposed | _pending_ |
+| 3.3.1 | Demo-mode bypass — write-side server rejection | [m3-phase-3-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-3-1-plan.md) | Landed | this PR |
 | 3.3.2 | Demo-mode bypass — client UI + noindex + M3 closer | _pending 3.3.2 phase planning_ | Proposed | _pending_ |
 
 The 3.2-as-single-row estimate did not hold. Phase 3.2's
