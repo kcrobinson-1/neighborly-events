@@ -1,6 +1,7 @@
 import { lazy, type ReactNode, Suspense } from "react";
 import { EventAdminPage } from "./pages/EventAdminPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
+import { LazyRouteErrorBoundary } from "./pages/LazyRouteErrorBoundary";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { RouteStateShell } from "./pages/RouteStateShell";
 import {
@@ -82,22 +83,29 @@ function getPageContent(
   if (matchedRedeem) {
     return (
       <ThemeScope theme={getThemeForSlug(matchedRedeem.slug)}>
-        <Suspense
-          fallback={
-            <LazyRouteFallback
-              body="Loading the redeem surface for this event."
-              chip="Loading redeem"
-              onNavigate={navigate}
-              title="Preparing redeem"
-            />
-          }
+        <LazyRouteErrorBoundary
+          body="We couldn't load the redeem surface. Reload to try again."
+          chip="Redeem unavailable"
+          onNavigateHome={() => navigate(routes.home)}
+          title="Couldn't load this section"
         >
-          <EventRedeemPage
-            key={matchedRedeem.slug}
-            onNavigate={navigate}
-            slug={matchedRedeem.slug}
-          />
-        </Suspense>
+          <Suspense
+            fallback={
+              <LazyRouteFallback
+                body="Loading the redeem surface for this event."
+                chip="Loading redeem"
+                onNavigate={navigate}
+                title="Preparing redeem"
+              />
+            }
+          >
+            <EventRedeemPage
+              key={matchedRedeem.slug}
+              onNavigate={navigate}
+              slug={matchedRedeem.slug}
+            />
+          </Suspense>
+        </LazyRouteErrorBoundary>
       </ThemeScope>
     );
   }
@@ -107,22 +115,29 @@ function getPageContent(
   if (matchedRedemptions) {
     return (
       <ThemeScope theme={getThemeForSlug(matchedRedemptions.slug)}>
-        <Suspense
-          fallback={
-            <LazyRouteFallback
-              body="Loading the redemption monitoring surface for this event."
-              chip="Loading redemptions"
-              onNavigate={navigate}
-              title="Preparing redemptions"
-            />
-          }
+        <LazyRouteErrorBoundary
+          body="We couldn't load the redemption monitoring surface. Reload to try again."
+          chip="Redemptions unavailable"
+          onNavigateHome={() => navigate(routes.home)}
+          title="Couldn't load this section"
         >
-          <EventRedemptionsPage
-            key={matchedRedemptions.slug}
-            onNavigate={navigate}
-            slug={matchedRedemptions.slug}
-          />
-        </Suspense>
+          <Suspense
+            fallback={
+              <LazyRouteFallback
+                body="Loading the redemption monitoring surface for this event."
+                chip="Loading redemptions"
+                onNavigate={navigate}
+                title="Preparing redemptions"
+              />
+            }
+          >
+            <EventRedemptionsPage
+              key={matchedRedemptions.slug}
+              onNavigate={navigate}
+              slug={matchedRedemptions.slug}
+            />
+          </Suspense>
+        </LazyRouteErrorBoundary>
       </ThemeScope>
     );
   }
