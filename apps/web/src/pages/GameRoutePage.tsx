@@ -1,7 +1,8 @@
-import { type ReactNode, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { featuredGameSlug, type GameConfig } from "../data/games";
 import { loadPublishedGameBySlug } from "../lib/gameContentApi";
 import { GamePage } from "./GamePage";
+import { RouteStateShell } from "./RouteStateShell";
 import { routes } from "../../../../shared/urls";
 
 type GameRoutePageProps = {
@@ -14,50 +15,6 @@ type GameRouteState =
   | { status: "unavailable" }
   | { game: GameConfig; status: "ready" }
   | { message: string; status: "error" };
-
-function RouteStateShell(
-  {
-    title,
-    body,
-    actions,
-    chip,
-    onNavigateHome,
-  }: {
-    actions: ReactNode;
-    body: string;
-    chip: string;
-    onNavigateHome: () => void;
-    title: string;
-  },
-) {
-  return (
-    <section className="game-layout">
-      <nav className="sample-nav">
-        <button
-          className="text-link"
-          onClick={onNavigateHome}
-          type="button"
-        >
-          Back to Neighborly Events
-        </button>
-      </nav>
-
-      <section className="app-card">
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">Published event route</p>
-            <h1>{title}</h1>
-          </div>
-        </header>
-        <section className="panel">
-          <span className="chip">{chip}</span>
-          <p>{body}</p>
-          <div className="not-found-actions">{actions}</div>
-        </section>
-      </section>
-    </section>
-  );
-}
 
 /** Resolves a route slug into published content before rendering the game shell. */
 export function GameRoutePage({ onNavigate, slug }: GameRoutePageProps) {

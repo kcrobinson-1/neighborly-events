@@ -1,17 +1,52 @@
-import type { ReactNode } from "react";
+import { lazy, type ReactNode, Suspense } from "react";
 import { EventAdminPage } from "./pages/EventAdminPage";
-import { EventRedeemPage } from "./pages/EventRedeemPage";
-import { EventRedemptionsPage } from "./pages/EventRedemptionsPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { RouteStateShell } from "./pages/RouteStateShell";
 import {
   matchEventAdminPath,
   matchGamePath,
   matchGameRedeemPath,
   matchGameRedemptionsPath,
+  routes,
 } from "../../../shared/urls";
 import { ThemeScope, getThemeForSlug } from "../../../shared/styles";
 import { usePathnameNavigation } from "./usePathnameNavigation";
+
+const EventRedeemPage = lazy(() =>
+  import("./pages/EventRedeemPage").then((module) => ({
+    default: module.EventRedeemPage,
+  }))
+);
+
+const EventRedemptionsPage = lazy(() =>
+  import("./pages/EventRedemptionsPage").then((module) => ({
+    default: module.EventRedemptionsPage,
+  }))
+);
+
+function LazyRouteFallback(
+  { title, chip, body, onNavigate }: {
+    body: string;
+    chip: string;
+    onNavigate: (path: string) => void;
+    title: string;
+  },
+) {
+  return (
+    <RouteStateShell
+      actions={
+        <button className="secondary-button" disabled type="button">
+          Loading...
+        </button>
+      }
+      body={body}
+      chip={chip}
+      onNavigateHome={() => onNavigate(routes.home)}
+      title={title}
+    />
+  );
+}
 
 /** Resolves the pathname to the page component that should be rendered. */
 function getPageContent(
@@ -47,11 +82,22 @@ function getPageContent(
   if (matchedRedeem) {
     return (
       <ThemeScope theme={getThemeForSlug(matchedRedeem.slug)}>
-        <EventRedeemPage
-          key={matchedRedeem.slug}
-          onNavigate={navigate}
-          slug={matchedRedeem.slug}
-        />
+        <Suspense
+          fallback={
+            <LazyRouteFallback
+              body="Loading the redeem surface for this event."
+              chip="Loading redeem"
+              onNavigate={navigate}
+              title="Preparing redeem"
+            />
+          }
+        >
+          <EventRedeemPage
+            key={matchedRedeem.slug}
+            onNavigate={navigate}
+            slug={matchedRedeem.slug}
+          />
+        </Suspense>
       </ThemeScope>
     );
   }
@@ -61,11 +107,22 @@ function getPageContent(
   if (matchedRedemptions) {
     return (
       <ThemeScope theme={getThemeForSlug(matchedRedemptions.slug)}>
-        <EventRedemptionsPage
-          key={matchedRedemptions.slug}
-          onNavigate={navigate}
-          slug={matchedRedemptions.slug}
-        />
+        <Suspense
+          fallback={
+            <LazyRouteFallback
+              body="Loading the redemption monitoring surface for this event."
+              chip="Loading redemptions"
+              onNavigate={navigate}
+              title="Preparing redemptions"
+            />
+          }
+        >
+          <EventRedemptionsPage
+            key={matchedRedemptions.slug}
+            onNavigate={navigate}
+            slug={matchedRedemptions.slug}
+          />
+        </Suspense>
       </ThemeScope>
     );
   }
