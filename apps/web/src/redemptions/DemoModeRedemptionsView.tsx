@@ -48,10 +48,13 @@ function resolveStatusLabel(row: DemoModeRedemptionRow): string {
  * surface.
  *
  * Renders the merged redeemed-and-reversed row list the demo-mode
- * read shim returns; row-detail mutation affordances (the reverse
- * action, the detail-sheet's reverse button) are intentionally
- * absent. Phase 3.3 reintroduces them in the chosen disabled-state
- * shape per the milestone doc's read-side / write-side seam.
+ * read shim returns; row-detail mutation affordances (the row
+ * detail sheet, the "Reverse this redemption" action) are
+ * intentionally absent. Demo-mode shape: hidden controls + inline
+ * read-only callout above the list. AGENTS.md "Bans on surface
+ * require rendering the consequence" is satisfied by the rendered
+ * callout, not by a disabled-state pattern. The empty-rows branch
+ * already renders the consequence in its own copy.
  */
 export function DemoModeRedemptionsView({
   slug,
@@ -132,6 +135,15 @@ export function DemoModeRedemptionsView({
         <p className="eyebrow">Demo monitoring view</p>
         <h2>{state.rows.length} redemption{state.rows.length === 1 ? "" : "s"}</h2>
       </div>
+      <section className="demo-mode-readonly-callout" aria-label="Read-only redemption affordances">
+        <h3>Redemption monitoring is read-only in demo mode.</h3>
+        <p>
+          Row details and the &ldquo;Reverse this redemption&rdquo;
+          action are hidden while you&apos;re browsing without
+          signing in.
+        </p>
+        <p>Sign in to manage redemptions.</p>
+      </section>
       <ul className="redemptions-list demo-mode-redemptions-list">
         {state.rows.map((row) => (
           <li className="redemptions-row" key={row.id}>
