@@ -439,7 +439,7 @@ contract, theme route scoping, theme token discipline, in-place
 auth, auth integration, and trust-boundary invariants from
 [`event-platform-epic.md`](/docs/plans/event-platform-epic.md);
 the test-event noindex + disclaimer banner invariant from
-[`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md); the
+[`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md); the
 apps/web ThemeScope wiring infrastructure delivered by
 [m1-themescope-wiring.md](/docs/plans/epics/demo-expansion/m1-themescope-wiring.md)
 (ThemeScope wraps in
@@ -508,7 +508,7 @@ session does not re-derive them.
 - **noindex extends to apps/web bypass-rendered surfaces.**
   The epic-level "Internal-partner audience" invariant and the
   test-event noindex inheritance from
-  [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+  [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   bind: bypass-rendered surfaces on apps/web are noindex.
   Implementation pattern (per-route metadata, dispatcher-level
   meta tag, server-rendered head injection) is phase-time; the
@@ -944,7 +944,7 @@ Capture."
   inherits. Event-platform-epic M2 phase 2.2 shipped the
   per-event admin route shell M3 bypasses; event-platform-
   epic M3 shipped the test events themselves.
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md) —
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —
   predecessor epic milestone doc; supplies the test-event
   noindex + disclaimer banner invariant M3 extends to
   apps/web bypass-rendered surfaces.

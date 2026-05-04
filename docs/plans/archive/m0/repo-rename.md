@@ -114,7 +114,7 @@ renamed in this PR.
   Document Role and End Goal product references.
 
 **This plan.**
-- `docs/plans/repo-rename.md` — Status flipped from `Proposed` to
+- `docs/plans/archive/m0/repo-rename.md` — Status flipped from `Proposed` to
   `Landed` in the same PR.
 
 ## Files Intentionally Not Touched
@@ -227,7 +227,7 @@ present because skipping it has burned this repo before.
      the deliberately preserved prefixes (`@neighborly/web` workspace
      scope, all `neighborly` runtime identifiers) with one-line
      rationale; reference this plan
-     ([`repo-rename.md`](/docs/plans/repo-rename.md)) as the executed contract;
+     ([`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md)) as the executed contract;
      keep the "No code logic changes. One PR." closer. The paragraph
      stays present-tense in the same way phase 0.2's already-landed
      paragraph stays present-tense — past-tense conversion is not the
@@ -343,7 +343,7 @@ the time this PR opens:
 - `docs/plans/release-readiness.md` — updated (first paragraph).
 - `docs/plans/analytics-strategy.md` — updated (Document Role + End
   Goal paragraphs).
-- `docs/plans/repo-rename.md` — Status flipped to `Landed`.
+- `docs/plans/archive/m0/repo-rename.md` — Status flipped to `Landed`.
 
 The other docs the parent epic enumerates (`docs/architecture.md`,
 `docs/dev.md`, `docs/operations.md`, `docs/product.md`,
@@ -379,7 +379,7 @@ gates per the parent epic.
 ## Related Docs
 
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
-- [`framework-decision.md`](/docs/plans/framework-decision.md) — sibling phase
+- [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) — sibling phase
   0.2 plan (already landed) for naming-convention reference
 - [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR gate,
   doc currency, validation honesty

@@ -12,7 +12,7 @@ import type { Theme } from "./types.ts";
  * first test event theme in M3 phase 3.1; the second in M3 phase
  * 3.2; Madrona in M4 phase 4.1) without changing any consumer —
  * the resolver picks them up by slug. See
- * [m3-site-rendering.md](../../docs/plans/m3-site-rendering.md)
+ * [m3-site-rendering.md](../../docs/plans/archive/m3/m3-site-rendering.md)
  * for the M3 phase shape.
  */
 export function getThemeForSlug(slug: string): Theme {

@@ -25,7 +25,7 @@ authoritative).
 
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M3, Phase 3.1 (children 3.1.1 + 3.1.2).
-**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md).
+**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phase:** 3.1.1 (rendering pipeline + first test event +
 basic SSR meta) — Landed.
 
@@ -498,7 +498,7 @@ invariants apply:
   as the right place for the shared helper.
 - [`docs/dev.md`](/docs/dev.md) "apps/site environment variables"
   section — document `NEXT_PUBLIC_SITE_ORIGIN`.
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   — flip the Phase Status table's 3.1 row `Status` column from
   `Proposed` to `Landed`; update the row's `PR` column to include
   the 3.1.2 PR number alongside the 3.1.1 reference.
@@ -567,7 +567,7 @@ Cross-cutting process artifacts updated in the same PR (not
    as ancestor of this branch's base — already verified by the
    M3 milestone doc's Phase Status table). Read this plan, then
    the M3 milestone doc
-   ([`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)),
+   ([`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)),
    the scoping doc
    ([`docs/plans/scoping/m3-phase-3-1-2.md`](/docs/plans/scoping/m3-phase-3-1-2.md)),
    and the apps/site Next.js 16 reminder
@@ -696,7 +696,7 @@ Cross-cutting process artifacts updated in the same PR (not
       added to the "apps/site environment variables" section
       (already covered by execution step 3; verify the edit
       shipped).
-    - [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+    - [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
       — flip the 3.1 Phase Status row from `Proposed` to
       `Landed`; update the `PR` column to include the 3.1.2 PR
       number.
@@ -884,7 +884,7 @@ relevant doc updates this branch must carry:
 - [`docs/dev.md`](/docs/dev.md) — `NEXT_PUBLIC_SITE_ORIGIN`
   documented in the "apps/site environment variables" section.
   This is a 3.1.2 ownership item.
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   Phase Status table — Phase 3.1 row's `Status` column flips
   to `Landed`; `PR` column gets the 3.1.2 PR number alongside
   the 3.1.1 reference.
@@ -899,7 +899,7 @@ relevant doc updates this branch must carry:
   M3 row — stays `Proposed` (epic flip is 3.3's job).
 - This plan — Status flips from `Proposed` to `Landed` in the
   implementing PR.
-- [`docs/plans/m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md)
+- [`docs/plans/archive/m3/m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md)
   — no change. 3.1.1 is already `Landed`; 3.1.2 does not
   retroactively edit it.
 - [`docs/plans/scoping/m3-phase-3-1-2.md`](/docs/plans/scoping/m3-phase-3-1-2.md)
@@ -1118,11 +1118,11 @@ to land before 3.3 closes the milestone.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic; M3 phase paragraphs are pre-milestone-planning
   estimate.
-- [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md) —
+- [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —
   M3 milestone doc; cross-phase invariants, decisions, risks.
   3.1.2's PR flips the Phase Status table's 3.1 row to
   `Landed`.
-- [`m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md)
+- [`m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md)
   — sibling phase plan for 3.1.1 (rendering pipeline + first
   test event + basic SSR meta). Records the og:image / metadataBase
   / openGraph.url / unfurl-validation co-deferral that 3.1.2
@@ -1136,7 +1136,7 @@ to land before 3.3 closes the milestone.
 - [`docs/plans/scoping/m3-phase-3-1.md`](/docs/plans/scoping/m3-phase-3-1.md) —
   3.1.1's scoping doc; records the original PR-split decision.
   Same batch-deletion in 3.3.
-- [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
+- [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
   — M1 phase 1.5 plan; ThemeScope contract and the
   `getThemeForSlug` resolver the OG image generator consumes
   via the shared helper.

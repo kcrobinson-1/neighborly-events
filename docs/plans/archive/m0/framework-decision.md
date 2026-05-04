@@ -158,7 +158,7 @@ confidence tag, then a relative verdict.
   reduces boilerplate, `next/og` ships in-the-box, and streaming-bot
   detection is handled automatically. For an epic whose explicit goal
   is "proper meta tags and link-unfurl previews" (M3 phase 3.1 per
-  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md), M4
+  [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md), M4
   phase 4.3), this dimension materially favors Next.js.
 
 ### 4. Deploy cost on Vercel monorepo
@@ -340,7 +340,7 @@ layer we control, and the future flexibility argument cuts both ways
 The dimensions where Next.js wins (3 — SSR/SSG ergonomics, 4 — deploy
 cost / built-in batteries) are end-user-facing and directly serve the
 epic's goals. M3 phase 3.1's SSR meta and unfurl validation (per
-[m3-site-rendering.md](/docs/plans/m3-site-rendering.md); the
+[m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md); the
 original 4-phase epic estimate placed this in a since-superseded
 phase 3.4) benefits from `generateMetadata`'s typed object and
 streaming-metadata bot detection. M4 phase 4.3's launch readiness benefits from `next/og`
@@ -408,7 +408,7 @@ correct call when the alternative does not rise to "much more suited."
   `twitter` fields. The doc gap on streaming-metadata behavior for
   `facebookexternalhit` should be confirmed during M3 phase 3.1 unfurl
   validation (per
-  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md)) rather
+  [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md)) rather
   than treated as solved.
 - Per-event OG images use `next/og` `ImageResponse` at
   `app/event/[slug]/opengraph-image.tsx`. This was a major factor in
@@ -453,7 +453,7 @@ same PR that lands this decision.
   behavioral envelope (which bots, which fields) is not exhaustively
   documented. M3 phase 3.1 owns validation against at least one
   real unfurl client (per
-  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); the
+  [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md); the
   original 4-phase epic estimate placed unfurl validation in a
   since-superseded phase 3.4).
 - **Proxy-rewrite project vs. Vercel Microfrontends as the routing

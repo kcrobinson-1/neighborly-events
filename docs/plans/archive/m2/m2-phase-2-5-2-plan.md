@@ -808,7 +808,7 @@ risks.
   precedent for an apps/web `vercel.json` edit composing with
   prior-phase edits; verifies the rule-ordering invariant in
   this sub-phase's Self-Review Audits.
-- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+- [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   — M0 phase 0.3 plan; established the
   `/event/:slug/game/*` apps/web carve-out (rules 1–2) the new
   operator URLs match before reaching the cross-app rule.

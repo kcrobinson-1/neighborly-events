@@ -203,7 +203,7 @@ split is below). Behavior-preserving.
 - Runtime identifiers (`neighborly_session` cookie, `x-neighborly-session`
   header, `neighborly.local-*` storage keys, `@neighborly/web` workspace
   scope) — preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) cross-cutting invariants.
 
 ### Execution steps
 
@@ -555,6 +555,6 @@ none. Backlog impact accumulates at the M1 gate per the parent epic.
   shared layer
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at every subphase's gate
-- [`repo-rename.md`](/docs/plans/repo-rename.md) — runtime-identifier
+- [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) — runtime-identifier
   preservation rules carry over here (cookie names, header names,
   storage keys, workspace scope)

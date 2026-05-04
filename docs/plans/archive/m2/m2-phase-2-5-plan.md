@@ -104,7 +104,7 @@ terminal phase**: 2.5.3's PR flips the
 to `Landed`.
 
 **Hard dependencies on landed siblings.** The
-[`/event/:slug/game/*`](/docs/plans/site-scaffold-and-routing.md) apps/web
+[`/event/:slug/game/*`](/docs/plans/archive/m0/site-scaffold-and-routing.md) apps/web
 carve-out at
 [`apps/web/vercel.json:8`](/apps/web/vercel.json#L8) (M0 phase
 0.3) is what makes 2.5.2's deletion of the bare-path carve-outs
@@ -624,10 +624,10 @@ Doc edits distribute across sub-phases per
   [`m2-phase-2-3-plan.md`](/docs/plans/archive/m2/m2-phase-2-3-plan.md),
   [`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md) — Landed
   sibling phase plans.
-- [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md) —
+- [`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md) —
   M1 phase 1.2 plan; established the deferral of the
   `gameRedeem` / `gameRedemptions` rename to this phase.
-- [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+- [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   — M0 phase 0.3 plan; established the
   `/event/:slug/game/*` apps/web carve-out the migrated URLs sit
   inside.

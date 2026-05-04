@@ -177,7 +177,7 @@ also inherits the URL contract, theme route scoping, theme
 token discipline, in-place auth, auth integration, and trust-
 boundary invariants from the parent epic, plus the test-event
 noindex invariant from
-[`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md).
+[`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 
 **Per-phase additions** (specific to this phase's diff
 surface):

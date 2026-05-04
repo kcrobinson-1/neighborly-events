@@ -31,7 +31,7 @@ plan to history).
 
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M3, Phase 3.1.
-**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md).
+**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phases:** 3.2 (second test event + distinct theme) —
 Proposed; 3.3 (cross-app navigation verification + M3 closure) —
 Proposed. The epic's M3 row stays `Proposed` until 3.3 lands.
@@ -104,7 +104,7 @@ cookie-boundary presence-check at
 [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)
 is replaced wholesale; its purpose (one-time M1 phase 1.3.2
 verification) is satisfied and recorded in
-[`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
+[`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md)
 "Verification Evidence."
 
 ## Cross-Cutting Invariants
@@ -598,7 +598,7 @@ following epic-level invariants apply:
   cookie-boundary presence-check and the `AUTH_COOKIE_PATTERN`
   regex are deleted; the M1 phase 1.3.2 verification evidence
   remains available in
-  [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
+  [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md)
   "Verification Evidence" and in git history.
 - [`apps/site/app/globals.css`](/apps/site/app/globals.css) —
   add new section-specific CSS rules (`.event-shell`,
@@ -658,7 +658,7 @@ following epic-level invariants apply:
    M3 milestone doc's "Phase Status" subsection, which already
    asserts the M2 dependency). Read this plan, then the M3
    milestone doc
-   ([`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)),
+   ([`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)),
    the scoping doc
    ([`docs/plans/scoping/m3-phase-3-1.md`](/docs/plans/scoping/m3-phase-3-1.md)),
    and the apps/site Next.js 16 reminder
@@ -867,7 +867,7 @@ following epic-level invariants apply:
     - [`docs/backlog.md`](/docs/backlog.md) — no edit. The
       "Event landing page for /event/:slug" entry closes
       with M4 phase 4.2; M3 ships infrastructure only.
-    - [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+    - [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
       Phase Status table — update the 3.1 row's `Plan`
       column to point at this plan when the plan-drafting
       commit lands; update the row's `PR` column with the
@@ -1130,7 +1130,7 @@ relevant doc updates this branch must carry:
 - [`docs/backlog.md`](/docs/backlog.md) — no change.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   M3 row — stays `Proposed`.
-- [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+- [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   Phase Status table — Phase 3.1 row's `Plan` column
   points at this plan; `PR` column gets the 3.1.1 PR
   number on PR open. `Status` column stays `Proposed`
@@ -1330,7 +1330,7 @@ infrastructure phases.
   pre-milestone-planning estimate (the epic still lists a
   4-phase shape including a defunct Phase 3.4); the M3
   milestone doc is canonical.
-- [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md) —
+- [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —
   M3 milestone doc; cross-phase invariants, decisions,
   risks. The 3-phase canonical shape (3.1, 3.2, 3.3) lives
   here.
@@ -1340,7 +1340,7 @@ infrastructure phases.
   the PR split rationale, the slug + Theme decisions, and
   the open decisions for plan-drafting. Deletes in batch in
   3.3's PR.
-- [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md) —
+- [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md) —
   M1 phase 1.5 plan; ThemeScope contract and the apps/site
   Sage Civic root layout this phase wraps inside.
 - [`docs/styling.md`](/docs/styling.md) — themable /

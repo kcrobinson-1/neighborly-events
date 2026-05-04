@@ -2,7 +2,7 @@
 
 ## Status
 
-Landed at M3 — M4 deferred 2026-05-01.
+Landed.
 
 ## Milestone Status
 
@@ -18,21 +18,29 @@ plan to history.
 | M1 — Foundation extraction | Landed |
 | M2 — Admin restructuring and authorization broadening | Landed |
 | M3 — Site rendering infrastructure with test events | Landed |
-| M4 — Madrona launch | Deferred |
+| M4 — Madrona launch | Moved to [`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md) |
 
 M0–M3 landed as recorded above; M4 (Madrona launch) was deferred
-2026-05-01 to a future sibling epic. The demo-expansion epic intervenes
-between this epic and Madrona's relaunch (see
-[`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md));
-a future Madrona-launch epic will own the deferred M4 work when its
-scoping begins. The top-level Status above is flipped to
-`Landed at M3 — M4 deferred` in this PR; closure does not depend on M4.
-Reframing of Goal, Why This Epic, Backlog Impact, and Sizing Summary
-sections to reflect "epic finished without Madrona" is intentionally out
-of scope for the change that recorded the deferral; those sections
-remain as historical record of the original plan and a separate
-follow-up may revisit them once the demo-expansion or Madrona-launch
-epic motivates the rewrite.
+2026-05-01 and moved to its own sibling epic at
+[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md).
+The demo-expansion epic intervenes between this epic and Madrona's
+relaunch (see
+[`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md)).
+The top-level Status above is flipped to `Landed` in this PR; closure
+does not depend on M4. Reframing of Goal, Why This Epic, Backlog
+Impact, and Sizing Summary sections to reflect "epic finished without
+Madrona" is intentionally out of scope for this change; those sections
+remain as historical record of the original plan. M4-specific content
+(the original phase 4.1/4.2/4.3 paragraphs, validation gate,
+documentation list, self-review audits, and the "Madrona content
+authoring time" risk) carried forward into
+[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md)
+under its "Pre-Milestone-Planning Historical Estimate" section so the
+Madrona-launch epic is self-contained; the M4 section below now holds
+only a pointer. Per AGENTS.md "Epic Drafting," that carried-forward
+content is pre-milestone-planning estimate; the Madrona-launch epic's
+milestone planning session re-derives phase shape against
+actually-merged code.
 
 ## Purpose
 
@@ -53,7 +61,7 @@ The epic produces:
 The repo, `neighborly-events`, is the platform repo for events whose first
 surface is a quiz game. M0 phase 0.1 renamed the repo from
 `neighborly-scavenger-game` to its current name to reflect the platform
-scope; see [`repo-rename.md`](/docs/plans/repo-rename.md) for the executed contract.
+scope; see [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) for the executed contract.
 
 ## Why This Epic
 
@@ -170,12 +178,14 @@ redeem, redemptions) ahead of the deferred-Madrona schedule, so
 the apps/web wrapping infrastructure now ships and resolves
 per-event Themes for the test events (`harvest-block-party`,
 `riverside-jam`). The invariant remains open for non-test-event
-slugs (Madrona) until the future Madrona-launch epic registers a
-non-test-event Theme — at which point the wrapping that
-demo-expansion M1 ships picks up the new Theme automatically. M4
-phase 4.1 below trims its scope accordingly: only Madrona's `Theme`
-registration remains; the wrapping is no longer M4 phase 4.1's
-deliverable.
+slugs (Madrona) until the
+[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
+registers a non-test-event Theme — at which point the wrapping
+that demo-expansion M1 ships picks up the new Theme
+automatically. The Madrona-launch epic's phase 4.1 (carried
+forward from this epic's original M4 phase 4.1) trims its scope
+accordingly: only Madrona's `Theme` registration remains; the
+wrapping is no longer phase 4.1's deliverable.
 
 **Trust boundary.** Every backend write reachable from a public or
 origin-gated endpoint enforces authorization at the database layer (RLS or
@@ -220,7 +230,7 @@ historical record.
 - M0, M1, M2 — landed; per-phase paragraphs are historical record of
   shipped work
 - M3 — milestone doc at
-  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md) is
+  [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md) is
   canonical; the M3 paragraphs below are pre-milestone-planning estimate
 - M4 — no milestone doc yet; the M4 paragraphs below are estimates
   pending its milestone planning session
@@ -233,7 +243,7 @@ with Vercel routing wired for the long-term URL contract. No product
 behavior changes during M0.
 
 **Phase 0.1 — Repo rename.**
-**Status:** Landed. **Plan:** [`repo-rename.md`](/docs/plans/repo-rename.md).
+**Status:** Landed. **Plan:** [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md).
 Rename the GitHub repo from `neighborly-scavenger-game` to
 `neighborly-events` and update every current-state textual reference
 inside the codebase. PR scope (current-state references actually
@@ -245,7 +255,7 @@ own paragraph, `docs/plans/release-readiness.md` first paragraph, and
 `docs/plans/analytics-strategy.md` Document Role plus End Goal
 paragraphs. The GitHub repo rename itself is a `gh repo rename`
 operator step executed post-merge. Deliberately preserved with rationale
-in [`repo-rename.md`](/docs/plans/repo-rename.md): the `@neighborly/web` workspace
+in [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md): the `@neighborly/web` workspace
 package name (brand prefix kept), the `neighborly` runtime identifier
 prefix on cookies, headers, storage keys, env vars, and the
 `generate_neighborly_verification_code` DB function (preserving these
@@ -255,16 +265,16 @@ change was required (neither file referenced the old repo name).
 Historical commit and PR URLs in `docs/self-review-catalog.md` and
 `docs/plans/archive/*.md` are out of scope; GitHub auto-redirects them.
 No code logic changes. One PR. Executed contract:
-[`repo-rename.md`](/docs/plans/repo-rename.md).
+[`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md).
 
 **Phase 0.2 — Framework research and decision.**
-**Status:** Landed. **Plan:** [`framework-decision.md`](/docs/plans/framework-decision.md).
+**Status:** Landed. **Plan:** [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md).
 A bounded two-day documentation- and consensus-based research pass comparing
 Next.js App Router and Remix (React Router 7 framework mode) for the
 `apps/site` use case. No spike code is built; the investigation relies on
 official framework docs, vendor (Supabase, Vercel) integration guides, and
 framework-team changelogs/blog posts. The deliverable is a decision doc
-landed in `docs/plans/framework-decision.md` covering the candidate
+landed in `docs/plans/archive/m0/framework-decision.md` covering the candidate
 frameworks evaluated, the evaluation criteria (auth integration, Supabase
 data loading, SSR/SSG ergonomics, deploy cost, team familiarity, and
 secondary dimensions named in the doc), the chosen framework, and the
@@ -272,7 +282,7 @@ rationale. Production-reality verification (cookie boundary on the
 production domain, etc.) is owned by phase 0.3. One PR (the decision doc).
 
 **Phase 0.3 — `apps/site` scaffold and Vercel routing.**
-**Status:** Landed. **Plan:** [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md).
+**Status:** Landed. **Plan:** [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md).
 Stand up `apps/site` as an empty deployable app in the chosen framework.
 Configure Vercel as a monorepo project with transitional path-based
 rewrite rules. The `apps/web` carve-outs under `/event/:slug/` are full
@@ -320,7 +330,7 @@ so both apps consume the same primitives. Behavior preserving for `apps/web`;
 `apps/site` becomes capable of consuming the foundation.
 
 **Phase 1.1 — `shared/db/`.**
-**Plan:** [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md).
+**Plan:** [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md).
 Extract the Supabase client factory, generated TypeScript types for shared
 domain shapes (event, draft, organizer/agent role records), and any
 existing typed query helpers. `apps/web` migrated to import from
@@ -335,7 +345,7 @@ only; subphase 1.1.2 generates the canonical Supabase TypeScript types
 and threads them through the existing call sites.
 
 **Phase 1.2 — `shared/urls/`.**
-**Status:** Landed. **Plan:** [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md).
+**Status:** Landed. **Plan:** [`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md).
 Extract the route table, route matchers, and post-auth `next=`
 validation into `shared/urls/`. The exported builder object is named
 `routes` (the `urls.*` shorthand in earlier drafts of this paragraph
@@ -358,7 +368,7 @@ Playwright fixtures retain their literal URL strings as test data
 expressing the contract under test. One PR.
 
 **Phase 1.3 — `shared/auth/`.**
-**Plan:** [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md).
+**Plan:** [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md).
 Two subphases with different risk profiles, each its own PR.
 
 *Subphase 1.3.1 — `shared/auth/` extraction.* Extract the role-neutral
@@ -392,7 +402,7 @@ smoke (two-phase Plan-to-Landed per
 
 **Inherited from M0 phase 0.3 (subphase 1.3.2): satisfied.** The
 cross-app cookie-boundary verification gate originally scoped to
-[`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+[`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
 was deferred when implementation surfaced that phase 0.3's chosen
 `neighborly_session` cookie lives on the Supabase Edge Function
 origin, not the apps/web frontend domain. Subphase 1.3.2 introduced
@@ -406,7 +416,7 @@ the **cookie-read half** via a manual cross-app run that signed in
 on apps/web, navigated to `/event/sponsor-spotlight`, and confirmed
 apps/site's `cookies()` read the auth cookie through the
 proxy-rewrite ("Auth cookie: present"). See
-[`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
+[`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md)
 "Verification Evidence" for the full record. The apps/site
 placeholder's deferral notice (added when M0 flipped Landed) was
 replaced with the presence-check readout in 1.3.2; the
@@ -414,7 +424,7 @@ replaced with the presence-check readout in 1.3.2; the
 on-demand re-run path against any production origin.
 
 **Phase 1.4 — `shared/events/`.**
-**Status:** Landed. **Plan:** [`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md).
+**Status:** Landed. **Plan:** [`shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md).
 Extract event-domain operations into `shared/events/` so both apps consume
 the same event-scoped reads, writes, and projections. The actual current
 homes of the code being moved:
@@ -466,7 +476,7 @@ delegate to `shared/events/`, following the
 preserving. One PR.
 
 **Phase 1.5 — `shared/styles/` and theme groundwork.**
-**Plan:** [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md).
+**Plan:** [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md).
 Two subphases. The earlier draft of this paragraph put Madrona's
 placeholder `Theme` and the apps/web event-route `<ThemeScope>` wiring
 in 1.5.2; both were deferred to M4 phase 4.1 during scoping to avoid a
@@ -558,7 +568,7 @@ in 1.5.2, component tests covering ThemeScope CSS-variable emission
 pass. **Production cookie-boundary verification inherited from M0
 phase 0.3** was already satisfied in phase 1.3 subphase 1.3.2 against
 the real frontend-origin auth cookie (see
-[`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) "Verification
+[`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md) "Verification
 Evidence"). The 1.5.2 PR cites that evidence when flipping the M1 row
 to `Landed` — no additional cookie-boundary run required because no
 1.5 change touches authentication.
@@ -733,7 +743,7 @@ those dependencies are pinned).
 
 ### M3 — Site Rendering Infrastructure With Test Events
 
-**Milestone doc.** [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+**Milestone doc.** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
 is canonical for M3's phase shape (3 phases, not the 4 estimated below),
 phase sequencing, cross-phase invariants, cross-phase decisions, and
 milestone-level risks. The phase paragraphs below are the
@@ -804,95 +814,17 @@ by `apps/site` page rendering or meta-tag handling are pinned).
 
 ### M4 — Madrona Launch
 
-**Status.** Deferred 2026-05-01. Madrona launch is moving to its own
-future sibling epic; the demo-expansion epic
-([`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md))
-intervenes between this epic and Madrona's relaunch. The phase
-paragraphs below remain as historical record of the
-pre-milestone-planning estimate at the time of deferral; they are not
-a canonical plan for Madrona launch. The Madrona-launch epic will
-draft fresh content against actually-merged code when its scoping
-begins.
-
-**Milestone doc.** Not yet drafted — M4's milestone planning session
-runs after M3 lands. Per AGENTS.md "Epic Drafting," the phase
-paragraphs below are pre-milestone-planning estimates pending that
-session. Phase counts, per-phase content, validation gate, and
-documentation list will be re-derived against actually-merged M3 code
-when M4 milestone planning begins; the milestone doc that session
-produces will be canonical and will supersede the paragraphs below.
-
-**Goal.** Madrona Music in the Playfield goes live as the first public event
-on the platform.
-
-**Phase 4.1 — Madrona theme palette definition.**
-Hold the Madrona theme discussion as its own task at the start of M4:
-pick approximately ten color values, the typography choice, and the
-accent treatment for Madrona's brand. Create
-`shared/styles/themes/madrona.ts` (the file does not exist before M4 —
-M1 phase 1.5.2 deliberately deferred Madrona's `Theme` to this phase to
-avoid a placeholder-Madrona double pass) and register it in the
-`shared/styles/themes/` registry. **Apps/web event-route ThemeScope
-wiring is no longer this phase's deliverable** — demo-expansion epic
-M1 phase 1.1 (2026-05-01) shipped the wrap ahead of schedule, so the
-`<ThemeScope>` wraps already exist on `GameRoutePage`,
-`EventRedeemPage`, `EventRedemptionsPage`, and `EventAdminPage` in
-the central [`App.tsx`](/apps/web/src/App.tsx) routing dispatcher.
-Once Madrona's registry entry lands, the existing wraps automatically
-pick up Madrona's `Theme` for `slug=madrona` — no per-consumer change
-required. **This is the brand-launch visual transition**: apps/web
-event routes shift from today's warm-cream defaults (the
-`getThemeForSlug` fallback for unregistered slugs) to Madrona's real
-palette at this PR's merge. UI-review captures cover the warm-cream →
-Madrona transition explicitly so the launch visual is signed off
-intentionally rather than landing as review surprise. The cross-app
-theme-continuity check originally deferred from M3 phase 3.3 was
-satisfied for the test events by demo-expansion epic M1 phase 1.1; M4
-phase 4.1 extends it to `slug=madrona` with a UI-review pair
-confirming that `/event/madrona` (apps/site) and `/event/madrona/game`
-(apps/web) render the same Madrona `Theme`. One PR.
-
-**Phase 4.2 — Madrona event content authoring.**
-Author Madrona's event content as a TypeScript module at
-`apps/site/events/madrona.ts` matching the `EventContent` type defined in
-M3: title, dates, schedule, lineup with set times, sponsor list with logos
-and links, FAQ, CTA copy, theme slug. Hardcoded for v1; admin-authored
-content is post-epic. One PR.
-
-**Phase 4.3 — Launch readiness.**
-Non-engineering preparation: volunteer training, QR posters pointing at
-`/event/madrona/game` and `/event/madrona`, sponsor logo links verified,
-unfurl preview verified for `/event/madrona`, redemption agent assignment
-verified, production smoke run against the full Madrona path (landing page →
-game → completion → redeem booth flow). Checklist execution; no PR for the
-checklist itself.
-
-**Validation gate.** Full Madrona path rendered correctly end-to-end.
-Production smoke per `docs/testing-tiers.md` Tier 5 with a Madrona-specific
-assertion set. Volunteer dry run completed. Unfurl preview verified in at
-least one client.
-
-**Documentation.** `docs/product.md` updated to reflect Madrona launched.
-`docs/backlog.md` closes "Event landing page for `/event/:slug`".
-`README.md` updated. This plan flipped from `Proposed` to `Landed` in the
-final PR. M4 follows the two-phase Plan-to-Landed pattern from
-`docs/testing-tiers.md` if the production smoke assertions added in M4
-must run post-deploy.
-
-**Self-review audits.** From `docs/self-review-catalog.md`:
-Readiness-gate truthfulness audit (production smoke claims for the
-Madrona path must reflect runs actually executed against production
-after deploy; the warm-cream → Madrona visual transition must be
-verified against captured before/after UI-review evidence, not
-asserted by code reasoning), Rename-aware diff classification (phase
-4.1 wraps existing event-route shells in `<ThemeScope>` in the central
-[`App.tsx`](/apps/web/src/App.tsx) dispatcher — the wrap is a
-content addition around an unchanged child, not a move), Effect
-cleanup audit (any new content components added for Madrona-specific
-rendering must clean up correctly). M4 also follows the
-Plan-to-Landed Gate For Plans With Post-Release Validation from
-`docs/testing-tiers.md` if the production smoke assertions added in M4
-must run post-deploy.
+**Status.** Deferred 2026-05-01 and moved to its own sibling epic at
+[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md).
+The phase paragraphs that originally lived here (Goal, Phase 4.1
+Madrona theme palette definition, Phase 4.2 Madrona event content
+authoring, Phase 4.3 Launch readiness, Validation gate,
+Documentation, Self-review audits) carried forward verbatim into the
+new epic's "Pre-Milestone-Planning Historical Estimate" section so
+readers do not need to bounce back here for M4-specific content. Per
+AGENTS.md "Epic Drafting," those paragraphs are pre-milestone-planning
+estimate; the Madrona-launch epic's milestone planning session
+re-derives phase shape against actually-merged code.
 
 ## Backlog Impact
 
@@ -936,7 +868,7 @@ epic completion:
   post-epic items
 - `docs/styling.md` — new doc; themable vs. structural tokens, theme
   registry, how to add a theme
-- `docs/plans/framework-decision.md` — new doc; M0 spike outcome
+- `docs/plans/archive/m0/framework-decision.md` — new doc; M0 spike outcome
 - This plan — flipped from `Proposed` to `Landed` in the same PR that
   lands M4
 
@@ -953,7 +885,7 @@ Drafting," each milestone's actual phase count and PR count are
 re-derived by its milestone planning session against merged-in code.
 M0/M1/M2 counts are historical fact (those milestones landed). M3's
 count was re-derived by its milestone session — see
-[m3-site-rendering.md](/docs/plans/m3-site-rendering.md) for the
+[m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md) for the
 canonical M3 shape. M4's count is pending its own milestone planning
 session.
 
@@ -962,8 +894,8 @@ Phases per milestone, with PR counts:
 - M0 — 3 phases, 3 PRs (landed)
 - M1 — 5 phases (phase 1.1, phase 1.3, and phase 1.5 each contain 2 subphases as separate PRs), 8 PRs (landed)
 - M2 — 5 phases, 5 PRs (landed; actually shipped 13 PRs once subphase splits were re-derived during phase planning — see [m2-admin-restructuring.md](/docs/plans/archive/m2/m2-admin-restructuring.md) phase status table)
-- M3 — pre-milestone-planning estimate: 4 phases, 4 PRs. Milestone-planning re-derived: 3 phases, 3 PRs (3.1 may split into 2). Canonical: [m3-site-rendering.md](/docs/plans/m3-site-rendering.md)
-- M4 — pre-milestone-planning estimate: 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR). Milestone planning pending.
+- M3 — pre-milestone-planning estimate: 4 phases, 4 PRs. Milestone-planning re-derived: 3 phases, 3 PRs (3.1 may split into 2). Canonical: [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md)
+- M4 — moved to [`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md); see that epic's Sizing estimate (3 phases, 2 PRs as carried forward) and milestone planning for re-derived counts
 
 Epic total: pre-milestone-planning estimate of 20 phases, 22 PRs;
 actuals will diverge as each milestone planning session and each phase
@@ -991,10 +923,10 @@ expected, expanding M1 phase 1.5. Mitigation: the audit is its own
 PR-deliverable subphase 1.5.1, isolated for review attention before code
 migration begins.
 
-**Madrona content authoring time.** Real design and copy decisions may take
-longer than expected. Mitigation: content lives as hardcoded TS modules in
-M4 phase 4.2 rather than blocking on a CMS layer; the engineering surface is
-small even if content polish iterates.
+**Madrona content authoring time** moved with the M4 phase paragraphs
+to
+[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md);
+that risk is now owned by the Madrona-launch epic.
 
 **M2 RLS edge cases.** Trust-boundary work tends to surface unanticipated
 cases during pgTAP authoring. Mitigation: M2 phase 2.1 lands as its own PR

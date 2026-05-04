@@ -35,7 +35,7 @@ than one push and trips CI currently pays that human-in-the-loop
 tax.
 
 This entry is also adjacent to the already-landed
-[`docs/plans/post-merge-smoke-watch.md`](/docs/plans/post-merge-smoke-watch.md)
+[`docs/plans/archive/post-merge-smoke-watch.md`](/docs/plans/archive/post-merge-smoke-watch.md)
 — both reduce friction of AI coding sessions reading GitHub Actions
 state without browser context. The two are independent: the
 post-merge watcher targets the post-Release smoke chain on `main`;
@@ -70,7 +70,7 @@ steps' captured output for the whole run.
 
 The repository already requires `gh >= 2.89.0` for log/JSON parsing
 in operational scripts. Verified by
-[`docs/plans/post-merge-smoke-watch.md`](/docs/plans/post-merge-smoke-watch.md)
+[`docs/plans/archive/post-merge-smoke-watch.md`](/docs/plans/archive/post-merge-smoke-watch.md)
 "gh CLI dependency" and the runbook reference in
 [`docs/dev.md`](/docs/dev.md). This plan inherits that pin.
 
@@ -144,7 +144,7 @@ The reporter shells out to `gh run view --log-failed` and
 API call. Below that, the reporter exits non-zero with a clear
 message naming the missing pin. This matches the standard already
 enforced by
-[`docs/plans/post-merge-smoke-watch.md`](/docs/plans/post-merge-smoke-watch.md).
+[`docs/plans/archive/post-merge-smoke-watch.md`](/docs/plans/archive/post-merge-smoke-watch.md).
 
 The Ubuntu runner image is the source of `gh`; the pin is enforced
 at runtime so a runner-image regression below 2.89.0 fails loudly
@@ -579,7 +579,7 @@ reporter itself is broken. Do not describe the reporter as
   closes.
 - [`docs/tracking/dev-workflow-improvements.md`](/docs/tracking/dev-workflow-improvements.md)
   — candidate-task block this plan supersedes.
-- [`docs/plans/post-merge-smoke-watch.md`](/docs/plans/post-merge-smoke-watch.md)
+- [`docs/plans/archive/post-merge-smoke-watch.md`](/docs/plans/archive/post-merge-smoke-watch.md)
   — adjacent post-merge surface; same `gh >= 2.89.0` pin and
   same agent-readability motivation, different workflow chain.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —

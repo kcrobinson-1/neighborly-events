@@ -1,7 +1,7 @@
 # Auth Sign-In Generalization — Phase 2 Execution Plan
 
 **Status:** Landed.
-**Parent overview:** [`auth-signin-generalization-plan.md`](/docs/plans/auth-signin-generalization-plan.md)
+**Parent overview:** [`auth-signin-generalization-plan.md`](/docs/plans/archive/auth-signin-generalization-plan.md)
 **Predecessor:** [`auth-signin-generalization-phase-1-plan.md`](/docs/plans/archive/auth-signin-generalization-phase-1-plan.md).
 Phase 1 is **fully landed**. Three commits on `main` satisfy the
 Phase 1 plan: `b16fa24` (role-neutral auth API helpers), `adc4f3f`

@@ -2,7 +2,7 @@
 
 ## Status
 
-Landed. Superseded by [`framework-decision.md`](/docs/plans/framework-decision.md),
+Landed. Superseded by [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md),
 which captures the chosen framework and rationale. This document is
 preserved in the archive as a methodology reference for future
 documentation-only research passes.
@@ -15,7 +15,7 @@ written, no throwaway branches are created, no `tmp/` artifacts are produced.
 The PR that lands the decision doc also tightens phase 0.2's wording in the
 parent epic so the two are aligned.
 
-**Deliverable:** `docs/plans/framework-decision.md` landed on `main` via a
+**Deliverable:** `docs/plans/archive/m0/framework-decision.md` landed on `main` via a
 single PR. The PR adds the decision doc and updates the parent epic's
 phase 0.2 wording; it adds no other files and changes no production surface.
 
@@ -293,7 +293,7 @@ two.
 
 ### Phase 0.2.C — Decision and PR
 
-Land the decision doc at `docs/plans/framework-decision.md` via a
+Land the decision doc at `docs/plans/archive/m0/framework-decision.md` via a
 single PR against `main`. The PR contains exactly:
 
 - the new decision doc
@@ -314,7 +314,7 @@ no build-touching files changed.
 
 ## Decision Doc Structure
 
-The PR lands `docs/plans/framework-decision.md` with this exact section
+The PR lands `docs/plans/archive/m0/framework-decision.md` with this exact section
 structure. The doc is the durable artifact; this plan is discarded
 after the PR merges.
 
@@ -367,7 +367,7 @@ PR. `npm run build:site` does not yet exist; it lands in M0 phase 0.3.
 
 ## Documentation
 
-This phase's only durable doc is `docs/plans/framework-decision.md`
+This phase's only durable doc is `docs/plans/archive/m0/framework-decision.md`
 itself, plus the parent-epic wording tweak. The epic's M0 row is not
 flipped by this phase; M0 status flips when phase 0.3 lands. The
 decision doc cross-references but does not modify:

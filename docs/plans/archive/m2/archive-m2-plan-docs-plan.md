@@ -71,13 +71,13 @@ Single PR. No production behavior change. No code, test, config, or
 migration touched.
 
 **Out of scope for this PR — archive M0 / M1 plans.** The backlog entry
-is explicit: M0 ([`framework-decision.md`](/docs/plans/framework-decision.md),
-[`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)) and
-M1 ([`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md),
-[`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md),
-[`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md),
-[`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md),
-[`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md)) plans
+is explicit: M0 ([`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md),
+[`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)) and
+M1 ([`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md),
+[`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md),
+[`shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md),
+[`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md),
+[`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md)) plans
 archive when their respective milestones close. M0 and M1 are already
 landed per the epic's milestone status table, so they could move now —
 but bundling expands scope beyond the requested backlog item, mixes
@@ -120,11 +120,11 @@ triggered on.
 - **Same-`docs/plans/` `./` links rewrite to `../../`.** Moved files
   also reference siblings in the *original* `docs/plans/` directory:
   [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) (epic, stays),
-  [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md),
-  [`shared-events-foundation.md`](/docs/plans/shared-events-foundation.md),
-  [`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md),
-  [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md), and
-  [`site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md).
+  [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md),
+  [`shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md),
+  [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md),
+  [`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md), and
+  [`site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md).
   Each of those `](./X.md)` links rewrites to `](../../X.md)`. The
   enumeration is closed — every `./` reference inside an M2 file
   either points at another M2 file (stays as `./`) or at one of the
@@ -278,7 +278,7 @@ must rewrite each reference to the archive path.
   styles** — this PR is doc-only.
 - **Frozen PR / commit URL references** inside any moved file — those
   anchor specific git history (per the
-  [`docs/plans/repo-rename.md`](/docs/plans/repo-rename.md) precedent) and stay
+  [`docs/plans/archive/m0/repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) precedent) and stay
   verbatim.
 
 ## Execution Steps
@@ -639,6 +639,6 @@ Drawn from
   example reference at line 256 rewrites in this PR.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   audit name source.
-- [`repo-rename.md`](/docs/plans/repo-rename.md) — precedent for doc-only
+- [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) — precedent for doc-only
   textual-rewrite PRs that explicitly leave frozen URL references
   alone.

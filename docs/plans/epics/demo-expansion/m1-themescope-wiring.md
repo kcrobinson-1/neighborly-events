@@ -187,7 +187,7 @@ contract, theme route scoping, and theme token discipline
 invariants from
 [event-platform-epic.md](/docs/plans/event-platform-epic.md), and
 the test-event noindex + disclaimer banner invariant from
-[m3-site-rendering.md](/docs/plans/m3-site-rendering.md). Self-
+[m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md). Self-
 review walks them against the M1 diff even though the diff is not
 expected to touch them; the discipline is "before banning the
 surface, prove the no-X outcome is acceptable."
@@ -397,12 +397,12 @@ closing. The phase plan owns the final call.
   predecessor epic; "Deferred ThemeScope wiring" invariant at
   lines 152–165, M3 phase 3.3 cross-app verification deferral at
   the M3 paragraph below.
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md) —
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —
   predecessor milestone doc; "ThemeScope wrapping discipline" at
   lines 183–213 records the partition between apps/site (wraps in
   M3) and apps/web (deferred until M4 / closed by demo-expansion
   M1).
-- [`docs/plans/m3-phase-3-3-plan.md`](/docs/plans/m3-phase-3-3-plan.md) —
+- [`docs/plans/archive/m3/m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md) —
   cross-app navigation verification plan; the manual deployed
   walk-through pattern for cross-app verification is the
   precedent the phase 1.1 plan inherits or refines.

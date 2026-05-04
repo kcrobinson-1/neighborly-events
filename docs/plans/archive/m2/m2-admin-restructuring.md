@@ -574,7 +574,7 @@ recorded for completeness so plan authors don't re-derive them:
   signature change.
 - **apps/site primary Vercel project promotion** (2.3, 2.4).
   **Defer** to post-epic per
-  [site-scaffold-and-routing.md](/docs/plans/site-scaffold-and-routing.md)
+  [site-scaffold-and-routing.md](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   "Primary-project ownership flip." M2 stays on apps/web-primary
   proxy-rewrite.
 - **`vercel.json` and architecture-table edit composition with 2.3

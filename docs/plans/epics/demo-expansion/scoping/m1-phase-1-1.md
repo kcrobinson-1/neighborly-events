@@ -255,7 +255,7 @@ plan's Validation Gate consolidates: 6 in-app capture pairs
 PR's Validation section.
 
 **Verified by:**
-[m3-phase-3-3-plan.md](/docs/plans/m3-phase-3-3-plan.md)
+[m3-phase-3-3-plan.md](/docs/plans/archive/m3/m3-phase-3-3-plan.md)
 established the manual production walk-through pattern for
 cross-app verification (lines 462+ describe the falsifier
 discipline).
@@ -483,7 +483,7 @@ scoping and plan":
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   predecessor epic; "Deferred ThemeScope wiring" invariant at
   lines 152-165 narrows partially in M1's PR.
-- [`m3-phase-3-3-plan.md`](/docs/plans/m3-phase-3-3-plan.md) —
+- [`m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md) —
   cross-app verification precedent.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   M2 phase 2.2 admin-wrap precedent (single-PR shape).

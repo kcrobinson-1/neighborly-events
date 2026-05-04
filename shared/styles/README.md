@@ -89,7 +89,7 @@ to Madrona's Theme at M4 phase 4.1.
 
 ## Plan reference
 
-- [`docs/plans/shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
+- [`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
   — phase 1.5 plan (subphase tables, execution steps, validation
   gate)
 - [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)

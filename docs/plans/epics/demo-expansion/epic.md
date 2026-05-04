@@ -143,7 +143,9 @@ auth integration, and trust-boundary invariants from
 ThemeScope wiring satisfies the "Deferred ThemeScope wiring" item from
 event-platform-epic for the apps/web event-route shells, scoped to test
 events; that invariant remains open for any future non-test-event slug
-until the Madrona-launch epic lands real-event wiring.
+until the
+[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
+lands real-event wiring.
 
 ## Open Questions Resolved By This Epic
 
@@ -290,18 +292,19 @@ lands):
 
 Items unblocked but not landed by this epic:
 
-- Madrona-launch epic — demo expansion ships the apps/web ThemeScope
-  wiring infrastructure (M1) that the original event-platform-epic M4
-  phase 4.1 was going to ship; the Madrona-launch epic inherits this
-  work and focuses on Madrona's `Theme` registration plus content
-  authoring
+- [Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md) —
+  demo expansion ships the apps/web ThemeScope wiring infrastructure
+  (M1) that the original event-platform-epic M4 phase 4.1 was going
+  to ship; the Madrona-launch epic inherits this work and focuses on
+  Madrona's `Theme` registration plus content authoring
 
 Items added by this epic for post-epic work:
 
 - demo-mode generalization beyond the test-event allowlist (post-epic)
 - production-friendly demo-mode for partner-onboarding scenarios
-  (post-epic; may be handled by the Madrona-launch epic or its
-  successor)
+  (post-epic; may be handled by the
+  [Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
+  or its successor)
 
 ## Documentation Currency PR Gate
 

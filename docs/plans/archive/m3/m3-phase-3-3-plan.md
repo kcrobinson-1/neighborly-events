@@ -33,7 +33,7 @@ three move `Proposed` → `In progress pending prod smoke` →
 
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M3, Phase 3.3.
-**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md).
+**Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phases:** 3.1.1 + 3.1.2 (rendering pipeline + first test
 event + per-event OG image / twitter-image / `metadataBase`) —
 Landed; 3.2 (second test event with `riverside-jam` Theme) —
@@ -63,7 +63,7 @@ inherited surface is consumed unchanged:
 - M1 phase 1.3.2's frontend-origin auth cookie established by
   `@supabase/ssr`'s `createBrowserClient`; the cookie-boundary
   verification record at
-  [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md)
+  [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md)
   "Verification Evidence" is the existing falsifier 3.3's
   walk-through re-confirms.
 - M0 phase 0.3 + M2 phase 2.5's Vercel rewrite topology at
@@ -166,7 +166,7 @@ Close M3 honestly. Three deliverables:
 3. **Milestone closure paperwork.** Flip the M3 row in
    [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)'s
    Milestone Status table, the top Status block in
-   [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md), the
+   [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md), the
    3.3 row in the same milestone doc's Phase Status table, and this
    plan's Status — all three move from `Proposed` to
    `In progress pending prod smoke` at PR open and to `Landed` once
@@ -252,13 +252,13 @@ triggered the rule.
   warm-cream `:root` defaults until M4 phase 4.1 wires the
   apps/web event-route ThemeScope. The visual jump on test events
   is acceptable per the M3 milestone doc's
-  ["Cross-Phase Risks" section](/docs/plans/m3-site-rendering.md)
+  ["Cross-Phase Risks" section](/docs/plans/archive/m3/m3-site-rendering.md)
   because test events are noindex'd and carry the disclaimer
   banner. Continuity verification is M4's surface.
 
 ## Naming
 
-- **Plan filename**: `docs/plans/m3-phase-3-3-plan.md` (this file).
+- **Plan filename**: `docs/plans/archive/m3/m3-phase-3-3-plan.md` (this file).
 - **Branch**: `plan/m3-phase-3-3` (matches the predecessor
   plan-and-scoping branch [`plan/m3-phase-3-2`](https://github.com/kcrobinson-1/neighborly-events/pull/143)
   / [#143] convention).
@@ -376,7 +376,7 @@ structure, Vercel proxy rewrites) are unchanged.
 
 ### M3 milestone doc Status flips
 
-Module: [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+Module: [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
 (modified). Two flips:
 
 - **Top Status block (lines 4-8).** Currently reads "Proposed.
@@ -489,7 +489,7 @@ Modules deleted:
 - [`docs/plans/scoping/m3-phase-3-3.md`](/docs/plans/scoping/m3-phase-3-3.md)
   (this plan's scoping doc — self-deletion is intentional per
   the M3 milestone doc at
-  [lines 86-95](/docs/plans/m3-site-rendering.md))
+  [lines 86-95](/docs/plans/archive/m3/m3-site-rendering.md))
 
 The four files delete in a single commit. Git history preserves
 the content for any future reader; the scoping content has no
@@ -534,7 +534,7 @@ invariants apply:
 > are handled via the PR body's `## Estimate Deviations` section
 > per AGENTS.md "Plan-to-PR Completion Gate."
 
-- [`docs/plans/m3-phase-3-3-plan.md`](/docs/plans/m3-phase-3-3-plan.md)
+- [`docs/plans/archive/m3/m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md)
   — this plan, drafted in this PR's first commit. Status
   block carries the verbatim `In progress pending prod smoke`
   string at PR-open and flips to `Landed` post-deploy per the
@@ -553,21 +553,21 @@ invariants apply:
 - [`README.md`](/README.md) — two edit sites per the Contracts
   above (placeholder removal in the apps/site repo-shape bullet,
   capability bullet for multi-event rendering).
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   — top Status block flip + Phase Status table row 3.3 update
   (Plan link on plan-drafting commit, Status column flip on the
   two-phase pattern, PR column on the implementing PR).
 - [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   — Milestone Status table M3 row's Status column flip on the
   two-phase pattern.
-- This plan ([`docs/plans/m3-phase-3-3-plan.md`](/docs/plans/m3-phase-3-3-plan.md))
+- This plan ([`docs/plans/archive/m3/m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md))
   — Status block flip on the two-phase pattern.
 
 ## Files to touch — delete
 
 > Estimate-shaped, but the deletion list reflects the M3 milestone
 > doc's binding batch-deletion contract at
-> [lines 86-95](/docs/plans/m3-site-rendering.md). Adding to or
+> [lines 86-95](/docs/plans/archive/m3/m3-site-rendering.md). Adding to or
 > removing from this list is a rule deviation requiring an in-PR
 > milestone-doc update before the deviation lands.
 
@@ -630,7 +630,7 @@ invariants apply:
 - [`docs/backlog.md`](/docs/backlog.md) — no change. The "Event
   landing page for `/event/:slug`" item closes with M4 phase 4.2
   (Madrona content), not M3, per the M3 milestone doc at
-  [lines 433-438](/docs/plans/m3-site-rendering.md). No other
+  [lines 433-438](/docs/plans/archive/m3/m3-site-rendering.md). No other
   backlog items become unblocked by M3.
 - [`docs/product.md`](/docs/product.md) — no change. M3 ships
   platform infrastructure; product capability narrative updates
@@ -646,10 +646,10 @@ invariants apply:
 - [`.github/pull_request_template.md`](/.github/pull_request_template.md)
   — no change. The template's existing sections (including
   Estimate Deviations and Validation) cover the 3.3 PR shape.
-- [`docs/plans/m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md),
-  [`docs/plans/m3-phase-3-1-2-plan.md`](/docs/plans/m3-phase-3-1-2-plan.md),
+- [`docs/plans/archive/m3/m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md),
+  [`docs/plans/archive/m3/m3-phase-3-1-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-2-plan.md),
   and
-  [`docs/plans/m3-phase-3-2-plan.md`](/docs/plans/m3-phase-3-2-plan.md)
+  [`docs/plans/archive/m3/m3-phase-3-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-2-plan.md)
   — no edit. All already `Landed`; 3.3 does not retroactively
   edit sibling plans.
 - The epic's M3 phase paragraphs at
@@ -660,7 +660,7 @@ invariants apply:
   doc, "Landed plan docs that reference M3's phase numbering for
   behavior whose ownership did not move … are not retroactively
   rewritten" (cited at
-  [`m3-site-rendering.md` lines 463-468](/docs/plans/m3-site-rendering.md)).
+  [`m3-site-rendering.md` lines 463-468](/docs/plans/archive/m3/m3-site-rendering.md)).
 
 ## Execution steps
 
@@ -676,7 +676,7 @@ invariants apply:
    as ancestor of this branch's base — already verified by the
    M3 milestone doc's Phase Status table). Read this plan, then
    the M3 milestone doc
-   ([`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)),
+   ([`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)),
    the scoping doc
    ([`docs/plans/scoping/m3-phase-3-3.md`](/docs/plans/scoping/m3-phase-3-3.md)),
    and the current state of architecture.md and README.md edit
@@ -923,11 +923,11 @@ relevant doc updates this branch must carry:
 
 - [`docs/architecture.md`](/docs/architecture.md) — five edit
   sites per Contracts. Owned by 3.3 per
-  [`m3-site-rendering.md` lines 405-416](/docs/plans/m3-site-rendering.md).
+  [`m3-site-rendering.md` lines 405-416](/docs/plans/archive/m3/m3-site-rendering.md).
 - [`README.md`](/README.md) — two edit sites per Contracts.
   Owned by 3.3 per
-  [`m3-site-rendering.md` lines 416-418](/docs/plans/m3-site-rendering.md).
-- [`docs/plans/m3-site-rendering.md`](/docs/plans/m3-site-rendering.md)
+  [`m3-site-rendering.md` lines 416-418](/docs/plans/archive/m3/m3-site-rendering.md).
+- [`docs/plans/archive/m3/m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   — top Status block flip + Phase Status table row 3.3 update
   per Contracts. The two-phase pattern: `Proposed` →
   `In progress pending prod smoke` (PR-merge commit) →
@@ -935,7 +935,7 @@ relevant doc updates this branch must carry:
 - [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   — Milestone Status table M3 row Status column flip per
   Contracts. Same two-phase pattern as the milestone doc.
-- This plan ([`docs/plans/m3-phase-3-3-plan.md`](/docs/plans/m3-phase-3-3-plan.md))
+- This plan ([`docs/plans/archive/m3/m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md))
   — Status flip per the two-phase pattern.
 - [`docs/dev.md`](/docs/dev.md) — no change. No new validation
   commands or workflow changes.
@@ -974,7 +974,7 @@ resolution path so reviewer attention does not relitigate them.
   3.3 re-confirms by walk-through, not by adding tests or code.
 - **Cross-app theme continuity verification.** Resolution: out
   of 3.3 per the M3 milestone doc's "Cross-Phase Risks" section
-  ([`m3-site-rendering.md` lines 357-370](/docs/plans/m3-site-rendering.md)).
+  ([`m3-site-rendering.md` lines 357-370](/docs/plans/archive/m3/m3-site-rendering.md)).
   Test events render their registered Themes on apps/site;
   apps/web event-route shells render warm-cream defaults until
   M4 phase 4.1. The asymmetry is acceptable because test events
@@ -999,7 +999,7 @@ resolution path so reviewer attention does not relitigate them.
   claim was inaccurate; the scoping doc records the discrepancy.
 - **docs/backlog.md edit closing the "Event landing page" item.**
   Resolution: out of 3.3 per the M3 milestone doc at
-  [lines 433-438](/docs/plans/m3-site-rendering.md). The item
+  [lines 433-438](/docs/plans/archive/m3/m3-site-rendering.md). The item
   closes at M4 phase 4.2 (Madrona content), not M3
   (infrastructure-only). Closing it now would land a misleading
   status — the entry contemplates an attendee-visible Madrona
@@ -1016,7 +1016,7 @@ resolution path so reviewer attention does not relitigate them.
 - **Updating M3 phase paragraphs in the epic to match the
   3-phase shape.** Resolution: out of 3.3 per the M3 milestone
   doc at
-  [lines 463-468](/docs/plans/m3-site-rendering.md). The epic's
+  [lines 463-468](/docs/plans/archive/m3/m3-site-rendering.md). The epic's
   M3 paragraphs are pre-milestone-planning estimates per AGENTS.md
   "Epic Drafting"; the milestone doc is canonical.
 - **Cross-app navigation against staging or local origins.**
@@ -1029,13 +1029,13 @@ resolution path so reviewer attention does not relitigate them.
   belongs in a separate plan — likely a post-epic operational-
   health follow-up — not a milestone-closure phase.
 - **Updating M3 phase paragraphs in
-  [`docs/plans/framework-decision.md`](/docs/plans/framework-decision.md)
+  [`docs/plans/archive/m0/framework-decision.md`](/docs/plans/archive/m0/framework-decision.md)
   or
-  [`docs/plans/site-scaffold-and-routing.md`](/docs/plans/site-scaffold-and-routing.md)
+  [`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
   if either retains stale `M3 phase 3.4` references.**
   Resolution: out of 3.3. The milestone-doc PR already updated
   cross-doc references that named the old shape per
-  [`m3-site-rendering.md` lines 451-462](/docs/plans/m3-site-rendering.md);
+  [`m3-site-rendering.md` lines 451-462](/docs/plans/archive/m3/m3-site-rendering.md);
   any references that survived that PR are either intentional
   historical-numbering anchors or pending the next sweep.
 
@@ -1131,21 +1131,21 @@ tracked backlog items, so they don't imply backlog edits.
   estimate per AGENTS.md "Epic Drafting." 3.3's PR flips the
   Milestone Status table M3 row to `Landed` per the two-phase
   pattern.
-- [`m3-site-rendering.md`](/docs/plans/m3-site-rendering.md) —
+- [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —
   M3 milestone doc; cross-phase invariants, decisions, risks,
   documentation-ownership map. 3.3's PR flips the top Status
   block and the Phase Status table row 3.3 to `Landed` per the
   two-phase pattern.
-- [`m3-phase-3-1-1-plan.md`](/docs/plans/m3-phase-3-1-1-plan.md) —
+- [`m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md) —
   3.1.1 plan (rendering pipeline + first test event + basic SSR
   meta). 3.3 inherits the rendering surface unchanged.
-- [`m3-phase-3-1-2-plan.md`](/docs/plans/m3-phase-3-1-2-plan.md) —
+- [`m3-phase-3-1-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-2-plan.md) —
   3.1.2 plan (per-event OG image, twitter-image, `metadataBase`,
   `openGraph.url`, unfurl verification). 3.3 inherits the meta
   pipeline unchanged. Pattern reference for the two-phase
   Plan-to-Landed Status pattern, which 3.1.2 used for its
   unfurl validation gate.
-- [`m3-phase-3-2-plan.md`](/docs/plans/m3-phase-3-2-plan.md) —
+- [`m3-phase-3-2-plan.md`](/docs/plans/archive/m3/m3-phase-3-2-plan.md) —
   3.2 plan (second test event with `riverside-jam` Theme). 3.3
   inherits the second-event surface unchanged. Pattern reference
   for the plan structure 3.3 follows.
@@ -1163,7 +1163,7 @@ tracked backlog items, so they don't imply backlog edits.
   pipeline conventions M3 inherited across phases. All three
   delete in this PR per the milestone doc's batch-deletion
   contract.
-- [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) —
+- [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md) —
   M1 phase 1.3 plan. "Verification Evidence" subsection records
   the production cookie-boundary verification 3.3's walk-through
   re-confirms.

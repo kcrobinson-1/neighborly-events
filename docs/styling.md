@@ -7,7 +7,7 @@ classification and color-derivation policy below are **binding** for
 the implementation in M1 phase 1.5.2; any token misclassification
 surfaced during 1.5.2 sends a doc fix back here in the same PR before
 the implementation continues. See
-[`docs/plans/shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
+[`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
 and the parent epic
 [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
 for context.
@@ -233,7 +233,7 @@ Option (a) is chosen because:
 1. **Theme author burden scales.** The epic ships 3–4 themes within
    its own boundary (Sage Civic platform palette in 1.5.2; two test
    event themes in M3 phases 3.1 and 3.2 — see
-   [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); Madrona
+   [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md); Madrona
    in M4 phase 4.1) and many more after. ~10 fields per theme vs ~30 compounds in author
    ergonomics across that horizon.
 2. **Visual consistency by construction.** Brand-tied surfaces always
@@ -293,7 +293,7 @@ declaration.
 
 Every field corresponds to a flat CSS custom property
 (`--token-name`, no `--theme-` prefix — see "Naming" in
-[`shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)).
+[`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)).
 `<ThemeScope theme={…}>` emits the CSS custom properties as inline
 style on a wrapper element. Brand-tied derived shades
 (`--secondary-surface`, etc.) are not Theme fields; they are
@@ -400,8 +400,9 @@ wrap in `<ThemeScope>` (admin from event-platform-epic M2 phase
 slugs. Non-test-event slugs continue to resolve to the platform
 Sage Civic Theme via `getThemeForSlug`'s fallback, so apps/web's
 warm-cream `:root` defaults remain in place for non-test-event
-slugs until a future per-event Theme registers (the future Madrona-
-launch epic owns Madrona's `Theme` registration). Sage Civic
+slugs until a future per-event Theme registers (the
+[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
+owns Madrona's `Theme` registration). Sage Civic
 landing in apps/site in 1.5.2 was the only intentional visual
 change in that phase.
 
@@ -410,7 +411,7 @@ change in that phase.
 - [`AGENTS.md`](/AGENTS.md) — Styling Token Discipline (rule for
   when to add a token; updated in 1.5.2 to point here for the
   themable/structural binding)
-- [`docs/plans/shared-styles-foundation.md`](/docs/plans/shared-styles-foundation.md)
+- [`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
   — phase 1.5 plan (subphase tables, execution steps, validation
   gate)
 - [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)

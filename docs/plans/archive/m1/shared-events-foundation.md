@@ -299,7 +299,7 @@ relitigate them.
   [`docs/operations.md`](/docs/operations.md), and elsewhere —
   describe the contract; not consumers.
 - Runtime identifiers preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) cross-cutting invariants.
 
 ## Execution steps
 
@@ -547,14 +547,14 @@ the parent epic.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
   parent epic; M1 milestone owns the foundation extraction.
   Sibling phase plans:
-  [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md),
-  [`shared-urls-foundation.md`](/docs/plans/shared-urls-foundation.md),
-  [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md).
-- [`shared-auth-foundation.md`](/docs/plans/shared-auth-foundation.md) —
+  [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md),
+  [`shared-urls-foundation.md`](/docs/plans/archive/m1/shared-urls-foundation.md),
+  [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md).
+- [`shared-auth-foundation.md`](/docs/plans/archive/m1/shared-auth-foundation.md) —
   prior phase's plan. Established the `configureShared*`
   per-app DI pattern and the binding-module re-export shape
   this plan inherits.
-- [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) —
+- [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) —
   earlier phase's plan. Established the
   Vite-coupled-adapter-over-shared-SDK boundary that this
   plan preserves rather than collapsing.
@@ -567,5 +567,5 @@ the parent epic.
   this plan to describe `shared/events/`.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at this phase's gate.
-- [`repo-rename.md`](/docs/plans/repo-rename.md) — runtime-identifier
+- [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) — runtime-identifier
   preservation rules carry over here.

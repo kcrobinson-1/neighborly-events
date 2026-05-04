@@ -227,7 +227,7 @@ reflect the deferred rename.
 - Runtime identifiers (`neighborly_session` cookie,
   `x-neighborly-session` header, `neighborly.local-*` storage keys,
   `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) cross-cutting invariants.
 
 ## Execution steps
 
@@ -451,7 +451,7 @@ parent epic.
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
   epic; M1 milestone owns the foundation extraction; sibling
   phases 1.1, 1.3, 1.4, 1.5 own their own plans.
-- [`shared-db-foundation.md`](/docs/plans/shared-db-foundation.md) — the
+- [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) — the
   prior phase's plan and template precedent for module layout,
   README ownership note, and per-app adapter pattern.
 - [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR
@@ -463,6 +463,6 @@ parent epic.
   new `shared/urls/` layer.
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) —
   named audits applied at this phase's gate.
-- [`repo-rename.md`](/docs/plans/repo-rename.md) — runtime-identifier
+- [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) — runtime-identifier
   preservation rules carry over here (cookie names, header
   names, storage keys, workspace scope).

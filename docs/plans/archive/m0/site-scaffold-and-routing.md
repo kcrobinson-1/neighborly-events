@@ -9,8 +9,8 @@ the deferral.
 **Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
 Milestone M0, Phase 0.3. The epic's M0 row stays `Proposed` until this
 phase's plan flips to `Landed`. Sibling phases:
-[`repo-rename.md`](/docs/plans/repo-rename.md) (0.1, Landed) and
-[`framework-decision.md`](/docs/plans/framework-decision.md) (0.2, Landed) — both
+[`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) (0.1, Landed) and
+[`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) (0.2, Landed) — both
 already on the platform.
 
 ## Goal
@@ -28,7 +28,7 @@ behavior changes.
 
 This is the first phase that runs the Phase 0.2 framework choice
 against the production domain. It owns closing the production-reality
-open questions [`framework-decision.md`](/docs/plans/framework-decision.md) left
+open questions [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) left
 on the table for the cookie-boundary mechanism.
 
 The epic's **final** routing contract (where `apps/site` owns `/`,
@@ -116,7 +116,7 @@ yet migrated."
 ## Decisions Resolved In This Plan
 
 These resolve open questions named in
-[`framework-decision.md`](/docs/plans/framework-decision.md) that the Phase 0.2
+[`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) that the Phase 0.2
 documentation could not close.
 
 - **Routing model: proxy-rewrite, not Vercel Microfrontends.** The
@@ -160,7 +160,7 @@ the PR adds:
   Next.js, React, React-DOM, TypeScript, Next.js ESLint config.
   Workspace name `@neighborly/site` (matching the `@neighborly/web`
   scope per the runtime-identifier preservation rule from
-  [`repo-rename.md`](/docs/plans/repo-rename.md)).
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md)).
 - `apps/site/next.config.ts` — `output: 'standalone'` per Vercel's
   monorepo guidance; no other non-default options in this phase.
 - `apps/site/tsconfig.json` — extends repo conventions; strict mode
@@ -264,7 +264,7 @@ A grep match against any of these is correct.
   `x-neighborly-session` header, `neighborly.local-*` storage keys,
   `NEIGHBORLY_SKIP_DB_RESET`, `generate_neighborly_verification_code`
   DB function, `@neighborly/web` workspace scope) — preserved per
-  [`repo-rename.md`](/docs/plans/repo-rename.md) cross-cutting invariants.
+  [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) cross-cutting invariants.
   The new `@neighborly/site` workspace scope follows the same
   `@neighborly` prefix convention.
 
@@ -505,7 +505,7 @@ state by the time this PR opens:
   transitional routing state with M2 migration pointers).
 - `docs/architecture.md` — updated (two-app shape, transitional
   routing topology summary, M2 migration pointer).
-- `docs/plans/site-scaffold-and-routing.md` — Status flipped to
+- `docs/plans/archive/m0/site-scaffold-and-routing.md` — Status flipped to
   `In progress pending production cookie-boundary verification`
   in PR #91; flipped to `Landed` (with deferral rationale instead
   of verification evidence) in the Stage 2 follow-up PR.
@@ -566,7 +566,7 @@ Captured here so reviewer attention does not relitigate them.
 - **`EventContent` type and per-event content.** M3 phase 3.1.
 - **Per-event meta tags / OG images / unfurl previews.** M3
   phase 3.1 (per
-  [m3-site-rendering.md](/docs/plans/m3-site-rendering.md); the
+  [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md); the
   original 4-phase epic estimate placed this in a since-superseded
   phase 3.4) and M4 phase 4.1.
 - **Vercel Microfrontends migration.** Documented as the
@@ -703,11 +703,11 @@ proxy (rules 7–8).
 - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
   epic; M2 phases 2.2, 2.3, 2.4, 2.5 own the routing migrations
   this phase prepares for
-- [`framework-decision.md`](/docs/plans/framework-decision.md) — sibling
+- [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) — sibling
   phase 0.2 plan (already landed); Implications For Downstream
   Milestones → M0 Phase 0.3 section guides this plan's
   framework-specific choices
-- [`repo-rename.md`](/docs/plans/repo-rename.md) — sibling phase 0.1 plan
+- [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) — sibling phase 0.1 plan
   (already landed); runtime-identifier preservation rules govern
   the `@neighborly/site` workspace scope choice here
 - [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR
