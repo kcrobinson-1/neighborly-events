@@ -344,37 +344,57 @@ consequence" rule;
 ### apps/web noindex emit (per scoping decision 3)
 
 `apps/web/vercel.json` gains a top-level `"headers"` array with
-**three entries**, one per bypass-eligible surface, each
-emitting `X-Robots-Tag: noindex, nofollow`. Three entries
-(rather than one entry with a broader pattern) are required
-because Vercel's `source` uses path-to-regexp under the hood
-and path-to-regexp tokenizes parameter regex constraints on
-`/`, so a single param like
+**six entries** — one **bare-path** entry plus one **`/:path*`**
+entry per bypass-eligible surface — each emitting
+`X-Robots-Tag: noindex, nofollow`. The pair-per-surface shape
+mirrors the existing rewrites in the same config, which use the
+same paired pattern (`/event/:slug/admin` +
+`/event/:slug/admin/:path*`) so trailing-slash URLs and any
+sub-path under the bypass route both rewrite to the apps/web
+SPA. A single bare-path entry would leave the trailing-slash
+variant uncovered (path-to-regexp matches sources literally),
+which would let a crawler hitting `/event/harvest-block-party/admin/`
+receive bypass-rendered SPA content without the `X-Robots-Tag`
+header — the gap PR #170's Codex review surfaced. The plan-
+drafting estimate of "three entries" did not anticipate the
+trailing-slash exposure; revised in-PR to six entries per
+AGENTS.md "Plan-to-PR Completion Gate" rule-deviation handling.
+
+Six entries (rather than fewer with a broader pattern) are
+required because Vercel's `source` uses path-to-regexp under
+the hood and path-to-regexp tokenizes parameter regex
+constraints on `/`, so a single param like
 `:surface(admin|game/redeem|game/redemptions)` cannot match
-across slash boundaries; each surface needs its own entry.
+across slash boundaries; each surface needs its own pair.
 `Verified by:` Vercel docs at
 https://vercel.com/docs/project-configuration/vercel-json#headers
 which document `source` accepting path-to-regexp named-
 parameter regex constraints (their example: `:path(\d{1,})`
-for digit-only matches in a redirect rule).
+for digit-only matches in a redirect rule); plus the existing
+[`apps/web/vercel.json`](/apps/web/vercel.json) rewrites that
+already use the bare + `/:path*` paired shape per surface.
 
-The three entries use the **`:slug(harvest-block-party|riverside-jam)`
+The six entries use the **`:slug(harvest-block-party|riverside-jam)`
 inline-regex named parameter** as the load-bearing slug-list
 hand-mirror surface — one regex constraint expression
-appearing in three sources, byte-equivalent to
+appearing in six sources, byte-equivalent to
 `TEST_EVENT_SLUGS`:
 
 - Entry 1: `source: "/event/:slug(harvest-block-party|riverside-jam)/admin"`
-- Entry 2: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redeem"`
-- Entry 3: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions"`
+- Entry 2: `source: "/event/:slug(harvest-block-party|riverside-jam)/admin/:path*"`
+- Entry 3: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redeem"`
+- Entry 4: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redeem/:path*"`
+- Entry 5: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions"`
+- Entry 6: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions/:path*"`
 
 Each entry's `headers` array contains exactly one element:
 `{"key": "X-Robots-Tag", "value": "noindex, nofollow"}`. The
-gameplay route `/event/:slug/game` is intentionally NOT
-matched by any entry — it stays publicly indexable per the
-milestone-doc Goal section's "gameplay route is unchanged"
-framing. Non-test slugs (e.g., `madrona-launch-day`) do not
-match the `:slug(...)` regex constraint and receive no
+gameplay route `/event/:slug/game` (and `/event/:slug/game/:path*`,
+which would match the bare gameplay route's sub-paths) is
+intentionally NOT matched by any entry — it stays publicly
+indexable per the milestone-doc Goal section's "gameplay route
+is unchanged" framing. Non-test slugs (e.g., `madrona-launch-day`)
+do not match the `:slug(...)` regex constraint and receive no
 `X-Robots-Tag` header.
 
 Interaction with the existing `rewrites` array at
@@ -398,7 +418,7 @@ existing `/event/:slug/admin → /index.html` and
 `/event/:slug/admin/:path*` rewrites that the bypass shells
 mount under).
 
-The slug literals in the three sources are **hand-mirrored**
+The slug literals in the six sources are **hand-mirrored**
 from
 [`shared/events/testEventAllowlist.ts:18-21`](/shared/events/testEventAllowlist.ts)
 `TEST_EVENT_SLUGS`. The hand-mirror is protected by the
@@ -424,15 +444,18 @@ runtime path-to-regexp execution), avoiding the npm-side
 dependency on Vercel's internal regex tokenizer:
 
 - **Entry shape.** Read `apps/web/vercel.json`, assert it
-  contains a `headers` array with exactly **three** entries
+  contains a `headers` array with exactly **six** entries
   whose `headers[]` array contains exactly one element with
   `key === "X-Robots-Tag"` and `value === "noindex, nofollow"`.
-- **Surface enumeration.** Assert the three entries' `source`
-  fields end with `/admin`, `/game/redeem`, and
-  `/game/redemptions` respectively (one entry per surface;
-  no extras, no duplicates).
+- **Surface enumeration (paired bare + `/:path*` per surface).**
+  Assert the six entries' `source` suffixes (after the
+  `/event/:slug(...)` prefix) form the expected paired set
+  (`/admin`, `/admin/:path*`, `/game/redeem`,
+  `/game/redeem/:path*`, `/game/redemptions`,
+  `/game/redemptions/:path*`). Both members of every pair must
+  appear; no extras, no duplicates.
 - **Slug-list byte-equivalence (the hand-mirror property).**
-  For each of the three entries, extract the substring inside
+  For each of the six entries, extract the substring inside
   the `:slug(...)` regex-constraint group via the regex
   `/:slug\(([^)]+)\)/`. Assert the captured group's value is
   byte-equivalent to `TEST_EVENT_SLUGS.join("|")` (after
@@ -440,15 +463,19 @@ dependency on Vercel's internal regex tokenizer:
   independent — `TEST_EVENT_SLUGS` is `["harvest-block-party",
   "riverside-jam"]` and the regex constraint is
   `harvest-block-party|riverside-jam`). If any slug in
-  `TEST_EVENT_SLUGS` is missing from any of the three
+  `TEST_EVENT_SLUGS` is missing from any of the six
   captured groups OR any extra slug literal appears in any
   captured group, the assertion fails.
 - **No drift to other surfaces.** Assert no other entry in
-  `headers` contains the `X-Robots-Tag` key (no accidental
-  noindex on the gameplay route, the home page, the admin
-  app, or auth callback).
-- **Path prefix uniformity.** Assert each of the three
-  entries' `source` starts with `/event/:slug(`.
+  `headers` contains the `X-Robots-Tag` key beyond the six
+  paired entries above (no accidental noindex on the gameplay
+  route, the home page, the admin app, or auth callback). The
+  negative-match assertion explicitly excludes the bare
+  gameplay route (`/event/:slug(...)/game`) and its
+  `/:path*` variant (`/event/:slug(...)/game/:path*`) since
+  the gameplay route stays publicly indexable.
+- **Path prefix uniformity.** Assert each of the six entries'
+  `source` starts with `/event/:slug(`.
 
 The test runs under `npm run test` (Vitest default; the
 existing root-level Vitest config picks up `tests/**/*.test.ts`
