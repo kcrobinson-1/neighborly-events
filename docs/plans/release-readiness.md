@@ -2,11 +2,23 @@
 
 ## Document Role
 
-This is the living release readiness document for the Neighborly Events
-repo. It defines how to perform a senior-engineer-grade quality check before a
-release candidate is considered ready to run a real event against real
-attendees, and it tracks the running state of each quality dimension across
-passes.
+This is the canonical release-readiness **methodology** for the Neighborly
+Events repo. It defines how to perform a senior-engineer-grade quality
+check before a release candidate is considered ready to run a real event
+against real attendees, the gates that must be met, and the candidate
+improvements to the methodology itself.
+
+The pass results live in two sibling files:
+
+- [`/docs/tracking/release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+  — the most recent quality-check pass (overwritten at each pass)
+- [`/docs/tracking/release-readiness-history.md`](/docs/tracking/release-readiness-history.md)
+  — the append-only archive of prior passes
+
+This split keeps the methodology stable and short-to-read while letting
+pass evidence accumulate without bloating the plan. When you change the
+methodology, edit this file. When you record what happened during a pass,
+edit `release-readiness-current.md`.
 
 Use this doc when:
 
@@ -34,6 +46,12 @@ Owner docs this file coordinates:
 - [operations.md](/docs/operations.md) — platform-managed settings and production responsibilities
 - [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) — post-release smoke triage
 - [dev.md](/docs/dev.md) — validation commands and local workflow source of truth
+- [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface that ships in the current MVP
+- [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
+- [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
+- [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
+- [epics/madrona-launch/epic.md](/docs/plans/epics/madrona-launch/epic.md) — current real-event launch epic (stub; full content pending milestone planning)
+- [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md) — completed M1–M3 (ThemeScope wiring, home rebuild, demo-mode auth bypass) that shipped between this doc's establishment and the next pass
 
 ## Scope And Release Target
 
@@ -45,20 +63,40 @@ scenario.
 Release-target checklist:
 
 - the attendee mobile flow works end to end against the deployed backend
+- the apps/site landing and event-detail pages, and the cross-app proxy
+  rewrites in `apps/web/vercel.json` that thread `/`, `/admin`, and
+  `/event/:slug` between the two Vercel projects, work end to end against
+  deployed infrastructure
 - organizers can author, publish, and unpublish events through the deployed
   admin surface
-- completion trust, entitlement uniqueness, and publish atomicity are proven
-  against real database behavior, not mocked
+- the redemption MVP (volunteer redeem flow at `/event/:slug/game/redeem`,
+  the queue at `/event/:slug/game/redemptions`, and the demo-mode read-only
+  variants on test slugs) works against the deployed backend and is gated by
+  the event-scoped roles (agent, organizer, root admin) defined in the
+  reward-redemption design
+- completion trust, entitlement uniqueness, redemption idempotency, role-based
+  access enforcement, and publish atomicity are proven against real database
+  behavior, not mocked
+- demo-mode auth bypass on test-event slugs (`harvest-block-party`,
+  `riverside-jam`) is enforced consistently on writes (rejected by the
+  shared `evaluateDemoModeRejection` helper) and on indexing (single-catchall
+  `X-Robots-Tag: noindex` covers all test-event surfaces)
 - operational visibility is sufficient to notice and diagnose a failure during
-  or shortly after a real event
+  or shortly after a real event, across both Vercel projects and the expanded
+  Edge Function surface
 - every release-blocking open question has a decision or an explicit deferral
 
 Out of scope for this doc:
 
-- broad role/permission design, analytics dashboards, and cross-event
-  comparisons that the product intentionally defers post-MVP
+- broad role/permission design beyond the event-scoped MVP roles already
+  shipped (deferrals: analytics dashboards, cross-event comparisons,
+  organizer self-service onboarding, root-admin UI)
 - infrastructure-as-code settings migration (see the future option note in
   [operations.md](/docs/operations.md))
+- demo-expansion epic milestones M4 (role-door redemption seeding), M5
+  (configuration tour), and M6 (behind-the-scenes / polish), which are
+  explicit deferrals in
+  [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md)
 
 ## Status Snapshot
 
@@ -69,40 +107,53 @@ in [AGENTS.md](/AGENTS.md) reads first.
 | Field | Value |
 | --- | --- |
 | Doc established | 2026-04-16 |
-| Last full pass | 2026-04-16 — completed with no-go findings |
-| Current release target | Madrona Music in the Playfield (initial validation target) |
-| Current go/no-go | _no-go — PR CI evidence is pending for this branch_ |
-| Blocking items summary | production admin smoke and volunteer verification are resolved; PR CI evidence is still pending |
+| Last full pass | 2026-05-04 — see [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) |
+| Last methodology refresh | 2026-05-04 — broadened to cover apps/site, cross-app rewrites, the expanded Edge Function surface (read-demo-event, generate-event-code, get-redemption-status, redeem-entitlement, reverse-entitlement-redemption), the redemption MVP, demo-mode auth bypass, and the new `release.yml` workflow |
+| Current release target | Madrona Music in the Playfield (initial validation target); demo-mode bypass surfaces on test-event slugs (`harvest-block-party`, `riverside-jam`) are also in scope as platform-readiness signal |
+| Current go/no-go | **no-go** as of 2026-05-04 — three gates unmet (G3, G8, G9); see [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) for evidence |
+| Blocking items summary | redemption operator path not exercised on deployed surface (G3); PR CI deno-check skips 4 of 10 Edge Functions (G8); demo-mode bypass Playwright suite not run for the release candidate (G9); see [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) |
 
-The first pass produces the initial findings tables under
-[Running Findings](#running-findings). Subsequent passes append a new dated
-entry and update the Status Snapshot.
+Each pass overwrites
+[`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+with new findings (after archiving the prior pass to
+[`release-readiness-history.md`](/docs/tracking/release-readiness-history.md)),
+and updates this snapshot to point at the new pass.
 
 ## How This Doc Works
 
-This is a living doc. It evolves with the codebase.
+This is a living doc, but its **methodology** sections (gates, dimensions,
+template) are intended to evolve slowly and deliberately. Pass evidence
+lives in the sibling tracking docs so this file can stay the canonical
+reference.
 
 Editing rules:
 
-- when a quality check pass runs, update [Status Snapshot](#status-snapshot)
-  before editing any other section
-- record concrete findings under [Running Findings](#running-findings) with a
-  dated entry; do not mutate prior dated entries
+- when a quality check pass runs, update
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+  with the new pass's findings (overwriting the prior pass after archiving
+  it), and update [Status Snapshot](#status-snapshot) here to point at the
+  new pass — that is the only edit a routine pass makes to this file
+- before overwriting `release-readiness-current.md`, move its existing pass
+  entry verbatim to the top of
+  [`release-readiness-history.md`](/docs/tracking/release-readiness-history.md)
+  — the history file is append-only, never edited in place
 - when a finding maps onto an existing tracker (`backlog.md`,
   `testing.md`, `code-refactor-checklist.md`, `open-questions.md`, or
-  `documentation-quality-checklist.md`), add it there first, then reference the
-  item from this doc; do not duplicate the tracking surface here
-- when a finding does not fit any existing tracker, capture it in a short
-  bullet in the relevant [Running Findings](#running-findings) dimension and
-  either resolve it in the same pass or migrate it into the correct tracker
-  before the pass is considered complete
+  `documentation-quality-checklist.md`), add it there first, then reference
+  the item from `release-readiness-current.md`; do not duplicate the
+  tracking surface
+- if a pass surfaces a *methodology* gap (a missing gate, a dimension that
+  no longer matches the codebase, a release bar that is too loose or too
+  strict), record the proposed change under
+  [Methodology Roadmap](#methodology-roadmap) in this file, decide it in a
+  later edit, and only then update the affected sections of the methodology
 - do not mark a release gate as met on the basis of "tests pass" alone —
   confirm the target shape, coverage, or behavioral claim the gate actually
   describes, consistent with the Refactor Completion Proof and Validation
   Honesty rules in [AGENTS.md](/AGENTS.md)
-- keep this doc branch-ready: if a pass stops partway, update Status Snapshot
-  to reflect the partial state and do not leave aspirational claims in the
-  Release Gates table
+- keep this doc branch-ready: if a methodology change lands partway, do
+  not leave aspirational claims in the Release Gates table — finish the
+  edit or revert
 
 Cadence guidance:
 
@@ -118,25 +169,50 @@ Cadence guidance:
 
 ## Release Gates
 
-Each gate below must be met before a release candidate is considered ready for
-a live event. A gate is met when the named evidence exists, not merely when
-tests pass.
+Each gate below must be met before a release candidate is considered ready
+for a live event. A gate is met when the named evidence exists, not merely
+when tests pass.
+
+At the current product-lifecycle stage a "release" is a self-imposed
+sanity check on the health of the implementation — there is one operator
+and no external SLA — so a no-go verdict is a truthful self-report, not
+an externally-enforced block. That stance does **not** lower the bar for
+when a gate counts as met:
+
+- **Gate definitions describe the evidence good looks like, not the
+  evidence we have right now.** A gap that should be evidence and isn't
+  yet (a missing test, a missing deployed-surface check, a missing log
+  line) makes the gate **not met** for this pass — even if the work to
+  close the gap is tracked in `backlog.md`. The pass entry names the
+  gap, the backlog item drives the fix, and a future pass flips the
+  gate to met when the evidence actually exists. Silently rescoping a
+  gate to its currently-implementable subset would let unmet criteria
+  pass under a quieter label.
+- **Gate definitions evolve when the underlying contract changes, not
+  when a pass is unable to meet them.** Methodology-level changes to a
+  gate's evidence column (new tools available, deprecated scope, etc.)
+  belong in the same PR that ships the underlying change, with the
+  candidate tracked under [Methodology Roadmap](#methodology-roadmap)
+  until that PR lands. A pass that finds a gate unmet records the gap,
+  not a gate edit.
 
 | # | Gate | Evidence required | Tracker of record |
 | --- | --- | --- | --- |
-| G1 | Trust-path behavior is validated against real Supabase, not mocks only | `npm run test:supabase` passes locally; pgTAP confirms entitlement uniqueness, request idempotency, and verification-code stability | [testing.md — Trust-Path Validation Strategy](/docs/testing.md) |
-| G2 | Attendee mobile flow works end to end in a real browser | `npm run test:e2e` passes and the captured mobile smoke sequence covers intro → answer → completion → direct route load | [testing.md — UX And End-To-End Browser Flow](/docs/testing.md) |
-| G3 | Admin authoring, publish, and unpublish work against deployed production | `npm run test:e2e:admin:production-smoke` has passed for the release candidate commit (via `Production Admin Smoke` workflow or manual run) | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
-| G4 | Completion and starts instrumentation is in place for the event | `game_starts` and completion tables populate correctly in a local Supabase run; the production Supabase project has both migrations applied before attendees arrive | [analytics-strategy.md — Phase 1 Implementation Plan](/docs/plans/analytics-strategy.md) |
-| G5 | Release-blocking open questions are either decided or explicitly deferred | Each item listed in [Release-Blocking Open Questions](#release-blocking-open-questions) has a linked decision or a recorded post-event deferral | [open-questions.md](/docs/open-questions.md) |
-| G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/plans/analytics-strategy.md) and this doc |
-| G7 | Docs describe the implemented state of the release candidate | The doc currency walkthrough in [AGENTS.md — Doc Currency Is a PR Gate](/AGENTS.md) has been executed for the release branch; `README.md`, `docs/architecture.md`, `docs/dev.md`, `docs/testing.md`, `docs/operations.md`, `docs/backlog.md`, and `docs/open-questions.md` match the shipped code | [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) |
-| G8 | PR CI covers the pre-release change set at a meaningful depth | For non-doc changes, lint, unit, Deno function tests, local Supabase integration, attendee trusted-backend Playwright smoke, and build pass on the release candidate commit via `.github/workflows/ci.yml`; docs-only pull requests still produce the required CI check but intentionally short-circuit heavy validation, and markdown/docs-only commits to `main` do not trigger production release. Any intentional gap is a known item in `backlog.md` | [testing.md — Where Tests Should Run](/docs/testing.md) and [backlog.md Tier 2](/docs/backlog.md) |
+| G1 | Trust-path behavior is validated against real Supabase, not mocks only | `npm run test:supabase` passes locally; pgTAP confirms entitlement uniqueness, request idempotency, verification-code stability, redemption idempotency (`redeem_entitlement` / `reverse_entitlement_redemption` RPCs), and event-scoped role helpers (`is_agent_for_event`, `is_organizer_for_event`, `is_root_admin`) | [testing.md — Trust-Path Validation Strategy](/docs/testing.md) |
+| G2 | Attendee mobile flow works end to end in a real browser | `npm run test:e2e` passes and the captured mobile smoke sequence covers intro → answer → completion → direct route load on `/event/:slug/game` | [testing.md — UX And End-To-End Browser Flow](/docs/testing.md) |
+| G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | `npm run test:e2e:admin:production-smoke` has passed for the release candidate commit (via `Production Admin Smoke` workflow or manual run); the smoke run exercises the cross-app `apps/web` → `apps/site` `/admin` rewrite, and the live-event redemption surfaces on a non-test slug have been walked manually or via `npm run test:e2e:redeem` / `npm run test:e2e:redemptions` against the same backend before attendees arrive. Extending `production-admin-smoke.yml` to exercise the redemption operator path on the deployed surface is tracked in [`backlog.md`](/docs/backlog.md) Tier 1 ("Add redemption operator path to deployed-surface smoke"); until that lands, the local-runner exercise satisfies the redemption-side evidence requirement. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
+| G4 | Completion, starts, and redemption instrumentation is in place for the event | `game_starts`, `game_completions`, `game_entitlements`, and the redemption columns/RPCs populate correctly in a local Supabase run; the production Supabase project has every migration through `20260427010000_broaden_event_scoped_rls.sql` applied before attendees arrive | [analytics-strategy.md — Phase 1 Implementation Plan](/docs/plans/analytics-strategy.md) and [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) |
+| G5 | Release-blocking open questions are either decided or explicitly deferred | Each item mirrored under the **Release-blocking open questions** subheading of the current pass entry in [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) has a linked decision or a recorded post-event deferral, per the mirror contract in [Release-Blocking Open Questions](#release-blocking-open-questions) below; the pass also confirms that no item in [open-questions.md](/docs/open-questions.md) that should be release-blocking is missing from that mirror | [open-questions.md](/docs/open-questions.md) |
+| G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/plans/analytics-strategy.md) and this doc |
+| G7 | Docs describe the implemented state of the release candidate | The doc currency walkthrough in [AGENTS.md — Doc Currency Is a PR Gate](/AGENTS.md) has been executed for the release branch; `README.md`, `docs/architecture.md`, `docs/dev.md`, `docs/testing.md`, `docs/operations.md`, `docs/backlog.md`, `docs/open-questions.md`, the active epic doc(s) under `docs/plans/epics/`, and `docs/plans/reward-redemption-mvp-design.md` match the shipped code | [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) |
+| G8 | PR CI covers the pre-release change set at a meaningful depth | For non-doc changes, lint, unit, `npm run test:functions` (Deno runtime tests), `deno check` over every function under `supabase/functions/*/index.ts`, `npm run test:supabase` (local Supabase integration + pgTAP), attendee-trusted-backend Playwright smoke, and both web (`build:web`) and site (`build:site`) builds pass on the release candidate commit via `.github/workflows/ci.yml`; the `release.yml` workflow then promotes Supabase migrations + Vercel deploys, and `production-admin-smoke.yml` validates the deployed admin surface. The `deno check` requirement covers all functions under the directory (including `read-demo-event`, `get-redemption-status`, `redeem-entitlement`, `reverse-entitlement-redemption`), not only the ones currently named in `ci.yml`. Docs-only pull requests still produce the required CI check but intentionally short-circuit heavy validation, and markdown/docs-only commits to `main` do not trigger production release. Any intentional gap is a known item in `backlog.md` | [testing.md — Where Tests Should Run](/docs/testing.md) and [backlog.md Tier 2](/docs/backlog.md) |
+| G9 | Demo-mode auth bypass on test-event slugs is consistent and contained | `npm run test:e2e:demo-mode-bypass` passes on the release candidate; the `evaluateDemoModeRejection` helper in `supabase/functions/_shared/` rejects writes on test slugs across `save-draft`, `publish-draft`, `unpublish-event`, `redeem-entitlement`, and `reverse-entitlement-redemption`; the single catchall `X-Robots-Tag: noindex, nofollow` header in `apps/web/vercel.json` covers every `/event/(harvest-block-party|riverside-jam)/:path*` route, and `apps/site` emits parallel `robots: { index: false, follow: false }` metadata on the matching routes | [test-event-noindex-uniformity-plan.md](/docs/plans/test-event-noindex-uniformity-plan.md) and [epics/demo-expansion/m3-demo-mode-auth-bypass.md](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md) |
 
-Gate status is recorded under [Running Findings](#running-findings) at each
-pass. Do not edit this table when a gate is met for a single pass — edit the
-dated entry instead, so the table stays a durable definition rather than a
-snapshot.
+Gate status is recorded in
+[`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+at each pass. Do not edit this table when a gate is met for a single pass —
+edit the pass entry instead, so the table stays a durable definition rather
+than a snapshot.
 
 ## Quality Check Methodology
 
@@ -170,29 +246,46 @@ visual regression. Those are intentionally deferred per
 How to run:
 
 1. Run `npm run validate:local` from a clean start. This is the integrated
-   local gate: lint, unit tests, Deno function tests, attendee Playwright
-   smoke, local Supabase integration, the web build, and the Deno checks for
-   each Edge Function.
+   local gate: lint (over `apps/web`, `apps/site`, `shared`, `supabase`,
+   `scripts`, `tests`), unit tests, Deno function tests over every function
+   under `supabase/functions/*/`, attendee Playwright smoke, local Supabase
+   integration + pgTAP, the web build, the site build (when the runner has
+   been refreshed for both apps; if not, run `npm run build:site` separately),
+   and `deno check` for each Edge Function.
 2. Run `npm run test:e2e:admin` against the local Supabase stack to exercise
    admin auth, allowlist, draft save, publish, unpublish, and public route
    state.
-3. After merge and deploy, confirm the `Production Admin Smoke` workflow has
+3. Run `npm run test:e2e:demo-mode-bypass` to confirm the test-event admin,
+   redeem, and redemptions surfaces render their read-only demo variants
+   without sign-in, and that demo-mode writes are rejected by the shared
+   `evaluateDemoModeRejection` helper.
+4. Run `npm run test:e2e:redeem` and `npm run test:e2e:redemptions` against a
+   live (non-test) event to exercise the redemption-operator path on
+   `/event/:slug/game/redeem` and the volunteer queue on
+   `/event/:slug/game/redemptions`, including reverse-redemption.
+5. After merge and deploy, confirm the `Production Admin Smoke` workflow has
    run successfully against the release commit (or trigger a `workflow_dispatch`
-   rerun). See [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md).
-4. Walk the [Proposed Test Inventory in testing.md](/docs/testing.md) against the
+   rerun). The smoke run also implicitly exercises the cross-app `/admin`
+   rewrite from `apps/web/vercel.json` to `apps/site`. See
+   [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md).
+6. Walk the [Proposed Test Inventory in testing.md](/docs/testing.md) against the
    current repo and list any item that is no longer representative of the
    shipped behavior. This is the step that catches "tests passed but coverage
    drifted" situations.
-5. For any change touching the trust boundary, cross-check against the
+7. For any change touching the trust boundary, cross-check against the
    "What Needs Coverage → Supabase Edge Functions" and "What Needs Coverage →
    Supabase Database" sections of `testing.md` and verify each item is still
-   exercised.
-6. For each user-facing path in scope of the release (attendee featured flow,
+   exercised. Cover all 10 deployed Edge Functions: `issue-session`,
+   `complete-game`, `save-draft`, `publish-draft`, `unpublish-event`,
+   `generate-event-code`, `read-demo-event`, `get-redemption-status`,
+   `redeem-entitlement`, and `reverse-entitlement-redemption`.
+8. For each user-facing path in scope of the release (attendee featured flow,
    attendee spotlight wrong-answer path, direct route load, admin draft save,
-   admin publish, admin unpublish, post-publish public route change), record
-   the exact manual confirmation — if any — that was run on real hardware
-   against deployed infrastructure. Distinguish manual checks from automated
-   coverage.
+   admin publish, admin unpublish, post-publish public route change,
+   redemption lookup + mark-as-redeemed, reverse-redemption, and the
+   demo-mode read-only variants on test slugs), record the exact manual
+   confirmation — if any — that was run on real hardware against deployed
+   infrastructure. Distinguish manual checks from automated coverage.
 
 Where findings live:
 
@@ -201,9 +294,10 @@ Where findings live:
   release-blocking
 - new known-flaky tests: add under
   [testing.md — Known Flaky Tests](/docs/testing.md)
-- manual checks required before release: record under
-  [Running Findings — Test Coverage](#running-findings), noting the pass date
-  and the hardware used
+- manual checks required before release: record under the **Test
+  coverage** subheading of the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md),
+  noting the pass date and the hardware used
 
 Release bar (see G1, G2, G3, G8):
 
@@ -256,12 +350,20 @@ How to run:
      canonical answer shape, local prototype fallback, smoke-only fixtures, or
      magic-link redirect assumptions) is documented at its definition
    - deprecated or transitional behavior (for example the local prototype
-     fallback in `apps/web/src/lib/gameApi.ts`) is clearly labeled
+     fallback in `apps/web/src/lib/gameApi.ts`, or the demo-mode
+     read-only variants in `apps/web/src/pages/EventAdminPage.tsx`,
+     `EventRedeemPage.tsx`, `EventRedemptionsPage.tsx`) is clearly labeled
    - comments do not merely restate names, types, or straightforward control
      flow
 3. Confirm area readmes still describe the current module ownership for any
-   area that has been restructured since the last pass (today that includes
-   `apps/web/src/game/`, `apps/web/src/admin/`, and `shared/game-config/`).
+   area that has been restructured since the last pass. The areas worth
+   checking now: `apps/web/src/game/`, `apps/web/src/admin/`,
+   `apps/web/src/redemptions/` (added with the redemption MVP),
+   `apps/web/src/pages/` (route-level pages including `EventRedeemPage`,
+   `EventRedemptionsPage`, `EventAdminPage`, `GameRoutePage`, `GamePage`),
+   `apps/site/app/`, `apps/site/components/`, `apps/site/events/`,
+   `shared/game-config/`, `shared/events/`, and `supabase/functions/_shared/`
+   (cross-function helpers for CORS, demo-mode rejection, and operator auth).
 4. Verify `docs/open-questions.md` no longer includes questions that have been
    answered in code since the last pass, and verify newly introduced
    unresolved decisions are captured there.
@@ -272,9 +374,10 @@ How to run:
 Where findings live:
 
 - missing inline comments: fix in the same PR that introduced the undocumented
-  behavior; if discovered post-hoc, record a short item under
-  [Running Findings — Documentation](#running-findings) and resolve it before
-  the release candidate ships
+  behavior; if discovered post-hoc, record a short item under the
+  **Documentation** subheading of the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+  and resolve it before the release candidate ships
 - broad comment-coverage uncertainty: add a bounded audit item to
   [backlog.md](/docs/backlog.md) that requires a gap list and remediation plan
   before implementation
@@ -314,18 +417,28 @@ notice and diagnose a failure at a live event. It does not mandate adopting a
 commercial SDK; it does require a recorded decision about what the operator
 would do if a live event looked broken at minute five.
 
-Current posture (as of doc establishment):
+Current posture (refreshed 2026-05-04):
 
 - there is no third-party error tracking, session replay, or product analytics
-  SDK integrated into the web app
+  SDK integrated into either app
 - the only server-side telemetry surface is the best-effort
   `game_starts` insert from `issue-session`; completion data lives in
-  `game_completions` and `game_entitlements`
+  `game_completions` and `game_entitlements`; redemption state lives in
+  `game_entitlements` (`redeemed_at`, `redemption_code`, `redemption_notes`)
+  and is mutated through `redeem-entitlement` /
+  `reverse-entitlement-redemption` (RPC-wrapped, audit-row-emitting)
+- demo-mode rejection on test-event slugs runs through the shared
+  `evaluateDemoModeRejection` helper in `supabase/functions/_shared/`; the
+  rejection currently returns a structured 403 response and does not produce
+  an explicit log line
 - runtime observability relies on Supabase platform logs for Edge Functions
-  and Postgres, plus Vercel deployment logs for the frontend
+  and Postgres, plus Vercel deployment logs for both the `apps/web` and
+  `apps/site` Vercel projects (the cross-app rewrite from
+  `apps/web/vercel.json` to `apps/site` adds a routing surface that can fail
+  independently of either app's deploy)
 - no alerting or uptime monitor is configured by the repo; the
-  `Production Admin Smoke` workflow is the closest equivalent and runs only
-  after release, not continuously
+  `Production Admin Smoke` workflow plus `release.yml` post-merge promotion
+  are the closest equivalents and run only after release, not continuously
 
 How to run:
 
@@ -335,13 +448,22 @@ How to run:
    a distinguishable response code or a deliberate log line — not a silent
    swallow. The current code generally returns structured responses without
    logging; confirm whether that is still the intended posture.
-2. Review `apps/web/src/lib/gameApi.ts` and `apps/web/src/lib/adminGameApi.ts`
-   for error paths reachable by real users. Confirm unexpected failures surface
-   to the UI instead of being dropped, and confirm the fallback path is still
-   gated on `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK`.
-3. Confirm the production Supabase project has `game_starts` migration applied
-   before the first live event. Start data is permanently unrecoverable
-   otherwise — see [analytics-strategy.md](/docs/plans/analytics-strategy.md).
+2. Review `apps/web/src/lib/gameApi.ts`, `apps/web/src/lib/adminGameApi.ts`,
+   and the redemption client surfaces under `apps/web/src/redemptions/` plus
+   the redemption pages (`EventRedeemPage`, `EventRedemptionsPage`) for error
+   paths reachable by real users. Confirm unexpected failures surface to the
+   UI instead of being dropped, the local prototype fallback path is still
+   gated on `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK`, and demo-mode 403s from
+   the backend produce a recognizable banner / read-only state rather than
+   a generic error.
+3. Confirm the production Supabase project has every migration through
+   `20260427010000_broaden_event_scoped_rls.sql` applied before the first
+   live event. The release-blocking ones are `game_starts` (start data is
+   permanently unrecoverable otherwise — see
+   [analytics-strategy.md](/docs/plans/analytics-strategy.md)) and the
+   redemption series (`20260421000000_add_redemption_columns.sql` →
+   `20260421000500_add_redemption_rls_policies.sql`), without which the
+   redemption operator path cannot run.
 4. Walk the operator runbook for a live event in
    [operations.md — Live Monitoring And Log Triage](/docs/operations.md#live-monitoring-and-log-triage):
    which dashboards or queries would the on-call contributor open at minute
@@ -349,13 +471,20 @@ How to run:
    deliverable; absence of an answer is the finding.
 5. Identify the smallest useful observability improvement that would reduce
    time-to-diagnose at a live event. Candidates worth evaluating:
-   - a single structured-log line in each Edge Function error branch
-   - a browser error boundary in `apps/web/src/` that reports unhandled
-     React errors
-   - an uptime or synthetic check for the published `/event/:slug/game` route and
-     for the `issue-session` endpoint
-   - a pre-event Supabase query that confirms both new migrations are applied
-     and at least one completion can round-trip from a staging device
+   - a single structured-log line in each Edge Function error branch (across
+     all 10 deployed functions, not just the original 5)
+   - a browser error boundary in `apps/web/src/` and a parallel one in
+     `apps/site/app/` that report unhandled React errors
+   - an uptime or synthetic check for the published `/event/:slug/game` route,
+     the `/event/:slug` event-detail page on `apps/site`, the `/admin`
+     cross-app rewrite, and for the `issue-session` and `redeem-entitlement`
+     endpoints
+   - a pre-event Supabase query that confirms every required migration is
+     applied (game_starts, redemption series, broaden_event_scoped_rls) and
+     at least one completion + redemption can round-trip from a staging device
+   - emitting a structured log line when `evaluateDemoModeRejection` rejects a
+     write (today the rejection is silent on the backend, which makes
+     accidental misuse on a real-event slug invisible until UI feedback)
 6. Decide for the current release whether the identified improvement is a
    release-blocker, a Tier 1 item in [backlog.md](/docs/backlog.md), or an
    explicit deferral. Record that decision.
@@ -366,8 +495,9 @@ Where findings live:
   [backlog.md](/docs/backlog.md) with a link to this doc for context
 - operator runbook content: keep the durable runbook in
   [operations.md — Live Monitoring And Log Triage](/docs/operations.md#live-monitoring-and-log-triage)
-  and summarize release-specific evidence under
-  [Running Findings — Monitoring, Logging, Observability](#running-findings)
+  and summarize release-specific evidence under the **Monitoring,
+  logging, observability** subheading of the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
 - analytics-adjacent gaps: add to
   [analytics-strategy.md](/docs/plans/analytics-strategy.md) in the relevant phase
 
@@ -400,24 +530,32 @@ How to run:
    `deno check` commands from [dev.md](/docs/dev.md). A clean run is a
    precondition for the rest of this dimension.
 2. Re-check the top ~15 largest `.ts`/`.tsx` source files under
-   `apps/web/src/`, `shared/`, and `supabase/functions/` for
-   single-responsibility issues. When the last pass was run, the top files
-   by size were roughly:
-   - `apps/web/src/admin/questionBuilder.ts`
-   - `apps/web/src/admin/useSelectedDraft.ts`
-   - `apps/web/src/admin/AdminQuestionEditor.tsx`
-   - `apps/web/src/admin/AdminEventWorkspace.tsx`
-   - `apps/web/src/lib/gameApi.ts`
-   - `apps/web/src/admin/useAdminDashboard.ts`
-   - `apps/web/src/game/gameSessionState.ts`
-   - `shared/game-config/draft-content.ts`
-   - `apps/web/src/lib/adminGameApi.ts`
-   - `supabase/functions/publish-draft/index.ts`
-   - `shared/game-config/sample-games.ts`
-   - `supabase/functions/save-draft/index.ts`
+   `apps/web/src/`, `apps/site/`, `shared/`, and `supabase/functions/` for
+   single-responsibility issues. When this pass was last run (2026-05-04),
+   the top files by size were roughly:
+   - `apps/web/src/pages/EventRedemptionsPage.tsx` (733)
+   - `shared/db/types.ts` (662, generated; excluded from refactor judgement)
+   - `apps/site/app/(authenticated)/admin/page.tsx` (572)
+   - `apps/web/src/admin/useSelectedDraft.ts` (549)
+   - `supabase/functions/read-demo-event/index.ts` (494)
+   - `apps/web/src/pages/EventRedeemPage.tsx` (471)
+   - `apps/web/src/redemptions/RedemptionDetailSheet.tsx` (468)
+   - `supabase/functions/save-draft/index.ts` (467)
+   - `apps/web/src/pages/EventAdminPage.tsx` (447)
+   - `apps/web/src/redemptions/useReverseRedemption.ts` (335)
+   - `supabase/functions/publish-draft/index.ts` (315)
+   - `apps/web/src/admin/questionStructure.ts` (310)
+   - `apps/web/src/admin/AdminEventDetailsForm.tsx` (302)
+   - `supabase/functions/reverse-entitlement-redemption/index.ts` (298)
+   - `shared/events/admin.ts` (288)
+   - `supabase/functions/redeem-entitlement/index.ts` (276)
+   - `apps/web/src/game/gameSessionState.ts` (275)
+
    Re-collect this list at each pass (for example, `wc -l` via bash against
    the tracked source directories) because the shape changes as refactor
-   items land.
+   items land. Treat generated files such as `shared/db/types.ts` as out
+   of scope for refactor decisions but keep them visible so unexpected
+   regenerated growth is noticed.
 3. For each oversized file, map it against
    [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md). If it is
    already in that checklist, do nothing. If it is a new candidate, add it
@@ -425,15 +563,28 @@ How to run:
    and the minimum validation command — following the rules in that file.
 4. Walk the architecture guardrails in [AGENTS.md](/AGENTS.md) and confirm
    no guardrail has silently drifted:
-   - visual and interaction logic stays in `apps/web/src`
-   - shared styling tokens stay in `apps/web/src/styles/`
+   - visual and interaction logic for the attendee/admin/redemption SPA
+     stays in `apps/web/src`; visual and interaction logic for the public
+     landing and event-detail SSR pages stays in `apps/site/app/` and
+     `apps/site/components/`
+   - shared styling tokens stay in `apps/web/src/styles/_tokens.scss` and
+     the parallel platform defaults in `shared/styles/themes/platform.ts`
+     consumed by `apps/site`
    - quiz definitions, catalog, validation, and scoring logic stay in
      `shared/game-config`
-   - trust, session, persistence, and entitlement logic stay in
-     `supabase/functions` and `supabase/migrations`
+   - test-event allowlist stays in `shared/events/` and is the single
+     source of truth consumed by demo-mode rejection (`supabase/functions/_shared/demo-mode-rejection.ts`),
+     `read-demo-event`, and the apps/web demo-mode UI branches
+   - trust, session, persistence, entitlement, and redemption logic stay in
+     `supabase/functions` (including the new `_shared/` helpers) and
+     `supabase/migrations`
    - business rules are not casually duplicated across frontend and backend
+     (or across `apps/web` and `apps/site`)
    - the local browser-only completion fallback is not treated as production
      backend behavior
+   - cross-app routing remains expressed declaratively in `apps/web/vercel.json`
+     rewrites; per-route logic that needs to live in only one app does not
+     leak into the other
 5. Confirm that every DB write reachable from a public or origin-gated
    endpoint has DB-level referential integrity or constraints, not only
    application-layer validation. This is the hard rule in
@@ -447,10 +598,11 @@ Where findings live:
 - file-size and split candidates: add to
   [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md)
 - architectural drift: fix in the PR that introduced it when discovered
-  in-review; record a short entry under
-  [Running Findings — Cleanliness](#running-findings) when discovered after
-  the fact, and either resolve or open a tracker before the release candidate
-  ships
+  in-review; record a short entry under the **Cleanliness** subheading of
+  the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+  when discovered after the fact, and either resolve or open a tracker
+  before the release candidate ships
 - missing DB-level constraints: record in
   [backlog.md](/docs/backlog.md) under the appropriate tier; treat as
   release-blocking if the write is reachable from a public endpoint
@@ -487,18 +639,29 @@ How to run:
    and confirm the attendee path does not do redundant network calls, stash
    duplicate state, or retain listeners that should be cleaned up between
    questions.
-2. Run `npm run build:web` and record the reported bundle size in the dated
-   Running Findings entry. Flag any meaningful increase over the previous
-   recorded size.
+2. Run `npm run build:web` and `npm run build:site` and record the reported
+   bundle / route-level output sizes in the current pass entry's
+   **Efficiency** subheading. Flag any meaningful increase over the
+   previously recorded size (compare against the most recent prior entry
+   in
+   [`release-readiness-history.md`](/docs/tracking/release-readiness-history.md)).
 3. Spot-check Edge Function handlers in `supabase/functions/*/index.ts` for
    needless work on the hot path — for example, redundant database reads
    before a known write, or JSON parses that could be avoided on the
-   unauthenticated/rejected branch.
+   unauthenticated/rejected branch. Pay particular attention to
+   `read-demo-event` (unauthenticated read shim; should fail fast on
+   non-allowlisted slugs), `redeem-entitlement` and
+   `reverse-entitlement-redemption` (parse-then-auth ordering with the
+   demo-mode 403 short-circuit must not double-parse the body), and the
+   `_shared/redemption-operator-auth.ts` helper.
 4. Review `supabase/migrations/` for indexes that would be touched by:
    - the funnel query in [analytics-strategy.md](/docs/plans/analytics-strategy.md)
      (starts → completions → entitlements)
    - the admin authoring path (draft read by `event_id`, publish transaction)
    - the public route lookup by `slug`
+   - the redemption queue and lookup paths
+     (`game_entitlements` by `event_id` plus `redemption_code` /
+     `redeemed_at`, and `event_role_assignments` by `(user_id, event_id)`)
    Confirm a planned live-event traffic volume (hundreds of attendees per
    event) will not require an unindexed scan.
 5. Note any non-obvious inefficiency that was observed in practice but not
@@ -510,9 +673,12 @@ Where findings live:
   release-relevant, or to
   [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md) if the fix is
   behavior-preserving and small
-- bundle size observations: record under
-  [Running Findings — Efficiency](#running-findings) with the measurement, so
-  trend is visible across passes
+- bundle size observations: record under the **Efficiency** subheading of
+  the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+  with the measurement, so trend is visible across passes (the prior
+  measurement is one click away in
+  [`release-readiness-history.md`](/docs/tracking/release-readiness-history.md))
 
 Release bar:
 
@@ -540,65 +706,74 @@ How to run:
    - still open and not release-blocking for the current target — leave
      as-is
    - still open and release-blocking for the current target — mirror it
-     into the list below under
-     [Release-Blocking Open Questions](#release-blocking-open-questions),
-     with a link back to the canonical entry
+     into the **Release-blocking open questions** subheading of the
+     current pass entry in
+     [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md),
+     with a link back to the canonical entry, per the contract under
+     [Release-Blocking Open Questions](#release-blocking-open-questions)
+     below
    - answered in code, docs, or platform configuration — remove or update the
      entry in `open-questions.md` in the same PR
 2. Confirm any new unresolved decision surfaced during this pass is captured
    in `open-questions.md` before the pass closes, per
    [AGENTS.md](/AGENTS.md).
 3. For each decision listed in `backlog.md` as `decision`, confirm whether it
-   is expected to be decided before the release target. If yes, mirror under
-   [Release-Blocking Open Questions](#release-blocking-open-questions).
+   is expected to be decided before the release target. If yes, mirror it
+   into the current pass entry under the same **Release-blocking open
+   questions** subheading.
 
 Where findings live:
 
 - canonical tracking is [open-questions.md](/docs/open-questions.md)
-- release-blocking mirror lives in this doc only as a short reference list,
-  refreshed at each pass
+- release-blocking mirror lives in the **Release-blocking open
+  questions** subheading of the current pass entry in
+  [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md);
+  the [Release-Blocking Open Questions](#release-blocking-open-questions)
+  subsection in this file owns the contract, not the data
 
 Release bar (see G5):
 
-- every question listed under
-  [Release-Blocking Open Questions](#release-blocking-open-questions) is
-  either decided (and linked to the decision) or explicitly deferred with a
-  named owner and post-event plan
+- every question mirrored in the current pass entry's **Release-blocking
+  open questions** subheading is either decided (and linked to the
+  decision) or explicitly deferred with a named owner and post-event plan
 
 #### Release-Blocking Open Questions
 
-This subsection is refreshed at each quality check pass. The contents are a
-filtered view of [open-questions.md](/docs/open-questions.md) — items that block
-the current release target go here. Everything else stays in the canonical
-tracker.
+This subsection owns the **contract** for how items from
+[open-questions.md](/docs/open-questions.md) are mirrored as release
+blockers. The actual list — which can be empty — lives in the
+**Release-blocking open questions** subheading of the current pass entry
+in
+[`release-readiness-current.md`](/docs/tracking/release-readiness-current.md),
+not here, so that data and mirror cannot drift across passes.
 
-Refresh instructions:
+Mirror contract:
 
-- do not invent new entries here; mirror an entry from
-  [open-questions.md](/docs/open-questions.md) and link back
-- remove an entry when the underlying question is decided, answered in code,
-  or explicitly deferred past the current release target
-- if an entry has been deferred, record the deferral decision and owner
-  directly in [open-questions.md](/docs/open-questions.md), then remove it from
-  this list
+- only items already present in
+  [open-questions.md](/docs/open-questions.md) qualify; do not invent
+  new entries during a pass
+- mirror the title and a link back to the canonical entry; do not
+  duplicate the question body
+- drop a mirrored entry when the underlying question is decided,
+  answered in code, or explicitly deferred past the current release
+  target
+- if an entry is deferred, record the deferral decision and owner
+  directly in [open-questions.md](/docs/open-questions.md); the next
+  pass entry will then naturally drop the mirror
 
-The list below was refreshed during the 2026-04-16 pass and updated after the
-Madrona pre-launch volunteer handoff decision.
+## Pass Template
 
-- _no entries currently block the release target_
+Pass entries live in
+[`/docs/tracking/release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
+(latest only) and
+[`/docs/tracking/release-readiness-history.md`](/docs/tracking/release-readiness-history.md)
+(append-only archive). Use the template below to start a new pass.
 
-## Running Findings
-
-Each pass appends a new dated entry. Do not rewrite prior entries. Keep the
-most recent entry at the top so the latest state is easy to find.
-
-### Template For A New Pass
-
-Copy this template at the start of each pass and fill it in as the pass
-progresses.
+Copy this template into `release-readiness-current.md` (after archiving the
+prior pass to history) and fill it in as the pass progresses.
 
 ```markdown
-### Pass YYYY-MM-DD
+## Pass YYYY-MM-DD
 
 **Reviewer:** <name or agent run id>
 **Release target:** <event name or "general hardening">
@@ -608,12 +783,13 @@ progresses.
 
 - G1 Trust-path: <met | not met — link to evidence>
 - G2 Attendee e2e: <met | not met>
-- G3 Admin production smoke: <met | not met>
-- G4 Starts + completion instrumentation: <met | not met>
+- G3 Admin production smoke + redemption operator path: <met | not met>
+- G4 Starts + completion + redemption instrumentation: <met | not met>
 - G5 Release-blocking open questions: <met | not met>
 - G6 Observability: <met | not met>
 - G7 Docs currency: <met | not met>
 - G8 PR CI depth: <met | not met>
+- G9 Demo-mode bypass containment: <met | not met>
 
 **Test coverage:**
 
@@ -646,192 +822,58 @@ progresses.
 - <link to backlog/tracker item created by this pass>
 ```
 
-### Pass 2026-04-17 (Scoped — Dimension 2 Documentation Audit)
+## Methodology Roadmap
 
-**Reviewer:** docs/code-doc-audit Codex session
-**Release target:** Madrona Music in the Playfield
-**Scope:** Documentation-only follow-up for the Tier 5 code-documentation audit backlog item
+This section tracks candidate improvements to the **methodology itself**
+— missing gates, dimensions that no longer match the codebase, release
+bars that are too loose or too strict. It is distinct from
+per-pass findings: pass-level "this gate was not met for that release"
+goes in `release-readiness-current.md`; methodology-level "this gate's
+*definition* should change going forward" goes here.
 
-**Documentation:**
+Editing rules:
 
-- Completed a scoped code-documentation audit artifact at
-  [`docs/tracking/code-documentation-audit.md`](/docs/tracking/code-documentation-audit.md), covering
-  `shared/game-config`, `apps/web/src/lib`, `apps/web/src/admin`,
-  `apps/web/src/game`, `supabase/functions`, and `supabase/migrations`.
-- Classified findings as `Required`, `Optional`, and `Noise` with rationale and
-  opened PR-sized remediation slices A-E.
-- This pass was audit-only; no implementation code-documentation edits were
-  applied yet.
+- a candidate enters this list when a pass surfaces a methodology gap,
+  or when a contributor proposes a structural change to the gates or
+  dimensions
+- a candidate is resolved by editing the affected sections of this file
+  and removing the entry, or by recording an explicit deferral with
+  rationale
+- do not let candidates linger here as soft commitments; either decide
+  them in a near-term pass or close them with a written deferral
 
-**Follow-ups opened:**
+Candidates currently open:
 
-- Tier 5 remediation slices in [`backlog.md`](/docs/backlog.md) for Slice A (admin),
-  B (shared barrel), C (browser API), D (edge function boundaries), and E
-  (migration/RPC invariants).
-
-### Pass 2026-04-16
-
-**Reviewer:** coordinator Codex thread
-**Release target:** Madrona Music in the Playfield
-**Release candidate commit:** 0265683, with follow-up smoke-evidence docs-only status update pending
-
-**Gates:**
-
-- G1 Trust-path: met for the coordinator branch — `npm run validate:local` passed, including `npm run test:supabase`, the real local `issue-session` plus `complete-game` integration path, and 90 pgTAP database tests
-- G2 Attendee e2e: met for the coordinator branch — `npm run test:e2e` passed 3 mobile Chromium attendee smoke tests after the default Playwright config was restricted to `mobile-smoke.spec.ts`
-- G3 Admin production smoke: met — GitHub run `24541137250` passed on the release-readiness branch after fixture defaults and GitHub `production` environment settings were configured
-- G4 Starts + completion instrumentation: met — `npm run validate:local` exercised start-row Deno tests, local Supabase integration, and pgTAP; release workflow run `24537097693` successfully applied migrations and deployed functions at `d08f65e`, which already contained `20260416000000_add_game_starts.sql` and `20260416010000_add_game_starts_event_fk.sql`; `70977d6` is docs-only and its release job was skipped
-- G5 Release-blocking open questions: met — Madrona pre-launch volunteer handoff uses the current completion screen plus verification code; stronger proof treatment is deferred until after this release
-- G6 Observability: met for the coordinator branch — the live monitoring runbook in [operations.md](/docs/operations.md#live-monitoring-and-log-triage) identifies the manual operator surfaces, and `Production Admin Smoke` run `24541137250` now provides the release-candidate deployed admin signal
-- G7 Docs currency: met for the coordinator branch — Dimension 2 doc-currency audit completed, with stale README release-flow and production-smoke status docs updated
-- G8 PR CI depth: not met — no PR CI evidence exists for the coordinator branch yet; `.github/workflows/ci.yml` covers lint, unit tests, Deno function tests, local Supabase integration/database tests, build, and function `deno check`, while attendee Playwright smoke in PR CI remains tracked in [backlog.md](/docs/backlog.md)
-
-**Test coverage:**
-
-- `npm run validate:local` initially failed because `npm run test:e2e` picked up admin and production-smoke specs requiring `TEST_SUPABASE_SERVICE_ROLE_KEY`; fixed in this branch by restricting the default Playwright config to `mobile-smoke.spec.ts`.
-- After that fix, `npm run validate:local` passed end to end: lint; 23 Vitest files / 175 tests; 34 Deno Edge Function tests; 3 attendee mobile Playwright smoke tests; local Supabase integration and pgTAP database tests; `npm run build:web`; and `deno check` for `issue-session`, `complete-game`, `save-draft`, `publish-draft`, and `unpublish-event`.
-- `npm run test:e2e:admin` passed 1 local Supabase-backed admin Playwright test covering save, publish, unpublish, and public route verification.
-- `Production Admin Smoke` run `24541137250` passed on the release-readiness branch, covering deployed admin auth, allowlist denial, draft save, publish, unpublish, and public route state against the dedicated production smoke fixture.
-- Proposed Test Inventory still matches the current suite at a high level: shared-domain tests, frontend session/API/page tests, Deno Edge Function tests, pgTAP database tests, attendee mobile smoke, local admin e2e, and production admin smoke harness all exist. The known gaps remain attendee Playwright smoke in PR CI and broader Playwright retry/backend-failure coverage, both already tracked in [testing.md](/docs/testing.md) or [backlog.md](/docs/backlog.md).
-
-**Documentation:**
-
-- Dimension 2 audit completed for doc-currency triggers, status-oriented docs,
-  area readmes, and boundary comments in the largest source files.
-- `README.md` release flow was stale because it described CI, Vercel deploy,
-  and Supabase release promotion but omitted the production admin smoke
-  workflow. Updated it to include the post-release smoke validation step.
-- `production-admin-smoke-tracking.md` described the workflow and environment
-  contract but did not name the current release-readiness status. Updated it to
-  record that release candidate `70977d6` has no successful production smoke
-  evidence yet and points to the Tier 1 backlog item.
-- Area readmes for `apps/web/src/game/`, `apps/web/src/admin/`, and
-  `shared/game-config/` still match the current module ownership at a
-  documentation level.
-- Boundary comments for trust, persistence, and publish entrypoints in the
-  largest source files are present where needed: `issue-session`,
-  `complete-game`, `save-draft`, `publish-draft`, `gameApi`, and
-  `adminGameApi` document the non-obvious trust, fallback, or auth-token
-  behavior that affects future maintainers.
-
-**Monitoring, logging, observability:**
-
-- Dimension 3 audit completed for Edge Function error responses, browser API
-  error surfacing, release workflow state, production smoke state, and current
-  operator surfaces.
-- Edge Functions currently return distinguishable HTTP statuses and structured
-  JSON errors for important failure branches rather than writing explicit
-  `console` logs. That posture is deliberate for the MVP: caller-visible
-  failures surface to the UI, while Supabase platform request/function logs
-  remain the backend investigation surface. The one deliberately swallowed
-  server-side failure is `issue-session` start tracking; comments explain that
-  `game_starts` is best-effort observability and must not block session
-  issuance.
-- Browser-visible failures are not silently dropped: attendee start errors and
-  completion retry states surface through `GamePage`, and admin API failures
-  throw user-facing messages consumed by the admin dashboard state.
-- Live-event operator path is now documented in
-  [operations.md — Live Monitoring And Log Triage](/docs/operations.md#live-monitoring-and-log-triage):
-  check the latest `Production Admin Smoke` workflow result first; inspect
-  Vercel deployment/runtime logs for frontend route availability; inspect
-  Supabase Edge Function logs for `issue-session`, `complete-game`,
-  `save-draft`, `publish-draft`, and `unpublish-event`; then verify Supabase
-  table activity in `game_starts`, `game_completions`, and
-  `game_entitlements` for the event.
-- Analytics-critical data is present in code and local validation:
-  `issue-session` records `game_starts`, and completions/entitlements are
-  persisted through the trusted RPC. Production promotion evidence exists from
-  release workflow run `24537097693` on commit `d08f65e`, which already included
-  the starts migrations; `70977d6` was docs-only and its release job was
-  skipped.
-- Production admin smoke is now operational for this branch: GitHub run
-  `24541137250` passed after the GitHub `production` environment settings and
-  smoke fixture defaults were aligned.
-
-**Cleanliness:**
-
-- Dimension 4 audit completed for largest source files, architecture guardrails,
-  and database enforcement behind public/origin-gated writes.
-- Largest `.ts`/`.tsx` source files in the audited areas are currently:
-  `questionBuilder.ts` (467), `useSelectedDraft.ts` (443),
-  `AdminQuestionEditor.tsx` (438), `AdminEventWorkspace.tsx` (397),
-  `draft-content.ts` (358), `gameApi.ts` (321), `useAdminDashboard.ts`
-  (306), `gameSessionState.ts` (275), `publish-draft/index.ts` (263),
-  `sample-games.ts` (256), and `adminGameApi.ts` (234).
-- Existing refactor checklist coverage already tracks `questionBuilder.ts`,
-  `AdminQuestionEditor.tsx`, `AdminEventWorkspace.tsx`,
-  `draft-content.ts`, `gameApi.ts`, `useAdminDashboard.ts`,
-  `sample-games.ts`, and `adminGameApi.ts` where appropriate.
-- New follow-up opened in [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md):
-  split selected draft publish/unpublish state from draft loading and save
-  state in `apps/web/src/admin/useSelectedDraft.ts`.
-- Architecture guardrails still hold at the reviewed boundaries: visual/admin
-  interaction logic remains in `apps/web/src`, shared quiz validation/scoring
-  remains in `shared/game-config`, and trust/session/persistence/entitlement
-  writes remain in `supabase/functions` plus `supabase/migrations`.
-- Public or origin-gated backend writes have DB-level enforcement: completion
-  writes go through `complete_game_and_award_entitlement` with unique
-  request/attempt and one-entitlement constraints; `game_starts` has a unique
-  `(event_id, client_session_id)` pair plus an event FK; draft writes have
-  primary-key/slug constraints plus the slug-lock trigger; publish/unpublish go
-  through transactional RPCs with audit rows and published-content constraints.
-
-**Efficiency:**
-
-- Dimension 5 audit completed for attendee network/state flow, Edge Function
-  hot paths, database query/index coverage, and build output.
-- Bundle baseline from `npm run validate:local` / `npm run build:web`:
-  `dist/assets/index-DYmuva_Y.js` 459.21 kB / gzip 128.82 kB, and
-  `dist/assets/index-BqpJ_O73.css` 13.21 kB / gzip 3.57 kB. This is the first
-  recorded release-readiness bundle measurement, so there is no prior-pass
-  trend comparison yet.
-- Attendee path does not show redundant completion writes: `useGameSession`
-  guards completion submission by `completionRequestId`, retry reuses the same
-  request id, and `gameApi` performs at most one session re-bootstrap after a
-  401 before replaying the same completion request.
-- Edge Function hot paths are appropriately narrow for the MVP: session
-  issuance performs one best-effort start upsert after session verification;
-  completion loads the published event and parallel question/option rows, then
-  persists through one RPC; publish/unpublish route through transactional RPCs.
-- Database query paths have suitable constraints/indexes for hundreds of
-  attendees per event: route lookups use unique `game_events.slug`, published
-  content reads use `event_id`-leading primary keys, completions and
-  entitlements use `(event_id, client_session_id)` indexes/constraints, and
-  `game_starts` uses unique `(event_id, client_session_id)` plus an event FK.
-- No new performance follow-up opened in this pass.
-
-**Release-blocking open questions:**
-
-- Dimension 6 audit completed against [open-questions.md](/docs/open-questions.md)
-  and `decision` entries in [backlog.md](/docs/backlog.md).
-- Release-blocking question resolved after the pass: for the Madrona pre-launch
-  release milestone, the current completion screen plus verification code is
-  sufficient for volunteer raffle handoff. Stronger proof treatment is deferred
-  until after this release.
-- Not release-blocking for this target: QR entry route. `experience.md`
-  already says QR codes should open directly into the event game experience,
-  and `/event/:slug/game` exists for that purpose; the long-term question of whether
-  this should always be the production entry contract remains open in
-  [open-questions.md](/docs/open-questions.md).
-- Not release-blocking for this target, deferred as tracked follow-ups:
-  staging/branch Supabase promotion path, sponsor reporting requirements,
-  organizer roles/root admin UI, richer publish controls, multi-quiz events,
-  and stronger trust-boundary/abuse controls.
-
-**Go/no-go:** no-go — PR CI evidence is still pending for this branch.
-
-**Follow-ups opened:**
-
-- Resolved after pass: production admin smoke settings were configured and
-  `Production Admin Smoke` run `24541137250` passed on the release-readiness
-  branch.
-- Resolved after pass: volunteer verification affordance for Madrona recorded in
-  [backlog.md](/docs/backlog.md) and [open-questions.md](/docs/open-questions.md).
-- Refactor candidate: split selected draft publish/unpublish state from draft
-  loading and save state in [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md).
+- **G3 evidence column wording when the deployed-surface redemption
+  smoke ships.** G3 today accepts redemption-side evidence as either a
+  manual walk on a non-test slug or a local
+  `test:e2e:redeem`/`test:e2e:redemptions` run against the same backend
+  the production smoke uses. When the Tier 1 backlog item "Add
+  redemption operator path to deployed-surface smoke" lands, the same
+  PR should tighten G3 so deployed-smoke coverage replaces the
+  manual/local fallbacks rather than sitting alongside them — the
+  fallbacks exist to keep G3 reachable today, not as a permanent
+  parallel evidence path.
+- **Decide how cross-app routing failures count.** G6 covers both
+  Vercel projects and the cross-app rewrite at the operator-runbook
+  level, but no gate currently requires *automated* evidence that
+  the rewrites resolve correctly post-deploy beyond what the admin
+  production smoke run incidentally exercises. Decide whether to
+  add a synthetic check for the apps/web → apps/site rewrites or
+  treat the smoke run's incidental coverage as sufficient for the
+  current MVP.
+- **Decide whether M0 phase 0.3 verification questions
+  (cookie/token boundary across path-routed Vercel projects) become
+  release-blocking when the next real-event milestone (Madrona)
+  ships sign-in-gated surfaces.** Today they are scoped to the
+  event-platform epic, not the launch milestone. The Madrona launch
+  epic's milestone-planning session is the right forum to decide
+  this; record the outcome here when it lands.
 
 ## Related Docs
 
+- [release-readiness-current.md](/docs/tracking/release-readiness-current.md) — the most recent pass results (overwritten at each pass)
+- [release-readiness-history.md](/docs/tracking/release-readiness-history.md) — append-only archive of prior passes
 - [AGENTS.md](/AGENTS.md) — agent behavior, pre-edit gate, doc currency PR gate, validation honesty rules
 - [dev.md](/docs/dev.md) — contributor workflow source of truth
 - [testing.md](/docs/testing.md) — test strategy, coverage snapshot, testing todo list
@@ -842,3 +884,7 @@ progresses.
 - [analytics-strategy.md](/docs/plans/analytics-strategy.md) — analytics and the only current telemetry surface
 - [operations.md](/docs/operations.md) — platform-managed settings
 - [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) — post-release smoke coverage and triage
+- [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface
+- [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
+- [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context
+- [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence

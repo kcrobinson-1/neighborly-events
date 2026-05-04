@@ -37,6 +37,33 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
+- [ ] **`dev` Cover every Edge Function in PR CI `deno check`**
+  `.github/workflows/ci.yml` explicitly names six functions
+  (`issue-session`, `complete-game`, `save-draft`, `generate-event-code`,
+  `publish-draft`, `unpublish-event`) and silently skips the four added
+  with the redemption MVP and demo-mode bypass: `read-demo-event`,
+  `get-redemption-status`, `redeem-entitlement`,
+  `reverse-entitlement-redemption`. All ten type-check cleanly today;
+  the gap is coverage drift, not breakage. Replace the per-function
+  steps with a single step that iterates over every
+  `supabase/functions/*/index.ts` so new functions are picked up
+  automatically.
+  Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G8 + Follow-ups](/docs/tracking/release-readiness-current.md)
+
+- [ ] **`dev` Add redemption operator path to deployed-surface smoke**
+  `production-admin-smoke.yml` covers the admin auth → save → publish →
+  unpublish flow against the deployed backend, but the redemption
+  operator surfaces (`/event/:slug/game/redeem` and
+  `/event/:slug/game/redemptions`, plus reverse-redemption) are only
+  exercised by local-on-demand runners (`test:e2e:redeem`,
+  `test:e2e:redemptions`). Add a smoke phase to
+  `production-admin-smoke.yml` (or a parallel post-deploy workflow)
+  that round-trips redemption lookup, mark-as-redeemed, and
+  reverse-redemption against the production fixture event before the
+  first event that ships volunteer redemption (currently Madrona Music
+  in the Playfield).
+  Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G3 + Follow-ups](/docs/tracking/release-readiness-current.md)
+
 ---
 
 ## Tier 2 — Operational Confidence
@@ -64,6 +91,30 @@ Reduce deployment risk and contributor friction before the live event.
   or formally adopt apps/site as canonical with full reverse proxy for
   apps/web routes.
   Detail: [`docs/architecture.md`](/docs/architecture.md)
+
+- [ ] **`dev` Wire demo-mode bypass Playwright suite into PR CI**
+  `playwright.demo-mode-bypass.config.ts` exists and exercises the G9
+  bypass-containment contract (read-only admin / redeem / redemptions
+  surfaces on test-event slugs without sign-in, plus write-rejection
+  via `evaluateDemoModeRejection`), but it runs only on demand from
+  contributors. Add it to `.github/workflows/ci.yml` so the bypass
+  contract is automated rather than relying on contributor recall.
+  Coordinates with the Tier 1 deno-check coverage entry above, since
+  both close PR-CI gaps surfaced by the 2026-05-04 release-readiness
+  pass.
+  Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G9 + Follow-ups](/docs/tracking/release-readiness-current.md)
+
+- [ ] **`dev` Emit a structured log line on demo-mode rejection**
+  `evaluateDemoModeRejection` in
+  `supabase/functions/_shared/demo-mode-rejection.ts` returns a
+  structured 403 response without writing a `console` log. The
+  intentional design (caller-visible failure surfacing to the UI) holds
+  for normal use, but accidental misuse on a real-event slug is
+  invisible in Supabase Edge Function logs until UI feedback surfaces
+  it. Add a single structured log line (`{ event: "demo_mode_rejected",
+  function, slug }`) so misuse is diagnosable from the backend logs
+  alone.
+  Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G6 + Follow-ups](/docs/tracking/release-readiness-current.md)
 
 ---
 
