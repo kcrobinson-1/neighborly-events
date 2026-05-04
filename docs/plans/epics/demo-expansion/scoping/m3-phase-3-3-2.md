@@ -19,20 +19,28 @@ demo-mode auth bypass: the apps/web bypass-rendered surfaces
 each render a concrete read-only signal at the affordance
 position where production-side mutation controls would mount,
 the apps/web bypass-rendered routes emit `noindex` via a
-mechanism whose strength matches apps/site's server-rendered
-emit (the milestone doc's deferred decision settles here per
-the strength-of-guarantee question), the demo-mode-bypass
-Playwright fixture extends with noindex + read-only-signal
-assertions, the apps/site M2 role-door card copy and the
-apps/site `HomeHero` "what's still stubbed" honesty paragraph
-are revised to reflect that demo-mode access has shipped, the
-M3-closing doc-currency map (README, architecture, product,
-backlog) is landed, the milestone-doc top Status flips from
-`Proposed` to `Landed`, the epic Milestone Status table's M3
-row flips from `Proposed` to `Landed`, this plan's Status flips
-from `In draft` → `Proposed` → `Landed` across the
-implementation lifecycle, and the four M3 scoping docs delete
-in batch.
+server-side mechanism (Vercel `headers` `X-Robots-Tag`) whose
+strength matches apps/site's server-rendered emit (the
+milestone doc's deferred decision settles here per the
+strength-of-guarantee question per decision 3), the noindex
+falsifier is single-layered as Vitest config-shape assertion
+(load-bearing CI gate per decision 3) plus manual `curl -sI`
+against the PR's Vercel preview deploy (platform-behavior
+confirmation), the demo-mode-bypass Playwright fixture extends
+with **read-only-callout copy assertions only** per decision
+4 (Playwright does NOT assert noindex — the existing Vite
+webServer cannot emit `vercel.json` headers, and layering a
+Vercel-CLI Playwright project would be a novel test mechanism
+with low marginal coverage gain), the apps/site M2 role-door
+card copy and the apps/site `HomeHero` "what's still stubbed"
+honesty paragraph are revised to reflect that demo-mode access
+has shipped, the M3-closing doc-currency map (README,
+architecture, product, backlog) is landed, the milestone-doc
+top Status flips from `Proposed` to `Landed`, the epic
+Milestone Status table's M3 row flips from `Proposed` to
+`Landed`, this plan's Status flips from `In draft` →
+`Proposed` → `Landed` across the implementation lifecycle, and
+the four M3 scoping docs delete in batch.
 
 3.3.2 is the **M3-closing PR**: every "Owned by the M3-closing
 phase" entry in the milestone doc's Documentation Currency
