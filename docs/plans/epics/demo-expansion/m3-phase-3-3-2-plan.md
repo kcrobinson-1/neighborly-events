@@ -61,9 +61,11 @@ view components (concrete read-only callout copy at the
 affordance position), apps/web edge config (new `vercel.json`
 `headers` array for `X-Robots-Tag`), apps/site home-page copy
 (role-door cards + hero "still stubbed" paragraph), e2e fixture
-(extended assertions for callout + noindex), unit-test enforcement
-of the noindex slug list, and the M3-closing doc-currency map +
-Status flips. The diff surface is two `DemoMode*View.tsx` edits
+(extended read-only-callout copy assertions only — noindex is
+not asserted by Playwright per scoping decision 3, see Contracts
+"e2e fixture extension"), unit-test enforcement of the noindex
+slug list (the load-bearing CI gate for noindex per scoping
+decision 3), and the M3-closing doc-currency map + Status flips. The diff surface is two `DemoMode*View.tsx` edits
 (admin + redemptions; the redeem variant's existing copy
 already renders the consequence per Contracts and is not
 touched), one `vercel.json` edit, two apps/site copy edits, one
