@@ -599,14 +599,57 @@ named.
 - **noindex emit shape on apps/web bypass-rendered routes.**
   apps/web is a Vite + React SPA per [`docs/architecture.md`](/docs/architecture.md);
   its head-tag emit pattern differs from apps/site's Next.js
-  metadata API. Whether bypass routes inject `<meta
-  name="robots" content="noindex,nofollow">` via a per-page
-  effect, a dispatcher-level head-manager, or another shape is
-  phase-time. **Owned by phase 3.2+.** Reality-check inputs:
-  current apps/web head-tag handling (search for existing
-  `document.title` mutations, react-helmet usage, or any meta-
-  tag injection pattern); the apps/site noindex-emit shape
-  for cross-app consistency reference.
+  metadata API. **Owned by phase 3.3.2.** The load-bearing
+  question 3.3.2's scoping must answer is **strength of
+  guarantee, not implementation feasibility.** Two cases:
+  - *If noindex on bypass routes is a soft demo-hygiene
+    signal* — the cost of a missed tag is partner confusion
+    or one stray search result during the demo window — then
+    a client-side mechanism (a `useNoindex()` hook calling
+    `useEffect` to append a robots `<meta>`, or react-helmet-
+    async, or an equivalent) is appropriate. Appending a meta
+    tag after React renders is ordinary DOM behavior; no
+    pre-plan spike is needed to prove the mechanism works.
+    The implementing PR's automated coverage (a Playwright
+    assertion of meta-tag presence on a bypass route + a
+    negative assertion on a non-bypass route) catches
+    implementation regressions; a missed tag is a normal
+    bugfix, not a launch blocker.
+  - *If noindex on bypass routes is a hard invariant
+    equivalent to apps/site's server-rendered metadata* — the
+    cost of a missed tag is a search engine indexing the
+    test-event surfaces, which violates the trust boundary
+    the milestone is supposed to protect — then a client-side
+    hook is the **wrong class of solution**. Crawlers that
+    skip JS, fetch the route before React mounts, or honor
+    only response headers will miss the tag; the SPA's
+    initial HTML emits no robots tag regardless of route. In
+    this case the investigation focuses on a server-delivered
+    mechanism: an `X-Robots-Tag: noindex, nofollow` response
+    header set by Vercel for path patterns matching
+    `/event/<test-slug>/*`, a Vercel rewrite to a
+    pre-rendered shell with the tag baked in, or moving the
+    bypass-target shells to apps/site's Next.js metadata API
+    where server-rendered emit is native.
+  3.3.2's scoping resolves the strength-of-guarantee question
+  first (against the partner audience the noindex protects
+  and the consequence of a missed tag); the implementation
+  mechanism falls out of that answer. Reality-check inputs
+  for the strength question: the
+  [`docs/architecture.md`](/docs/architecture.md)
+  trust-boundary section's existing language about
+  test-event noindex; the apps/site noindex-emit shape
+  (which IS server-rendered, providing one anchor for "what
+  hard-invariant noindex looks like in this codebase"); the
+  epic's Out Of Scope statement on public indexing of test
+  events for the partner-vs-public threat model. Reality-
+  check inputs for the implementation mechanism (whichever
+  class is picked): current apps/web head-tag handling
+  (search for existing `document.title` mutations,
+  react-helmet usage, or any meta-tag injection pattern);
+  current apps/web Vercel deploy config for header / rewrite
+  precedent; the apps/site `generateMetadata` shape for
+  cross-app consistency reference.
 - **Test-event-allowlist enforcement assertion.** The epic
   Risk Register names "pgTAP or equivalent assertions that
   allowlist membership is honored uniformly" as the

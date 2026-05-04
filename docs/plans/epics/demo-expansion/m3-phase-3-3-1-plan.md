@@ -14,8 +14,8 @@ the `In draft` → `Proposed` flip:
   re-confirm scoping reality-check inputs against current
   code).
 
-No spike is required — apps/web noindex / novel-mechanism work
-is 3.3.2's scope, not 3.3.1's. After the promotion-gate walk,
+3.3.1 is server-only — no novel client-side mechanisms, no
+investigation work pending. After the promotion-gate walk,
 this plan flips `In draft` → `Proposed`. The implementing PR
 flips `Proposed` → `Landed` per AGENTS.md "Plan-to-PR
 Completion Gate." No commit SHAs in the Status block.
