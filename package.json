@@ -29,6 +29,7 @@
     "test:e2e:attendee:trusted-backend": "node scripts/testing/run-attendee-trusted-backend-e2e-tests.cjs",
     "test:e2e:admin": "node scripts/testing/run-admin-e2e-tests.cjs",
     "test:e2e:admin:production-smoke": "node scripts/testing/run-production-admin-smoke.cjs",
+    "test:e2e:redemption:production-smoke": "node scripts/testing/run-production-redemption-smoke.cjs",
     "test:e2e:demo-mode-bypass": "playwright test --config=playwright.demo-mode-bypass.config.ts",
     "validate:local": "node scripts/testing/run-local-validation.cjs",
     "release:watch-smoke": "node scripts/release/post-merge-smoke-watch.cjs",

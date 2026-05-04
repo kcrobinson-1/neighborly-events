@@ -247,7 +247,7 @@ describe("post-merge-smoke-watch / SHA + eligibility filter", () => {
 
   it("rejects workflow_dispatch smoke runs even on the matching SHA", () => {
     const dispatch = makeRun({
-      workflowName: "Production Admin Smoke",
+      workflowName: "Production Deployed-Surface Smoke",
       event: "workflow_dispatch",
     });
     expect(watcher.isEligibleRun(dispatch, smokeStage, MERGE_SHA)).toBe(false);
@@ -497,7 +497,7 @@ describe("post-merge-smoke-watch / runWatch", () => {
       databaseId: 12,
     });
     const smokeRun = makeRun({
-      workflowName: "Production Admin Smoke",
+      workflowName: "Production Deployed-Surface Smoke",
       event: "workflow_run",
       databaseId: 13,
       url: "https://github.com/example/example/actions/runs/13",
@@ -585,7 +585,7 @@ describe("post-merge-smoke-watch / runWatch", () => {
       databaseId: 32,
     });
     const smokeFail = makeRun({
-      workflowName: "Production Admin Smoke",
+      workflowName: "Production Deployed-Surface Smoke",
       event: "workflow_run",
       databaseId: 33,
       status: "completed",

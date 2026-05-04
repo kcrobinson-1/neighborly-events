@@ -1,4 +1,4 @@
-name: Production Admin Smoke
+name: Production Deployed-Surface Smoke
 
 on:
   workflow_dispatch:
@@ -33,6 +33,16 @@ jobs:
       PRODUCTION_SMOKE_BASE_URL: ${{ vars.PRODUCTION_SMOKE_BASE_URL }}
       PRODUCTION_SMOKE_READY_POLL_MS: ${{ vars.PRODUCTION_SMOKE_READY_POLL_MS }}
       PRODUCTION_SMOKE_READY_TIMEOUT_MS: ${{ vars.PRODUCTION_SMOKE_READY_TIMEOUT_MS }}
+      PRODUCTION_SMOKE_EVENT_ID: ${{ vars.PRODUCTION_SMOKE_EVENT_ID }}
+      PRODUCTION_SMOKE_EVENT_SLUG: ${{ vars.PRODUCTION_SMOKE_EVENT_SLUG }}
+      PRODUCTION_SMOKE_REDEEM_AGENT_EMAIL: ${{ vars.PRODUCTION_SMOKE_REDEEM_AGENT_EMAIL }}
+      PRODUCTION_SMOKE_REDEEM_REDIRECT_URL: ${{ vars.PRODUCTION_SMOKE_REDEEM_REDIRECT_URL }}
+      PRODUCTION_SMOKE_REDEEM_SUFFIX: ${{ vars.PRODUCTION_SMOKE_REDEEM_SUFFIX }}
+      PRODUCTION_SMOKE_REDEMPTIONS_ORGANIZER_EMAIL: ${{ vars.PRODUCTION_SMOKE_REDEMPTIONS_ORGANIZER_EMAIL }}
+      PRODUCTION_SMOKE_REDEMPTIONS_REDIRECT_URL: ${{ vars.PRODUCTION_SMOKE_REDEMPTIONS_REDIRECT_URL }}
+      PRODUCTION_SMOKE_REDEMPTIONS_REDEEMED_BY_ME_SUFFIX: ${{ vars.PRODUCTION_SMOKE_REDEMPTIONS_REDEEMED_BY_ME_SUFFIX }}
+      PRODUCTION_SMOKE_REDEMPTIONS_REDEEMED_BY_OTHER_SUFFIX: ${{ vars.PRODUCTION_SMOKE_REDEMPTIONS_REDEEMED_BY_OTHER_SUFFIX }}
+      PRODUCTION_SMOKE_REDEMPTIONS_REVERSED_BY_ME_SUFFIX: ${{ vars.PRODUCTION_SMOKE_REDEMPTIONS_REVERSED_BY_ME_SUFFIX }}
       TEST_ADMIN_EMAIL: ${{ vars.PRODUCTION_SMOKE_ADMIN_EMAIL }}
       TEST_ADMIN_EVENT_ID: ${{ vars.PRODUCTION_SMOKE_EVENT_ID }}
       TEST_ADMIN_EVENT_NAME: ${{ vars.PRODUCTION_SMOKE_EVENT_NAME }}
@@ -74,10 +84,21 @@ jobs:
       - name: Run production admin smoke
         run: npm run test:e2e:admin:production-smoke
 
-      - name: Upload smoke artifacts on failure
+      - name: Upload admin smoke artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: production-admin-smoke-playwright-results
           path: tmp/playwright/test-results-production-admin-smoke
+          if-no-files-found: ignore
+
+      - name: Run production redemption smoke
+        run: npm run test:e2e:redemption:production-smoke
+
+      - name: Upload redemption smoke artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-redemption-smoke-playwright-results
+          path: tmp/playwright/test-results-production-redemption-smoke
           if-no-files-found: ignore
