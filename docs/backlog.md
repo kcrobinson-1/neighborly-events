@@ -175,20 +175,6 @@ prioritization before starting.
   feedback shapes the requirements.
   Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
 
-- [ ] **`decision` Test-event gameplay-route noindex uniformity**
-  M3 noindex'd the three apps/web bypass-rendered surfaces (admin,
-  redeem, redemptions) on the two test-event slugs at parity with
-  the apps/site test-event landing. The gameplay route
-  `/event/:slug/game` is the lone outlier — currently indexable —
-  and the M3 plan's "gameplay route is unchanged" framing reads as
-  preservation-of-prior-state rather than active design. The
-  question is whether the test-event surface should be uniformly
-  internal-partner-shaped (uniformly `noindex`'d, collapsing
-  `apps/web/vercel.json` to a single catchall) or whether some
-  product story requires test-event gameplay routes to stay
-  search-discoverable.
-  Detail: [`docs/plans/test-event-noindex-uniformity.md`](/docs/plans/test-event-noindex-uniformity.md)
-
 ---
 
 ## Tier 5 — Code Health And Tooling

@@ -2,18 +2,39 @@
 
 ## Status
 
-Open. Awaiting product decision.
+Resolved 2026-05-04 — **Option B chosen.**
 
-The question crystallized in PR #170 (M3 phase 3.3.2's
+The product owner confirmed there is no partner-discovery
+scenario requiring test-event gameplay routes to be search-
+discoverable. With that input, the recommendation in this doc
+flips from medium-high-confidence to settled, and Option B is
+the right shape: the apps/web edge uniformly noindexes every
+URL under a test-event slug (`harvest-block-party`,
+`riverside-jam`), and `apps/web/vercel.json` collapses from six
+explicit `headers` entries to one catchall entry. Real-event
+slugs remain fully indexable (the regex constraint excludes
+them).
+
+The implementation plan is at
+[`docs/plans/test-event-noindex-uniformity-plan.md`](/docs/plans/test-event-noindex-uniformity-plan.md);
+the implementation lands in the same PR that flips this doc's
+Status. The Tier 4 backlog entry that pointed here closes with
+that PR per the backlog convention "When an item is complete,
+update the owning detail file and remove the item from this
+backlog instead of leaving closed history inline."
+
+---
+
+The question originally crystallized in PR #170 (M3 phase 3.3.2's
 implementing PR) when a Codex review caught a trailing-slash gap
 in the apps/web `X-Robots-Tag` rules. Fixing the gap forced a
 6-entry shape (bare + `/:path*` per bypass surface). That fix
 landed; the broader question — *"are we writing the right number
 of entries at all, given what we mean by `internal-partner
-audience`?"* — is what this doc resolves.
+audience`?"* — is what this doc resolved.
 
-This is a decision-bound item (no dev work until the product
-choice lands). Tracked in the [post-MVP backlog](/docs/backlog.md).
+The original options walkthrough below remains as the durable
+record of the deliberation.
 
 ## Context
 

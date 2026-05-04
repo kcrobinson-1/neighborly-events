@@ -66,10 +66,14 @@ Keep the game interaction local and fast, but make the completion state backend-
   the bypass renders read shims via the `read-demo-event` Edge
   Function and surfaces an inline read-only callout at the
   affordance position. The apps/web edge emits
-  `X-Robots-Tag: noindex, nofollow` on the six bypass-eligible URL
-  paths via [`apps/web/vercel.json`](/apps/web/vercel.json) `headers`,
+  `X-Robots-Tag: noindex, nofollow` uniformly on every URL under
+  a test-event slug — bypass surfaces and the gameplay route alike
+  — via a single catchall
+  [`apps/web/vercel.json`](/apps/web/vercel.json) `headers` entry
+  whose `:slug(...)` regex constraint hand-mirrors `TEST_EVENT_SLUGS`,
   parallel to the apps/site `generateMetadata` `robots` emit on
-  test-event landings.
+  test-event landings. Real-event slugs (e.g., `madrona-launch-day`)
+  are excluded by the regex constraint and remain fully indexable.
 - `apps/site`
   The Next.js 16 App Router app for the internal-partner demo home
   page, auth callback, platform admin, and public event landing
@@ -261,10 +265,13 @@ grouped into a dedicated `apps/web/src/game/` module:
   [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx)
   (`robots: { index: false, follow: false }`); the parallel
   apps/web edge mechanism (`X-Robots-Tag: noindex, nofollow` via
-  `apps/web/vercel.json` `headers`) covers the three demo-mode
-  bypass-rendered surfaces (`/event/:slug/admin`,
-  `/event/:slug/game/redeem`, `/event/:slug/game/redemptions`) on
-  the same test-event slugs at parity strength.
+  a single catchall `apps/web/vercel.json` `headers` entry)
+  covers every URL under the same test-event slugs — the three
+  demo-mode bypass-rendered surfaces (`/event/:slug/admin`,
+  `/event/:slug/game/redeem`, `/event/:slug/game/redemptions`)
+  plus the gameplay route `/event/:slug/game` — at parity
+  strength. Together they keep test events uniformly invisible
+  to public search across both apps.
 - `apps/site/events/`
   Directory of record for per-event TypeScript content modules;
   one `<slug>.ts` file per registered event.
