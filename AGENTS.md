@@ -427,8 +427,27 @@ before any per-phase planning.
 
 A phase planning session produces the per-phase plan that an
 implementing PR consumes. Run this session just-in-time before a
-phase's implementation starts, **after** prior phases have shipped
-(not in batch alongside their planning).
+phase's implementation starts. Drafting the scoping and plan docs
+may begin while the prior phase is still in implementation or
+review, provided every still-pending decision in the prior phase
+is enumerated as a named "input from prior phase" in the scoping
+doc and carried through the plan doc as an open input the plan
+must verify before promotion. A pending input is only valid if it
+cites the concrete surface where the decision is being made — a
+PR number, a scoping-doc section heading, a review-comment
+thread, an issue number, or a named cross-phase decision in the
+milestone doc. Bare "TBD," "pending," or
+unattributed-prose entries do not count and must be resolved
+(either by citing the surface or by deciding the question now)
+before they can be carried as inputs. The plan's `Status:` stays
+Draft (not Proposed) until every named input has settled. Updating
+the next-phase draft if the prior phase shifts during
+implementation or review is an accepted cost — preferable to
+forcing serial execution. Do **not** open phase planning in batch
+alongside the prior phase's planning session: that risks
+recording assumptions before any code exists to ground them; the
+relaxation here is about parallelism with **implementation or
+review**, not with **planning**.
 
 - **Goal.** Produce two artifacts that split ownership cleanly
   rather than co-cover the same content: a phase scoping doc
