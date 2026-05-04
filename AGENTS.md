@@ -372,8 +372,12 @@ before any per-phase planning.
   contracts, file inventory, risks, and execution steps — split
   between the scoping doc and the plan doc per "Phase Planning
   Sessions → Scoping owns / plan owns" below) belong to the
-  phase planning session for each phase, against actually-merged
-  earlier phases. Scoping any phase in the milestone session —
+  phase planning session for each phase, run per the timing and
+  pending-input rules in "Phase Planning Sessions" below (which
+  permit drafting in parallel with the prior phase's
+  implementation or review under explicit citation requirements,
+  but still bar scoping during the milestone session itself).
+  Scoping any phase in the milestone session —
   even the first — risks recording assumptions that won't
   survive contact with merged code, and produces
   confident-feeling artifacts that may or may not be grounded. When phase A's scoping cites phase B's "Inputs From
@@ -440,7 +444,10 @@ milestone doc. Bare "TBD," "pending," or
 unattributed-prose entries do not count and must be resolved
 (either by citing the surface or by deciding the question now)
 before they can be carried as inputs. The plan's `Status:` stays
-Draft (not Proposed) until every named input has settled. Updating
+`In draft` (not `Proposed`) until every named input has settled —
+this is the canonical pre-`Proposed` label per the
+"`In draft` → `Proposed` promotion gate" later in this file, and
+the gate's full self-review walk runs before the flip. Updating
 the next-phase draft if the prior phase shifts during
 implementation or review is an accepted cost — preferable to
 forcing serial execution. Do **not** open phase planning in batch
