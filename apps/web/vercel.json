@@ -48,5 +48,25 @@
       "source": "/",
       "destination": "https://neighborly-events-site.vercel.app/"
     }
+  ],
+  "headers": [
+    {
+      "source": "/event/:slug(harvest-block-party|riverside-jam)/admin",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/event/:slug(harvest-block-party|riverside-jam)/game/redeem",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    },
+    {
+      "source": "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
+      ]
+    }
   ]
 }
