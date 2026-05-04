@@ -133,7 +133,8 @@ drafts and as its PR merges.
 | --- | --- | --- | --- | --- |
 | 3.1 | Demo-mode data-access-semantics decision (doc-only) | [m3-phase-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md) | Landed | this PR |
 | 3.2 | Demo-mode bypass — read side | [m3-phase-3-2-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-2-plan.md) | Landed | this PR |
-| 3.3 | Demo-mode bypass — write side + M3 closure | [m3-phase-3-3-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-3-plan.md) | Proposed | _pending_ |
+| 3.3.1 | Demo-mode bypass — write-side server rejection | [m3-phase-3-3-1-plan.md](/docs/plans/epics/demo-expansion/m3-phase-3-3-1-plan.md) | Proposed | _pending_ |
+| 3.3.2 | Demo-mode bypass — client UI + noindex + M3 closer | _pending 3.3.2 phase planning_ | Proposed | _pending_ |
 
 The 3.2-as-single-row estimate did not hold. Phase 3.2's
 plan-drafting ran AGENTS.md "PR-count predictions need a branch
@@ -161,6 +162,30 @@ trade-space 3.1 walked; the 2-shape is the chosen ship order.
 The 3-shape (sandbox-ephemeral) remains not in scope for M3
 — it stays a live candidate for second-iteration M4–M6
 scoping.
+
+The 3.3-as-single-row estimate also did not hold. Phase
+3.3's plan-drafting (this scoping session, 2026-05-03) ran
+AGENTS.md "PR-count predictions need a branch test" against
+actually-merged 3.2 code and picked a 2-shape along a server
+/ client+closer seam: 3.3.1 isolates the trust-boundary work
+(the new shared `evaluateDemoModeRejection` helper, helper
+wiring across the five mutation Edge Functions, and the
+auth-vs-parse ordering normalization on the two redemption
+functions that today authenticate before parsing payload),
+and 3.3.2 ships the browser-shape work (apps/web mutation-
+control disabled-state UI, the apps/web noindex hook +
+emit, the Playwright e2e fixture extension, the apps/site
+M2 role-door copy revision, the M3 doc-currency map, and
+the M3 milestone-doc + epic Status flips). The branch-test
+analysis is recorded canonically at
+[`scoping/m3-phase-3-3-1.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-1.md)
+decision 1; the load-bearing reason for splitting (versus
+the original 3.1-pre-authorized 1-PR shape) is that the
+auth-vs-parse-ordering reorder on the two redemption
+functions is subtle trust-boundary work that benefits from
+review attention undiluted by frontend / noindex / doc-
+closure noise. 3.3.2's plan-drafting runs after 3.3.1
+merges per AGENTS.md "Phase Planning Sessions" cadence.
 
 - **1-implementation-phase shape (3.2 alone).** Likely if 3.1
   chooses **read-only browse**: the bypass surfaces add an
