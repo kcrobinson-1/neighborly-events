@@ -163,6 +163,28 @@ Rules for this checklist:
   Validation: `npm run test:db` and a repo-wide grep for each old filename
   (none are expected to be referenced outside the file itself).
 
+- [ ] Code-split the redemption-MVP pages out of the apps/web SPA bundle.
+  The 2026-05-04 release-readiness pass measured
+  `apps/web/dist/assets/index-*.js` at 518.91 kB / gzip 142.85 kB —
+  +59.70 kB raw / +14.03 kB gzip vs. the 2026-04-16 baseline (459.21 kB
+  / 128.82 kB), past Vite's 500 kB warning threshold. The growth is
+  attributable to the redemption MVP shipping into the same chunk:
+  `apps/web/src/pages/EventRedemptionsPage.tsx` (733),
+  `apps/web/src/pages/EventRedeemPage.tsx` (471),
+  `apps/web/src/redemptions/RedemptionDetailSheet.tsx` (468), plus the
+  redemption client surfaces. Convert the redemption page imports in
+  `apps/web/src/App.tsx` to `React.lazy()` + `<Suspense>` so the
+  attendee mobile path (`/event/:slug/game`) does not pay for code only
+  the volunteer redemption surfaces use. Behavior-preserving for all
+  routes; the routing dispatcher already has loading-state surface for
+  per-event Theme bootstrap that the lazy boundaries can reuse. Score:
+  6/10.
+  Validation: `npm run build:web` (confirm `index-*.js` shrinks and
+  separate redemption chunks appear in `dist/assets/`),
+  `npm test`, and `npm run test:e2e:redeem` + `npm run test:e2e:redemptions`
+  to confirm the lazy-loaded routes still mount correctly under
+  Playwright.
+
 ## Large Files To Leave Alone For Now
 
 - `supabase/migrations/20260406130000_add_published_quiz_content.sql` is large

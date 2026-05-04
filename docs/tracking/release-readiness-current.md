@@ -267,24 +267,30 @@ against the deployed backend, not only locally.
   `.github/workflows/ci.yml` to `deno check` every function under
   `supabase/functions/*/index.ts` (today it explicitly names six and
   silently skips `read-demo-event`, `get-redemption-status`,
-  `redeem-entitlement`, `reverse-entitlement-redemption`). Track
-  in [`backlog.md`](/docs/backlog.md).
+  `redeem-entitlement`, `reverse-entitlement-redemption`). Tracked
+  in [`backlog.md`](/docs/backlog.md) — Tier 1 "Cover every Edge
+  Function in PR CI `deno check`".
 - **Tier 1, redemption operator path on deployed surface:** add a
   smoke check (in `production-admin-smoke.yml` or a parallel
   workflow) that the redemption lookup + mark-as-redeemed +
   reverse-redemption path round-trips against the production
   fixture event before the first event that ships volunteer
-  redemption. Track in [`backlog.md`](/docs/backlog.md).
+  redemption. Tracked in [`backlog.md`](/docs/backlog.md) — Tier 1
+  "Add redemption operator path to deployed-surface smoke".
 - **Tier 2, demo-mode bypass Playwright in CI:** wire
   `playwright.demo-mode-bypass.config.ts` into `ci.yml` so the G9
   bypass-containment evidence is automated rather than
-  contributor-on-demand. Track in [`backlog.md`](/docs/backlog.md).
+  contributor-on-demand. Tracked in
+  [`backlog.md`](/docs/backlog.md) — Tier 2 "Wire demo-mode bypass
+  Playwright suite into PR CI".
 - **Tier 2, demo-mode rejection log line:** emit a structured log
   line from `evaluateDemoModeRejection` when it returns a 403, so
   accidental misuse on a real-event slug is visible in Supabase
-  Edge Function logs. Track in [`backlog.md`](/docs/backlog.md).
+  Edge Function logs. Tracked in [`backlog.md`](/docs/backlog.md) —
+  Tier 2 "Emit a structured log line on demo-mode rejection".
 - **Tier 2, web bundle code-splitting:** the redemption-MVP pages
   pushed `apps/web/dist/assets/index-*.js` past Vite's 500 kB
   warning threshold. Evaluate dynamic-import code-splitting for the
-  redemption pages so the attendee path stays lean. Track in
-  [`code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md).
+  redemption pages so the attendee path stays lean. Tracked in
+  [`code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md) —
+  "Code-split the redemption-MVP pages out of the apps/web SPA bundle".
