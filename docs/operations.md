@@ -91,18 +91,28 @@ For this project today, that means:
   - `SUPABASE_ACCESS_TOKEN`
   - `SUPABASE_DB_PASSWORD`
   - `SUPABASE_PROJECT_REF`
-- GitHub `production` environment vars and secrets for production admin smoke:
+- GitHub `production` environment vars and secrets for the production
+  deployed-surface smoke (admin + redemption operator phases):
   - required vars:
     - `PRODUCTION_SMOKE_BASE_URL`
     - `PRODUCTION_SMOKE_SUPABASE_URL`
     - `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`
-  - optional fixture override vars:
+  - optional admin-phase fixture override vars:
     - `PRODUCTION_SMOKE_ADMIN_EMAIL`
     - `PRODUCTION_SMOKE_DENIED_ADMIN_EMAIL`
     - `PRODUCTION_SMOKE_EVENT_ID`
     - `PRODUCTION_SMOKE_EVENT_SLUG`
     - `PRODUCTION_SMOKE_EVENT_NAME`
     - `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL`
+  - optional redemption-phase fixture override vars:
+    - `PRODUCTION_SMOKE_REDEEM_AGENT_EMAIL`
+    - `PRODUCTION_SMOKE_REDEEM_REDIRECT_URL`
+    - `PRODUCTION_SMOKE_REDEEM_SUFFIX`
+    - `PRODUCTION_SMOKE_REDEMPTIONS_ORGANIZER_EMAIL`
+    - `PRODUCTION_SMOKE_REDEMPTIONS_REDIRECT_URL`
+    - `PRODUCTION_SMOKE_REDEMPTIONS_REDEEMED_BY_ME_SUFFIX`
+    - `PRODUCTION_SMOKE_REDEMPTIONS_REDEEMED_BY_OTHER_SUFFIX`
+    - `PRODUCTION_SMOKE_REDEMPTIONS_REVERSED_BY_ME_SUFFIX`
   - optional readiness tuning vars:
     - `PRODUCTION_SMOKE_READY_TIMEOUT_MS`
     - `PRODUCTION_SMOKE_READY_POLL_MS`
@@ -129,8 +139,10 @@ Phase 1 baseline settings for this repo's solo-operator workflow:
 - monitor `Release / Sync Supabase Production` as the post-CI production
   deployment gate; it runs after successful CI on `main` and should not be a
   pre-merge required branch check
-- treat `Production Admin Smoke / Smoke Admin On Production` as post-release
-  operational confidence, not a pre-merge required check
+- treat `Production Deployed-Surface Smoke / Smoke Admin On Production` as
+  post-release operational confidence, not a pre-merge required check
+  (the workflow runs both admin and redemption operator smoke phases on
+  the dedicated smoke event)
 
 CI docs-only trigger policy:
 
@@ -214,9 +226,10 @@ Current pre-launch posture:
   service, or third-party error tracking SDK configured in the repo
 - the release operator monitors manually through GitHub Actions, Vercel, and
   Supabase
-- the `Production Admin Smoke` workflow is the strongest deployed-path signal
-  currently available, but it runs after release or by manual dispatch; it is
-  not continuous monitoring
+- the `Production Deployed-Surface Smoke` workflow is the strongest
+  deployed-path signal currently available — it runs admin authoring +
+  redemption operator phases against the dedicated smoke event after
+  release or by manual dispatch; it is not continuous monitoring
 
 Use this runbook during a live event or final pre-event check when someone
 reports that the site, quiz start, completion flow, or admin publishing is not
@@ -227,7 +240,7 @@ working.
 When you have the merge commit SHA in hand (typical for the doc-only
 follow-up commit required by the Plan-to-Landed Gate), prefer
 `npm run release:watch-smoke -- <merge-sha>` for evidence capture. It
-walks the `CI` → `Release` → `Production Admin Smoke` chain, prints
+walks the `CI` → `Release` → `Production Deployed-Surface Smoke` chain, prints
 stage-by-stage progress, and emits a `SMOKE_URL=<run-url>` line on green
 smoke or the failed-step logs on any-stage failure — see
 [`dev.md`](/docs/dev.md) "Watching The Post-Merge Chain."
@@ -235,7 +248,7 @@ smoke or the failed-step logs on any-stage failure — see
 Otherwise (operator triage with no merge SHA, or follow-up on a
 `workflow_dispatch` rerun), start with GitHub Actions:
 
-1. Open the `Production Admin Smoke` workflow.
+1. Open the `Production Deployed-Surface Smoke` workflow.
 2. Check the latest run for the release candidate or `main`.
 3. If needed, run it manually with `workflow_dispatch`.
 4. Read the failing step before changing platform settings.
@@ -269,11 +282,17 @@ Use Vercel for deployment and frontend availability questions:
 curl -I "$PRODUCTION_SMOKE_BASE_URL"
 curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/admin"
 curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game"
+curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game/redeem"
+curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game/redemptions"
 ```
 
 `/admin` resolves through the apps/web → apps/site cross-app proxy
 rewrite (see `apps/web/vercel.json`), so a 200 response indicates both
 the proxy rule fired and apps/site's platform admin page rendered.
+`/event/<slug>/game/redeem` and `/event/<slug>/game/redemptions` are
+SPA routes served directly by apps/web; the deployed-surface smoke
+walks both phases (admin authoring + redemption operator) on the
+dedicated smoke event.
 
 Notes:
 
@@ -393,7 +412,7 @@ where slug = 'production-smoke-event';
 If attendees report that the event is broken:
 
 1. Check whether the production URL and event route load in a browser.
-2. Check the latest `Production Admin Smoke` run.
+2. Check the latest `Production Deployed-Surface Smoke` run.
 3. If the site does not load, inspect Vercel deployment/build/runtime logs.
 4. If the quiz loads but cannot start, inspect `issue-session` logs and query
    `game_starts`.

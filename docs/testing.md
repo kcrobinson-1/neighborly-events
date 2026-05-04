@@ -25,6 +25,7 @@ Today the repo validation surface includes:
 - `npm run test:e2e:attendee:trusted-backend`
 - `npm run test:e2e:admin`
 - `npm run test:e2e:admin:production-smoke`
+- `npm run test:e2e:redemption:production-smoke`
 - `npm run test:db`
 - `npm run test:supabase`
 - `npm run build:web`
@@ -36,7 +37,9 @@ Today the repo validation surface includes:
 - `deno check --no-lock supabase/functions/unpublish-event/index.ts`
 - `npm run ui:review:capture` for screenshot-based browser review
 - [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
-  for post-release and manual production admin smoke runs against dedicated smoke fixtures
+  (`Production Deployed-Surface Smoke`) for post-release and manual
+  bi-phase smoke runs covering admin authoring + redemption operator
+  paths against dedicated smoke fixtures
 
 That baseline is now a real first-wave strategy, not just static validation. The repo already has focused shared-domain tests, frontend behavior tests, a mobile Playwright smoke suite (fallback mode plus trusted-backend mode), pgTAP coverage for the completion RPC, Deno coverage for the Edge Function trust boundary, and a real local Supabase integration test for the full session-plus-completion path.
 
@@ -54,6 +57,7 @@ Use this table to pick the smallest useful command for your change.
 | Admin local e2e | `npm run test:e2e:admin` | Real local Supabase-backed `/admin` auth/allowlist/save/publish/unpublish flow | Deployed production auth redirect and production infrastructure wiring | Admin auth/authoring/publish or related UI changes |
 | Full local default gate | `npm run validate:local` | Lint, unit tests, Deno function tests, attendee Playwright smoke, local Supabase validation, web build, Deno checks | Admin local e2e and production smoke | Before handoff when you need broad local confidence |
 | Production admin smoke | `npm run test:e2e:admin:production-smoke` (normally via workflow) | Deployed production admin auth/allowlist/save/publish/unpublish on dedicated smoke fixtures | General attendee production coverage, non-smoke event data, PR CI checks | Post-release validation or manual production smoke rerun |
+| Production redemption smoke | `npm run test:e2e:redemption:production-smoke` (normally via workflow) | Deployed production redemption operator paths (lookup-and-redeem, list-and-filter, reverse-redemption) on dedicated smoke fixtures with dedicated agent + organizer identities | General attendee production coverage, non-smoke event data, PR CI checks, demo-mode bypass routes | Post-release validation or manual production smoke rerun |
 
 ## Coverage Snapshot
 
@@ -67,6 +71,7 @@ Use this table to pick the smallest useful command for your change.
 - attendee mobile browser smoke (trusted backend with success + rejection DB assertions and bootstrap-failure messaging)
 - local admin e2e against real local Supabase
 - production admin smoke (manual + post-release workflow) against dedicated smoke fixtures
+- production redemption operator smoke (manual + post-release workflow) against dedicated smoke event + dedicated agent + organizer identities
 
 ### Intentionally Not Covered Yet
 
@@ -216,10 +221,15 @@ The current setup includes a few deliberate choices that are worth documenting:
 - `npm run test:e2e:admin` is the local admin end-to-end validation command
   it prepares deterministic admin auth and draft fixtures, then runs Playwright
   against the real local Supabase-backed `/admin` workflow
-- `npm run test:e2e:admin:production-smoke` is the production smoke runner used
-  by the `Production Admin Smoke` workflow
+- `npm run test:e2e:admin:production-smoke` is the admin-phase runner used
+  by the `Production Deployed-Surface Smoke` workflow
   it polls deployed route readiness, then runs a single-worker Playwright suite
   against the deployed admin surface with dedicated smoke fixtures
+- `npm run test:e2e:redemption:production-smoke` is the redemption-phase
+  runner used by the same workflow
+  it polls the deployed redeem and redemptions routes, then runs a
+  single-worker Playwright suite against the deployed redemption operator
+  surface with dedicated agent + organizer identities
 - `npm run test:supabase` is the shared local-backend validation command
   it reuses one local Supabase stack for the Edge Function integration test and the pgTAP database suite
 - `deno.json` keeps `nodeModulesDir` in manual mode

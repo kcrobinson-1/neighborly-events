@@ -37,19 +37,7 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-- [ ] **`dev` Add redemption operator path to deployed-surface smoke**
-  `production-admin-smoke.yml` covers the admin auth → save → publish →
-  unpublish flow against the deployed backend, but the redemption
-  operator surfaces (`/event/:slug/game/redeem` and
-  `/event/:slug/game/redemptions`, plus reverse-redemption) are only
-  exercised by local-on-demand runners (`test:e2e:redeem`,
-  `test:e2e:redemptions`). Add a smoke phase to
-  `production-admin-smoke.yml` (or a parallel post-deploy workflow)
-  that round-trips redemption lookup, mark-as-redeemed, and
-  reverse-redemption against the production fixture event before the
-  first event that ships volunteer redemption (currently Madrona Music
-  in the Playfield).
-  Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G3 + Follow-ups](/docs/tracking/release-readiness-current.md)
+_(no Tier 1 items currently open)_
 
 ---
 
@@ -86,9 +74,6 @@ Reduce deployment risk and contributor friction before the live event.
   via `evaluateDemoModeRejection`), but it runs only on demand from
   contributors. Add it to `.github/workflows/ci.yml` so the bypass
   contract is automated rather than relying on contributor recall.
-  Coordinates with the Tier 1 deno-check coverage entry above, since
-  both close PR-CI gaps surfaced by the 2026-05-04 release-readiness
-  pass.
   Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G9 + Follow-ups](/docs/tracking/release-readiness-current.md)
 
 - [ ] **`dev` Emit a structured log line on demo-mode rejection**
