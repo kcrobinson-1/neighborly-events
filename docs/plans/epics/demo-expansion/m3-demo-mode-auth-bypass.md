@@ -229,12 +229,21 @@ Phase 3.2's plan-drafting ran AGENTS.md "PR-count predictions
 need a branch test" against actually-merged code and picked
 the 2-shape per the canonical analysis at
 [`scoping/m3-phase-3-2.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-2.md)
-decision 1. The M3-closing responsibility (milestone-doc Phase
-Status flips for the 3.3 row, milestone-doc top-level Status
-flip, epic Milestone Status table flip, doc currency across
-README + architecture + product + operations, copy revision on
-M2's role-doors) travels with phase 3.3 because 3.3 ships
-last. The open-questions.md closure for the
+decision 1. Phase 3.3's plan-drafting (2026-05-03) ran the
+same branch test and split phase 3.3 into 3.3.1 (server
+write-rejection) + 3.3.2 (client UI + noindex + M3 closer)
+per the canonical analysis at
+[`scoping/m3-phase-3-3-1.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-1.md)
+decision 1. The M3-closing responsibility (milestone-doc
+Phase Status flip for the 3.3.2 row, milestone-doc top-level
+Status flip, epic Milestone Status table flip, doc currency
+across README + architecture + product + operations, copy
+revision on M2's role-doors) travels with phase 3.3.2
+because 3.3.2 ships last. Phase 3.3.1's PR flips only its
+own row Status and its own plan Status; it does not touch
+the milestone-doc top Status, the epic Milestone Status
+table, or any of the closer doc-currency targets. The
+open-questions.md closure for the
 "Demo-mode data-access semantics" entry already shipped in
 phase 3.1's PR per the Documentation Currency assignment
 below.
