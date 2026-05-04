@@ -498,7 +498,7 @@ export async function assertReversalPersisted(
   const { data: entitlementRow, error: entitlementError } = await serviceRoleClient
     .from("game_entitlements")
     .select(
-      "redemption_status,redemption_reversed_at,redemption_reversed_by_role,redemption_reversal_reason,verification_code",
+      "redemption_status,redemption_reversed_at,redemption_reversed_by_role,redemption_note,verification_code",
     )
     .eq("event_id", eventId)
     .eq("verification_code", verificationCode)
@@ -506,7 +506,7 @@ export async function assertReversalPersisted(
       redemption_status: string;
       redemption_reversed_at: string | null;
       redemption_reversed_by_role: string | null;
-      redemption_reversal_reason: string | null;
+      redemption_note: string | null;
       verification_code: string;
     }>();
 
@@ -521,6 +521,6 @@ export async function assertReversalPersisted(
   expect(entitlementRow?.redemption_status).toBe("unredeemed");
   expect(entitlementRow?.redemption_reversed_at).not.toBeNull();
   expect(entitlementRow?.redemption_reversed_by_role).toBe("organizer");
-  expect(entitlementRow?.redemption_reversal_reason).toBe(expectedReason);
+  expect(entitlementRow?.redemption_note).toBe(expectedReason);
 }
 
