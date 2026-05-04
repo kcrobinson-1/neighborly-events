@@ -82,6 +82,18 @@ the release candidate.
   the deployed backend, or runs `test:e2e:redeem` /
   `test:e2e:redemptions` locally against the same backend, and
   records that as G3 evidence.
+  - **2026-05-04 follow-up:** path (a) closed. PR #177 added the
+    redemption operator phase (renaming the workflow display name to
+    `Production Deployed-Surface Smoke`); PR #178 corrected a
+    fabricated assertion column the post-release run on PR #177's
+    merge SHA caught. The first green bi-phase run on the hot-fix
+    merge SHA `533a326` is
+    [run 25345598914](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25345598914).
+    The next release-readiness pass that re-walks G3 against a
+    release candidate can flip the redemption half to **met** by
+    citing the workflow's now-bi-phase run on the candidate's merge
+    SHA; this pass entry remains historical (the methodology gate
+    walks the candidate's own evidence, not retroactively).
 - G4 Starts + completion + redemption instrumentation: **met** —
   `release.yml` `25306340650` applied every migration through
   `20260427010000_broaden_event_scoped_rls.sql` to production
