@@ -37,10 +37,12 @@ function formatTimestamp(value: string): string {
  * Read-only admin variant rendered on the bypass-rendered surface.
  *
  * Renders the published-event metadata the demo-mode read shim
- * returns. Mutation controls (Save, Publish, Unpublish, draft
- * editing) are intentionally absent — phase 3.3 introduces the
- * disabled-state shape per the milestone doc's read-side / write-
- * side seam.
+ * returns. Mutation controls (Save changes, Publish draft,
+ * Unpublish, draft editing) are intentionally absent. Demo-mode
+ * shape: hidden controls + inline read-only callout. AGENTS.md
+ * "Bans on surface require rendering the consequence" is
+ * satisfied by the rendered callout below the metadata list, not
+ * by a disabled-state pattern.
  */
 export function DemoModeAdminView({ slug }: DemoModeAdminViewProps) {
   const [state, setState] = useState<LoadState>({ status: "loading" });
@@ -149,6 +151,15 @@ export function DemoModeAdminView({ slug }: DemoModeAdminViewProps) {
           <dd>{formatTimestamp(summary.updatedAt)}</dd>
         </div>
       </dl>
+      <section className="demo-mode-readonly-callout" aria-label="Read-only authoring affordances">
+        <h3>Authoring is read-only in demo mode.</h3>
+        <p>
+          Save changes, Publish draft, Unpublish, and the question
+          editor are hidden while you&apos;re browsing without
+          signing in.
+        </p>
+        <p>Sign in to manage this event.</p>
+      </section>
     </div>
   );
 }

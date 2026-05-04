@@ -22,11 +22,12 @@ export function HomeHero() {
       <p className="home-hero-honesty">
         <strong>What&rsquo;s real at this iteration:</strong>{" "}
         rendered event landings, two registered Themes, the
-        authenticated admin workspace, and the attendee + volunteer
-        gameplay shells.{" "}
-        <strong>What&rsquo;s still stubbed:</strong> live attendees,
-        production sponsors, and demo-mode access on the auth-gated
-        surfaces (sign-in required until that bypass ships).
+        authenticated admin workspace, the attendee + volunteer
+        gameplay shells, and a read-only demo-mode browse of the
+        auth-gated organizer and volunteer surfaces without
+        signing in.{" "}
+        <strong>What&rsquo;s still stubbed:</strong> live attendees
+        and production sponsors.
       </p>
     </section>
   );
