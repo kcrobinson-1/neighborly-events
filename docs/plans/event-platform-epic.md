@@ -30,13 +30,17 @@ The top-level Status above is flipped to `Landed` in this PR; closure
 does not depend on M4. Reframing of Goal, Why This Epic, Backlog
 Impact, and Sizing Summary sections to reflect "epic finished without
 Madrona" is intentionally out of scope for this change; those sections
-remain as historical record of the original plan, and the
+remain as historical record of the original plan. M4-specific content
+(the original phase 4.1/4.2/4.3 paragraphs, validation gate,
+documentation list, self-review audits, and the "Madrona content
+authoring time" risk) carried forward into
 [`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md)
-stub is the canonical pointer for any future Madrona-launch work.
-The M4 phase paragraphs under "M4 — Madrona Launch" below remain in
-place as the pre-milestone-planning estimate at the time of deferral;
-the Madrona-launch epic's milestone planning session re-derives phase
-shape against actually-merged code per AGENTS.md "Epic Drafting."
+under its "Pre-Milestone-Planning Historical Estimate" section so the
+Madrona-launch epic is self-contained; the M4 section below now holds
+only a pointer. Per AGENTS.md "Epic Drafting," that carried-forward
+content is pre-milestone-planning estimate; the Madrona-launch epic's
+milestone planning session re-derives phase shape against
+actually-merged code.
 
 ## Purpose
 
@@ -174,12 +178,14 @@ redeem, redemptions) ahead of the deferred-Madrona schedule, so
 the apps/web wrapping infrastructure now ships and resolves
 per-event Themes for the test events (`harvest-block-party`,
 `riverside-jam`). The invariant remains open for non-test-event
-slugs (Madrona) until the future Madrona-launch epic registers a
-non-test-event Theme — at which point the wrapping that
-demo-expansion M1 ships picks up the new Theme automatically. M4
-phase 4.1 below trims its scope accordingly: only Madrona's `Theme`
-registration remains; the wrapping is no longer M4 phase 4.1's
-deliverable.
+slugs (Madrona) until the
+[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
+registers a non-test-event Theme — at which point the wrapping
+that demo-expansion M1 ships picks up the new Theme
+automatically. The Madrona-launch epic's phase 4.1 (carried
+forward from this epic's original M4 phase 4.1) trims its scope
+accordingly: only Madrona's `Theme` registration remains; the
+wrapping is no longer phase 4.1's deliverable.
 
 **Trust boundary.** Every backend write reachable from a public or
 origin-gated endpoint enforces authorization at the database layer (RLS or
@@ -808,95 +814,17 @@ by `apps/site` page rendering or meta-tag handling are pinned).
 
 ### M4 — Madrona Launch
 
-**Status.** Deferred 2026-05-01. Madrona launch is moving to its own
-future sibling epic; the demo-expansion epic
-([`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md))
-intervenes between this epic and Madrona's relaunch. The phase
-paragraphs below remain as historical record of the
-pre-milestone-planning estimate at the time of deferral; they are not
-a canonical plan for Madrona launch. The Madrona-launch epic will
-draft fresh content against actually-merged code when its scoping
-begins.
-
-**Milestone doc.** Not yet drafted — M4's milestone planning session
-runs after M3 lands. Per AGENTS.md "Epic Drafting," the phase
-paragraphs below are pre-milestone-planning estimates pending that
-session. Phase counts, per-phase content, validation gate, and
-documentation list will be re-derived against actually-merged M3 code
-when M4 milestone planning begins; the milestone doc that session
-produces will be canonical and will supersede the paragraphs below.
-
-**Goal.** Madrona Music in the Playfield goes live as the first public event
-on the platform.
-
-**Phase 4.1 — Madrona theme palette definition.**
-Hold the Madrona theme discussion as its own task at the start of M4:
-pick approximately ten color values, the typography choice, and the
-accent treatment for Madrona's brand. Create
-`shared/styles/themes/madrona.ts` (the file does not exist before M4 —
-M1 phase 1.5.2 deliberately deferred Madrona's `Theme` to this phase to
-avoid a placeholder-Madrona double pass) and register it in the
-`shared/styles/themes/` registry. **Apps/web event-route ThemeScope
-wiring is no longer this phase's deliverable** — demo-expansion epic
-M1 phase 1.1 (2026-05-01) shipped the wrap ahead of schedule, so the
-`<ThemeScope>` wraps already exist on `GameRoutePage`,
-`EventRedeemPage`, `EventRedemptionsPage`, and `EventAdminPage` in
-the central [`App.tsx`](/apps/web/src/App.tsx) routing dispatcher.
-Once Madrona's registry entry lands, the existing wraps automatically
-pick up Madrona's `Theme` for `slug=madrona` — no per-consumer change
-required. **This is the brand-launch visual transition**: apps/web
-event routes shift from today's warm-cream defaults (the
-`getThemeForSlug` fallback for unregistered slugs) to Madrona's real
-palette at this PR's merge. UI-review captures cover the warm-cream →
-Madrona transition explicitly so the launch visual is signed off
-intentionally rather than landing as review surprise. The cross-app
-theme-continuity check originally deferred from M3 phase 3.3 was
-satisfied for the test events by demo-expansion epic M1 phase 1.1; M4
-phase 4.1 extends it to `slug=madrona` with a UI-review pair
-confirming that `/event/madrona` (apps/site) and `/event/madrona/game`
-(apps/web) render the same Madrona `Theme`. One PR.
-
-**Phase 4.2 — Madrona event content authoring.**
-Author Madrona's event content as a TypeScript module at
-`apps/site/events/madrona.ts` matching the `EventContent` type defined in
-M3: title, dates, schedule, lineup with set times, sponsor list with logos
-and links, FAQ, CTA copy, theme slug. Hardcoded for v1; admin-authored
-content is post-epic. One PR.
-
-**Phase 4.3 — Launch readiness.**
-Non-engineering preparation: volunteer training, QR posters pointing at
-`/event/madrona/game` and `/event/madrona`, sponsor logo links verified,
-unfurl preview verified for `/event/madrona`, redemption agent assignment
-verified, production smoke run against the full Madrona path (landing page →
-game → completion → redeem booth flow). Checklist execution; no PR for the
-checklist itself.
-
-**Validation gate.** Full Madrona path rendered correctly end-to-end.
-Production smoke per `docs/testing-tiers.md` Tier 5 with a Madrona-specific
-assertion set. Volunteer dry run completed. Unfurl preview verified in at
-least one client.
-
-**Documentation.** `docs/product.md` updated to reflect Madrona launched.
-`docs/backlog.md` closes "Event landing page for `/event/:slug`".
-`README.md` updated. This plan flipped from `Proposed` to `Landed` in the
-final PR. M4 follows the two-phase Plan-to-Landed pattern from
-`docs/testing-tiers.md` if the production smoke assertions added in M4
-must run post-deploy.
-
-**Self-review audits.** From `docs/self-review-catalog.md`:
-Readiness-gate truthfulness audit (production smoke claims for the
-Madrona path must reflect runs actually executed against production
-after deploy; the warm-cream → Madrona visual transition must be
-verified against captured before/after UI-review evidence, not
-asserted by code reasoning), Rename-aware diff classification (phase
-4.1 wraps existing event-route shells in `<ThemeScope>` in the central
-[`App.tsx`](/apps/web/src/App.tsx) dispatcher — the wrap is a
-content addition around an unchanged child, not a move), Effect
-cleanup audit (any new content components added for Madrona-specific
-rendering must clean up correctly). M4 also follows the
-Plan-to-Landed Gate For Plans With Post-Release Validation from
-`docs/testing-tiers.md` if the production smoke assertions added in M4
-must run post-deploy.
+**Status.** Deferred 2026-05-01 and moved to its own sibling epic at
+[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md).
+The phase paragraphs that originally lived here (Goal, Phase 4.1
+Madrona theme palette definition, Phase 4.2 Madrona event content
+authoring, Phase 4.3 Launch readiness, Validation gate,
+Documentation, Self-review audits) carried forward verbatim into the
+new epic's "Pre-Milestone-Planning Historical Estimate" section so
+readers do not need to bounce back here for M4-specific content. Per
+AGENTS.md "Epic Drafting," those paragraphs are pre-milestone-planning
+estimate; the Madrona-launch epic's milestone planning session
+re-derives phase shape against actually-merged code.
 
 ## Backlog Impact
 
@@ -967,7 +895,7 @@ Phases per milestone, with PR counts:
 - M1 — 5 phases (phase 1.1, phase 1.3, and phase 1.5 each contain 2 subphases as separate PRs), 8 PRs (landed)
 - M2 — 5 phases, 5 PRs (landed; actually shipped 13 PRs once subphase splits were re-derived during phase planning — see [m2-admin-restructuring.md](/docs/plans/archive/m2/m2-admin-restructuring.md) phase status table)
 - M3 — pre-milestone-planning estimate: 4 phases, 4 PRs. Milestone-planning re-derived: 3 phases, 3 PRs (3.1 may split into 2). Canonical: [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md)
-- M4 — pre-milestone-planning estimate: 3 phases, 2 PRs (phase 4.3 is checklist execution, not a PR). Milestone planning pending.
+- M4 — moved to [`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md); see that epic's Sizing estimate (3 phases, 2 PRs as carried forward) and milestone planning for re-derived counts
 
 Epic total: pre-milestone-planning estimate of 20 phases, 22 PRs;
 actuals will diverge as each milestone planning session and each phase
@@ -995,10 +923,10 @@ expected, expanding M1 phase 1.5. Mitigation: the audit is its own
 PR-deliverable subphase 1.5.1, isolated for review attention before code
 migration begins.
 
-**Madrona content authoring time.** Real design and copy decisions may take
-longer than expected. Mitigation: content lives as hardcoded TS modules in
-M4 phase 4.2 rather than blocking on a CMS layer; the engineering surface is
-small even if content polish iterates.
+**Madrona content authoring time** moved with the M4 phase paragraphs
+to
+[`epics/madrona-launch/epic.md`](/docs/plans/epics/madrona-launch/epic.md);
+that risk is now owned by the Madrona-launch epic.
 
 **M2 RLS edge cases.** Trust-boundary work tends to surface unanticipated
 cases during pgTAP authoring. Mitigation: M2 phase 2.1 lands as its own PR
