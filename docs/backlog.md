@@ -37,19 +37,6 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-- [ ] **`dev` Cover every Edge Function in PR CI `deno check`**
-  `.github/workflows/ci.yml` explicitly names six functions
-  (`issue-session`, `complete-game`, `save-draft`, `generate-event-code`,
-  `publish-draft`, `unpublish-event`) and silently skips the four added
-  with the redemption MVP and demo-mode bypass: `read-demo-event`,
-  `get-redemption-status`, `redeem-entitlement`,
-  `reverse-entitlement-redemption`. All ten type-check cleanly today;
-  the gap is coverage drift, not breakage. Replace the per-function
-  steps with a single step that iterates over every
-  `supabase/functions/*/index.ts` so new functions are picked up
-  automatically.
-  Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G8 + Follow-ups](/docs/tracking/release-readiness-current.md)
-
 - [ ] **`dev` Add redemption operator path to deployed-surface smoke**
   `production-admin-smoke.yml` covers the admin auth → save → publish →
   unpublish flow against the deployed backend, but the redemption
