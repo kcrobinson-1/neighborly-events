@@ -114,21 +114,22 @@ the release candidate.
   gate language in
   [`release-readiness.md`](/docs/plans/release-readiness.md) to
   match.
-- G8 PR CI depth: **not met** — `ci.yml` covers lint, unit, Deno
-  function tests, local Supabase integration + pgTAP,
-  attendee-trusted-backend Playwright smoke, both `build:web` and
+- G8 PR CI depth: **not met** — `ci.yml` covers lint, `npm test`,
+  `npm run test:functions`, `npm run test:supabase`,
+  attendee-trusted-backend Playwright smoke, `build:web` +
   `build:site`, and `deno check` for `issue-session`,
   `complete-game`, `save-draft`, `generate-event-code`,
-  `publish-draft`, and `unpublish-event`. The G8 evidence column
-  requires Deno function tests "over every function in
-  `supabase/functions/*/`," and `ci.yml` skips `read-demo-event`,
-  `get-redemption-status`, `redeem-entitlement`, and
-  `reverse-entitlement-redemption`. Locally re-confirmed all 10
+  `publish-draft`, and `unpublish-event`. G8's evidence column
+  requires `deno check` over **every** function under
+  `supabase/functions/*/index.ts`; `ci.yml` silently skips
+  `read-demo-event`, `get-redemption-status`, `redeem-entitlement`,
+  and `reverse-entitlement-redemption`. Locally re-confirmed all 10
   type-check cleanly on HEAD, so the underlying code is healthy;
-  the gate is unmet because the *gate evidence is named CI
-  coverage*, and the four functions are silently skipped in CI.
-  Tier 1 backlog item "Cover every Edge Function in PR CI `deno
-  check`" closes this; G8 will flip to met once that lands.
+  the gate is unmet because the gate evidence is named *CI
+  coverage*, not *type-checkability*, and the four functions are
+  not covered by the workflow. Tier 1 backlog item "Cover every
+  Edge Function in PR CI `deno check`" closes this; G8 will flip
+  to met once that lands.
 - G9 Demo-mode bypass containment: **not met** — the gate's evidence
   column requires `npm run test:e2e:demo-mode-bypass` to pass on the
   release candidate, and that suite was not run for this pass (it is
