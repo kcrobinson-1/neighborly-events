@@ -48,9 +48,11 @@ This repository currently includes:
   (`/event/:slug/admin`, `/event/:slug/game/redeem`,
   `/event/:slug/game/redemptions`) for the two test-event slugs
   (`harvest-block-party`, `riverside-jam`), reaching internal-partner
-  demos without sign-in; mutations stay rejected server-side and the
-  apps/web edge emits `X-Robots-Tag: noindex, nofollow` on the
-  bypass-eligible URL paths
+  demos without sign-in; mutations stay rejected server-side, and the
+  apps/web edge emits `X-Robots-Tag: noindex, nofollow` uniformly on
+  every URL under a test-event slug (bypass surfaces plus the gameplay
+  route) at parity with the apps/site test-event landing's
+  `generateMetadata` `robots` emit
 - attendee completion-screen polling against the trusted
   `get-redemption-status` endpoint, so the volunteer redeem action is
   reflected back on the attendee screen within a few seconds while the

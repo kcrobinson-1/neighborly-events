@@ -51,37 +51,7 @@
   ],
   "headers": [
     {
-      "source": "/event/:slug(harvest-block-party|riverside-jam)/admin",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
-    },
-    {
-      "source": "/event/:slug(harvest-block-party|riverside-jam)/admin/:path*",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
-    },
-    {
-      "source": "/event/:slug(harvest-block-party|riverside-jam)/game/redeem",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
-    },
-    {
-      "source": "/event/:slug(harvest-block-party|riverside-jam)/game/redeem/:path*",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
-    },
-    {
-      "source": "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions",
-      "headers": [
-        { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
-      ]
-    },
-    {
-      "source": "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions/:path*",
+      "source": "/event/:slug(harvest-block-party|riverside-jam)/:path*",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]

@@ -47,7 +47,7 @@ Today the repo implements:
 - an organizer-facing admin workspace at `/admin` for drafting, editing, publishing, and unpublishing events
 - `game_starts` table and session-issuance write so analytics has the funnel denominator (starts → completions → entitlements) before the first live event
 - an authenticated agent-facing redeem route at `/event/:slug/game/redeem` for fast booth-side code entry, and an authenticated organizer-facing monitoring + reversal route at `/event/:slug/game/redemptions` for dispute handling (list, filter, search, reverse with optional reason), both direct-URL only until role seeding
-- a read-only demo-mode bypass on the auth-gated event surfaces (admin, redeem, redemptions) for the two test-event slugs (`harvest-block-party`, `riverside-jam`), reaching internal-partner demos without sign-in; mutations stay rejected server-side and the bypass-rendered URL paths emit `noindex` at parity with the apps/site test-event landings
+- a read-only demo-mode bypass on the auth-gated event surfaces (admin, redeem, redemptions) for the two test-event slugs (`harvest-block-party`, `riverside-jam`), reaching internal-partner demos without sign-in; mutations stay rejected server-side, and every apps/web URL under a test-event slug — bypass surfaces and the gameplay route alike — emits `noindex` uniformly at parity with the apps/site test-event landings, keeping test events invisible to public search end-to-end
 
 What remains as future product work:
 
