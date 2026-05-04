@@ -85,10 +85,13 @@ plus an explanatory paragraph
 ([`DemoModeRedeemView.tsx:14-23`](/apps/web/src/redeem/DemoModeRedeemView.tsx));
 DemoModeAdminView renders metadata only with no inline
 explanation of what's absent
-([`DemoModeAdminView.tsx:120-152`](/apps/web/src/admin/DemoModeAdminView.tsx));
+([`DemoModeAdminView.tsx:126-151`](/apps/web/src/admin/DemoModeAdminView.tsx)
+— the `<dl className="demo-mode-summary-list">` block);
 DemoModeRedemptionsView renders rows with no inline explanation
 at the row-detail position
-([`DemoModeRedemptionsView.tsx:129-149`](/apps/web/src/redemptions/DemoModeRedemptionsView.tsx)).
+([`DemoModeRedemptionsView.tsx:135-147`](/apps/web/src/redemptions/DemoModeRedemptionsView.tsx)
+— the `<ul className="redemptions-list demo-mode-redemptions-list">`
+block).
 
 **Options considered.**
 
@@ -959,55 +962,64 @@ lifecycle).
 
 ## Open decisions to make at plan-drafting
 
-These intentionally defer to plan-drafting because they
-require reading on-disk content against actually-merged code at
-plan-time, not against the scoping snapshot:
+The promotion-gate self-review on 2026-05-03 resolved the
+plan-drafting deferrals previously listed here against
+actually-merged code (the merged 3.3.1 helper at
+[`supabase/functions/_shared/demo-mode-rejection.ts`](/supabase/functions/_shared/demo-mode-rejection.ts),
+the merged 3.2 view components, the merged
+[`apps/web/vercel.json`](/apps/web/vercel.json), the merged
+[`tests/e2e/demo-mode-bypass.spec.ts`](/tests/e2e/demo-mode-bypass.spec.ts),
+and the merged
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md))
++ Vercel `headers` upstream documentation at
+https://vercel.com/docs/project-configuration/vercel-json#headers.
+The promotion-gate resolutions are absorbed into the plan's
+Contracts:
 
-- **Exact inline-read-only-callout copy** for DemoModeAdminView
-  and DemoModeRedemptionsView. Decision 1 binds the rendering
-  shape and the affordance enumeration; the exact words are
-  drafted in the dev server with the consequence rendered per
-  AGENTS.md "Bans on surface require rendering the
-  consequence."
-- **Vercel `headers` regex source shape.** Decision 3 binds
-  Vercel `headers` as the mechanism and binds hand-mirrored
-  slugs in the regex with a CI-asserted byte-equivalence
-  test. The exact regex shape — pattern syntax (Vercel
-  `source` accepts a path-to-regexp-style pattern), the
-  trailing-slash policy, the bypass route enumeration — is
-  plan-time per AGENTS.md "Reality-check gate" → "external-
-  service-behavior claims" reads upstream Vercel docs.
-- **Self-Review Audit set** against
-  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md).
-  Plan-drafting walks the catalog. Likely-relevant audits:
-  cross-app copy contract revision audit (yes — M2 → M3
-  copy contract); noindex emit audit (yes — apps/web edge-
-  emit + apps/site precedent parity); rename-aware diff
-  classification (no — no renames). Plan-drafting confirms.
-- **Validation Gate command list.** Beyond `npm run lint`,
-  `npm run build:web`, `npm run test`, the plan names
-  `npm run test:e2e:demo-mode-bypass` (the existing
-  Playwright wrapper) and any noindex-specific validator. The
-  plan also names the new Vitest test file the Decision 8
-  enforcement assertion lives in.
-- **Commit boundaries.** Likely shape: (1) DemoModeAdminView
-  + DemoModeRedemptionsView read-only callout edits (no
-  DemoModeRedeemView edit per decision 1); (2)
-  apps/web/vercel.json headers config + the Vitest enforcement
-  test (load-bearing noindex CI gate per decision 3); (3)
-  apps/site RoleDoors + HomeHero copy revision + e2e fixture
-  extension for callout copy; (4) M3 doc-currency map (README,
-  architecture, product, backlog) + scoping-doc batch deletion
-  + milestone-doc + epic + this plan Status flips. Plan-
-  drafting finalizes against the actual edit shape.
-- **Vercel.json regex literal vs. a small build-time codegen.**
-  Decision 8 picks hand-mirror + Vitest assertion as the
-  enforcement path. If plan-drafting surfaces a strong reason
-  to instead generate the regex from the TS source at build
-  time (e.g., the regex shape becomes complex enough that the
-  Vitest assertion needs to parse it), the plan reopens
-  Decision 8 in-place and notes the reopening. Default stays
-  hand-mirror unless reopened.
+- **Exact callout copy for DemoModeAdminView and
+  DemoModeRedemptionsView** — remains plan-drafting-/render-
+  time per AGENTS.md "Bans on surface require rendering the
+  consequence;" the implementing PR finalizes copy in the dev
+  server and records any deviation in the PR body's
+  Estimate Deviations section. This is the only intentional
+  deferral; AGENTS.md authorizes copy deferral to render-time.
+- **Vercel `headers` source pattern shape** — resolved at
+  promotion-gate to three entries with `:slug(harvest-block-
+  party|riverside-jam)/<surface>` per surface; absorbed into
+  the plan's Contracts "apps/web noindex emit" section.
+- **Vitest assertion shape** — resolved at promotion-gate to
+  string-extraction-based against the `:slug(...)` regex
+  constraint group via `/:slug\(([^)]+)\)/`; absorbed into
+  Contracts "Hand-mirror enforcement test."
+- **Self-Review Audit set** — resolved at promotion-gate
+  walk against `docs/self-review-catalog.md`: no catalog
+  audit maps to 3.3.2's diff surface; the four 3.3.2-internal
+  audits (Cross-app copy contract revision, Noindex emit
+  parity, Ban-rendering, Allowlist-drift) are walked plan-
+  internally; catalog extension is intentionally out of
+  scope. Absorbed into the plan's Self-Review Audits section.
+- **Validation Gate command list** — resolved at promotion-
+  gate to `npm run lint`, `npm run build:web`,
+  `npm run build:site` (added per cross-app review feedback
+  on 2026-05-03), `npm run test`,
+  `npm run test:e2e:demo-mode-bypass`, plus a manual `curl
+  -sI` checklist against the PR's Vercel preview deploy.
+  Absorbed into the plan's Validation Gate.
+- **Commit boundaries** — resolved at promotion-gate to the
+  five-commit shape; absorbed into the plan's Commit
+  Boundaries section.
+
+**Implementation-time-only items** that remain genuinely
+deferred (not plan-drafting deferrals):
+
+- **`docs/backlog.md` exact entry text.** Plan-drafting greps
+  for incidentally-resolved entries and adds the post-epic
+  items the milestone doc names; the exact entry phrasing is
+  read against the file at implementation time.
+- **`docs/architecture.md` exact paragraph rephrasings.** The
+  Contracts entry names the section + line range; the exact
+  prose is drafted against the rendered surrounding paragraphs
+  at implementation time.
 
 ## Plan structure handoff
 

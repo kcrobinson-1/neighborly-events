@@ -2,15 +2,27 @@
 
 ## Status
 
-In draft.
+Proposed.
 
-This plan opens at `In draft` per AGENTS.md "`In draft` →
-`Proposed` promotion gate." The plan-drafting deferrals named in
-[`scoping/m3-phase-3-3-2.md`](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-2.md)
-"Open decisions to make at plan-drafting" must be resolved end-
-to-end against current code before the `In draft` → `Proposed`
-flip; the implementing PR's Status edit flips `Proposed` →
-`Landed`.
+The promotion-gate self-review walked the plan + scoping doc
+end-to-end on 2026-05-03 and resolved each plan-drafting
+deferral (Vercel `headers` source-pattern shape, Vitest
+assertion shape, SCSS partial location, callout placement on
+DemoModeRedemptionsView, Self-Review Audit set, Validation
+Gate command list, commit boundaries), restored coherence
+across plan + scoping (Decision 1→4 typo in Goal corrected,
+DemoModeAdminView `<dl>` line range reconciled to 126-151
+against the merged file, "comment refresh on the third"
+contradiction in Context dropped, dual acceptance-standard
+collapsed to a single Vitest-config + manual-curl gate per
+reviewer feedback, `npm run build:site` added to Validation
+Gate per cross-app review feedback), and added inline `Verified
+by:` citations to every load-bearing claim in Contracts. The
+remaining intentional deferral is exact callout copy, which
+AGENTS.md "Bans on surface require rendering the consequence"
+authorizes to render-time. The implementing PR's Status edit
+flips `Proposed` → `Landed` per AGENTS.md "Plan-to-PR
+Completion Gate."
 
 ## Context
 
@@ -88,8 +100,10 @@ doc-currency map. Specifically:
 - The demo-mode-bypass Playwright fixture extends with
   read-only-callout copy assertions on the admin and
   redemptions tests (the redeem test stays as-is per scoping
-  decision 1 — its existing copy already renders the
-  consequence). The Playwright fixture does NOT assert
+  decision 4 — the redeem variant's existing copy already
+  satisfies decision 1 and the existing fixture assertion at
+  [`tests/e2e/demo-mode-bypass.spec.ts:156-159`](/tests/e2e/demo-mode-bypass.spec.ts)
+  already covers it). The Playwright fixture does NOT assert
   noindex per scoping decision 3 — the load-bearing noindex
   falsifier is the Vitest config-shape assertion below, and
   the existing `playwright.demo-mode-bypass.config.ts`
@@ -200,18 +214,30 @@ surface):
 
 ## Naming
 
-- **`demo-mode-readonly-callout`** (working CSS class) — the
-  inline read-only callout rendered at the affordance position
-  on DemoModeAdminView and DemoModeRedemptionsView. Final class
-  name and SCSS partial location are plan-drafting-time;
-  consumes existing tokens per scoping decision 6 (no
-  `docs/styling.md` revision).
-- **`tests/web/demo-mode-bypass-noindex.test.ts`** (working
-  Vitest path) — the new file that asserts the byte-equivalence
-  between `TEST_EVENT_SLUGS` and the hand-mirrored slug list in
-  `apps/web/vercel.json`'s `headers[].source` regex. Final path
-  and exact assertion shape are plan-drafting-time per scoping
-  decision 8.
+- **`demo-mode-readonly-callout`** — the CSS class for the
+  inline read-only callout rendered at the affordance
+  position on DemoModeAdminView and DemoModeRedemptionsView.
+  The class lives in
+  [`apps/web/src/styles/_demo-mode.scss`](/apps/web/src/styles/_demo-mode.scss)
+  alongside the existing `.demo-mode-banner`,
+  `.demo-mode-stack`, `.demo-mode-summary-list`, and
+  `.demo-mode-redemptions-list` selectors that 3.2 shipped.
+  The styles consume existing demo-mode tokens (no new
+  themable / structural classification per scoping decision 6;
+  no `docs/styling.md` revision). `Verified by:`
+  [`apps/web/src/styles/_demo-mode.scss:13,25,35,64`](/apps/web/src/styles/_demo-mode.scss)
+  — the existing partial is the load-bearing co-location
+  surface.
+- **`tests/web/demo-mode-bypass-noindex.test.ts`** — the new
+  Vitest file that asserts the byte-equivalence between
+  `TEST_EVENT_SLUGS` and the hand-mirrored slug list in
+  `apps/web/vercel.json`'s `headers[].source` regex. Final
+  path settled at promotion-gate time (scoping decision 8 +
+  Contracts "Hand-mirror enforcement test"); assertion shape
+  is string-extraction-based against the `:slug(...)` regex-
+  constraint group via `/:slug\(([^)]+)\)/`. `Verified by:`
+  Contracts "Hand-mirror enforcement test" section below for
+  the full assertion enumeration.
 - **`X-Robots-Tag: noindex, nofollow`** — the exact response-
   header value emitted on the six bypass-eligible URL paths.
   Final spelling matches the standard Google search-indexing
@@ -232,13 +258,15 @@ controls would mount. Specifically:
 - **DemoModeAdminView**
   ([apps/web/src/admin/DemoModeAdminView.tsx](/apps/web/src/admin/DemoModeAdminView.tsx))
   — below the existing metadata `<dl>` at line 126-151, an
-  inline section (working class `demo-mode-readonly-callout`)
-  is added. The callout names the absent affordances (Save
-  changes, Publish draft, Unpublish, draft editing) and the
-  resolution ("Sign in to manage this event."). Exact copy is
-  plan-drafting-time per AGENTS.md "Bans on surface require
-  rendering the consequence" — copy is finalized after
-  rendering it in the dev server. The "phase 3.3 introduces
+  inline section with class `demo-mode-readonly-callout` (per
+  Naming) is added. The callout names the absent affordances
+  (Save changes, Publish draft, Unpublish, draft editing) and
+  the resolution ("Sign in to manage this event."). Exact copy
+  is finalized at render-time per AGENTS.md "Bans on surface
+  require rendering the consequence" — copy is drafted in
+  the dev server before commit; deviations from the plan-
+  drafting copy land in the PR body's Estimate Deviations
+  section. The "phase 3.3 introduces
   the disabled-state shape per the milestone doc's read-side
   / write-side seam" comment at lines 36-44 is revised to
   record the chosen shape ("Demo-mode shape: hidden controls
@@ -257,20 +285,30 @@ controls would mount. Specifically:
   rendered surface in the dev server.
 - **DemoModeRedemptionsView**
   ([apps/web/src/redemptions/DemoModeRedemptionsView.tsx](/apps/web/src/redemptions/DemoModeRedemptionsView.tsx))
-  — at the position adjacent to the redemptions list (above
-  the `<ul>` at line 135 or below it; plan-drafting picks),
-  an inline section (same `demo-mode-readonly-callout` class)
-  is added. The callout names the absent row-detail / reverse
-  affordance and the resolution ("Sign in to manage
-  redemptions."). The empty-rows branch at lines 114-127
-  already partially names the consequence ("A signed-in
-  organizer at this event would see redeemed and reversed
-  entitlements appear here as volunteers run the booth.") —
-  the new callout extends this honesty to the populated-rows
-  branch, where the absent reverse affordance is the gap.
-  The "Phase 3.3 reintroduces them in the chosen disabled-
-  state shape" comment at lines 46-54 is revised to record
-  the chosen shape, parallel to DemoModeAdminView's revision.
+  — an inline section (same `demo-mode-readonly-callout`
+  class) is added **above** the `<ul className="redemptions-
+  list demo-mode-redemptions-list">` at line 135 (and inside
+  the same `<div className="signin-stack demo-mode-stack">`
+  wrapper, after the existing `<div className="section-
+  heading">` at lines 131-134 which already names the row
+  count). Above-the-list placement contextualizes what the
+  reader is looking at (read-only monitoring view) before the
+  eye reaches the rows themselves; below-the-list placement
+  was rejected because partners scrolling rows would
+  encounter the inline-callout only after exhausting the row
+  inventory, which inverts the "name the consequence at the
+  affordance position" rendering goal. The callout names the
+  absent row-detail / reverse affordance and the resolution
+  ("Sign in to manage redemptions."). The existing empty-
+  rows branch at lines 114-127 already partially names the
+  consequence ("A signed-in organizer at this event would see
+  redeemed and reversed entitlements appear here as
+  volunteers run the booth.") — the new callout extends this
+  honesty to the populated-rows branch, where the absent
+  reverse affordance is the gap. The "Phase 3.3 reintroduces
+  them in the chosen disabled-state shape" comment at lines
+  46-54 is revised to record the chosen shape, parallel to
+  DemoModeAdminView's revision.
 
 The callout copy is rendered in the dev server before
 finalizing per AGENTS.md "Bans on surface require rendering
@@ -278,86 +316,156 @@ the consequence;" the implementing PR records the final
 rendered copy in the PR body's Estimate Deviations section
 if it deviates from the plan-drafting copy.
 
+`Verified by:`
+[`apps/web/src/admin/DemoModeAdminView.tsx:36-44,126-151`](/apps/web/src/admin/DemoModeAdminView.tsx)
+(the 3.2-shipped "phase 3.3 introduces the disabled-state
+shape" comment 3.3.2 revises + the `<dl>` block the callout
+sits below);
+[`apps/web/src/redeem/DemoModeRedeemView.tsx:14-23`](/apps/web/src/redeem/DemoModeRedeemView.tsx)
+(the existing copy that already renders the consequence —
+the `<h2>` "Redemption codes are read-only in demo mode."
+heading + the explanatory paragraph);
+[`apps/web/src/redemptions/DemoModeRedemptionsView.tsx:46-54,135-147`](/apps/web/src/redemptions/DemoModeRedemptionsView.tsx)
+(the 3.2-shipped "Phase 3.3 reintroduces them in the chosen
+disabled-state shape" comment + the `<ul>` block the
+callout sits above);
+[`apps/web/src/redemptions/DemoModeRedemptionsView.tsx:114-127`](/apps/web/src/redemptions/DemoModeRedemptionsView.tsx)
+(the empty-rows branch that partially names the consequence
+today);
+AGENTS.md "Bans on surface require rendering the
+consequence" rule;
+[`scoping/m3-phase-3-3-2.md` decision 1](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-2.md)
+(the chosen-shape resolution);
+[`m3-phase-3-1-plan.md` Contracts item 6](/docs/plans/epics/demo-expansion/m3-phase-3-1-plan.md)
+(the original deferral framing).
+
 ### apps/web noindex emit (per scoping decision 3)
 
 `apps/web/vercel.json` gains a top-level `"headers"` array with
-one entry whose `source` pattern matches the six bypass-eligible
-URL paths and whose `headers` array contains
+**three entries**, one per bypass-eligible surface, each
+emitting `X-Robots-Tag: noindex, nofollow`. Three entries
+(rather than one entry with a broader pattern) are required
+because Vercel's `source` uses path-to-regexp under the hood
+and path-to-regexp tokenizes parameter regex constraints on
+`/`, so a single param like
+`:surface(admin|game/redeem|game/redemptions)` cannot match
+across slash boundaries; each surface needs its own entry.
+`Verified by:` Vercel docs at
+https://vercel.com/docs/project-configuration/vercel-json#headers
+which document `source` accepting path-to-regexp named-
+parameter regex constraints (their example: `:path(\d{1,})`
+for digit-only matches in a redirect rule).
+
+The three entries use the **`:slug(harvest-block-party|riverside-jam)`
+inline-regex named parameter** as the load-bearing slug-list
+hand-mirror surface — one regex constraint expression
+appearing in three sources, byte-equivalent to
+`TEST_EVENT_SLUGS`:
+
+- Entry 1: `source: "/event/:slug(harvest-block-party|riverside-jam)/admin"`
+- Entry 2: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redeem"`
+- Entry 3: `source: "/event/:slug(harvest-block-party|riverside-jam)/game/redemptions"`
+
+Each entry's `headers` array contains exactly one element:
 `{"key": "X-Robots-Tag", "value": "noindex, nofollow"}`. The
-final pattern shape (Vercel `source` syntax — path-to-regexp
-style) is plan-drafting-time per scoping decision's deferred
-"Vercel `headers` regex source shape" item. Plan-drafting reads
-upstream Vercel docs at
-https://vercel.com/docs/projects/project-configuration#headers
-to confirm:
+gameplay route `/event/:slug/game` is intentionally NOT
+matched by any entry — it stays publicly indexable per the
+milestone-doc Goal section's "gameplay route is unchanged"
+framing. Non-test slugs (e.g., `madrona-launch-day`) do not
+match the `:slug(...)` regex constraint and receive no
+`X-Robots-Tag` header.
 
-- `source` pattern syntax (regex literal vs. path-to-regexp).
-- `headers[].key` / `headers[].value` shape.
-- Interaction between `headers` and `rewrites` (the existing
-  `rewrites` array at
-  [`apps/web/vercel.json:2-50`](/apps/web/vercel.json) must
-  continue to function unchanged; `headers` apply to the
-  source path the request hits at apps/web's edge, before any
-  rewrite proxies to apps/site).
+Interaction with the existing `rewrites` array at
+[`apps/web/vercel.json:2-50`](/apps/web/vercel.json):
+`headers` apply to the request URL hitting apps/web's edge
+**before** any rewrite resolves; the existing rewrites that
+proxy `/event/:slug` and `/event/:slug/:path*` paths to
+apps/site are unchanged in semantics — the apps/web
+deployment serves the bypass shells via the
+`/event/:slug/admin → /index.html`,
+`/event/:slug/admin/:path*`, and `/event/:slug/game/:path*`
+rewrites, and the `X-Robots-Tag` header attaches to those
+served responses on the bypass-eligible URL paths. `Verified
+by:` the path-to-regexp pattern semantics (request URL is
+matched against `headers[].source` before rewrite resolution)
+documented at
+https://vercel.com/docs/project-configuration/vercel-json#headers
++
+[`apps/web/vercel.json:13-21`](/apps/web/vercel.json) (the
+existing `/event/:slug/admin → /index.html` and
+`/event/:slug/admin/:path*` rewrites that the bypass shells
+mount under).
 
-The slug literals in the pattern are **hand-mirrored** from
-[`shared/events/testEventAllowlist.ts`](/shared/events/testEventAllowlist.ts)
-`TEST_EVENT_SLUGS` (`harvest-block-party`, `riverside-jam`).
-The hand-mirror is protected by the CI-asserted byte-
-equivalence test below.
+The slug literals in the three sources are **hand-mirrored**
+from
+[`shared/events/testEventAllowlist.ts:18-21`](/shared/events/testEventAllowlist.ts)
+`TEST_EVENT_SLUGS`. The hand-mirror is protected by the
+CI-asserted byte-equivalence test below.
 
 ### Hand-mirror enforcement test (per scoping decisions 3 + 8) — load-bearing noindex CI gate
 
-A new Vitest file (working path
-`tests/web/demo-mode-bypass-noindex.test.ts`) reads
-`apps/web/vercel.json` and asserts the load-bearing config-
-shape properties that the Playwright fixture deliberately
-does NOT cover (per scoping decision 3). This test is the
-**load-bearing noindex CI gate** — the failure mode it
-catches is "the vercel.json headers entry is shape-wrong";
-the failure mode "Vercel platform does not honor a correct
-config" is a vendor guarantee per
-https://vercel.com/docs/projects/project-configuration#headers
+A new Vitest file at `tests/web/demo-mode-bypass-noindex.test.ts`
+reads `apps/web/vercel.json` and asserts the load-bearing
+config-shape properties that the Playwright fixture
+deliberately does NOT cover (per scoping decision 3). This
+test is the **load-bearing noindex CI gate** — the failure
+mode it catches is "the vercel.json headers entry is shape-
+wrong"; the failure mode "Vercel platform does not honor a
+correct config" is a vendor guarantee per
+https://vercel.com/docs/project-configuration/vercel-json#headers
 and is confirmed by the manual `curl -sI` step in the
 Validation Gate's manual-verify checklist, not by automated
 test.
 
-Assertions:
+The assertion shape is **string-extraction-based** (no
+runtime path-to-regexp execution), avoiding the npm-side
+dependency on Vercel's internal regex tokenizer:
 
-- The `headers` array exists and contains an entry whose
-  `headers[].key` equals `X-Robots-Tag` and `headers[].value`
-  equals `noindex, nofollow` (exact string match).
-- The entry's `source` pattern matches each of the six
-  bypass-eligible URL paths (admin, game/redeem,
-  game/redemptions for each of the two test-event slugs),
-  exercised by sample-URL match assertions against the
-  pattern.
-- The pattern does NOT match the gameplay route
-  (`/event/<test-slug>/game`), the apps/site root (`/`), or
-  any non-test-event slug (e.g.,
-  `/event/madrona-launch-day/admin`), exercised by sample-
-  URL non-match assertions.
-- Each slug in `TEST_EVENT_SLUGS` appears verbatim in the
-  pattern source (the byte-equivalence hand-mirror check
-  per milestone-doc Cross-Phase Invariant 1).
-- No slug-shaped string literal that is not in
-  `TEST_EVENT_SLUGS` appears in the pattern source.
+- **Entry shape.** Read `apps/web/vercel.json`, assert it
+  contains a `headers` array with exactly **three** entries
+  whose `headers[]` array contains exactly one element with
+  `key === "X-Robots-Tag"` and `value === "noindex, nofollow"`.
+- **Surface enumeration.** Assert the three entries' `source`
+  fields end with `/admin`, `/game/redeem`, and
+  `/game/redemptions` respectively (one entry per surface;
+  no extras, no duplicates).
+- **Slug-list byte-equivalence (the hand-mirror property).**
+  For each of the three entries, extract the substring inside
+  the `:slug(...)` regex-constraint group via the regex
+  `/:slug\(([^)]+)\)/`. Assert the captured group's value is
+  byte-equivalent to `TEST_EVENT_SLUGS.join("|")` (after
+  sorting both sides alphabetically to make the test order-
+  independent — `TEST_EVENT_SLUGS` is `["harvest-block-party",
+  "riverside-jam"]` and the regex constraint is
+  `harvest-block-party|riverside-jam`). If any slug in
+  `TEST_EVENT_SLUGS` is missing from any of the three
+  captured groups OR any extra slug literal appears in any
+  captured group, the assertion fails.
+- **No drift to other surfaces.** Assert no other entry in
+  `headers` contains the `X-Robots-Tag` key (no accidental
+  noindex on the gameplay route, the home page, the admin
+  app, or auth callback).
+- **Path prefix uniformity.** Assert each of the three
+  entries' `source` starts with `/event/:slug(`.
 
-Final assertion shape (string-includes-based vs. regex-
-parser-based vs. path-to-regexp-library-based — Vercel uses
-path-to-regexp under the hood) is plan-drafting-time. If
-plan-drafting picks `path-to-regexp` (the library Vercel
-documents using), the URL-match / non-match assertions are
-exact; otherwise plan-drafting downgrades to string-
-inclusion checks against the pattern source plus a
-slug-membership pass.
+The test runs under `npm run test` (Vitest default; the
+existing root-level Vitest config picks up `tests/**/*.test.ts`
+via the project's existing testMatch glob — plan-drafting
+confirms by reading the Vitest config) and fails CI on any
+drift: slug additions to `TEST_EVENT_SLUGS` not reflected in
+vercel.json, accidental non-test-event-slug additions to the
+regex constraint, header key/value typos, or extension of the
+pattern to the gameplay route.
 
-The test runs under `npm run test` (Vitest default) and
-fails CI on any drift — slug additions to `TEST_EVENT_SLUGS`
-that aren't reflected in vercel.json, accidental
-non-test-event-slug additions to the pattern, header
-key/value typos, or extension of the pattern to the
-gameplay route.
+`Verified by:`
+[`shared/events/testEventAllowlist.ts:18-21`](/shared/events/testEventAllowlist.ts)
+(`TEST_EVENT_SLUGS` array literal — the source of truth the
+test reads against);
+[`m3-demo-mode-auth-bypass.md` Cross-Phase Invariant 1](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+(the enforcement-path binding requiring "hand-mirrored SQL
+constant whose value-by-value agreement with the TypeScript
+source is asserted by an exact-match test that fails CI on
+drift" — applied here to the vercel.json regex source).
 
 ### e2e fixture extension (per scoping decision 4)
 
@@ -399,6 +507,20 @@ The `test.describe` block at
 ("demo-mode bypass — read side") name stays — the callout
 copy is a read-side property.
 
+`Verified by:`
+[`tests/e2e/demo-mode-bypass.spec.ts:93,111-140,142-166,156-159,168-194`](/tests/e2e/demo-mode-bypass.spec.ts)
+(the existing `test.describe` block + the three per-route
+tests + the existing redeem-test heading assertion that
+already covers the redeem-view copy);
+[`playwright.demo-mode-bypass.config.ts:14-31`](/playwright.demo-mode-bypass.config.ts)
+(the existing `webServer` running `npm run dev:web:test` —
+proves the dev/edge gap that scopes Playwright away from
+noindex);
+AGENTS.md "Spike before plan for novel mechanisms" + "Reality-
+check gate" → "external-service-behavior claims" rules;
+[`scoping/m3-phase-3-3-2.md` decision 4](/docs/plans/epics/demo-expansion/scoping/m3-phase-3-3-2.md)
+(the extend-in-place resolution).
+
 ### M2 → M3 copy revision (per scoping decision 5)
 
 Three apps/site files revise:
@@ -435,6 +557,25 @@ Three apps/site files revise:
 - The `m2-phase-2-3-plan.md` confirmation pass per Decision 7
   records the M2 contract walk in the PR body, not in any
   file edit.
+
+`Verified by:`
+[`apps/site/components/home/RoleDoors.tsx:19-24,34-39,41-46,52,59`](/apps/site/components/home/RoleDoors.tsx)
+(the block-comment + `home-roles-copy` paragraph + Attendee
+card's no-caveat shape + Organizer/Volunteer `authCaveat`
+strings the diff revises);
+[`apps/site/components/home/HomeHero.tsx:22-30`](/apps/site/components/home/HomeHero.tsx)
+(the "What's real / What's still stubbed" paragraph 3.3.2
+revises);
+[`m2-phase-2-3-plan.md` "Per-role auth-honesty copy contract"](/docs/plans/epics/demo-expansion/m2-phase-2-3-plan.md)
+(the M2 → M3 forward-pointing contract being satisfied);
+[`m3-demo-mode-auth-bypass.md` Cross-Phase Invariant 4](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+(the cross-milestone copy-contract-revision invariant);
+[`m3-demo-mode-auth-bypass.md` Cross-Phase Invariant 3](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+(the cross-app honesty invariant pulling HomeHero into
+3.3.2's scope);
+AGENTS.md "Bans on surface require rendering the
+consequence" rule (authorizing render-time copy
+finalization).
 
 ### M3-closing doc-currency map (per scoping decision 6)
 
@@ -489,12 +630,42 @@ milestone doc enumerates. **Edited by 3.3.2:**
   classification (callout composes existing tokens).
 - **`docs/dev.md`** — no new local-dev workflow.
 - **`docs/open-questions.md`** — closed by 3.1.
-- **`docs/self-review-catalog.md`** — only updated if the
-  3.3.2 self-review introduces a novel review surface
-  warranting a new audit name; plan-drafting decides at
-  Self-Review Audits resolution time.
+- **`docs/self-review-catalog.md`** — promotion-gate walk
+  resolved that no catalog audit directly maps to 3.3.2's
+  diff surface and the four 3.3.2-internal audits are walked
+  plan-internally (see Self-Review Audits section); catalog
+  extension is intentionally out of scope this PR.
 - **`docs/plans/epics/demo-expansion/m2-phase-2-3-plan.md`** —
   confirmation pass only, no edit.
+
+`Verified by:`
+[`README.md:22-29`](/README.md)
+(the "current implemented slice" bullet list this phase
+extends);
+[`docs/architecture.md:60-61,200-260`](/docs/architecture.md)
+(the apps/web app-section paragraph + the trust-boundary /
+metadata section paragraphs this phase extends);
+[`docs/product.md:34-49`](/docs/product.md)
+(the "Current Implemented Slice" bullet list this phase
+extends);
+[`docs/architecture.md:211,246`](/docs/architecture.md)
+(the existing apps/site noindex framing the architecture
+edit extends — `Internal-partner demo home page at "/"
+(noindex)` and `TestEventDisclaimer for noindex'd test
+events`);
+[`apps/site/app/event/[slug]/page.tsx:69-71`](/apps/site/app/event/%5Bslug%5D/page.tsx)
+(the apps/site `robots: { index: false, follow: false }`
+precedent the architecture edit names);
+[`m3-demo-mode-auth-bypass.md` Documentation Currency](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+(the milestone-doc owner-mapping for each entry — every
+"Owned by the M3-closing phase" entry traveled to 3.3.2);
+[`docs/operations.md`](/docs/operations.md) +
+[`docs/styling.md`](/docs/styling.md) +
+[`docs/dev.md`](/docs/dev.md) +
+[`docs/open-questions.md`](/docs/open-questions.md)
+(the four docs intentionally not edited; the milestone-doc
+Documentation Currency framing for each is verified at scope-
+gate time).
 
 ### Scoping-doc batch deletion (per scoping decision 6)
 
@@ -819,51 +990,99 @@ require rendering the consequence"):**
 
 ## Self-Review Audits
 
-Plan-drafting walks
+Walked
 [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
-at implementation time and binds the relevant audits here.
-Likely-relevant audits (estimate, per scoping decision "Open
-decisions"):
+at promotion-gate time (2026-05-03) against 3.3.2's diff
+surface (React JSX additions, SCSS partial entry,
+`apps/web/vercel.json` headers config, apps/site copy
+revisions, doc-currency edits, Vitest config-shape test). **No
+catalog audit directly maps to 3.3.2's diff surface** — the
+diff has no SQL changes (so SQL-migrations audits skip), no
+new save paths or RPC mutations (so frontend-forms audits
+skip), no new `useEffect` lifecycles (so
+[Effect cleanup audit:287](/docs/self-review-catalog.md)
+skips), no renames (so
+[Rename-aware diff classification:354](/docs/self-review-catalog.md)
+skips), no Edge Function auth-gate config changes (so
+[Platform-auth-gate config audit:446](/docs/self-review-catalog.md)
+skips — that was 3.3.1's territory), and no composed
+predicates over async calls (so
+[Composed-predicate error-treatment audit:477](/docs/self-review-catalog.md)
+skips — also 3.3.1's territory).
 
-- **Cross-app copy contract revision audit.** The M2 → M3
-  forward-pointing copy contract is bound by the M2 plan's
-  "Per-role auth-honesty copy contract" + the milestone-doc
-  Cross-Phase Invariant 4. The audit walks: (a) every
-  `authCaveat` string the M2 plan named is revised; (b) the
-  Attendee card is NOT revised; (c) the HomeHero "still
-  stubbed" paragraph is revised even though not strictly
-  bound by M2's contract (per Decision 5's expand-scope
-  rationale); (d) no other apps/site copy site references
-  M3-pending state.
-- **Noindex emit parity audit.** The audit walks: (a) the
-  apps/web `X-Robots-Tag` header fires on each of the six
-  bypass-eligible URL paths; (b) the header does NOT fire on
-  any non-bypass route (`/event/madrona-launch-day/admin`,
-  `/event/<test-slug>/game`, `/`, `/admin/*`, etc.); (c) the
-  apps/site `generateMetadata` precedent at
-  `apps/site/app/event/[slug]/page.tsx` continues to emit
-  `<meta name="robots">` server-side for the same test events
-  (parity check); (d) the hand-mirrored slug list in
-  `apps/web/vercel.json` is byte-equivalent to
-  `TEST_EVENT_SLUGS` (the Vitest assertion).
+The 3.3.2 self-review walks the four phase-internal audits
+below. Catalog extension is intentionally NOT in scope for
+this PR — adding new audit names to the catalog is a separate
+deliverable; if any of these audit shapes recur in a follow-up
+phase, the post-epic backlog item to catalogue them is the
+appropriate landing place. `Verified by:`
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+(catalog walk at promotion-gate time confirmed no existing
+audit matches 3.3.2's diff surface);
+[`m3-demo-mode-auth-bypass.md` Documentation Currency](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
+("self-review-catalog.md may grow new audit names if phase
+3.2+ introduces a novel review surface; phase planning re-
+derives" framing — 3.3.2 declines the extension this phase).
+
+- **Cross-app copy contract revision audit (3.3.2-internal).**
+  The M2 → M3 forward-pointing copy contract is bound by the
+  M2 plan's "Per-role auth-honesty copy contract" + the
+  milestone-doc Cross-Phase Invariant 4. The audit walks:
+  (a) every `authCaveat` string the M2 plan named is revised
+  (Organizer + Volunteer); (b) the Attendee card is NOT
+  revised (M2 contract bound only the auth-gated cards); (c)
+  the HomeHero "What's still stubbed" paragraph is revised
+  even though not strictly bound by M2's contract (per
+  Decision 5's expand-scope rationale — Cross-Phase Invariant
+  3 honesty pull); (d) `grep -rn "wait for demo-mode\|until.*bypass ships\|demo-mode access in M3" apps/site/`
+  returns no hits after the diff lands (no other apps/site
+  copy site references M3-pending state).
+- **Noindex emit parity audit (3.3.2-internal).** The audit
+  walks: (a) the apps/web `X-Robots-Tag` header fires on each
+  of the six bypass-eligible URL paths (verified via the
+  manual `curl -sI` step in the Validation Gate); (b) the
+  header does NOT fire on the gameplay route, the apps/site
+  root, the admin app, the auth callback, or any non-test-
+  event slug (also via curl); (c) the apps/site
+  `generateMetadata` precedent at
+  [`apps/site/app/event/[slug]/page.tsx:69-71`](/apps/site/app/event/%5Bslug%5D/page.tsx)
+  continues to emit `<meta name="robots">` server-side for
+  the same test events (parity check — no change to the
+  apps/site mechanism, only adds the apps/web parallel); (d)
+  the hand-mirrored slug list in `apps/web/vercel.json` is
+  byte-equivalent to `TEST_EVENT_SLUGS` per the Vitest
+  assertion at `tests/web/demo-mode-bypass-noindex.test.ts`.
 - **Ban-rendering audit (per AGENTS.md "Bans on surface
   require rendering the consequence").** The audit walks:
   (a) DemoModeAdminView renders the consequence at the
-  affordance position; (b) DemoModeRedemptionsView same; (c)
-  DemoModeRedeemView's existing copy still satisfies; (d)
-  the dev server actually renders each callout (not just
-  authored).
+  affordance position via the new
+  `demo-mode-readonly-callout` section (rendered in dev
+  server before commit); (b) DemoModeRedemptionsView same;
+  (c) DemoModeRedeemView's existing copy at lines 14-23 still
+  satisfies (no edit needed per Decision 1); (d) the dev
+  server actually renders each callout (not just authored —
+  the manual-verify checklist in the Validation Gate names
+  the dev-server render step explicitly).
 - **Allowlist-drift audit (inherited from milestone-level
-  Cross-Phase Risk).** The audit walks: (a) no per-site slug
-  literal is introduced anywhere in 3.3.2's diff; (b) the
-  vercel.json regex consumes the slug literals via the hand-
-  mirror + CI-asserted byte-equivalence pattern; (c) no new
-  TS guard site is added that bypasses the
-  `isTestEventSlug` predicate.
-
-Plan-drafting confirms the audit set against the on-disk
-catalog and replaces this estimate with the final list during
-the promotion-gate walk.
+  Cross-Phase Risk "Allowlist drift between guard sites").**
+  The audit walks: (a) `grep -rn '"harvest-block-party"\|"riverside-jam"' apps/web/ apps/site/`
+  shows no NEW slug literals introduced by 3.3.2 (existing
+  hits in `shared/styles/themes/index.ts`,
+  `apps/site/lib/eventContent.ts`,
+  `apps/site/events/`, and the M2 RoleDoors `DEMO_EVENT_SLUG`
+  constant predate 3.3.2 — those are content-shaped not
+  bypass-eligibility-shaped per the milestone-doc allowlist
+  module commentary); (b) the vercel.json regex consumes the
+  slug literals via the hand-mirror + Vitest byte-equivalence
+  pattern (no other path); (c) no new TS guard site is added
+  that bypasses the `isTestEventSlug` predicate (the diff
+  surface has no new bypass-eligibility predicate sites at
+  all — the existing
+  [`EventAdminPage.tsx:394`](/apps/web/src/pages/EventAdminPage.tsx),
+  [`EventRedeemPage.tsx:436`](/apps/web/src/pages/EventRedeemPage.tsx),
+  and
+  [`EventRedemptionsPage.tsx:697`](/apps/web/src/pages/EventRedemptionsPage.tsx)
+  dispatch sites stay).
 
 ## Documentation Currency PR Gate
 
