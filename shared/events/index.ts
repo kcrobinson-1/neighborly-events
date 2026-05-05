@@ -38,3 +38,5 @@ export {
   createDuplicatedDraftContent,
   createStarterDraftContent,
 } from "./draftCreation.ts";
+export type { GameSeedConfig } from "./seed-config.ts";
+export { seedConfig as madronaDemoSeedConfig } from "./madrona-demo-game-content.ts";
