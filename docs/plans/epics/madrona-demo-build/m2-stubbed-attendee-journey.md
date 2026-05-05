@@ -76,7 +76,7 @@ After M2:
   completion / redeem / redemptions under the Madrona Theme on a
   real attendee + agent + organizer journey
   (`Verified by:`
-  [docs/plans/epics/madrona-demo-build/m1-brand-foundation.md:236-246](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md)
+  [docs/plans/epics/madrona-demo-build/m1-brand-foundation.md:243-253](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md)
   for the M1 cross-app theme-continuity invariant M2 inherits and
   extends)
 - `<meta name="robots" content="noindex">` posture (apps/site) and
@@ -85,7 +85,7 @@ After M2:
   (`Verified by:`
   [apps/site/events/madrona.ts:41](/apps/site/events/madrona.ts)
   for the apps/site meta;
-  [docs/plans/epics/madrona-demo-build/epic.md:378-387](/docs/plans/epics/madrona-demo-build/epic.md)
+  [docs/plans/epics/madrona-demo-build/epic.md:384-393](/docs/plans/epics/madrona-demo-build/epic.md)
   for the Risk Register mitigation enforced from M1 onward)
 - the demo URL is shareable end-to-end for stakeholder review
   without real Madrona content yet — the gameplay is real
@@ -344,7 +344,7 @@ disputes. Recorded so phase planning sessions do not re-derive.
 - **Redemption agent assignment.** Manual root-admin SQL
   `INSERT` into `event_role_assignments` per the epic's Risk
   Register mitigation
-  ([epic.md:389-394](/docs/plans/epics/madrona-demo-build/epic.md)).
+  ([epic.md:394-400](/docs/plans/epics/madrona-demo-build/epic.md)).
   M2 does not introduce organizer-managed agent assignment;
   that is launch-epic territory if it lands at all.
 - **Apps/web ThemeScope wraps.** Inherited from M1 (which
