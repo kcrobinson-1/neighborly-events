@@ -110,8 +110,8 @@ merged code at phase-start.
 
 | Phase | Title (estimate) | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 2.1 | Placeholder Madrona game content authored + published; agent assigned; full attendee journey verified end-to-end | [m2-phase-2-1-plan.md](/docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md) | In flight | this PR |
-| 2.2 | (Conditional) Cross-app theme-continuity capture set + closure | — | Collapsed into 2.1 | this PR |
+| 2.1 | Placeholder Madrona game content authored + published; agent assigned; full attendee journey verified end-to-end | [m2-phase-2-1-plan.md](/docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md) | In flight | [#188](https://github.com/kcrobinson-1/neighborly-events/pull/188) |
+| 2.2 | (Conditional) Cross-app theme-continuity capture set + closure | — | Collapsed into 2.1 | [#188](https://github.com/kcrobinson-1/neighborly-events/pull/188) |
 
 The 1–2 phase estimate matches the epic's Sizing Summary
 (M2: 1–2 PRs). The default shape is **single phase**: the work
