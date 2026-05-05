@@ -41,20 +41,32 @@ the M2 milestone-terminal PR.
 
 After this PR:
 
-- a service-role seed script ships at
-  [`scripts/release/seed-madrona-demo-content.cjs`](/scripts/release/seed-madrona-demo-content.cjs)
+- a generic service-role seed script ships at
+  [`scripts/release/seed-game-content.cjs`](/scripts/release/seed-game-content.cjs)
   that, given `TEST_SUPABASE_URL`, `TEST_SUPABASE_SERVICE_ROLE_KEY`,
-  and `MADRONA_PUBLISHED_BY_USER_ID` env vars, idempotently
-  upserts the Madrona draft row in `game_event_drafts` and
-  invokes `publish_game_event_draft('madrona', $user_id)`;
-- the placeholder game content lives in a structured
-  versioned artifact at
+  `GAME_SEED_PUBLISHED_BY_USER_ID`, and `--content <path>`,
+  idempotently upserts the seeded draft row in `game_event_drafts`
+  and invokes `publish_game_event_draft($content_id, $user_id)`.
+  The script is event-agnostic: any future event seed adds one
+  new module that exports `seedConfig: GameSeedConfig` and
+  re-uses the same script;
+- a `GameSeedConfig` type lives at
+  [`shared/events/seed-config.ts`](/shared/events/seed-config.ts):
+  `{ eventCode: string; content: AuthoringGameDraftContent }`. The
+  `eventCode` peer field is on the wrapper because it lives on
+  `game_event_drafts` / `game_events` directly rather than inside
+  the `content` JSON;
+- the Madrona placeholder content + event_code lives at
   [`shared/events/madrona-demo-game-content.ts`](/shared/events/madrona-demo-game-content.ts)
-  as a typed `AuthoringGameDraftContent` literal — six
-  music-and-neighborhood-themed questions, three to four options
-  each, one correct option per question, with explanations and
-  sponsor-fact strings populated for feedback richness; the
-  script imports this module rather than carrying inline content;
+  as a `seedConfig: GameSeedConfig` export (re-exported from
+  [`shared/events/index.ts`](/shared/events/index.ts) under the
+  type-stable name `madronaDemoSeedConfig`). The wrapped content
+  carries six music-and-neighborhood-themed questions, three to
+  four options each, one correct option per question, with
+  explanations and sponsor-fact strings populated for feedback
+  richness;
+- `npm run release:seed:madrona` is an alias that invokes the
+  generic script with `--content shared/events/madrona-demo-game-content.ts`;
 - the script has been executed against production Supabase
   (per the runbook below), and a
   `select slug, name, published_at from public.game_events where slug = 'madrona';`
@@ -119,37 +131,57 @@ self-review:
 
 - **Service-role script's safety contract.** The script
   refuses to run if `TEST_SUPABASE_URL` is unset or doesn't
-  start with `https://`, refuses if `MADRONA_PUBLISHED_BY_USER_ID`
-  is not a valid UUID, and echoes the resolved `slug`,
-  `event_code`, and `TEST_SUPABASE_URL` host before performing
-  any write. This guards the production-edit shape per scoping
-  Decision 5's risk story.
+  start with `https://`, refuses if `GAME_SEED_PUBLISHED_BY_USER_ID`
+  is not a valid UUID, asserts the loaded `seedConfig` shape
+  (eventCode + content), and echoes the resolved `event_id`,
+  `slug`, `event_code`, and `TEST_SUPABASE_URL` host before
+  performing any write. This guards the production-edit shape
+  per scoping Decision 5's risk story.
 
 ## Naming
 
-- **Script path** — `scripts/release/seed-madrona-demo-content.cjs`.
+- **Generic script path** — `scripts/release/seed-game-content.cjs`.
   Reasoning: the `scripts/release/` directory currently holds
   one file (`post-merge-smoke-watch.cjs`) for release-phase
-  tooling; the seed script is one-time-per-environment release
+  tooling; the seed script is one-time-per-event release
   setup, closer in shape to release tooling than to the
   smoke-test scripts under `scripts/testing/`. The `.cjs`
-  extension matches the existing scripts.
-- **Content module path** —
+  extension matches the existing scripts. The script is
+  event-agnostic — it takes `--content <path>` so any future
+  event seed re-uses it.
+- **Type module path** — `shared/events/seed-config.ts`,
+  exporting the `GameSeedConfig` type.
+- **Madrona seed module path** —
   `shared/events/madrona-demo-game-content.ts`. Reasoning: the
   `shared/events/` directory already houses
   `draftCreation.ts`, `published.ts`, and other event-shaped
-  helpers; an exported `madronaDemoGameContent: AuthoringGameDraftContent`
-  literal fits there.
-- **Module export** — `madronaDemoGameContent` (matches the
-  `madronaContent` precedent on apps/site).
+  helpers; an exported `seedConfig: GameSeedConfig` (with
+  `eventCode + content` wrapper) fits there. The filename
+  remains Madrona-specific because the data is Madrona-specific;
+  generic naming would obscure the per-event uniqueness.
+- **Module exports** — the seed module exports `seedConfig`
+  (the canonical name the generic script imports). The
+  package re-export at `shared/events/index.ts` aliases this
+  to `madronaDemoSeedConfig` for type-safe consumers that
+  want the more specific name. Future event seed modules
+  follow the same pattern: each module exports a local
+  `seedConfig`; the index re-exports under an event-specific
+  alias.
 - **Game `id` and `slug`** — both `"madrona"` (matches the
   apps/site content registry key and the `themeSlug` field).
+  These come from `seedConfig.content.id` / `.slug`, not
+  hardcoded in the script.
 - **Game `event_code`** — `"MAD"` (3-character uppercase, the
   canonical shape per
   [migration 20260418030000_add_event_code_columns.sql](/supabase/migrations/20260418030000_add_event_code_columns.sql)).
-  The script asserts no existing event already holds this code
-  (a SELECT against `game_events` and `game_event_drafts`
-  before INSERT); collision aborts with a clear error.
+  Lives at `seedConfig.eventCode`; the script asserts no
+  existing event already holds this code (a SELECT against
+  `game_events` and `game_event_drafts` before INSERT);
+  collision aborts with a clear error.
+- **npm script alias** — `release:seed:madrona` invokes the
+  generic script with `--content shared/events/madrona-demo-game-content.ts`.
+  Future events add their own alias if frequent invocation is
+  expected; one-off seeds run the script directly.
 - **Agent assignment SQL** — recorded inline in the
   `## Runbook` section below; the assignment is one row per
   identity, idempotent via `ON CONFLICT (event_id, user_id, role) DO NOTHING`.
@@ -158,9 +190,11 @@ self-review:
 
 | File | Change shape |
 | --- | --- |
-| `scripts/release/seed-madrona-demo-content.cjs` | New file. Service-role Node script. |
-| `shared/events/madrona-demo-game-content.ts` | New file. Typed `AuthoringGameDraftContent` literal with the six placeholder questions. |
-| `shared/events/index.ts` | One-line export append for `madronaDemoGameContent`. |
+| `scripts/release/seed-game-content.cjs` | New file. Generic service-role Node script (`--content <path>`). |
+| `shared/events/seed-config.ts` | New file. `GameSeedConfig` type definition. |
+| `shared/events/madrona-demo-game-content.ts` | New file. Madrona placeholder `seedConfig: GameSeedConfig` (eventCode + content wrapper) with the six placeholder questions. |
+| `shared/events/index.ts` | Re-exports `GameSeedConfig` (type) and `madronaDemoSeedConfig` (alias for `seedConfig` from the Madrona module). |
+| `package.json` | `release:seed:madrona` alias that invokes the generic script with `--content shared/events/madrona-demo-game-content.ts`. |
 | `docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md` | This file. |
 | `docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md` | New scoping doc (drafted in same PR). |
 | `docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md` | Phase Status row 2.1 → `Landed`; row 2.2 → `Collapsed into 2.1`; top-level Status → `Landed across PR #<this PR>`. |
@@ -198,14 +232,20 @@ self-review must explain):
 
 ## Contracts
 
-### Script env-var contract
+### Script CLI + env-var contract
 
-The script requires:
+CLI argument:
 
-- `TEST_SUPABASE_URL` — production Supabase URL, must start
-  `https://`.
+- `--content <path>` — path to a TypeScript module that exports
+  `seedConfig: GameSeedConfig`. Resolved relative to
+  `process.cwd()`. Missing or unresolved path aborts.
+
+Env vars (all required, asserted at startup before any DB
+write):
+
+- `TEST_SUPABASE_URL` — Supabase URL, must start `https://`.
 - `TEST_SUPABASE_SERVICE_ROLE_KEY` — service-role JWT.
-- `MADRONA_PUBLISHED_BY_USER_ID` — `auth.users.id` UUID of
+- `GAME_SEED_PUBLISHED_BY_USER_ID` — `auth.users.id` UUID of
   the actor recorded as `published_by` in
   `game_event_versions` and the audit log; must match the
   active root-admin's user ID.
@@ -213,63 +253,74 @@ The script requires:
 Missing or malformed env vars cause the script to exit
 non-zero before any DB write.
 
-The script echoes `Resolving Madrona seed against <host>`
-(host extracted from `TEST_SUPABASE_URL`) before any write,
-giving the operator a final visual check that they're pointed
-at the intended environment.
+The script echoes
+`Resolving seed for event_id="<id>" slug="<slug>" event_code="<code>" against <host>`
+(host extracted from `TEST_SUPABASE_URL`, identity fields from
+the loaded `seedConfig`) before any write, giving the operator
+a final visual check that they're pointed at the intended
+environment with the intended seed.
 
 ### Script behavior contract
 
-1. SELECT existing `event_code` values from `game_events` and
-   `game_event_drafts`, asserting `"MAD"` is not held by any
-   row whose `id`/`slug` differs from `"madrona"`. Abort if
-   collision; succeed if held by an existing Madrona row
+1. Dynamic-import the module at `--content <path>` and assert
+   the `seedConfig` export conforms to `GameSeedConfig`:
+   `eventCode` is a 3-character uppercase string, `content.id` /
+   `content.slug` / `content.name` are non-empty strings.
+   Bind `eventId = content.id`, `slug = content.slug`, and
+   `eventCode = seedConfig.eventCode` for the rest of the run.
+2. SELECT existing `event_code` values from `game_events` and
+   `game_event_drafts`, asserting `eventCode` is not held by
+   any row whose `id`/`slug` differs from the seed's. Abort if
+   collision; succeed if held by an existing seed-match row
    (idempotent re-run path).
-2. UPSERT the `game_event_drafts` row keyed on `id = "madrona"`:
-   `slug = "madrona"`, `event_code = "MAD"`, `name`,
-   `schema_version`, `content` JSONB built from
-   `madronaDemoGameContent`. ON CONFLICT updates `content`,
-   `name`, and any other shape that changed.
-3. Invoke `publish_game_event_draft('madrona', $user_id)`
-   via PostgREST RPC. Log the returned
+3. UPSERT the `game_event_drafts` row keyed on `id = eventId`:
+   `slug`, `event_code = eventCode`, `name = content.name`,
+   `schema_version`, `content` JSONB. ON CONFLICT updates
+   `content`, `name`, and any other shape that changed.
+4. Invoke `publish_game_event_draft(eventId, $user_id)` via
+   PostgREST RPC. Log the returned
    `(event_id, slug, version_number, published_at)` row.
-4. Re-SELECT the published row from `game_events` and the
-   first question from `game_questions` for `event_id = 'madrona'`,
-   asserting both are present. Exit zero on success, non-zero
-   on any of: collision, RPC error, identity-check failure,
-   or missing post-publish row.
+5. Re-SELECT the published row from `game_events` and the
+   first question from `game_questions` for the seed's
+   `event_id`, asserting both are present. Exit zero on
+   success, non-zero on any of: missing `seedConfig` export,
+   schema-shape failure, collision, RPC error, identity-check
+   failure, or missing post-publish row.
 
 ### Placeholder content contract
 
 `shared/events/madrona-demo-game-content.ts` exports
-`madronaDemoGameContent: AuthoringGameDraftContent` conforming
-to the existing shape:
+`seedConfig: GameSeedConfig` (re-exported from
+`shared/events/index.ts` as `madronaDemoSeedConfig`):
 
-- `id: "madrona"`, `slug: "madrona"`, `name: "Madrona Music in
-  the Playfield"` (matches `apps/site/events/madrona.ts`'s
-  `hero.name`).
-- `feedbackMode: "final_score_reveal"`,
-  `allowBackNavigation: true`, `allowRetake: true`.
-- `estimatedMinutes: 2`, `entitlementLabel: "reward ticket"`.
-- `intro: "..."`, `summary: "..."`, `location: "Madrona
-  Playfield, Seattle"`. Copy is concise stakeholder-honest
-  prose, not marketing.
-- `questions[]` carries six entries. Each:
-  - `id: "q1"` through `"q6"`.
-  - `prompt`: music-and-neighborhood-themed neutral content
-    (no real Madrona band, sponsor, or specific historical
-    fact named — invariant 5 binds).
-  - `selectionMode: "single"`.
-  - `options[]`: 3–4 entries each with `id` and `label`.
-  - `correctAnswerIds[]`: exactly one entry.
-  - `explanation`: one sentence, present on every question.
-  - `sponsorFact`: one sentence with a placeholder sponsor
-    attribution; present on every question for feedback
-    richness.
-  - `sponsor`: one of three placeholder sponsor names rotated
-    across the six questions (matching the placeholder
-    sponsor list in `apps/site/events/madrona.ts`'s
-    `sponsors[]`).
+- `eventCode: "MAD"` (3-character uppercase).
+- `content`: an `AuthoringGameDraftContent` literal with the
+  fields below.
+  - `id: "madrona"`, `slug: "madrona"`, `name: "Madrona Music
+    in the Playfield"` (matches `apps/site/events/madrona.ts`'s
+    `hero.name`).
+  - `feedbackMode: "final_score_reveal"`,
+    `allowBackNavigation: true`, `allowRetake: true`.
+  - `estimatedMinutes: 2`, `entitlementLabel: "reward ticket"`.
+  - `intro: "..."`, `summary: "..."`, `location: "Madrona
+    Playfield, Seattle"`. Copy is concise stakeholder-honest
+    prose, not marketing.
+  - `questions[]` carries six entries. Each:
+    - `id: "q1"` through `"q6"`.
+    - `prompt`: music-and-neighborhood-themed neutral content
+      (no real Madrona band, sponsor, or specific historical
+      fact named — invariant 5 binds).
+    - `selectionMode: "single"`.
+    - `options[]`: 3–4 entries each with `id` and `label`.
+    - `correctAnswerIds[]`: exactly one entry.
+    - `explanation`: one sentence, present on every question.
+    - `sponsorFact`: one sentence with a placeholder sponsor
+      attribution; present on every question for feedback
+      richness.
+    - `sponsor`: one of three placeholder sponsor names rotated
+      across the six questions (matching the placeholder
+      sponsor list in `apps/site/events/madrona.ts`'s
+      `sponsors[]`).
 
 The validator
 [`validateAuthoringGameDraftContent`](/shared/game-config/draft-content.ts)
@@ -294,40 +345,46 @@ constraint per
 the ON CONFLICT clause makes re-runs idempotent.
 
 The same `<root-admin auth.users.id UUID>` is the value
-passed to `MADRONA_PUBLISHED_BY_USER_ID` for the script run,
+passed to `GAME_SEED_PUBLISHED_BY_USER_ID` for the script run,
 so the operator looks up the UUID once and uses it twice.
 
 ## Implementation Steps
 
-1. **Author the placeholder content module.** Create
+1. **Define the `GameSeedConfig` type.** Create
+   `shared/events/seed-config.ts` with the
+   `{ eventCode: string; content: AuthoringGameDraftContent }`
+   shape and a header docstring naming the generic seed
+   script as the consumer.
+2. **Author the Madrona seed module.** Create
    `shared/events/madrona-demo-game-content.ts` with the
-   typed `AuthoringGameDraftContent` literal. Export from
-   `shared/events/index.ts`. Run `npm run lint` to confirm
-   the type checks; the `validateAuthoringGameDraftContent`
-   check happens at script-run time, but TypeScript catches
-   field-shape mismatches at this step.
-2. **Author the seed script.** Create
-   `scripts/release/seed-madrona-demo-content.cjs` per the
-   contracts above. Use `node --experimental-strip-types` if
-   the script imports the `.ts` content module directly, or
-   build the content module to a JSON string ahead of time —
-   the plan doc's Estimate Deviations section records the
-   call if Node's TS-loading shape forces a build step. The
-   simpler shape (assert at scoping time) is to import the
-   compiled JS via the existing `tsconfig.json` build, but
-   this script is one-time-per-environment, so emitting the
-   content as a JSON literal during script execution is the
-   cleanest fallback.
-3. **Local dry-run.** Optional but recommended: point the
+   typed content literal and an exported
+   `seedConfig: GameSeedConfig` (eventCode `"MAD"` + content).
+   Re-export at `shared/events/index.ts` as
+   `madronaDemoSeedConfig`. Run `npm run lint` to confirm the
+   type checks; field-shape errors surface at this step.
+3. **Author the generic seed script.** Create
+   `scripts/release/seed-game-content.cjs` per the contracts
+   above. The script uses dynamic `import()` of the TS
+   content module, which works under Node 24's native
+   type-stripping. If the operator's environment does not
+   strip types as expected, the plan's fallback is to inline
+   the content as JSON in a sibling `.json` file alongside
+   the `.ts` module and have the script accept either —
+   recorded as Estimate Deviation if exercised.
+4. **Wire the npm alias.** Add `release:seed:madrona` to
+   `package.json` invoking the generic script with
+   `--content shared/events/madrona-demo-game-content.ts`.
+5. **Local dry-run.** Optional but recommended: point the
    script at a local Supabase instance (per
    `scripts/testing/setup-local-testing.cjs`) and verify the
    round-trip: draft INSERT, RPC call, published row read.
-4. **Production execution (operator step, not in this PR's
+6. **Production execution (operator step, not in this PR's
    diff).** With the operator's root-admin
-   `MADRONA_PUBLISHED_BY_USER_ID` env var, the production
+   `GAME_SEED_PUBLISHED_BY_USER_ID` env var, the production
    `TEST_SUPABASE_URL`, and the production
-   `TEST_SUPABASE_SERVICE_ROLE_KEY`, run the script. Confirm
-   the post-publish SELECT shows the expected row.
+   `TEST_SUPABASE_SERVICE_ROLE_KEY`, run
+   `npm run release:seed:madrona`. Confirm the post-publish
+   SELECT shows the expected row.
 5. **Agent-assignment SQL execution (operator step).** Run
    the INSERT from the contract above. Confirm via
    `select * from event_role_assignments where event_id = 'madrona'`.
@@ -372,7 +429,7 @@ so the operator looks up the UUID once and uses it twice.
       beyond the new module).
 - [ ] `npm run test:functions` — runs Deno function tests if
       relevant; expected zero regressions.
-- [ ] **Script smoke**: `node scripts/release/seed-madrona-demo-content.cjs`
+- [ ] **Script smoke**: `npm run release:seed:madrona`
       against a local Supabase instance succeeds and the
       round-trip read confirms the row.
 - [ ] **Production seed**: the script run against production

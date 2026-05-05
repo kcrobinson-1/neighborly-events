@@ -88,10 +88,11 @@ root admin's `auth.users.id`); the RPC's identity-check
 [migration 20260423010000:63-67](/supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
 is satisfied by construction.
 
-The script lives at `scripts/release/seed-madrona-demo-content.cjs`
-(or `scripts/testing/seed-madrona-demo-content.cjs` — the plan
-doc owns the exact path) following the precedent set by the
-existing service-role-using scripts at
+The script lives at `scripts/release/seed-game-content.cjs`
+as a generic event-agnostic seed harness; per-event data lives
+in a sibling module that exports `seedConfig: GameSeedConfig`
+(the plan doc records the exact paths and naming) following
+the precedent set by the existing service-role-using scripts at
 [scripts/testing/run-production-redemption-smoke.cjs:64-73](/scripts/testing/run-production-redemption-smoke.cjs)
 which read `TEST_SUPABASE_URL` and
 `TEST_SUPABASE_SERVICE_ROLE_KEY` env vars. The script is
@@ -438,10 +439,11 @@ phase-time reality check against the merged code state.
 - **Exact script path and name.** `scripts/release/...` vs
   `scripts/testing/...` vs `scripts/seed/...`. Constraint:
   match the closest precedent given the script's role.
-  The `scripts/testing/run-production-*-smoke.cjs` precedent
-  suggests `scripts/testing/`, but Madrona content seeding is
-  not a test — it's a one-time release seeding. The plan doc
-  picks based on phase-time grep and convention reading.
+  Plan-drafting resolved to **`scripts/release/seed-game-content.cjs`**
+  — the script is one-time-per-event release setup, closer to
+  `scripts/release/post-merge-smoke-watch.cjs` than to the
+  test-suite scripts, and is event-agnostic (takes
+  `--content <path>`) so future event seeds re-use it.
 - **Exact placeholder question content.** Plan-time authoring;
   6 prompts, 3-4 options each, with 1 correct option per
   question; explanations and sponsor-facts populated for
@@ -452,8 +454,14 @@ phase-time reality check against the merged code state.
   committed JSON / TS file or inlines the literal.** A
   separate `madrona-demo-game.json` (or `.ts`) makes the
   content reviewable as a structured artifact; an inline
-  literal in the script reduces file count. The plan doc owns
-  the call. Constraint: the diff stays reviewable.
+  literal in the script reduces file count. Plan-drafting
+  resolved to **typed TS module + dynamic import**: per-event
+  content lives in
+  `shared/events/madrona-demo-game-content.ts` exporting
+  `seedConfig: GameSeedConfig`, and the generic script loads
+  it via dynamic `import()` under Node 24's native
+  type-stripping. The TS path keeps content type-safe at lint
+  time without a separate build step.
 - **Exact capture set count and final selection.** Working set
   is 6 in-app + 1 optional cross-app per Decision 7. Plan-time
   decision based on which captures actually land coherent

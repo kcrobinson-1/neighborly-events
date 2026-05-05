@@ -1,4 +1,5 @@
 import type { AuthoringGameDraftContent } from "../game-config";
+import type { GameSeedConfig } from "./seed-config.ts";
 
 /**
  * Placeholder Madrona game content authored by the
@@ -22,17 +23,18 @@ import type { AuthoringGameDraftContent } from "../game-config";
  * placeholder roster the apps/site landing surfaces.
  *
  * The seed flow is: a service-role script
- * (`scripts/release/seed-madrona-demo-content.cjs`) imports this
- * module, UPSERTs a `game_event_drafts` row keyed on
- * `id = "madrona"`, then invokes
+ * (`scripts/release/seed-game-content.cjs`) imports this module
+ * with `--content shared/events/madrona-demo-game-content.ts`,
+ * reads the `seedConfig` export, UPSERTs a `game_event_drafts`
+ * row keyed on `seedConfig.content.id = "madrona"`, then invokes
  * `publish_game_event_draft('madrona', $user_id)` to project the
  * content into `game_events` / `game_questions` /
- * `game_question_options`. The script is the only consumer
- * today; the module is exported from `shared/events/index.ts`
+ * `game_question_options`. The seed script is the primary
+ * consumer; the module is exported from `shared/events/index.ts`
  * so a future "Create New Event" admin-UI affordance could
  * adopt the same content as a starter template if needed.
  */
-export const madronaDemoGameContent: AuthoringGameDraftContent = {
+const madronaDemoGameContent: AuthoringGameDraftContent = {
   id: "madrona",
   slug: "madrona",
   name: "Madrona Music in the Playfield",
@@ -156,4 +158,18 @@ export const madronaDemoGameContent: AuthoringGameDraftContent = {
         "Arboretum Coffee Roasters typically has the last cup poured by the time the headliner takes their bow.",
     },
   ],
+};
+
+/**
+ * Generic seed-script input for the Madrona placeholder content.
+ * The `eventCode` is a peer field on `game_event_drafts` /
+ * `game_events` (not inside the `content` JSON), so it lives on
+ * the wrapper. The seed script at
+ * `scripts/release/seed-game-content.cjs` imports this module via
+ * `--content shared/events/madrona-demo-game-content.ts` and
+ * reads `seedConfig`.
+ */
+export const seedConfig: GameSeedConfig = {
+  eventCode: "MAD",
+  content: madronaDemoGameContent,
 };

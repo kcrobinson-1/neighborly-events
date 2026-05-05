@@ -1,19 +1,42 @@
-// Service-role seed script that authors and publishes the Madrona placeholder
-// game content. Run once per environment (production, or any local Supabase
-// the operator points the env vars at). The script is idempotent: re-running
-// upserts the draft and publishes a new version; the live `game_events` row
-// is replaced with the latest projection on each call.
+// Service-role seed script that authors and publishes one event's game
+// content. Generic over events: takes a `--content <path>` argument
+// pointing at a TypeScript module that exports
+// `seedConfig: GameSeedConfig` (see shared/events/seed-config.ts).
+// Run once per environment per event; the script is idempotent
+// (subsequent runs upsert the draft and publish a new version).
 //
 // Authored by the Madrona demo-build epic M2 phase 2.1 — see
-// docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md for the contract
-// and runbook.
+// docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md for the
+// contract and runbook.
 
 const path = require("node:path");
 
-const eventId = "madrona";
-const slug = "madrona";
-const eventCode = "MAD";
 const schemaVersion = 1;
+
+function parseArgs(argv) {
+  const options = {};
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const token = argv[index];
+
+    if (!token.startsWith("--")) {
+      continue;
+    }
+
+    const key = token.slice(2);
+    const next = argv[index + 1];
+
+    if (!next || next.startsWith("--")) {
+      options[key] = "true";
+      continue;
+    }
+
+    options[key] = next;
+    index += 1;
+  }
+
+  return options;
+}
 
 function readRequiredEnv(name) {
   const value = process.env[name];
@@ -43,8 +66,58 @@ function assertUuid(value, name) {
   }
 }
 
+function assertSeedConfig(value, source) {
+  if (!value || typeof value !== "object") {
+    throw new Error(
+      `${source} did not export a \`seedConfig\` object; got ${typeof value}.`,
+    );
+  }
+
+  if (typeof value.eventCode !== "string" || value.eventCode.length !== 3) {
+    throw new Error(
+      `${source} \`seedConfig.eventCode\` must be a 3-character string; got ${JSON.stringify(
+        value.eventCode,
+      )}.`,
+    );
+  }
+
+  if (value.eventCode !== value.eventCode.toUpperCase()) {
+    throw new Error(
+      `${source} \`seedConfig.eventCode\` must be uppercase; got ${JSON.stringify(
+        value.eventCode,
+      )}.`,
+    );
+  }
+
+  const content = value.content;
+
+  if (!content || typeof content !== "object") {
+    throw new Error(
+      `${source} \`seedConfig.content\` must be an object; got ${typeof content}.`,
+    );
+  }
+
+  if (typeof content.id !== "string" || content.id.length === 0) {
+    throw new Error(
+      `${source} \`seedConfig.content.id\` must be a non-empty string.`,
+    );
+  }
+
+  if (typeof content.slug !== "string" || content.slug.length === 0) {
+    throw new Error(
+      `${source} \`seedConfig.content.slug\` must be a non-empty string.`,
+    );
+  }
+
+  if (typeof content.name !== "string" || content.name.length === 0) {
+    throw new Error(
+      `${source} \`seedConfig.content.name\` must be a non-empty string.`,
+    );
+  }
+}
+
 function logStep(message) {
-  process.stdout.write(`[seed-madrona] ${message}\n`);
+  process.stdout.write(`[seed-game-content] ${message}\n`);
 }
 
 async function fetchJson(url, init) {
@@ -71,66 +144,49 @@ async function fetchJson(url, init) {
   return body;
 }
 
-async function loadDemoContent() {
-  // The placeholder content lives as a typed module at
-  // shared/events/madrona-demo-game-content.ts so the TypeScript validator
-  // runs at lint time. The script loads it via dynamic ESM import; Node 24+
-  // strips TS types natively, so no build step is needed for this seed.
-  const moduleUrl = new URL(
-    `file://${path.resolve(
-      __dirname,
-      "..",
-      "..",
-      "shared",
-      "events",
-      "madrona-demo-game-content.ts",
-    )}`,
-  );
-
-  const mod = await import(moduleUrl.href);
-
-  if (!mod.madronaDemoGameContent) {
+async function loadSeedConfig(contentArg) {
+  if (!contentArg) {
     throw new Error(
-      "Loaded shared/events/madrona-demo-game-content.ts but did not find " +
-        "the `madronaDemoGameContent` export.",
+      "Missing --content <path>. Pass a TypeScript module that exports `seedConfig: GameSeedConfig`.",
     );
   }
 
-  return mod.madronaDemoGameContent;
+  const resolvedPath = path.resolve(process.cwd(), contentArg);
+  const moduleUrl = new URL(`file://${resolvedPath}`);
+  const mod = await import(moduleUrl.href);
+
+  assertSeedConfig(mod.seedConfig, contentArg);
+
+  return { resolvedPath, seedConfig: mod.seedConfig };
 }
 
 async function main() {
+  const args = parseArgs(process.argv.slice(2));
   const supabaseUrl = readRequiredEnv("TEST_SUPABASE_URL").replace(/\/$/, "");
   const serviceRoleKey = readRequiredEnv("TEST_SUPABASE_SERVICE_ROLE_KEY");
-  const publishedByUserId = readRequiredEnv("MADRONA_PUBLISHED_BY_USER_ID");
+  const publishedByUserId = readRequiredEnv("GAME_SEED_PUBLISHED_BY_USER_ID");
 
   assertHttpsUrl(supabaseUrl, "TEST_SUPABASE_URL");
-  assertUuid(publishedByUserId, "MADRONA_PUBLISHED_BY_USER_ID");
+  assertUuid(publishedByUserId, "GAME_SEED_PUBLISHED_BY_USER_ID");
+
+  const { resolvedPath, seedConfig } = await loadSeedConfig(args.content);
+  const { eventCode, content } = seedConfig;
+  const eventId = content.id;
+  const slug = content.slug;
 
   const host = new URL(supabaseUrl).host;
-  logStep(`Resolving Madrona seed against ${host}`);
+  logStep(
+    `Resolving seed for event_id="${eventId}" slug="${slug}" event_code="${eventCode}" against ${host}`,
+  );
+  logStep(`Loaded seedConfig from ${resolvedPath}`);
 
   const baseHeaders = {
     apikey: serviceRoleKey,
     Authorization: `Bearer ${serviceRoleKey}`,
   };
 
-  const content = await loadDemoContent();
-
-  if (content.id !== eventId) {
-    throw new Error(
-      `madronaDemoGameContent.id is "${content.id}"; expected "${eventId}".`,
-    );
-  }
-
-  if (content.slug !== slug) {
-    throw new Error(
-      `madronaDemoGameContent.slug is "${content.slug}"; expected "${slug}".`,
-    );
-  }
-
-  // 1. Check event_code collision: any row holding "MAD" whose id/slug differs
-  //    from "madrona" aborts the run.
+  // 1. Check event_code collision: any row holding this code whose id/slug
+  //    differs from the seed's aborts the run.
   logStep(`Checking event_code "${eventCode}" for collisions`);
 
   const collisionRows = await fetchJson(
@@ -146,7 +202,7 @@ async function main() {
     throw new Error(
       `event_code "${eventCode}" is already held by event_id="${
         collidingEvent.id
-      }" slug="${collidingEvent.slug}". Pick a different code in seed-madrona-demo-content.cjs.`,
+      }" slug="${collidingEvent.slug}". Pick a different code in the seed module.`,
     );
   }
 
@@ -167,7 +223,7 @@ async function main() {
     );
   }
 
-  // 2. Upsert the draft row keyed on id="madrona".
+  // 2. Upsert the draft row keyed on the seed's content.id.
   logStep(`Upserting game_event_drafts row id="${eventId}"`);
 
   const draftRow = {
@@ -250,6 +306,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`[seed-madrona] failed: ${error.message}\n`);
+  process.stderr.write(`[seed-game-content] failed: ${error.message}\n`);
   process.exit(1);
 });
