@@ -2,14 +2,49 @@
 
 ## Status
 
-`In draft` — alternatives evaluated, target shape proposed, and the
-three initial open decisions resolved by user direction (see "User
-Direction" below). Awaiting plan-review pass(es) before promotion to
-`Proposed` and execution. Per user direction, the restructure ships as
-a single PR on this branch: plan-doc commit is already up; remaining
-review-cycle commits land here, then the restructure execution lands
-on this branch as additional commits, and the PR description is
-updated to cover the full diff before flipping the plan to `Landed`.
+`Proposed` — alternatives evaluated, target shape settled, three
+initial open decisions resolved by user direction (see "User
+Direction" below), and the `In draft` → `Proposed` promotion gate
+walked per AGENTS.md "Phase Planning Sessions" (end-to-end coherence
+read, decision-completeness on Contracts, `Verified by:` walk on
+load-bearing claims, reality-check inputs re-confirmed against
+current AGENTS.md). Promotion-gate findings:
+
+- **Contradictions resolved.** Earlier draft named "~250 lines" as a
+  root-router target in the Goal and Files-To-Modify sections, which
+  contradicted user direction #3 ("No fixed root-router target
+  size"). Both occurrences rewritten to point at the size-smell
+  check in the Validation Gate.
+- **Deferral resolved.** Routing-logic prose said "drafted, not yet
+  final wording," which deferred the table contract to plan-drafting
+  itself. Tightened: the table *shape* (which session → which file
+  set) is the decision-complete contract; row-label and column-
+  header *prose* is execution-time polish.
+- **`Verified by:` walk.** Citations to AGENTS.md line ranges
+  (801-824 Verified-by, 850-871 falsifiability, 714-758 rules-vs-
+  estimates, 825-849 exact-match label quoting, 943-950 planning-
+  artifacts-cite-each-other) verified against current AGENTS.md
+  section starts. Section names match exactly; line ranges are
+  approximate (off by ≤1 against current section bounds, which is
+  expected because the source file accretes whitespace) and stay
+  load-bearing-by-name not by-line.
+- **Reality-check inputs.** AGENTS.md line count (1,727), referenced
+  doc paths (`docs/plans/planning-doc-location.md`, `docs/dev.md`,
+  `docs/architecture.md`, `docs/styling.md`, `docs/testing-tiers.md`,
+  `docs/self-review-catalog.md`, `docs/operations.md`,
+  `README.md`, `.github/pull_request_template.md`), and the
+  `docs/plans/epics/` tree all re-confirmed present.
+
+Per user direction, restructure execution does **not** start at this
+flip — execution begins on explicit go-ahead. This `Proposed` flip
+records that the plan is ready for code review.
+
+The restructure ships as a single PR on this branch
+([PR #190](https://github.com/kcrobinson-1/neighborly-events/pull/190)):
+plan-doc commits are up; restructure execution will land on this
+branch as additional commits when started; PR description rewrites
+before merge to cover the full diff; plan flips to `Landed` in the
+final commit per AGENTS.md "Plan-to-PR Completion Gate."
 
 This is a cross-cutting plan (not bound to a single epic) and lives at
 `docs/plans/agents-md-restructure.md` per the in-repo layout convention
@@ -57,8 +92,10 @@ After this refactor:
   repo orientation, the universal rules every session needs (pre-edit
   gate, scope guardrails, sub-agent delegation, stop-and-report,
   anti-patterns, change boundaries), and a session-type routing table
-  pointing to the right files for the work at hand. Target size ~250
-  lines (down from 1,727).
+  pointing to the right files for the work at hand. No fixed line
+  target — the size-smell check in the Validation Gate covers
+  whether the file ends up doing the right amount of work for its
+  declared scope.
 - **Cross-cutting planning rules live in one place** — the shared
   planning file — so the `Verified by:` annotation rule, falsifiability
   check, rules-vs-estimates distinction, plan-code-minimalism
@@ -250,8 +287,11 @@ the router-plus-leaf-files shape.
 
 ### Routing logic
 
-The root [`AGENTS.md`](/AGENTS.md) carries a session-type routing table
-in this shape (drafted, not yet final wording):
+The root [`AGENTS.md`](/AGENTS.md) carries a session-type routing
+table covering the session types below. The table's *shape* — which
+session type maps to which file set — is the decision-complete
+contract; the row-label and column-header *prose* is editorial polish
+to be tightened at execution-time. The shape:
 
 | If your session is… | Read these files |
 |---|---|
@@ -429,10 +469,10 @@ mix of rules and estimates," implementation may revise.*
 
 *Estimate; reality at execution may revise.*
 
-- [`AGENTS.md`](/AGENTS.md) — rewrite as router (~250 lines target).
-  Keeps Purpose orientation, universal rules, session-type routing
-  table, pointer to [`docs/dev.md`](/docs/dev.md). Drops everything
-  else.
+- [`AGENTS.md`](/AGENTS.md) — rewrite as router. Keeps Purpose
+  orientation, universal rules, session-type routing table, pointer
+  to [`docs/dev.md`](/docs/dev.md). Drops everything else. No fixed
+  size target; size-smell check at Validation Gate time.
 - [`docs/dev.md`](/docs/dev.md) — has at least one reference to
   AGENTS.md sections by name; verify no broken section references.
 - Per-phase plan docs under [`docs/plans/`](/docs/plans/) — verify
