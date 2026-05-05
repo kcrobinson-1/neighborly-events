@@ -34,7 +34,8 @@ When implementation diverged from an estimate-shaped plan section
 ("Files intentionally not touched" ended up touched, intended commit
 boundaries reshuffled, etc.), name the deviation, the actual outcome,
 and why the call was right. Rule deviations are not handled here —
-they require a plan-doc change in the same PR per AGENTS.md
+they require a plan-doc change in the same PR per
+[`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
 "Plan-to-PR Completion Gate." Write `N/A` if no estimate deviated.
 
 ## UX Review

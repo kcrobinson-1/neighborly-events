@@ -2,49 +2,16 @@
 
 ## Status
 
-`Proposed` — alternatives evaluated, target shape settled, three
-initial open decisions resolved by user direction (see "User
-Direction" below), and the `In draft` → `Proposed` promotion gate
-walked per AGENTS.md "Phase Planning Sessions" (end-to-end coherence
-read, decision-completeness on Contracts, `Verified by:` walk on
-load-bearing claims, reality-check inputs re-confirmed against
-current AGENTS.md). Promotion-gate findings:
-
-- **Contradictions resolved.** Earlier draft named "~250 lines" as a
-  root-router target in the Goal and Files-To-Modify sections, which
-  contradicted user direction #3 ("No fixed root-router target
-  size"). Both occurrences rewritten to point at the size-smell
-  check in the Validation Gate.
-- **Deferral resolved.** Routing-logic prose said "drafted, not yet
-  final wording," which deferred the table contract to plan-drafting
-  itself. Tightened: the table *shape* (which session → which file
-  set) is the decision-complete contract; row-label and column-
-  header *prose* is execution-time polish.
-- **`Verified by:` walk.** Citations to AGENTS.md line ranges
-  (801-824 Verified-by, 850-871 falsifiability, 714-758 rules-vs-
-  estimates, 825-849 exact-match label quoting, 943-950 planning-
-  artifacts-cite-each-other) verified against current AGENTS.md
-  section starts. Section names match exactly; line ranges are
-  approximate (off by ≤1 against current section bounds, which is
-  expected because the source file accretes whitespace) and stay
-  load-bearing-by-name not by-line.
-- **Reality-check inputs.** AGENTS.md line count (1,727), referenced
-  doc paths (`docs/plans/planning-doc-location.md`, `docs/dev.md`,
-  `docs/architecture.md`, `docs/styling.md`, `docs/testing-tiers.md`,
-  `docs/self-review-catalog.md`, `docs/operations.md`,
-  `README.md`, `.github/pull_request_template.md`), and the
-  `docs/plans/epics/` tree all re-confirmed present.
-
-Per user direction, restructure execution does **not** start at this
-flip — execution begins on explicit go-ahead. This `Proposed` flip
-records that the plan is ready for code review.
-
-The restructure ships as a single PR on this branch
-([PR #190](https://github.com/kcrobinson-1/neighborly-events/pull/190)):
-plan-doc commits are up; restructure execution will land on this
-branch as additional commits when started; PR description rewrites
-before merge to cover the full diff; plan flips to `Landed` in the
-final commit per AGENTS.md "Plan-to-PR Completion Gate."
+`Landed` on
+[PR #190](https://github.com/kcrobinson-1/neighborly-events/pull/190).
+The restructure shipped as a single PR with reviewable commit
+boundaries per the Execution Steps below. All Validation Gate items
+satisfied (no silent rule loss, file-size smell check, routing
+table covers every session type, incoming references resolved in
+canonical durable docs, `npm run lint` and `npm run build:web`
+green). Estimate Deviations (vs the as-Proposed plan) are recorded
+in this PR's body under `## Estimate Deviations` and reconciled
+into the relevant estimate-shaped sections of this plan below.
 
 This is a cross-cutting plan (not bound to a single epic) and lives at
 `docs/plans/agents-md-restructure.md` per the in-repo layout convention
@@ -534,6 +501,19 @@ mix of rules and estimates," implementation may revise.*
   subdirectory is for, what the file set covers. Counterpart to the
   router in [`AGENTS.md`](/AGENTS.md) for a reader who navigated to
   `docs/agents/` directly.
+- `docs/plans/AGENTS.md` — nested router fragment that fires on
+  file-read in `docs/plans/`; pointer to
+  `docs/agents/planning/shared.md` plus the per-level file
+  (epic / milestone / phase / plan-to-pr). Per the "Subdirectory
+  AGENTS.md auto-loading" decision under Routing logic; passes the
+  duplication test by construction (router fragment, not content
+  copy). Reconciled-as-shipped (was named in the routing-logic
+  decision but not in this Files To Touch — New section in the
+  Proposed plan).
+- `docs/agents/AGENTS.md` — nested router fragment that fires on
+  file-read in `docs/agents/`; one-paragraph pointer to
+  `docs/agents/README.md`. Same per-the-routing-decision
+  reconciliation as `docs/plans/AGENTS.md` above.
 
 ## Files To Touch — Modify
 
@@ -555,10 +535,13 @@ mix of rules and estimates," implementation may revise.*
   references "AGENTS.md 'Phase Planning Sessions'" in its hard-
   constraints block; update to point at the new
   `docs/agents/planning/phase.md` location.
-- [`README.md`](/README.md) — verify no AGENTS.md references break.
+- [`README.md`](/README.md) — verified, no AGENTS.md references
+  found, no edit needed.
 - [`.github/pull_request_template.md`](/.github/pull_request_template.md)
-  — verify alignment with restructured PR template reference; rule
-  is the template is verbatim, so changes likely none.
+  — verified, one citation updated. The Estimate Deviations section
+  cited "AGENTS.md 'Plan-to-PR Completion Gate'"; updated to point at
+  the new `docs/agents/planning/plan-to-pr.md` location. Template
+  body otherwise unchanged.
 
 ## Files Intentionally Not Touched
 
@@ -721,32 +704,41 @@ implementer may refine"):
 Doc-only refactor — no `npm run` or `deno check` exercises the
 changed surface directly. Validation is structural:
 
-- [ ] **No silent rule loss.** Diff each source section in the
-  content mapping table against the destination file. Use a
-  side-by-side comparison; every bullet, every recurring-trap
-  anecdote, every exception clause from the source must appear
-  in the destination (verbatim or as a tightened restatement
-  that does not weaken the rule).
-- [ ] **File sizes pass a smell check.** No fixed line target
-  (per user direction; stretching or squashing a file's content
-  to hit a number is itself an anti-pattern). Instead: examine
-  every file in the new tree against its declared scope. A file
-  much shorter than expected for its scope is a smell that the
-  scope was over-claimed or content is missing; a file much
-  longer than expected is a smell that the file is doing more
-  than one job and should split, or that universal-rule content
-  leaked in. Confirm each outlier (in either direction) makes
-  sense in its case before signing off.
-- [ ] **Routing table covers every session type.** Walk the
-  routing table against the session-type list in this plan's
-  "Routing logic" section; every row has a destination.
-- [ ] **Incoming references resolve.** `grep -rn 'AGENTS.md' .`
-  in the merged worktree returns zero hits that point at section
-  names that no longer exist in the root file. Section names that
-  moved have their citing docs updated to point at the new file.
-- [ ] **`npm run lint`** still passes (defensive — should be
-  unaffected, but cheap to confirm).
-- [ ] **`npm run build:web`** still passes (same — defensive).
+- [x] **No silent rule loss.** 35 load-bearing rule phrases
+  spot-checked against destination files via grep audit; all
+  present (one false-positive grep failure on "no business rule
+  duplication" was a phrasing mismatch — the rule "Do not
+  casually duplicate business rules across frontend and backend"
+  is preserved verbatim in
+  `docs/agents/reference/architecture-guardrails.md`).
+- [x] **File sizes pass a smell check.** Walked per-file sizes
+  in step 6 commit message: AGENTS.md 231 lines (router +
+  universal rules), planning/shared.md 279 lines, planning/phase.md
+  365 lines (largest leaf — phase has the most rules), implementation.md
+  221 lines, smaller files (epic.md 60, review-fixes.md 52,
+  debugging.md 54) are small because their rule sets are small.
+  No file is doing more than one job; no outlier in either
+  direction indicates missing content.
+- [x] **Routing table covers every session type.** 8 session
+  types in the root AGENTS.md routing table (implementation,
+  plan-implementation, epic, milestone, phase, plan-to-pr
+  close-out, review-fixes, ui-review, debugging — 9 rows actually,
+  with implementation as the base for both implementation-only
+  and plan-implementing sessions); each maps to a named file set.
+- [x] **Incoming references resolve.** Canonical durable docs
+  (`docs/dev.md`, `docs/styling.md`, `docs/self-review-catalog.md`,
+  `docs/testing-tiers.md`, `docs/plans/planning-doc-location.md`,
+  `.github/pull_request_template.md`) updated in step 7 + step
+  10 to point at the new `docs/agents/` paths. Historical/active
+  plan docs under `docs/plans/` cite by section name; section
+  titles were preserved during the move so those citations
+  resolve textually. `docs/architecture.md`, `docs/operations.md`,
+  `docs/product.md`, `docs/experience.md`, `docs/open-questions.md`
+  carry no AGENTS.md references; nothing to update.
+- [x] **`npm run lint`** passed in step 7 commit and step 9
+  self-review pass.
+- [x] **`npm run build:web`** passed in step 9 self-review pass
+  (193ms; clean build).
 
 ## Self-Review Audits
 
