@@ -296,7 +296,7 @@ specifically:
   the headers block was slug-allowlisted to the two test events
   (`harvest-block-party`, `riverside-jam`) only, leaving Madrona
   publicly indexable on apps/web until phase-2.1 fix-up
-  [#190](https://github.com/kcrobinson-1/neighborly-events/pull/190)
+  [#191](https://github.com/kcrobinson-1/neighborly-events/pull/191)
   added a second header rule for `/event/madrona/:path*`. Future
   non-test demo events (donation / feedback child epics, drafts
   awaiting publish) follow the same shape: a per-event header
