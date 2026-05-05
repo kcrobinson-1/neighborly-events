@@ -4,8 +4,10 @@ import type { Theme } from "../types.ts";
  * Platform Sage Civic Theme. apps/site's root layout emits these as
  * inline CSS custom properties on `<html>`; `getThemeForSlug`
  * returns this Theme for any slug not registered in
- * [`themes/index.ts`](./index.ts) (i.e., every slug through M3 phase
- * 3.2's test events and through M4 phase 4.1 when Madrona registers).
+ * [`themes/index.ts`](./index.ts) (every unregistered slug; through
+ * M3 phase 3.2's test events the registry held only those, and the
+ * [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
+ * M1 phase 1.1 added Madrona as the first non-test entry).
  *
  * Source-of-truth values live in the parent epic
  * ([`docs/plans/event-platform-epic.md`](../../../docs/plans/event-platform-epic.md))
@@ -14,7 +16,8 @@ import type { Theme } from "../types.ts";
  * defaults (today's warm-cream values) are deliberately not driven
  * by this Theme — they live byte-identically in
  * [`apps/web/src/styles/_tokens.scss`](../../../apps/web/src/styles/_tokens.scss)
- * until M4 phase 4.1 wires apps/web event routes to ThemeScope.
+ * and remain in place for any apps/web event-route shell whose slug
+ * does not resolve to a registered Theme.
  *
  * `bodyFontFamily` and `headingFontFamily` reference CSS variables
  * that apps/site sets via `next/font` on `<html>`; the values resolve
