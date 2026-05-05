@@ -305,7 +305,16 @@ async function main() {
   logStep("Seed complete.");
 }
 
-main().catch((error) => {
-  process.stderr.write(`[seed-game-content] failed: ${error.message}\n`);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().catch((error) => {
+    process.stderr.write(`[seed-game-content] failed: ${error.message}\n`);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  assertHttpsUrl,
+  assertSeedConfig,
+  assertUuid,
+  parseArgs,
+};
