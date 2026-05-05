@@ -2,24 +2,33 @@
 
 ## Status
 
-In draft.
+Proposed.
 
-The plan stays `In draft` (not `Proposed`) until every named
-input from the
-[scoping doc's "Inputs from prior phase"](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md)
-section has settled — concretely, until phase 1.1 merges and the
-post-1.1 state of `apps/site/lib/eventContent.ts`,
-`EventLineup.tsx`, `EventSponsors.tsx`, and `apps/site/events/madrona.ts`
-is observable. The scoping doc enumerates each pending input
-with a concrete surface citation per AGENTS.md "Phase Planning
-Sessions."
+The `In draft` → `Proposed` promotion gate is satisfied:
 
-The plan also carries open Naming decisions (named below in
-§Naming) where the plan-drafter has proposed concrete spellings
-under the constraints in scoping decision 3 (no foreclosure of
-donation/feedback child epics); the spellings are open for
-rebuttal and are the load-bearing surface for the plan's
-`In draft` → `Proposed` promotion gate.
+- **Phase 1.1 merged in
+  [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182).**
+  Post-1.1 state of `apps/site/lib/eventContent.ts`,
+  `EventLineup.tsx`, `EventSponsors.tsx`, and
+  `apps/site/events/madrona.ts` is observable. Reality-check
+  inputs re-confirmed at promotion: `EventContent` type now
+  starts at line 49 (header docstring expanded for 1.1's
+  `meta.{robots,logoSrc,logoAlt}` paragraph); `lineup[]`
+  literal at lines 79-83 and `sponsors[]` literal at lines
+  85-92; renderers structurally unchanged (only doc-currency
+  comment rewrites in `EventSponsors.tsx`); `madrona.ts`
+  exists with placeholder content per the 1.1 plan's contract.
+- **Naming decisions settled.** The proposed field names —
+  `imageSrc?` + `imageAlt?`, `extendedBio?`,
+  `featuredQuote?: { text; attribution? }`, `externalLinks?`,
+  `shortDescription?`, `socialLinks?` — were walked in PR #183
+  with no rebuttal; they are the contract this plan ships
+  against.
+- **Donation/feedback child epic re-grep confirmed neither
+  has scoped.** `docs/plans/epics/madrona-donation/` and
+  `docs/plans/epics/madrona-feedback/` directories do not
+  exist at promotion time; the invariant-2 audit operates on
+  field-naming specificity alone (per scoping decision 3).
 
 ## Context
 
@@ -79,8 +88,11 @@ After this PR:
 - [`EventLineup.tsx`](/apps/site/components/event/EventLineup.tsx)
   renders each new band-depth field with a truthiness guard
   matching the existing `bio` and `setTimes.length > 0`
-  precedents (`Verified by:` re-confirmed at plan-drafting
-  against post-1.1 state of the file);
+  precedents
+  (`Verified by:`
+  [EventLineup.tsx:24-26 and 27-33](/apps/site/components/event/EventLineup.tsx)
+  for the existing guard patterns; post-1.1 state confirmed
+  unchanged at promotion);
 - [`EventSponsors.tsx`](/apps/site/components/event/EventSponsors.tsx)
   renders each new sponsor-depth field with the same guard
   pattern;
@@ -144,16 +156,16 @@ already bind.
 
 ## Naming
 
-Open. The plan-drafter proposes the following spellings against
-the constraints in
+Settled. The following spellings are the contract this plan
+ships against; they were walked in
+[PR #183](https://github.com/kcrobinson-1/neighborly-events/pull/183)
+with no rebuttal under the constraints in
 [scoping decision 3 — no foreclosure of donation/feedback child
 epics](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md).
-Spellings are subject to revision before the plan promotes
-from `In draft` → `Proposed`; the rationale for each is
-recorded so a reviewer can rebut on the rationale, not on the
-name in isolation.
+Rationale per name is preserved so future readers can
+reconstruct the choice without diving back into the PR thread.
 
-### Band depth fields (proposed)
+### Band depth fields
 
 Added to `EventContent.lineup[number]`:
 
@@ -210,7 +222,7 @@ Added to `EventContent.lineup[number]`:
     while preserving the constraint that the link is band-
     external (not e.g. donation-link).
 
-### Sponsor depth fields (proposed)
+### Sponsor depth fields
 
 Added to `EventContent.sponsors[number]`:
 
@@ -242,7 +254,7 @@ Added to `EventContent.sponsors[number]`:
     the semantic role differs; merging would force a generic
     name (`links[]`) banned by scoping decision 3.
 
-### Renderer surface choices (proposed)
+### Renderer surface choices
 
 `EventLineup.tsx` per-band card extends to render new fields in
 this order (top to bottom inside the `<li>`):
@@ -294,8 +306,9 @@ load-bearing.
 
 ### `EventContent.lineup[number]` extension contract
 
-[`apps/site/lib/eventContent.ts:55-60`](/apps/site/lib/eventContent.ts)
-gains four new optional fields after `bio?: string`:
+[`apps/site/lib/eventContent.ts:79-83`](/apps/site/lib/eventContent.ts)
+(post-1.1 line range; re-verify at edit time) gains four new
+optional fields after `bio?: string`:
 
 ```
 lineup: Array<{
@@ -324,8 +337,9 @@ edit time; see §Documentation Currency PR Gate.
 
 ### `EventContent.sponsors[number]` extension contract
 
-[`apps/site/lib/eventContent.ts:61-67`](/apps/site/lib/eventContent.ts)
-gains two new optional fields after `tier?: string`:
+[`apps/site/lib/eventContent.ts:85-92`](/apps/site/lib/eventContent.ts)
+(post-1.1 line range; re-verify at edit time) gains two new
+optional fields after `tier?: string`:
 
 ```
 sponsors: Array<{
@@ -513,11 +527,11 @@ This sequence is the planner's pre-implementation estimate of
 the expected execution shape per AGENTS.md "Plan content is a
 mix of rules and estimates"; the implementer may refine.
 
-1. **Branch hygiene.** Worktree off main once 1.1 has merged.
+1. **Branch hygiene.** Worktree off main (1.1 merged in
+   [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182)).
    Branch rename to a semantic slug per the AGENTS.md / memory
    rule "Rename auto-generated worktree branches to a semantic
-   slug" — likely `feat/madrona-m1-phase-1-2` or
-   `plan/madrona-m1-phase-1-2`.
+   slug" — likely `feat/madrona-m1-phase-1-2`.
 2. **Baseline validation.** `npm run lint`, `npm run build:web`,
    `npm run build:site` (the site build is required because
    apps/site is touched per memory rule).
@@ -887,12 +901,12 @@ milestone-doc Cross-Phase Risks (which inherit by reference):
   before committing the diff. Recording the call in
   `## Estimate Deviations` makes the rationale durable.
 - **Donation/feedback child epic surfaces a colliding name.**
-  Between scoping (now) and PR-time (post-1.1 merge), the
-  donation or feedback child epic could be scoped and surface
-  a settled field shape that collides with one of the
-  proposed names (e.g., the donation epic decides it wants
-  `socialLinks` for sponsor donation handles). Mitigation: the
-  reality-check re-grep at plan-implementation step 3 catches
+  Between plan promotion (now) and PR-time, the donation or
+  feedback child epic could be scoped and surface a settled
+  field shape that collides with one of the settled names
+  (e.g., the donation epic decides it wants `socialLinks` for
+  sponsor donation handles). Mitigation: the reality-check
+  re-grep at plan-implementation step 3 catches
   this; the rename is mechanical.
 
 ## Backlog Impact
