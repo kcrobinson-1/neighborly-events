@@ -57,7 +57,7 @@
       ]
     },
     {
-      "source": "/event/madrona/:path*",
+      "source": "/event/:slug(madrona)/:path*",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]

@@ -14,29 +14,31 @@ import { TEST_EVENT_SLUGS } from "../../shared/events/testEventAllowlist";
  * honors the config. Together they form the noindex acceptance gate.
  *
  * Per the post-M3 `test-event-noindex-uniformity` decision (Option B),
- * the apps/web headers config collapses to a single catchall entry
- * covering every URL under a test-event slug. The catchall is the
- * load-bearing slug-list hand-mirror surface; one regex constraint
- * expression (`:slug(harvest-block-party|riverside-jam)`) appearing
- * in one source, byte-equivalent to `TEST_EVENT_SLUGS`.
+ * the apps/web headers config collapsed from six per-surface entries
+ * to a single catchall covering every URL under a test-event slug.
  *
- * The test reads `apps/web/vercel.json` as text + JSON and asserts:
- *   - exactly one `headers` entry,
- *   - that entry emits `X-Robots-Tag: noindex, nofollow` and only
- *     that header,
- *   - the entry's `source` is the catchall shape
- *     `/event/:slug(...)/:path*`,
- *   - the `:slug(...)` regex-constraint group is byte-equivalent to
- *     `TEST_EVENT_SLUGS` (after sorting both sides),
- *   - the catchall covers all the bypass surfaces and the gameplay
- *     route under a test slug (positive coverage walk against
- *     concrete test paths).
+ * The Madrona demo-build epic M2 phase 2.1 post-merge audit
+ * (PR #191) extended the shape: per-event noindex is no longer
+ * test-event-only. Non-test demo events (Madrona today; donation /
+ * feedback child epics or draft events in future) get their own
+ * per-event catchall rule, keeping the test-event regex byte-
+ * equivalent to `TEST_EVENT_SLUGS` while letting non-test demo slugs
+ * sit in their own rule(s). The contract this test enforces is now:
+ *   - one or more catchall headers entries,
+ *   - each entry uses the catchall shape `/event/:slug(...)/:path*`
+ *     and emits `X-Robots-Tag: noindex, nofollow` as its only header,
+ *   - the union of slugs across all entries is byte-equivalent to
+ *     `TEST_EVENT_SLUGS ∪ NON_TEST_NOINDEX_SLUGS` (after sorting),
+ *   - positive coverage: each test-event and non-test-noindex path
+ *     is matched by some entry,
+ *   - negative coverage: real-event slugs (`madrona-launch-day` and
+ *     other not-yet-existing future event slugs) are not matched.
  *
  * Failure modes the test catches:
  *   - slug additions to `TEST_EVENT_SLUGS` not reflected in the
  *     vercel.json regex,
- *   - accidental non-test-event-slug additions to the regex
- *     constraint,
+ *   - new non-test demo events not added here AND in vercel.json,
+ *   - accidental real-event additions to any catchall regex,
  *   - header key/value typos,
  *   - drift away from the catchall shape (e.g., reverting to a
  *     surface-enumerated list without explicit re-decision).
@@ -63,11 +65,22 @@ const SLUG_REGEX_GROUP = /:slug\(([^)]+)\)/;
 const EXPECTED_SOURCE_SHAPE = /^\/event\/:slug\([^)]+\)\/:path\*$/;
 
 /**
- * Concrete test paths that must all be covered by the single catchall.
+ * Non-test demo / non-launch event slugs that share the test-event
+ * noindex posture but are not in `TEST_EVENT_SLUGS`. Madrona is in
+ * demo-build phase (per the Madrona demo-build epic) until the
+ * future Madrona-launch epic flips it to indexable. Future entries:
+ * donation / feedback child-epic events if they get their own slug,
+ * draft events awaiting publish, etc.
+ */
+const NON_TEST_NOINDEX_SLUGS: readonly string[] = ["madrona"];
+
+/**
+ * Concrete test paths that must all be covered by some catchall.
  * Spans bypass surfaces (admin, redeem, redemptions), the gameplay
- * route, trailing-slash variants, and a future-bypass-surface placeholder.
- * Any drift away from the catchall shape would leave one of these
- * uncovered; the suffix-shape assertion is the load-bearing falsifier.
+ * route, trailing-slash variants, a future-bypass-surface placeholder,
+ * and the Madrona demo surfaces. Any drift away from the catchall
+ * shape would leave one of these uncovered; the suffix-shape
+ * assertion is the load-bearing falsifier.
  */
 const PATHS_THAT_MUST_INHERIT_NOINDEX = [
   "/event/harvest-block-party/admin",
@@ -80,12 +93,19 @@ const PATHS_THAT_MUST_INHERIT_NOINDEX = [
   "/event/harvest-block-party/future-surface",
   "/event/riverside-jam/admin",
   "/event/riverside-jam/game",
+  "/event/madrona/admin",
+  "/event/madrona/game",
+  "/event/madrona/game/redeem",
+  "/event/madrona/game/redemptions",
+  "/event/madrona/future-surface",
 ];
 
 /**
  * Concrete paths the catchall must NOT cover. Real-event slugs and
  * non-test-event paths stay indexable by virtue of the regex
- * constraint excluding their slugs.
+ * constraint excluding their slugs. `madrona-launch-day` is the
+ * future Madrona-launch sibling epic's slug; demo-build does not
+ * extend noindex to it.
  */
 const PATHS_THAT_MUST_NOT_INHERIT_NOINDEX = [
   "/event/madrona-launch-day/admin",
@@ -98,19 +118,31 @@ function loadVercelConfig(): VercelConfig {
   return JSON.parse(raw) as VercelConfig;
 }
 
-function getCatchallSlugRegexLiteral(): string | null {
+/**
+ * Returns `[{ source, slugs }]` for every catchall headers entry.
+ * Each entry's `slugs` is the inline regex-constrained list parsed
+ * out of `:slug(...)`. An entry whose `source` does not contain a
+ * `:slug(...)` group returns an empty `slugs` array, which the
+ * source-shape test catches independently.
+ */
+function loadCatchallEntries(): Array<{ source: string; slugs: string[] }> {
   const config = loadVercelConfig();
-  if (!config.headers || config.headers.length !== 1) {
-    return null;
-  }
-  const match = config.headers[0].source.match(SLUG_REGEX_GROUP);
-  return match ? match[1] : null;
+  return (config.headers ?? []).map((entry) => {
+    const match = entry.source.match(SLUG_REGEX_GROUP);
+    const slugs = match ? match[1].split("|") : [];
+    return { source: entry.source, slugs };
+  });
+}
+
+function getAllCoveredSlugs(): string[] {
+  return loadCatchallEntries().flatMap((entry) => entry.slugs);
 }
 
 /**
- * Synthesizes the runtime regex the Vercel platform compiles for the
- * catchall source. The vercel.json `source` uses path-to-regexp; for
- * the assertion-side we emulate the relevant subset:
+ * Synthesizes a runtime regex covering the union of every catchall
+ * source's `:slug(...)` constraint. The vercel.json `source` uses
+ * path-to-regexp; for the assertion-side we emulate the relevant
+ * subset:
  *   - `:slug(...)` is the inline regex-constrained named param,
  *   - `:path*` is zero-or-more path segments after a separator.
  *
@@ -120,51 +152,55 @@ function getCatchallSlugRegexLiteral(): string | null {
  * still fail correctly because the slug regex constraint is the
  * authoritative gate.
  */
-function buildCatchallMatcher(): RegExp | null {
-  const slugRegex = getCatchallSlugRegexLiteral();
-  if (slugRegex === null) {
+function buildUnionMatcher(): RegExp | null {
+  const slugs = getAllCoveredSlugs();
+  if (slugs.length === 0) {
     return null;
   }
-  // Mirrors `/event/:slug(<slugRegex>)/:path*` semantics:
-  //   - leading literal `/event/`
-  //   - slug constraint (group 1)
-  //   - optional trailing `/` + zero or more path segments (group 2)
-  return new RegExp(`^/event/(${slugRegex})(?:/.*)?$`);
+  const unionSlugRegex = slugs.join("|");
+  return new RegExp(`^/event/(${unionSlugRegex})(?:/.*)?$`);
 }
 
 describe("apps/web/vercel.json demo-mode noindex headers", () => {
-  it("declares exactly one headers entry (single catchall per Option B)", () => {
+  it("declares one or more catchall headers entries", () => {
     const config = loadVercelConfig();
     expect(Array.isArray(config.headers)).toBe(true);
-    expect(config.headers).toHaveLength(1);
+    expect((config.headers ?? []).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("emits X-Robots-Tag: noindex, nofollow as the entry's only header", () => {
+  it("every entry emits X-Robots-Tag: noindex, nofollow as its only header", () => {
     const config = loadVercelConfig();
-    const entry = (config.headers ?? [])[0];
-    expect(entry.headers).toHaveLength(1);
-    expect(entry.headers[0]).toEqual({
-      key: "X-Robots-Tag",
-      value: NOINDEX_VALUE,
-    });
+    for (const entry of config.headers ?? []) {
+      expect(entry.headers, `entry source=${entry.source}`).toHaveLength(1);
+      expect(entry.headers[0]).toEqual({
+        key: "X-Robots-Tag",
+        value: NOINDEX_VALUE,
+      });
+    }
   });
 
-  it("uses the catchall source shape /event/:slug(...)/:path*", () => {
+  it("every entry uses the catchall source shape /event/:slug(...)/:path*", () => {
     const config = loadVercelConfig();
-    const entry = (config.headers ?? [])[0];
-    expect(entry.source).toMatch(EXPECTED_SOURCE_SHAPE);
+    for (const entry of config.headers ?? []) {
+      expect(entry.source).toMatch(EXPECTED_SOURCE_SHAPE);
+    }
   });
 
-  it("the :slug(...) regex constraint is byte-equivalent to TEST_EVENT_SLUGS", () => {
-    const captured = getCatchallSlugRegexLiteral();
-    expect(captured, "catchall source must contain :slug(...)").not.toBeNull();
-    const sortedActual = (captured as string).split("|").sort().join("|");
-    const sortedExpected = [...TEST_EVENT_SLUGS].sort().join("|");
+  it("union of slug regexes is byte-equivalent to TEST_EVENT_SLUGS ∪ NON_TEST_NOINDEX_SLUGS", () => {
+    const captured = getAllCoveredSlugs();
+    expect(
+      captured.length,
+      "every entry's source must contain :slug(...)",
+    ).toBeGreaterThan(0);
+    const sortedActual = [...captured].sort().join("|");
+    const sortedExpected = [...TEST_EVENT_SLUGS, ...NON_TEST_NOINDEX_SLUGS]
+      .sort()
+      .join("|");
     expect(sortedActual).toBe(sortedExpected);
   });
 
-  it("matches every test-event apps/web URL that must inherit noindex", () => {
-    const matcher = buildCatchallMatcher();
+  it("matches every apps/web URL that must inherit noindex", () => {
+    const matcher = buildUnionMatcher();
     expect(matcher).not.toBeNull();
     for (const path of PATHS_THAT_MUST_INHERIT_NOINDEX) {
       expect(
@@ -174,8 +210,8 @@ describe("apps/web/vercel.json demo-mode noindex headers", () => {
     }
   });
 
-  it("does not match non-test-event URLs (real-event slugs stay indexable)", () => {
-    const matcher = buildCatchallMatcher();
+  it("does not match non-noindex URLs (real-event slugs stay indexable)", () => {
+    const matcher = buildUnionMatcher();
     expect(matcher).not.toBeNull();
     for (const path of PATHS_THAT_MUST_NOT_INHERIT_NOINDEX) {
       expect(
