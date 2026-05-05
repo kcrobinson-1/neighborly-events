@@ -9,8 +9,11 @@ import type { EventContent } from "../lib/eventContent.ts";
  *
  * `testEvent: true` triggers the disclaimer banner and the
  * `robots: { index: false, follow: false }` SSR meta so the page is
- * never indexed by crawlers; Madrona in M4 omits the field. All
- * structural depth (two schedule days, lineup with set-time
+ * never indexed by crawlers; Madrona (registered by the
+ * [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
+ * M1 phase 1.1) omits `testEvent` and rides on `meta.robots: "noindex"`
+ * for the same SSR meta without inheriting the test-event disclaimer
+ * banner. All structural depth (two schedule days, lineup with set-time
  * cross-references, sponsors with logos and tier groupings, FAQ
  * including an explicit test-event disclosure first) mirrors the
  * harvest precedent so the multi-theme proof rests on
