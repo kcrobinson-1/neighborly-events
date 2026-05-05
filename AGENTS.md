@@ -1353,118 +1353,15 @@ as a router in restructure step 6.
 
 ## Validation Expectations
 
-Run the checks relevant to the area you changed.
-
-For frontend or shared TypeScript changes, run:
-
-```bash
-npm run lint
-npm run build:web
-```
-
-For frontend style changes, also make sure the SCSS entrypoint still builds through the normal frontend build:
-
-```bash
-npm run build:web
-```
-
-For Supabase edge function changes, run:
-
-```bash
-deno check --no-lock supabase/functions/issue-session/index.ts
-deno check --no-lock supabase/functions/complete-game/index.ts
-```
-
-If you changed both frontend/shared code and Supabase code, run both sets of checks.
-
-If you could not run a relevant check, say so explicitly and explain why.
-
-For pull requests into `main`, expect GitHub CI to run the same validation via `.github/workflows/ci.yml`.
-
-### Validation Honesty
-
-Do not overstate what was validated.
-
-- Run the validation commands named by the task or checklist before handoff.
-- If you added a new test command, validation surface, or workflow step, prefer to run it locally before opening or updating a PR.
-- If you added a new top-level validation path, run the integrated repo command that is supposed to cover it, not just the new subcommand in isolation.
-- If a validation command depends on local services or runners, exercise it from a clean start when practical, not only from a warm reused state.
-- If a new validation step cannot be run locally, call out the exact blocker in the handoff and PR description.
-- Do not describe a branch as fully validated if any newly introduced check has not been exercised end to end.
-- If docs describe a test as covering the "real" backend or browser path, make sure the implementation actually does that. If the test runs in fallback or mocked mode, document that precisely.
-- If baseline validation failed and the task was stopped before edits, report
-  that as a baseline failure, not as a failed implementation.
-
-### Continuous Validation
-
-Do not wait until the end of a large change to discover that the branch drifted.
-
-- for multi-file or non-trivial work, run the relevant checks before each commit, not only before handoff
-- when code movement changes test layout, confirm the normal repo runners still pick up the affected tests
-- when adding a new test file pattern or directory, make sure the configured runner includes it
-- if a step cannot yet pass validation, shrink the step until it can
-
-### PR Readiness
-
-Treat pull requests as reviewable engineering work, not speculative drafts with known unverified edges hidden inside them.
-
-- Before opening or updating a PR, confirm that all docs the branch should have touched are current (see "Doc Currency Is a PR Gate" above).
-- Before opening or updating a PR, make sure every new script or validation command added by the branch is runnable by a contributor following repo docs.
-- If a PR is intentionally still exploratory, keep it clearly framed as draft work and do not present it as merge-ready.
-- For new test runners or test directories, confirm the existing runners do not accidentally pick them up or conflict with them.
-- If a helper script depends on local tools such as Docker, Deno, Playwright, or the Supabase CLI, either make the script self-checking with clear failure messages or document the setup in the same change.
-- For new helper scripts that start local services or background processes, validate teardown as well as setup so CI cannot hang after the assertions already passed.
-- Prefer fixing local workflow blockers in the repo when reasonable instead of relying on CI to be the first real execution environment.
-
-#### PR Body Template
-
-See [`docs/agents/reference/pr-template.md`](/docs/agents/reference/pr-template.md)
-"PR Body Template" and "Section-specific rules" — content moved per
-the AGENTS.md restructure
+See [`docs/agents/reference/validation.md`](/docs/agents/reference/validation.md)
+for the full validation reference: per-area validation commands
+(`npm run lint`, `npm run build:web`, `deno check supabase/...`),
+Validation Honesty, Continuous Validation, PR Readiness, Regression
+Discipline, and Testing Tiers Discipline. Content moved per the
+AGENTS.md restructure
 ([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
 this section persists as a pointer until the root file is rewritten
 as a router in restructure step 6.
-
-### Regression Discipline
-
-When a change touches testing infrastructure, validation commands, CI, or local setup, review it for operational regressions in addition to product regressions.
-
-- make sure new validation commands do not silently depend on undeclared local state
-- make sure new validation commands work from both fresh-start and warm-start local states when that distinction matters
-- make sure browser tests are deterministic about which backend path they exercise
-- make sure helper scripts are safe to rerun and fail with actionable guidance
-- make sure helper scripts emit enough progress logging and bounded timeouts to debug CI stalls
-- make sure CI does not pay heavyweight setup costs earlier than necessary
-- make sure local validation steps do not mutate workspace state in ways that break later commands
-
-### Testing Tiers Discipline
-
-Plan authors and reviewers must distinguish tiers that are valid pre-merge
-gates from tiers that are not. The full tier map lives in
-[`docs/testing-tiers.md`](/docs/testing-tiers.md).
-
-The two rules that trip up plan authors most often:
-
-- **Plans may gate merge only on tiers the implementer can actually execute
-  against the pre-merge state of the code.** Production smoke (Tier 5) runs
-  against the deployed origin. Any new smoke assertion a plan adds cannot
-  pass against production until the plan's code is deployed. Plans that
-  extend production smoke assertions land in two phases: code merged with
-  plan `In progress pending prod smoke`, then plan flipped to `Landed`
-  after the post-release smoke run is green. Do not gate the merge on a
-  check that can only pass post-deploy. The same two-phase gate applies
-  to any other plan whose Validation Gate names a check that can only
-  run post-release; see [`docs/testing-tiers.md`](/docs/testing-tiers.md)
-  "Plan-to-Landed Gate For Plans With Post-Release Validation."
-- **Plans must not require contributors to configure production credentials
-  on local laptops.** `PRODUCTION_SMOKE_*` env vars, production admin
-  fixture emails, and production service-role keys live in the GitHub
-  `production` environment per
-  [`docs/tracking/production-admin-smoke-tracking.md`](/docs/tracking/production-admin-smoke-tracking.md).
-  They are owned by the release/ops owner. A plan that implicitly requires
-  them on the implementer's laptop is misrouting validation — the fix is
-  to adjust the plan's validation section, not to provision production
-  secrets to developers.
 
 ## UI Review Runs
 
