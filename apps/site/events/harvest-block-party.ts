@@ -5,10 +5,13 @@ import type { EventContent } from "../lib/eventContent.ts";
  * `/event/[slug]` rendering pipeline end-to-end against a non-Sage-Civic
  * Theme. `testEvent: true` triggers the disclaimer banner and the
  * `robots: { index: false, follow: false }` SSR meta so the page is
- * never indexed by crawlers; Madrona in M4 omits the field. All
- * structural depth (multiple schedule days, lineup with set times,
- * sponsors with logos and links, FAQ) is populated so UI review
- * exercises every section component.
+ * never indexed by crawlers; Madrona (registered by the
+ * [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
+ * M1 phase 1.1) omits `testEvent` and rides on `meta.robots: "noindex"`
+ * for the same SSR meta without the test-event disclaimer / demo-mode
+ * auth-bypass eligibility. All structural depth (multiple schedule
+ * days, lineup with set times, sponsors with logos and links, FAQ) is
+ * populated so UI review exercises every section component.
  */
 export const harvestBlockPartyContent: EventContent = {
   slug: "harvest-block-party",

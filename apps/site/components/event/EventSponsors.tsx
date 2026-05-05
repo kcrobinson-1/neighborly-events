@@ -35,7 +35,7 @@ function groupSponsorsByTier(
 /**
  * Sponsor logo grid. Each sponsor is a link wrapping a plain `<img>`
  * — `next/image` is intentionally not used in 3.1.1 to keep static
- * asset handling simple; if M4 phase 4.2 needs `next/image` for
+ * asset handling simple; if a future authoring pass needs `next/image` for
  * Madrona, the upgrade is local. If any sponsor sets a `tier`, the
  * grid groups by tier with `<h3>` headings; otherwise renders flat.
  * `logoAlt` is required by the `EventContent` contract so
@@ -72,7 +72,7 @@ export function EventSponsors({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element --
                       Plain `<img>` is the deliberate choice for 3.1.1
-                      per the M3 phase 3.1.1 plan; if M4 phase 4.2
+                      per the M3 phase 3.1.1 plan; if a future authoring pass
                       needs `next/image` for Madrona, the upgrade is
                       local to this component. */}
                   <img

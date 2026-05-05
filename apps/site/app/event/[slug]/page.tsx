@@ -34,7 +34,13 @@ export function generateStaticParams() {
  *
  * `robots: { index: false, follow: false }` ships when
  * `content.testEvent === true` so the test event is server-rendered
- * as `noindex, nofollow` before any client hydration. A client-side
+ * as `noindex, nofollow` before any client hydration. The same
+ * SSR meta also ships when `content.meta.robots === "noindex"`, so
+ * non-test events (e.g., Madrona during its demo phase per the
+ * [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+ * M1 phase 1.1) can opt into `noindex` without setting
+ * `testEvent: true` and triggering the disclaimer banner / demo-mode
+ * auth bypass eligibility that test events carry. A client-side
  * `<meta>` injection (e.g., a `useEffect` that appends to
  * `document.head`) would silently regress this invariant; the curl
  * falsifier in the plan's Validation Gate guards against that drift.
@@ -66,9 +72,10 @@ export async function generateMetadata({
       title: content.meta.title,
       description: content.meta.description,
     },
-    robots: content.testEvent
-      ? { index: false, follow: false }
-      : undefined,
+    robots:
+      content.testEvent || content.meta.robots === "noindex"
+        ? { index: false, follow: false }
+        : undefined,
   };
 }
 

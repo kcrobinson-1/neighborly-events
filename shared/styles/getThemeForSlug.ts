@@ -10,8 +10,10 @@ import type { Theme } from "./types.ts";
  * In M1 phase 1.5.2 the registry is empty, so every slug resolves to
  * the platform Theme. Per-event themes register over time (the
  * first test event theme in M3 phase 3.1; the second in M3 phase
- * 3.2; Madrona in M4 phase 4.1) without changing any consumer —
- * the resolver picks them up by slug. See
+ * 3.2; Madrona in the
+ * [Madrona demo-build epic](../../docs/plans/epics/madrona-demo-build/epic.md)
+ * M1 phase 1.1) without changing any consumer — the resolver picks
+ * them up by slug. See
  * [m3-site-rendering.md](../../docs/plans/archive/m3/m3-site-rendering.md)
  * for the M3 phase shape.
  */

@@ -2,7 +2,7 @@
 
 ## Status
 
-Scoping in progress. This is a transient artifact per AGENTS.md
+Absorbed into plan. This is a transient artifact per AGENTS.md
 "Phase Planning Sessions"; deletes in batch with sibling scoping
 docs at the milestone-terminal PR. Durable cross-phase content
 absorbs into
@@ -59,9 +59,11 @@ blocks M1 engineering," the palette must settle before phase
 1.1 plan-drafting begins. The decision artifact is
 `Verified by:`'d below.
 
-**Concrete palette.** Eyeball-sampled from the logo file (see
-"Verified by" below); pin pixel-exact at plan-drafting time
-with a color-picker pass against the same file:
+**Concrete palette.** Pixel-sampled from the committed logo PNG at
+plan-implementation time (PR-time `sharp`-based pass over each
+letter region; values updated from scoping eyeball where shift was
+beyond the ±0x06 / channel bound named in the phase plan's Naming
+section, with pixel-sampled values authoritative going forward):
 
 | Field | Value | Source |
 | --- | --- | --- |
@@ -70,14 +72,14 @@ with a color-picker pass against the same file:
 | `surfaceStrong` | `#ffffff` | — |
 | `surfaceCard` | `#ffffff` | — |
 | `surfaceCardMuted` | `#f3f1fa` | Very pale lavender-white, M-blue undertone |
-| `text` | `#1a1d2e` | Near-black with indigo undertone — "transparent black" feel without pure `#000` |
-| `muted` | `#5a607a` | Cool gray, indigo undertone |
-| `border` | `rgba(26,29,46,0.10)` | Derived from `text` |
-| `borderSoft` | `rgba(26,29,46,0.06)` | — |
-| `borderMuted` | `rgba(26,29,46,0.10)` | — |
-| `primary` | `#3F4796` | Madrona M-blue (logo letter 1) — also matches the blue banner bar on madrona.us |
-| `secondary` | `#E04335` | Madrona second-A red (logo letter 7) — strong warm contrast for CTAs/headings |
-| `accent` | `#5FB6B0` | Madrona R-teal (logo letter 4) — softer highlight for badges/links/hover |
+| `text` | `#1a1d33` | Near-black with indigo undertone matching the (slightly bluer) pinned `primary` |
+| `muted` | `#5b6280` | Cool gray, indigo undertone |
+| `border` | `rgba(26,29,51,0.10)` | Derived from `text` |
+| `borderSoft` | `rgba(26,29,51,0.06)` | — |
+| `borderMuted` | `rgba(26,29,51,0.10)` | — |
+| `primary` | `#404e9d` | Madrona M-blue (logo letter 1) — pixel-sampled (was `#3F4796` eyeball) |
+| `secondary` | `#cc2229` | Madrona second-A red (logo letter 7) — pixel-sampled (was `#E04335` eyeball) |
+| `accent` | `#84c2b6` | Madrona R-teal (logo letter 4) — pixel-sampled (was `#5FB6B0` eyeball; the eyeball read the dark anti-aliased letter edges; the inner letter is noticeably lighter) |
 | `whiteWarm` | `#fefefe` | — |
 | `whitePanel` | `#ffffff` | — |
 | `whiteTint` | `#f8f8fb` | Very subtle indigo undertone |
@@ -94,19 +96,22 @@ with a color-picker pass against the same file:
 | `cardRadius` | `8px` | — |
 | `controlRadius` | `6px` | — |
 
-**Logo letter colors (eyeball-sampled, all 7).** Recorded for
-phase 1.2 reference in case the section component renderer
-updates ever want to surface additional Madrona accents:
+**Logo letter colors (pixel-sampled at plan-implementation time, all
+7).** Recorded for phase 1.2 reference in case the section component
+renderer updates ever want to surface additional Madrona accents.
+The seven values are the per-letter inner-region averages from the
+committed PNG (3749×808, sampled across the letter's center 50%
+horizontal × middle 40% vertical):
 
-| Letter | Hex (eyeballed) | Notes |
+| Letter | Hex (pixel-sampled) | Notes |
 | --- | --- | --- |
-| M | `#3F4796` | deep indigo / royal blue → Theme `primary` |
-| A (1st) | `#C44E2C` | burnt orange / terra-cotta |
-| D | `#D27D7D` | dusty rose / coral |
-| R | `#5FB6B0` | muted teal → Theme `accent` |
-| O | `#9DBE3E` | lime / yellow-green |
-| N | `#E1A776` | warm peach / tan |
-| A (2nd) | `#E04335` | vermillion red → Theme `secondary` |
+| M | `#404e9d` | deep indigo / royal blue → Theme `primary` |
+| A (1st) | `#d3572b` | burnt orange / terra-cotta |
+| D | `#da7f6f` | dusty rose / coral |
+| R | `#84c2b6` | muted teal → Theme `accent` |
+| O | `#a4c74c` | lime / yellow-green |
+| N | `#e9b170` | warm peach / tan |
+| A (2nd) | `#cc2229` | vermillion red → Theme `secondary` |
 
 **Verified by:**
 - [apps/site/public/events/madrona/logo.png](/apps/site/public/events/madrona/logo.png)

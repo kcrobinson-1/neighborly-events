@@ -3,8 +3,10 @@
 Platform theme model shared across `apps/web` and `apps/site`. Owns
 the `Theme` type, the universal `<ThemeScope>` React component, the
 `getThemeForSlug` resolver, and the platform Sage Civic Theme. The
-per-event registry is empty in M1 phase 1.5.2 and grows as M3 phase
-3.2 (test events) and M4 phase 4.1 (Madrona) register their themes.
+per-event registry was empty in M1 phase 1.5.2 and grew with M3
+phase 3.2's test events and the
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+M1 phase 1.1's Madrona registration.
 
 ## What this module owns
 
@@ -71,9 +73,13 @@ ships the component with **no production wiring**. Wiring sites:
 
 - M2 phase 2.2 — apps/web per-event admin (`/event/:slug/admin`)
 - M3 phase 3.1 — apps/site event landing pages
-- M4 phase 4.1 — apps/web event routes (game, redeem, redemptions)
-  alongside Madrona's Theme registration; this is the brand-launch
-  visual transition from today's warm-cream to Madrona's palette
+- demo-expansion epic M1 phase 1.1 — apps/web event routes (game,
+  redeem, redemptions) wrapped in centralized `<ThemeScope>` blocks
+- [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+  M1 phase 1.1 — Madrona's Theme registers under `slug=madrona`,
+  driving the brand-launch visual transition from today's warm-cream
+  defaults to Madrona's palette on every apps/web event-route shell
+  resolving `slug=madrona`
 
 ## Source-of-truth split for `:root` defaults
 
@@ -81,11 +87,12 @@ apps/web's `:root` block (in
 [`_tokens.scss`](/apps/web/src/styles/_tokens.scss)) carries
 today's warm-cream values byte-identically. apps/site's root layout
 emits the platform Sage Civic Theme. The two are deliberately
-independent sources, not a sync gap — apps/web carries warm-cream
-through M2 and M3 (per-event admin in M2 phase 2.2 wraps in
-`<ThemeScope>` but resolves to platform Sage Civic for any slug
-because no per-event Theme is registered until M4) and only switches
-to Madrona's Theme at M4 phase 4.1.
+independent sources, not a sync gap — apps/web's `:root` defaults
+remain in place for any event-route shell whose slug does not
+resolve to a registered Theme. With Madrona registered (Madrona
+demo-build epic M1 phase 1.1), apps/web event-route shells carrying
+`slug=madrona` render against Madrona's palette via the centralized
+`<ThemeScope>` wraps from demo-expansion epic M1 phase 1.1.
 
 ## Plan reference
 

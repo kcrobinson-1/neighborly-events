@@ -56,8 +56,10 @@ Today's `apps/web` warm-cream values are listed for cross-reference;
 they are the values M1 phase 1.5.2 encodes byte-identically as the
 apps/web `:root` defaults so existing routes render unchanged. The
 platform Sage Civic values are recorded under "Platform Sage Civic
-Theme" below; per-event theme values land later (Madrona in M4 phase
-4.1).
+Theme" below; per-event theme values land in their own
+`shared/styles/themes/<slug>.ts` files (Madrona registered in the
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+M1 phase 1.1).
 
 ### Brand bases — themable
 
@@ -230,11 +232,14 @@ The two candidates the plan named were:
 
 Option (a) is chosen because:
 
-1. **Theme author burden scales.** The epic ships 3–4 themes within
-   its own boundary (Sage Civic platform palette in 1.5.2; two test
-   event themes in M3 phases 3.1 and 3.2 — see
-   [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md); Madrona
-   in M4 phase 4.1) and many more after. ~10 fields per theme vs ~30 compounds in author
+1. **Theme author burden scales.** The platform horizon ships 3–4
+   themes within the event-platform-epic's own boundary (Sage Civic
+   platform palette in 1.5.2; two test event themes in M3 phases
+   3.1 and 3.2 — see
+   [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md);
+   Madrona in the
+   [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+   M1 phase 1.1) and many more after. ~10 fields per theme vs ~30 compounds in author
    ergonomics across that horizon.
 2. **Visual consistency by construction.** Brand-tied surfaces always
    derive from the corresponding brand base, so an author cannot

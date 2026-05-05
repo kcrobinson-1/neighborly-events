@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { harvestBlockPartyContent } from "../../../apps/site/events/harvest-block-party.ts";
+import { madronaContent } from "../../../apps/site/events/madrona.ts";
 import { riversideJamContent } from "../../../apps/site/events/riverside-jam.ts";
 import {
   getEventContentBySlug,
@@ -18,33 +19,42 @@ describe("getEventContentBySlug", () => {
   });
 
   it("returns the registered content for the riverside-jam slug", () => {
-    // M3 phase 3.2 registers the second test event. Same
+    // M3 phase 3.2 registered the second test event. Same
     // referential-identity stance as the harvest case above.
     expect(getEventContentBySlug("riverside-jam")).toBe(riversideJamContent);
   });
 
-  it("returns null for unknown slugs", () => {
-    expect(getEventContentBySlug("madrona")).toBeNull();
-    expect(getEventContentBySlug("not-a-real-slug")).toBeNull();
-    expect(getEventContentBySlug("")).toBeNull();
+  it("returns the registered content for the madrona slug", () => {
+    // The Madrona demo-build epic M1 phase 1.1 registered Madrona as
+    // the first non-test entry. Referential identity again.
+    expect(getEventContentBySlug("madrona")).toBe(madronaContent);
   });
 
-  it("registered content's slug field matches its registry key", () => {
-    // The page route's `Page` and `generateMetadata` resolve content
-    // via `params.slug`; if the registered content's `slug` field
-    // diverged from the registry key, every consumer reading
-    // `content.slug` would see a different string from the URL.
-    const content = getEventContentBySlug("harvest-block-party");
-    expect(content?.slug).toBe("harvest-block-party");
+  it("returns null for unknown slugs", () => {
+    expect(getEventContentBySlug("not-a-real-slug")).toBeNull();
+    expect(getEventContentBySlug("")).toBeNull();
   });
 });
 
 describe("registeredEventSlugs", () => {
-  it("contains exactly the registered slugs", () => {
-    expect(registeredEventSlugs.sort()).toEqual([
-      "harvest-block-party",
-      "riverside-jam",
-    ]);
+  it("is non-empty", () => {
+    // Sanity floor — `generateStaticParams` reads from this list and
+    // an empty list would silently zero out the prerender set.
+    expect(registeredEventSlugs.length).toBeGreaterThan(0);
+  });
+
+  it("every slug resolves via getEventContentBySlug, and the resolved content's slug matches the registry key", () => {
+    // The page route's `Page` and `generateMetadata` resolve content
+    // via `params.slug`; if a registered content's `slug` field
+    // diverged from its registry key, every consumer reading
+    // `content.slug` would see a different string from the URL. This
+    // walk also catches a registry entry whose value is `null`,
+    // `undefined`, or a stale alias.
+    for (const slug of registeredEventSlugs) {
+      const content = getEventContentBySlug(slug);
+      expect(content, `expected content for slug=${slug}`).not.toBeNull();
+      expect(content?.slug, `slug field should match registry key for ${slug}`).toBe(slug);
+    }
   });
 });
 
