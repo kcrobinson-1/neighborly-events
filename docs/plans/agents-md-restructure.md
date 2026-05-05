@@ -310,11 +310,59 @@ sub-agent delegation, stop-and-report, anti-patterns, change
 boundaries) apply to every session and are not enumerated in the
 table.
 
-The reference files (`reference/pr-template.md`, `reference/validation.md`,
-`reference/architecture-guardrails.md`, `reference/documentation-currency.md`)
-are linked from the workflow files that need them — the router does
-not list reference files because they are lookups, not session-scoped
-playbooks.
+### Reference files are topic-organized constraint sets, not lookups
+
+The `reference/` directory is **not** a stash of optional lookup
+material. Every file under `reference/` is a topic-organized
+*constraint set* that fires at a specific session moment:
+
+| Reference file | Fires at | Triggered by |
+|---|---|---|
+| `reference/architecture-guardrails.md` | **Pre-edit gate** (before the first edit) | Diff surface intersects `apps/`, `shared/`, `supabase/`, or styling |
+| `reference/validation.md` | Mid-session (Continuous Validation: before each commit on multi-file work) and end-of-session (PR Readiness, Validation Honesty) | Any code-touching session; the "before each commit" cadence is mid-session, not PR-time only |
+| `reference/documentation-currency.md` | Mid-session (doc-update triggers as code changes) and end-of-session (Doc Currency PR Gate) | Diff surface includes any of the named docs (`README.md`, `docs/architecture.md`, `docs/dev.md`, etc.) |
+| `reference/pr-template.md` | Per-commit (Conventional Commits) and end-of-session (PR body template) | Every commit; every PR open |
+
+The router does not enumerate reference files in the session-type
+routing table because the *triggering* logic lives in the workflow
+file (which is what tells you "you are now at the pre-edit gate;
+load `architecture-guardrails.md`"). The workflow file's role is
+orchestration; reference files carry the binding rule content.
+
+Earlier draft of this plan called reference files "lookups, not
+session-scoped playbooks." That framing was wrong — it would let an
+implementation session skip
+`reference/architecture-guardrails.md` entirely and miss
+pre-edit-time constraints like "Do not casually duplicate business
+rules across frontend and backend" and the styling-token bucket
+discipline. Reframed here as constraint sets so the reading
+discipline matches what each file actually does.
+
+### Mandatory pre-edit reference reads
+
+`reference/architecture-guardrails.md` is a **mandatory pre-edit
+read** for any session whose diff surface intersects:
+
+- `apps/web/`, `apps/site/`, `shared/`, `supabase/` (the
+  responsibility-split rules and the "do not duplicate business
+  rules" / "shared source of truth drives both" constraints)
+- styling surfaces — `apps/web/src/styles.scss`,
+  `apps/web/src/styles/`, `shared/styles/`, or any SCSS / CSS
+  custom property definition site (the Styling Token Discipline
+  rules)
+
+`workflows/implementation.md` and `workflows/plan-implementation.md`
+both name this routing in their pre-edit-gate sections: "Before
+the first edit to a file matching the surface set above, read
+`docs/agents/reference/architecture-guardrails.md` end-to-end." The
+read is not negotiable — it is the same shape of pre-edit gate the
+root router carries for the universal rules.
+
+This pattern generalizes for any future reference file whose
+content is pre-edit binding (vs. PR-time lookup): the workflow
+file names the trigger surface and the mandatory read; the
+reference file lives under `reference/` because that is where
+topic-organized constraint sets live in this layout.
 
 ### Single-file Plan-to-PR rule placement
 
@@ -401,11 +449,24 @@ mix of rules and estimates," implementation may revise.*
   lightweight path, execution rules, refactor completion proof,
   feature-time cleanup, versioning discipline. Plus self-review
   checklist (general items not specific to plan-implementation).
+  Pre-edit gate explicitly names the mandatory routing into
+  `reference/architecture-guardrails.md` for diff surfaces in
+  `apps/`, `shared/`, `supabase/`, or styling — read end-to-end
+  before the first edit. Continuous Validation and Validation
+  Honesty load from `reference/validation.md` mid-session before
+  each commit on multi-file work; doc-update triggers from
+  `reference/documentation-currency.md` fire as code changes; PR
+  template + Conventional Commits from `reference/pr-template.md`
+  apply per-commit and at PR open.
 - `docs/agents/workflows/plan-implementation.md` — plan-implementer
   extras: walking the plan's contracts, distinguishing rule vs
   estimate deviations, running plan's named self-review audits, the
   "When the plan says X but reality is Y" deviation handling. Points
-  at `planning/plan-to-pr.md` for the Status-flip rules.
+  at `planning/plan-to-pr.md` for the Status-flip rules. Inherits
+  every pre-edit / mid-session / PR-time reference-file routing from
+  `workflows/implementation.md` — does not duplicate it. Adds the
+  plan's own `Cross-Cutting Invariants` walk and the named
+  self-review audits per surface.
 - `docs/agents/workflows/review-fixes.md` — review-fix rigor, GH
   thread reply rules, the "audit siblings of the same class" rule.
 - `docs/agents/workflows/ui-review.md` — UI review runs, capture
@@ -456,7 +517,16 @@ mix of rules and estimates," implementation may revise.*
   guardrails, the apps/web vs apps/site vs supabase split, styling
   token discipline, the cross-app hard-navigation guidance (a
   pointer; rule body lives in `planning/phase.md` because that is
-  where it binds at plan-drafting time).
+  where it binds at plan-drafting time). **Mandatory pre-edit
+  read** for any session whose diff surface intersects `apps/`,
+  `shared/`, `supabase/`, or styling — see "Mandatory pre-edit
+  reference reads" under Routing logic. Despite living under
+  `reference/`, this file is *not* an optional lookup; the rules
+  it carries (no business-rule duplication across frontend and
+  backend, themable-vs-structural token bucket discipline,
+  shared-source-of-truth for quiz correctness / scoring /
+  validation, no production-fallback drift) bind before the first
+  edit, not at PR-open time.
 - `docs/agents/reference/documentation-currency.md` — Doc Currency
   Is a PR Gate, the README / architecture / dev.md / open-questions
   / backlog update triggers.
@@ -706,6 +776,17 @@ diff surfaces":
   guardrails, sub-agent delegation, stop-and-report, anti-patterns,
   and change boundaries appear in the root router only — not
   duplicated into any workflow / planning / reference file.
+- **Reference-file routing audit.** Confirm `workflows/implementation.md`
+  names the mandatory pre-edit read of
+  `reference/architecture-guardrails.md` for diff surfaces in
+  `apps/`, `shared/`, `supabase/`, or styling — explicit, not
+  buried in prose. Confirm the pre-edit-gate section in
+  `workflows/implementation.md` walks reads from each
+  reference file at the right moment (architecture-guardrails
+  pre-edit; validation mid-session before each commit;
+  documentation-currency mid-session as code changes; pr-template
+  per-commit and at PR open). Confirm `workflows/plan-implementation.md`
+  inherits this routing without duplicating it.
 
 ## Documentation Currency PR Gate
 
