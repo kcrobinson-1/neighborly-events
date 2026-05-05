@@ -138,8 +138,23 @@ number, then closes that PR and reopens as a different number, then has
 to chase every reference. The simplest fix is not to write the PR number
 at all — the merge date plus the plan-doc link survive any churn.
 
-Before opening or updating a PR, grep the diff for `#\d{2,}` (PR / issue
-number citations) and `[a-f0-9]{7,}` (commit hashes). Hits in scoping
-docs, PR descriptions, or commit messages are fine; hits in any other
-tracked file are a boundary violation and should be rewritten using one
-of the durable forms above.
+Before opening or updating a PR, scan the diff for ephemeral coordination
+identifiers in tracked files outside `docs/plans/**/scoping/`. The check
+is semantic, not pattern-based — distinguish identifiers used as
+**citations** (PR / issue numbers, commit hashes, "this PR" placeholders,
+GitHub PR or issue links, branch-name references tied to a specific work
+cycle, Linear / Jira ticket IDs, Slack permalinks, and similar) from
+identifiers used as **load-bearing data** (UUIDs in fixtures, hex color
+codes, ETags, `event_code` / slug values, hashes in test inputs, content
+that the runtime actually consumes). Citations in tracked durable docs
+are boundary violations and should be rewritten using one of the durable
+forms above; load-bearing data is content and stays.
+
+This is an agent-judgment pass, not a deterministic grep. Greps can flag
+the obvious citation forms efficiently but they false-positive on
+legitimate hex / numeric content and they miss novel leak shapes — a
+contributor inventing a new coordination identifier (a fresh ticket
+system's ID format, a different chat platform's permalink) won't match
+any pre-defined regex. The semantic walk catches both the obvious shapes
+and the unforeseen ones; greps remain useful as an efficiency aid for the
+common cases but are not the rule.
