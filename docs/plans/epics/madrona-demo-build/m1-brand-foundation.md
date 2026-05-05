@@ -2,7 +2,14 @@
 
 ## Status
 
-Proposed.
+Landed across
+[PR #182](https://github.com/kcrobinson-1/neighborly-events/pull/182)
+(phase 1.1) and
+[PR #185](https://github.com/kcrobinson-1/neighborly-events/pull/185)
+(phase 1.2 with phase 1.3 collapsed in). All M1 phase-status rows
+in the table below are at `Landed`; this close-out PR flips the
+milestone-level Status, reconciles the epic's Sizing Summary M1
+line, and deletes the transient phase scoping docs.
 
 This milestone doc is the durable coordination artifact for M1
 of the Madrona demo-build epic: restated milestone goal, phase
