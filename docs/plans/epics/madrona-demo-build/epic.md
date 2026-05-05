@@ -337,9 +337,15 @@ epic-creation PR specifically.
 3 milestones. Estimate, not binding; per-milestone PR counts are
 re-derived at each milestone's planning session.
 
-- **M1:** 2–3 PRs. Theme registration; `EventContent` shape
-  extensions + section component renderer updates; placeholder
-  Madrona content module.
+- **M1:** 2–3 PRs estimated; **2 PRs actual** —
+  [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182)
+  (Theme registration + minimal Madrona content module) and
+  [#185](https://github.com/kcrobinson-1/neighborly-events/pull/185)
+  (`EventContent` shape extensions + section component renderer
+  updates + Madrona placeholder depth-field population, with
+  phase 1.3 collapsed into 1.2 per the milestone-doc-authorized
+  deviation). Within the estimate range; the collapse rationale
+  is recorded in PR #185's `## Estimate Deviations`.
 - **M2:** 1–2 PRs. Placeholder Madrona game authored and
   published; redemption agent assigned; cross-app theme
   continuity UI-review pair captured.

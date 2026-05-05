@@ -45,7 +45,7 @@ After this PR:
 
 - `shared/styles/themes/madrona.ts` exists and exports
   `madronaTheme: Theme` with the palette resolved in
-  [scoping/m1-phase-1-1.md decision 1](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md);
+  scoping/m1-phase-1-1.md decision 1;
 - [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
   registers `"madrona": madronaTheme` so
   [`getThemeForSlug`](/shared/styles/getThemeForSlug.ts) returns
@@ -133,7 +133,7 @@ recording for self-review:
   `apps/site/lib/eventContent.ts` under the registry key derived
   from `madronaContent.slug = "madrona"`.
 - **Palette table.** The full 27-field palette is the
-  [scoping/m1-phase-1-1.md decision 1 table](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md).
+  scoping/m1-phase-1-1.md decision 1 table.
   Plan-time pixel-exact pinning happens against the committed
   logo at
   [`apps/site/public/events/madrona/logo.png`](/apps/site/public/events/madrona/logo.png);
@@ -176,7 +176,7 @@ recording for self-review:
 that conforms to the
 [`Theme` type at shared/styles/types.ts:16-61](/shared/styles/types.ts).
 All 27 fields are populated; values come from the
-[scoping decision 1 palette table](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md)
+scoping decision 1 palette table
 with pixel-exact pinning against the committed logo at
 plan-implementation time.
 
@@ -473,7 +473,7 @@ structural call requires deviating, recorded in the PR body's
   `Landed` for the milestone doc itself defers to the terminal
   M1 PR per the milestone Doc Currency map** — phase 1.1 is not
   the terminal M1 PR if 1.2 / 1.3 ship after.
-- [docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md) —
+- docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md —
   Status `Scoping in progress` → `Absorbed into plan` (or
   similar terminal label); the file deletes in batch with
   sibling scoping docs at the milestone-terminal PR per
@@ -545,7 +545,7 @@ mix of rules and estimates"; the implementer may refine.
    apps/site is touched per memory rule).
 3. **Reality-check re-run.** Re-verify every line-number
    citation in
-   [scoping/m1-phase-1-1.md §Reality-check inputs](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md)
+   scoping/m1-phase-1-1.md §Reality-check inputs
    against current code. Pin the palette pixel-exact via
    color-picker pass against
    `apps/site/public/events/madrona/logo.png`. Re-grep for
@@ -937,7 +937,7 @@ milestone-doc Cross-Phase Risks (which inherit by reference):
   — parent milestone doc. Owns Cross-Phase Invariants,
   Cross-Phase Risks, Documentation Currency map, Backlog Impact
   this plan binds by reference.
-- [`scoping/m1-phase-1-1.md`](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-1.md)
+- `scoping/m1-phase-1-1.md`
   — scoping doc for this phase. Owns the rejected-alternatives
   deliberation prose for the three settled-at-scoping decisions
   (palette, logo commit, phase scope split) absorbed into this

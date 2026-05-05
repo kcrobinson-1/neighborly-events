@@ -86,7 +86,7 @@ After this PR:
   bio, featured quote — as `?: T` optional fields per scoping
   decision 1
   (`Verified by:`
-  [scoping/m1-phase-1-2.md §Decisions made at scoping time](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md));
+  scoping/m1-phase-1-2.md §Decisions made at scoping time);
 - `EventContent.sponsors[number]` carries the sponsor-depth
   optional fields — short description, social links — as `?: T`
   optional fields, same rule;
@@ -151,7 +151,7 @@ walks each against this PR's diff:
 Invariant 2 (no foreclosure of donation/feedback child epics) is
 the load-bearing audit for the Naming decisions in §Naming below
 — every new field name is walked against the constraint in
-[scoping decision 3](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md).
+scoping decision 3.
 Invariant 4 (render-when-present) is load-bearing on every
 renderer-extension contract in §Contracts — the byte-for-byte
 falsifier against the test events is the structural anchor.
@@ -165,8 +165,8 @@ Settled. The following spellings are the contract this plan
 ships against; they were walked in
 [PR #183](https://github.com/kcrobinson-1/neighborly-events/pull/183)
 with no rebuttal under the constraints in
-[scoping decision 3 — no foreclosure of donation/feedback child
-epics](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md).
+scoping decision 3 — no foreclosure of donation/feedback child
+epics.
 Rationale per name is preserved so future readers can
 reconstruct the choice without diving back into the PR thread.
 
@@ -410,7 +410,7 @@ named here as a permitted shape, not a binding contract.
 
 ### Madrona placeholder-content extension contract (conditional)
 
-If [scoping's open decision on phase 1.3 collapse](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md)
+If scoping's open decision on phase 1.3 collapse
 fires (collapse: 1.2 absorbs 1.3), then
 [`apps/site/events/madrona.ts`](/apps/site/events/madrona.ts)'s
 placeholder lineup and sponsors arrays gain populated values for
@@ -482,7 +482,7 @@ structural call requires deviating, recorded in the PR body's
 - [docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md)
   — this plan's Status flips `Proposed` → `Landed` at PR-merge
   time, with the PR number recorded.
-- [docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md)
+- docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md
   — Status `Scoping in progress` → `Absorbed into plan` (or
   similar terminal label); the file deletes in batch with
   sibling scoping docs at the milestone-terminal PR.
@@ -542,7 +542,7 @@ mix of rules and estimates"; the implementer may refine.
    apps/site is touched per memory rule).
 3. **Reality-check re-run.** Re-verify every line-number
    citation in
-   [scoping/m1-phase-1-2.md §Reality-check inputs](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md)
+   scoping/m1-phase-1-2.md §Reality-check inputs
    against current code. Re-grep
    `docs/plans/epics/madrona-donation/` and
    `docs/plans/epics/madrona-feedback/` for any child-epic
@@ -717,7 +717,7 @@ alongside the milestone-doc-level walks listed below:
   every new field name (`imageSrc`, `imageAlt`, `extendedBio`,
   `featuredQuote`, `externalLinks`, `shortDescription`,
   `socialLinks`) against the constraint in
-  [scoping decision 3](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md):
+  scoping decision 3:
   none collide with names a future donation- or feedback-child-
   epic shape might want. If the donation or feedback child
   epic scoping has surfaced between scoping and PR, walk
@@ -957,7 +957,7 @@ milestone-doc Cross-Phase Risks (which inherit by reference):
   Cross-Phase Risks, Documentation Currency map, Backlog
   Impact this plan binds by reference. Phase Status row 1.2
   authorizes the 1.3-collapse-into-1.2 deviation in advance.
-- [`scoping/m1-phase-1-2.md`](/docs/plans/epics/madrona-demo-build/scoping/m1-phase-1-2.md)
+- `scoping/m1-phase-1-2.md`
   — scoping doc for this phase. Owns the rejected-alternatives
   deliberation prose for the five settled-at-scoping decisions
   (additive-optional shape, render-when-present, field-name
