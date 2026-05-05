@@ -45,6 +45,29 @@
  * cross-cutting invariant 4 — render-when-present, not require-
  * when-absent). The renderer reads both fields together; setting
  * one without the other yields the no-logo render.
+ *
+ * `lineup[number]` and `sponsors[number]` carry additive optional
+ * depth fields the [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
+ * M1 phase 1.2 added: bands gain `imageSrc` / `imageAlt`,
+ * `extendedBio`, `featuredQuote`, and `externalLinks`; sponsors
+ * gain `shortDescription` and `socialLinks`. Every new field is
+ * `?: T` and the `EventLineup` / `EventSponsors` renderers
+ * truthiness-guard each independently — an event that omits the
+ * new fields renders byte-for-byte identical to the pre-1.2
+ * output (the same render-when-present discipline the
+ * `meta.logoSrc/Alt` paragraph above commits to). The two test
+ * events (`harvest-block-party`, `riverside-jam`) deliberately
+ * omit the new fields so that falsifier stays structural rather
+ * than aspirational. `extendedBio` splits on `\n\n` for paragraph
+ * rendering — markdown is intentionally not supported in 1.2.
+ * `featuredQuote.attribution` is meaningful only when
+ * `featuredQuote.text` is present, so the pair nests; `imageAlt`
+ * falls back to the band's `name` when `imageSrc` is present
+ * without it. `externalLinks` and `socialLinks` are separately
+ * named (not unified under a generic `links[]`) because the
+ * semantic role differs across bands and sponsors, and the
+ * field-name specificity preserves invariant 2 — no foreclosure
+ * of the donation / feedback child epics.
  */
 export type EventContent = {
   slug: string;
@@ -80,6 +103,11 @@ export type EventContent = {
     slug: string;
     name: string;
     bio?: string;
+    imageSrc?: string;
+    imageAlt?: string;
+    extendedBio?: string;
+    featuredQuote?: { text: string; attribution?: string };
+    externalLinks?: Array<{ label: string; href: string }>;
     setTimes: Array<{ day: string; time: string }>;
   }>;
   sponsors: Array<{
@@ -88,6 +116,8 @@ export type EventContent = {
     logoAlt: string;
     href: string;
     tier?: string;
+    shortDescription?: string;
+    socialLinks?: Array<{ label: string; href: string }>;
   }>;
   faq: Array<{ question: string; answer: string }>;
   cta: { label: string; sublabel?: string };
