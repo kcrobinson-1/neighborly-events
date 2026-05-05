@@ -32,6 +32,7 @@
     "test:e2e:redemption:production-smoke": "node scripts/testing/run-production-redemption-smoke.cjs",
     "test:e2e:demo-mode-bypass": "playwright test --config=playwright.demo-mode-bypass.config.ts",
     "validate:local": "node scripts/testing/run-local-validation.cjs",
+    "release:seed:madrona": "node scripts/release/seed-madrona-demo-content.cjs",
     "release:watch-smoke": "node scripts/release/post-merge-smoke-watch.cjs",
     "ui:review:capture": "node scripts/ui-review/capture-ui-review.cjs",
     "ui:review:capture:admin": "node scripts/ui-review/capture-ui-review.cjs --mode admin",

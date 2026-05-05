@@ -38,3 +38,4 @@ export {
   createDuplicatedDraftContent,
   createStarterDraftContent,
 } from "./draftCreation.ts";
+export { madronaDemoGameContent } from "./madrona-demo-game-content.ts";
