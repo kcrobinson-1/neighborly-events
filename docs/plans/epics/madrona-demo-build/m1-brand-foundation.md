@@ -2,7 +2,7 @@
 
 ## Status
 
-In draft.
+Proposed.
 
 This milestone doc is the durable coordination artifact for M1
 of the Madrona demo-build epic: restated milestone goal, phase
@@ -110,7 +110,7 @@ merged code at phase-start.
 
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 1.1 | Madrona Theme registration + minimal Madrona content module | _plan-pending_ | Plan-pending | — |
+| 1.1 | Madrona Theme registration + minimal Madrona content module | [m1-phase-1-1-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md) | Proposed | — |
 | 1.2 | `EventContent` shape extensions + section component renderer updates | _plan-pending_ | Plan-pending | — |
 | 1.3 | Placeholder Madrona content depth pass exercising the extended shape | _plan-pending_ | Plan-pending | — |
 
