@@ -63,15 +63,13 @@ as a router in restructure step 6.
 
 ## Expected Workflow
 
-Work should follow the repo process even when the prompt only describes the end state.
-
-Use the lightweight path only when the change is small and low-risk, for example:
-
-- a single-file fix
-- a narrow copy or style adjustment
-- a small test update that does not change structure
-
-Use the full structured path when the change is multi-file, architectural, refactor-heavy, or changes tests, validation, documentation, or workflow.
+The lightweight-vs-full-structured-path intro lives in
+[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Lightweight vs full structured" — content moved per the AGENTS.md
+restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ### Planning Depth
 
@@ -923,32 +921,12 @@ rules, routing, generated artifacts, or unrelated production code.
 
 ### Feature-Time Cleanup And Refactor Debt Capture
 
-Feature work should leave the touched code coherent, but it should not expand
-into opportunistic refactors that are not required for the feature.
-
-During implementation:
-
-- prefer small local cleanup when it directly improves the feature diff, reduces
-  immediate duplication, or prevents confusing ownership in the touched files
-- do not restructure unrelated code just because nearby code could be cleaner
-- do not block a feature on broad cleanup unless the existing structure makes
-  the feature hard to implement safely
-- if a file or module becomes noticeably harder to review because of the
-  feature, decide whether a small extraction belongs in the same PR
-- if the cleanup is useful but not necessary for the feature, record it as a
-  bounded follow-up in `docs/tracking/code-refactor-checklist.md`
-
-Before handoff, run a post-implementation structure review:
-
-- identify any touched file that grew large, mixed responsibilities, duplicated
-  logic, or became harder to test because of the change
-- fix the issue in the same PR only when it is small, directly related, and does
-  not obscure the feature being implemented
-- otherwise add a checklist item with the specific file or module, the concrete
-  responsibility problem, the desired target shape, and the minimum validation
-  command
-- do not add checklist items for cosmetic preferences, speculative abstraction,
-  or general "clean up this area" work
+See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Feature-Time Cleanup And Refactor Debt Capture" — content moved per
+the AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ### Pre-Edit Gate
 
@@ -980,42 +958,19 @@ Before editing for any non-trivial task:
 
 ### Lightweight Path
 
-1. Read the relevant code and matching docs before editing.
-2. Make the smallest coherent change that solves the task.
-3. Update any touched tests and docs in the same pass when they would otherwise drift.
-4. Review the diff before finishing.
-5. Run the relevant validation commands before handing off.
+See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Lightweight Path" — content moved per the AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ### Full Structured Path
 
-1. Ground in the current code and docs before making structural decisions.
-2. Check branch state before editing.
-   If you are on `main`, create or switch to a feature branch before the first repo edit.
-3. Write down the execution plan before editing.
-   Use a local README, checklist, or equivalent in the relevant area when the work spans multiple files or steps.
-4. Define the target structure and file responsibilities up front so the refactor is constraint-driven, not improvised file by file.
-5. Define the intended commit boundaries up front.
-   For multi-step work, note the planned commit slices before the first code change so implementation does not collapse into one large commit by accident.
-6. Execute in small, reversible commits.
-   Each commit should leave the repo working, keep tests aligned with code, and preserve a reviewable intermediate state.
-7. Validate continuously, not just at the end.
-   Run the relevant checks before each commit and after any risky structural step.
-8. Run an automated code-review feedback loop before documentation cleanup.
-   Review the diff from a senior-engineer/code-review stance, identify concrete
-   bugs, behavior drift, weak tests, stale copy, accessibility or usability
-   regressions, misplaced abstractions, and docs drift. Apply the best fixes,
-   rerun the focused validation, and commit review fixes separately when that
-   makes the history easier to review.
-9. Keep documentation current as the work progresses.
-   Do not save README or architecture updates for the very end if the structure is already changing underneath them.
-   After the code-review feedback loop, update durable docs so they describe
-   the reviewed implementation rather than the first implementation pass.
-10. Before handoff, delete temporary execution-plan/checklist docs or convert
-   them into durable reference docs. Do not leave running-state planning docs in
-   the repo after their phase has landed.
-11. Self-review each commit-sized diff, then self-review the final branch as a whole before handing off or opening a PR.
-
-If you discover that the current docs no longer describe the code accurately, fix the docs in the same change when practical.
+See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Full Structured Path" — content moved per the AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ### Review-Fix Rigor
 
@@ -1062,23 +1017,14 @@ thread state readable for humans:
 
 ## Execution Rules
 
-Prefer constraint-driven execution over open-ended refactoring.
-
-- decide the intended module boundaries before moving files around
-- prefer extracting one seam at a time over broad rewrites
-- keep code, tests, and docs moving together
-- externalize plan state when the work spans multiple steps so later decisions do not depend on memory
-- prefer adding focused tests for newly exposed pure seams instead of relying only on higher-level coverage
-
-For multi-step work, do not batch everything into one large uncommitted transformation.
-
-- create or maintain a local checklist in the relevant area when it helps track structure, responsibilities, or remaining work
-- update that checklist or README as steps are completed
-- remove or finalize that checklist before handoff so canonical docs, not
-  stale running state, describe the implemented system
-- keep intermediate states understandable to the next engineer or agent
-- if the work started from `main`, do not leave implementation only in the working tree on `main`; move it onto a feature branch before substantial edits accumulate
-- if the change spans backend, frontend, tests, and docs, assume it should land as multiple commits unless there is a specific reason not to
+The Execution Rules intro and bullets live in
+[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Execution Rules" — content moved per the AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6. Universal subsections
+(Sub-Agent Delegation, Stop-And-Report Conditions) remain inline below
+until step 6 promotes them into the root router proper.
 
 ### Sub-Agent Delegation
 
@@ -1112,28 +1058,12 @@ the missing gates before treating the work as done.
 
 ### Refactor Completion Proof
 
-For checklist, cleanup, split, extraction, or other behavior-preserving refactor
-tasks, passing tests is necessary but not sufficient. Before marking the task
-complete, prove that the requested target shape was actually achieved.
-
-- define the target shape before editing, including what responsibilities should
-  remain in the original file or module and what responsibilities should move
-- verify the final diff against every concrete clause in the checklist item or
-  prompt, not just against the task title
-- report the final responsibility split in the handoff for any split or
-  extraction task
-- include before/after size or ownership evidence when file size, reviewability,
-  or local ownership is the reason for the task
-- do not mark a checklist item complete merely because some helper was extracted
-  or some code moved; the remaining code must match the requested shape
-- if substantial duplicated logic, mixed responsibilities, or unclear ownership
-  remains, either finish the refactor or leave the checklist item open and
-  explain the blocker
-- if validation passes but the target shape is not met, treat the task as
-  incomplete
-- if the refactor does not clearly improve reviewability, ownership, risk
-  reduction, or future change cost, stop and report instead of marking it
-  complete
+See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Refactor Completion Proof" — content moved per the AGENTS.md
+restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ### Stop-And-Report Conditions
 
@@ -1207,14 +1137,12 @@ the error might be.
 
 ### Versioning And Dependency Discipline
 
-Choose versions deliberately when you add or update libraries, actions, CLIs, or other tooling that pulls in libraries.
-
-- prefer current stable versions that are compatible with the repo's runtime and framework constraints
-- do not use floating values such as `latest`, broad unpinned ranges, or moving tags when a reproducible pinned version is practical
-- when an action or tool installs another dependency under the hood, verify the installed version is compatible with the repo and the surrounding runtime
-- when Deno, npm, JSR, GitHub Actions, or other package systems interact, make sure their resolved versions do not drift silently across environments
-- update lockfiles and any version-carrying config in the same change
-- prefer upgrading intentionally with a clear validation pass over opportunistic version bumps mixed into unrelated work
+See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Versioning And Dependency Discipline" — content moved per the
+AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ## Documentation Expectations
 
