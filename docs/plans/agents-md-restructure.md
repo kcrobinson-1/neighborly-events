@@ -2,8 +2,14 @@
 
 ## Status
 
-`In draft` — alternatives evaluated and target shape proposed; awaiting
-user sign-off before promotion to `Proposed` and execution.
+`In draft` — alternatives evaluated, target shape proposed, and the
+three initial open decisions resolved by user direction (see "User
+Direction" below). Awaiting plan-review pass(es) before promotion to
+`Proposed` and execution. Per user direction, the restructure ships as
+a single PR on this branch: plan-doc commit is already up; remaining
+review-cycle commits land here, then the restructure execution lands
+on this branch as additional commits, and the PR description is
+updated to cover the full diff before flipping the plan to `Landed`.
 
 This is a cross-cutting plan (not bound to a single epic) and lives at
 `docs/plans/agents-md-restructure.md` per the in-repo layout convention
@@ -304,19 +310,47 @@ Same treatment for the falsifiability check
 other anti-pattern ([AGENTS.md:943-950](/AGENTS.md)), and the
 exact-match label quoting rule ([AGENTS.md:825-849](/AGENTS.md)).
 
-### Subdirectory AGENTS.md auto-loading: deferred
+### Subdirectory AGENTS.md auto-loading: in-scope, conditional, late commit
 
 Claude Code auto-loads subdirectory `AGENTS.md` / `CLAUDE.md` files
-when reading files in that directory. We could add a thin
-`docs/plans/AGENTS.md` that points planning sessions at the planning
-shared rules. Deferred from this refactor because (a) other agent
-tools used in this repo (Codex review, GitHub Copilot, etc.) may
-not honor that mechanism uniformly, and (b) it only fires when
-files are *read* in `docs/plans/`, not when *written* — and a
-new-plan-drafting session typically writes a file that does not yet
-exist. The explicit router in [`AGENTS.md`](/AGENTS.md) is the
-portable mechanism. We can add `docs/plans/AGENTS.md` later as a
-safety net once the explicit router is established and stable.
+when reading files in that directory. Per user direction, thin
+nested AGENTS.md files land near the end of this PR — but only if
+they carry non-duplicative content. The explicit router in the root
+[`AGENTS.md`](/AGENTS.md) remains the primary, portable mechanism;
+nested files are a Claude-Code-specific safety net that fires when
+an agent reads a file in (e.g.) `docs/plans/` without first re-reading
+the root router.
+
+Candidate locations and the duplication test for each:
+
+- **`docs/plans/AGENTS.md`** — fires when an agent reads or edits any
+  plan doc. Non-duplicative content: a one-paragraph reminder that
+  planning sessions should load `docs/agents/planning/shared.md` plus
+  the per-level file (`epic.md` / `milestone.md` / `phase.md` /
+  `plan-to-pr.md`), with the canonical pointers. This is a *router
+  fragment*, not a copy of the planning rules — duplication-free by
+  construction.
+- **`docs/agents/AGENTS.md`** — fires when an agent reads any file in
+  the new `docs/agents/` tree. Non-duplicative content: a one-line
+  pointer to `docs/agents/README.md` for directory orientation. The
+  README itself is the durable map; `AGENTS.md` here is just the
+  hook that makes Claude Code load the README on directory entry.
+  Duplication test: pass — pointer only.
+- **`apps/web/AGENTS.md`, `apps/site/AGENTS.md`, `supabase/AGENTS.md`,
+  `shared/AGENTS.md`** — *not* added in this PR. The
+  per-app guidance currently in the root file's Architecture
+  Guardrails moves to `docs/agents/reference/architecture-guardrails.md`,
+  not into per-app nested files. Adding per-app nested files would
+  duplicate that content and would expand the scope of this refactor
+  beyond restructuring agent guidance into restructuring per-app
+  documentation. Out of scope here; can land separately if the
+  duplication-free version emerges.
+
+Each candidate above is re-confirmed against the "non-duplicative"
+test at execution time before its commit lands. If a candidate's
+content cannot be expressed without restating something already in
+the root router or a leaf file, the candidate is dropped from this
+PR with a one-line note in the PR body.
 
 ## Files To Touch — New
 
@@ -512,13 +546,14 @@ each commit standing alone as a coherent step. Estimated commit
 boundaries (per AGENTS.md "intended commit boundaries are an estimate;
 implementer may refine"):
 
-1. **Land this plan doc.** Either as its own PR or as commit 1 of the
-   restructure PR. Decision deferred until user sign-off — see "Open
-   decisions" below. If shipped as its own PR, this commit flips the
-   plan's Status from `In draft` → `Proposed` after addressing any
-   review feedback; the restructure PR then flips it to `Landed`.
-2. **Create the new `docs/agents/` tree with empty files.** Empty
-   stubs with frontmatter (one-line description per file). Verifies
+1. **Plan doc lands as commit 1 of this PR** (already shipped:
+   commit `89ccb86`). Plan-review pass(es) land as additional
+   commits on this branch before execution begins; the plan flips
+   from `In draft` → `Proposed` after the plan-review walk per
+   AGENTS.md "`In draft` → `Proposed` promotion gate" — that
+   walk is what gates the start of execution.
+2. **Create the new `docs/agents/` tree with empty stubs.** Empty
+   files with a one-line description at the top of each. Verifies
    the directory layout before any content moves. Includes
    `docs/agents/README.md`.
 3. **Move reference content.** Carve out
@@ -543,20 +578,33 @@ implementer may refine"):
 6. **Rewrite root `AGENTS.md` as router.** Drop the temporary
    pointer-stubs left behind by steps 3-5. Add the routing table
    and verify it covers every session type from the proposed list.
-   Verify root file is at the ~250-line target.
+   No fixed target size; the size-smell check in the validation gate
+   covers this.
 7. **Update incoming references.** `grep -rn 'AGENTS.md' .` and
    audit every hit. Update plan docs / `docs/dev.md` / `README.md` /
    `docs/plans/planning-doc-location.md` references that point at
    moved sections. The convention going forward is to cite section
    *names* (which carry across the move) plus the new file path.
-8. **Self-review pass.** Walk the cross-cutting invariants above
+8. **Add nested AGENTS.md files (conditional).** For each candidate
+   in the "Subdirectory AGENTS.md auto-loading" decision above,
+   re-confirm the non-duplicative test against the now-final leaf
+   files. If a candidate passes, add it as its own commit. If a
+   candidate fails the test, drop it from this PR with a one-line
+   note in the PR body; the candidate can land separately if a
+   duplication-free version emerges later.
+9. **Self-review pass.** Walk the cross-cutting invariants above
    against the final tree. Confirm every source section in the
    mapping table has actually landed in its destination. Run the
    "no silent rule loss" check by diffing the bullet-by-bullet
    content of each source section against the destination file.
-9. **Flip plan Status to `Landed`.** In the same PR, per AGENTS.md
-   "Plan-to-PR Completion Gate." If shipped as a separate plan PR
-   first, the close-out happens in the restructure PR.
+   Run the size-smell check from the validation gate.
+10. **Update PR description and flip plan Status to `Landed`.**
+    The PR was opened plan-only at commit 1; before merge, the
+    description is rewritten to cover the full restructure diff
+    (Summary, Why, Validation, etc. all updated to reflect the
+    expanded scope). Plan Status flips from `Proposed` →
+    `Landed` in the final commit, per AGENTS.md "Plan-to-PR
+    Completion Gate."
 
 ## Validation Gate
 
@@ -569,8 +617,16 @@ changed surface directly. Validation is structural:
   anecdote, every exception clause from the source must appear
   in the destination (verbatim or as a tightened restatement
   that does not weaken the rule).
-- [ ] **Root router under target size.** `wc -l AGENTS.md` returns
-  ≤ 300 (target 250, hard ceiling 300).
+- [ ] **File sizes pass a smell check.** No fixed line target
+  (per user direction; stretching or squashing a file's content
+  to hit a number is itself an anti-pattern). Instead: examine
+  every file in the new tree against its declared scope. A file
+  much shorter than expected for its scope is a smell that the
+  scope was over-claimed or content is missing; a file much
+  longer than expected is a smell that the file is doing more
+  than one job and should split, or that universal-rule content
+  leaked in. Confirm each outlier (in either direction) makes
+  sense in its case before signing off.
 - [ ] **Routing table covers every session type.** Walk the
   routing table against the session-type list in this plan's
   "Routing logic" section; every row has a destination.
@@ -636,9 +692,15 @@ Walk the triggers from AGENTS.md "Doc Currency Is a PR Gate":
   GitHub Discussions). That is its own open investigation tracked
   in [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md);
   this restructure does not touch it.
-- Adding a `docs/plans/AGENTS.md` for nested auto-loading. Deferred
-  per the "Routing logic" decision above; can be added later as a
-  safety net once the explicit router is established.
+- Per-app nested AGENTS.md files (`apps/web/AGENTS.md`,
+  `apps/site/AGENTS.md`, `supabase/AGENTS.md`, `shared/AGENTS.md`).
+  Per the "Subdirectory AGENTS.md auto-loading" decision under
+  "Routing logic" above — these would duplicate the content moving
+  to `docs/agents/reference/architecture-guardrails.md`. The two
+  in-scope nested AGENTS.md candidates (`docs/plans/AGENTS.md` and
+  `docs/agents/AGENTS.md`) are router fragments / pointers, not
+  content copies, so they pass the duplication test by construction
+  and are in scope per the same decision.
 - Migrating pre-convention plan docs (the
   [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
   set and its M0–M3 phase plans) into the
@@ -697,26 +759,33 @@ Walk the triggers from AGENTS.md "Doc Currency Is a PR Gate":
 No backlog items closed or opened. This refactor is mechanical
 restructuring of agent guidance, not product or platform work.
 
-## Open Decisions (for user sign-off before promotion to `Proposed`)
+## User Direction (Resolved)
 
-- **Single-PR vs plan-PR-then-implementation-PR shape.** This repo's
-  convention for phase plans under an epic is to land the plan in
-  its own PR before the implementing PR. For cross-cutting plans
-  not under an epic (this one), the convention is less established.
-  Single-PR is faster and keeps the plan + restructure in one
-  reviewable diff; two-PR shape is more conservative and matches
-  the phase pattern. **Default proposal**: single PR with commit-by-
-  commit boundaries from the Execution Steps section, plan-doc
-  Status flipped to `Landed` in the same PR after the restructure
-  lands. Awaiting user direction.
-- **Whether to also add a thin `docs/plans/AGENTS.md` for nested
-  auto-loading**, or leave that for a follow-up. Plan currently
-  defers (see "Routing logic" decision); user may prefer to ship
-  it together for completeness.
-- **Root router target size.** Plan currently targets ~250 lines
-  with a 300-line ceiling. HumanLayer's recommendation is "under
-  60 lines" for the index; OpenAI repos run nested AGENTS.md at
-  varying sizes. Tighter targets are achievable but reduce the
-  amount of universal-rule content that lives in the router (some
-  would have to move to `docs/agents/universal.md` or similar).
-  Default is 250 lines; user may prefer tighter.
+The three initial open decisions resolved by user direction; recorded
+here so the rationale survives if the doc is read cold later.
+
+- **Delivery shape: single PR.** Plan-doc commit is already up on
+  this branch as commit 1. Plan-review pass(es) happen here as
+  additional commits before execution begins. Once the plan is
+  signed off, restructure execution lands as additional commits on
+  this same branch; the PR description is updated to cover the full
+  diff before flipping the plan to `Landed`. Two-PR shape was
+  available; single-PR was chosen for keeping the plan-review and
+  the restructure in one reviewable history.
+- **Nested AGENTS.md files: in-scope, conditional, late commit.**
+  Thin nested AGENTS.md files land near the end of this PR if and
+  only if their content is non-duplicative against the root router
+  and the leaf files. See "Subdirectory AGENTS.md auto-loading:
+  in-scope, conditional, late commit" under "Decisions Made At
+  Planning Time → Routing logic" above for the per-candidate
+  duplication test. Earlier draft of this plan deferred them; user
+  direction reverses that and adds them late in the sequence with a
+  per-candidate gate.
+- **No fixed root-router target size.** Stretching or squashing a
+  file's content to hit a number is an anti-pattern. The validation
+  gate examines each file in the new tree for size as a *smell* —
+  a file disproportionately short for its declared scope is a smell
+  that scope was over-claimed or content is missing; a file
+  disproportionately long is a smell that it is doing more than one
+  job or that universal-rule content leaked in. Outliers (in either
+  direction) get audited individually before sign-off.
