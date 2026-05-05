@@ -158,24 +158,30 @@ and not on every such route until M4 — see "Deferred ThemeScope wiring"
 below. Routes outside the `/event/:slug/*` namespace render against the
 host app's `:root` defaults, not against any per-event Theme: apps/site's
 `:root` carries the Sage Civic platform palette (M1 phase 1.5.2);
-apps/web's `:root` carries today's warm-cream legacy values until M4
-phase 4.1. The platform-admin at `/admin` and the demo-overview landing
+apps/web's `:root` carries today's warm-cream legacy values for any
+event-route shell whose slug does not resolve to a registered Theme;
+the
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+M1 phase 1.1 added Madrona as the first non-test entry. The platform-admin at `/admin` and the demo-overview landing
 at `/` are not per-event themed.
 
 **Deferred ThemeScope wiring.** During scoping the apps/web event-route
 `<ThemeScope>` wiring and Madrona's `Theme` registration both moved
-from M1 phase 1.5.2 to M4 phase 4.1, to avoid a placeholder-Madrona
-double pass and align the warm-cream → Madrona visual transition with
-the brand launch. As a consequence, between M1 phase 1.5.2 and M4
-phase 4.1, apps/web event routes (game, redeem after 2.5's rename,
-redemptions after 2.5's rename) render against apps/web's warm-cream
-`:root` defaults rather than inside `<ThemeScope>`; per-event admin
-from M2 phase 2.2 wraps in `<ThemeScope>` but resolves to the platform
-Sage Civic `Theme` for any slug because no per-event `Theme` is
-registered until M4. M3 phase 3.2's per-event test Themes therefore
-apply only on apps/site, not on apps/web, until M4 lands. This is an
-intentional interim state called out in M2 phase 2.2, M2 phase 2.5,
-M3 phase 3.3, and M4 phase 4.1.
+from M1 phase 1.5.2 to a deferred milestone, to avoid a
+placeholder-Madrona double pass and align the warm-cream → Madrona
+visual transition with the brand launch. The demo-expansion epic's
+M1 phase 1.1 (2026-05-01) closed the apps/web event-route wrapping;
+the Madrona demo-build epic's M1 phase 1.1 closed Madrona's `Theme`
+registration. Between M1 phase 1.5.2 and those closures, apps/web
+event routes (game, redeem after 2.5's rename, redemptions after
+2.5's rename) rendered against apps/web's warm-cream `:root` defaults
+rather than inside `<ThemeScope>`; per-event admin from M2 phase 2.2
+wrapped in `<ThemeScope>` but resolved to the platform Sage Civic
+`Theme` for any slug because no per-event `Theme` was registered
+during that window. M3 phase 3.2's per-event test Themes therefore
+applied only on apps/site, not on apps/web, until the demo-expansion
+M1 wrap landed. This was an intentional interim state called out in
+M2 phase 2.2, M2 phase 2.5, M3 phase 3.3.
 
 *Partial closure (2026-05-01).* Demo-expansion epic M1 phase 1.1
 wires `<ThemeScope>` into apps/web event-route shells (game,
@@ -483,9 +489,14 @@ preserving. One PR.
 **Plan:** [`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md).
 Two subphases. The earlier draft of this paragraph put Madrona's
 placeholder `Theme` and the apps/web event-route `<ThemeScope>` wiring
-in 1.5.2; both were deferred to M4 phase 4.1 during scoping to avoid a
-"placeholder Madrona = today's values" double pass. 1.5.2 ships pure
-infrastructure plus apps/site's platform identity; M4 phase 4.1 lands
+in 1.5.2; both were deferred during scoping to avoid a
+"placeholder Madrona = today's values" double pass — the wiring
+landed in demo-expansion epic M1 phase 1.1 (2026-05-01) and Madrona's
+Theme landed in the
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+M1 phase 1.1. 1.5.2 ships pure
+infrastructure plus apps/site's platform identity; the deferred
+milestones land
 Madrona's real `Theme` and wires `<ThemeScope>` into apps/web event
 routes as the intentional brand-launch visual transition. Per-event
 admin in M2 phase 2.2 and operator-route renames in M2 phase 2.5
@@ -522,10 +533,11 @@ emission on the root element — this is the first apps/site surface
 with real visual identity. **Do not wire `<ThemeScope>` into any
 apps/web route in this phase**; M2 phase 2.2 is the first apps/web
 consumer (per-event admin), M3 phase 3.1 is the first apps/site
-consumer (event landing), M4 phase 4.1 wires the existing apps/web
-event-route shells. ThemeScope placement in apps/web is centralized in
-the [`App.tsx`](/apps/web/src/App.tsx) routing dispatcher — not
-per-page — so the M2/M4 wiring sites are symmetric. Component tests at
+consumer (event landing), and demo-expansion epic M1 phase 1.1 wires
+the existing apps/web event-route shells. ThemeScope placement in
+apps/web is centralized in the [`App.tsx`](/apps/web/src/App.tsx)
+routing dispatcher — not per-page — so the M2 / demo-expansion-M1
+wiring sites are symmetric. Component tests at
 `tests/shared/styles/` pass synthetic test themes and verify rendered
 CSS custom properties change accordingly. `AGENTS.md` "Styling Token
 Discipline" section reorganized to introduce themable/structural
@@ -646,10 +658,13 @@ existing game-content authoring UI (question editor, draft management,
 publish/unpublish for the event's draft) inside the event's themed shell
 wrapped in `<ThemeScope theme={getThemeForSlug(slug)}>`. Authorization-gated
 states render inside the themed shell, preserving in-place auth behavior.
-Until M4 phase 4.1 registers Madrona's `Theme` in
-`shared/styles/themes/`, `getThemeForSlug` returns the platform Sage
-Civic Theme for any slug, so per-event admin renders Sage Civic-themed
-for all events through M2 and M3 — this is intentional, not a bug.
+During M2 / M3 the registry was empty, so `getThemeForSlug` returned
+the platform Sage Civic Theme for any slug and per-event admin
+rendered Sage Civic-themed for all events through M2 and M3 — this
+was intentional, not a bug. The
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+M1 phase 1.1 added Madrona to the registry; per-event admin under
+`/event/madrona/admin` now resolves to Madrona's `Theme`.
 M4's PR registers Madrona's Theme and the visual transition to
 Madrona's brand for `slug=madrona` happens at that PR's merge. The
 existing apps/web `/admin` deep-editor experience remains accessible
@@ -707,8 +722,9 @@ root-admin authentication and the platform admin's
 event-list/create/lifecycle flows in apps/site, screenshot validation
 of routes consistent with the deferred-Madrona rollout: per-event
 admin from phase 2.2 wraps in `<ThemeScope>` and renders against the
-platform Sage Civic Theme (per-event Themes apply after M4 phase 4.1
-registers them); operator routes from phase 2.5 render against
+platform Sage Civic Theme (per-event Themes started applying once
+the registry gained entries — M3 phases 3.1.1 / 3.2 for the test
+events, the Madrona demo-build epic M1 phase 1.1 for Madrona); operator routes from phase 2.5 render against
 apps/web's `:root` warm-cream defaults (their `<ThemeScope>` wiring is
 deferred to M4); the platform admin from phase 2.4 and the migrated
 `/` and `/auth/callback` from phase 2.3 render against apps/site's
@@ -785,9 +801,11 @@ back to the site's event page work correctly; auth cookie state
 preserved across the boundary. **Cross-app theme continuity is not a
 phase 3.3 gate** — apps/site routes resolve their per-event Theme via
 ThemeScope (registered in M3 phase 3.2's test events), while apps/web
-event routes remain on warm-cream `:root` defaults until M4 phase 4.1
-wires their ThemeScope per the deferred-Madrona rollout (see the
-"Deferred ThemeScope wiring" cross-cutting invariant). The interim
+event routes remained on warm-cream `:root` defaults until
+demo-expansion epic M1 phase 1.1 wired their ThemeScope (and the
+Madrona demo-build epic M1 phase 1.1 added Madrona's Theme so apps/web
+event-route shells render against Madrona's palette for `slug=madrona`
+— see the "Deferred ThemeScope wiring" cross-cutting invariant). The interim
 cross-app visual jump on test events is acceptable because test events
 are noindex'd with the "demo event for platform testing" disclaimer
 banner from phase 3.2; cross-app continuity verification lands at M4
