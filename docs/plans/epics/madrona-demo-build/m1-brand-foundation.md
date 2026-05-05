@@ -111,7 +111,7 @@ merged code at phase-start.
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
 | 1.1 | Madrona Theme registration + minimal Madrona content module | [m1-phase-1-1-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md) | Landed | _PR-pending_ |
-| 1.2 | `EventContent` shape extensions + section component renderer updates | _plan-pending_ | Plan-pending | — |
+| 1.2 | `EventContent` shape extensions + section component renderer updates | [m1-phase-1-2-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md) | Proposed | — |
 | 1.3 | Placeholder Madrona content depth pass exercising the extended shape | _plan-pending_ | Plan-pending | — |
 
 The 3-row estimate matches the epic's Sizing Summary (M1: 2–3
