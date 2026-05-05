@@ -27,7 +27,9 @@ deriving brand-tied surface tints, the `Theme` model that
 `shared/styles/` exposes, and the procedure for adding a new theme.
 
 It does **not** cover when to add a new token at all — that decision
-lives in [`AGENTS.md`](/AGENTS.md) "Styling Token Discipline."
+lives in
+[`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
+"Styling Token Discipline."
 
 ## Two Buckets
 
@@ -413,9 +415,10 @@ change in that phase.
 
 ## Related Docs
 
-- [`AGENTS.md`](/AGENTS.md) — Styling Token Discipline (rule for
-  when to add a token; updated in 1.5.2 to point here for the
-  themable/structural binding)
+- [`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
+  — Styling Token Discipline (rule for when to add a token;
+  updated in 1.5.2 to point here for the themable/structural
+  binding)
 - [`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
   — phase 1.5 plan (subphase tables, execution steps, validation
   gate)

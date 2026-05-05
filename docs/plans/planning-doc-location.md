@@ -20,17 +20,20 @@ Effective 2026-05-01, in-repo plan docs follow this layout:
   epic-scoped body of work.
 - `docs/plans/epics/<epic-slug>/m<N>-<short-slug>.md` — milestone doc
   (durable; only present when a milestone needs cross-phase coordination
-  beyond the milestone shells in `epic.md`; see AGENTS.md "Milestone
-  Planning Sessions"). Per-epic milestone numbering: each epic counts
+  beyond the milestone shells in `epic.md`; see
+  [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md)).
+  Per-epic milestone numbering: each epic counts
   from M1 independently, and sibling epics may reuse the same milestone
   numbers without collision because the path's epic segment disambiguates.
 - `docs/plans/epics/<epic-slug>/m<N>-phase-<X>-<Y>-plan.md` — per-phase
-  plan doc (durable; survives the feature; see AGENTS.md "Phase Planning
-  Sessions"). Sub-phase plans add another segment:
+  plan doc (durable; survives the feature; see
+  [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)).
+  Sub-phase plans add another segment:
   `m<N>-phase-<X>-<Y>-<Z>-plan.md`.
 - `docs/plans/epics/<epic-slug>/scoping/m<N>-phase-<X>-<Y>.md` — phase
   scoping doc (transient; deletes in batch with sibling scoping docs at
-  the milestone-terminal PR; see AGENTS.md "Phase Planning Sessions").
+  the milestone-terminal PR; see
+  [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)).
 - `docs/plans/archive/` — existing archive for superseded plans, unchanged.
   New epics adopt the in-place-as-archive pattern: once an epic is `Landed`,
   its `docs/plans/epics/<slug>/` folder remains in place as the durable
@@ -70,12 +73,14 @@ investigation does not need to re-evaluate them:
   the in-repo doc currently provides — agent reads plan and code in
   one navigable tree without prompting.
 - **Codex review against the actual code is load-bearing.** Plan-time
-  reality-check rules in [`AGENTS.md`](/AGENTS.md) — "Reality-check
-  gate between scoping and plan," `Verified by:` annotations on
-  load-bearing technical claims — depend on the reviewer being able
-  to verify claims against in-repo code during plan review. A
-  separated plan repo loses that grounding for plans that name code
-  surfaces.
+  reality-check rules in
+  [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+  "Reality-check gate between scoping and plan" and
+  [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+  "`Verified by:` annotations on load-bearing claims" depend on the
+  reviewer being able to verify claims against in-repo code during
+  plan review. A separated plan repo loses that grounding for plans
+  that name code surfaces.
 
 These rule out moving the **per-phase implementation contract** (the
 plan doc that the implementing PR consumes) out of the code repo. That
@@ -122,7 +127,8 @@ Steps:
 
 - Moving the per-phase implementation-contract plan doc out of the
   code repo. The hard constraints above settle that.
-- Rewriting [`AGENTS.md`](/AGENTS.md)'s plan-to-PR workflow itself.
+- Rewriting the plan-to-PR workflow itself
+  ([`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)).
   Workflow tweaks are downstream of the location decision and may not
   be needed.
 - Migrating already-archived plan docs out of `/docs/plans/archive/`.
