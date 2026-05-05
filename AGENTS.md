@@ -1,17 +1,48 @@
 # Agent Instructions
 
-This file gives repository-specific guidance to AI coding agents working in this project.
+This file is the **router** for AI coding agents working in this repo.
+It carries the rules every session needs (pre-edit gate, scope
+guardrails, sub-agent delegation, stop-and-report, anti-patterns,
+change boundaries), the session-type routing table that names which
+files an agent reads for the work at hand, and pointers to the
+contributor-workflow source of truth.
 
-Use it as a practical checklist for making changes that stay aligned with the current architecture, documentation, and product stage.
+Per-session-type playbooks, planning meta-process, and topic-
+organized constraint sets live under [`docs/agents/`](/docs/agents/);
+see [`docs/agents/README.md`](/docs/agents/README.md) for the
+directory map.
 
-## Development Workflow Source Of Truth
+## Repo orientation
+
+This repository currently contains a prototype-to-MVP attendee quiz experience:
+
+- [`apps/web`](/apps/web/) is the Vite + React frontend
+- [`apps/web/src/styles.scss`](/apps/web/src/styles.scss) is the SCSS entrypoint, backed by focused partials in [`apps/web/src/styles/`](/apps/web/src/styles/)
+- [`shared/game-config.ts`](/shared/game-config.ts) is the shared quiz public entrypoint, backed by focused modules in [`shared/game-config/`](/shared/game-config/)
+- [`supabase/functions`](/supabase/functions/) contains the trusted backend edge functions
+- [`supabase/migrations`](/supabase/migrations/) contains the database schema and RPC logic
+- [`docs`](/docs/) explains the current system, tooling, and roadmap
+
+Before making major architectural assumptions, read:
+
+- [`README.md`](/README.md)
+- [`docs/architecture.md`](/docs/architecture.md)
+- [`docs/dev.md`](/docs/dev.md)
+- [`docs/open-questions.md`](/docs/open-questions.md)
+
+Use [`docs/product.md`](/docs/product.md) and [`docs/experience.md`](/docs/experience.md)
+as product and UX targets, not as proof that every planned feature already exists.
+When the repo leaves a decision unresolved, capture that uncertainty in
+[`docs/open-questions.md`](/docs/open-questions.md) instead of inventing an answer.
+
+## Development workflow source of truth
 
 For any repository change beyond a trivial read-only answer, treat
-`docs/dev.md` as the development workflow source of truth.
+[`docs/dev.md`](/docs/dev.md) as the development workflow source of truth.
 
-To find the highest-priority next task, start with `docs/backlog.md`. It is the
-single priority-ordered list of post-MVP follow-up work across all concern areas,
-with links to the detail file for each item.
+To find the highest-priority next task, start with [`docs/backlog.md`](/docs/backlog.md).
+It is the single priority-ordered list of post-MVP follow-up work across all
+concern areas, with links to the detail file for each item.
 
 Before editing, read the relevant `docs/dev.md` sections for:
 
@@ -25,126 +56,52 @@ Before editing, read the relevant `docs/dev.md` sections for:
 defines the current contributor workflow. Follow both. If they conflict, stop
 and report the conflict instead of guessing.
 
-## Purpose
+## Session-type routing
 
-This repository currently contains a prototype-to-MVP attendee quiz experience:
+Pick the row that best fits the work at hand and read the named files.
+Universal rules below apply to every session and are not enumerated in
+the table.
 
-- `apps/web` is the Vite + React frontend
-- `apps/web/src/styles.scss` is the SCSS entrypoint, backed by focused partials in `apps/web/src/styles/`
-- `shared/game-config.ts` is the shared quiz public entrypoint, backed by focused modules in `shared/game-config/`
-- `supabase/functions` contains the trusted backend edge functions
-- `supabase/migrations` contains the database schema and RPC logic
-- `docs` explains the current system, tooling, and roadmap
+| If your session is… | Read these files |
+|---|---|
+| Implementation work (lightweight or full structured path), no plan doc to consume | [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md) |
+| Implementing a documented plan from [`docs/plans/`](/docs/plans/) | [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md) + [`docs/agents/workflows/plan-implementation.md`](/docs/agents/workflows/plan-implementation.md) + the plan's own `Cross-Cutting Invariants` and `Self-Review Audits` |
+| Drafting an epic | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md) |
+| Drafting a milestone doc (sequencing, cross-phase invariants, cross-phase decisions) | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md) |
+| Drafting a phase scoping doc or phase plan doc | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md) + [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) |
+| Plan-to-Landed close-out PR (Status flip after post-release validation) | [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) |
+| Addressing PR review feedback | [`docs/agents/workflows/review-fixes.md`](/docs/agents/workflows/review-fixes.md) |
+| Capturing UI screenshots / building PR screenshot evidence | [`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md) |
+| Debugging a failing validation, CI run, or local test | [`docs/agents/workflows/debugging.md`](/docs/agents/workflows/debugging.md) |
 
-Before making major architectural assumptions, read:
+Reference files under [`docs/agents/reference/`](/docs/agents/reference/)
+are topic-organized **constraint sets** (not optional lookups) that
+workflow files route to at the appropriate session moment (pre-edit
+gate, mid-session, per-commit, PR open). The workflow file you load
+above names the trigger. The "Mandatory pre-edit reads" section below
+calls out the constraint that fires before any other workflow step.
 
-- `README.md`
-- `docs/architecture.md`
-- `docs/dev.md`
-- `docs/open-questions.md`
+## Mandatory pre-edit reads
 
-Use `docs/product.md` and `docs/experience.md` as product and UX targets, not as proof that every planned feature already exists.
-When the repo leaves a decision unresolved, capture that uncertainty in `docs/open-questions.md` instead of inventing an answer.
+[`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
+is a **mandatory pre-edit read** for any session whose diff surface
+intersects:
 
-## Architecture Guardrails
+- [`apps/web/`](/apps/web/), [`apps/site/`](/apps/site/),
+  [`shared/`](/shared/), [`supabase/`](/supabase/) — the
+  responsibility-split rules and the no-business-rule-duplication /
+  shared-source-of-truth-for-quiz-correctness / no-production-fallback
+  constraints
+- styling surfaces — [`apps/web/src/styles.scss`](/apps/web/src/styles.scss),
+  [`apps/web/src/styles/`](/apps/web/src/styles/),
+  [`shared/styles/`](/shared/styles/), or any SCSS / CSS custom
+  property definition site — the Styling Token Discipline rules
 
-See [`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
-for the responsibility split (apps/web, shared/, supabase/), the
-no-business-rule-duplication rule, the shared-source-of-truth-for-
-quiz-correctness rule, the no-production-fallback-drift rule, and
-the full Styling Token Discipline (themable vs structural buckets,
-naming, when to add a token vs keep it local). **Mandatory
-pre-edit read** for any diff surface intersecting `apps/`,
-`shared/`, `supabase/`, or styling. Content moved per the AGENTS.md
-restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
+Read end-to-end before the first edit. The file lives under
+`reference/` because that is where topic-organized constraint sets
+live; it is not an optional lookup.
 
-## Expected Workflow
-
-The lightweight-vs-full-structured-path intro lives in
-[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Lightweight vs full structured" — content moved per the AGENTS.md
-restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Planning Depth
-
-See [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-"Planning Depth," "Plan code minimalism," "Cross-Cutting Invariants
-section," and the surrounding cross-level planning rules — content
-moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Plan-to-PR Completion Gate
-
-See [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) —
-content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Epic Drafting
-
-See [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md) —
-content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Milestone Planning Sessions
-
-See [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md) —
-content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Phase Planning Sessions
-
-See [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md) —
-content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Scope Guardrails
-
-Treat broad checklist, cleanup, or refactor requests as a queue of PR-sized tasks, not as permission to work through everything in one thread.
-
-- prefer one checklist item, one feature slice, or one tightly related file family per branch and handoff
-- combine multiple items only when they share the same files, the same validation surface, and still produce a small reviewable diff
-- if a user asks for many checklist items at once, record or confirm the sequence, then execute only the first bounded slice unless the user explicitly asks only for planning
-- if the work grows beyond one clean PR, stop after updating the checklist or plan with smaller follow-up tasks
-- stop and report instead of expanding scope when the task starts requiring behavior changes, unrelated production edits, mixed backend/frontend/UI work, or validation outside the originally relevant surface
-- prefer a fresh thread or fresh branch for the next checklist item when the previous slice has been committed and handed off
-
-When a prompt identifies a specific checklist item, issue, file family, feature
-slice, or validation command, treat that as the active boundary. Do not work on
-adjacent cleanup, nearby checklist items, opportunistic dependency upgrades, or
-unrelated docs unless they are necessary to keep the requested change correct
-and validated.
-
-If the requested task is behavior-preserving, keep it behavior-preserving. Stop
-and report instead of proceeding if the implementation appears to require
-changing product behavior, public contracts, persistence semantics, authorization
-rules, routing, generated artifacts, or unrelated production code.
-
-### Feature-Time Cleanup And Refactor Debt Capture
-
-See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Feature-Time Cleanup And Refactor Debt Capture" — content moved per
-the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Pre-Edit Gate
+## Pre-Edit Gate
 
 Before editing for any non-trivial task:
 
@@ -172,43 +129,29 @@ Before editing for any non-trivial task:
   the authoritative enforcement point and cannot be bypassed by a future code
   path. If no enforcement exists yet, add it in the same change.
 
-### Lightweight Path
+## Scope Guardrails
 
-See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Lightweight Path" — content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
+Treat broad checklist, cleanup, or refactor requests as a queue of PR-sized tasks, not as permission to work through everything in one thread.
 
-### Full Structured Path
+- prefer one checklist item, one feature slice, or one tightly related file family per branch and handoff
+- combine multiple items only when they share the same files, the same validation surface, and still produce a small reviewable diff
+- if a user asks for many checklist items at once, record or confirm the sequence, then execute only the first bounded slice unless the user explicitly asks only for planning
+- if the work grows beyond one clean PR, stop after updating the checklist or plan with smaller follow-up tasks
+- stop and report instead of expanding scope when the task starts requiring behavior changes, unrelated production edits, mixed backend/frontend/UI work, or validation outside the originally relevant surface
+- prefer a fresh thread or fresh branch for the next checklist item when the previous slice has been committed and handed off
 
-See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Full Structured Path" — content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
+When a prompt identifies a specific checklist item, issue, file family, feature
+slice, or validation command, treat that as the active boundary. Do not work on
+adjacent cleanup, nearby checklist items, opportunistic dependency upgrades, or
+unrelated docs unless they are necessary to keep the requested change correct
+and validated.
 
-### Review-Fix Rigor
+If the requested task is behavior-preserving, keep it behavior-preserving. Stop
+and report instead of proceeding if the implementation appears to require
+changing product behavior, public contracts, persistence semantics, authorization
+rules, routing, generated artifacts, or unrelated production code.
 
-See [`docs/agents/workflows/review-fixes.md`](/docs/agents/workflows/review-fixes.md)
-"Review-Fix Rigor" and "GitHub thread state discipline" — content
-moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## Execution Rules
-
-The Execution Rules intro and bullets live in
-[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Execution Rules" — content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6. Universal subsections
-(Sub-Agent Delegation, Stop-And-Report Conditions) remain inline below
-until step 6 promotes them into the root router proper.
-
-### Sub-Agent Delegation
+## Sub-Agent Delegation
 
 Sub-agents spawned via delegation tools do not inherit this file. They only
 know what is explicitly included in their prompt.
@@ -238,16 +181,7 @@ If a delegated task grew beyond its original scope during execution, the
 orchestrating session is responsible for catching the drift and applying
 the missing gates before treating the work as done.
 
-### Refactor Completion Proof
-
-See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Refactor Completion Proof" — content moved per the AGENTS.md
-restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Stop-And-Report Conditions
+## Stop-And-Report Conditions
 
 Stop and report instead of continuing when any of these happen:
 
@@ -270,90 +204,6 @@ Stop and report instead of continuing when any of these happen:
 When stopping, leave the worktree clean when practical. If stopping after
 partial edits, clearly identify the touched files, what remains incomplete, and
 whether any validation was run.
-
-### Debugging Discipline
-
-See [`docs/agents/workflows/debugging.md`](/docs/agents/workflows/debugging.md)
-"Debugging Discipline" — content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-### Versioning And Dependency Discipline
-
-See [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Versioning And Dependency Discipline" — content moved per the
-AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## Documentation Expectations
-
-See [`docs/agents/reference/documentation-currency.md`](/docs/agents/reference/documentation-currency.md)
-for the full documentation-currency reference: doc-update triggers
-for `README.md`, `docs/architecture.md`, `docs/dev.md`,
-`docs/open-questions.md`,
-`docs/tracking/documentation-quality-checklist.md`, inline comments
-and function/type documentation; the status-oriented-section update
-rule; the per-phase plan-doc status update rule; and the Doc
-Currency PR Gate. Content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## Commit Message Expectations
-
-See [`docs/agents/reference/pr-template.md`](/docs/agents/reference/pr-template.md)
-"Commit Message Expectations" — content moved per the AGENTS.md
-restructure ([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## Validation Expectations
-
-See [`docs/agents/reference/validation.md`](/docs/agents/reference/validation.md)
-for the full validation reference: per-area validation commands
-(`npm run lint`, `npm run build:web`, `deno check supabase/...`),
-Validation Honesty, Continuous Validation, PR Readiness, Regression
-Discipline, and Testing Tiers Discipline. Content moved per the
-AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## UI Review Runs
-
-See [`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md)
-"UI Review Runs" — content moved per the AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## Pull Request Screenshot Process
-
-See [`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md)
-"Pull Request Screenshot Process" — content moved per the AGENTS.md
-restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
-
-## Self-Review Checklist
-
-The general / refactor / backend-trust / testing-tooling / multi-
-commit subsets and the walk-named-audits preamble live in
-[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
-"Self-Review Checklist." The UI subset lives in
-[`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md)
-"UI self-review." The walk-the-plan's-Cross-Cutting-Invariants
-preamble lives in
-[`docs/agents/workflows/plan-implementation.md`](/docs/agents/workflows/plan-implementation.md)
-"Read the plan in full before the first edit." Content moved per the
-AGENTS.md restructure
-([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
-this section persists as a pointer until the root file is rewritten
-as a router in restructure step 6.
 
 ## Anti-Patterns
 
