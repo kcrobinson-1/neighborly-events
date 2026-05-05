@@ -73,78 +73,13 @@ as a router in restructure step 6.
 
 ### Planning Depth
 
-When asked to make a plan, do not compress the workflow to an arbitrary short
-step count.
-
-- include every execution gate that materially affects quality, even if that
-  makes the plan longer than five steps
-- keep baseline validation, branch hygiene, implementation, automated
-  code-review feedback, documentation cleanup, final validation, and PR
-  preparation as separate steps when they are all relevant
-- for implementation plans, include an explicit documentation-current-state gate:
-  identify which docs with status-oriented sections (for example `Current
-  State`, `Current status`, rollout status, or phase status) are affected, and
-  include updating them as a required step before handoff
-- do not merge steps just to keep the plan visually compact
-- if a new required step is added, insert it at the correct point in the
-  sequence without weakening or collapsing the surrounding steps
-- for implementation plans, make the plan decision-complete enough that another
-  engineer or agent can execute it without inventing missing gates, validation,
-  or handoff work
-- for PR-sized work, name the intended commit boundaries before editing when
-  practical, and keep review-fix commits distinct when they clarify the history
-- name the self-review audits that apply to this PR's diff surfaces, drawn
-  from [`docs/self-review-catalog.md`](/docs/self-review-catalog.md). The
-  plan should list audit names by surface (SQL / frontend / CI / runbook)
-  so the implementer runs them at commit boundaries rather than
-  rediscovering review feedback at PR-review time
-- keep plans at the level of contracts and prose, not implementation
-  detail. One-line function signatures, short type declarations, and
-  short file-path references are fine; full function bodies, multi-line
-  shell pipelines, SCSS rule bodies, or any code block longer than
-  roughly five lines is implementation that belongs in the PR, not the
-  plan. Plans attract code review; every bug in a code snippet inside a
-  plan costs a review round on the plan doc itself before the
-  implementation even starts, which is pure churn
-- **Code shapes in plans are directional pseudocode.** Whatever code-
-  shaped content the five-line rule above admits — a backticked
-  field-value pair, a one-line type signature, a short expression — is
-  *shape*, not source. It communicates contract structure (what field
-  exists where, what shape it takes, how it relates to other fields),
-  not exact syntax. The implementer translates shapes into
-  syntactically-correct code at PR time, against the surrounding prose
-  that frames the shape. Agents reviewing a plan-doc PR (Claude,
-  Codex, similar bots, human reviewers) apply this stance directly
-  from this rule: focus on shape-level questions — is the right field
-  named? does the shape match what the prose around it describes? is
-  the contract self-consistent? — not on syntax-level findings
-  (template-literal quotes, shell precedence, missing imports,
-  semicolons). The five-line rule caps how much code-shaped content
-  lives here even under this framing; this rule shifts the reviewer's
-  stance on whatever content the cap admits.
-- list the cross-cutting invariants that thread through multiple files
-  in their own `## Cross-Cutting Invariants` subsection, distinct from
-  per-file contracts. Per-file contracts describe what one module does;
-  cross-cutting invariants describe relationships that must hold
-  simultaneously at every call site and break silently when one site
-  drifts (examples: "a shared reference clock advances on every
-  user action that changes filtered output," "every dialog exposes
-  an accessible name via `aria-label` or `aria-labelledby`," "derived
-  state for modal return-focus must survive the close transition,
-  not null out with the trigger state"). Aim for 2–4 one-line
-  invariants. Without naming these, implementer self-review checks
-  each file in isolation and misses bugs that only appear when two
-  sites disagree about the same rule; reviewer rounds then rediscover
-  the gap one call site at a time. The plan's job is to name the rule
-  once so self-review can walk every site against it
-- when a reviewer comment targets a code snippet inside a plan, the
-  correction is to **remove or summarize the snippet**, not to fix the
-  code in place. Code-correctness iteration belongs in the PR that
-  implements the plan. Exception: if the comment surfaces a genuine
-  design flaw whose phrasing happens to be code (e.g. an ordering
-  race, an invariant violation), fix the *prose contract* in the plan
-  and move the code to the implementation PR — don't fix both in the
-  plan
+See [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+"Planning Depth," "Plan code minimalism," "Cross-Cutting Invariants
+section," and the surrounding cross-level planning rules — content
+moved per the AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ### Plan-to-PR Completion Gate
 
