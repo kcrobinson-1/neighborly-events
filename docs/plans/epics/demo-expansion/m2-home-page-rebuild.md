@@ -56,8 +56,8 @@ on first when evaluating the platform. After M2:
 M2 does not introduce demo-mode auth bypass (M3's scope), does
 not add new test events beyond Harvest and Riverside (epic's "Out
 Of Scope"), does not register a non-test-event Theme (the
-[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
-owns Madrona), and does not change apps/web
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+owns Madrona's `Theme` registration in its M1), and does not change apps/web
 beyond what cross-app navigation requires (typically zero — links
 target apps/web routes via hard navigation, no apps/web code
 edits).

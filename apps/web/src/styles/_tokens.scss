@@ -18,8 +18,10 @@
 //    event slugs continue to resolve to the platform Sage Civic
 //    Theme via `getThemeForSlug`'s fallback, so this `:root` block
 //    remains the source-of-truth for non-test-event apps/web
-//    defaults until a future per-event Theme registers (the future
-//    Madrona-launch epic owns Madrona's `Theme` registration).
+//    defaults until a future per-event Theme registers (the
+//    Madrona demo-build epic at
+//    `docs/plans/epics/madrona-demo-build/epic.md` owns Madrona's
+//    `Theme` registration).
 //    Deliberately independent of `shared/styles/themes/platform.ts`
 //    (apps/site's source-of-truth).
 

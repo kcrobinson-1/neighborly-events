@@ -412,7 +412,7 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   and the per-event registry at
   [`shared/styles/themes/index.ts`](/shared/styles/themes/index.ts)
   (the registry holds the `harvest-block-party` and `riverside-jam`
-  test event Themes; the [Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md) adds Madrona).
+  test event Themes; the [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md) adds Madrona in its M1).
   apps/site event routes resolve per-event Themes through
   `<ThemeScope>` from M3 phase 3.1; apps/web event-route shells
   (`/event/:slug/{game,admin,game/redeem,game/redemptions}`) wrap

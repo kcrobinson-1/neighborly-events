@@ -401,8 +401,8 @@ slugs. Non-test-event slugs continue to resolve to the platform
 Sage Civic Theme via `getThemeForSlug`'s fallback, so apps/web's
 warm-cream `:root` defaults remain in place for non-test-event
 slugs until a future per-event Theme registers (the
-[Madrona-launch epic](/docs/plans/epics/madrona-launch/epic.md)
-owns Madrona's `Theme` registration). Sage Civic
+[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
+owns Madrona's `Theme` registration in its M1). Sage Civic
 landing in apps/site in 1.5.2 was the only intentional visual
 change in that phase.
 

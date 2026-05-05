@@ -50,7 +50,7 @@ Owner docs this file coordinates:
 - [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
 - [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
 - [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
-- [epics/madrona-launch/epic.md](/docs/plans/epics/madrona-launch/epic.md) — current real-event launch epic (stub; full content pending milestone planning)
+- [epics/madrona-demo-build/epic.md](/docs/plans/epics/madrona-demo-build/epic.md) — current real-event work (demo-build phase: Theme registration, content authoring, end-to-end attendee journey through a stakeholder-shareable demo URL); launch readiness deferred to a far-future Madrona-launch sibling
 - [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md) — completed M1–M3 (ThemeScope wiring, home rebuild, demo-mode auth bypass) that shipped between this doc's establishment and the next pass
 
 ## Scope And Release Target
