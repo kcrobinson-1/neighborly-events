@@ -2,14 +2,13 @@
 
 ## Status
 
-Scoping in progress. This is a transient artifact per AGENTS.md
-"Phase Planning Sessions"; deletes in batch with sibling scoping
-docs at the milestone-terminal PR. Durable cross-phase content
-already lives in
-[m1-brand-foundation.md](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md);
-durable per-phase content absorbs into
-`docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md` once
-that plan drafts.
+Absorbed into plan. Durable per-phase content lives in
+[`m1-phase-1-2-plan.md`](/docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md);
+durable cross-phase content lives in
+[m1-brand-foundation.md](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md).
+This file is a transient artifact per AGENTS.md "Phase Planning
+Sessions" and deletes in batch with sibling scoping docs at the
+milestone-terminal PR.
 
 ## Phase summary
 

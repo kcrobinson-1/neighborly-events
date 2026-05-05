@@ -2,9 +2,14 @@
 
 ## Status
 
-Proposed.
+Landed in
+[PR #185](https://github.com/kcrobinson-1/neighborly-events/pull/185).
+Phase 1.3 collapsed into this PR per the milestone-doc-authorized
+deviation; recorded in the PR body's `## Estimate Deviations`
+section.
 
-The `In draft` → `Proposed` promotion gate is satisfied:
+The `In draft` → `Proposed` promotion gate was satisfied at
+promotion time:
 
 - **Phase 1.1 merged in
   [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182).**
