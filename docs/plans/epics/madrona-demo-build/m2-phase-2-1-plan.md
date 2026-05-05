@@ -2,7 +2,10 @@
 
 ## Status
 
-Proposed.
+`Proposed` (substrate landing in this PR; close-out PR will flip
+to `Landed` once the operator step ships its evidence). See
+`## Estimate Deviations` below for the substrate / close-out
+split rationale.
 
 ## Context
 
@@ -84,14 +87,18 @@ After this PR:
 - six captures from the walkthrough are attached to the PR
   body's `## Validation` section with one-sentence match-
   assertion prose per capture;
-- the M2 milestone doc's Phase Status row 2.1 flips
-  `TBD` → `Landed`; the `2.2 (Conditional)` row flips to
-  `Collapsed into 2.1` per the scoping doc's collapse decision;
-  the milestone doc top-level Status flips
-  `Proposed` → `Landed across PR #<this PR>`;
-- the parent epic's Sizing Summary M2 line is reconciled per
-  AGENTS.md "Estimate Deviations" if the actual PR count
-  differs from the estimated 1–2.
+- the M2 milestone doc's Phase Status row 2.1 is seeded as
+  `In flight` in the substrate PR; the row flips to `Landed`
+  in the close-out PR alongside the top-level milestone
+  Status `Proposed` → `Landed across PR #<substrate> + PR
+  #<close-out>` flip and the scoping doc deletion. Row 2.2
+  stays `Collapsed into 2.1` (the closure work the scoping
+  doc collapsed is what the close-out PR carries);
+- the parent epic's Sizing Summary M2 line records the
+  resulting 2-PR shape per AGENTS.md "Estimate Deviations" —
+  estimated 1–2 PRs, actual 2 PRs (substrate + close-out),
+  within range. Rationale for the substrate / close-out
+  split lives in this plan's Estimate Deviations section.
 
 This phase does **not** add an admin-UI "Create New Event"
 affordance (deferred to a future phase or epic), does **not**
@@ -197,8 +204,8 @@ self-review:
 | `package.json` | `release:seed:madrona` alias that invokes the generic script with `--content shared/events/madrona-demo-game-content.ts`. |
 | `docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md` | This file. |
 | `docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md` | New scoping doc (drafted in same PR). |
-| `docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md` | Phase Status row 2.1 → `Landed`; row 2.2 → `Collapsed into 2.1`; top-level Status → `Landed across PR #<this PR>`. |
-| `docs/plans/epics/madrona-demo-build/epic.md` | Sizing Summary M2 line reconciled if actual PR count differs from 1–2 estimate. |
+| `docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md` | Phase Status row 2.1 seeded as `In flight` in the substrate PR; flipped to `Landed` plus top-level Status flip in the close-out PR. Row 2.2 stays `Collapsed into 2.1` throughout. |
+| `docs/plans/epics/madrona-demo-build/epic.md` | Sizing Summary M2 line reconciled in the close-out PR (estimated 1–2 PRs, actual 2 PRs — substrate + close-out). |
 
 Files **intentionally not touched** (per AGENTS.md "Plan
 content is a mix of rules and estimates"; touching one of
@@ -593,23 +600,35 @@ and are inherited by reference, not restated.
 This phase's PR lands the following doc updates per AGENTS.md
 "Documentation Currency PR Gate":
 
+**Substrate PR (this PR):**
+
+- This plan doc — Status `In draft` → `Proposed` (substrate
+  landing); flip to `Landed` deferred to the close-out PR.
 - [m2-stubbed-attendee-journey.md](/docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md)
-  — Phase Status row 2.1 set to `Landed` with this PR's
-  number; row 2.2 set to `Collapsed into 2.1`; top-level
-  Status `Proposed` → `Landed across PR #<this PR>`.
+  — Phase Status row 2.1 seeded as `In flight` with this PR's
+  number. Top-level milestone Status stays `Proposed`; row 2.1
+  `Landed` flip and the top-level Status flip both move to the
+  close-out PR.
+
+**Close-out PR (follow-up):**
+
+- [m2-stubbed-attendee-journey.md](/docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md)
+  — Phase Status row 2.1 → `Landed` with the close-out PR's
+  number; row 2.2 stays `Collapsed into 2.1` (the closure work
+  was the collapse target, now in the close-out PR);
+  top-level Status `Proposed` → `Landed across PR #<substrate>
+  + PR #<close-out>`.
 - [epic.md](/docs/plans/epics/madrona-demo-build/epic.md)
-  — Sizing Summary M2 line: estimated 1–2 PRs, actual
-  recorded against the actual count. If actual is 1 (the
-  collapse path), the line records 1 PR with collapse-
-  rationale link to this plan's Estimate Deviations.
+  — Sizing Summary M2 line: estimated 1–2 PRs, actual 2 PRs
+  (substrate + close-out), within range. The line records 2
+  PRs with the substrate / close-out split rationale linking
+  to this plan's Estimate Deviations.
+- This plan doc — Status `Proposed` → `Landed` in the close-out
+  PR.
 - [scoping/m2-phase-2-1.md](/docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md)
-  — deleted in this PR per the milestone doc's
-  batch-deletion-at-terminal-PR commitment (collapse path
-  makes 2.1's PR the M2-terminal PR).
-- This plan doc — Status flips `Proposed` → `Landed` in
-  this same PR (no separate close-out PR per the M1
-  precedent — the M1 close-out PR (#186) was a
-  remediation, not the plan-level convention).
+  — deleted in the close-out PR per the milestone doc's
+  batch-deletion-at-terminal-PR commitment (close-out PR is
+  the M2-terminal PR).
 - [docs/operations.md](/docs/operations.md) — phase-time
   grep confirms whether the manual agent-assignment SQL
   belongs there. Per scoping Decision 8 the default is
@@ -623,7 +642,7 @@ This phase's PR lands the following doc updates per AGENTS.md
 - **Closed by phase 2.1.** Nothing in
   [`docs/backlog.md`](/docs/backlog.md). M2's capability is
   the milestone's, not a separate backlog item; closure is
-  at the M2 milestone-doc Status flip in this same PR.
+  at the M2 milestone-doc Status flip in the close-out PR.
 - **Unblocked by phase 2.1.** M3 (real Madrona content
   authoring) inherits the gameplay wiring this phase
   ships; M3 swaps the placeholder content via the same
@@ -649,6 +668,34 @@ This phase's PR lands the following doc updates per AGENTS.md
     Madrona-only warm-cream-leaking surface.** Same
     pattern as demo-expansion-epic-M1-phase-1.1's
     derived-shade-cascade spinout.
+
+## Estimate Deviations
+
+- **Single-PR collapse → substrate + close-out split.**
+  [Scoping Decision 2](/docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md)
+  chose a single-PR shape on the rationale that the script
+  alone cannot demonstrate the journey works (coupling too
+  tight for the review-coherence benefit of splitting).
+  Plan-time and PR-time the call held; the operator-step
+  seam is what shifted it. The actual shape splits along the
+  natural boundary: the **substrate PR** ships the
+  reviewable-by-CI artifacts (plan + script + content + type
+  + tests + npm alias + milestone Phase Status `In flight`
+  seeding); the **close-out PR** ships the
+  operator-produced evidence (script run logs, agent SQL
+  confirmation, journey-walkthrough captures), the milestone
+  Status `Landed` flip, the scoping doc deletion, and the
+  epic Sizing Summary reconciliation. Why the call is right:
+  the substrate is independently reviewable + safely
+  mergeable (the script does not run at build or runtime, so
+  production behavior is unchanged until the operator step
+  executes); keeping the substrate PR open while waiting for
+  the operator step would block reviewers from verifying the
+  reviewable parts. The split matches the M1 close-out
+  [#186](https://github.com/kcrobinson-1/neighborly-events/pull/186)
+  precedent of substrate-then-close-out and produces a 2-PR
+  outcome within the parent epic's M2 Sizing Summary 1–2 PR
+  estimate.
 
 ## Related Docs
 
