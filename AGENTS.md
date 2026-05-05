@@ -1125,68 +1125,19 @@ as a router in restructure step 6.
 
 ## Self-Review Checklist
 
-Before finishing, walk the named audits from
-[`docs/self-review-catalog.md`](/docs/self-review-catalog.md) that match
-the diff's surfaces — the plan step named them upfront. Then walk the
-plan's `Cross-Cutting Invariants` section (if the plan has one) against
-every call site the diff touches, not just the site the invariant was
-first triggered by. The general review items below are layered on top
-of both of those passes, not a substitute for them.
-
-Before finishing, review your own work for:
-
-- correctness
-- regressions in the existing attendee flow
-- readability and maintainability
-- duplicated logic
-- stale inline comments or stale docs — walk the "Doc Currency Is a PR Gate" triggers and confirm every relevant named doc was updated
-- missing validation
-- complete call-site coverage: when a function signature changes or a new
-  parameter is added, audit every call site including error, retry, and fallback
-  paths — not just the primary happy path
-- accessibility or usability regressions in the mobile flow
-- whether the final change is still positive value for the codebase and should
-  be merged, rather than being needless churn or adding noise that offsets its
-  benefit
-
-For any bounded checklist or refactor task, also confirm:
-
-- the final diff stays inside the requested scope
-- the checklist item or prompt can be mapped to concrete changed files
-- any checklist status change is backed by target-shape evidence, not only by
-  passing tests
-- the handoff says whether behavior changed; for behavior-preserving tasks, the
-  answer should be "no" or should explain why the task stopped
-- the handoff lists validation actually run, files changed, follow-up tasks
-  added, and any remaining risk or blocker
-
-For UI changes, confirm:
-
-- the flow still feels mobile-first and one-step-at-a-time
-- direct route loading still works
-- progress, answer selection, submission, and completion states still make sense
-- browser tests still use realistic interactions unless there is a documented reason not to
-
-For backend or trust-related changes, confirm:
-
-- client input is still validated defensively
-- shared quiz logic is still the source of truth where appropriate
-- completion verification and entitlement behavior remain coherent
-- every new DB write reachable from a public or origin-gated endpoint has
-  referential integrity or a constraint enforcing what values are valid — not
-  just application-layer checks that a future code path could skip
-
-For testing and tooling changes, confirm:
-
-- the new or changed commands work locally with the documented setup
-- docs and PR descriptions accurately describe what the tests do and do not prove
-- new validation paths are included in the self-review, not delegated entirely to CI
-
-For multi-commit work, also review:
-
-- whether each commit would make sense to a reviewer on its own
-- whether a later commit silently fixed issues introduced by an earlier one
-- whether any structural change remains undocumented
+The general / refactor / backend-trust / testing-tooling / multi-
+commit subsets and the walk-named-audits preamble live in
+[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Self-Review Checklist." The UI subset lives in
+[`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md)
+"UI self-review." The walk-the-plan's-Cross-Cutting-Invariants
+preamble lives in
+[`docs/agents/workflows/plan-implementation.md`](/docs/agents/workflows/plan-implementation.md)
+"Read the plan in full before the first edit." Content moved per the
+AGENTS.md restructure
+([`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md));
+this section persists as a pointer until the root file is rewritten
+as a router in restructure step 6.
 
 ## Anti-Patterns
 
