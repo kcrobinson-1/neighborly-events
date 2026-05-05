@@ -40,6 +40,11 @@ function groupSponsorsByTier(
  * grid groups by tier with `<h3>` headings; otherwise renders flat.
  * `logoAlt` is required by the `EventContent` contract so
  * accessibility cannot silently regress.
+ *
+ * Madrona M1 phase 1.2 added `shortDescription` and `socialLinks`
+ * sponsor-depth fields. Each is truthiness-guarded independently
+ * — render-when-present, not require-when-absent — so events that
+ * omit them render byte-for-byte identical to the pre-1.2 output.
  */
 export function EventSponsors({
   sponsors,
@@ -81,6 +86,26 @@ export function EventSponsors({
                     alt={sponsor.logoAlt}
                   />
                 </a>
+                {sponsor.shortDescription ? (
+                  <p className="event-sponsors-short-description">
+                    {sponsor.shortDescription}
+                  </p>
+                ) : null}
+                {sponsor.socialLinks && sponsor.socialLinks.length > 0 ? (
+                  <ul className="event-sponsors-social-links">
+                    {sponsor.socialLinks.map((link) => (
+                      <li key={link.href}>
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
               </li>
             ))}
           </ul>

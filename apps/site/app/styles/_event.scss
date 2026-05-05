@@ -177,6 +177,15 @@
   border-radius: var(--radius-card);
 }
 
+.event-lineup-image {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 0 0 4px;
+  border-radius: var(--radius-card);
+}
+
 .event-lineup-name {
   margin: 0;
   font-size: 1.1rem;
@@ -186,6 +195,55 @@
   margin: 0;
   color: var(--muted);
   font-size: 0.95rem;
+}
+
+.event-lineup-extended-bio {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.event-lineup-extended-bio p {
+  margin: 0;
+}
+
+.event-lineup-quote {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--secondary);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.event-lineup-quote p {
+  margin: 0;
+}
+
+.event-lineup-quote cite {
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-style: normal;
+}
+
+.event-lineup-external-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.event-lineup-external-links a {
+  color: var(--secondary);
 }
 
 .event-lineup-set-times {
@@ -211,6 +269,7 @@
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  align-items: start;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -236,6 +295,56 @@
   display: block;
   max-width: 100%;
   height: auto;
+}
+
+/*
+ * Sponsor cards with `shortDescription` or `socialLinks` populated
+ * grow vertically: the existing `.event-sponsors-link` keeps the
+ * boxed logo area, and the new content lands below inside the same
+ * `<li>`. `:has()` keeps the card-frame styling off sponsors that
+ * omit the new fields, preserving the byte-for-byte falsifier on
+ * the test events.
+ */
+.event-sponsors-item:has(.event-sponsors-short-description),
+.event-sponsors-item:has(.event-sponsors-social-links) {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-card);
+}
+
+.event-sponsors-item:has(.event-sponsors-short-description)
+  .event-sponsors-link,
+.event-sponsors-item:has(.event-sponsors-social-links)
+  .event-sponsors-link {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.event-sponsors-short-description {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.event-sponsors-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.event-sponsors-social-links a {
+  color: var(--secondary);
 }
 
 .event-faq-list {
