@@ -87,3 +87,59 @@ Walk through the triggers above and confirm each relevant update was made:
 A PR is not ready to open if any of these docs still describe the state before
 the branch's changes rather than after them. Doc updates belong in the same
 branch, not in a follow-up.
+
+### Ephemeral Identifiers In Durable Docs
+
+Durable docs (plan docs, milestone docs, epic docs, README, AGENTS.md and
+its fragments under [`docs/agents/`](/docs/agents/), code comments, and any
+other tracked file outside `docs/plans/**/scoping/`) must not embed PR
+numbers, commit IDs, or other ephemeral coordination identifiers. Those
+references rot:
+
+- a PR number cited inline becomes meaningless when the PR is closed and
+  reopened, when a fork / mirror replaces it, or when a contributor reading
+  the doc has no GitHub access to chase the link
+- "as of commit `abc123`" goes stale on the first rebase or squash-merge
+- "see PR #X for context" sends the reader off-platform to find what the
+  doc itself should already explain
+
+What to use instead in durable docs:
+
+- file paths + line numbers (`apps/web/vercel.json:54`)
+- function / module / decision-doc names
+  ([`docs/plans/test-event-noindex-uniformity.md`](/docs/plans/test-event-noindex-uniformity.md),
+  `publish_game_event_draft`)
+- the rule or contract by name, not by where it shipped
+- date of resolution (`Resolved 2026-05-04`) when historical timing matters
+- a section heading or doc-internal anchor when one self-contained doc
+  contains the answer
+
+Where ephemeral identifiers are acceptable:
+
+- **scoping docs** under `docs/plans/**/scoping/` — these are transient,
+  deleted at milestone-terminal PR per the milestone batch-deletion rule,
+  so PR / commit references in them carry no long-term rot risk
+- **PR descriptions** — live on GitHub, not in tracked file content
+- **commit messages** — immutable history; point-in-time references are
+  expected
+- **the contributor's local `~/.claude/` memory or other local-only notes** —
+  outside the repo
+
+Phase Status tables and similar audit-trail rows that record where each
+phase landed are a special case: prefer the dated form (`Landed 2026-05-04`)
+over the PR-number form (`Landed in PR #NNN`). The PR number adds nothing
+the merge date and the plan-doc link don't already convey, and it ages
+into noise. If review traceability is genuinely useful, attach the link in
+the PR description, not in the milestone doc.
+
+Recurring trap: a milestone-doc Phase Status row references "this PR"
+before the PR number is known, then the author goes back to fill in the
+number, then closes that PR and reopens as a different number, then has
+to chase every reference. The simplest fix is not to write the PR number
+at all — the merge date plus the plan-doc link survive any churn.
+
+Before opening or updating a PR, grep the diff for `#\d{2,}` (PR / issue
+number citations) and `[a-f0-9]{7,}` (commit hashes). Hits in scoping
+docs, PR descriptions, or commit messages are fine; hits in any other
+tracked file are a boundary violation and should be rewritten using one
+of the durable forms above.

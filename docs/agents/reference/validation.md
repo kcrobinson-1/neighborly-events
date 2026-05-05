@@ -93,6 +93,56 @@ When a change touches testing infrastructure, validation commands, CI, or local 
 - make sure CI does not pay heavyweight setup costs earlier than necessary
 - make sure local validation steps do not mutate workspace state in ways that break later commands
 
+### Test Boundary Discipline
+
+A unit test should fail when the unit's contract is violated and pass otherwise.
+If unrelated data — a new event slug, a new feature flag, a new sample fixture,
+a new config entry, a new sponsor record, a new draft event — requires editing
+the test, the test boundary is wrong: the test is asserting against data that
+lives outside its unit's contract.
+
+Before opening or updating a PR that adds or modifies tests, walk every
+modified or added test through this question:
+
+  **"If a contributor added an unrelated <thing in this domain> tomorrow,
+  would this test need editing?"**
+
+If the answer is yes, the test is data-coupled. Refactor before opening the
+PR. Common fixes:
+
+- **Mock the cross-boundary input.** When the test verifies algorithm or
+  matcher behavior, build a synthetic config / fixture / input set inside
+  the test rather than reading the live artifact. Live-artifact reads belong
+  in shape-correctness tests, not in algorithm tests.
+- **Parametrize over the source-of-truth constant.** When the test
+  legitimately cares about a domain set (e.g., a TypeScript allowlist
+  consumed by both application code and platform config), iterate over the
+  constant rather than hardcoding members. Adding to the constant then
+  automatically extends the walk.
+- **Assert the load-bearing invariant, not the specific population.** When
+  two surfaces must mirror each other (a TypeScript allowlist and a regex
+  in a JSON config, a database column and a UI field, a `shared/` constant
+  and a per-app projection), assert byte-equivalence between them — that
+  catches real drift. Adding to one without updating the other still fails
+  the test; adding to an unrelated slot in either surface does not.
+- **Separate format from algorithm.** Format / shape correctness tests run
+  against the live artifact and assert structural rules (every entry has
+  the shape we expect). Algorithm tests run against synthetic inputs and
+  assert behavior (the matcher matches what it should). Mixing them couples
+  the test to whatever data is in the artifact today.
+
+If the test legitimately needs to enumerate domain data — e.g., a regression
+fixture for a specific historical bug — leave a comment naming what triggers
+a future edit so the next contributor sees the trap before tripping it.
+
+Recurring trap: a unit test reads a live config (`apps/web/vercel.json`,
+`shared/events/*`, a fixture file, a migration list), hardcodes the
+slugs / flags / fixtures present today, and breaks every time someone adds
+an unrelated entry. The fix is to assert the contract that links the
+source-of-truth constant to the config (catches real drift) and to test the
+matching algorithm against synthetic inputs (independent of what's in the
+config at any point in time).
+
 ### Testing Tiers Discipline
 
 Plan authors and reviewers must distinguish tiers that are valid pre-merge

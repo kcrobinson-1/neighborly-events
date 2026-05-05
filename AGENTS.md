@@ -221,6 +221,19 @@ Avoid these unless the task explicitly requires them:
   test so the filename still makes sense after the phase ships, matching the
   `<feature>_<aspect>.test.sql` convention established by
   `event_code_data_model.test.sql` and `redemption_data_model.test.sql`
+- writing tests that depend on data outside their unit's contract (a new
+  event slug, fixture, feature flag, or config entry breaking unrelated
+  tests). See [`docs/agents/reference/validation.md`](/docs/agents/reference/validation.md)
+  "Test Boundary Discipline" for the pre-PR verification question and the
+  refactor playbook
+- embedding PR numbers, commit IDs, or other ephemeral coordination
+  identifiers in durable docs (plan docs, milestone docs, README, AGENTS.md
+  fragments, code comments). Allowed only in scoping docs under
+  `docs/plans/**/scoping/` (deleted at milestone-terminal PR), PR
+  descriptions, and commit messages. See
+  [`docs/agents/reference/documentation-currency.md`](/docs/agents/reference/documentation-currency.md)
+  "Ephemeral Identifiers In Durable Docs" for the durable-form alternatives
+  and the pre-PR grep check
 
 ## Change Boundaries
 
