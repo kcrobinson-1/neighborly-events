@@ -135,24 +135,48 @@ export const madronaContent: EventContent = {
       slug: "cedar-and-salt",
       name: "Cedar & Salt",
       bio: "A three-piece acoustic group rooted in Pacific Northwest folk songwriting.",
+      imageSrc: "/events/madrona/lineup/cedar-and-salt.jpg",
+      imageAlt: "Cedar & Salt — placeholder band photo",
+      extendedBio:
+        "Cedar & Salt formed during a long winter of porch sessions on the east side of the lake.\n\nTheir songs trace the small geographies of Pacific Northwest neighborhoods — ferry landings, garden plots, the slow turn from rain to sun.\n\nThis is placeholder copy authored for the Madrona demo build; M3 replaces it with the band's real bio.",
+      featuredQuote: {
+        text: "Demo placeholder: a featured-quote string used to exercise the new EventLineup quote affordance.",
+        attribution: "Placeholder Reviewer, Demo Outlet",
+      },
+      externalLinks: [
+        { label: "Spotify", href: "https://example.com/cedar-and-salt-spotify" },
+        { label: "Bandcamp", href: "https://example.com/cedar-and-salt-bandcamp" },
+        { label: "Website", href: "https://example.com/cedar-and-salt" },
+      ],
       setTimes: [{ day: "2026-08-11", time: "6:00 PM" }],
     },
     {
       slug: "lake-washington-brass",
       name: "Lake Washington Brass",
       bio: "Eight-piece neighborhood brass ensemble drawing on parade and second-line traditions.",
+      imageSrc: "/events/madrona/lineup/lake-washington-brass.jpg",
+      imageAlt: "Lake Washington Brass — placeholder band photo",
       setTimes: [{ day: "2026-08-11", time: "7:00 PM" }],
     },
     {
       slug: "arboretum-strings",
       name: "Arboretum Strings",
       bio: "Chamber-folk quartet writing songs about lakes, ferries, and the long Seattle dusk.",
+      extendedBio:
+        "Arboretum Strings has played the Madrona neighborhood since the early '20s.\n\nTheir set leans on slow-build folk arrangements with cello, acoustic guitar, and a single voice. Demo content; M3 replaces with the real bio.",
+      featuredQuote: {
+        text: "Demo placeholder quote — used here to show that a band can carry a quote without an image.",
+      },
       setTimes: [{ day: "2026-08-18", time: "6:00 PM" }],
     },
     {
       slug: "roosevelt-way-soul-revue",
       name: "Roosevelt Way Soul Revue",
       bio: "Six-piece soul revue with horns, organ, and a rotating cast of neighborhood vocalists.",
+      externalLinks: [
+        { label: "Bandcamp", href: "https://example.com/roosevelt-way-bandcamp" },
+        { label: "Instagram", href: "https://example.com/roosevelt-way-instagram" },
+      ],
       setTimes: [{ day: "2026-08-18", time: "7:15 PM" }],
     },
     {
@@ -175,6 +199,12 @@ export const madronaContent: EventContent = {
       logoAlt: "Madrona Neighborhood Association logo",
       href: "https://example.com/madrona-neighborhood-association",
       tier: "Hosting",
+      shortDescription:
+        "Demo placeholder: the neighborhood association that organizes the series, with a short blurb to exercise the new sponsor-description affordance.",
+      socialLinks: [
+        { label: "Instagram", href: "https://example.com/madrona-na-instagram" },
+        { label: "Newsletter", href: "https://example.com/madrona-na-newsletter" },
+      ],
     },
     {
       name: "Lake Washington Boulevard Bakery",
@@ -182,6 +212,8 @@ export const madronaContent: EventContent = {
       logoAlt: "Lake Washington Boulevard Bakery logo",
       href: "https://example.com/lake-washington-boulevard-bakery",
       tier: "Headline",
+      shortDescription:
+        "Demo placeholder: a neighborhood bakery sponsor blurb.",
     },
     {
       name: "Arboretum Coffee Roasters",
@@ -189,6 +221,9 @@ export const madronaContent: EventContent = {
       logoAlt: "Arboretum Coffee Roasters logo",
       href: "https://example.com/arboretum-coffee-roasters",
       tier: "Headline",
+      socialLinks: [
+        { label: "Instagram", href: "https://example.com/arboretum-coffee-instagram" },
+      ],
     },
     {
       name: "Eastlake Print Shop",
