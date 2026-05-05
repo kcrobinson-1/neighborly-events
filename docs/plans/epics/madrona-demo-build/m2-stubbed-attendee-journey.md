@@ -290,12 +290,20 @@ specifically:
   Apps/site `/event/madrona` carries `meta.robots: "noindex"`
   ([apps/site/events/madrona.ts:41](/apps/site/events/madrona.ts));
   apps/web routes carry `X-Robots-Tag: noindex` via the Vercel
-  headers config (existing). M2 ships no flip and no carve-out;
-  the milestone-doc rule binds every phase's diff to leave both
-  posture mechanisms intact. Phase 2.1's plan walks an `Out Of
-  Scope` line confirming `meta.robots` is unchanged on
-  `apps/site/events/madrona.ts` and the Vercel headers config
-  is unchanged.
+  headers config in
+  [`apps/web/vercel.json`](/apps/web/vercel.json). The milestone-
+  session hypothesis "(existing) wildcard config" was wrong —
+  the headers block was slug-allowlisted to the two test events
+  (`harvest-block-party`, `riverside-jam`) only, leaving Madrona
+  publicly indexable on apps/web until phase-2.1 fix-up
+  [#191](https://github.com/kcrobinson-1/neighborly-events/pull/191)
+  added a second header rule for `/event/madrona/:path*`. Future
+  non-test demo events (donation / feedback child epics, drafts
+  awaiting publish) follow the same shape: a per-event header
+  rule keyed on the slug. The milestone-doc rule binds every
+  phase's diff to leave both posture mechanisms intact across
+  the four `/event/madrona*` apps/web surfaces and the apps/site
+  `/event/madrona` landing.
 - **Placeholder content is content-neutral with respect to
   M3.** Placeholder questions / options / sponsor-fact strings
   M2 authors are deliberately non-canonical: real Madrona
