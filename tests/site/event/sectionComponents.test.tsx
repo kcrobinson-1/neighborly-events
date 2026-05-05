@@ -135,6 +135,125 @@ describe("EventLineup", () => {
     expect(screen.getByText("Synthetic performer bio")).toBeTruthy();
     expect(screen.getByText("2026-09-26 — 2:00 PM")).toBeTruthy();
   });
+
+  it("renders nothing for absent depth fields", () => {
+    const { container } = render(
+      <EventLineup lineup={baseContent.lineup} />,
+    );
+    expect(container.querySelector(".event-lineup-image")).toBeNull();
+    expect(container.querySelector(".event-lineup-extended-bio")).toBeNull();
+    expect(container.querySelector(".event-lineup-quote")).toBeNull();
+    expect(container.querySelector(".event-lineup-external-links")).toBeNull();
+  });
+
+  it("renders the band image with explicit alt text when imageSrc and imageAlt are present", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        imageSrc: "/test/band.jpg",
+        imageAlt: "Synthetic Performer band photo",
+      },
+    ];
+    render(<EventLineup lineup={lineup} />);
+    const image = screen.getByRole("img", {
+      name: "Synthetic Performer band photo",
+    });
+    expect(image.getAttribute("src")).toBe("/test/band.jpg");
+  });
+
+  it("falls back to the performer name for image alt when imageAlt is omitted", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        imageSrc: "/test/band.jpg",
+      },
+    ];
+    render(<EventLineup lineup={lineup} />);
+    const image = screen.getByRole("img", { name: "Synthetic Performer" });
+    expect(image.getAttribute("src")).toBe("/test/band.jpg");
+  });
+
+  it("splits extendedBio into paragraphs on \\n\\n", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        extendedBio:
+          "First paragraph.\n\nSecond paragraph.\n\nThird paragraph.",
+      },
+    ];
+    const { container } = render(<EventLineup lineup={lineup} />);
+    const paragraphs = container.querySelectorAll(
+      ".event-lineup-extended-bio p",
+    );
+    expect(paragraphs).toHaveLength(3);
+    expect(paragraphs[0].textContent).toBe("First paragraph.");
+    expect(paragraphs[1].textContent).toBe("Second paragraph.");
+    expect(paragraphs[2].textContent).toBe("Third paragraph.");
+  });
+
+  it("filters empty extendedBio paragraphs from triple-newline runs", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        extendedBio: "First.\n\n\n\nSecond.",
+      },
+    ];
+    const { container } = render(<EventLineup lineup={lineup} />);
+    const paragraphs = container.querySelectorAll(
+      ".event-lineup-extended-bio p",
+    );
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0].textContent).toBe("First.");
+    expect(paragraphs[1].textContent).toBe("Second.");
+  });
+
+  it("renders featuredQuote with both text and attribution when present", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        featuredQuote: {
+          text: "A quote about the band.",
+          attribution: "Some Reviewer",
+        },
+      },
+    ];
+    const { container } = render(<EventLineup lineup={lineup} />);
+    expect(screen.getByText("A quote about the band.")).toBeTruthy();
+    expect(screen.getByText("Some Reviewer")).toBeTruthy();
+    expect(container.querySelector(".event-lineup-quote cite")).not.toBeNull();
+  });
+
+  it("renders featuredQuote text without a cite when attribution is omitted", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        featuredQuote: { text: "An unattributed quote." },
+      },
+    ];
+    const { container } = render(<EventLineup lineup={lineup} />);
+    expect(screen.getByText("An unattributed quote.")).toBeTruthy();
+    expect(container.querySelector(".event-lineup-quote cite")).toBeNull();
+  });
+
+  it("renders externalLinks as labeled anchors with target=_blank rel=noopener noreferrer", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        externalLinks: [
+          { label: "Spotify", href: "https://example.com/spotify" },
+          { label: "Bandcamp", href: "https://example.com/bandcamp" },
+        ],
+      },
+    ];
+    render(<EventLineup lineup={lineup} />);
+    const spotify = screen.getByRole("link", { name: "Spotify" });
+    expect(spotify.getAttribute("href")).toBe("https://example.com/spotify");
+    expect(spotify.getAttribute("target")).toBe("_blank");
+    expect(spotify.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(
+      screen.getByRole("link", { name: "Bandcamp" }).getAttribute("href"),
+    ).toBe("https://example.com/bandcamp");
+  });
 });
 
 describe("EventSponsors", () => {
@@ -172,6 +291,49 @@ describe("EventSponsors", () => {
     const headings = screen.getAllByRole("heading");
     expect(headings).toHaveLength(1);
     expect(headings[0].textContent).toBe("Sponsors");
+  });
+
+  it("renders nothing for absent depth fields", () => {
+    const { container } = render(
+      <EventSponsors sponsors={baseContent.sponsors} />,
+    );
+    expect(
+      container.querySelector(".event-sponsors-short-description"),
+    ).toBeNull();
+    expect(container.querySelector(".event-sponsors-social-links")).toBeNull();
+  });
+
+  it("renders shortDescription when present", () => {
+    const sponsors: EventContent["sponsors"] = [
+      {
+        ...baseContent.sponsors[0],
+        shortDescription: "A short sponsor blurb for unit tests.",
+      },
+    ];
+    render(<EventSponsors sponsors={sponsors} />);
+    expect(
+      screen.getByText("A short sponsor blurb for unit tests."),
+    ).toBeTruthy();
+  });
+
+  it("renders socialLinks as labeled anchors with target=_blank rel=noopener noreferrer", () => {
+    const sponsors: EventContent["sponsors"] = [
+      {
+        ...baseContent.sponsors[0],
+        socialLinks: [
+          { label: "Instagram", href: "https://example.com/instagram" },
+          { label: "LinkedIn", href: "https://example.com/linkedin" },
+        ],
+      },
+    ];
+    render(<EventSponsors sponsors={sponsors} />);
+    const ig = screen.getByRole("link", { name: "Instagram" });
+    expect(ig.getAttribute("href")).toBe("https://example.com/instagram");
+    expect(ig.getAttribute("target")).toBe("_blank");
+    expect(ig.getAttribute("rel")).toBe("noopener noreferrer");
+    expect(
+      screen.getByRole("link", { name: "LinkedIn" }).getAttribute("href"),
+    ).toBe("https://example.com/linkedin");
   });
 });
 
