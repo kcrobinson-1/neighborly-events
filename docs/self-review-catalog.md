@@ -21,7 +21,8 @@ tell you you're safe.
    not only at the end. Small diffs are easier to audit honestly.
 
 PR plans should name the audits they commit to running — see
-[`AGENTS.md`](/AGENTS.md) § "Planning Depth" and § "Pre-Edit Gate".
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+"Planning Depth" and [`AGENTS.md`](/AGENTS.md) "Pre-Edit Gate."
 
 ## Contributing
 
@@ -47,9 +48,11 @@ not.
 ## Workflow-discipline audits
 
 Read-logs-first, speculative-commit-traceability, and local-vs-CI-baseline
-discipline live in [`AGENTS.md`](/AGENTS.md) § "Debugging Discipline".
-They are not duplicated here; the triggers fire on most non-trivial
-debugging work and are closer in intent to process than to diff review.
+discipline live in
+[`docs/agents/workflows/debugging.md`](/docs/agents/workflows/debugging.md)
+"Debugging Discipline." They are not duplicated here; the triggers fire on
+most non-trivial debugging work and are closer in intent to process than
+to diff review.
 
 ---
 
@@ -117,7 +120,9 @@ privilege list.
 — a "service_role cannot UPDATE" assertion passed locally but failed in
 CI under the baseline grant; the same commit also split a
 `'SELECT,INSERT,DELETE'` comma list into AND-joined per-privilege
-checks. See also `AGENTS.md` § Debugging Discipline.
+checks. See also
+[`docs/agents/workflows/debugging.md`](/docs/agents/workflows/debugging.md)
+"Debugging Discipline."
 
 ### Legacy-data precheck for constraint tightening
 

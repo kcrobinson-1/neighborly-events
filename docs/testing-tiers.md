@@ -29,8 +29,8 @@ Who runs it: the contributor, before the first edit for any non-trivial task.
 What runs: the relevant subset of `npm run lint`, `npm run build:web`,
 `npm test`, `npm run test:functions`, and the deno `--no-lock` checks for any
 edge function surface expected to be touched. Exact commands by surface live
-in `docs/dev.md`. When it fails: stop and report; do not edit. See AGENTS.md
-"Pre-Edit Gate."
+in `docs/dev.md`. When it fails: stop and report; do not edit. See
+[`AGENTS.md`](/AGENTS.md) "Pre-Edit Gate."
 
 ## Tier 2 — Pre-PR Handoff
 
@@ -83,9 +83,12 @@ or user-facing copy in a meaningful way. What runs: `npm run ui:review:capture`
 via Playwright, mobile viewport first, against a local web app — or
 `npm run ui:review:capture:admin` for admin-facing PRs, which uses
 Playwright route mocks so no production data is read or written. Full
-workflow in `docs/dev.md` and AGENTS.md "UI Review Runs." Valid pre-merge
-gate: yes for UX-affecting PRs, with before/after screenshots linked in the
-PR body per AGENTS.md "Pull Request Screenshot Process."
+workflow in `docs/dev.md` and
+[`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md)
+"UI Review Runs." Valid pre-merge gate: yes for UX-affecting PRs, with
+before/after screenshots linked in the PR body per
+[`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md)
+"Pull Request Screenshot Process."
 
 ## Tier 5 — Post-Release Production Smoke
 
@@ -156,7 +159,9 @@ deployed origin.
    commit; see [`dev.md`](/docs/dev.md) "Watching The Post-Merge
    Chain."
 
-This is the carve-out AGENTS.md's Plan-to-PR Completion Gate points to.
+This is the carve-out
+[`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
+"Plan-to-PR Completion Gate" points to.
 The implementing PR leaves the plan in a named, non-drift state —
 `In progress pending <validation-name>` — rather than a soft post-merge
 promise. The `Landed` flip lives in the follow-up doc commit that
@@ -166,7 +171,8 @@ downstream of the merge, so the status flip is too.
 
 Plans whose Validation Gate can be fully satisfied pre-merge do not
 need this two-phase structure; the same-PR `Landed` flip applies (see
-AGENTS.md "Plan-to-PR Completion Gate").
+[`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
+"Plan-to-PR Completion Gate").
 
 ## Which Tier Catches Which Class Of Regression
 
@@ -201,4 +207,5 @@ covered.
 - `docs/operations.md` — release and production operations
 - `docs/tracking/production-admin-smoke-tracking.md` — Tier 5 details, env
   ownership, failure triage
-- `AGENTS.md` — "Validation Expectations" and "Plan-to-PR Completion Gate"
+- [`docs/agents/reference/validation.md`](/docs/agents/reference/validation.md) — Validation Expectations
+- [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) — Plan-to-PR Completion Gate
