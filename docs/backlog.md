@@ -37,6 +37,42 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
+- [ ] **`dev` Event-code and slug locks survive unpublish (organizer UX gap)**
+  The `game_event_draft_event_code_lock` and `game_event_draft_slug_lock`
+  triggers gate on `old.last_published_version_number is not null`
+  (`supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql:11-29`,
+  originally `supabase/migrations/20260418050000_lock_event_code_after_publish.sql:15-22`
+  and `supabase/migrations/20260415000000_add_quiz_event_draft_slug_lock_trigger.sql`).
+  The column was renamed from `live_version_number` to
+  `last_published_version_number` on 2026-04-23 because
+  `unpublish_game_event`
+  (`supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql:232-291`)
+  only sets `game_events.published_at = null` and writes an audit row;
+  it never clears `game_event_drafts.last_published_version_number`.
+  Net effect: once an event has been published once, even after
+  unpublish, even with zero entitlements ever issued, the event_code
+  and slug are immutable forever. That contradicts the organizer
+  expectation "edit code/slug until the game goes live." Live evidence
+  during Madrona M2 phase 2.1 close-out (2026-05-06,
+  `docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md`): a
+  `MAD → MIP` event-code rotation on a beta event with one stale
+  unredeemed entitlement was blocked by the trigger and resolved only
+  via a service-role `update ... set last_published_version_number =
+  null` followed by re-seed. The fact that the workaround is manual
+  SQL is the gap — organizers won't run service-role queries.
+  Class-of-solution is open: (a) make `unpublish_game_event` clear
+  `last_published_version_number` so the locks read as "while
+  currently live" by construction; (b) tighten the trigger condition
+  to query `game_events.published_at is not null` directly, paying a
+  cross-table lookup per update for durability if other paths to
+  clearing the draft column appear; (c) add a one-shot admin-only
+  escape-hatch RPC scoped to "no entitlements redeemed yet." All
+  three restore the same organizer UX; the trade is migration scope
+  vs. trigger complexity vs. surface count. Tier 1 because this
+  bites organizers at the moment they want a final pre-launch
+  correction (typo, brand swap, sponsor rename) and the only
+  workaround today is engineer-mediated SQL.
+
 - [ ] **`dev` Event slug routing is case-sensitive (silent 404 on capitalized URLs)**
   `/event/Madrona/game` (capital M) returns HTTP 200 but the SPA renders
   the not-found / empty state because the slug pulled from `useParams` is
