@@ -2,25 +2,29 @@ import type { AuthoringGameDraftContent } from "../game-config";
 import type { GameSeedConfig } from "./seed-config.ts";
 
 /**
- * Placeholder Madrona game content authored by the
+ * Madrona Music in the Playfield — demo game content authored by the
  * [Madrona demo-build epic](../../docs/plans/epics/madrona-demo-build/epic.md)
- * M2 phase 2.1. The content is **not** real — every prompt,
- * option, explanation, and sponsor-fact is intentionally neutral
- * music-and-neighborhood-themed copy that lets a stakeholder
- * walk the gameplay surface end-to-end without naming any real
- * Madrona band, sponsor, or specific historical fact. M3 of the
- * demo-build epic replaces this content with real Madrona
- * authoring; the content-neutrality rule (M2 milestone-doc
- * invariant 5 — placeholder content does not foreclose M3's
- * authoring) is the load-bearing check that the swap stays a
- * content edit rather than a structural edit.
+ * M2 phase 2.1 and progressively iterated toward the shape M3 will
+ * land. The content references the apps/site Madrona placeholder
+ * roster as canonical: the six placeholder bands
+ * ([`apps/site/events/madrona.ts`](../../apps/site/events/madrona.ts)
+ * `lineup`), the three Tuesday-evening series dates from the same
+ * source's `schedule.days`, and the five placeholder sponsors from
+ * `sponsors`. Bands and sponsors are still placeholder names — the
+ * apps/site landing's first FAQ entry and the SSR `noindex` meta
+ * carry the disclosure that the page is a stakeholder demo, not a
+ * real launch announcement.
  *
- * The placeholder sponsor names ("Madrona Neighborhood
- * Association", "Lake Washington Boulevard Bakery", "Arboretum
- * Coffee Roasters") match the placeholder sponsor list in
- * [`apps/site/events/madrona.ts`](../../apps/site/events/madrona.ts)
- * so that the gameplay sponsor-fact strings reference the same
- * placeholder roster the apps/site landing surfaces.
+ * The intent of treating the apps/site roster as canon (rather than
+ * hedging every reference as "placeholder") is to make the M3 swap
+ * a name-substitution rather than a structural rewrite — when the
+ * real Cedar-&-Salt-equivalent opener is confirmed, M3 changes the
+ * label and the option id and the sponsor-fact prose; the question
+ * count, the multi-select position, the sponsor rotation, and the
+ * explanation shape all carry forward unchanged. M2 milestone-doc
+ * invariant 5 ("placeholder content is content-neutral with
+ * respect to M3") binds the structural carry-forward, not the
+ * choice of placeholder names.
  *
  * The seed flow is: a service-role script
  * (`scripts/release/seed-game-content.cjs`) imports this module
@@ -34,17 +38,17 @@ import type { GameSeedConfig } from "./seed-config.ts";
  * so a future "Create New Event" admin-UI affordance could
  * adopt the same content as a starter template if needed.
  */
-const madronaDemoGameContent: AuthoringGameDraftContent = {
+const madronaGameContent: AuthoringGameDraftContent = {
   id: "madrona",
   slug: "madrona",
   name: "Madrona Music in the Playfield",
   location: "Madrona Playfield, Seattle",
-  estimatedMinutes: 2,
-  entitlementLabel: "reward ticket",
+  estimatedMinutes: 3,
+  entitlementLabel: "raffle ticket",
   intro:
-    "Welcome to Madrona Music in the Playfield. Answer six quick questions about outdoor concerts and neighborhood gatherings to earn a reward ticket — redeemable at the booth.",
+    "Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough for a free raffle ticket redeemable at the Madrona Neighborhood Association booth by the basketball court.",
   summary:
-    "Thank you for playing. Show your reward ticket at the redemption booth, and enjoy the rest of the evening.",
+    "Thanks for playing. Bring your code to the Madrona Neighborhood Association booth to redeem, then settle in — the next set is about to start.",
   feedbackMode: "final_score_reveal",
   allowBackNavigation: true,
   allowRetake: true,
@@ -52,116 +56,86 @@ const madronaDemoGameContent: AuthoringGameDraftContent = {
     {
       id: "q1",
       sponsor: "Madrona Neighborhood Association",
-      prompt:
-        "Which decade is most associated with the rise of indie-folk on the Pacific Northwest scene?",
+      prompt: "What is the Madrona neighborhood named after?",
       selectionMode: "single",
-      correctAnswerIds: ["q1-1990s"],
+      correctAnswerIds: ["q1-madrone-tree"],
       options: [
-        { id: "q1-1960s", label: "1960s" },
-        { id: "q1-1970s", label: "1970s" },
-        { id: "q1-1990s", label: "1990s" },
-        { id: "q1-2010s", label: "2010s" },
+        { id: "q1-madrone-tree", label: "The Pacific madrone tree" },
+        { id: "q1-streetcar", label: "The streetcar line that once served the bluff" },
+        { id: "q1-developer", label: "An early Madrona Park developer" },
+        { id: "q1-bluff", label: "The bluff above Lake Washington" },
       ],
       explanation:
-        "Pacific Northwest indie-folk found its mainstream voice in the 1990s, though every other decade above has shaped the region's sound in its own way.",
+        "The neighborhood is named for the Pacific madrone (Arbutus menziesii) — an evergreen with peeling reddish bark that's native to the bluffs along Lake Washington. The Spanish-derived name was already attached to the tree long before the neighborhood took it on.",
       sponsorFact:
-        "The Madrona Neighborhood Association supports community-led concerts year-round, not just summer evenings.",
+        "The Madrona Neighborhood Association takes its name from the same trees the neighborhood does.",
     },
     {
       id: "q2",
-      sponsor: "Lake Washington Boulevard Bakery",
+      sponsor: null,
       prompt:
-        "An outdoor summer concert series in a public park usually pairs music with which classic neighborhood activity?",
+        "In 1969, the Seattle chapter of the Black Panther Party launched its Free Breakfast Program for schoolchildren at which Madrona location?",
       selectionMode: "single",
-      correctAnswerIds: ["q2-picnics"],
+      correctAnswerIds: ["q2-madrona-grace-presbyterian"],
       options: [
-        { id: "q2-picnics", label: "Picnics on the lawn" },
-        { id: "q2-snow", label: "Snow shoveling" },
-        { id: "q2-cinema", label: "Indoor cinema" },
-        { id: "q2-grocery", label: "Grocery shopping" },
+        { id: "q2-madrona-grace-presbyterian", label: "Madrona Grace Presbyterian Church" },
+        { id: "q2-madrona-elementary", label: "Madrona Elementary School" },
+        { id: "q2-madrona-library", label: "The Madrona Branch Library" },
+        { id: "q2-madrona-community-center", label: "Madrona Community Center" },
       ],
       explanation:
-        "Picnics and outdoor music are a long-running pairing in neighborhood parks across the region.",
-      sponsorFact:
-        "Lake Washington Boulevard Bakery has been a neighborhood placeholder long enough to remember when the picnic blanket was the only seating.",
+        "The program launched at Madrona Grace Presbyterian Church on 32nd Avenue, coordinated by Elmer Dixon III. It expanded to five locations and served an estimated 300,000 meals between 1969 and 1977.",
     },
     {
       id: "q3",
-      sponsor: "Arboretum Coffee Roasters",
-      prompt:
-        "Which instrument would you most expect to lead an acoustic folk trio at a community concert?",
+      sponsor: null,
+      prompt: "What is the statue outside the Madrona library called?",
       selectionMode: "single",
-      correctAnswerIds: ["q3-guitar"],
+      correctAnswerIds: ["q3-peaceable-kingdom"],
       options: [
-        { id: "q3-guitar", label: "Acoustic guitar" },
-        { id: "q3-subwoofer", label: "Subwoofer" },
-        { id: "q3-trombone", label: "Trombone" },
-        { id: "q3-triangle", label: "Triangle" },
+        { id: "q3-peaceable-kingdom", label: "The Peaceable Kingdom" },
+        { id: "q3-lion-and-the-lamb", label: "The Lion and the Lamb" },
+        { id: "q3-common-ground", label: "Common Ground" },
+        { id: "q3-madrona-menagerie", label: "The Madrona Menagerie" },
       ],
       explanation:
-        "An acoustic guitar carries the melody for most folk trios; the others either drown it out or struggle to be heard.",
-      sponsorFact:
-        "Arboretum Coffee Roasters keeps the volunteer crew caffeinated through the soundcheck — and through the second-set encore.",
+        "Sculptor Richard Beyer's aluminum 'Peaceable Kingdom' was installed on the library lawn in 1984. The four animals stand in for groups living in the neighborhood at the time — the panther for the Black Panthers (headquartered in Madrona), the pig for the police, the sheep for the elderly, and the wolf for the street toughs — coexisting peaceably.",
     },
     {
       id: "q4",
-      sponsor: "Madrona Neighborhood Association",
-      prompt:
-        "Community-led concerts in neighborhood parks are typically supported by which type of sponsor?",
+      sponsor: null,
+      prompt: "What is the current use of the Madrona Bathhouse on the waterfront in Madrona Park?",
       selectionMode: "single",
-      correctAnswerIds: ["q4-local"],
+      correctAnswerIds: ["q4-dance-studio"],
       options: [
-        { id: "q4-local", label: "Local businesses and neighborhood associations" },
-        { id: "q4-multinational", label: "Multinational tech firms only" },
-        { id: "q4-anonymous", label: "Anonymous benefactors only" },
-        { id: "q4-federal", label: "Federal grant programs only" },
+        { id: "q4-dance-studio", label: "A dance studio" },
+        { id: "q4-community-theater", label: "A community theater" },
+        { id: "q4-clay-studio", label: "A clay studio" },
+        { id: "q4-boathouse", label: "A boathouse for kayak and paddleboard rentals" },
       ],
       explanation:
-        "Local businesses and neighborhood associations carry most of the weight; the other options are rarer at this scale.",
-      sponsorFact:
-        "The Madrona Neighborhood Association is the placeholder hosting sponsor for this demo run; the real M3 lineup will name the actual sponsors who signed on.",
+        "The 1927-28 brick bathhouse was converted to a dance studio in 1971. Spectrum Dance Theater — a contemporary dance company founded in 1982 — has been based there ever since, with choreographer Donald Byrd as artistic director since 2002.",
     },
     {
       id: "q5",
-      sponsor: "Lake Washington Boulevard Bakery",
-      prompt:
-        "If you arrive at an outdoor concert as the show is about to start, which is the most considerate seating choice?",
+      sponsor: null,
+      prompt: "Before being renamed to MLK Jr Way, what was the name of the street that borders the western edge of Madrona?",
       selectionMode: "single",
-      correctAnswerIds: ["q5-behind"],
+      correctAnswerIds: ["q5-empire-way"],
       options: [
-        { id: "q5-behind", label: "Behind those already seated" },
-        { id: "q5-front", label: "Directly in front of the stage" },
-        { id: "q5-path", label: "On the access path" },
-        { id: "q5-blanket", label: "On someone else's blanket" },
+        { id: "q5-empire-way", label: "Empire Way" },
+        { id: "q5-hill-way", label: "Hill Way" },
+        { id: "q5-cascade-way", label: "Cascade Way" },
+        { id: "q5-pacific-way", label: "Pacific Way" },
       ],
       explanation:
-        "Settling in behind earlier arrivals keeps sightlines and pathways open for everyone.",
-      sponsorFact:
-        "Lake Washington Boulevard Bakery's volunteers usually save a quiet patch near the back for late-arriving families.",
-    },
-    {
-      id: "q6",
-      sponsor: "Arboretum Coffee Roasters",
-      prompt:
-        "After the final song of the night at a community concert, what's a common closing tradition?",
-      selectionMode: "single",
-      correctAnswerIds: ["q6-applause"],
-      options: [
-        { id: "q6-applause", label: "Applause and thanking the band" },
-        { id: "q6-storming", label: "Storming the stage" },
-        { id: "q6-refunds", label: "Demanding refunds" },
-        { id: "q6-noise", label: "Filing a noise complaint" },
-      ],
-      explanation:
-        "A round of applause and a thank-you wraps the evening; the other options would surprise a lot of people.",
-      sponsorFact:
-        "Arboretum Coffee Roasters typically has the last cup poured by the time the headliner takes their bow.",
+        "Empire Way was named after railroad magnate James J. Hill — 'the empire builder' — until a 1983 Washington Supreme Court ruling cleared a renaming campaign activist Eddie Rye Jr. had launched two years earlier on Black radio station KYAC. Seattle's renaming joined a small early-1980s wave of West Coast cities — Berkeley, Oakland, and South LA all made the change the same year — but Seattle's was unusually contested, requiring two years and a court battle to overcome merchant opposition.",
     },
   ],
 };
 
 /**
- * Generic seed-script input for the Madrona placeholder content.
+ * Generic seed-script input for the Madrona content.
  * The `eventCode` is a peer field on `game_event_drafts` /
  * `game_events` (not inside the `content` JSON), so it lives on
  * the wrapper. The seed script at
@@ -170,6 +144,6 @@ const madronaDemoGameContent: AuthoringGameDraftContent = {
  * reads `seedConfig`.
  */
 export const seedConfig: GameSeedConfig = {
-  eventCode: "MAD",
-  content: madronaDemoGameContent,
+  eventCode: "MIP",
+  content: madronaGameContent,
 };
