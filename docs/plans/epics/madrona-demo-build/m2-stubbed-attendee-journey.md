@@ -108,7 +108,7 @@ AGENTS.md "Plan content is a mix of rules and estimates" and
 session for each phase re-derives the actual shape against
 merged code at phase-start.
 
-| Phase | Title (estimate) | Plan | Status | PR |
+| Phase | Title (estimate) | Plan | Status | Landed |
 | --- | --- | --- | --- | --- |
 | 2.1 | Placeholder Madrona game content authored + published; agent assigned; full attendee journey verified end-to-end | [m2-phase-2-1-plan.md](/docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md) | Landed 2026-05-06 | See plan doc |
 | 2.2 | (Conditional) Cross-app theme-continuity capture set + closure | — | Collapsed into 2.1 | See plan doc |
@@ -155,8 +155,9 @@ flowchart LR
 **Why M1 blocks 2.1.** M2 wires gameplay / redeem against
 `slug=madrona`; the slug must already resolve to a registered
 Theme and a registered apps/site `EventContent` for the journey
-to render coherently. M1's two PRs ([#182](https://github.com/kcrobinson-1/neighborly-events/pull/182),
-[#185](https://github.com/kcrobinson-1/neighborly-events/pull/185))
+to render coherently. M1's two phase PRs (phases 1.1 and 1.2,
+both landed 2026-05-04 — see
+[m1-brand-foundation.md `## Phase Status`](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md))
 landed both prerequisites and the M1 milestone is `Landed`.
 Reversing the order (extending placeholder game content against
 an unregistered slug) silently falls back to the warm-cream
@@ -295,9 +296,10 @@ specifically:
   session hypothesis "(existing) wildcard config" was wrong —
   the headers block was slug-allowlisted to the two test events
   (`harvest-block-party`, `riverside-jam`) only, leaving Madrona
-  publicly indexable on apps/web until phase-2.1 fix-up
-  [#191](https://github.com/kcrobinson-1/neighborly-events/pull/191)
-  added a second header rule for `/event/madrona/:path*`. Future
+  publicly indexable on apps/web until a phase-2.1 fix-up
+  (landed 2026-05-05) added a second header rule for
+  `/event/madrona/:path*`
+  ([apps/web/vercel.json:59-64](/apps/web/vercel.json)). Future
   non-test demo events (donation / feedback child epics, drafts
   awaiting publish) follow the same shape: a per-event header
   rule keyed on the slug. The milestone-doc rule binds every

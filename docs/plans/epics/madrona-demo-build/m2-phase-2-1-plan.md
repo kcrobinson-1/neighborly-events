@@ -424,7 +424,8 @@ so the operator looks up the UUID once and uses it twice.
    epic Sizing Summary M2 line per Estimate Deviations, and
    delete the milestone's transient scoping docs (the
    `scoping/m1-phase-1-1.md` and `scoping/m1-phase-1-2.md`
-   were already deleted in PR #186 close-out, so the only
+   were already deleted in the M1 close-out (landed 2026-05-05),
+   so the only
    transient doc deleting now is `scoping/m2-phase-2-1.md`).
 9. **PR-body assembly.** Per the 10-section template, including
    the validation captures inline in the `## Validation` section
@@ -701,8 +702,9 @@ This phase's PR lands the following doc updates per AGENTS.md
   executes); keeping the substrate PR open while waiting for
   the operator step would block reviewers from verifying the
   reviewable parts. The split matches the M1 close-out
-  [#186](https://github.com/kcrobinson-1/neighborly-events/pull/186)
-  precedent of substrate-then-close-out and produces a 2-PR
+  precedent (landed 2026-05-05;
+  [m1-brand-foundation.md `## Status`](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md))
+  of substrate-then-close-out and produces a 2-PR
   outcome within the parent epic's M2 Sizing Summary 1–2 PR
   estimate.
 

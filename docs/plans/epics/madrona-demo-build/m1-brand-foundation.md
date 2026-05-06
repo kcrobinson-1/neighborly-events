@@ -2,11 +2,11 @@
 
 ## Status
 
-Landed across
-[PR #182](https://github.com/kcrobinson-1/neighborly-events/pull/182)
-(phase 1.1) and
-[PR #185](https://github.com/kcrobinson-1/neighborly-events/pull/185)
-(phase 1.2 with phase 1.3 collapsed in). All M1 phase-status rows
+Landed 2026-05-04 across phase 1.1
+([m1-phase-1-1-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md))
+and phase 1.2
+([m1-phase-1-2-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md),
+with phase 1.3 collapsed in). All M1 phase-status rows
 in the table below are at `Landed`; this close-out PR flips the
 milestone-level Status, reconciles the epic's Sizing Summary M1
 line, and deletes the transient phase scoping docs.
@@ -115,11 +115,11 @@ AGENTS.md "Plan content is a mix of rules and estimates" and
 session for each phase re-derives the actual shape against
 merged code at phase-start.
 
-| Phase | Title | Plan | Status | PR |
+| Phase | Title | Plan | Status | Landed |
 | --- | --- | --- | --- | --- |
-| 1.1 | Madrona Theme registration + minimal Madrona content module | [m1-phase-1-1-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md) | Landed | [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182) |
-| 1.2 | `EventContent` shape extensions + section component renderer updates | [m1-phase-1-2-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md) | Landed | [#185](https://github.com/kcrobinson-1/neighborly-events/pull/185) |
-| 1.3 | Placeholder Madrona content depth pass exercising the extended shape | — | Collapsed into 1.2 | [#185](https://github.com/kcrobinson-1/neighborly-events/pull/185) |
+| 1.1 | Madrona Theme registration + minimal Madrona content module | [m1-phase-1-1-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md) | Landed | 2026-05-04 |
+| 1.2 | `EventContent` shape extensions + section component renderer updates | [m1-phase-1-2-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-2-plan.md) | Landed | 2026-05-04 |
+| 1.3 | Placeholder Madrona content depth pass exercising the extended shape | — | Collapsed into 1.2 | 2026-05-04 |
 
 The 3-row estimate matches the epic's Sizing Summary (M1: 2–3
 PRs) at the upper bound. Phase 1.3 may collapse into 1.2 at

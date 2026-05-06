@@ -2,17 +2,17 @@
 
 ## Status
 
-Landed in
-[PR #185](https://github.com/kcrobinson-1/neighborly-events/pull/185).
-Phase 1.3 collapsed into this PR per the milestone-doc-authorized
-deviation; recorded in the PR body's `## Estimate Deviations`
-section.
+Landed 2026-05-04. Phase 1.3 collapsed into this PR per the
+milestone-doc-authorized deviation
+([m1-brand-foundation.md `## Phase Status`](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md));
+the per-PR rationale was recorded in the merging PR's
+`## Estimate Deviations` section.
 
 The `In draft` → `Proposed` promotion gate was satisfied at
 promotion time:
 
-- **Phase 1.1 merged in
-  [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182).**
+- **Phase 1.1 merged 2026-05-04**
+  ([m1-phase-1-1-plan.md](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md)).
   Post-1.1 state of `apps/site/lib/eventContent.ts`,
   `EventLineup.tsx`, `EventSponsors.tsx`, and
   `apps/site/events/madrona.ts` is observable. Reality-check
@@ -26,9 +26,9 @@ promotion time:
 - **Naming decisions settled.** The proposed field names —
   `imageSrc?` + `imageAlt?`, `extendedBio?`,
   `featuredQuote?: { text; attribution? }`, `externalLinks?`,
-  `shortDescription?`, `socialLinks?` — were walked in PR #183
-  with no rebuttal; they are the contract this plan ships
-  against.
+  `shortDescription?`, `socialLinks?` — were walked at plan-draft
+  time (landed 2026-05-04) with no rebuttal; they are the
+  contract this plan ships against.
 - **Donation/feedback child epic re-grep confirmed neither
   has scoped.** `docs/plans/epics/madrona-donation/` and
   `docs/plans/epics/madrona-feedback/` directories do not
@@ -162,13 +162,13 @@ already bind.
 ## Naming
 
 Settled. The following spellings are the contract this plan
-ships against; they were walked in
-[PR #183](https://github.com/kcrobinson-1/neighborly-events/pull/183)
-with no rebuttal under the constraints in
+ships against; they were walked at plan-draft review time
+(landed 2026-05-04) with no rebuttal under the constraints in
 scoping decision 3 — no foreclosure of donation/feedback child
 epics.
 Rationale per name is preserved so future readers can
-reconstruct the choice without diving back into the PR thread.
+reconstruct the choice without diving back into the review
+thread.
 
 ### Band depth fields
 
@@ -532,8 +532,7 @@ This sequence is the planner's pre-implementation estimate of
 the expected execution shape per AGENTS.md "Plan content is a
 mix of rules and estimates"; the implementer may refine.
 
-1. **Branch hygiene.** Worktree off main (1.1 merged in
-   [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182)).
+1. **Branch hygiene.** Worktree off main (1.1 merged 2026-05-04).
    Branch rename to a semantic slug per the AGENTS.md / memory
    rule "Rename auto-generated worktree branches to a semantic
    slug" — likely `feat/madrona-m1-phase-1-2`.
