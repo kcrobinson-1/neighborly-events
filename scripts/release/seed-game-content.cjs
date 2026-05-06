@@ -11,6 +11,8 @@
 
 const path = require("node:path");
 
+const { assertProdGuard, loadEnv } = require("../lib/load-env.cjs");
+
 const schemaVersion = 1;
 
 function parseArgs(argv) {
@@ -161,6 +163,8 @@ async function loadSeedConfig(contentArg) {
 }
 
 async function main() {
+  loadEnv();
+
   const args = parseArgs(process.argv.slice(2));
   const supabaseUrl = readRequiredEnv("TEST_SUPABASE_URL").replace(/\/$/, "");
   const serviceRoleKey = readRequiredEnv("TEST_SUPABASE_SERVICE_ROLE_KEY");
@@ -168,6 +172,8 @@ async function main() {
 
   assertHttpsUrl(supabaseUrl, "TEST_SUPABASE_URL");
   assertUuid(publishedByUserId, "GAME_SEED_PUBLISHED_BY_USER_ID");
+
+  await assertProdGuard({ envNames: ["TEST_SUPABASE_URL"] });
 
   const { resolvedPath, seedConfig } = await loadSeedConfig(args.content);
   const { eventCode, content } = seedConfig;
