@@ -338,15 +338,14 @@ epic-creation PR specifically.
 3 milestones. Estimate, not binding; per-milestone PR counts are
 re-derived at each milestone's planning session.
 
-- **M1:** 2–3 PRs estimated; **2 PRs actual** —
-  [#182](https://github.com/kcrobinson-1/neighborly-events/pull/182)
+- **M1:** 2–3 PRs estimated; **2 PRs actual** — phase 1.1
   (Theme registration + minimal Madrona content module) and
-  [#185](https://github.com/kcrobinson-1/neighborly-events/pull/185)
-  (`EventContent` shape extensions + section component renderer
-  updates + Madrona placeholder depth-field population, with
-  phase 1.3 collapsed into 1.2 per the milestone-doc-authorized
-  deviation). Within the estimate range; the collapse rationale
-  is recorded in PR #185's `## Estimate Deviations`.
+  phase 1.2 (`EventContent` shape extensions + section component
+  renderer updates + Madrona placeholder depth-field population,
+  with phase 1.3 collapsed into 1.2 per the milestone-doc-
+  authorized deviation), both landed 2026-05-04. Within the
+  estimate range; the collapse is authorized in advance by
+  [m1-brand-foundation.md `## Phase Status`](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md).
 - **M2:** 1–2 PRs. Placeholder Madrona game authored and
   published; redemption agent assigned; cross-app theme
   continuity UI-review pair captured.
