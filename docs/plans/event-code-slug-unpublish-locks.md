@@ -18,18 +18,18 @@ follow-up plan ships as a standard fix PR; no epic structure.
 
 `game_event_draft_event_code_lock` and `game_event_draft_slug_lock`
 fire on `old.last_published_version_number is not null`
-([20260423010000_rename_live_version_number_to_last_published_version_number.sql:11-29](supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql)).
+([20260423010000_rename_live_version_number_to_last_published_version_number.sql:11-29](/supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql)).
 That column is set on first publish
-([:198](supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
+([:198](/supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
 and **never cleared** —
-`unpublish_game_event` ([:232-291](supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
+`unpublish_game_event` ([:232-291](/supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
 only nulls `game_events.published_at` and writes an audit row.
 
 Net effect: once an event publishes, slug and event_code are
 immutable forever, even after unpublish, even with zero
 entitlements ever issued. The same pre-check sits in the Edge
 Function path
-([save-draft/index.ts:97-124](supabase/functions/save-draft/index.ts)),
+([save-draft/index.ts:97-124](/supabase/functions/save-draft/index.ts)),
 so the lock surfaces uniformly across PostgREST and the Edge.
 
 Live evidence: Madrona M2 phase 2.1 close-out (2026-05-06) needed a
@@ -46,7 +46,7 @@ Locking is not vestigial. While an event is live:
 
 - Entitlement `verification_code` values are stamped as
   `<event_code>-NNNN` at issue time
-  ([20260418070000_rewrite_verification_code_generator.sql:155-198](supabase/migrations/20260418070000_rewrite_verification_code_generator.sql)).
+  ([20260418070000_rewrite_verification_code_generator.sql:155-198](/supabase/migrations/20260418070000_rewrite_verification_code_generator.sql)).
   Changing event_code mid-event would not invalidate already-issued
   codes (they remain a literal column value), but printed/scanned
   attendee artifacts referencing the old prefix would diverge from
@@ -63,18 +63,18 @@ trigger is a strict superset.
 After unpublish:
 
 - `game_events.published_at` is `null`, so attendee surfaces 404
-  the slug ([read-demo-event](supabase/functions/read-demo-event/index.ts)
+  the slug ([read-demo-event](/supabase/functions/read-demo-event/index.ts)
   and the SPA event routes gate on live state).
 - Already-issued `<old_code>-NNNN` entitlements remain redeemable
   by exact `verification_code` match — redemption looks up by
   `(event_id, verification_code)`
-  ([20260421000300_add_redeem_entitlement_rpc.sql:47-62](supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)),
+  ([20260421000300_add_redeem_entitlement_rpc.sql:47-62](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)),
   so prefix change does not strand them. Confirmed by the
   Madrona MAD → MIP rotation: the stale entitlement remained
   redeemable through the manual workaround.
 - `game_entitlements_event_code_unique` is `(event_id,
   verification_code)`
-  ([20260418070000:62-63](supabase/migrations/20260418070000_rewrite_verification_code_generator.sql)),
+  ([20260418070000:62-63](/supabase/migrations/20260418070000_rewrite_verification_code_generator.sql)),
   so old + new prefix can coexist on one event_id without collision.
 
 So the constraint "live = locked, unpublished = unlocked"
@@ -90,7 +90,7 @@ WHEN clauses then read as "locked while currently live" by
 construction; no trigger logic changes.
 
 **Why rejected:** the column was renamed from `live_version_number`
-to `last_published_version_number` on 2026-04-23 ([:1-9](supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
+to `last_published_version_number` on 2026-04-23 ([:1-9](/supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql))
 specifically to *stop* implying "currently live" semantics. The
 header comment on that migration:
 
@@ -101,11 +101,11 @@ header comment on that migration:
 Clearing the column on unpublish reintroduces exactly the conflation
 the rename corrected. Downstream consumers depend on the historical
 reading: `hasBeenPublished: row.last_published_version_number !== null`
-([shared/events/admin.ts:93](shared/events/admin.ts), and parallel sites
-in [save-draft:450](supabase/functions/save-draft/index.ts) and
-[read-demo-event:106](supabase/functions/read-demo-event/index.ts)). After (a), `hasBeenPublished` would be a lie post-unpublish.
+([shared/events/admin.ts:93](/shared/events/admin.ts), and parallel sites
+in [save-draft:450](/supabase/functions/save-draft/index.ts) and
+[read-demo-event:106](/supabase/functions/read-demo-event/index.ts)). After (a), `hasBeenPublished` would be a lie post-unpublish.
 The admin status view's `first_published_at` derivation
-([20260423020000_add_game_event_admin_status_view.sql:4-9](supabase/migrations/20260423020000_add_game_event_admin_status_view.sql))
+([20260423020000_add_game_event_admin_status_view.sql:4-9](/supabase/migrations/20260423020000_add_game_event_admin_status_view.sql))
 queries `game_event_versions` directly and would still resolve
 correctly — but every other consumer of the column would need to
 flip its mental model. Net: large semantic blast radius for a
@@ -140,7 +140,7 @@ extra index probe per draft update where the column is changing
 `last_published_version_number` keeps its historical meaning.
 
 Application-layer mirror in
-[save-draft/index.ts:97-124](supabase/functions/save-draft/index.ts)
+[save-draft/index.ts:97-124](/supabase/functions/save-draft/index.ts)
 needs the same shift: select `published_at` from `game_events`
 joined to the draft row instead of reading
 `last_published_version_number`.
@@ -208,10 +208,10 @@ The fix PR should:
 - Add a new migration `<date>_relax_lock_to_currently_live.sql`
   that recreates both `enforce_*_lock` functions with the
   cross-table read and updates the triggers' WHEN clauses.
-- Update [save-draft/index.ts:91-124](supabase/functions/save-draft/index.ts)
+- Update [save-draft/index.ts:91-124](/supabase/functions/save-draft/index.ts)
   to query `game_events.published_at` for the live check.
 - Add pgTAP coverage in
-  [supabase/tests/database/event_code_data_model.test.sql](supabase/tests/database/event_code_data_model.test.sql)
+  [supabase/tests/database/event_code_data_model.test.sql](/supabase/tests/database/event_code_data_model.test.sql)
   and the slug equivalent for the unpublish-then-rotate case.
 - No frontend changes; the existing organizer UX surfaces the
   trigger's structured error already.
