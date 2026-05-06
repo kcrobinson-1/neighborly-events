@@ -96,7 +96,12 @@ function shouldSkipPause({ env = process.env, stream = process.stdout } = {}) {
   if (process.argv.includes("--yes") || process.argv.includes("-y")) {
     return true;
   }
-  if (stream && typeof stream.isTTY === "boolean" && !stream.isTTY) {
+  // Node sets `isTTY === true` on real TTY streams and leaves the
+  // property `undefined` when output is piped or redirected. Treat
+  // anything that is not explicitly `true` as non-interactive so the
+  // pause auto-skips in scripted local runs (CI is already covered by
+  // the CI check above, but operators also redirect output to files).
+  if (stream && stream.isTTY !== true) {
     return true;
   }
   return false;

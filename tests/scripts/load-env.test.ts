@@ -119,8 +119,16 @@ describe("shouldSkipPause", () => {
     expect(shouldSkipPause({ env: { CI: "true" }, stream: { isTTY: true } as never })).toBe(true);
   });
 
-  it("skips when stream is non-TTY (piped output)", () => {
+  it("skips when stream is explicitly non-TTY", () => {
     expect(shouldSkipPause({ env: {}, stream: { isTTY: false } as never })).toBe(true);
+  });
+
+  // Node only sets `isTTY === true` on real TTY streams; piped or
+  // redirected output leaves the property `undefined`. The auto-skip
+  // must treat that case as non-interactive, otherwise scripted local
+  // runs sleep for no benefit.
+  it("skips when stream is non-TTY by Node's default (isTTY undefined)", () => {
+    expect(shouldSkipPause({ env: {}, stream: {} as never })).toBe(true);
   });
 
   it("does not skip in an interactive non-CI shell", () => {
