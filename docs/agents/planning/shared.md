@@ -416,3 +416,57 @@ decisions.
   opened from this point forward must include the section, and
   plan-implementing PRs must reconcile the plan with what shipped
   per the bullet above
+
+## `Deferred` status for paused planning
+
+Plans, milestone docs, and scoping docs whose drafting is
+intentionally paused — typically because the work has been
+resequenced behind other milestones, an upstream dependency
+hasn't decided yet, or the deliverable has been moved to a
+future epic — carry Status `Deferred` (exact-match canonical
+token), optionally followed by an em-dash and freeform
+human-readable context: `Deferred — <reason>`.
+
+The canonical `Deferred` prefix is what status-tracking
+queries match against; the post-em-dash reason is freeform
+context for humans, NOT exact-match-checked. Examples:
+
+- `Deferred — final milestone of the epic; not yet next-up`
+- `Deferred — pending decision on cross-app routing`
+- `Deferred — moved to future organizer-reading epic`
+
+While Deferred, the doc's content is **non-prescriptive**:
+future planning sessions that resume the work re-derive every
+goal, sequencing, decision, invariant, and risk against the
+actually-merged code at resume time and are not bound by the
+choices recorded in the deferred draft. The protective intent
+is the recurring trap a Deferred state otherwise hides: a
+future planner reads the deferred doc, treats its decisions
+as settled because they look complete, and silently inherits
+assumptions that the original drafting session never expected
+to bind. Authors of a Deferred doc must state the
+non-prescriptive framing explicitly in the doc's leading
+prose so the future reader can't miss it.
+
+State transitions out of `Deferred`:
+
+- **`Deferred` → `In draft` (resumption).** When the work
+  becomes next-up, the resuming planner flips Status back to
+  `In draft` and re-runs the `In draft` → `Proposed`
+  promotion gate from scratch. The previous deliberation
+  becomes input to consider, not contract to respect.
+- **`Deferred` → (deletion).** If the work is cancelled
+  outright (epic re-scoped to drop it, or absorbed by a
+  different epic), the doc is deleted in the same PR that
+  records the cancellation rationale; the deferred content
+  survives in git history.
+
+Do not invent additional states adjacent to `Deferred` (e.g.
+`Deferred draft`, `Deferred — non-prescriptive`,
+`Paused`, `On hold`, `Frozen`). The em-dash freeform reason
+is the supported affordance for context. This rule is the
+exact-match label discipline above applied to the Status
+lifecycle: `Deferred` is the canonical token, and adjacent
+descriptive variants break queryability the same way
+paraphrased `In progress pending prod smoke` did before its
+exact-match rule landed.
