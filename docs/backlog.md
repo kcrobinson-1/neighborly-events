@@ -117,6 +117,19 @@ Reduce deployment risk and contributor friction before the live event.
   apps/web routes.
   Detail: [`docs/architecture.md`](/docs/architecture.md)
 
+- [ ] **`infra` Reduce Vercel preview-deploy consumption on draft PRs**
+  PR #205 hit the Vercel Hobby 100/day deployment cap
+  (`api-deployments-free-per-day`) and blocked the preview build
+  until the counter rolled over. Every push on every PR — including
+  drafts, force-pushes, and docs/migration-only commits with zero
+  apps/site impact — currently triggers a preview deploy. Investigate
+  the lever combination (project fan-out audit, auto-cancel-on-push,
+  Ignored Build Step on draft state + path filter, `vercel.json`
+  per-branch gating, optional `[skip-preview]` commit token), pick a
+  combination, and land it. Out of scope: upgrading to Pro, GitHub
+  Actions CI changes.
+  Detail: [`docs/plans/vercel-preview-deploy-budget.md`](/docs/plans/vercel-preview-deploy-budget.md)
+
 - [ ] **`dev` Wire demo-mode bypass Playwright suite into PR CI**
   `playwright.demo-mode-bypass.config.ts` exists and exercises the G9
   bypass-containment contract (read-only admin / redeem / redemptions
