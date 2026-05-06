@@ -68,6 +68,62 @@ export type Database = {
           },
         ]
       }
+      feedback_enabled_events: {
+        Row: {
+          enabled_at: string
+          slug: string
+        }
+        Insert: {
+          enabled_at?: string
+          slug: string
+        }
+        Update: {
+          enabled_at?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      feedback_submissions: {
+        Row: {
+          email: string | null
+          email_declined: boolean
+          event_slug: string
+          free_text: string | null
+          id: string
+          newsletter_opt_in: boolean
+          ratings: Json
+          submitted_at: string
+        }
+        Insert: {
+          email?: string | null
+          email_declined?: boolean
+          event_slug: string
+          free_text?: string | null
+          id?: string
+          newsletter_opt_in?: boolean
+          ratings: Json
+          submitted_at?: string
+        }
+        Update: {
+          email?: string | null
+          email_declined?: boolean
+          event_slug?: string
+          free_text?: string | null
+          id?: string
+          newsletter_opt_in?: boolean
+          ratings?: Json
+          submitted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_submissions_event_slug_fkey"
+            columns: ["event_slug"]
+            isOneToOne: false
+            referencedRelation: "feedback_enabled_events"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
       game_completions: {
         Row: {
           attempt_number: number
