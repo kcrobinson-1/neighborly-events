@@ -115,8 +115,19 @@ End state out of scope for the MVP (see Out Of Scope below).
    `/event/<slug>/feedback` itself renders a friendly
    "feedback isn't being collected for this event" state
    rather than 404ing, so a stale or guessed link lands
-   somewhere humane. Existing test events
-   (`harvest-block-party`, `riverside-jam`) render unchanged.
+   somewhere humane. The route is owned by apps/site via
+   the catch-all `/event/:slug/:path*` rewrite to the
+   neighborly-events-site origin (Verified by:
+   [`apps/web/vercel.json:18-21`](/apps/web/vercel.json)),
+   making the friendly state a Next.js page render in
+   apps/site rather than an apps/web SPA route. Existing test
+   events (`harvest-block-party`, `riverside-jam`) render
+   unchanged (Verified by:
+   [`apps/site/events/harvest-block-party.ts`](/apps/site/events/harvest-block-party.ts),
+   [`apps/site/events/riverside-jam.ts`](/apps/site/events/riverside-jam.ts);
+   neither sets a `feedback` field on `EventContent`, so the
+   default-omitted CTA section honors the invariant by
+   construction).
 3. **Ratings questions are content, not code.** The set of
    rating dimensions (music, sound, park, website, ...) is
    authored on `EventContent`, not hardcoded in the form
@@ -152,14 +163,22 @@ End state out of scope for the MVP (see Out Of Scope below).
    section rendered between the existing `EventCTA` (gameplay)
    and `EventFooter`, with copy like "How was the show? Tell
    us what you liked or didn't" and a link to
-   `/event/<slug>/feedback`. Visual weight is intentionally
-   below the gameplay CTA so feedback doesn't steal attention
-   from the headline action pre- and during-event; the
-   placement keeps it findable for post-event scrollers, who
-   are the primary audience anyway. Section omission rule
-   matches the other section components: the renderer omits
-   it when feedback isn't opted in, so events that don't opt
-   in render unchanged.
+   `/event/<slug>/feedback`. The current section render order
+   on the landing page is Header → Schedule → Lineup →
+   Sponsors → FAQ → CTA → Footer (Verified by:
+   [`apps/site/components/event/EventLandingPage.tsx:26-44`](/apps/site/components/event/EventLandingPage.tsx));
+   the feedback CTA slots in between the existing CTA and
+   Footer. Visual weight is intentionally below the gameplay
+   CTA so feedback doesn't steal attention from the headline
+   action pre- and during-event; the placement keeps it
+   findable for post-event scrollers, who are the primary
+   audience anyway. Section omission rule matches the other
+   section components — the renderer omits the section when
+   the `EventContent` field is empty / absent (Verified by:
+   the `length > 0` guards on `schedule.days`, `lineup`,
+   `sponsors`, and `faq` at
+   [`apps/site/components/event/EventLandingPage.tsx:30-39`](/apps/site/components/event/EventLandingPage.tsx))
+   — so events that don't opt feedback in render unchanged.
 3. The feedback page presents the rating questions as labeled
    1–5 star rows, each with an N/A option. Tapping a star sets
    the rating; tapping N/A clears stars and marks the row N/A.
@@ -187,12 +206,21 @@ End state out of scope for the MVP (see Out Of Scope below).
 
 The organizer reads submissions after the event through an
 event-scoped admin route under `/event/<slug>/admin/feedback`,
-shipped in M2. The route renders per-dimension rating
-distributions, a list of free-text responses in submission
-order, and a filter / export view of newsletter opt-in rows
-(email + submitted_at) for the manual newsletter export.
-Authenticated to event admins only, following the existing
-event-scoped admin auth pattern.
+shipped in M2. `/event/:slug/admin/:path*` is owned by apps/web
+via the rewrite to the SPA's `/index.html` (Verified by:
+[`apps/web/vercel.json:10-17`](/apps/web/vercel.json)), so the
+feedback admin lives in apps/web alongside the existing
+event-scoped `EventAdminPage` (Verified by:
+[`apps/web/src/pages/EventAdminPage.tsx:288`](/apps/web/src/pages/EventAdminPage.tsx)
+and its routing in
+[`apps/web/src/App.tsx:62`](/apps/web/src/App.tsx)). The route
+renders per-dimension rating distributions, a list of
+free-text responses in submission order, and a filter /
+export view of newsletter opt-in rows (email + submitted_at)
+for the manual newsletter export. Authenticated to event
+admins only, reusing `EventAdminPage`'s session-state +
+event-scope auth pattern (Verified by: same file's
+`useEventAdminWorkspace` wiring at line 205).
 
 During the M1 demo phase before M2 ships, the organizer reads
 via Supabase Studio. Studio access is the unblock path, not
@@ -286,10 +314,14 @@ M2 is operational convenience for the post-event read-through.
 ## Backlog Impact
 
 **Closes:** nothing in [`docs/backlog.md`](/docs/backlog.md).
-Backlog scan at promotion surfaced no attendee-feedback items;
-existing `feedback`-keyword hits in the backlog refer to UI
-feedback for logging (line 85) and to organizer/admin shape
-informed by partner feedback (lines 189, 198), not to attendee
+Backlog scan at promotion surfaced no attendee-feedback items
+(Verified by: `grep -n -i feedback docs/backlog.md` returned
+hits at lines 85, 189, 198 only). Those hits refer to UI
+feedback for logging
+([`docs/backlog.md:85`](/docs/backlog.md)) and to
+organizer/admin shape informed by partner feedback
+([`docs/backlog.md:189`](/docs/backlog.md),
+[`docs/backlog.md:198`](/docs/backlog.md)) — not attendee
 feedback collection.
 
 **Sequences toward:** future Madrona-launch epic, which
@@ -300,8 +332,10 @@ real-attendee volume.
 
 - **Spam / abuse on an anonymous, captcha-less form.** Anyone on
   the internet who finds the URL can submit. Mitigation for
-  MVP: the demo phase runs against `noindex` (parent epic Risk
-  Register) so the URL is not discoverable; the Madrona '26
+  MVP: the demo phase serves `X-Robots-Tag: noindex, nofollow`
+  on `/event/madrona/*` (Verified by:
+  [`apps/web/vercel.json:42-46`](/apps/web/vercel.json)) so
+  the URL is not discoverable via search; the Madrona '26
   audience is small and known; the organizer can purge garbage
   rows post-event. The launch epic revisits if real volume
   surfaces real abuse.
