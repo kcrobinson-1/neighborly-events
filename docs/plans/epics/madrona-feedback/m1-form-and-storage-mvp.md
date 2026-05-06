@@ -118,7 +118,7 @@ phase-start.
 
 | Phase | Title | Plan | Status | PR |
 | --- | --- | --- | --- | --- |
-| 1.1 | DB foundation: `feedback_enabled_events` + `feedback_submissions` migration with RLS, seeding `madrona` into the registry | — | Not started | — |
+| 1.1 | DB foundation: `feedback_enabled_events` + `feedback_submissions` migration with RLS, seeding `madrona` into the registry | [m1-phase-1-1-plan.md](/docs/plans/epics/madrona-feedback/m1-phase-1-1-plan.md) | Proposed | — |
 | 1.2 | `EventContent.feedback?` shape + `EventFeedbackCTA` section component + landing-page wiring | — | Not started | — |
 | 1.3 | `/event/<slug>/feedback` route + form component + `madrona.ts` feedback opt-in | — | Not started | — |
 
