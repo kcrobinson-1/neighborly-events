@@ -152,6 +152,29 @@ End state out of scope for the MVP (see Out Of Scope below).
    insert) is a deliberate trade-off for friction, not an
    oversight; the Risk Register names what we accept and what
    the launch epic may need to revisit.
+6. **Submissions accepted only for known feedback-enabled
+   events, enforced at the database.** The submission write
+   is reachable from an unauthenticated origin-gated endpoint
+   (the Next.js feedback page), so per
+   [`AGENTS.md:125-130`](/AGENTS.md) the epic must answer
+   what prevents arbitrary or nonexistent data before
+   implementation. Answer: the `feedback_submissions` table's
+   `event_slug` column carries DB-level referential integrity
+   to a server-side registry of feedback-enabled event slugs
+   (foreign key to a `feedback_enabled_events` table, or
+   equivalent — exact SQL mechanic deferred to milestone
+   planning, but the invariant binds). An insert against a
+   slug not in the registry MUST fail at the database, not
+   only at the application layer. Concretely this means: the
+   M1 migration introduces both the submissions table and the
+   feedback-enabled-events registry in the same change;
+   opting an event in is a registry insert; the disabled-event
+   promise is enforced by FK, not by client-side route
+   gating; and an attacker who hits the Supabase REST endpoint
+   directly with arbitrary slugs gets database errors, not
+   stored rows. Application-layer client validation is fine
+   as a UX layer on top, but it is not the load-bearing
+   enforcement.
 
 ## Product Surface
 
@@ -244,10 +267,25 @@ that the set can shift without code changes.
 
 ## Data Shape (sketch, not contract)
 
-A `feedback_submissions` table keyed by event slug, roughly:
+Two tables land together in the M1 migration so the integrity
+invariant (Cross-Cutting Invariant 6) holds from the first
+write:
+
+`feedback_enabled_events` — server-side registry of which
+event slugs accept submissions. Roughly:
+
+- `slug` — text, primary key
+- (additional columns deferred to milestone planning, e.g.
+  `enabled_at`, opt-in metadata; the load-bearing column is
+  `slug`)
+
+`feedback_submissions` — keyed by event slug, roughly:
 
 - `id` — uuid primary key
-- `event_slug` — text, indexed
+- `event_slug` — text, foreign key to
+  `feedback_enabled_events(slug)`, indexed. The FK is the
+  load-bearing enforcement of Invariant 6 — inserts against
+  unregistered slugs fail at the database.
 - `submitted_at` — timestamptz, default now()
 - `ratings` — jsonb keyed by rating-dimension key, values
   `1..5 | "n/a"`
@@ -261,9 +299,21 @@ A `feedback_submissions` table keyed by event slug, roughly:
   email. Stored on the same row as the feedback so the consent
   context (when, against which event) is preserved alongside
   the address.
-Final column types and RLS posture are milestone-planning
-calls. The rating-dimension key strategy is settled
-(content-authored per-event, see Resolved Decisions).
+
+RLS posture, set in the M1 migration alongside the tables:
+anonymous inserts into `feedback_submissions` are permitted
+(the form is unauthenticated by design); reads are
+event-admin-only via the existing event-scoped admin auth
+pattern; the `feedback_enabled_events` registry is
+read-restricted from anon (anon doesn't need to enumerate it
+— the FK does the enforcement on insert) and write-restricted
+to service-role / admin paths. Exact policy SQL is a
+milestone-planning detail; the shape of the policy is fixed
+here.
+
+Final column types are milestone-planning calls. The
+rating-dimension key strategy is settled (content-authored
+per-event, see Resolved Decisions).
 
 `EventContent` adds an optional `feedback?: { enabled: true;
 ratingDimensions: { key: string; label: string }[]; ... }`
@@ -297,9 +347,15 @@ landing-page wiring; the feedback route + form component
 (ratings, free text, email field, decline-email checkbox,
 newsletter opt-in checkbox); the friendly disabled-event
 state at the route; light client-side email validation;
-Supabase table + RLS; `madrona.ts` opts feedback in with the
-initial rating dimension set. No organizer UI yet — the
-organizer reads via Studio for the demo phase.
+Supabase migration introducing both `feedback_enabled_events`
+(registry, FK target) and `feedback_submissions` (the FK
+holder) along with their RLS policies — landing both tables
+in the same migration is what makes Invariant 6's DB-level
+integrity hold from the first write; `madrona` registered as
+a feedback-enabled event in that migration; `madrona.ts`
+opts feedback in on the content side with the initial rating
+dimension set. No organizer UI yet — the organizer reads via
+Studio for the demo phase.
 
 **M2 — Organizer-readable surface.** Capability target: the
 organizer reads ratings and free text through a UI rather
