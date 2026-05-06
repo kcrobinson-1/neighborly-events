@@ -113,28 +113,12 @@ small mechanical win.
 
 ### (b) Trigger reads `game_events.published_at` directly
 
-Replace the WHEN-clause column check with a function-body cross-table
-read:
-
-```sql
-create or replace function public.enforce_game_event_draft_event_code_lock()
-returns trigger language plpgsql as $$
-begin
-  if new.event_code is distinct from old.event_code
-     and exists (
-       select 1 from public.game_events
-       where id = new.id and published_at is not null
-     ) then
-    raise exception 'event_code_locked' using detail = '...';
-  end if;
-  return new;
-end;
-$$;
-create trigger ... before update ... for each row
-  execute function public.enforce_game_event_draft_event_code_lock();
-```
-
-Locks read as "while currently live" by construction. Cost: one
+Move the live-state check out of the trigger's `WHEN` clause and
+into the trigger function body, where it can `EXISTS`-probe
+`public.game_events` for `published_at is not null` on the matching
+`id` and raise `event_code_locked` / `slug_locked` accordingly. The
+trigger fires unconditionally on the column being distinct; the
+function returns early when the event is not currently live. Locks read as "while currently live" by construction. Cost: one
 extra index probe per draft update where the column is changing
 (rare path; drafts typically update content, not slug/code).
 `last_published_version_number` keeps its historical meaning.
