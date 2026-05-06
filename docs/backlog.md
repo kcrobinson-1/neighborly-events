@@ -37,7 +37,21 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-_(no Tier 1 items currently open)_
+- [ ] **`dev` Event slug routing is case-sensitive (silent 404 on capitalized URLs)**
+  `/event/Madrona/game` (capital M) returns HTTP 200 but the SPA renders
+  the not-found / empty state because the slug pulled from `useParams` is
+  compared byte-for-byte against the lowercase DB slug `madrona`. The
+  lowercase URL works. `curl -sI` shows both casings return 200 at the
+  edge, so the breakage is application-layer rather than Vercel routing.
+  A printed QR with an accidentally capitalized letter, or an attendee
+  hand-typing a proper-noun slug, will silently break — the exact failure
+  mode this tier gates. Slug extraction lives in the apps/web event
+  pages: `apps/web/src/event/` (game route) and the
+  `apps/web/src/pages/Event*.tsx` admin / redeem / redemptions surfaces
+  that read `useParams`. Open question for the fix: client-side
+  `.toLowerCase()` normalization at the extraction sites, or an edge 308
+  redirect from any non-canonical casing to the lowercase form before
+  the SPA mounts.
 
 ---
 
