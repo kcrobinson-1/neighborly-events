@@ -127,8 +127,9 @@ Steps:
 
 - Moving the per-phase implementation-contract plan doc out of the
   code repo. The hard constraints above settle that.
-- Rewriting the plan-to-PR workflow itself
-  ([`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)).
+- Rewriting the plan-to-PR workflow itself (the "Plan-to-PR
+  Completion Gate" section in
+  [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)).
   Workflow tweaks are downstream of the location decision and may not
   be needed.
 - Migrating already-archived plan docs out of `/docs/plans/archive/`.

@@ -160,7 +160,7 @@ deployed origin.
    Chain."
 
 This is the carve-out
-[`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
 "Plan-to-PR Completion Gate" points to.
 The implementing PR leaves the plan in a named, non-drift state —
 `In progress pending <validation-name>` — rather than a soft post-merge
@@ -171,7 +171,7 @@ downstream of the merge, so the status flip is too.
 
 Plans whose Validation Gate can be fully satisfied pre-merge do not
 need this two-phase structure; the same-PR `Landed` flip applies (see
-[`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
 "Plan-to-PR Completion Gate").
 
 ## Which Tier Catches Which Class Of Regression
@@ -208,4 +208,4 @@ covered.
 - `docs/tracking/production-admin-smoke-tracking.md` — Tier 5 details, env
   ownership, failure triage
 - [`docs/agents/reference/validation.md`](/docs/agents/reference/validation.md) — Validation Expectations
-- [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) — Plan-to-PR Completion Gate
+- [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) — Plan-to-PR Completion Gate

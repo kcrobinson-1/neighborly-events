@@ -25,9 +25,10 @@ Load the planning rules from [`docs/agents/planning/`](/docs/agents/planning/):
     `docs/plans/m<N>-phase-<X>-<Y>-plan.md` and
     `docs/plans/scoping/m<N>-phase-<X>-<Y>.md`):
     [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
-- Plus [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
-  for any plan with a Status block (Plan-to-PR Completion Gate; Status
-  lifecycle; Estimate Deviations PR-body callout)
+
+The Plan-to-PR Completion Gate (Status lifecycle, Estimate Deviations
+PR-body callout, soft-commitment ban) lives inside `shared.md` as a
+cross-level section — no separate file to load.
 
 ## If you are implementing a plan
 

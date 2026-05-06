@@ -56,7 +56,7 @@ When implementation diverged from an estimate-shaped plan section
 boundaries reshuffled, etc.), name the deviation, the actual outcome,
 and why the call was right. Rule deviations are not handled here —
 they require a plan-doc change in the same PR per
-[`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md)
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
 "Plan-to-PR Completion Gate." Write `N/A` if no estimate deviated.
 
 ## UX Review
@@ -87,8 +87,8 @@ Name residual risk, blockers, or follow-up work. If none are known, say so.
   intentionally not touched" ended up touched, "Files to touch — new"
   missed a file, intended commit boundaries reshuffled, etc.) per
   [`planning/phase.md`](../planning/phase.md) "Plan content is a mix
-  of rules and estimates" and [`planning/plan-to-pr.md`](../planning/plan-to-pr.md)
-  "Call out estimate deviations." Write `N/A` if no estimate deviated.
+  of rules and estimates" and [`planning/shared.md`](../planning/shared.md)
+  "Plan-to-PR Completion Gate." Write `N/A` if no estimate deviated.
   Rule deviations do not belong here — they require a same-PR
   plan-doc edit per the Completion Gate.
 - **UX Review**: For PRs that create or materially modify UX, layout,

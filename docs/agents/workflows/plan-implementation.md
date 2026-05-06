@@ -52,8 +52,8 @@ mix of rules and estimates"):
   section per [`reference/pr-template.md`](../reference/pr-template.md)
   "Section-specific rules" and reconcile the plan-doc estimate
   to match what shipped per
-  [`planning/plan-to-pr.md`](../planning/plan-to-pr.md) "Call
-  out estimate deviations."
+  [`planning/shared.md`](../planning/shared.md) "Plan-to-PR
+  Completion Gate."
 
 When the call between rule and estimate is unclear, ask. Do not
 treat an estimate as a hard ban or treat a rule as discretionary.
@@ -61,14 +61,15 @@ treat an estimate as a hard ban or treat a rule as discretionary.
 ## Plan-to-PR Completion Gate
 
 Before opening or updating the plan-implementing PR, walk the gate
-in [`planning/plan-to-pr.md`](../planning/plan-to-pr.md):
+in [`planning/shared.md`](../planning/shared.md) "Plan-to-PR
+Completion Gate":
 
 - Walk every Goal, Test, Validation step, and Self-Review audit
   named in the plan; each is satisfied or explicitly deferred **in
   the plan itself** with written rationale.
 - Flip the plan's `Status` line per the lifecycle rule (same-PR
   flip is the default; the post-release-validation exception
-  splits the flip into two phases — see plan-to-pr.md and
+  splits the flip into two phases — see shared.md and
   [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
   Gate For Plans With Post-Release Validation").
 - Reconcile every estimate-shaped plan section against the merged
