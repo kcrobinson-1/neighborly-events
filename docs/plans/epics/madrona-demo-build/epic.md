@@ -272,7 +272,8 @@ to the future Madrona-launch sibling.
   shape door open.
 - **Madrona feedback child epic.** Attendee feedback collection
   (form route, Supabase table, organizer-readable surface).
-  Sequences in parallel with this epic's M3. Scoping pending;
+  Sequences in parallel with this epic's M3. Scoped at
+  [`epics/madrona-feedback/epic.md`](/docs/plans/epics/madrona-feedback/epic.md);
   invariant 2 keeps the shape door open.
 
 **Sequences toward:**
@@ -452,7 +453,7 @@ Total: 4–7 PRs across the epic.
   Proposed promotion gate.
 - (Future, not yet authored) `docs/plans/epics/madrona-donation/epic.md` —
   child epic, parallel with this epic's M3.
-- (Future, not yet authored) `docs/plans/epics/madrona-feedback/epic.md` —
+- [`epics/madrona-feedback/epic.md`](/docs/plans/epics/madrona-feedback/epic.md) —
   child epic, parallel with this epic's M3.
 - (Future, not yet authored) `docs/plans/epics/madrona-launch/epic.md` —
   far-future sibling; demo-build is its sequential predecessor.
