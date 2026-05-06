@@ -2,10 +2,12 @@
 
 ## Status
 
-`Proposed` (substrate landing in this PR; close-out PR will flip
-to `Landed` once the operator step ships its evidence). See
-`## Estimate Deviations` below for the substrate / close-out
-split rationale.
+`Landed` 2026-05-06. See `## Estimate Deviations` below for the
+substrate / close-out split rationale; the close-out attached
+the six attendee-journey captures, flipped this and the M2
+milestone doc's top-level status, deleted the scoping doc per
+the milestone-doc batch-deletion commitment, and reconciled the
+epic's Sizing Summary M2 line against actuals.
 
 ## Context
 
