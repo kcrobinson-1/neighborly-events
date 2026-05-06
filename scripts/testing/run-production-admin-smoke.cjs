@@ -1,4 +1,5 @@
 const { logStep, run } = require("./utils.cjs");
+const { assertProdGuard, loadEnv } = require("../lib/load-env.cjs");
 
 const defaultReadinessTimeoutMs = 180_000;
 const defaultReadinessPollMs = 5_000;
@@ -68,6 +69,8 @@ async function waitForRouteReady({ routeLabel, routeUrl, timeoutMs, pollMs }) {
 }
 
 async function main() {
+  loadEnv();
+
   const baseUrl = readRequiredEnv("PRODUCTION_SMOKE_BASE_URL").replace(/\/$/, "");
   const eventSlug =
     process.env.TEST_ADMIN_EVENT_SLUG || defaultSmokeFixture.eventSlug;
@@ -83,6 +86,8 @@ async function main() {
   readRequiredEnv("TEST_SUPABASE_SERVICE_ROLE_KEY");
   readRequiredEnv("VITE_SUPABASE_URL");
   readRequiredEnv("VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY");
+
+  await assertProdGuard({ envNames: ["TEST_SUPABASE_URL", "VITE_SUPABASE_URL"] });
 
   const timeoutMs = readDurationEnv(
     "PRODUCTION_SMOKE_READY_TIMEOUT_MS",

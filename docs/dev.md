@@ -463,6 +463,32 @@ Constraint:
 - it does not support `/admin`; the admin shell requires real Supabase auth and
   private draft reads
 
+### Running release / production-smoke scripts locally
+
+Scripts under `scripts/release/` and `scripts/testing/run-production-*.cjs`
+write to (or read service-role data from) the live Supabase project. In CI
+they pick up credentials from the workflow's `env:` block, sourced from
+`secrets.PRODUCTION_SMOKE_SUPABASE_SERVICE_ROLE_KEY` and friends. To run
+the same scripts on a contributor machine:
+
+1. Copy [`scripts/.env.example`](/scripts/.env.example) to `scripts/.env`
+   and fill in real values (the file is gitignored).
+2. Run the script normally — for example,
+   `npm run release:seed:madrona` or
+   `npm run smoke:production:redemption`. The shared loader at
+   [`scripts/lib/load-env.cjs`](/scripts/lib/load-env.cjs) reads
+   `scripts/.env` and populates only variables that are not already set,
+   so a workflow's `env:` block always wins over an on-disk file.
+3. When `TEST_SUPABASE_URL` resolves to a hosted Supabase host the
+   scripts print a one-line ⚠ banner and pause for ~5s before
+   continuing. Pass `--yes` to skip the pause; CI auto-skips it via the
+   `CI=true` environment variable.
+
+The service-role key in `scripts/.env` is the same JWT shown in the
+Supabase Dashboard → Project Settings → API panel under `service_role`.
+Rotate it there at any time and update `scripts/.env`; nothing else
+needs to change.
+
 ## Self-Review Before Push
 
 Before pushing a branch, walk the named audits from
