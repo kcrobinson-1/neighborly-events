@@ -68,8 +68,8 @@ the table.
 | Implementing a documented plan from [`docs/plans/`](/docs/plans/) | [`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md) + [`docs/agents/workflows/plan-implementation.md`](/docs/agents/workflows/plan-implementation.md) + the plan's own `Cross-Cutting Invariants` and `Self-Review Audits` |
 | Drafting an epic | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md) |
 | Drafting a milestone doc (sequencing, cross-phase invariants, cross-phase decisions) | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md) |
-| Drafting a phase scoping doc or phase plan doc | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md) + [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) |
-| Plan-to-Landed close-out PR (Status flip after post-release validation) | [`docs/agents/planning/plan-to-pr.md`](/docs/agents/planning/plan-to-pr.md) |
+| Drafting a phase scoping doc or phase plan doc | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md) |
+| Plan-to-Landed close-out PR (Status flip after post-release validation) | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) "Plan-to-PR Completion Gate" |
 | Addressing PR review feedback | [`docs/agents/workflows/review-fixes.md`](/docs/agents/workflows/review-fixes.md) |
 | Capturing UI screenshots / building PR screenshot evidence | [`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md) |
 | Debugging a failing validation, CI run, or local test | [`docs/agents/workflows/debugging.md`](/docs/agents/workflows/debugging.md) |

@@ -5,10 +5,10 @@ Per-level planning playbook for **phase-planning** sessions. Loads
 (`Verified by:` annotations, falsifiability check, rules-vs-
 estimates labeling, plan-code minimalism, planning-artifacts-cite-
 each-other anti-pattern, exact-match label quoting, `In draft` →
-`Proposed` promotion gate). Loads [`plan-to-pr.md`](./plan-to-pr.md)
-for the Plan-to-PR Completion Gate and the Status lifecycle that
-the implementing PR consumes. This file covers what is unique to
-the phase level.
+`Proposed` promotion gate, and the Plan-to-PR Completion Gate
+including the Status lifecycle the implementing PR consumes —
+all in [`shared.md`](./shared.md)). This file covers what is
+unique to the phase level.
 
 A phase planning session produces the per-phase plan that an
 implementing PR consumes. Run this session just-in-time before a
