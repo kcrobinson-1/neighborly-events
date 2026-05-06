@@ -328,11 +328,13 @@ shape (parent Invariant 2 again).
 Per [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md),
 this section is an estimate; phase counts and per-phase
 content are re-derived at each milestone planning session.
-The epic spans multiple milestones — the form-and-storage MVP
-and the organizer surface do not collapse into one even if
-the second is small, since the demo-phase value of M1 is
-realized whether or not M2 has shipped, and forcing them
-together would couple two independent UI-review surfaces.
+Where a milestone doc exists, that doc is canonical; the epic
+paragraph is historical record. The epic spans multiple
+milestones — the form-and-storage MVP and the organizer
+surface do not collapse into one even if the second is small,
+since the demo-phase value of M1 is realized whether or not
+M2 has shipped, and forcing them together would couple two
+independent UI-review surfaces.
 
 ```mermaid
 flowchart LR
@@ -341,7 +343,10 @@ flowchart LR
   M1 --> M2
 ```
 
-**M1 — Form and storage MVP.** Capability target: a Madrona
+**M1 — Form and storage MVP.** Milestone doc:
+[`m1-form-and-storage-mvp.md`](/docs/plans/epics/madrona-feedback/m1-form-and-storage-mvp.md)
+(canonical; estimate paragraph below preserved as historical
+record). Capability target: a Madrona
 attendee can submit feedback at `/event/madrona/feedback` and
 the submission lands in Supabase. `EventContent` shape
 extension; the new `EventFeedbackCTA` section component +
@@ -493,6 +498,11 @@ inherits them rather than re-litigating:
 
 ## Related Docs
 
+- [`m1-form-and-storage-mvp.md`](/docs/plans/epics/madrona-feedback/m1-form-and-storage-mvp.md) —
+  M1 milestone doc; canonical phase shape, cross-phase
+  invariants, cross-phase decisions (settled-by-default and
+  deferred-to-phase-time), risks, and doc-currency map for
+  the form-and-storage MVP milestone.
 - [`epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md) —
   parent demo-build epic; this epic sequences parallel with its
   M3 and inherits Cross-Cutting Invariant 2 ("don't foreclose
