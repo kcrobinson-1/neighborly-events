@@ -47,10 +47,9 @@ Locking is not vestigial. While an event is live:
 - Entitlement `verification_code` values are stamped as
   `<event_code>-NNNN` at issue time
   ([20260418070000_rewrite_verification_code_generator.sql:155-198](/supabase/migrations/20260418070000_rewrite_verification_code_generator.sql)).
-  Changing event_code mid-event would not invalidate already-issued
-  codes (they remain a literal column value), but printed/scanned
-  attendee artifacts referencing the old prefix would diverge from
-  newly-generated codes — operationally messy.
+  Changing event_code mid-event makes already-issued codes
+  unreachable through the redeem RPCs (see "What rotation does
+  to unredeemed entitlements" below).
 - Slug rotation while live breaks any QR / link / SMS already
   distributed.
 
@@ -58,27 +57,40 @@ The invariant the locks should enforce is **"locked while currently
 live,"** not "locked forever after the first publish." The current
 trigger is a strict superset.
 
-## Why post-unpublish rotation is safe
+## What rotation does to unredeemed entitlements
 
-After unpublish:
+Slug and event_code have different entitlement coupling. An earlier
+draft of this section asserted both were safe to rotate
+post-unpublish; that was wrong on event_code. Codex review on PR
+#207 caught the error; correcting here.
 
-- `game_events.published_at` is `null`, so attendee surfaces 404
-  the slug ([read-demo-event](/supabase/functions/read-demo-event/index.ts)
-  and the SPA event routes gate on live state).
-- Already-issued `<old_code>-NNNN` entitlements remain redeemable
-  by exact `verification_code` match — redemption looks up by
-  `(event_id, verification_code)`
-  ([20260421000300_add_redeem_entitlement_rpc.sql:47-62](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)),
-  so prefix change does not strand them. Confirmed by the
-  Madrona MAD → MIP rotation: the stale entitlement remained
-  redeemable through the manual workaround.
-- `game_entitlements_event_code_unique` is `(event_id,
-  verification_code)`
-  ([20260418070000:62-63](/supabase/migrations/20260418070000_rewrite_verification_code_generator.sql)),
-  so old + new prefix can coexist on one event_id without collision.
+**Slug rotation is operationally safe.** Slug appears nowhere in
+`game_entitlements` and is not a key into the redeem or reverse
+RPCs. After unpublish, the only artifacts referencing the old slug
+are external (QR codes, links, SMS). Changing the slug strands
+those external artifacts but does not strand any DB row — every
+existing entitlement is still reachable through the same RPCs
+under the new slug.
 
-So the constraint "live = locked, unpublished = unlocked"
-is operationally sound.
+**Event_code rotation strands unredeemed entitlements.** The redeem
+and reverse RPCs do not look up by stored `verification_code`
+directly. Each reads the *current* `event_code` from `game_events`
+for the matching `id` and constructs the lookup as
+`<current_event_code>-<suffix>`
+([redeem_entitlement_by_code:47-62](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql),
+[reverse_entitlement_redemption:44-59](/supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql)).
+After rotating event_code from `MAD` to `MIP`, an entitlement
+stored as `verification_code='MAD-0001'` no longer matches the
+constructed key `MIP-0001`; the RPC returns `not_found`. The
+existing rows are not deleted; they are unreachable through the
+redeem path.
+
+The Madrona MAD → MIP evidence cited in the Problem section was
+misread. The operator manually cleared
+`last_published_version_number`, rotated the code, and **re-seeded
+the test entitlement under the new prefix**. The re-seed is
+consistent with the strand behavior, not with the safety the
+earlier draft inferred.
 
 ## Class-of-solution options
 
@@ -136,71 +148,98 @@ Add `admin_unlock_event_code(event_id)` /
 redeemed yet" (or similar guard). Organizer flow stays blocked;
 root admin or operator unlocks on demand.
 
-**Why rejected as primary:** the backlog item is explicitly an
-*organizer UX gap*. (c) leaves the gap and adds operator surface.
-The "no entitlements redeemed" guard is also stricter than the
-operational reality (Madrona rotation succeeded *with* a stale
-unredeemed entitlement). Reasonable as a defense-in-depth
-follow-up if (b) ever proves too permissive, but doesn't solve
-the user-facing problem.
+**Why rejected as primary for slug:** the backlog item is explicitly
+an *organizer UX gap*. (c) leaves the gap and adds operator
+surface. For event_code, a "zero entitlements" guard re-emerges as
+sub-option (b3) below, framed as a guard on the relaxed trigger
+rather than a separate RPC.
 
-## Decision: (b) Trigger reads `game_events.published_at`
+## Decision: (b) for slug; event_code requires resolving redeem-RPC coupling
 
-Restores correct semantics with bounded surface:
+Slug ships under option (b) as scoped: trigger reads
+`game_events.published_at`. Bounded migration scope; no entitlement
+side-effect; restores the organizer UX without a new RPC.
 
-- Two trigger functions changed (`enforce_game_event_draft_event_code_lock`,
-  `enforce_game_event_draft_slug_lock`).
-- WHEN clauses simplify (drop the `last_published_version_number`
-  predicate; keep only `is distinct from`).
-- One Edge-Function pre-check shifted to read live state.
-- `last_published_version_number` semantics preserved — downstream
-  `hasBeenPublished` consumers untouched.
-- No new RPC, no admin surface.
+Event_code does **not** ship under (b) alone, because (b) on its
+own silently strands every unredeemed entitlement on the event the
+moment an organizer rotates the code. The choice for event_code is
+a sub-decision that needs organizer-input on whether mid-cycle
+rotation is a feature or an organizer-error to prevent:
 
-## Open questions for the plan
+- **(b1) Relax trigger; accept stranding; surface a confirmation
+  in the organizer UI naming the count of pending entitlements
+  about to become unreachable.** Lowest migration scope. Trades
+  database safety for UX warning. Risk: organizer click-throughs
+  the warning and strands real attendees.
+- **(b2) Relax trigger AND change the redeem and reverse RPCs to
+  look up by stored `verification_code` directly,** dropping the
+  current-event_code reconstruction. Restores prefix-independence;
+  every previously issued code keeps redeeming. Touches the
+  trust-boundary RPCs and their pgTAP coverage; widest migration
+  scope. Cleanest invariant.
+- **(b3) Relax trigger only when the event has zero
+  entitlements.** Strict guard expressed in the trigger function.
+  Covers the Madrona pre-launch use case (rotate brand label
+  before any real attendee enrolls); blocks any rotation once
+  test or real entitlements exist. Smallest blast radius; doesn't
+  generalize to mid-cycle rotation if that ever becomes a need.
 
-1. **Should "live + has unredeemed entitlements" stay locked?**
-   Live state already locks (no change). Unpublished state with
-   stale entitlements unlocks. Answer per Madrona evidence:
-   unlocked is correct. Plan should not add an entitlement-count
-   guard.
+This scoping does not pick among (b1)/(b2)/(b3). That belongs in a
+follow-up scoping pass once we know whether mid-cycle event_code
+rotation is a real organizer need or a footgun to prevent. The
+slug fix does not depend on the event_code resolution.
 
-2. **Concurrency: republish race vs. concurrent draft update.**
-   Operator unpublishes; organizer changes code; another operator
+## Open questions for the slug fix
+
+1. **Concurrency: republish race vs. concurrent draft update.**
+   Operator unpublishes; organizer changes slug; another operator
    republishes. Trigger reads `published_at` at trigger time, so
    serialization is by row lock on `game_event_drafts` (the
    UPDATE) and a non-locking read on `game_events`. Worst case:
-   organizer's update commits before republish; new entitlements
-   get the new prefix. Acceptable. The plan should state this
+   organizer's update commits before republish; the republish
+   ships the new slug. Acceptable. The plan should state this
    explicitly and not add cross-table locking.
 
-3. **Edge Function pre-check: pre-check or rely on trigger?**
+2. **Edge Function pre-check: pre-check or rely on trigger?**
    The Edge pre-check exists so the API returns a structured
    error before the DB raises. The plan keeps the pre-check —
    shift it to read `game_events.published_at` for parity. The
    trigger remains the durable enforcement.
 
-4. **Test surface.** pgTAP tests for the trigger: live → locked,
-   unpublished → unlocked, never-published → unlocked. Existing
-   `event_code_data_model.test.sql` is the home; add cases rather
-   than a new file.
+3. **Test surface.** pgTAP tests for the slug trigger: live →
+   locked, unpublished → unlocked, never-published → unlocked.
+   Existing `event_code_data_model.test.sql` covers event_code;
+   slug coverage may need a sibling file or section. Plan should
+   pick.
 
 ## Plan handoff
 
-The fix PR should:
+**This scoping resolves slug only.** Event_code is deferred to a
+follow-up scoping pass that picks among (b1)/(b2)/(b3) above.
 
-- Add a new migration `<date>_relax_lock_to_currently_live.sql`
-  that recreates both `enforce_*_lock` functions with the
-  cross-table read and updates the triggers' WHEN clauses.
-- Update [save-draft/index.ts:91-124](/supabase/functions/save-draft/index.ts)
-  to query `game_events.published_at` for the live check.
-- Add pgTAP coverage in
-  [supabase/tests/database/event_code_data_model.test.sql](/supabase/tests/database/event_code_data_model.test.sql)
-  and the slug equivalent for the unpublish-then-rotate case.
+The slug fix PR should:
+
+- Add a migration that recreates `enforce_game_event_draft_slug_lock`
+  with the cross-table read on `game_events.published_at` and
+  updates the trigger's `WHEN` to drop the
+  `last_published_version_number` predicate. Leave the event_code
+  trigger untouched pending the follow-up scoping.
+- Update the slug pre-check in
+  [save-draft/index.ts:97-124](/supabase/functions/save-draft/index.ts)
+  to query `game_events.published_at`. Leave the event_code
+  pre-check untouched.
+- Add pgTAP coverage for the slug trigger: live → locked,
+  unpublished → unlocked, never-published → unlocked.
 - No frontend changes; the existing organizer UX surfaces the
   trigger's structured error already.
-- Backlog entry deletes from `docs/backlog.md` Tier 1 in the same
-  PR per the "remove on landing" rule.
+- Backlog entry stays in place; revise the entry text to reflect
+  that slug is fixed and event_code is pending the follow-up
+  scoping.
 
-Estimated size: one migration + one Edge Function patch + two
+Estimated size: one migration + one Edge Function patch + three
 pgTAP cases. One PR.
+
+**Event_code follow-up scoping** lives as a separate doc once
+organizer input clarifies whether mid-cycle event_code rotation is
+a feature (drives toward b2) or an organizer-error to prevent
+(drives toward b3).
