@@ -2,10 +2,12 @@
 
 ## Status
 
-`Proposed` (substrate landing in this PR; close-out PR will flip
-to `Landed` once the operator step ships its evidence). See
-`## Estimate Deviations` below for the substrate / close-out
-split rationale.
+`Landed` 2026-05-06. See `## Estimate Deviations` below for the
+substrate / close-out split rationale; the close-out attached
+the six attendee-journey captures, flipped this and the M2
+milestone doc's top-level status, deleted the scoping doc per
+the milestone-doc batch-deletion commitment, and reconciled the
+epic's Sizing Summary M2 line against actuals.
 
 ## Context
 
@@ -35,10 +37,14 @@ The deliberation behind the calls below — service-role script
 vs. admin-UI flow, single-PR vs. 2.2 split, agent identity
 choice, organizer deferral, environment, capture-set shape,
 question count and flavor, runbook home, and grep regression
-check — lives in
-[`scoping/m2-phase-2-1.md`](/docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md).
-That doc deletes in batch with the M1 sibling scoping docs at
-the M2 milestone-terminal PR.
+check — lived in `scoping/m2-phase-2-1.md`, which deleted in
+this phase's close-out (2026-05-06) per the milestone doc's
+batch-deletion-at-terminal-PR commitment. The durable contract
+derived from those nine settled-at-scoping decisions is the
+content of this plan doc; the deliberation prose with rejected
+alternatives and reality-check inputs is intentionally not
+preserved past the milestone, matching how phase 2.1's M1
+siblings were closed out.
 
 ## Goal
 
@@ -203,7 +209,7 @@ self-review:
 | `shared/events/index.ts` | Re-exports `GameSeedConfig` (type) and `madronaDemoSeedConfig` (alias for `seedConfig` from the Madrona module). |
 | `package.json` | `release:seed:madrona` alias that invokes the generic script with `--content shared/events/madrona-demo-game-content.ts`. |
 | `docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md` | This file. |
-| `docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md` | New scoping doc (drafted in same PR). |
+| `docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md` | New scoping doc (drafted in the substrate PR; deleted in the close-out PR per the milestone-doc batch-deletion commitment). |
 | `docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md` | Phase Status row 2.1 seeded as `In flight` in the substrate PR; flipped to `Landed` plus top-level Status flip in the close-out PR. Row 2.2 stays `Collapsed into 2.1` throughout. |
 | `docs/plans/epics/madrona-demo-build/epic.md` | Sizing Summary M2 line reconciled in the close-out PR (estimated 1–2 PRs, actual 2 PRs — substrate + close-out). |
 
@@ -626,10 +632,10 @@ This phase's PR lands the following doc updates per AGENTS.md
   to this plan's Estimate Deviations.
 - This plan doc — Status `Proposed` → `Landed` in the close-out
   PR.
-- [scoping/m2-phase-2-1.md](/docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md)
-  — deleted in the close-out PR per the milestone doc's
-  batch-deletion-at-terminal-PR commitment (close-out PR is
-  the M2-terminal PR).
+- `scoping/m2-phase-2-1.md` — deleted in the close-out PR
+  (2026-05-06) per the milestone doc's
+  batch-deletion-at-terminal-PR commitment. Path retained
+  here as a deletion-event marker, not as a link.
 - [docs/operations.md](/docs/operations.md) — phase-time
   grep confirms whether the manual agent-assignment SQL
   belongs there. Per scoping Decision 8 the default is
@@ -673,10 +679,13 @@ This phase's PR lands the following doc updates per AGENTS.md
 ## Estimate Deviations
 
 - **Single-PR collapse → substrate + close-out split.**
-  [Scoping Decision 2](/docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md)
-  chose a single-PR shape on the rationale that the script
-  alone cannot demonstrate the journey works (coupling too
-  tight for the review-coherence benefit of splitting).
+  Scoping-time Decision 2 chose a single-PR shape on the
+  rationale that the script alone cannot demonstrate the
+  journey works (coupling too tight for the review-coherence
+  benefit of splitting). The scoping doc that recorded that
+  decision deleted in the close-out per the milestone-doc
+  batch-deletion commitment; the inline summary here is the
+  rationale's durable form.
   Plan-time and PR-time the call held; the operator-step
   seam is what shifted it. The actual shape splits along the
   natural boundary: the **substrate PR** ships the
@@ -704,9 +713,6 @@ This phase's PR lands the following doc updates per AGENTS.md
 - [`docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md`](/docs/plans/epics/madrona-demo-build/m2-stubbed-attendee-journey.md)
   — milestone doc; Phase Status row 2.1, cross-phase
   invariants, milestone-level risks.
-- [`docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md`](/docs/plans/epics/madrona-demo-build/scoping/m2-phase-2-1.md)
-  — scoping doc with deliberation prose and rejected
-  alternatives.
 - [`docs/plans/epics/madrona-demo-build/epic.md`](/docs/plans/epics/madrona-demo-build/epic.md)
   — parent epic.
 - [`docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md`](/docs/plans/epics/madrona-demo-build/m1-phase-1-1-plan.md)

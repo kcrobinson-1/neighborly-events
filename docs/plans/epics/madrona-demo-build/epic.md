@@ -346,9 +346,27 @@ re-derived at each milestone's planning session.
   authorized deviation), both landed 2026-05-04. Within the
   estimate range; the collapse is authorized in advance by
   [m1-brand-foundation.md `## Phase Status`](/docs/plans/epics/madrona-demo-build/m1-brand-foundation.md).
-- **M2:** 1–2 PRs. Placeholder Madrona game authored and
-  published; redemption agent assigned; cross-app theme
-  continuity UI-review pair captured.
+- **M2:** 1–2 PRs estimated; **5 PRs actual** — substrate
+  ([m2-phase-2-1-plan.md](/docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md)),
+  apps/web noindex fix-up surfaced during deployment review,
+  agent-guidance updates spun off from substrate review,
+  content iteration after the placeholder copy proved
+  unsuitable for the public-facing beta, and the close-out
+  PR landing 2026-05-06 with the six attendee-journey
+  captures and the milestone-doc Status flips. The deviation
+  was driven by three forces the milestone estimate did not
+  anticipate: (1) production deployment review surfaced a
+  noindex gap that warranted its own focused fix, (2) review
+  feedback during substrate landing produced agent-guidance
+  changes worth their own PR, and (3) the placeholder
+  content was not suitable for the public-facing event the
+  demo became, requiring a content-iteration PR before
+  close-out captures could match deployed reality. Each
+  deviation is justified at its own PR's `## Estimate
+  Deviations`; collectively they argue the M2 milestone
+  estimate underweighted "review-driven follow-ups" as a
+  PR-count contributor distinct from the implementation
+  work itself.
 - **M3:** 1–2 PRs. Real content authoring; UI review of the
   finished demo URL.
 

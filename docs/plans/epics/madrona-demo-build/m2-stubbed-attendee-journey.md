@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed 2026-05-06.
 
 This milestone doc is the durable coordination artifact for M2 of
 the Madrona demo-build epic: restated milestone goal, phase
@@ -110,8 +110,8 @@ merged code at phase-start.
 
 | Phase | Title (estimate) | Plan | Status | Landed |
 | --- | --- | --- | --- | --- |
-| 2.1 | Placeholder Madrona game content authored + published; agent assigned; full attendee journey verified end-to-end | [m2-phase-2-1-plan.md](/docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md) | In flight | substrate landed 2026-05-05 |
-| 2.2 | (Conditional) Cross-app theme-continuity capture set + closure | — | Collapsed into 2.1 | 2026-05-05 |
+| 2.1 | Placeholder Madrona game content authored + published; agent assigned; full attendee journey verified end-to-end | [m2-phase-2-1-plan.md](/docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md) | Landed 2026-05-06 | See plan doc |
+| 2.2 | (Conditional) Cross-app theme-continuity capture set + closure | — | Collapsed into 2.1 | See plan doc |
 
 The 1–2 phase estimate matches the epic's Sizing Summary
 (M2: 1–2 PRs). The default shape is **single phase**: the work
