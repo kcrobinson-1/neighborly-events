@@ -118,7 +118,7 @@ End state out of scope for the MVP (see Out Of Scope below).
    somewhere humane. The route is owned by apps/site via
    the catch-all `/event/:slug/:path*` rewrite to the
    neighborly-events-site origin (Verified by:
-   [`apps/web/vercel.json:18-21`](/apps/web/vercel.json)),
+   [`apps/web/vercel.json:23-26`](/apps/web/vercel.json)),
    making the friendly state a Next.js page render in
    apps/site rather than an apps/web SPA route. Existing test
    events (`harvest-block-party`, `riverside-jam`) render
@@ -189,7 +189,7 @@ End state out of scope for the MVP (see Out Of Scope below).
    `/event/<slug>/feedback`. The current section render order
    on the landing page is Header → Schedule → Lineup →
    Sponsors → FAQ → CTA → Footer (Verified by:
-   [`apps/site/components/event/EventLandingPage.tsx:26-44`](/apps/site/components/event/EventLandingPage.tsx));
+   [`apps/site/components/event/EventLandingPage.tsx:27-42`](/apps/site/components/event/EventLandingPage.tsx));
    the feedback CTA slots in between the existing CTA and
    Footer. Visual weight is intentionally below the gameplay
    CTA so feedback doesn't steal attention from the headline
@@ -231,18 +231,20 @@ The organizer reads submissions after the event through an
 event-scoped admin route under `/event/<slug>/admin/feedback`,
 shipped in M2. `/event/:slug/admin/:path*` is owned by apps/web
 via the rewrite to the SPA's `/index.html` (Verified by:
-[`apps/web/vercel.json:10-17`](/apps/web/vercel.json)), so the
+[`apps/web/vercel.json:11-18`](/apps/web/vercel.json)), so the
 feedback admin lives in apps/web alongside the existing
 event-scoped `EventAdminPage` (Verified by:
 [`apps/web/src/pages/EventAdminPage.tsx:288`](/apps/web/src/pages/EventAdminPage.tsx)
-and its routing in
-[`apps/web/src/App.tsx:62`](/apps/web/src/App.tsx)). The route
-renders per-dimension rating distributions, a list of
+and the route dispatch in
+[`apps/web/src/App.tsx:57-68`](/apps/web/src/App.tsx)). The
+route renders per-dimension rating distributions, a list of
 free-text responses in submission order, and a filter /
 export view of newsletter opt-in rows (email + submitted_at)
-for the manual newsletter export. Authenticated to event
-admins only, reusing `EventAdminPage`'s session-state +
-event-scope auth pattern (Verified by: same file's
+for the manual newsletter export. Gated on sign-in plus the
+organizer-or-admin role, reusing `EventAdminPage`'s
+session-state + event-scope auth pattern (Verified by:
+`EventAdminPage.tsx:287` doc comment naming the gate as
+"sign-in plus organizer-or-admin role," and the
 `useEventAdminWorkspace` wiring at line 205).
 
 During the M1 demo phase before M2 ships, the organizer reads
@@ -302,9 +304,9 @@ event slugs accept submissions. Roughly:
 
 RLS posture, set in the M1 migration alongside the tables:
 anonymous inserts into `feedback_submissions` are permitted
-(the form is unauthenticated by design); reads are
-event-admin-only via the existing event-scoped admin auth
-pattern; the `feedback_enabled_events` registry is
+(the form is unauthenticated by design); reads are gated on
+sign-in plus the organizer-or-admin role per the existing
+event-scoped admin auth pattern; the `feedback_enabled_events` registry is
 read-restricted from anon (anon doesn't need to enumerate it
 — the FK does the enforcement on insert) and write-restricted
 to service-role / admin paths. Exact policy SQL is a
@@ -361,7 +363,8 @@ Studio for the demo phase.
 organizer reads ratings and free text through a UI rather
 than Studio, including the email + newsletter opt-in
 columns so manual newsletter export is a copy-paste away.
-Admin route under the existing event-admin auth pattern,
+Admin route gated on sign-in plus the organizer-or-admin
+role per the existing event-scoped admin auth pattern,
 per-dimension rating distributions, free-text list,
 filterable / exportable view of newsletter opt-in rows.
 Sequenced after M1 because M1 is the demo-blocking work and
@@ -386,15 +389,24 @@ real-attendee volume.
 
 ## Risk Register
 
-- **Spam / abuse on an anonymous, captcha-less form.** Anyone on
-  the internet who finds the URL can submit. Mitigation for
-  MVP: the demo phase serves `X-Robots-Tag: noindex, nofollow`
-  on `/event/madrona/*` (Verified by:
-  [`apps/web/vercel.json:42-46`](/apps/web/vercel.json)) so
-  the URL is not discoverable via search; the Madrona '26
-  audience is small and known; the organizer can purge garbage
-  rows post-event. The launch epic revisits if real volume
-  surfaces real abuse.
+- **Spam / abuse on an anonymous, captcha-less form.** The
+  feedback page hosts an anonymous Supabase insert; anyone
+  with the URL — or with the Supabase REST endpoint and a
+  feedback-enabled slug — can submit. Two faces of the risk,
+  separately mitigated:
+  - **Discovery via search.** The demo phase serves
+    `X-Robots-Tag: noindex, nofollow` on `/event/madrona/*`
+    (Verified by:
+    [`apps/web/vercel.json:59-64`](/apps/web/vercel.json))
+    so the URL is not surfaced by search engines.
+  - **Direct attack against a known slug.** Once a slug is
+    in the feedback-enabled registry, the FK from
+    `feedback_submissions.event_slug` (Invariant 6) does
+    not slow spam against that slug — it only stops
+    fabricated / unregistered slugs. Accepted for MVP: the
+    Madrona '26 audience is small and known and the
+    organizer can purge garbage rows post-event. The launch
+    epic revisits if real volume surfaces real abuse.
 - **Rating-dimension drift between Madrona '26 and '27 breaks
   aggregation.** If '27 reuses '26's keys with shifted meaning,
   or picks new ones, automatic year-over-year comparison gets
