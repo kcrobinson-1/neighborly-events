@@ -2,6 +2,45 @@
 
 ## Status
 
+`Deferred — final milestone of the epic; sequenced after every other milestone, paused 2026-05-06`
+
+M2 is the **final milestone of this epic**, sequenced after every
+other milestone (including any milestones the epic adds later
+between M1 and M2). Active drafting is paused as of 2026-05-06;
+the content below is preserved as historical research, **not as
+a binding contract**, per
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+"`Deferred` status for paused planning." Future milestone
+planning re-derives every goal, sequence, invariant, decision,
+risk, and doc-currency entry in this doc against the
+actually-merged code at the time M2 becomes the next milestone
+and is **explicitly not bound** by the choices recorded below.
+Treat this doc as a starting set of inputs for a future
+milestone session, not as a settled plan.
+
+The "non-prescriptive" framing means: do not cite the decisions
+below as settled when scoping any other milestone or phase; do
+not rely on the Phase Status table's 2.1 / 2.2 split as the
+canonical shape; do not use the Cross-Phase Invariants below as
+binding constraints on intervening milestones. The data-layer
+choices in M1 (FK-enforced registry, RLS read predicate,
+read-path index, consent-record column shape) DO bind, because
+they ship in M1's migration; the M2 content below is downstream
+consumer reasoning that may shift substantially when M2 actually
+plans.
+
+When M2 becomes next-up, Status flips `Deferred` → `In draft`
+and the `In draft` → `Proposed` promotion gate re-runs from
+scratch per the same `shared.md` section.
+
+Original drafting context preserved below for reference. The
+original (pre-defer) framing is what follows; everything below
+was written under the now-superseded assumption that M2 was the
+immediate next milestone after M1. Re-read with that framing in
+mind.
+
+---
+
 In draft. This milestone doc is the durable coordination artifact
 for M2 of the
 [Madrona feedback child epic](/docs/plans/epics/madrona-feedback/epic.md):

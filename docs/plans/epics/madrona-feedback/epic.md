@@ -329,18 +329,37 @@ Per [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md),
 this section is an estimate; phase counts and per-phase
 content are re-derived at each milestone planning session.
 Where a milestone doc exists, that doc is canonical; the epic
-paragraph is historical record. The epic spans multiple
-milestones — the form-and-storage MVP and the organizer
-surface do not collapse into one even if the second is small,
-since the demo-phase value of M1 is realized whether or not
-M2 has shipped, and forcing them together would couple two
+paragraph is historical record.
+
+**M1 is the immediate next milestone. M2 (organizer-readable
+surface) is the final milestone of this epic and is explicitly
+deferred** — sequenced after every other milestone, including
+any additional milestones the epic adds between M1 and M2.
+The M2 milestone doc that exists today carries Status
+`Deferred` per
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+"`Deferred` status for paused planning"; the doc is preserved
+as **non-prescriptive historical research**, not as a binding
+contract. The future planning session that turns M2 into the
+next-up milestone flips Status `Deferred` → `In draft` and
+re-derives goal / sequencing / decisions / risks against the
+actually-merged code at that time, not bound by what's
+recorded there (`Verified by:` the `Deferred` Status block at
+[`m2-organizer-readable-surface.md`](/docs/plans/epics/madrona-feedback/m2-organizer-readable-surface.md)).
+
+The form-and-storage MVP and the organizer surface do not
+collapse into one even if the second is small, since the
+demo-phase value of M1 is realized whether or not M2 has
+shipped, and forcing them together would couple two
 independent UI-review surfaces.
 
 ```mermaid
 flowchart LR
   M1[M1 Form + storage MVP]
-  M2[M2 Organizer readable surface]
-  M1 --> M2
+  Mx[Future milestones<br/>not yet scoped]
+  M2[M2 Organizer readable surface<br/>final milestone — deferred]
+  M1 --> Mx
+  Mx --> M2
 ```
 
 **M1 — Form and storage MVP.** Milestone doc:
@@ -364,16 +383,23 @@ opts feedback in on the content side with the initial rating
 dimension set. No organizer UI yet — the organizer reads via
 Studio for the demo phase.
 
-**M2 — Organizer-readable surface.** Capability target: the
-organizer reads ratings and free text through a UI rather
-than Studio, including the email + newsletter opt-in
-columns so manual newsletter export is a copy-paste away.
-Admin route gated on sign-in plus the organizer-or-admin
-role per the existing event-scoped admin auth pattern,
-per-dimension rating distributions, free-text list,
-filterable / exportable view of newsletter opt-in rows.
-Sequenced after M1 because M1 is the demo-blocking work and
-M2 is operational convenience for the post-event read-through.
+**M2 — Organizer-readable surface (Status `Deferred`; final
+milestone).** Capability target: the organizer reads ratings
+and free text through a UI rather than Studio, including the
+email + newsletter opt-in columns so manual newsletter export
+is a copy-paste away. The shape sketched here — admin route
+gated on sign-in plus the organizer-or-admin role, per-dimension
+rating distributions, free-text list, filterable / exportable
+view of newsletter opt-in rows — is the
+**non-prescriptive historical sketch**, not a settled
+contract. M2's milestone planning session reopens cleanly when
+M2 becomes the next-up milestone (Status flips `Deferred` →
+`In draft`) and is not bound by the choices preserved in
+[`m2-organizer-readable-surface.md`](/docs/plans/epics/madrona-feedback/m2-organizer-readable-surface.md).
+Sequenced last because M2 is operational convenience layered
+on top of the demo-phase deliverables (M1 plus any intervening
+milestones), and the demo-phase value of M1 is realized
+whether or not M2 has shipped.
 
 ## Backlog Impact
 
