@@ -71,6 +71,42 @@ semicolons). The five-line rule caps how much code-shaped content
 lives here even under this framing; this rule shifts the reviewer's
 stance on whatever content the cap admits.
 
+**Author-side falsifier — would a reviewer find a syntax bug?**
+The five-line cap is necessary but not sufficient: short snippets
+can still attract syntax-level review when they contain exact
+syntax the implementer must transcribe verbatim. Before committing
+any code-shaped content, ask: could a careful reviewer find a
+syntax bug in this snippet? If yes, the content is exact syntax
+(not directional shape), regardless of length, and belongs in the
+implementation PR. Patterns that consistently fail this test: SQL
+policy bodies and subqueries with column references, function-call
+expressions with literal arguments the implementer cannot
+mechanically derive from the surrounding prose, regex literals,
+JSON / object literals with field-value pairs that must match a
+downstream consumer exactly, multi-statement shell pipelines.
+Replace each with prose that names the contract structure
+("policy resolves slug → event_id by joining through `game_events`,"
+not a `using (...)` body; "the script invokes the publish RPC with
+the same `event_id` and an actor uuid," not the call expression).
+A self-flag is the strongest signal that this rule is firing: if
+you find yourself writing a parenthetical like "implementer audits
+this against the actual parser diagnostic," "alias the row
+reference if the database surfaces ambiguity," or "adjust if X"
+next to a code snippet, that uncertainty *is* the rule firing —
+delete the snippet, keep (and tighten) the prose. Annotating a
+snippet with a "fix this later" note doesn't satisfy the rule; it
+just hands reviewers more code to review, and them finding the
+very thing the annotation flagged is the predictable outcome.
+Recurring trap (M1 phase 1.1 planning, 2026-05-06): a phase plan's
+SELECT-policy contract included a 3-line scalar-subquery SQL body
+— short enough to slip under the line cap but exact-syntax enough
+that an unqualified column reference made the subquery
+tautological and runtime-broken; the author noticed the ambiguity
+at write time and added a parenthetical fix-later annotation
+instead of removing the snippet, and Codex review caught the very
+ambiguity the annotation flagged. The shape-not-syntax test plus
+the self-flag check would have caught it regardless of line count.
+
 When a reviewer comment targets a code snippet inside a plan, the
 correction is to **remove or summarize the snippet**, not to fix the
 code in place. Code-correctness iteration belongs in the PR that
