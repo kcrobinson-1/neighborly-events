@@ -38,7 +38,18 @@ organizer reads ratings and free text through a UI rather than
 Supabase Studio, including the email and newsletter opt-in columns
 needed for manual newsletter export. The surface shows what the
 M1 form collected for one event slug at a time; it does not
-moderate, aggregate across events, or summarize the responses.
+moderate, aggregate across events, or summarize free text. The
+per-dimension rating distribution view phase 2.2 lands is a
+numeric aggregation across submissions for one event, not a
+free-text summary — the trade epic Out Of Scope draws is between
+"organizer reads the responses themselves" and "automated
+sentiment / LLM summary of the prose," and the distribution view
+sits on the reads-the-responses side because the prose itself is
+listed verbatim by phase 2.1, not summarized.
+(`Verified by:`
+[docs/plans/epics/madrona-feedback/epic.md:99-101](/docs/plans/epics/madrona-feedback/epic.md)
+for the epic's "Sentiment analysis or LLM summarization of free
+text" Out Of Scope entry this distinction tracks)
 
 After M2:
 
@@ -309,18 +320,28 @@ Recorded so phase planning sessions do not re-derive.
   admin rewrite;
   [docs/plans/epics/madrona-feedback/epic.md:230-252](/docs/plans/epics/madrona-feedback/epic.md)
   for the epic Organizer Path's apps/web ownership claim)
-- **Reads use the existing M1-installed RLS predicate without
-  modification.** Both phases read via PostgREST under the
-  policy `"organizers and admins can read event feedback"` that
-  M1 phase 1.1 installs; no new policy, no new helper, no
-  service-role escalation. Slug → event_id resolution happens
-  inside the policy via the JOIN through `game_events`, settled
-  at the M1 phase 1.1 plan level. (`Verified by:`
+- **Reads use the M1-installed RLS predicate without
+  modification — M2 ships no new RLS policy, helper, or
+  service-role escalation.** This is what binds at the milestone
+  level: M2 is a read-side consumer of whatever predicate M1
+  phase 1.1 lands, not a co-author of it. The M1 phase 1.1
+  plan's current Decision 1 outcome (JOIN through `game_events`
+  inside the policy, no new helper, no denormalized `event_id`
+  column on `feedback_submissions`) is the planned shape M2's
+  fetch path is sized for, but the implementation review for M1
+  phase 1.1 hasn't happened yet — see Pending Inputs From M1 for
+  the verification step that walks the actually-merged SQL at
+  M2 phase-start. The settled-at-this-doc commitment is "consume
+  whatever shape merges, don't introduce a parallel one,"
+  not "the JOIN-through-`game_events` shape is final."
+  (`Verified by:`
   [docs/plans/epics/madrona-feedback/m1-phase-1-1-plan.md:149-216](/docs/plans/epics/madrona-feedback/m1-phase-1-1-plan.md)
-  for the Contracts section that names the policy and the
-  predicate;
+  for the M1 phase 1.1 plan's Contracts section naming the
+  planned policy;
   [docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md:44-86](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md)
-  for Decision 1's JOIN-through-`game_events` rationale)
+  for Decision 1's planned JOIN-through-`game_events` rationale,
+  recorded as the M1 phase 1.1 plan's intent and not a merged
+  contract)
 - **Read-path index already exists for the M2 query shape.** M1
   phase 1.1 lands
   `feedback_submissions_event_slug_submitted_at_idx` precisely
@@ -358,8 +379,9 @@ Recorded so phase planning sessions do not re-derive.
   Phase 2.2 owns the table shape (column order, row formatting);
   the endpoint-vs-render decision is fixed here.
 - **Single fetch path per page render.** Both phases consume the
-  same `select * from feedback_submissions where event_slug =
-  $slug order by submitted_at desc` shape. Phase 2.2's
+  same per-event submission read — filtered by `event_slug` for
+  the requested event and ordered by `submitted_at desc` to
+  match the M1-installed read-path index. Phase 2.2's
   aggregations derive client-side from the fetched rows rather
   than running a second query against a derived view. The trade
   is named so phase 2.2 doesn't drift into building a server-side
