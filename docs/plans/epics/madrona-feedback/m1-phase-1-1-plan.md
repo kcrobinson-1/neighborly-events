@@ -2,12 +2,13 @@
 
 ## Status
 
-Proposed. This is a planning-only PR landing the scoping doc and
-this plan doc; the migration + types regeneration + validation
-gate run + Phase Status flip to `Landed` happen in a follow-up
-implementing PR per the
+Landed in [#205](https://github.com/kcrobinson-1/neighborly-events/pull/205).
+The migration, regenerated types, pgTAP validation gate, and the
+milestone-doc Phase Status flip ship in that PR per the
 [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-Plan-to-PR Completion Gate.
+Plan-to-PR Completion Gate. Plan-doc retained because it owns the
+Contracts and Validation Gate the migration encodes; deletes in
+batch with sibling phase plan docs at the M1 milestone-terminal PR.
 
 ## Context
 
