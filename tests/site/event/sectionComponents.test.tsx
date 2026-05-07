@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { EventCTA } from "../../../apps/site/components/event/EventCTA.tsx";
 import { EventFAQ } from "../../../apps/site/components/event/EventFAQ.tsx";
+import { EventFeedbackCTA } from "../../../apps/site/components/event/EventFeedbackCTA.tsx";
 import { EventFooter } from "../../../apps/site/components/event/EventFooter.tsx";
 import { EventHeader } from "../../../apps/site/components/event/EventHeader.tsx";
 import { EventLandingPage } from "../../../apps/site/components/event/EventLandingPage.tsx";
@@ -10,7 +11,27 @@ import { EventLineup } from "../../../apps/site/components/event/EventLineup.tsx
 import { EventSchedule } from "../../../apps/site/components/event/EventSchedule.tsx";
 import { EventSponsors } from "../../../apps/site/components/event/EventSponsors.tsx";
 import { TestEventDisclaimer } from "../../../apps/site/components/event/TestEventDisclaimer.tsx";
+import { harvestBlockPartyContent } from "../../../apps/site/events/harvest-block-party.ts";
+import { riversideJamContent } from "../../../apps/site/events/riverside-jam.ts";
 import type { EventContent } from "../../../apps/site/lib/eventContent.ts";
+
+const feedbackFixture: NonNullable<EventContent["feedback"]> = {
+  cta: {
+    heading: "How was the show?",
+    body: "Tell us what you liked or didn't.",
+  },
+  ratingDimensions: [
+    { key: "music", label: "Music choice" },
+    { key: "overall", label: "Overall" },
+  ],
+  freeTextPrompt: "Anything specific you'd like the organizer to hear?",
+  emailCopy: {
+    label: "Email — so we can follow up",
+    declineLabel: "I'd rather not share my email",
+    newsletterOptInLabel: "Add me to the newsletter",
+  },
+  thankYouMessage: "Thanks — we read every response.",
+};
 
 afterEach(cleanup);
 
@@ -380,6 +401,37 @@ describe("TestEventDisclaimer", () => {
   });
 });
 
+describe("EventFeedbackCTA", () => {
+  it("renders the heading, optional body, and a feedback link with the slug-keyed href", () => {
+    render(
+      <EventFeedbackCTA feedback={feedbackFixture} slug="any-slug" />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "How was the show?" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Tell us what you liked or didn't."),
+    ).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Share feedback" });
+    expect(link.getAttribute("href")).toBe("/event/any-slug/feedback");
+  });
+
+  it("omits the body paragraph when feedback.cta.body is absent", () => {
+    const noBody: NonNullable<EventContent["feedback"]> = {
+      ...feedbackFixture,
+      cta: { heading: "How was the show?" },
+    };
+    const { container } = render(
+      <EventFeedbackCTA feedback={noBody} slug="any-slug" />,
+    );
+    expect(
+      screen.getByRole("heading", { name: "How was the show?" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Share feedback" })).toBeTruthy();
+    expect(container.querySelector(".event-feedback-cta-body")).toBeNull();
+  });
+});
+
 describe("EventLandingPage", () => {
   it("composes all sections and shows the disclaimer for test events", () => {
     const testContent: EventContent = { ...baseContent, testEvent: true };
@@ -441,5 +493,47 @@ describe("EventLandingPage", () => {
       />,
     );
     expect(screen.queryByRole("heading", { name: "Schedule" })).toBeNull();
+  });
+
+  it("renders the EventFeedbackCTA section when content.feedback is set", () => {
+    const optedIn: EventContent = {
+      ...baseContent,
+      feedback: feedbackFixture,
+    };
+    const { container } = render(
+      <EventLandingPage content={optedIn} slug={optedIn.slug} />,
+    );
+    expect(container.querySelector(".event-feedback-cta")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "How was the show?" }),
+    ).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Share feedback" });
+    expect(link.getAttribute("href")).toBe(
+      `/event/${optedIn.slug}/feedback`,
+    );
+  });
+
+  it("omits the EventFeedbackCTA section when content.feedback is absent (baseContent)", () => {
+    const { container } = render(
+      <EventLandingPage content={baseContent} slug={baseContent.slug} />,
+    );
+    expect(container.querySelector(".event-feedback-cta")).toBeNull();
+    expect(screen.queryByText("Share feedback")).toBeNull();
+  });
+
+  it("renders no feedback CTA on the test events (same-section-set invariant)", () => {
+    // Falsifies the milestone-level rule that test events render the
+    // same set of sections — no new section sprouts after this phase.
+    // Markup-level drift inside an existing section's body is not
+    // bound by this assertion; only the *presence* of the new
+    // feedback section on test events would falsify the invariant.
+    for (const content of [harvestBlockPartyContent, riversideJamContent]) {
+      const { container, unmount } = render(
+        <EventLandingPage content={content} slug={content.slug} />,
+      );
+      expect(container.querySelector(".event-feedback-cta")).toBeNull();
+      expect(screen.queryByText("Share feedback")).toBeNull();
+      unmount();
+    }
   });
 });

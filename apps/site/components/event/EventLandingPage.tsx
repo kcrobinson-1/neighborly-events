@@ -1,6 +1,7 @@
 import type { EventContent } from "../../lib/eventContent.ts";
 import { EventCTA } from "./EventCTA.tsx";
 import { EventFAQ } from "./EventFAQ.tsx";
+import { EventFeedbackCTA } from "./EventFeedbackCTA.tsx";
 import { EventFooter } from "./EventFooter.tsx";
 import { EventHeader } from "./EventHeader.tsx";
 import { EventLineup } from "./EventLineup.tsx";
@@ -38,6 +39,9 @@ export function EventLandingPage({
       ) : null}
       {content.faq.length > 0 ? <EventFAQ faq={content.faq} /> : null}
       <EventCTA cta={content.cta} slug={slug} />
+      {content.feedback ? (
+        <EventFeedbackCTA feedback={content.feedback} slug={slug} />
+      ) : null}
       <EventFooter footer={content.footer} />
     </main>
   );
