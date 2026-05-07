@@ -107,6 +107,37 @@ instead of removing the snippet, and Codex review caught the very
 ambiguity the annotation flagged. The shape-not-syntax test plus
 the self-flag check would have caught it regardless of line count.
 
+**Data-structure-shaped illustrations are the one carve-out.**
+A code block whose entire body is a *data structure* — a
+TypeScript type literal, a JSON / object shape, a SQL column list,
+a table schema sketch — communicates contract structure faster as
+a code block than as nested prose, and the readability gain is
+real even past five lines. The carve-out applies only when:
+
+- the block is an inert shape (no function bodies, no JSX, no
+  control flow, no expressions that *do* anything);
+- it is explicitly framed as illustrative, not contractual,
+  immediately before or after the block (e.g. "illustrative
+  shape — plan-drafting may refine," "contract structure
+  sketch," wording that names the block as plan-time-shape, not
+  implementation-time-syntax);
+- the surrounding prose is the load-bearing contract — the
+  shape block adds readability over prose, it does not replace
+  it.
+
+Behavioral pseudocode does **not** get this carve-out, regardless
+of length: function bodies, function signatures with parameter
+types, JSX trees, SQL policy bodies, multi-statement shell
+pipelines, and any block where a reviewer would naturally check
+whether the *code* is correct (rather than whether the *shape*
+is right) belong in prose or in the implementation PR. A
+TypeScript signature like `function Foo({ x, y }: { x: A; y: B }):
+JSX.Element;` is behavioral — it describes *what the function
+takes and returns* — and reads as something a reviewer should
+verify, not a shape they should accept as illustrative. Replace
+with prose that names the contract ("`Foo` accepts `x: A` and
+`y: B` and returns the rendered section element").
+
 When a reviewer comment targets a code snippet inside a plan, the
 correction is to **remove or summarize the snippet**, not to fix the
 code in place. Code-correctness iteration belongs in the PR that
