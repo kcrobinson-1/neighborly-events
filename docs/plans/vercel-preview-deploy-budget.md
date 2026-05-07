@@ -89,10 +89,12 @@ GitHub Actions workflow that does two things:
   human-readable description naming the trigger to fire it.
 - On a trigger event (PR comment `/deploy-preview`, label
   `preview`, or `ready_for_review` transition): call Vercel's
-  Deploy Hook for each affected project, poll the Vercel
-  API for the resulting deployment URL, post a sticky PR
-  comment with the URL(s), and flip `preview-deploy` to
-  `success`.
+  Create Deployment REST API once per affected project,
+  scoped to the PR's exact head SHA; poll until each
+  deployment terminates; post a sticky PR comment with the
+  URL(s); set `preview-deploy` to `success` only if every
+  expected deployment reached `READY`, otherwise `failure`
+  with a description naming what failed.
 
 A branch-protection rule on `main` requires `preview-deploy`
 to be `success`, so the merge button stays grey until either
@@ -112,16 +114,35 @@ rendered for the current head SHA.
   `git.deploymentEnabled` config. (apps/site has no
   `vercel.json` today.)
 
-**Vercel Deploy Hooks**
+**Triggering deploys**
 
-One Deploy Hook per project, created in the Vercel dashboard
-(Settings → Git → Deploy Hooks). Each hook is a stable URL
-that, when POSTed to with a `?ref=<branch>` query parameter,
-creates a preview deployment for that branch's current HEAD.
-Hook URLs go in repository secrets:
+Vercel's Deploy Hook mechanism is **not** suitable here:
+hooks are bound to a fixed branch at creation time and have
+no documented `ref` override (only `buildCache=false`). Using
+hooks would deploy whatever branch the hook was created
+against, not the PR's head SHA — `preview-deploy` could pass
+on code unrelated to the PR.
 
-- `VERCEL_DEPLOY_HOOK_WEB`
-- `VERCEL_DEPLOY_HOOK_SITE`
+Use Vercel's Create Deployment REST API instead:
+
+- Endpoint: `POST https://api.vercel.com/v13/deployments`
+- Auth: bearer token in `VERCEL_TOKEN` repo secret. Scoped
+  as narrowly as Vercel supports at implementation time
+  (team-scoped is the floor; project-scoped is preferable
+  if available).
+- Body: `name` = project name; `gitSource` = `{ type:
+  'github', repo, org, ref: <PR_HEAD_SHA> }`. Passing the
+  exact SHA (not the branch name) makes the deployment's
+  source unambiguous and immune to races with subsequent
+  pushes.
+- Project IDs surfaced via repo variables
+  `VERCEL_PROJECT_ID_WEB` and `VERCEL_PROJECT_ID_SITE`;
+  `VERCEL_ORG_ID` likewise as a variable.
+
+Vercel still owns the build itself — the workflow only
+creates the deployment record and waits for it to settle.
+No `vercel pull` / `vercel build` / `vercel deploy
+--prebuilt` plumbing is needed.
 
 **Workflow**
 
@@ -142,14 +163,39 @@ A new `.github/workflows/preview-deploys.yml`:
   `issue_comment` matching `/deploy-preview`,
   `pull_request.labeled` with label `preview`, or
   `pull_request.ready_for_review`). Recomputes the diff and
-  classification (event-source independence is cheap). For
-  each affected project, POSTs to the project's Deploy Hook
-  with `?ref=${{ pr.head.ref }}`. Polls the Vercel
-  Deployments API filtered by branch + SHA until both
-  expected deployments report `READY` or `ERROR`. Posts or
-  updates a sticky PR comment with the resulting preview
-  URL(s) keyed by a stable comment marker. Flips
-  `preview-deploy` to `success` on the PR head SHA.
+  classification (event-source independence is cheap).
+  Records the PR's head SHA at trigger time and uses it for
+  the rest of the run. For each affected project, calls
+  `POST /v13/deployments` with the head SHA in `gitSource.ref`.
+  Polls the deployment's status until it reaches a terminal
+  state (`READY`, `ERROR`, `CANCELED`) or the polling
+  timeout (10 minutes per project). Updates a sticky PR
+  comment keyed by a stable marker, listing per-project
+  status and URL where applicable.
+
+  Status-check contract — the gate must distinguish three
+  outcomes:
+
+  - **All affected projects reached `READY`.** Set
+    `preview-deploy` on the head SHA to `success`. Sticky
+    comment lists each project's URL.
+  - **Any affected project reached `ERROR` or `CANCELED`.**
+    Set `preview-deploy` to `failure` with a description
+    naming which project(s) failed and a link to the
+    deployment inspector URL. Sticky comment surfaces the
+    failure same way.
+  - **Polling timeout for any affected project.** Set
+    `preview-deploy` to `failure` with description "preview
+    deploy did not terminate within timeout — re-trigger
+    after investigating." Sticky comment names the project
+    and provides the inspector URL for the in-flight
+    deployment.
+
+  In every case the status check is set on the SHA recorded
+  at trigger time. If the PR has since received new
+  pushes, Job A's pending check on the newer SHA still
+  blocks merge — branch protection compares against the
+  current head, so stale results cannot leak through.
 - A `concurrency` group keyed on the PR number with
   `cancel-in-progress: true` ensures rapid consecutive
   triggers cancel older runs before they post duplicate
@@ -258,10 +304,29 @@ quota, observed in the Vercel deployments view:
    head SHA; the prior success on the old SHA does not
    count for branch protection on the new SHA. Merge button
    re-greys until next trigger.
-9. **Merge to main.** Production deploys on both projects
-   via Vercel's existing Git path; the workflow short-
-   circuits on `main` and creates no extra deployment
-   objects.
+9. **Build-failure preview.** Trigger a deploy on a PR
+   whose code fails its build (e.g. introduce a TS error
+   on apps/web). Vercel deployment terminates as `ERROR`.
+   `preview-deploy` flips to `failure` (not `success`),
+   sticky comment names the failed project and links to
+   the inspector URL, merge button stays grey.
+10. **Polling timeout.** Simulate a deploy that does not
+    terminate within the 10-minute timeout (e.g. by
+    artificially shortening the timeout to a few seconds
+    in a test run). `preview-deploy` flips to `failure`
+    with a clear "did not terminate within timeout"
+    description. Merge button stays grey.
+11. **Partial success across projects.** Trigger a
+    `shared/**` change where apps/web builds successfully
+    but apps/site fails (e.g. site-specific build error).
+    `preview-deploy` flips to `failure`; sticky comment
+    shows the web URL (since the deployment did succeed)
+    and surfaces the site failure. Merge button stays
+    grey.
+12. **Merge to main.** Production deploys on both projects
+    via Vercel's existing Git path; the workflow short-
+    circuits on `main` and creates no extra deployment
+    objects.
 
 Verification method: read the deployment count from the
 Vercel dashboard's project deployments view immediately
@@ -303,14 +368,21 @@ concurrent build per project. If a PR triggers both web
 and site deploys, they run sequentially. A second trigger
 landing during that window queues. Latency cost only.
 
-**Deploy Hook ref handling.** Vercel's Deploy Hook deploys
-the current HEAD of the branch named in the `ref` query
-parameter. If a push lands between trigger fire and Vercel
-reading the ref, Vercel deploys the newer SHA. Workflow
-should record the SHA it expected and verify the resulting
-deployment matches; on mismatch, fail the status check with
-a clear message rather than silently approving the wrong
-preview.
+**Token scope and rotation.** `VERCEL_TOKEN` is a long-lived
+credential. At implementation time, prefer the narrowest
+scope Vercel supports (project-scoped if available, else
+team-scoped). Document the token's location and rotation
+procedure inline in the workflow file or a sibling README so
+the secret doesn't become orphaned. Treat the token as a
+high-value secret in incident response.
+
+**SHA pinning matters.** The Create Deployment REST API call
+sends the head SHA, not the branch name, so the deployed code
+is unambiguous regardless of subsequent pushes. The workflow
+must record the head SHA at trigger time and use it
+consistently in (a) the deploy API call, (b) the polling
+filter, and (c) the status-check target SHA. Drift between
+these three risks approving the wrong code.
 
 **Loss of Vercel auto-checks.** Vercel currently attaches a
 "Vercel" status check on PRs. Once `deploymentEnabled: false`
@@ -358,7 +430,7 @@ substantial headroom.
   `marocchino/sticky-pull-request-comment`); do not write
   our own.
 - Vercel API polling loop with timeout.
-- Vercel config edits and dashboard Deploy Hook creation.
+- Vercel config edits and `VERCEL_TOKEN` provisioning.
 - Branch protection rule edit (manual, captured in PR
   description).
 
@@ -401,7 +473,11 @@ apps/web's redemption code imports from `shared/db` at
 build time, so any column-shape change must trigger a web
 rebuild. That correction is preserved in the table above.
 
-The Deploy Hook mechanism is documented at
-`vercel.com/docs/deploy-hooks`. Vercel's
-`git.deploymentEnabled` is documented at
+Deploy Hooks are documented at
+`vercel.com/docs/deploy-hooks` — see "Why earlier drafts
+were wrong" above for why they don't fit this design (no
+SHA-pinned deploys; hooks are bound to the branch selected
+at hook-creation time). The Create Deployment REST API is
+documented at `vercel.com/docs/rest-api/reference/endpoints/deployments/create-a-new-deployment`.
+Vercel's `git.deploymentEnabled` is documented at
 `vercel.com/docs/project-configuration/git-configuration`.
