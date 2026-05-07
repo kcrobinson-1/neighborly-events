@@ -68,6 +68,22 @@
  * semantic role differs across bands and sponsors, and the
  * field-name specificity preserves invariant 2 — no foreclosure
  * of the donation / feedback child epics.
+ *
+ * `feedback?` is the [Madrona feedback child epic](../../../docs/plans/epics/madrona-feedback/epic.md)
+ * M1 phase 1.2 opt-in field: presence renders the
+ * `EventFeedbackCTA` section on the landing page (between
+ * `EventCTA` and `EventFooter`) and, in a future phase, makes
+ * `/event/<slug>/feedback` a real form route. Absence omits the
+ * CTA section and renders the disabled-event state on the
+ * feedback route. The outer field name `feedback` provides
+ * namespace, so inner field names stay domain-natural (`cta`,
+ * `ratingDimensions`, `freeTextPrompt`, `emailCopy`,
+ * `thankYouMessage`) without colliding with anything a future
+ * `donation?` outer field might want — the same field-name-
+ * specificity discipline the lineup / sponsor depth fields
+ * adopted, applied at the outer-field level. The two test events
+ * (`harvest-block-party`, `riverside-jam`) deliberately omit
+ * `feedback` so the omission-guard falsifier stays structural.
  */
 export type EventContent = {
   slug: string;
@@ -121,6 +137,23 @@ export type EventContent = {
   }>;
   faq: Array<{ question: string; answer: string }>;
   cta: { label: string; sublabel?: string };
+  feedback?: {
+    cta: {
+      heading: string;
+      body?: string;
+    };
+    ratingDimensions: Array<{
+      key: string;
+      label: string;
+    }>;
+    freeTextPrompt: string;
+    emailCopy: {
+      label: string;
+      declineLabel: string;
+      newsletterOptInLabel: string;
+    };
+    thankYouMessage: string;
+  };
   footer?: { attribution?: string };
 };
 

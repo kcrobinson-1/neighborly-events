@@ -2,13 +2,17 @@
 
 ## Status
 
-Proposed. The implementing PR ships the type extension, the new
-section component, the landing-page composition wiring, the test
-extensions, the style additions (post the dev-server consequence
-check this plan binds), the doc-currency edits, and the milestone
-doc Phase Status row 1.2 → `Landed` flip per the
+Landed in [#213](https://github.com/kcrobinson-1/neighborly-events/pull/213).
+The type extension, the new section component, the landing-page
+composition wiring, the test extensions, the style additions
+(post the dev-server consequence check), the doc-currency edit
+to `eventContent.ts`, and the milestone doc Phase Status row
+1.2 → `Landed` flip all ship in that PR per the
 [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-Plan-to-PR Completion Gate.
+Plan-to-PR Completion Gate. Plan-doc retained because it owns the
+Contracts and Validation Gate the implementation encodes; deletes
+in batch with sibling phase plan docs at the M1 milestone-terminal
+PR.
 
 The deliberation prose with rejected alternatives lives in
 [`scoping/m1-phase-1-2.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-2.md);
