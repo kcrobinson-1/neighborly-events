@@ -70,30 +70,18 @@ Must be resolved before QR codes are printed or the first real event runs.
     and Edge Function pre-check read `game_events.published_at`
     directly. Scoping in
     [`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md).
-  - **Phase 2: event_code — scoping in progress, decision pending.**
-    Cannot relax the lock the same way because the redeem and
+  - **Phase 2: event_code — implementation pending.** Cannot
+    relax the lock the same way as slug because the redeem and
     reverse RPCs construct the lookup key as
     `<current_event_code>-<suffix>`
     (`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:47-62`,
     `supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql:44-59`),
     so post-rotation `MAD-0001` returns `not_found` and
-    unredeemed entitlements are stranded. Scoping in
-    [`docs/plans/event-code-rotation-safety.md`](/docs/plans/event-code-rotation-safety.md).
-    Technical findings (i) — the wildcard guard is `=` not the
-    prefix construction the migration header credits — and (ii)
-    — the redemption keypad captures suffix only; prefix never
-    leaves the printed card — are resolved in the scoping doc.
-
-    **(iii) Open permissibility call.** Organizers must be able
-    to change `event_code` *before* the event goes live (the
-    actual requirement). Open question: do we **explicitly
-    block** changes *after* the event goes live, or **allow them
-    as a permissive side-effect** because not handling the
-    post-launch case is simpler? Not "is post-launch rotation a
-    feature?" — no concrete use case for that has surfaced.
-    Just: how strict should the system be about preventing the
-    risky post-launch path. Sub-options analyzed in the scoping
-    doc — Strict / Permissive / Permissive+UI-warning.
+    unredeemed entitlements are stranded. Scoped in
+    [`docs/plans/event-code-rotation-safety.md`](/docs/plans/event-code-rotation-safety.md);
+    decision is **Strict** — block post-launch rotation when
+    entitlements exist. Implementation handoff at the bottom of
+    the scoping doc.
 
   Tier 1 because both halves bite organizers at the moment they
   want a final pre-launch correction (typo, brand swap, sponsor
