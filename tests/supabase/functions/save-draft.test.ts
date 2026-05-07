@@ -263,7 +263,7 @@ Deno.test("save-draft rejects invalid event codes before persistence", async () 
   assertEquals(saveCalls, 0);
 });
 
-Deno.test("save-draft rejects slug changes on published events as 422", async () => {
+Deno.test("save-draft rejects slug changes on currently-live events as 422", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
     authenticateEventOrganizerOrAdmin: async () => ({
@@ -276,7 +276,7 @@ Deno.test("save-draft rejects slug changes on published events as 422", async ()
       data: null,
       error: {
         code: "slug_locked",
-        message: "Slug cannot be changed after the event has been published.",
+        message: "Slug cannot be changed while the event is currently live.",
       },
     }),
   });
@@ -287,8 +287,8 @@ Deno.test("save-draft rejects slug changes on published events as 422", async ()
 
   assertEquals(response.status, 422);
   assertEquals(await response.json(), {
-    details: "Slug cannot be changed after the event has been published.",
-    error: "The slug cannot be changed after the event has been published.",
+    details: "Slug cannot be changed while the event is currently live.",
+    error: "The slug cannot be changed while the event is currently live.",
   });
 });
 
