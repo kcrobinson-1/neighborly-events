@@ -65,31 +65,35 @@ Must be resolved before QR codes are printed or the first real event runs.
   coupling and ship in separate phases. This entry is the parent;
   it stays open until both phases land.
 
-  - **Phase 1: slug.** Slug appears nowhere in `game_entitlements`
-    and is not a key into the redeem RPCs, so the lock can be
-    relaxed cleanly: trigger and Edge Function pre-check read
-    `game_events.published_at` directly. Scoping in
-    [`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md);
-    one-PR implementation handoff.
-  - **Phase 2: event_code.** Cannot relax the lock alone because
-    the redeem and reverse RPCs construct the lookup key as
+  - **Phase 1: slug — shipped 2026-05-07.** Slug has no
+    entitlement coupling, so the lock relaxed cleanly: trigger
+    and Edge Function pre-check read `game_events.published_at`
+    directly. Scoping in
+    [`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md).
+  - **Phase 2: event_code — scoping in progress, decision pending.**
+    Cannot relax the lock the same way because the redeem and
+    reverse RPCs construct the lookup key as
     `<current_event_code>-<suffix>`
     (`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:47-62`,
     `supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql:44-59`),
-    so post-rotation `MAD-0001` returns `not_found` and unredeemed
-    entitlements are stranded. Phase 2 needs its own scoping pass
-    that resolves: **(i)** the security rationale behind the
-    current key construction (the redeem RPC migration header
-    cites it as "the only guard against wildcard characters in
-    `p_code_suffix`"), **(ii)** the printed-card flow shape — what
-    arrives as `p_code_suffix` when an attendee scans `MAD-0001`,
-    and **(iii)** whether mid-cycle event_code rotation is a
-    feature (drives toward changing the RPC lookup contract) or
-    an organizer-error to prevent (drives toward a
-    zero-entitlements guard on the relaxed trigger). Phase 2
-    starts after phase 1 lands; sub-options enumerated in the
-    phase 1 scoping doc's "Carryover for phase 2" section give
-    that pass a starting brief.
+    so post-rotation `MAD-0001` returns `not_found` and
+    unredeemed entitlements are stranded. Scoping in
+    [`docs/plans/event-code-rotation-safety.md`](/docs/plans/event-code-rotation-safety.md).
+    Technical findings (i) — the wildcard guard is `=` not the
+    prefix construction the migration header credits — and (ii)
+    — the redemption keypad captures suffix only; prefix never
+    leaves the printed card — are resolved in the scoping doc.
+
+    **(iii) Open permissibility call.** Organizers must be able
+    to change `event_code` *before* the event goes live (the
+    actual requirement). Open question: do we **explicitly
+    block** changes *after* the event goes live, or **allow them
+    as a permissive side-effect** because not handling the
+    post-launch case is simpler? Not "is post-launch rotation a
+    feature?" — no concrete use case for that has surfaced.
+    Just: how strict should the system be about preventing the
+    risky post-launch path. Sub-options analyzed in the scoping
+    doc — Strict / Permissive / Permissive+UI-warning.
 
   Tier 1 because both halves bite organizers at the moment they
   want a final pre-launch correction (typo, brand swap, sponsor

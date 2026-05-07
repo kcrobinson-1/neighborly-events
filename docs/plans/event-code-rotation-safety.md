@@ -1,6 +1,6 @@
 ---
 name: event-code rotation safety — phase 2 scoping
-description: Phase 2 scoping for the Tier 1 unpublish-locks parent. Resolves the design space for relaxing the event_code lock without silently stranding unredeemed entitlements. Decision deferred pending product call on whether mid-cycle rotation is a feature or a footgun.
+description: Phase 2 scoping for the Tier 1 unpublish-locks parent. Resolves the design space for relaxing the event_code lock without silently stranding unredeemed entitlements. Decision deferred pending a permissibility call: should the system explicitly block event_code changes after the event goes live, or allow them as a permissive side-effect that is undocumented and untested?
 type: scoping
 status: Draft
 ---
@@ -82,12 +82,14 @@ informational. The Edge Function wrapper validates
 ([redeem-entitlement/index.ts:121](/supabase/functions/redeem-entitlement/index.ts))
 and passes that suffix to the RPC.
 
-Implication for phase 2: any sub-option that wants prefix-aware
-redemption after a rotation must change the keypad input flow or
-carry the prefix server-side from somewhere it already knows it.
-The keypad today gives the operator no place to indicate which
-prefix a card was issued under. The (b2) variants below have to
-address this directly.
+Implication for phase 2: a sub-option that wanted prefix-aware
+redemption after a rotation would have to change the keypad
+input flow or carry the prefix server-side from somewhere it
+already knows it. The keypad today gives the operator no place
+to indicate which prefix a card was issued under. This finding
+contributed to rejecting "post-launch rotation as a feature"
+from the active sub-option set (see "Considered and rejected"
+below).
 
 The verification_code generator
 ([20260418070000:14-22](/supabase/migrations/20260418070000_rewrite_verification_code_generator.sql))
@@ -99,114 +101,139 @@ post-rotation. The unique constraint allows both because they
 are distinct verification_code values. Any "ignore prefix and
 match by suffix only" lookup is non-deterministic in that case.
 
-## Open question (iii) — product call needed
+## Open question (iii) — permissibility call needed
 
-**Is mid-cycle event_code rotation a feature or an
-organizer-error to prevent?**
+**Goal:** organizers must be able to change `event_code` *before*
+the event goes live. That's the actual requirement; the Madrona
+MAD → MIP rotation that triggered this whole backlog item is a
+pre-launch case (beta event, one stale test entitlement, no real
+attendee artifact to invalidate).
 
-- **Feature:** organizers might legitimately need to rotate a
-  code mid-event (sponsor change, brand update). The
-  post-rotation system must keep all already-printed codes
-  working, which forces (b2a) below — wrapper accepts full
-  code, keypad UI changes, RPC matches stored verification_code
-  verbatim.
-- **Footgun:** organizers should rotate event_code only before
-  any attendee artifact has been printed/distributed. Mid-cycle
-  rotation is operator error. The system can either prevent it
-  (b3 — relax trigger only when zero entitlements exist) or warn
-  loudly (b1 — relax trigger + UI confirmation showing pending
-  entitlement count).
+**Question:** do we *explicitly block* `event_code` changes
+*after* the event goes live, or do we *allow them as a
+permissive side-effect* because not handling that scenario is
+simpler?
 
-The Madrona MAD → MIP evidence is consistent with **footgun**:
-the rotation happened on a beta event with one stale unredeemed
-test entitlement that the operator re-seeded under the new
-prefix; not a real attendee, no real printed card to invalidate.
-But that's one data point on an internal beta event; product
-input is what makes the call.
+This is not a question about whether to support mid-cycle
+rotation as a feature. No concrete use case for treating
+post-launch rotation as a real, designed feature has been
+identified at scoping time. The earlier framing of this question
+manufactured a false design tension by reaching for
+post-launch-feature scenarios that don't actually map to
+`event_code`'s purpose (sponsor data lives on questions, brand
+identity drives slug not event_code).
 
-This scoping doc waits on (iii). The Decision section below is
-empty until it resolves.
+**The two real shapes:**
+
+- **Strict.** Trigger refuses post-launch rotation. Pre-launch
+  rotation works. The system actively prevents the risky case.
+- **Permissive.** Trigger only checks "not currently live."
+  Post-launch rotation succeeds; nobody designs or tests for it;
+  if an organizer does it, codes silently break. Documented
+  behavior: "don't rotate event_code after going live."
+
+A third hedge — **Permissive + warning** — sits between them
+and is worth naming because it's cheap.
+
+This scoping doc waits on a call between Strict and Permissive.
+The Decision section below is empty until it resolves.
 
 ## Sub-option analysis
 
-### (b1) Relax trigger + UI confirmation
+### (S) Strict — block post-launch rotation when entitlements exist
 
-**Footgun-shape solution.** Trigger relaxes per phase 1 pattern
-(function-body `EXISTS`-probe on `game_events.published_at`).
-Organizer UI surfaces "rotating event_code will make N pending
-entitlement codes unreachable, continue?" before allowing the
-change.
-
-- Migration scope: small (one trigger function).
-- UI scope: medium (count query against `game_entitlements`,
-  confirmation modal, copy with stranded-count).
-- Implementation risk: low.
-- Tradeoff: organizer can click-through and strand real cards.
-  Acceptable if organizer is trusted to read the warning;
-  unacceptable if cards are mass-printed before the organizer
-  would notice.
-
-### (b2a) Relax trigger + change RPC and keypad to use full code
-
-**Feature-shape solution.** Trigger relaxes. Edge Function
-wrapper accepts the full `[A-Z]{3}-[0-9]{4}` code; RPC matches
-`verification_code = p_full_code`. Keypad UI changes from
-4-digit-only to full-code entry (or the keypad still captures
-suffix and the UI joins it with a per-card prefix hint surfaced
-by the printed artifact).
-
-- Migration scope: medium (RPC signature change, wrapper
-  validation, keypad component).
-- Trust-boundary RPC change requires pgTAP coverage refresh.
-- Tradeoff: cleanest invariant — rotation never strands, every
-  printed code keeps redeeming. Highest implementation surface.
-  Changes operator muscle memory.
-
-### (b2b) Relax trigger + RPC fallback lookup
-
-**Hybrid.** Trigger relaxes. Wrapper still passes suffix; RPC
-tries `<current_event_code>-<suffix>` first; on `not_found`,
-falls back to looking for any verification_code on this event_id
-ending in `-<suffix>`.
-
-- Generator's randomness (see (ii)) creates non-zero probability
-  that the same suffix exists under two prefixes on the same
-  event_id, making fallback non-deterministic.
-- Possible mitigation: fallback succeeds only when exactly one
-  row matches; otherwise return a structured `ambiguous_code`
-  error.
-- Migration scope: small (RPC change only). UI unchanged.
-- Tradeoff: small surface, but fallback ambiguity is an
-  unprincipled corner — operationally rare but not impossible,
-  and hard to defend in a security review.
-
-### (b3) Relax trigger only when zero entitlements exist
-
-**Strict footgun-shape solution.** Trigger relaxes only when
+Trigger relaxes only when no entitlements have been issued for
+the event:
 `not exists (select 1 from game_entitlements where event_id =
-new.id)`. The Madrona pre-launch case (rotate brand label before
-any entitlement issued) succeeds; any rotation after the first
-entitlement is issued blocks at the trigger with a structured
-error.
+new.id)`. The Madrona-class pre-launch case (rotate brand label
+before any entitlement is issued) succeeds; any rotation after
+the first entitlement is issued raises a structured error
+(e.g. `event_code_locked_by_entitlements`).
 
 - Migration scope: smallest (one trigger function, one extra
-  `EXISTS` probe).
-- Tradeoff: blocks the Madrona case as it actually happened (one
-  stale test entitlement made the rotation fail). Organizer
-  must clear test entitlements before rotating, which they need
-  a UI surface for — pushes work into authoring tooling.
+  `EXISTS` probe vs. phase 1's slug pattern).
+- pgTAP scope: add the entitlements-exist case alongside the
+  phase 1 cases.
+- Operator surface: organizer must clear test entitlements
+  before rotating. That's a separate authoring UX concern; it
+  pushes a small piece of work into the authoring surface.
+- Tradeoff: blocks the Madrona-shape case as it actually
+  happened (one stale test entitlement made rotation fail until
+  manual cleanup). Acceptable if test-entitlement clearing is
+  a normal pre-launch step.
+
+### (P) Permissive — trigger only checks `published_at`
+
+Trigger mirrors phase 1's slug pattern verbatim (function-body
+`EXISTS`-probe on `game_events.published_at`). Pre-launch
+rotation works. Post-launch rotation also succeeds and silently
+strands every entitlement issued under the old prefix.
+
+- Migration scope: cheapest (copy phase 1's pattern for the
+  event_code trigger).
+- pgTAP scope: phase-1-equivalent cases (live → locked,
+  unpublished → unlocked, never-published → unlocked).
+- Documented behavior: "do not rotate `event_code` after the
+  event goes live; doing so will make already-issued codes
+  unreachable through the redeem path."
+- Tradeoff: untested path. If an organizer rotates post-launch,
+  the system permits it with no warning and codes break.
+  Recovery requires either restoring the prior `event_code` or
+  the engineer-mediated SQL workaround that motivated phase 1.
+
+### (P+W) Permissive + organizer UI warning
+
+Same trigger as (P), plus the authoring UI surfaces "rotating
+`event_code` after going live will make N pending entitlement
+codes unreachable; continue?" before issuing the update.
+
+- Migration scope: same as (P) (one trigger function).
+- UI scope: medium (`game_entitlements` count query + a
+  confirmation modal + copy).
+- Tradeoff: same untested-path concern as (P), but with a
+  guardrail at the moment the organizer would do the wrong
+  thing. Click-through risk remains: organizer can blow past
+  the warning. Better than silent.
+
+## Considered and rejected: post-launch rotation as a feature
+
+Earlier sub-option drafts proposed reshaping the redemption
+RPCs and the operator keypad so that rotation never strands
+codes — wrapper accepts full `[A-Z]{3}-[0-9]{4}` code, RPC
+matches stored `verification_code` verbatim, keypad UX captures
+or hints the prefix. Rejected from the active set because:
+
+- No concrete use case requires it. The motivating Madrona
+  evidence is a pre-launch case; sponsor / brand / tier
+  scenarios I initially listed don't actually drive event_code
+  rotation in this product (sponsor lives on questions, brand
+  identity drives slug not event_code).
+- Surface is large: trust-boundary RPC change with pgTAP
+  coverage refresh, Edge Function wrapper input-shape
+  redefinition, operator keypad rework.
+- An RPC fallback variant (try current prefix, fall back to
+  any-prefix-on-this-event-id) is non-deterministic given the
+  random 4-digit suffix generator (see finding (ii)) — same
+  suffix can legitimately exist under two prefixes on one
+  event_id post-rotation.
+
+Recorded here so a future scoping pass that re-encounters this
+question doesn't have to re-derive it. If a real post-launch
+rotation use case surfaces, this section is the starting brief
+for a separate "event_code rotation as a feature" scoping pass.
 
 ## Decision: deferred pending (iii)
 
-Cannot pick among (b1)/(b2a)/(b2b)/(b3) without an answer to
-(iii). Cost ordering, given the findings above:
+Cannot pick between (S), (P), and (P+W) without the
+permissibility call. Cost ordering:
 
-- **(b3)** cheapest if footgun-shape is acceptable AND
-  organizers get a way to clear pre-launch test entitlements.
-- **(b1)** mid-cost; trades safety for organizer UX flexibility.
-- **(b2a)** most expensive but only fully safe option if
-  mid-cycle rotation must work for printed/distributed cards.
-- **(b2b)** small surface but unprincipled; not recommended.
+- **(S)** small migration; pgTAP adds one case; pushes a
+  small piece of work into authoring UI for test-entitlement
+  cleanup.
+- **(P)** cheapest; relies on documentation and operator
+  discipline to avoid the broken path.
+- **(P+W)** same migration as (P) plus a UI confirmation
+  surface; hedges the discipline reliance.
 
 ## Plan handoff (empty until (iii) resolves)
 
