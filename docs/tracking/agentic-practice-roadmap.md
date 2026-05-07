@@ -155,14 +155,18 @@ proves it" + aggressive consolidation of the rules already written.
 
 ## Bets
 
-Each bet names a measurable change, the diagnosis finding it ties to,
-and the target metric. Bets are not contracts — if a bet stops moving
-or measures the wrong thing, log it as a failed bet and either revise
-or drop. Targets are reasoned guesses; missing them is information,
-not failure.
+A **bet** is a measurable conjecture in the form *"doing X will move
+metric M toward target T."* It is not a contract: the target is a
+reasoned guess, missing it is information rather than failure, and a
+bet that stops moving or measures the wrong thing gets logged as
+failed and either revised or dropped. Each entry below leads with
+that one-sentence form, then expands into the metric, the target,
+the current value, and the fallback if the bet doesn't hold.
 
-### Bet 1: plan-doc LOC growth ≤ code+test LOC growth, per epic
+### Bet 1: Plan LOC stays under code LOC
 
+**Bet:** Tighter phase-plan discipline (Bets 3 + 4) will move per-epic
+plan-doc LOC at or below code+test LOC.
 **Ties to:** "Process-to-product ratio is upside-down."
 **Measure:** at each epic close-out, sum lines added under
 `docs/plans/epics/<epic>/` and compare to lines added under
@@ -172,53 +176,62 @@ across the epic's lifetime.
 **Today:** Madrona feedback M1 phases 1.1 + 1.2 + 1.3 added ≥3000
 plan LOC against substantially less code+test. Likely fails for the
 current epic; the bet is "next epic does better."
-**If failing:** start with the cap on phase plan-doc length (see
-Bet 4) and the rule-budget gate (Bet 3); revisit if neither moves
-the ratio.
+**If failing:** start with the phase-plan length cap (Bet 4) and the
+rule-budget gate (Bet 3); revisit if neither moves the ratio.
 
-### Bet 2: rule-deletion vs rule-addition ratio in `docs/agents/`
+### Bet 2: Rules get deleted, not just added
 
+**Bet:** Running explicit consolidation passes on `shared.md` and
+`phase.md` will move the monthly rule-deletion / rule-addition PR
+ratio in `docs/agents/` to ≥ 0.3.
 **Ties to:** "Rule-density compounding" / no PR has deleted a rule.
 **Measure:** per calendar month, count PRs that net-decrease line
 count in `docs/agents/**` against PRs that net-increase. Use
 `gh pr list --search "path:docs/agents"` plus `git log --stat`.
-**Target:** ratio ≥ 0.3 (i.e. at least one rule-deletion PR for every
-~3 rule-addition PRs) within two months.
+**Target:** ratio ≥ 0.3 (≥ 1 deletion PR per ~3 addition PRs) within
+two months.
 **Today:** ratio ≈ 0 in the last 30 days.
-**If failing:** schedule an explicit consolidation pass on
-`shared.md` and `phase.md` with the goal of merging redundant rules
-and removing carve-outs whose original triggers no longer apply.
+**If failing:** consolidation isn't generating real merges; switch to
+hard line caps on `shared.md` / `phase.md` and force consolidation
+when caps are hit.
 
-### Bet 3: rule-budget gate on new rules added to `docs/agents/`
+### Bet 3: New rules name a rule they retire
 
+**Bet:** Requiring rule-adding PRs to cite a deletion or merge in
+their PR body will move ≥ 50% of such PRs to carry one.
 **Ties to:** "every Codex finding becomes a new rule."
-**Measure:** every PR that adds a new rule to `docs/agents/**` should
-either (a) name a rule it deletes or merges into the new one, or (b)
-explicitly call out in the PR body why no rule could be retired. This
-is a self-imposed convention, not an automated gate.
-**Target:** by the next quarterly review, ≥ 50% of rule-adding PRs
-carry a deletion or merge.
+**Measure:** every PR that adds a new rule to `docs/agents/**`
+either (a) names a rule it deletes or merges into the new one, or
+(b) explicitly explains why no rule could be retired. Self-imposed
+convention, not an automated gate.
+**Target:** ≥ 50% of rule-adding PRs carry a deletion or merge by the
+next quarterly review.
 **Today:** ~0%.
-**If failing:** the rule wasn't strong enough — move toward an
+**If failing:** the convention wasn't strong enough — move toward an
 explicit cap (e.g. `shared.md` ≤ 350 lines, `phase.md` ≤ 250 lines)
-and force consolidation when caps are hit.
+and treat additions over the cap as blocking.
 
-### Bet 4: phase-plan-doc length cap
+### Bet 4: Phase plans fit in 400 lines
 
+**Bet:** Drafting phase plan docs against a soft length cap will move
+plan-doc LOC ≤ 400 (and matching scoping doc ≤ 250) without losing
+contract decision-completeness.
 **Ties to:** "the plan layer is eating the implementation."
-**Measure:** for phase plan docs in `docs/plans/epics/*/m*-phase-*-plan.md`,
-LOC at merge time. Soft cap, not enforced by CI.
+**Measure:** for phase plan docs in
+`docs/plans/epics/*/m*-phase-*-plan.md`, LOC at merge time. Soft cap,
+not enforced by CI.
 **Target:** ≤ 400 lines for any phase plan doc; ≤ 250 lines for the
 matching scoping doc when one exists.
-**Today:** recent phase plans have run 563–815 lines, scoping docs
+**Today:** recent phase plans have run 563–815 lines; scoping docs
 449–539.
-**If failing:** the cap is the bet — re-test by drafting the next
-phase against the cap and seeing what survives. The likely outcome is
-that decision prose compresses fine and only contract enumerations
-need the longer form.
+**If failing:** the cap is the bet — re-test on the next phase
+draft. The likely outcome is that decision prose compresses fine and
+only contract enumerations need longer form.
 
-### Bet 5: external human reviewer touchpoint per milestone
+### Bet 5: A human reviews every milestone
 
+**Bet:** Recruiting one informal external reviewer will move
+human-review-touchpoints-per-milestone to ≥ 1.
 **Ties to:** "Single-author + bot review loop has no human pushback."
 **Measure:** at each milestone close-out, was there ≥ 1 PR review
 comment from a human reviewer who is not the author?
@@ -226,20 +239,22 @@ comment from a human reviewer who is not the author?
 a recurring informal reviewer.
 **Today:** 0.
 **If failing:** the loop is structural — no amount of in-repo rule
-tightening fixes the absence of an outside voice. The fallback is a
-deliberate pre-merge "self-review as a hostile outsider" pass, but
-the right move is finding a human.
+tightening substitutes for an outside voice. Fallback is a deliberate
+pre-merge "self-review as a hostile outsider" pass; the right move is
+finding a human.
 
-### Bet 6: memory index size, net of consolidation passes
+### Bet 6: Memory index stops growing
 
+**Bet:** Running periodic `consolidate-memory` passes will move
+month-over-month `MEMORY.md` entry count to ≤ 0 growth for two
+consecutive months.
 **Ties to:** "Memory index growing only via additions."
-**Measure:** count of entries in `MEMORY.md` (not the underlying
-files — the index, which is what loads into context) at the start vs
+**Measure:** count of entries in `MEMORY.md` (the index, which is
+what loads into context — not the underlying files) at the start vs
 end of each month.
 **Target:** after the next consolidation pass, month-over-month
-growth ≤ 0 sustained for two consecutive months. Passes happen
-through the `consolidate-memory` skill.
-**Today:** 29 entries, growing.
+growth ≤ 0 sustained for two consecutive months.
+**Today:** 30 entries, growing.
 **If failing:** consolidation isn't merging; check whether new
 entries are genuinely new patterns or restatements of existing ones,
 and either tighten the existing entry or accept that the failure
