@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(25);
+select plan(24);
 
 select ok(
   exists (
@@ -283,20 +283,9 @@ select lives_ok(
   'event_code can change before first publish'
 );
 
-update public.game_event_drafts
-set last_published_version_number = 1
-where id = 'lock-test-draft';
-
-select throws_ok(
-  $$
-    update public.game_event_drafts
-    set event_code = 'LCE'
-    where id = 'lock-test-draft'
-  $$,
-  'P0001',
-  'event_code_locked',
-  'event_code cannot change after first publish'
-);
+-- Detailed lock-trigger coverage (live / unpublished+entitlements /
+-- unpublished-clean / never-published / never-published+entitlements) lives
+-- in event_code_lock.test.sql.
 
 select * from finish();
 rollback;

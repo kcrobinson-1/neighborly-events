@@ -292,7 +292,7 @@ Deno.test("save-draft rejects slug changes on currently-live events as 422", asy
   });
 });
 
-Deno.test("save-draft rejects event code changes on published events as 422", async () => {
+Deno.test("save-draft rejects event code changes on currently-live events as 422", async () => {
   const handler = createSaveDraftHandler({
     ...defaultSaveDraftHandlerDependencies,
     authenticateEventOrganizerOrAdmin: async () => ({
@@ -305,7 +305,8 @@ Deno.test("save-draft rejects event code changes on published events as 422", as
       data: null,
       error: {
         code: "event_code_locked",
-        message: "Event code cannot be changed after the event has been published.",
+        message:
+          "Event code cannot be changed while the event is currently live.",
       },
     }),
   });
@@ -316,8 +317,40 @@ Deno.test("save-draft rejects event code changes on published events as 422", as
 
   assertEquals(response.status, 422);
   assertEquals(await response.json(), {
-    details: "Event code cannot be changed after the event has been published.",
-    error: "Event code can't change after the event is published.",
+    details: "Event code cannot be changed while the event is currently live.",
+    error: "The event code cannot be changed while the event is currently live.",
+  });
+});
+
+Deno.test("save-draft rejects event code changes when entitlements exist as 422", async () => {
+  const handler = createSaveDraftHandler({
+    ...defaultSaveDraftHandlerDependencies,
+    authenticateEventOrganizerOrAdmin: async () => ({
+      status: "ok",
+      userId: adminUserId,
+    }),
+    authoringHttp: createAuthoringHttpDependencies(),
+    evaluateDemoModeRejection: noopEvaluateDemoModeRejection,
+    saveDraft: async () => ({
+      data: null,
+      error: {
+        code: "event_code_locked_by_entitlements",
+        message:
+          "Event code cannot be changed while entitlements exist for this event. Clear pending entitlements first.",
+      },
+    }),
+  });
+
+  const response = await handler(
+    createAuthoringRequest({ content: sampleDraft, eventCode: "ABC" }),
+  );
+
+  assertEquals(response.status, 422);
+  assertEquals(await response.json(), {
+    details:
+      "Event code cannot be changed while entitlements exist for this event. Clear pending entitlements first.",
+    error:
+      "The event code cannot be changed while entitlements exist for this event. Clear pending entitlements first.",
   });
 });
 

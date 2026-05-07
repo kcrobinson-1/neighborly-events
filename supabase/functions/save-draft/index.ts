@@ -116,17 +116,42 @@ async function saveDraft(
 
   if (
     existing !== null &&
-    existing.last_published_version_number !== null &&
     input.eventCode !== null &&
     input.eventCode !== existing.event_code
   ) {
-    return {
-      data: null,
-      error: {
-        code: "event_code_locked",
-        message: "Event code cannot be changed after the event has been published.",
-      },
-    };
+    const { data: liveEvent } = await supabase
+      .from("game_events")
+      .select("id")
+      .eq("id", input.content.id)
+      .not("published_at", "is", null)
+      .maybeSingle<{ id: string }>();
+
+    if (liveEvent !== null) {
+      return {
+        data: null,
+        error: {
+          code: "event_code_locked",
+          message:
+            "Event code cannot be changed while the event is currently live.",
+        },
+      };
+    }
+
+    const { count: entitlementCount } = await supabase
+      .from("game_entitlements")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", input.content.id);
+
+    if ((entitlementCount ?? 0) > 0) {
+      return {
+        data: null,
+        error: {
+          code: "event_code_locked_by_entitlements",
+          message:
+            "Event code cannot be changed while entitlements exist for this event. Clear pending entitlements first.",
+        },
+      };
+    }
   }
 
   const preservedEventCode = existing?.event_code ?? null;
@@ -252,6 +277,15 @@ function isEventCodeLocked(error: { code?: string; message: string }) {
   return error.code === "event_code_locked" || error.message === "event_code_locked";
 }
 
+function isEventCodeLockedByEntitlements(
+  error: { code?: string; message: string },
+) {
+  return (
+    error.code === "event_code_locked_by_entitlements" ||
+    error.message === "event_code_locked_by_entitlements"
+  );
+}
+
 function isSlugLocked(error: { code?: string; message: string }) {
   // Catches both the application-layer pre-check (code: "slug_locked") and the
   // DB trigger (message: "slug_locked", code: "P0001") so the race between a
@@ -262,7 +296,11 @@ function isSlugLocked(error: { code?: string; message: string }) {
 function getPersistenceStatus(
   error: { code?: string; details?: string; message: string },
 ) {
-  if (isEventCodeLocked(error) || isSlugLocked(error)) {
+  if (
+    isEventCodeLocked(error) ||
+    isEventCodeLockedByEntitlements(error) ||
+    isSlugLocked(error)
+  ) {
     return 422;
   }
 
@@ -285,7 +323,11 @@ function getPersistenceMessage(
   error: { code?: string; details?: string; message: string },
 ) {
   if (isEventCodeLocked(error)) {
-    return "Event code can't change after the event is published.";
+    return "The event code cannot be changed while the event is currently live.";
+  }
+
+  if (isEventCodeLockedByEntitlements(error)) {
+    return "The event code cannot be changed while entitlements exist for this event. Clear pending entitlements first.";
   }
 
   if (isSlugLocked(error)) {
