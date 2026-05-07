@@ -166,12 +166,19 @@ A new `.github/workflows/preview-deploys.yml`:
   classification (event-source independence is cheap).
   Records the PR's head SHA at trigger time and uses it for
   the rest of the run. For each affected project, calls
-  `POST /v13/deployments` with the head SHA in `gitSource.ref`.
-  Polls the deployment's status until it reaches a terminal
-  state (`READY`, `ERROR`, `CANCELED`) or the polling
-  timeout (10 minutes per project). Updates a sticky PR
-  comment keyed by a stable marker, listing per-project
-  status and URL where applicable.
+  `POST /v13/deployments` with the head SHA in `gitSource.ref`,
+  authenticated by `VERCEL_TOKEN` and scoped to
+  `VERCEL_ORG_ID` + `VERCEL_PROJECT_ID_*`. Captures the
+  deployment ID returned by the create call and polls
+  `GET /v13/deployments/{id}` against that exact ID — using
+  the deployment ID (not a branch+SHA filter) means the
+  polling target is unambiguous regardless of how many
+  deployments share the branch and SHA. Polls until the
+  deployment reaches a terminal state (`READY`, `ERROR`,
+  `CANCELED`) or the polling timeout (10 minutes per
+  project). Updates a sticky PR comment keyed by a stable
+  marker, listing per-project status and URL where
+  applicable.
 
   Status-check contract — the gate must distinguish three
   outcomes:
@@ -201,11 +208,70 @@ A new `.github/workflows/preview-deploys.yml`:
   triggers cancel older runs before they post duplicate
   status checks or comments.
 
-**Branch protection**
+**Branch protection — required-checks swap**
 
-`main` branch protection requires the `preview-deploy`
-status check. This is a one-time GitHub repository settings
-change captured in the PR description.
+The repo's current `main` ruleset requires three status
+checks: `Lint, Tests, Build, and Supabase Checks` (CI),
+`Vercel – neighborly-events-site`, and `Vercel –
+neighborly-scavenger-game-web`. The two Vercel checks are
+auto-attached by Vercel's Git integration and will **stop
+appearing on PR branch pushes** the moment
+`git.deploymentEnabled: false` is set for branches —
+without removing them from the ruleset, every PR becomes
+permanently unmergeable on the new head SHA.
+
+The cutover swap, applied in the same PR that flips
+`deploymentEnabled`:
+
+- Remove `Vercel – neighborly-events-site` from required
+  checks.
+- Remove `Vercel – neighborly-scavenger-game-web` from
+  required checks.
+- Add `preview-deploy` as a required check.
+- Keep `Lint, Tests, Build, and Supabase Checks` unchanged.
+
+The Vercel auto-checks on `main` itself (production
+deploys) keep working because `deploymentEnabled.main =
+true` — but the checks are scoped to PR branch pushes for
+required-checks purposes, so removing them from the
+ruleset doesn't affect production deploy verification.
+
+The ruleset edit can be made via the GitHub web UI or
+`gh api PUT /repos/{owner}/{repo}/rulesets/{id}`; capture
+the before/after JSON in the implementing PR's
+description.
+
+**Trigger authorization**
+
+The `/deploy-preview` comment, the `preview` label add, and
+the `ready_for_review` transition all consume Vercel
+deployment quota and run with secrets accessible. Restrict
+who can fire them:
+
+- For `issue_comment` events, gate on
+  `github.event.comment.author_association` being one of
+  `OWNER`, `MEMBER`, or `COLLABORATOR`. Reject all other
+  values (`NONE`, `FIRST_TIMER`, `FIRST_TIME_CONTRIBUTOR`,
+  `CONTRIBUTOR`) with a no-op (no status-check change, no
+  deploy).
+- For `pull_request` events (label / ready-for-review),
+  gate on `github.event.pull_request.author_association`
+  with the same allowlist. The PR author and the actor
+  performing the label/transition can differ; gate on the
+  *actor* (`github.event.sender.login` cross-checked against
+  collaborator status) when the two diverge.
+- The workflow uses `pull_request` (not
+  `pull_request_target`), so PRs from forks have no access
+  to secrets in the first place. If a future change ever
+  switches to `pull_request_target`, the trigger
+  authorization above becomes load-bearing for security
+  rather than just quota — flag the change as
+  security-sensitive in review.
+
+The repo is currently a single-contributor private repo,
+so the practical attack surface is small. The gate ships
+with the workflow regardless so the trust model holds if
+the repo opens up later.
 
 **Path classification**
 
@@ -323,7 +389,15 @@ quota, observed in the Vercel deployments view:
     shows the web URL (since the deployment did succeed)
     and surfaces the site failure. Merge button stays
     grey.
-12. **Merge to main.** Production deploys on both projects
+12. **Untrusted comment trigger.** Have an account whose
+    `author_association` is `NONE` or `CONTRIBUTOR`
+    comment `/deploy-preview` on a PR (simulate via test
+    account or `act`-style local mock). Workflow no-ops:
+    no deploy fires, `preview-deploy` is unchanged, sticky
+    comment is not updated. (On a single-contributor
+    private repo this is a defensive verification — there's
+    no actual untrusted commenter today.)
+13. **Merge to main.** Production deploys on both projects
     via Vercel's existing Git path; the workflow short-
     circuits on `main` and creates no extra deployment
     objects.
@@ -352,16 +426,30 @@ status-checks UI for the merge-button state.
 
 ## Failure modes and migration risks
 
-**Cutover fragility.** During the transition, any window
-where (a) Vercel Git is off for branches but (b) the GHA
-workflow is broken or (c) branch protection requires the
-new check that the workflow can't yet produce means PRs
-get *zero* preview deploys *and* cannot merge. Mitigation:
-land the workflow first with `deploymentEnabled` still
-`true` for branches (workflow runs in shadow), then verify
-the trigger flow on at least 3 PRs, then flip
-`deploymentEnabled: false` and add the branch-protection
-requirement in a follow-up commit.
+**Cutover fragility.** Three things must change in lockstep:
+(a) `git.deploymentEnabled` flips to `false` for branches,
+(b) the ruleset's required checks swap the two Vercel
+auto-checks for `preview-deploy`, and (c) the GHA workflow
+is producing `preview-deploy` correctly for every diff
+shape. Any window where one of these three lags means PRs
+either get zero preview deploys or become permanently
+unmergeable.
+
+Cutover sequence:
+
+1. Land the workflow first with `deploymentEnabled` still
+   `true` for branches and the ruleset unchanged. The
+   workflow runs in *shadow* — it produces a
+   `preview-deploy` status check that nothing requires.
+   Verify the trigger flow on at least 3 PRs of varying
+   shape (docs-only, single-project, both-project) and
+   confirm `preview-deploy` settles correctly.
+2. In a second PR, atomically: flip `deploymentEnabled` to
+   `false` for branches in both `vercel.json` files, and
+   update the ruleset to remove the two Vercel checks and
+   add `preview-deploy`. These edits land together so the
+   "Vercel checks vanish but ruleset still requires them"
+   window doesn't exist.
 
 **Concurrent-build limit on Hobby.** Hobby is limited to one
 concurrent build per project. If a PR triggers both web
@@ -380,9 +468,10 @@ high-value secret in incident response.
 sends the head SHA, not the branch name, so the deployed code
 is unambiguous regardless of subsequent pushes. The workflow
 must record the head SHA at trigger time and use it
-consistently in (a) the deploy API call, (b) the polling
-filter, and (c) the status-check target SHA. Drift between
-these three risks approving the wrong code.
+consistently in (a) the deploy API call's `gitSource.ref`
+and (b) the status-check target SHA. The polling step uses
+the deployment ID returned from (a), not a branch+SHA
+filter, eliminating any ambiguity from the API side.
 
 **Loss of Vercel auto-checks.** Vercel currently attaches a
 "Vercel" status check on PRs. Once `deploymentEnabled: false`
@@ -398,11 +487,17 @@ runs each trigger to completion (modulo concurrency
 cancellation). Acceptable cost — the deploys are still
 intentional and tied to human attention.
 
-**Backlog branch-protection ordering.** If branch protection
-is added before the workflow exists, all PRs immediately
-become unmergeable. Cutover order: workflow first (in
-shadow), verify, then flip Vercel config + add branch
-protection in the same PR.
+**Untrusted comment commands.** The `issue_comment` event
+fires on any PR comment matching `/deploy-preview`,
+including comments from outside collaborators on a
+hypothetical future public state of the repo. The trigger
+authorization gate (see Mechanism → Trigger
+authorization) rejects comments whose
+`author_association` is not in `OWNER`/`MEMBER`/
+`COLLABORATOR`. Without this gate, any commenter could
+consume Vercel quota or, if the workflow ever switches to
+`pull_request_target`, exfiltrate secrets via PR-supplied
+code paths.
 
 ## Cost / value evaluation
 
@@ -431,8 +526,9 @@ substantial headroom.
   our own.
 - Vercel API polling loop with timeout.
 - Vercel config edits and `VERCEL_TOKEN` provisioning.
-- Branch protection rule edit (manual, captured in PR
-  description).
+- Ruleset edit on `main` to swap the two Vercel checks for
+  `preview-deploy` (manual via web UI or `gh api`, captured
+  before/after in the cutover PR description).
 
 **Ongoing cost.** Classifier-table drift when paths change;
 debugging when GHA flakes; occasional contributor
