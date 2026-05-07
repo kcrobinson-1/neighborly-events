@@ -681,8 +681,11 @@ outstanding from the milestone Doc Currency map after 1.3.2.
 - Slug-format validation — the [Tier 1 backlog
   entry](/docs/backlog.md) covers this; the route trusts
   `getEventContentBySlug` to handle slug resolution and the
-  FK to handle slug registration. Disabled-state-on-typo'd-
-  slug behavior is what scoping Decision 3 binds.
+  FK to handle slug registration. A typo'd slug returns
+  `null` from `getEventContentBySlug` and hits `notFound()`
+  per scoping Decision 3 — it does **not** reach the
+  disabled-event branch (that branch is for slugs the
+  platform knows but that haven't opted feedback in).
 
 ## Risk Register
 
