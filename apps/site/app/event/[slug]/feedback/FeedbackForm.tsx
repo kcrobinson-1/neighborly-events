@@ -189,16 +189,19 @@ export function FeedbackForm({
                 <div className="event-feedback-form-rating-buttons">
                   {STAR_VALUES.map((star) => {
                     const selected = value === star;
+                    const numericValue = typeof value === "number" ? value : 0;
+                    const filled = star <= numericValue;
                     return (
                       <button
                         key={star}
                         type="button"
                         className="event-feedback-form-rating-button"
+                        data-filled={filled ? "true" : undefined}
                         aria-pressed={selected}
                         aria-label={`${dim.label}: ${star} of 5`}
                         onClick={() => setRating(dim.key, star)}
                       >
-                        {star}
+                        <span aria-hidden="true">★</span>
                       </button>
                     );
                   })}
@@ -246,6 +249,8 @@ export function FeedbackForm({
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
               disabled={isSubmitting}
+              inputMode="email"
+              autoComplete="email"
               aria-invalid={emailError ? true : undefined}
               aria-describedby={
                 emailError ? "event-feedback-form-email-error" : undefined

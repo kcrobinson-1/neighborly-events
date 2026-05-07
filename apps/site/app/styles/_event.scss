@@ -519,26 +519,51 @@
 .event-feedback-form-rating-buttons {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  align-items: center;
 }
 
 .event-feedback-form-rating-button,
 .event-feedback-form-na-button {
-  min-width: 40px;
-  min-height: 40px;
+  min-width: 48px;
+  min-height: 48px;
   padding: 0 10px;
   background: var(--surface-card);
   border: 1px solid var(--border-soft);
   border-radius: var(--radius-control);
   font-weight: 600;
   cursor: pointer;
+  font-size: 1rem;
 }
 
-.event-feedback-form-rating-button[aria-pressed="true"],
+.event-feedback-form-rating-button {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--muted) 65%, transparent);
+}
+
+.event-feedback-form-rating-button[data-filled="true"] {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface-card));
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border-soft));
+}
+
+.event-feedback-form-rating-button[aria-pressed="true"] {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+
+.event-feedback-form-na-button {
+  margin-left: 12px;
+  border-style: dashed;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .event-feedback-form-na-button[aria-pressed="true"] {
   background: var(--primary);
   color: var(--white-warm);
   border-color: var(--primary);
+  border-style: solid;
 }
 
 .event-feedback-form-rating-button:focus-visible,
@@ -650,5 +675,40 @@
 
   .event-cta {
     padding: 24px;
+  }
+
+  .event-feedback-form-shell,
+  .event-feedback-disabled {
+    padding: 32px 18px 64px;
+  }
+
+  .event-feedback-form-rating-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .event-feedback-form-rating-buttons {
+    justify-content: space-between;
+    gap: 4px;
+  }
+
+  .event-feedback-form-rating-button,
+  .event-feedback-form-na-button {
+    flex: 1 1 0;
+    min-width: 44px;
+    padding: 0 4px;
+  }
+
+  .event-feedback-form-na-button {
+    margin-left: 6px;
+    flex: 0 1 auto;
+    min-width: 56px;
+  }
+
+  .event-feedback-form-submit {
+    justify-self: stretch;
+    width: 100%;
+    text-align: center;
   }
 }
