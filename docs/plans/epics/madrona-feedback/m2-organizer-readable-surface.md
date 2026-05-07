@@ -25,9 +25,21 @@ canonical shape; do not use the Cross-Phase Invariants below as
 binding constraints on intervening milestones. The data-layer
 choices in M1 (FK-enforced registry, RLS read predicate,
 read-path index, consent-record column shape) DO bind, because
-they ship in M1's migration; the M2 content below is downstream
-consumer reasoning that may shift substantially when M2 actually
-plans.
+they shipped in M1's migration
+`supabase/migrations/20260506000000_add_feedback_tables.sql` and
+now live in the regenerated `shared/db/types.ts` row type; the
+M2 content below is downstream consumer reasoning that may shift
+substantially when M2 actually plans.
+(`Verified by:` the FK declaration at
+[supabase/migrations/20260506000000_add_feedback_tables.sql:53](/supabase/migrations/20260506000000_add_feedback_tables.sql);
+the organizer-or-admin SELECT policy on submissions at
+[supabase/migrations/20260506000000_add_feedback_tables.sql:89-98](/supabase/migrations/20260506000000_add_feedback_tables.sql);
+the read-path index at
+[supabase/migrations/20260506000000_add_feedback_tables.sql:69-70](/supabase/migrations/20260506000000_add_feedback_tables.sql);
+the consent columns + named CHECK constraints at
+[supabase/migrations/20260506000000_add_feedback_tables.sql:56-66](/supabase/migrations/20260506000000_add_feedback_tables.sql);
+the regenerated `feedback_submissions` Row type at
+[shared/db/types.ts:87-96](/shared/db/types.ts).)
 
 When M2 becomes next-up, Status flips `Deferred` → `In draft`
 and the `In draft` → `Proposed` promotion gate re-runs from
