@@ -303,6 +303,8 @@ one pgTAP file, save-draft test additions. Comparable to phase
 small piece of work into the authoring surface: organizers
 need a UI path to delete test entitlements on a draft event so
 they can rotate `event_code` after issuing then deciding to
-change it. Tracked as a separate Tier 3 (admin authoring polish)
-backlog entry once phase 2 lands; leaving it implicit while
-phase 2 is in flight.
+change it. Tracked as a Tier 3 (admin authoring polish) backlog
+entry — "Authoring affordance for clearing test entitlements on
+a draft event" — surfaced concurrent with this scoping doc so
+phase 2 implementation and the authoring follow-up are visible
+together.

@@ -172,6 +172,25 @@ Reduce deployment risk and contributor friction before the live event.
 Improve the authoring experience before the organizer uses it to set up a real
 event.
 
+- [ ] **`ux` Authoring affordance for clearing test entitlements on a draft event**
+  Phase 2 of the unpublish-locks fix landed Strict — `event_code`
+  rotation blocks when any entitlements exist for the event,
+  even on an unpublished draft. The intended use case is
+  organizers issuing a few test entitlements during pre-launch
+  authoring (to walk through the redemption flow themselves),
+  then deciding to rotate `event_code` before going live. Today
+  there is no organizer-facing path to delete entitlements on a
+  draft event — it falls back to engineer-mediated SQL, which
+  is the same shape of gap the original Tier 1 unpublish-locks
+  entry was created to close. Add a delete affordance scoped to
+  draft events (no `published_at` on `game_events`) so an
+  organizer can clear test entitlements before rotating. Surface
+  on the admin event workspace alongside the event-details form;
+  copy must distinguish "delete test entitlement"
+  (pre-launch tooling) from any operator-facing redemption
+  affordance.
+  Detail: [`docs/plans/event-code-rotation-safety.md` — Plan handoff (Authoring UI follow-up)](/docs/plans/event-code-rotation-safety.md)
+
 - [ ] **`docs` Rewrite `database-backed-quiz-content.md` and `quiz-authoring-plan.md` to target terminology**
   These two plan docs still use legacy `quiz`/`raffle` language (12 and 27
   occurrences respectively). All other docs were swept in Phases 1 and 5; these
