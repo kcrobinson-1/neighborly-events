@@ -40,7 +40,7 @@ export function EventFeedbackCTA({
       ) : null}
       <Link
         className="event-feedback-cta-button"
-        href={`/event/${slug}/feedback`}
+        href={`/event/${encodeURIComponent(slug)}/feedback`}
       >
         Share feedback
       </Link>

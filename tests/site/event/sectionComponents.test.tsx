@@ -430,6 +430,21 @@ describe("EventFeedbackCTA", () => {
     expect(screen.getByRole("link", { name: "Share feedback" })).toBeTruthy();
     expect(container.querySelector(".event-feedback-cta-body")).toBeNull();
   });
+
+  it("URL-encodes slugs containing reserved characters in the href", () => {
+    // Mirrors the encoding discipline at shared/urls/routes.ts:30-38.
+    // Defensive against future slugs that slip past authoring-layer
+    // validation (no slug-format CHECK exists today; tracked in
+    // docs/backlog.md Tier 1). For canonical kebab-case ASCII slugs,
+    // encodeURIComponent is a no-op.
+    render(
+      <EventFeedbackCTA feedback={feedbackFixture} slug="my event/slug" />,
+    );
+    const link = screen.getByRole("link", { name: "Share feedback" });
+    expect(link.getAttribute("href")).toBe(
+      "/event/my%20event%2Fslug/feedback",
+    );
+  });
 });
 
 describe("EventLandingPage", () => {
