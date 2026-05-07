@@ -94,18 +94,24 @@ async function saveDraft(
     .eq("id", input.content.id)
     .maybeSingle<ExistingDraftRow>();
 
-  if (
-    existing !== null &&
-    existing.last_published_version_number !== null &&
-    existing.slug !== input.content.slug
-  ) {
-    return {
-      data: null,
-      error: {
-        code: "slug_locked",
-        message: "Slug cannot be changed after the event has been published.",
-      },
-    };
+  if (existing !== null && existing.slug !== input.content.slug) {
+    const { data: liveEvent } = await supabase
+      .from("game_events")
+      .select("id")
+      .eq("id", input.content.id)
+      .not("published_at", "is", null)
+      .maybeSingle<{ id: string }>();
+
+    if (liveEvent !== null) {
+      return {
+        data: null,
+        error: {
+          code: "slug_locked",
+          message:
+            "Slug cannot be changed while the event is currently live.",
+        },
+      };
+    }
   }
 
   if (
@@ -283,7 +289,7 @@ function getPersistenceMessage(
   }
 
   if (isSlugLocked(error)) {
-    return "The slug cannot be changed after the event has been published.";
+    return "The slug cannot be changed while the event is currently live.";
   }
 
   if (isEventCodeConflict(error)) {
