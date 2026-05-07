@@ -2,27 +2,36 @@
 name: event-code-and-slug locks survive unpublish — scoping
 description: Class-of-solution scoping for the Tier 1 backlog item where slug + event_code locks remain enforced after unpublish, blocking organizer self-service rotation.
 type: scoping
-status: Draft
+status: Landed 2026-05-07
 ---
 
 # Event-code and slug locks survive unpublish — scoping
 
 ## Status
 
-Draft. **Phase 1 scoping (slug only)** for the Tier 1 backlog
-entry "Event-code and slug locks survive unpublish (organizer UX
-gap)" in [`docs/backlog.md`](/docs/backlog.md). The backlog entry
-is the parent that holds the full picture and names both phases:
-phase 1 (slug, this doc) and phase 2 (event_code, scoping yet to
-begin — the backlog entry lists the open questions phase 2 must
-resolve).
+Landed 2026-05-07. **Phase 1 scoping (slug only)** for the Tier 1
+backlog entry "Event-code and slug locks survive unpublish
+(organizer UX gap)" in [`docs/backlog.md`](/docs/backlog.md). The
+backlog entry is the parent that holds the full picture and names
+both phases: phase 1 (slug, this doc, now landed) and phase 2
+(event_code, scoping yet to begin — the backlog entry lists the
+open questions phase 2 must resolve).
 
-This doc resolves phase 1 only. The slug fix PR is the only
-implementation handoff from this scoping. Phase 2 starts after
-phase 1 lands and writes its own scoping doc; the
+This doc resolved phase 1 only. The slug fix shipped as the single
+implementation handoff from this scoping: the
+`enforce_game_event_draft_slug_lock` trigger function now probes
+`game_events.published_at` directly, the trigger's `WHEN` simplifies
+to "slug is distinct," and the Edge Function pre-check in
+`save-draft/index.ts` mirrors the same semantics. pgTAP coverage
+landed in `supabase/tests/database/slug_lock.test.sql`. Migration
+applied and edge function redeployed in production; deployed-surface
+smoke green.
+
+Phase 2 starts whenever scoped and writes its own scoping doc; the
 [Carryover for phase 2 scoping](#carryover-for-phase-2-scoping)
-section below gives that pass the design analysis already
-produced here so it doesn't have to re-derive.
+section below gives that pass the design analysis already produced
+here so it doesn't have to re-derive. The parent backlog entry
+stays open until phase 2 also lands.
 
 ## Problem
 
