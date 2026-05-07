@@ -26,7 +26,8 @@ ship a new `EventFeedbackCTA` section component, and wire it into
 opts feedback in during this phase — that is 1.3's responsibility,
 along with the route + form. The deliberate intermediate state
 1.2 lands is "the type and the section exist; no event uses
-either; every event renders byte-for-byte unchanged." That state
+either; every event renders the same set of sections it did
+before." That state
 is the falsifier the milestone doc's collapse-rejection paragraph
 preserves: if the omission guard regresses, the test events would
 sprout an empty section heading.
@@ -121,40 +122,26 @@ working precedent (`Verified by:`
 form is plausibly something the donation child epic would also
 want.**
 
-Concrete shape the plan locks (illustrative, not contractual —
-plan-drafting may refine):
-
-```
-feedback?: {
-  cta: {                        // landing-page section copy
-    heading: string;
-    body?: string;
-  };
-  ratingDimensions: Array<{     // form's per-dimension rows
-    key: string;
-    label: string;
-  }>;
-  freeTextPrompt: string;       // form's optional textarea label
-  emailCopy: {                  // form's email-field copy
-    label: string;
-    declineLabel: string;
-    newsletterOptInLabel: string;
-  };
-  thankYouMessage: string;      // post-submit replacement copy
-};
-```
-
-Note the outer field is `feedback` (already locked by the epic and
-milestone). The inner fields don't carry a `feedback` prefix
-**because the outer field already provides that namespace** —
-`event.feedback.cta` is unambiguous. The donation epic would
-introduce its own `donation?` outer field with its own inner
-shape; collision is impossible at the inner-field level when the
-outer field disambiguates. The trap the milestone names ("a
-generic field name the donation epic might also want") applies
-when an inner field is generic enough that splitting it across
-two outer fields invites confusion or duplication — but every
-inner field above is feedback-domain-specific.
+The plan-owned `EventContent.feedback` shape (locked in the
+plan's Contracts section, not duplicated here per
+[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+"Scoping does not restate plan-owned content") carries five
+inner fields: a `cta` object with the landing-page section copy,
+a `ratingDimensions` array for the form's per-dimension rows, a
+`freeTextPrompt` string for the optional textarea label, an
+`emailCopy` object grouping the email field's labels, and a
+`thankYouMessage` string for the post-submit replacement copy.
+The outer field is `feedback` (locked by the epic and milestone).
+Inner fields don't carry a `feedback` prefix **because the outer
+field already provides that namespace** — `event.feedback.cta`
+is unambiguous. The donation epic would introduce its own
+`donation?` outer field with its own inner shape; collision is
+impossible at the inner-field level when the outer field
+disambiguates. The trap the milestone names ("a generic field
+name the donation epic might also want") applies when an inner
+field is generic enough that splitting it across two outer
+fields invites confusion or duplication — but every inner field
+in the plan's locked shape is feedback-domain-specific.
 
 The two names worth flagging for plan-drafting attention:
 
@@ -212,21 +199,12 @@ author CTA copy alongside their other content without a code
 change. That matches the platform-genericity discipline epic
 Invariant 1 binds.
 
-The component itself is shaped after `EventCTA`:
-
-```
-function EventFeedbackCTA({ feedback, slug }) {
-  return (
-    <section className="event-feedback-cta" aria-labelledby="…">
-      <h2 …>{feedback.cta.heading}</h2>
-      {feedback.cta.body ? <p …>{feedback.cta.body}</p> : null}
-      <Link className="event-feedback-cta-button" href={…}>
-        Share feedback
-      </Link>
-    </section>
-  );
-}
-```
+The component itself is shaped after `EventCTA` (a section
+wrapper, a heading reading from `feedback.cta.heading`, an
+optional body paragraph reading from `feedback.cta.body`, and a
+section button labeled `Share feedback` linking to
+`/event/<slug>/feedback`). The plan owns the exact rendered
+markup contract.
 
 (`Verified by:` `EventCTA` shape at
 [apps/site/components/event/EventCTA.tsx](/apps/site/components/event/EventCTA.tsx))
@@ -255,7 +233,7 @@ apps/site.
 [apps/web/vercel.json:23-26](/apps/web/vercel.json) for apps/site
 ownership of `/event/:slug/:path*`)
 
-### Decision 5: Section omission guard — `content.feedback ? <EventFeedbackCTA …/> : null` pattern, byte-for-byte test event invariant
+### Decision 5: Section omission guard — `content.feedback ? <EventFeedbackCTA …/> : null` pattern, same-section-set test event invariant
 
 The existing `EventLandingPage` composition uses two omission
 patterns (`Verified by:`
@@ -277,7 +255,8 @@ shape. The natural guard:
 
 This is structurally identical to the `testEvent` pattern (truthy
 check on an optional/boolean). The milestone-level invariant on
-test events rendering byte-for-byte unchanged
+test events rendering the same section set with no new section
+sprouting
 ([m1-form-and-storage-mvp.md:255-261](/docs/plans/epics/madrona-feedback/m1-form-and-storage-mvp.md))
 is the falsifier: if `harvest-block-party` or `riverside-jam`
 (neither sets `feedback`) emits any DOM change after this PR
@@ -397,7 +376,8 @@ of those, this phase's diff actually moves on:
   reads from `EventContent.feedback`, no madrona-keyed branches.
 - Epic Invariant 2 (no foreclosure of donation epic) — Decision 2
   binds the field-name discipline.
-- Milestone invariant: test events render byte-for-byte unchanged
+- Milestone invariant: test events render the same section set
+  (no new section sprouting)
   — Decision 5's omission guard is the load-bearing mechanism.
 
 Validation Gate: Vitest section-component tests (per Decision 6) +
@@ -406,31 +386,16 @@ render-the-consequence check from Decision 7, recorded as a
 plan-time validation step (not a CI gate, but an
 implementer-must-do step before commit).
 
-Files To Touch (estimate per
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-"Plan content is a mix of rules and estimates"):
-
-- New: `apps/site/components/event/EventFeedbackCTA.tsx`
-- Modify: `apps/site/lib/eventContent.ts` (type extension +
-  header comment paragraph extension)
-- Modify: `apps/site/components/event/EventLandingPage.tsx`
-  (import + section composition)
-- Modify: `tests/site/event/sectionComponents.test.tsx` (new
-  cases per Decision 6)
-- Modify (likely): `apps/site/app/globals.css` (styling per
-  Decision 7; plan-drafting confirms after consequence check)
-- Modify: `docs/plans/epics/madrona-feedback/m1-form-and-storage-mvp.md`
-  Phase Status row 1.2: flip to `Landed` with PR link
-
-Intentionally not touched:
-
-- `apps/site/events/madrona.ts` — content opt-in is 1.3 scope.
-- `apps/site/events/harvest-block-party.ts` and
-  `apps/site/events/riverside-jam.ts` — test events stay as-is
-  to make the byte-for-byte invariant a structural falsifier.
-- `apps/web/vercel.json` — the existing `/event/:slug/:path*`
-  rewrite already covers `/event/<slug>/feedback`; no change.
-- `supabase/migrations/` — DB substrate is 1.1 scope.
+The plan doc owns the file inventory (Files To Touch +
+Intentionally not touched) per
+[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+"Scoping does not restate plan-owned content." The
+substantive call this scoping doc hands off, distinct from the
+mechanical inventory: keep the existing test events
+(`harvest-block-party`, `riverside-jam`) untouched in 1.2 so
+the same-section-set invariant is structurally falsifiable on
+those events — the plan's Intentionally-not-touched section
+binds the rule, this scoping decision records the why.
 
 ## Reality-Check Inputs
 

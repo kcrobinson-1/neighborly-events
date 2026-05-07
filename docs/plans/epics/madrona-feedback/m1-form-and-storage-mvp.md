@@ -54,7 +54,8 @@ After M1:
   opts an event in to the feedback surface. Field-name specificity
   preserves epic Invariant 2 (no foreclosure of donation child epic
   shape). Existing test events `harvest-block-party` and
-  `riverside-jam` continue to render byte-for-byte unchanged.
+  `riverside-jam` continue to render the same section set
+  with no new section sprouting.
   (`Verified by:` the existing additive-optional discipline already
   documented for lineup / sponsor depth fields at
   [apps/site/lib/eventContent.ts:49-71](/apps/site/lib/eventContent.ts);
@@ -202,7 +203,9 @@ phase ships a coherent state of the world:
 - After 1.2: `EventContent.feedback?` is optional and no event
   opts in. `EventFeedbackCTA` is defined and wired into
   `EventLandingPage` but renders for no event because none have
-  set the field. Test events render byte-for-byte unchanged.
+  set the field. Test events render the same section set with
+  no new section sprouting (no `EventFeedbackCTA` heading,
+  copy, or markup reachable).
   No `/event/<slug>/feedback` route exists.
 - After 1.3: the route lives in apps/site; madrona's content
   module opts feedback in (CTA renders on `/event/madrona`,
@@ -250,16 +253,23 @@ when multiple phases interact:
   both tables, FK declared inline) and binds phase 1.3's
   registration approach: opting madrona in is a registry
   insert, not a route-gate.
-- **Test events render byte-for-byte unchanged across the M1
-  PR set.** Every M1 phase preserves the apps/site render of
-  `harvest-block-party` and `riverside-jam`. Phase 1.2's
-  shape extension is `?: T` optional; phase 1.2's
-  `EventLandingPage` change adds an omission-guarded section
-  matching the existing pattern (`Verified by:`
+- **Test events render the same set of sections across the M1
+  PR set — no new section sprouts.** Every M1 phase preserves
+  the section list `harvest-block-party` and `riverside-jam`
+  render today (Header → Schedule → Lineup → Sponsors → FAQ →
+  CTA → Footer): no new section heading appears, no existing
+  section disappears, and no `EventFeedbackCTA` markup or copy
+  is reachable on either event's rendered output. Markup-level
+  drift inside an existing section's body is not bound by this
+  invariant — that is implementation-PR concern, not
+  cross-phase contract. Phase 1.2's shape extension is `?: T`
+  optional; phase 1.2's `EventLandingPage` change adds an
+  omission-guarded section matching the existing pattern
+  (`Verified by:`
   [apps/site/components/event/EventLandingPage.tsx:30-39](/apps/site/components/event/EventLandingPage.tsx));
   phase 1.3 ships no apps/site shape change beyond madrona's
   own opt-in. Phase 1.2's and 1.3's validation gates re-confirm
-  the test-event rendering invariant.
+  the same-section-set invariant.
 - **Newsletter opt-in is opt-in, not opt-out, and the consent
   context is stored alongside the submission.** Default
   unchecked checkbox; the column is `false` unless the
@@ -497,8 +507,8 @@ Register; the parent epic's Risk Register also binds.
 - **Test events regress when EventLandingPage gains the new
   section.** The omission guard for `EventFeedbackCTA` must
   match the existing pattern; otherwise an empty section
-  heading or a stray render artifact breaks the byte-for-byte
-  invariant. Mitigation: phase 1.2's validation gate captures
+  heading or a stray render artifact breaks the
+  same-section-set invariant. Mitigation: phase 1.2's validation gate captures
   the test-event landing pages before and after, and the
   guard shape mirrors the existing
   [`length > 0`](/apps/site/components/event/EventLandingPage.tsx)

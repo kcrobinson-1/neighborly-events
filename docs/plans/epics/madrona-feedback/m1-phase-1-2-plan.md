@@ -31,8 +31,9 @@ Phase 1.2 is doing this *now* because (a) it is independent of
 in parallel with 1.1's review and merge, and (b) the milestone
 doc's collapse-rejection paragraph commits to 1.2 landing as a
 distinct PR with the explicit intermediate state "type and section
-exist; no event uses either; every event renders byte-for-byte
-unchanged" — that intermediate state is the falsifier the
+exist; no event uses either; every event renders the same set of
+sections it did before" — that intermediate state is the falsifier
+the
 landing-page omission guard regression would erase.
 
 The surfaces this touches at the conceptual level: the
@@ -65,10 +66,11 @@ After this PR:
 - `EventLandingPage` composes the new section between `EventCTA`
   and `EventFooter` under a `content.feedback ?` omission guard
   matching the existing `content.testEvent ?` pattern, so test
-  events without `feedback` set render byte-for-byte unchanged;
+  events without `feedback` set render the same section set
+  with no `EventFeedbackCTA` heading, copy, or markup reachable;
 - `tests/site/event/sectionComponents.test.tsx` extends with the
   cases this plan's Validation Gate names (presence-renders /
-  absence-omits / href-shape / byte-for-byte-test-event);
+  absence-omits / href-shape / no-CTA-on-test-events);
 - `apps/site/app/styles/_event.scss` gains the minimal styling
   the dev-server consequence check this plan binds determines
   is necessary — written down post-check, not pre-judged;
@@ -90,7 +92,8 @@ This phase does **not** opt feedback in on
 `/event/<slug>/feedback` route or the form component (1.3 scope),
 does **not** touch the existing test events
 (`harvest-block-party`, `riverside-jam`) — they stay as-is so the
-byte-for-byte invariant is structural, and does **not** ship any
+same-section-set invariant is structurally falsifiable on those
+events, and does **not** ship any
 Supabase, vercel.json, or apps/web change.
 
 ## Cross-Cutting Invariants
@@ -117,12 +120,16 @@ on:
   `donation?` outer field might want. Self-review walks every
   new field name and asserts it's either feedback-domain-
   specific or namespaced-by-the-outer-field.
-- **Milestone invariant: test events render byte-for-byte
-  unchanged.** Neither `harvest-block-party` nor `riverside-jam`
-  sets `feedback`; the omission guard
-  (`content.feedback ? <…/> : null`) keeps their rendered output
-  identical. The validation gate's byte-for-byte assertion is
-  the load-bearing falsifier.
+- **Milestone invariant: test events render the same set of
+  sections — no new section sprouts.** Neither
+  `harvest-block-party` nor `riverside-jam` sets `feedback`;
+  the omission guard (`content.feedback ? <…/> : null`) keeps
+  the rendered section set unchanged on those events (no
+  `EventFeedbackCTA` heading, copy, or `event-feedback-cta`
+  markup reachable). The validation gate's no-CTA-on-test-events
+  assertion is the load-bearing falsifier; markup-level drift
+  inside an existing section's body is not bound by this
+  invariant.
 
 The other epic / milestone invariants (DB-level integrity,
 consent-record column shape, decline-as-first-class-path) are
@@ -165,6 +172,13 @@ not exercised by this phase's diff — those are 1.1's surface
 ## Contracts
 
 ### `EventContent.feedback` shape
+
+Illustrative shape — the contract structure for plan-time
+clarity, not exact syntax the implementer transcribes. Per
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+"Plan code minimalism" data-structure carve-out, the block below
+is an inert type literal communicating field structure; the
+prose around it is the load-bearing contract:
 
 ```
 feedback?: {
@@ -211,35 +225,28 @@ Inner-field nullability:
 
 ### `EventFeedbackCTA` component contract
 
-```
-function EventFeedbackCTA({
-  feedback,
-  slug,
-}: {
-  feedback: NonNullable<EventContent["feedback"]>;
-  slug: string;
-}): JSX.Element;
-```
+The component accepts a non-null `feedback` object (typed as
+`NonNullable<EventContent["feedback"]>`) and the event `slug`
+string, and returns the rendered section element. The omission
+guard lives in `EventLandingPage`, not inside the component —
+the component itself asserts its `feedback` prop is non-empty
+when called, matching the section-component discipline at
+[apps/site/components/event/EventLandingPage.tsx:11-18](/apps/site/components/event/EventLandingPage.tsx).
 
 Component renders:
 
-- a `<section className="event-feedback-cta"
-  aria-labelledby="event-feedback-cta-heading">` wrapper;
-- an `<h2 id="event-feedback-cta-heading"
-  className="event-section-heading">` carrying
-  `feedback.cta.heading`;
-- an optional `<p>` carrying `feedback.cta.body` when present;
-- a Next.js `<Link className="event-feedback-cta-button"
-  href={\`/event/\${slug}/feedback\`}>Share feedback</Link>`.
+- a `<section>` wrapper with class `event-feedback-cta` and an
+  `aria-labelledby` pointing at the heading id below;
+- an `<h2>` carrying `feedback.cta.heading`, with the same
+  `event-section-heading` class the other section headings use
+  and an `id` of `event-feedback-cta-heading`;
+- an optional `<p>` carrying `feedback.cta.body` when that
+  field is present (omitted when absent);
+- a Next.js `<Link>` styled as the section button (class
+  `event-feedback-cta-button`), labeled `Share feedback`,
+  pointing at `/event/<slug>/feedback`.
 
-The component asserts its `feedback` prop is non-null (matching
-the section-component contract at
-[apps/site/components/event/EventLandingPage.tsx:11-18](/apps/site/components/event/EventLandingPage.tsx)
-that section components assume their prop is non-empty when
-rendered). The omission guard lives in `EventLandingPage`, not
-inside the component.
-
-The href is built inline (`\`/event/\${slug}/feedback\``), not via
+The href is built inline as the route string, not via
 the `routes` helper at
 [shared/urls/index.ts](/shared/urls/index.ts), because that
 helper is the apps/web cross-app navigation surface (per the
@@ -251,22 +258,18 @@ inline string is more honest about which app owns the path.
 
 ### `EventLandingPage` composition change
 
-Before, after `EventCTA` and before `EventFooter`:
+The composition gains one new section, omission-guarded on the
+truthiness of `content.feedback`, inserted between the existing
+`EventCTA` render and the existing `EventFooter` render. When
+`content.feedback` is present, the new `EventFeedbackCTA`
+section renders with `feedback` and `slug` passed as props;
+when absent, no markup is emitted for it.
 
-```
-<EventCTA cta={content.cta} slug={slug} />
-{content.feedback ? (
-  <EventFeedbackCTA feedback={content.feedback} slug={slug} />
-) : null}
-<EventFooter footer={content.footer} />
-```
-
-The omission guard (`content.feedback ? <…/> : null`) follows
-the existing `testEvent` pattern at
-[apps/site/components/event/EventLandingPage.tsx:28](/apps/site/components/event/EventLandingPage.tsx)
-(truthiness check on an optional field), not the
-`length > 0` array-guard pattern (which doesn't apply to an
-optional object).
+The omission guard pattern matches the existing `testEvent`
+truthiness-on-optional-field guard at
+[apps/site/components/event/EventLandingPage.tsx:28](/apps/site/components/event/EventLandingPage.tsx),
+not the `length > 0` array-guard the other sections use (which
+doesn't apply to an optional object).
 
 ## Files To Touch
 
@@ -314,7 +317,7 @@ Estimate Deviation.
 - `apps/site/events/madrona.ts` — feedback opt-in is 1.3 scope.
 - `apps/site/events/harvest-block-party.ts` and
   `apps/site/events/riverside-jam.ts` — test events stay as-is
-  to keep the byte-for-byte invariant a structural falsifier
+  to keep the same-section-set invariant a structural falsifier
   (if either started setting `feedback`, the omission guard
   would no longer be falsifiable on those events).
 - `apps/web/vercel.json` — the existing `/event/:slug/:path*`
@@ -390,7 +393,7 @@ Two commits:
    — the `EventContent` type extension, the new component file,
    the `EventLandingPage` composition change, the SCSS rule set,
    and the test file extensions in one commit. Body explains the
-   omission-guard shape, the byte-for-byte invariant, and the
+   omission-guard shape, the same-section-set invariant, and the
    in-app `<Link>` choice.
 2. **`docs(plans): flip M1 phase 1.2 status to Landed`** — the
    milestone-doc Phase Status row update. Separate commit
@@ -430,12 +433,15 @@ extends with these cases:
 3. **Body is optional.** A `feedback` shape with no `cta.body`
    renders the heading and the link but no `<p>` element with
    the body class. Falsifies a "body is required" regression.
-4. **Test-event byte-for-byte: harvest-block-party and
-   riverside-jam.** Render `EventLandingPage` with each of the
-   two real test event content modules. Confirm no
+4. **Test events render no feedback CTA: harvest-block-party
+   and riverside-jam.** Render `EventLandingPage` with each of
+   the two real test event content modules. Confirm no
    `event-feedback-cta` class and no "Share feedback" text
-   appears. Falsifies the milestone-level invariant the
-   collapse-rejection paragraph preserves.
+   appears. Falsifies the milestone-level same-section-set
+   invariant the collapse-rejection paragraph preserves.
+   Markup-level drift inside an existing section's body is not
+   bound by this assertion — only the *presence* of the new
+   feedback section on test events would falsify it.
 5. **Href shape.** Render the CTA in isolation with
    `slug="any-slug"` and confirm the link's `href` is
    `/event/any-slug/feedback`. Falsifies the in-app navigation
@@ -566,8 +572,8 @@ milestone doc's Documentation Currency map):
   Accepted; the rule is "look at the page before declaring
   done." Recorded as an Estimate Deviation if the SCSS diff
   exceeds ~30 lines.
-- **Test events accidentally regress byte-for-byte unchanged
-  invariant.** The existing fixtures don't set `feedback`, so
+- **Test events accidentally regress the same-section-set
+  invariant (a feedback CTA appears).** The existing fixtures don't set `feedback`, so
   the omission guard is structurally exercised. Mitigation: the
   Validation Gate's case 4 asserts no `event-feedback-cta`
   class appears under either real test event's content.
