@@ -31,6 +31,35 @@ entries" or "consolidate planning/shared.md to ≤ 300 lines"), prefer
 landing it as an ordinary docs PR rather than promoting it into a
 plan-tree.
 
+## Terminology
+
+Terms that are load-bearing in this doc, defined once so the
+Diagnosis and Bets sections can use them without re-explaining.
+
+**Bet.** A measurable conjecture in the form *"doing X will move
+metric M toward target T."* Distinct from a rule (binds behavior),
+a goal (expected to succeed), and a plan (contracts an
+implementation). Three properties make something a bet rather than
+one of those:
+
+- the target is a reasoned guess, not a contract — missing it is
+  information about whether the conjecture was right, not a
+  failure to comply;
+- it carries a counting procedure (the **Measure** field) so it
+  is falsifiable;
+- it has an **If failing** branch — when the metric stops moving,
+  revise or drop the bet rather than tightening enforcement to
+  force the metric.
+
+**LOC.** Raw line count from `wc -l` (or equivalent), counting every
+line in the file including blanks, frontmatter, comments, and
+markdown structure. Not "significant lines of code" or any
+formatter-aware measure. The choice is deliberate: this doc tracks
+*reading cost* and *review surface*, both of which scale with raw
+lines, not with semantic content. Using a sophisticated measure
+would let a bet's target be moved by reformatting rather than by
+the underlying behavior change the bet is trying to drive.
+
 ## Diagnosis (2026-05-07)
 
 External review of the repo at this date by an agent reviewing only the
@@ -155,13 +184,10 @@ proves it" + aggressive consolidation of the rules already written.
 
 ## Bets
 
-A **bet** is a measurable conjecture in the form *"doing X will move
-metric M toward target T."* It is not a contract: the target is a
-reasoned guess, missing it is information rather than failure, and a
-bet that stops moving or measures the wrong thing gets logged as
-failed and either revised or dropped. Each entry below leads with
-that one-sentence form, then expands into the metric, the target,
-the current value, and the fallback if the bet doesn't hold.
+See [Terminology](#terminology) for the definition of *bet*. Each
+entry below leads with the one-sentence "doing X will move M toward
+T" form, then expands into the metric, the target, the current
+value, and the fallback if the bet doesn't hold.
 
 ### Bet 1: Plan LOC stays under code LOC
 
@@ -259,6 +285,132 @@ growth ≤ 0 sustained for two consecutive months.
 entries are genuinely new patterns or restatements of existing ones,
 and either tighten the existing entry or accept that the failure
 mode is "memory writes are the cheap action."
+
+## Action Layer
+
+Bets above are *measurements*. Without something that actually
+changes contributor or agent behavior, no measurement moves. This
+section tracks **candidate instruction-surface edits and behavior
+changes** that, if landed, would plausibly move one or more bets.
+
+Treat this as a backlog, not a plan. Entries are not ordered, not
+committed to, and not a checklist to work through. Pick one when
+it fits naturally; some will sit here indefinitely; some will
+turn out to be wrong and get marked dropped. The roadmap is
+deliberately not specifying sequence — that's how the contributor
+preserves discretion at planning moments.
+
+Entry shape:
+- **Edit** — what concrete change, in which file
+- **Activates** — which bet(s) this would move
+- **Status** — `candidate` / `in progress` / `landed (date)` /
+  `dropped (date, reason)`
+- **Notes** — rationale, blockers, prior art (1–3 lines)
+
+When an entry lands, leave it here with `landed (date)` and a
+one-line outcome — the roadmap is the durable record of what was
+tried, not just what's pending. Items that turn out to be wrong
+stay as `dropped` with the reason; deletion loses the prior-art
+signal.
+
+### A1: Insert the rule-retirement convention into AGENTS.md
+
+**Edit:** add one sentence to `AGENTS.md` (or
+`docs/agents/planning/shared.md`) requiring that any PR adding a
+rule to `docs/agents/**` either name a rule it deletes or merges
+into the new one, or explicitly state in the PR body why no rule
+could be retired.
+**Activates:** Bet 3 (directly), Bet 2 (over time).
+**Status:** candidate.
+**Notes:** smallest possible diff (one sentence in one file) with
+the largest footprint — loads on every planning session. Without
+this, Bet 3 is a roadmap-only convention that no agent sees at the
+moment of rule-addition.
+
+### A2: Lightweight phase-planning path
+
+**Edit:** add a "skip the scoping doc" branch to
+`docs/agents/planning/phase.md` for narrow-surface phases (one
+route or one TypeScript field or one migration with no behavior
+fork). Make it the default for that class; require explicit
+opt-in for the full scoping-doc + plan-doc path.
+**Activates:** Bet 4 (directly), Bet 1 (over time).
+**Status:** candidate.
+**Notes:** `phase.md` currently assumes every phase needs both
+docs. The Madrona feedback M1 phases (1.1, 1.2, 1.3) would all
+have qualified for the lightweight path under a reasonable
+threshold; the contributor wrote 449–815 line scoping+plan docs
+for each instead.
+
+### A3: Sharpen the lightweight-vs-full threshold in implementation.md
+
+**Edit:** rewrite the "Lightweight vs full structured" section of
+`docs/agents/workflows/implementation.md` with a concrete
+threshold (file count, surface count, schema-touch yes/no) and put
+the lightweight path first.
+**Activates:** Bet 1, Bet 4 (over time).
+**Notes:** current threshold reads as fuzzy and tilted toward
+full structured. Status: candidate.
+
+### A4: Consolidation pass on shared.md
+
+**Edit:** one PR that net-decreases line count in
+`docs/agents/planning/shared.md` by merging redundant rules and
+removing carve-outs whose original triggers have stopped firing
+(e.g. carve-outs added for a single Codex finding that hasn't
+recurred).
+**Activates:** Bet 2 (directly — produces the first numerator
+entry), Bet 1 (over time, by reducing the rules that justify
+long plans).
+**Status:** candidate.
+**Notes:** worth running after one or two consecutive months of
+no carve-out triggers fire. Until then, deleting a carve-out
+risks reintroducing the failure mode it was added to prevent.
+
+### A5: Narrow the AGENTS.md mandatory pre-edit reads
+
+**Edit:** narrow the trigger surface in
+`AGENTS.md` "Mandatory pre-edit reads" so docs-only edits to
+`docs/tracking/`, `docs/backlog.md`, and similar lightweight
+surfaces don't fire `architecture-guardrails.md`.
+**Activates:** indirectly enables faster docs-only sessions, no
+direct bet move.
+**Status:** candidate.
+**Notes:** lower priority than A1–A4 because the failure it
+addresses (unnecessary reads on lightweight docs PRs) is friction
+on the contributor's time, not on bet metrics. Worth doing if
+A2/A3 land first — at that point the lightweight path is real and
+this edit makes it actually lightweight.
+
+### A6: Codex-feedback escalation ladder
+
+**Edit:** add a section to
+`docs/agents/workflows/review-fixes.md` naming an explicit ladder
+for Codex findings — *fix only* → *self-review audit entry* →
+*plan-doc rule* → *AGENTS.md rule* — with rising bar at each
+step (e.g. ≥ 2 distinct PR occurrences before promoting from
+"fix only" to "audit entry"; ≥ 1 occurrence after the audit
+entry exists before promoting to a plan-doc rule).
+**Activates:** Bet 2, Bet 3, Bet 6 (the same pattern produces
+memory bloat too).
+**Status:** candidate.
+**Notes:** the self-review catalog already requires ≥ 2 PR
+occurrences before adding an audit; this edit extends the same
+discipline to the layers above (rules) and below (raw fixes).
+
+### A7: First-draft plan against Bet 4 caps
+
+**Edit:** none to instructions — a behavior commitment. Draft the
+next phase plan (whatever phase comes after the Madrona feedback
+M1 work in flight) against the soft cap of ≤ 400 lines for the
+plan and ≤ 250 for the scoping doc, and log what survived,
+what got cut, and what (if anything) genuinely needed the longer
+form.
+**Activates:** Bet 4 (directly), Bet 1 (over time).
+**Status:** candidate.
+**Notes:** this is the empirical version of A2/A3 — proves the
+cap is reachable before the instructions are edited to require
+it. Outcome lands as a Log entry below.
 
 ## Log
 
