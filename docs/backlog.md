@@ -37,56 +37,6 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-- [ ] **`dev` Event-code and slug locks survive unpublish (organizer UX gap)**
-  The `game_event_draft_event_code_lock` and `game_event_draft_slug_lock`
-  triggers gate on `old.last_published_version_number is not null`
-  (`supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql:11-29`,
-  originally `supabase/migrations/20260418050000_lock_event_code_after_publish.sql:15-22`
-  and `supabase/migrations/20260415000000_add_quiz_event_draft_slug_lock_trigger.sql`).
-  The column was renamed from `live_version_number` to
-  `last_published_version_number` on 2026-04-23 because
-  `unpublish_game_event`
-  (`supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql:232-291`)
-  only sets `game_events.published_at = null` and writes an audit row;
-  it never clears `game_event_drafts.last_published_version_number`.
-  Net effect: once an event has been published once, even after
-  unpublish, even with zero entitlements ever issued, the event_code
-  and slug are immutable forever. That contradicts the organizer
-  expectation "edit code/slug until the game goes live." Live evidence
-  during Madrona M2 phase 2.1 close-out (2026-05-06,
-  `docs/plans/epics/madrona-demo-build/m2-phase-2-1-plan.md`): a
-  `MAD → MIP` event-code rotation on a beta event with one stale
-  unredeemed entitlement was blocked by the trigger and resolved only
-  via a service-role `update ... set last_published_version_number =
-  null` followed by re-seed. The fact that the workaround is manual
-  SQL is the gap — organizers won't run service-role queries.
-
-  **Phased fix.** Slug and event_code have different entitlement
-  coupling and ship in separate phases. This entry is the parent;
-  it stays open until both phases land.
-
-  - **Phase 1: slug — shipped 2026-05-07.** Slug has no
-    entitlement coupling, so the lock relaxed cleanly: trigger
-    and Edge Function pre-check read `game_events.published_at`
-    directly. Scoping in
-    [`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md).
-  - **Phase 2: event_code — implementation pending.** Cannot
-    relax the lock the same way as slug because the redeem and
-    reverse RPCs construct the lookup key as
-    `<current_event_code>-<suffix>`
-    (`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:47-62`,
-    `supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql:44-59`),
-    so post-rotation `MAD-0001` returns `not_found` and
-    unredeemed entitlements are stranded. Scoped in
-    [`docs/plans/event-code-rotation-safety.md`](/docs/plans/event-code-rotation-safety.md);
-    decision is **Strict** — block post-launch rotation when
-    entitlements exist. Implementation handoff at the bottom of
-    the scoping doc.
-
-  Tier 1 because both halves bite organizers at the moment they
-  want a final pre-launch correction (typo, brand swap, sponsor
-  rename) and the only workaround today is engineer-mediated SQL.
-
 - [ ] **`dev` Event slug routing is case-sensitive (silent 404 on capitalized URLs)**
   `/event/Madrona/game` (capital M) returns HTTP 200 but the SPA renders
   the not-found / empty state because the slug pulled from `useParams` is
