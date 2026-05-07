@@ -9,10 +9,20 @@ status: Draft
 
 ## Status
 
-Draft. This scoping doc resolves the Tier 1 backlog entry "Event-code
-and slug locks survive unpublish (organizer UX gap)" in
-[`docs/backlog.md`](/docs/backlog.md). Once decisions land here, the
-follow-up plan ships as a standard fix PR; no epic structure.
+Draft. **Phase 1 scoping (slug only)** for the Tier 1 backlog
+entry "Event-code and slug locks survive unpublish (organizer UX
+gap)" in [`docs/backlog.md`](/docs/backlog.md). The backlog entry
+is the parent that holds the full picture and names both phases:
+phase 1 (slug, this doc) and phase 2 (event_code, scoping yet to
+begin — the backlog entry lists the open questions phase 2 must
+resolve).
+
+This doc resolves phase 1 only. The slug fix PR is the only
+implementation handoff from this scoping. Phase 2 starts after
+phase 1 lands and writes its own scoping doc; the
+[Carryover for phase 2 scoping](#carryover-for-phase-2-scoping)
+section below gives that pass the design analysis already
+produced here so it doesn't have to re-derive.
 
 ## Problem
 
@@ -154,40 +164,21 @@ surface. For event_code, a "zero entitlements" guard re-emerges as
 sub-option (b3) below, framed as a guard on the relaxed trigger
 rather than a separate RPC.
 
-## Decision: (b) for slug; event_code requires resolving redeem-RPC coupling
+## Decision: (b) for slug
 
-Slug ships under option (b) as scoped: trigger reads
-`game_events.published_at`. Bounded migration scope; no entitlement
-side-effect; restores the organizer UX without a new RPC.
+Slug ships under option (b): trigger reads
+`game_events.published_at` directly via a cross-table check in the
+function body, with the WHEN clause simplifying to "slug is
+distinct." Bounded migration scope; no entitlement side-effect; no
+new RPC; restores the organizer UX. Application-layer mirror in
+[save-draft/index.ts:97-124](/supabase/functions/save-draft/index.ts)
+shifts the slug pre-check the same way.
 
-Event_code does **not** ship under (b) alone, because (b) on its
-own silently strands every unredeemed entitlement on the event the
-moment an organizer rotates the code. The choice for event_code is
-a sub-decision that needs organizer-input on whether mid-cycle
-rotation is a feature or an organizer-error to prevent:
-
-- **(b1) Relax trigger; accept stranding; surface a confirmation
-  in the organizer UI naming the count of pending entitlements
-  about to become unreachable.** Lowest migration scope. Trades
-  database safety for UX warning. Risk: organizer click-throughs
-  the warning and strands real attendees.
-- **(b2) Relax trigger AND change the redeem and reverse RPCs to
-  look up by stored `verification_code` directly,** dropping the
-  current-event_code reconstruction. Restores prefix-independence;
-  every previously issued code keeps redeeming. Touches the
-  trust-boundary RPCs and their pgTAP coverage; widest migration
-  scope. Cleanest invariant.
-- **(b3) Relax trigger only when the event has zero
-  entitlements.** Strict guard expressed in the trigger function.
-  Covers the Madrona pre-launch use case (rotate brand label
-  before any real attendee enrolls); blocks any rotation once
-  test or real entitlements exist. Smallest blast radius; doesn't
-  generalize to mid-cycle rotation if that ever becomes a need.
-
-This scoping does not pick among (b1)/(b2)/(b3). That belongs in a
-follow-up scoping pass once we know whether mid-cycle event_code
-rotation is a real organizer need or a footgun to prevent. The
-slug fix does not depend on the event_code resolution.
+Event_code is **not** scoped here. The
+[Carryover for phase 2 scoping](#carryover-for-phase-2-scoping)
+section below records what this scoping pass discovered about the
+event_code design space so phase 2 starts from analysis rather
+than re-derivation.
 
 ## Open questions for the slug fix
 
@@ -214,16 +205,13 @@ slug fix does not depend on the event_code resolution.
 
 ## Plan handoff
 
-**This scoping resolves slug only.** Event_code is deferred to a
-follow-up scoping pass that picks among (b1)/(b2)/(b3) above.
-
 The slug fix PR should:
 
 - Add a migration that recreates `enforce_game_event_draft_slug_lock`
   with the cross-table read on `game_events.published_at` and
   updates the trigger's `WHEN` to drop the
   `last_published_version_number` predicate. Leave the event_code
-  trigger untouched pending the follow-up scoping.
+  trigger untouched pending phase 2.
 - Update the slug pre-check in
   [save-draft/index.ts:97-124](/supabase/functions/save-draft/index.ts)
   to query `game_events.published_at`. Leave the event_code
@@ -232,14 +220,41 @@ The slug fix PR should:
   unpublished → unlocked, never-published → unlocked.
 - No frontend changes; the existing organizer UX surfaces the
   trigger's structured error already.
-- Backlog entry stays in place; revise the entry text to reflect
-  that slug is fixed and event_code is pending the follow-up
-  scoping.
+- Backlog entry stays open as the parent across both phases. The
+  phase 1 PR does **not** delete the entry; it stays open until
+  phase 2 also lands.
 
 Estimated size: one migration + one Edge Function patch + three
 pgTAP cases. One PR.
 
-**Event_code follow-up scoping** lives as a separate doc once
-organizer input clarifies whether mid-cycle event_code rotation is
-a feature (drives toward b2) or an organizer-error to prevent
-(drives toward b3).
+## Carryover for phase 2 scoping
+
+Phase 2 (event_code) needs its own scoping pass. The backlog entry
+names the open questions phase 2 must resolve ((i)/(ii)/(iii) in
+the parent entry). This scoping pass also produced a candidate
+sub-option set that phase 2 can start from rather than re-derive:
+
+- **(b1) Relax trigger; accept stranding; surface a confirmation
+  in the organizer UI naming the count of pending entitlements
+  about to become unreachable.** Lowest migration scope. Trades
+  database safety for UX warning. Risk: organizer click-throughs
+  the warning and strands real attendees.
+- **(b2) Relax trigger AND change the redeem and reverse RPCs to
+  look up by stored `verification_code` directly,** dropping the
+  current-event_code reconstruction. Restores prefix-independence;
+  every previously issued code keeps redeeming. Touches the
+  trust-boundary RPCs and their pgTAP coverage; widest migration
+  scope. Cleanest invariant. Phase 2 must address the security
+  rationale the redeem RPC migration cites for the current
+  construction (open question (i) in the backlog entry).
+- **(b3) Relax trigger only when the event has zero
+  entitlements.** Strict guard expressed in the trigger function.
+  Covers the Madrona pre-launch use case (rotate brand label
+  before any real attendee enrolls); blocks any rotation once
+  test or real entitlements exist. Smallest blast radius;
+  doesn't generalize to mid-cycle rotation.
+
+Picking among (b1)/(b2)/(b3) is phase 2 scoping work, not
+something to anchor on prematurely. The mid-cycle rotation
+feature/footgun call (open question (iii) in the backlog entry)
+is what most directly drives the choice.

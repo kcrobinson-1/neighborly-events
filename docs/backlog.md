@@ -60,18 +60,40 @@ Must be resolved before QR codes are printed or the first real event runs.
   via a service-role `update ... set last_published_version_number =
   null` followed by re-seed. The fact that the workaround is manual
   SQL is the gap — organizers won't run service-role queries.
-  Class-of-solution is open: (a) make `unpublish_game_event` clear
-  `last_published_version_number` so the locks read as "while
-  currently live" by construction; (b) tighten the trigger condition
-  to query `game_events.published_at is not null` directly, paying a
-  cross-table lookup per update for durability if other paths to
-  clearing the draft column appear; (c) add a one-shot admin-only
-  escape-hatch RPC scoped to "no entitlements redeemed yet." All
-  three restore the same organizer UX; the trade is migration scope
-  vs. trigger complexity vs. surface count. Tier 1 because this
-  bites organizers at the moment they want a final pre-launch
-  correction (typo, brand swap, sponsor rename) and the only
-  workaround today is engineer-mediated SQL.
+
+  **Phased fix.** Slug and event_code have different entitlement
+  coupling and ship in separate phases. This entry is the parent;
+  it stays open until both phases land.
+
+  - **Phase 1: slug.** Slug appears nowhere in `game_entitlements`
+    and is not a key into the redeem RPCs, so the lock can be
+    relaxed cleanly: trigger and Edge Function pre-check read
+    `game_events.published_at` directly. Scoping in
+    [`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md);
+    one-PR implementation handoff.
+  - **Phase 2: event_code.** Cannot relax the lock alone because
+    the redeem and reverse RPCs construct the lookup key as
+    `<current_event_code>-<suffix>`
+    (`supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql:47-62`,
+    `supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql:44-59`),
+    so post-rotation `MAD-0001` returns `not_found` and unredeemed
+    entitlements are stranded. Phase 2 needs its own scoping pass
+    that resolves: **(i)** the security rationale behind the
+    current key construction (the redeem RPC migration header
+    cites it as "the only guard against wildcard characters in
+    `p_code_suffix`"), **(ii)** the printed-card flow shape — what
+    arrives as `p_code_suffix` when an attendee scans `MAD-0001`,
+    and **(iii)** whether mid-cycle event_code rotation is a
+    feature (drives toward changing the RPC lookup contract) or
+    an organizer-error to prevent (drives toward a
+    zero-entitlements guard on the relaxed trigger). Phase 2
+    starts after phase 1 lands; sub-options enumerated in the
+    phase 1 scoping doc's "Carryover for phase 2" section give
+    that pass a starting brief.
+
+  Tier 1 because both halves bite organizers at the moment they
+  want a final pre-launch correction (typo, brand swap, sponsor
+  rename) and the only workaround today is engineer-mediated SQL.
 
 - [ ] **`dev` Event slug routing is case-sensitive (silent 404 on capitalized URLs)**
   `/event/Madrona/game` (capital M) returns HTTP 200 but the SPA renders
