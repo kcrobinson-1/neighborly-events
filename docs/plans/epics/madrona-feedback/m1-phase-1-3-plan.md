@@ -787,9 +787,6 @@ outstanding from the milestone Doc Currency map after 1.3.2.
 - [`m1-form-and-storage-mvp.md`](/docs/plans/epics/madrona-feedback/m1-form-and-storage-mvp.md)
   — parent milestone doc; this phase's terminal PR flips its
   Status to `Landed`.
-- [`scoping/m1-phase-1-3.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-3.md)
-  — transient scoping doc; deletes in batch with sibling
-  scoping docs at 1.3.2 (the milestone-terminal PR).
 - [`docs/plans/epics/madrona-feedback/epic.md`](/docs/plans/epics/madrona-feedback/epic.md)
   — parent epic; Cross-Cutting Invariants 1, 3, 4, 5, 6 are
   the load-bearing constraints this phase ships under.

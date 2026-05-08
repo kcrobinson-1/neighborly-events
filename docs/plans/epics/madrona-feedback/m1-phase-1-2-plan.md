@@ -11,13 +11,16 @@ to `eventContent.ts`, and the milestone doc Phase Status row
 [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
 Plan-to-PR Completion Gate. Plan-doc retained because it owns the
 Contracts and Validation Gate the implementation encodes; deletes
-in batch with sibling phase plan docs at the M1 milestone-terminal
-PR.
+in a future cleanup pass once the M1 plan-doc-retention question
+is resolved at a higher level (sibling 1.1 / 1.3 plan docs apply
+the same retention rationale).
 
-The deliberation prose with rejected alternatives lives in
-[`scoping/m1-phase-1-2.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-2.md);
-that scoping doc deletes in batch with sibling scoping docs at
-the M1 milestone-terminal PR.
+The deliberation prose with rejected alternatives lived in a
+transient scoping doc deleted at the M1 milestone-terminal PR
+([#219](https://github.com/kcrobinson-1/neighborly-events/pull/219));
+the locked decisions live in this plan's Contracts and the merged
+type extension at
+[`apps/site/lib/eventContent.ts`](/apps/site/lib/eventContent.ts).
 
 ## Context
 
@@ -51,8 +54,9 @@ route, no form, no DB code, and no event opts in yet — that's
 The deliberation behind the calls below — full M1 inner shape in
 1.2 vs. staged across 1.2/1.3, field-name specificity, content-
 authored vs. hardcoded CTA copy, in-app `<Link>` vs. plain `<a>`,
-omission guard shape, validation tier, styling posture — lives in
-[`scoping/m1-phase-1-2.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-2.md).
+omission guard shape, validation tier, styling posture — lived in
+the transient scoping doc deleted at the M1 milestone-terminal PR
+([#219](https://github.com/kcrobinson-1/neighborly-events/pull/219)).
 
 ## Goal
 
@@ -623,10 +627,6 @@ milestone doc's Documentation Currency map):
   decision and the "EventContent.feedback exact field shape —
   Phase 1.2 owns" deferred decision this plan's Contracts
   section locks.
-- [`scoping/m1-phase-1-2.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-2.md)
-  — transient scoping doc; deliberation prose with rejected
-  alternatives for the seven scoping-time decisions this plan's
-  Contracts section locks.
 - [`docs/plans/epics/madrona-feedback/epic.md`](/docs/plans/epics/madrona-feedback/epic.md)
   — parent epic; Cross-Cutting Invariants 1 (platform-genericity)
   and 2 (no foreclosure of donation child epic) are the
