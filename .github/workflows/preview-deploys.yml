@@ -71,12 +71,16 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euo pipefail
+          # Three-dot diff: changes the PR introduced relative to the merge-base,
+          # ignoring whatever the base branch has done since the branch point.
+          # Two-dot ("$BASE_SHA..$HEAD_SHA") would mis-classify a docs-only PR as
+          # web/site/both whenever main has advanced.
           {
-            echo "Diff range: $BASE_SHA..$HEAD_SHA"
+            echo "Diff range (merge-base aware): $BASE_SHA...$HEAD_SHA"
             echo "Changed files:"
-            git diff --name-only "$BASE_SHA..$HEAD_SHA"
+            git diff --name-only "$BASE_SHA...$HEAD_SHA"
           } >&2
-          classification=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
+          classification=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
           echo "classification=$classification" >> "$GITHUB_OUTPUT"
           echo "Classification: $classification" >&2
 
@@ -161,6 +165,7 @@ jobs:
             core.setOutput('number', pr.number);
             core.setOutput('head_ref', pr.head.ref);
             core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('base_ref', pr.base.ref);
             core.setOutput('base_sha', pr.base.sha);
             core.setOutput('open', pr.state === 'open' ? 'true' : 'false');
 
@@ -175,13 +180,18 @@ jobs:
         if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
         id: classify
         env:
-          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+          BASE_REF: ${{ steps.pr.outputs.base_ref }}
           HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
           set -euo pipefail
-          # Base SHA may not be present locally on a deep clone of the head; fetch defensively.
-          git fetch origin "$BASE_SHA" --depth=1 2>/dev/null || true
-          classification=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
+          # Fetch the base branch fully so the merge-base is reachable for the
+          # three-dot diff below. The head-sha checkout above doesn't pull base
+          # branch refs by itself.
+          git fetch origin "$BASE_REF" 2>/dev/null || true
+          # Three-dot diff: changes the PR introduced relative to the merge-base.
+          # Two-dot would include base-branch-only changes when main has advanced
+          # and mis-classify a docs-only PR as web/site/both.
+          classification=$(git diff --name-only "origin/$BASE_REF...$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
           echo "classification=$classification" >> "$GITHUB_OUTPUT"
           echo "Classification: $classification" >&2
 
