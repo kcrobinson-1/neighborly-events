@@ -30,6 +30,25 @@ import type { EventContent } from "../lib/eventContent.ts";
  * `EventHeader`; the `Verified by:` source for the canonical event
  * name and dates is the madrona.us 2026 announcement re-fetched at
  * implementation time.
+ *
+ * `feedback` opts madrona in to the
+ * [Madrona feedback child epic](../../../docs/plans/epics/madrona-feedback/epic.md)
+ * M1 attendee feedback flow registered in phase 1.1's migration:
+ * presence here renders the `EventFeedbackCTA` button on the landing
+ * page (1.2) and the form route at `/event/madrona/feedback` (1.3.1),
+ * and routes anon submissions to the `feedback_submissions` row whose
+ * FK target — `feedback_enabled_events.slug = 'madrona'` — was seeded
+ * by the same 1.1 migration. The starter rating-dimension set
+ * (Music choice, Sound quality, Park experience, Website experience,
+ * Overall) tracks the milestone doc's named starter set; the keys
+ * are content-authored stable identifiers per epic Invariant 3, so a
+ * future copy revision can edit the visible `label` without
+ * invalidating already-stored rows that reference the `key`. Future
+ * events that opt feedback in inherit the same `EventContent.feedback`
+ * shape (1.2's type extension) and the same submission path; the
+ * platform-genericity invariant (epic Invariant 1) means there are
+ * no madrona-keyed branches inside the route, the form, or the
+ * insert path.
  */
 export const madronaContent: EventContent = {
   slug: "madrona",
@@ -270,6 +289,26 @@ export const madronaContent: EventContent = {
   cta: {
     label: "Play the Madrona scavenger game",
     sublabel: "Visit booths around the playfield to earn stamps and unlock prizes.",
+  },
+  feedback: {
+    cta: {
+      heading: "How was Music in the Playfield?",
+      body: "Tell us what you'd want different next year — answers go straight to the Madrona Neighborhood Association.",
+    },
+    ratingDimensions: [
+      { key: "music-choice", label: "Music choice" },
+      { key: "sound-quality", label: "Sound quality" },
+      { key: "park-experience", label: "Park experience" },
+      { key: "website-experience", label: "Website experience" },
+      { key: "overall", label: "Overall" },
+    ],
+    freeTextPrompt: "Anything specific you'd like the organizer to hear?",
+    emailCopy: {
+      label: "Email — so we can follow up if you'd like",
+      declineLabel: "I'd rather not share my email",
+      newsletterOptInLabel: "Add me to the Madrona Neighborhood Association mailing list",
+    },
+    thankYouMessage: "Thanks — every response goes straight to the organizers.",
   },
   footer: {
     attribution:

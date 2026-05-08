@@ -386,19 +386,17 @@ Recorded so phase planning sessions do not re-derive.
   whatever shape merges, don't introduce a parallel one,"
   not "the JOIN-through-`game_events` shape is final."
   (`Verified by:`
-  [docs/plans/epics/madrona-feedback/m1-phase-1-1-plan.md:149-216](/docs/plans/epics/madrona-feedback/m1-phase-1-1-plan.md)
-  for the M1 phase 1.1 plan's Contracts section naming the
-  planned policy;
-  [docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md:44-86](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md)
-  for Decision 1's planned JOIN-through-`game_events` rationale,
-  recorded as the M1 phase 1.1 plan's intent and not a merged
-  contract)
+  [supabase/migrations/20260506000000_add_feedback_tables.sql:38-47](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+  for the registry-read policy and
+  [supabase/migrations/20260506000000_add_feedback_tables.sql:89-98](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+  for the submissions-read policy — both the merged JOIN-through-
+  `game_events` shape that M2 reads under)
 - **Read-path index already exists for the M2 query shape.** M1
   phase 1.1 lands
   `feedback_submissions_event_slug_submitted_at_idx` precisely
   because M2 reads per-event in `submitted_at desc` order. M2
   does not introduce a second index. (`Verified by:`
-  [docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md:203-212](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md))
+  [supabase/migrations/20260506000000_add_feedback_tables.sql:69-70](/supabase/migrations/20260506000000_add_feedback_tables.sql))
 - **Auth gate reuses `useOrganizerForEvent` and the
   `EventAdminPage`-style state-branching shell.** Per the
   Cross-Phase Invariant above. The state branching is "loading
@@ -530,13 +528,14 @@ below resolves to a merged surface.
   hardcoding column names from this milestone doc.
 - **RLS read-predicate shape (slug → event_id resolution).** M2
   reads under this predicate; if the resolution shape shifts in
-  M1 phase 1.1 implementation review (e.g. a slug-keyed helper
-  is introduced after all), the auth posture M2's fetch relies on
-  shifts. **Concrete surface:** the M1 phase 1.1 scoping
-  Decision 1 at
-  [docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md:44-86](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md)
-  and the resulting policy SQL in the phase 1.1 plan. **Settles
-  when:** M1 phase 1.1 implementing PR merges.
+  a future migration (e.g. a slug-keyed helper is introduced after
+  all), the auth posture M2's fetch relies on shifts. **Concrete
+  surface:** the merged policy SQL at
+  [supabase/migrations/20260506000000_add_feedback_tables.sql:38-47](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+  (registry-read) and
+  [supabase/migrations/20260506000000_add_feedback_tables.sql:89-98](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+  (submissions-read). **Settled at:** [#205](https://github.com/kcrobinson-1/neighborly-events/pull/205)
+  (M1 phase 1.1).
 - **`EventContent.feedback?` shape — specifically the
   rating-dimension key + label structure.** Phase 2.2's
   per-dimension distribution renders labels, not raw keys; the

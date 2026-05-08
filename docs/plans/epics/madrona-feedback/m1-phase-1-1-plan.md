@@ -7,8 +7,10 @@ The migration, regenerated types, pgTAP validation gate, and the
 milestone-doc Phase Status flip ship in that PR per the
 [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
 Plan-to-PR Completion Gate. Plan-doc retained because it owns the
-Contracts and Validation Gate the migration encodes; deletes in
-batch with sibling phase plan docs at the M1 milestone-terminal PR.
+Contracts and Validation Gate the migration encodes; deletes in a
+future cleanup pass once the M1 plan-doc-retention question is
+resolved at a higher level (sibling 1.2 / 1.3 plan docs apply the
+same retention rationale).
 
 ## Context
 
@@ -40,10 +42,12 @@ write or read path until phase 1.3 ships the form.
 
 The deliberation behind the calls below — RLS predicate shape,
 column types, CHECK constraints, registry seed location, single-file
-migration shape, generated-types regeneration — lives in
-[`scoping/m1-phase-1-1.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md).
-That doc deletes in batch with sibling scoping docs at the M1
-milestone-terminal PR.
+migration shape, generated-types regeneration — lived in a transient
+scoping doc deleted at the M1 milestone-terminal PR
+([#219](https://github.com/kcrobinson-1/neighborly-events/pull/219));
+the locked decisions live in this plan's Contracts and the merged
+migration at
+[`supabase/migrations/20260506000000_add_feedback_tables.sql`](/supabase/migrations/20260506000000_add_feedback_tables.sql).
 
 ## Goal
 
@@ -533,10 +537,6 @@ that would now drift; if it does, fix in this PR per the
   — parent milestone doc; the "Settled by default" RLS posture
   and "Migration ships both tables together, plus the `madrona`
   registry seed" decisions this plan inherits.
-- [`scoping/m1-phase-1-1.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-1.md)
-  — transient scoping doc; deliberation prose with rejected
-  alternatives for the seven scoping-time decisions this plan's
-  Contracts section locks.
 - [`docs/plans/epics/madrona-feedback/epic.md`](/docs/plans/epics/madrona-feedback/epic.md)
   — parent epic; Cross-Cutting Invariant 6 (DB-level integrity
   enforcement) is the load-bearing constraint this phase ships.

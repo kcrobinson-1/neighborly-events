@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 This milestone doc is the durable coordination artifact for M1 of
 the [Madrona feedback child epic](/docs/plans/epics/madrona-feedback/epic.md):
@@ -121,7 +121,7 @@ phase-start.
 | --- | --- | --- | --- | --- |
 | 1.1 | DB foundation: `feedback_enabled_events` + `feedback_submissions` migration with RLS, seeding `madrona` into the registry | [m1-phase-1-1-plan.md](/docs/plans/epics/madrona-feedback/m1-phase-1-1-plan.md) | Landed | [#205](https://github.com/kcrobinson-1/neighborly-events/pull/205) |
 | 1.2 | `EventContent.feedback?` shape + `EventFeedbackCTA` section component + landing-page wiring | [m1-phase-1-2-plan.md](/docs/plans/epics/madrona-feedback/m1-phase-1-2-plan.md) | Landed | [#213](https://github.com/kcrobinson-1/neighborly-events/pull/213) |
-| 1.3 | `/event/<slug>/feedback` route + form component + `madrona.ts` feedback opt-in | — | Not started | — |
+| 1.3 | `/event/<slug>/feedback` route + form component + `madrona.ts` feedback opt-in | [m1-phase-1-3-plan.md](/docs/plans/epics/madrona-feedback/m1-phase-1-3-plan.md) | Landed | [#217](https://github.com/kcrobinson-1/neighborly-events/pull/217) (1.3.1), [#219](https://github.com/kcrobinson-1/neighborly-events/pull/219) (1.3.2) |
 
 The 3-phase split is solid; the milestone doc does not authorize
 a collapse. The split is: 1.1 lands the data-layer foundation
