@@ -2,17 +2,16 @@
 name: Vercel preview-deploy budget — implementation plan
 description: Disable Vercel's automatic per-push preview deploys for branches and replace them with a manual-trigger flow gated by a required "preview-deploy" status check. Branches get exactly the previews they're explicitly asked for, docs-only PRs auto-pass, and the merge button stays grey until a preview has actually rendered.
 type: implementation
-status: Proposed
+status: Active
 ---
 
 # Vercel preview-deploy budget — implementation plan
 
 ## Status
 
-Proposed. Two earlier drafts picked levers that didn't
-actually reduce the deployment count or were
-disproportionate to the problem; the in-PR commit history
-preserves the design walk.
+Active — shadow-phase workflow in flight. Cutover PR will
+flip to Landed once the workflow has been verified on at
+least three real PRs.
 
 ## Why earlier drafts were wrong
 
@@ -114,6 +113,18 @@ PR.
   is a repo collaborator (owner, member, or collaborator
   status). Comments, labels, and ready-for-review
   transitions from non-collaborators no-op.
+- **Trusted code only in secret-bearing jobs.** The trigger
+  job runs scripts checked out from the default branch, never
+  from a PR-controlled ref. PR content reaches the classifier
+  via fetched git refs (no checkout). Required because the
+  `issue_comment` event runs from the default branch with
+  full secret access regardless of fork status — without this
+  contract a fork could plant a malicious script that fires
+  when a trusted collaborator types `/deploy-preview`. The
+  gate job has no secrets and may continue to run the PR's
+  classifier directly; on fork PRs its `GITHUB_TOKEN` is
+  read-only, so a malicious classifier can't fake a success
+  status.
 - **Stale results can't leak.** Status checks are SHA-keyed.
   A new push posts a fresh pending check on the new SHA;
   the old SHA's prior success is irrelevant to merge.

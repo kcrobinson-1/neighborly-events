@@ -1,0 +1,238 @@
+name: Preview deploys
+
+# Manages Vercel preview deployments for pull requests with a SHA-pinned,
+# human-triggered, terminal-state-aware gate that branch protection can
+# require. Two reasons this exists rather than relying on Vercel's Git
+# auto-deploys:
+#
+#  - PR pushes don't auto-burn Vercel deployment quota; the trigger only
+#    fires on an explicit human signal.
+#  - The merge button stays grey until a preview has actually rendered
+#    successfully for the current head SHA — a property Vercel's
+#    auto-attached checks don't enforce on their own.
+#
+# Two jobs:
+#  - gate    — runs on every PR push; classifies the diff via
+#              scripts/vercel/classify-paths.sh and posts a `preview-deploy`
+#              GitHub status check on the head SHA (success for docs-only
+#              diffs, pending otherwise).
+#  - trigger — runs on a human signal (PR comment `/deploy-preview`,
+#              `preview` label add, or `ready_for_review` transition);
+#              delegates to scripts/vercel/preview-deploy-trigger.mjs, which
+#              calls Vercel's create-deployment API once per affected
+#              project (SHA-pinned), polls each to terminal state, posts a
+#              sticky PR comment with results, and flips `preview-deploy`
+#              to success only if every affected project reached READY.
+#
+# Trusted-actor gate: triggers from non-collaborators no-op.
+# Required secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_WEB,
+# VERCEL_PROJECT_ID_SITE.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: preview-deploys-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  STATUS_CONTEXT: preview-deploy
+  STICKY_HEADER: "<!-- preview-deploy-sticky -->"
+  TRIGGER_PHRASE: "/deploy-preview"
+  TRIGGER_LABEL: preview
+
+jobs:
+  gate:
+    name: Gate (status check on push)
+    if: |
+      github.event_name == 'pull_request' &&
+      contains(fromJSON('["opened","synchronize","reopened"]'), github.event.action)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Classify diff
+        id: classify
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          # Three-dot diff: changes the PR introduced relative to the merge-base,
+          # ignoring whatever the base branch has done since the branch point.
+          # Two-dot ("$BASE_SHA..$HEAD_SHA") would mis-classify a docs-only PR as
+          # web/site/both whenever main has advanced.
+          {
+            echo "Diff range (merge-base aware): $BASE_SHA...$HEAD_SHA"
+            echo "Changed files:"
+            git diff --name-only "$BASE_SHA...$HEAD_SHA"
+          } >&2
+          classification=$(git diff --name-only "$BASE_SHA...$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "Classification: $classification" >&2
+
+      - name: Set preview-deploy status
+        uses: actions/github-script@v7
+        env:
+          CLASSIFICATION: ${{ steps.classify.outputs.classification }}
+        with:
+          script: |
+            const classification = process.env.CLASSIFICATION;
+            const sha = context.payload.pull_request.head.sha;
+            const isDocsOnly = classification === 'docs-only';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              context: process.env.STATUS_CONTEXT,
+              state: isDocsOnly ? 'success' : 'pending',
+              description: isDocsOnly
+                ? 'no preview needed for docs-only changes'
+                : `comment ${process.env.TRIGGER_PHRASE} or mark ready for review to deploy`,
+            });
+            core.notice(`Gate set ${isDocsOnly ? 'success' : 'pending'} for ${classification} on ${sha}`);
+
+  trigger:
+    name: Trigger preview deploy
+    if: |
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       startsWith(github.event.comment.body, '/deploy-preview')) ||
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'ready_for_review') ||
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'labeled' &&
+       github.event.label.name == 'preview')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authorize trigger actor
+        id: authz
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const TRUSTED = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            let association;
+            if (context.eventName === 'issue_comment') {
+              association = context.payload.comment.author_association;
+            } else {
+              const { data: perms } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: context.payload.sender.login,
+              });
+              association = (perms.permission === 'admin' || perms.permission === 'write')
+                ? 'COLLABORATOR'
+                : 'NONE';
+            }
+            const ok = TRUSTED.has(association);
+            if (!ok) {
+              core.notice(`Trigger from ${association} actor — no-op`);
+            }
+            core.setOutput('ok', ok ? 'true' : 'false');
+            core.setOutput('association', association);
+
+      - name: Resolve PR head
+        if: steps.authz.outputs.ok == 'true'
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let pr;
+            if (context.eventName === 'issue_comment') {
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.issue.number,
+              });
+              pr = data;
+            } else {
+              pr = context.payload.pull_request;
+            }
+            core.setOutput('number', pr.number);
+            core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('base_ref', pr.base.ref);
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('open', pr.state === 'open' ? 'true' : 'false');
+
+      # Check out the default branch, NOT the PR head. Critical:
+      # `issue_comment` events run with full secret access regardless of
+      # whether the PR is from a fork, so any code we then execute must come
+      # from a trusted source. The PR's tree is reached through fetched git
+      # refs in the next step — but never executed.
+      - name: Checkout default branch (trusted scripts)
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Fetch PR head into local refs
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        env:
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          BASE_REF: ${{ steps.pr.outputs.base_ref }}
+        run: |
+          set -euo pipefail
+          # GitHub mirrors PR heads — including from forks — at
+          # refs/pull/<n>/head in the base repo. Fetching this ref makes the
+          # PR's tree reachable for `git diff` without ever checking it out.
+          # Full fetch (no --depth): a long-lived branch whose merge-base is
+          # older than any shallow window would otherwise fail the three-dot
+          # diff in the next step with "no merge base".
+          git fetch origin "refs/pull/$PR_NUMBER/head" 2>/dev/null || true
+          git fetch origin "$BASE_REF" 2>/dev/null || true
+          # Verify the SHA captured at trigger time is still reachable. If a
+          # force-push happened during the trigger run, $HEAD_SHA may have
+          # been removed; bail rather than approve a SHA that no longer
+          # exists in the PR.
+          if ! git rev-parse --verify "$HEAD_SHA^{commit}" >/dev/null 2>&1; then
+            echo "PR head SHA $HEAD_SHA is not reachable — likely force-pushed during trigger run." >&2
+            exit 1
+          fi
+
+      - name: Classify diff
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        id: classify
+        env:
+          BASE_REF: ${{ steps.pr.outputs.base_ref }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          # The classifier we invoke here lives on the default branch (we
+          # checked out main, not the PR head), so PR-controlled file
+          # content cannot influence what runs with secrets in the next
+          # step. The diff itself uses three-dot syntax to ignore changes
+          # the base branch has made since the merge-base.
+          classification=$(git diff --name-only "origin/$BASE_REF...$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "Classification: $classification" >&2
+
+      - name: Run trigger
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          CLASSIFICATION: ${{ steps.classify.outputs.classification }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID_WEB: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+          VERCEL_PROJECT_ID_SITE: ${{ secrets.VERCEL_PROJECT_ID_SITE }}
+        run: node scripts/vercel/preview-deploy-trigger.mjs
