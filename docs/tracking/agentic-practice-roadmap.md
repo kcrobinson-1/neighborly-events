@@ -31,6 +31,19 @@ entries" or "consolidate planning/shared.md to ≤ 300 lines"), prefer
 landing it as an ordinary docs PR rather than promoting it into a
 plan-tree.
 
+**Review stance for this doc.** Review for whether the diagnosis is
+factually accurate, whether bets are measurable and worth running,
+whether action-layer entries describe real candidate moves, and
+whether sections are internally coherent. **Do not review for
+line-level code correctness.** Any commands, queries, or paths
+referenced inside prose are illustrations of procedures, not code
+under contract; if a procedure is unclear in prose, flag the
+prose, not the syntax. This stance is the experiment for tracking
+docs that the [Diagnosis](#diagnosis-2026-05-07) below names as
+needing a different review path than feature PRs — the line-level
+finding loop on plan- and tracking-doc PRs is a known driver of
+process bloat in this repo.
+
 ## Terminology
 
 Terms that are load-bearing in this doc, defined once so the
@@ -177,13 +190,15 @@ proves it" + aggressive consolidation of the rules already written.
 
 ### Sources for this snapshot
 
-- `git log` and `gh pr list` against `origin/main` at 2026-05-07.
-- LOC totals via `find <path> -type f ... -exec wc -l {} + | tail -1`.
-  Specifically:
-  - Plan docs: `find docs/plans -name '*.md' -exec wc -l {} + | tail -1`.
-  - Product code: `find apps shared supabase -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.scss' -o -name '*.sql' \) -exec wc -l {} + | tail -1`
-    (excluding generated types).
-  - Tests: `find tests supabase/tests -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.sql' \) -exec wc -l {} + | tail -1`.
+- Git history and PR list against `origin/main` at 2026-05-07.
+- LOC totals across files under the named paths, using standard
+  recursive line-counting tools:
+  - Plan docs: all markdown under [`docs/plans/`](/docs/plans/).
+  - Product code: TypeScript / TSX / SCSS / SQL under
+    [`apps/`](/apps/), [`shared/`](/shared/), and
+    [`supabase/`](/supabase/), excluding generated types.
+  - Tests: all source under [`tests/`](/tests/) and
+    `supabase/tests/`.
 - Read of [`AGENTS.md`](/AGENTS.md), the
   [`docs/agents/`](/docs/agents/) router tree, sample epic /
   milestone / phase / scoping docs in
@@ -220,14 +235,11 @@ rule-budget gate (Bet 3); revisit if neither moves the ratio.
 `phase.md` will move the monthly rule-deletion / rule-addition PR
 ratio in `docs/agents/` to ≥ 0.3.
 **Ties to:** "Rule-density compounding" / no PR has deleted a rule.
-**Measure:** per calendar month, count merge commits that touch
-`docs/agents/**` and classify each by net direction. Procedure:
-`git log --since=YYYY-MM-DD --merges -- docs/agents/` to enumerate
-the merges; `git show --stat <sha> -- docs/agents/` reveals the
-net line-count delta per merge. (The earlier draft of this Measure
-named `gh pr list --search "path:docs/agents"`, which doesn't work
-— `path:` is a code-search qualifier, not an issue/PR-search
-qualifier.)
+**Measure:** per calendar month, enumerate merge commits that touch
+`docs/agents/**` and classify each by net line-count delta (positive
+or negative). Standard git tooling against the `docs/agents/` path
+suffices; the procedure is prose-described rather than scripted
+because this doc is a tracking doc, not a runbook.
 **Target:** ratio ≥ 0.3 (≥ 1 deletion PR per ~3 addition PRs) within
 two months.
 **Today:** ratio ≈ 0 in the last 30 days.
