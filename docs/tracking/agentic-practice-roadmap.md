@@ -178,15 +178,18 @@ proves it" + aggressive consolidation of the rules already written.
 ### Sources for this snapshot
 
 - `git log` and `gh pr list` against `origin/main` at 2026-05-07.
-- `wc -l` against [`docs/plans/`](/docs/plans/),
-  [`apps/`](/apps/), [`shared/`](/shared/), [`supabase/`](/supabase/),
-  [`tests/`](/tests/).
+- LOC totals via `find <path> -type f ... -exec wc -l {} + | tail -1`.
+  Specifically:
+  - Plan docs: `find docs/plans -name '*.md' -exec wc -l {} + | tail -1`.
+  - Product code: `find apps shared supabase -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.scss' -o -name '*.sql' \) -exec wc -l {} + | tail -1`
+    (excluding generated types).
+  - Tests: `find tests supabase/tests -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.sql' \) -exec wc -l {} + | tail -1`.
 - Read of [`AGENTS.md`](/AGENTS.md), the
   [`docs/agents/`](/docs/agents/) router tree, sample epic /
   milestone / phase / scoping docs in
   [`docs/plans/epics/madrona-feedback/`](/docs/plans/epics/madrona-feedback/),
   the PR template, the self-review catalog, sample Codex review
-  threads, and the memory index.
+  threads, and the contributor's local agent memory index.
 
 ## Bets
 
@@ -217,9 +220,14 @@ rule-budget gate (Bet 3); revisit if neither moves the ratio.
 `phase.md` will move the monthly rule-deletion / rule-addition PR
 ratio in `docs/agents/` to ≥ 0.3.
 **Ties to:** "Rule-density compounding" / no PR has deleted a rule.
-**Measure:** per calendar month, count PRs that net-decrease line
-count in `docs/agents/**` against PRs that net-increase. Use
-`gh pr list --search "path:docs/agents"` plus `git log --stat`.
+**Measure:** per calendar month, count merge commits that touch
+`docs/agents/**` and classify each by net direction. Procedure:
+`git log --since=YYYY-MM-DD --merges -- docs/agents/` to enumerate
+the merges; `git show --stat <sha> -- docs/agents/` reveals the
+net line-count delta per merge. (The earlier draft of this Measure
+named `gh pr list --search "path:docs/agents"`, which doesn't work
+— `path:` is a code-search qualifier, not an issue/PR-search
+qualifier.)
 **Target:** ratio ≥ 0.3 (≥ 1 deletion PR per ~3 addition PRs) within
 two months.
 **Today:** ratio ≈ 0 in the last 30 days.
@@ -278,12 +286,15 @@ finding a human.
 ### Bet 6: Memory index stops growing
 
 **Bet:** Running periodic `consolidate-memory` passes will move
-month-over-month `MEMORY.md` entry count to ≤ 0 growth for two
-consecutive months.
+month-over-month agent-memory-index entry count to ≤ 0 growth for
+two consecutive months.
 **Ties to:** "Memory index growing only via additions."
-**Measure:** count of entries in `MEMORY.md` (the index, which is
-what loads into context — not the underlying files) at the start vs
-end of each month.
+**Measure:** count of entries in the agent memory index file (the
+index that loads into every Claude session, distinct from the
+underlying memory files) at the start vs end of each month. The
+index lives in the contributor's local Claude state, not in this
+repo, so the metric is checkable by the contributor but not
+reproducible from the repo alone — same shape as Bet 5.
 **Target:** after the next consolidation pass, month-over-month
 growth ≤ 0 sustained for two consecutive months.
 **Today:** 30 entries, growing.
