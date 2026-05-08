@@ -18,6 +18,9 @@ if (!rootElement) {
   throw new Error("Missing root element for Neighborly web app.");
 }
 
+// Validation-only marker for preview-deploy trigger error-path test —
+// PR not intended for merge; remove or close after the trigger workflow
+// has fired its `error` status check confirming the missing-secrets path.
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <App />
