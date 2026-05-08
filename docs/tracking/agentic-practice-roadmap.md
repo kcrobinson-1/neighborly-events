@@ -76,7 +76,7 @@ sections are append-only — if a future review disagrees, append a new
   (`kcrobinson-1`) plus automated reviewer (`chatgpt-codex-connector`,
   reviewed ~75% of PRs).
 - PR mix: 84 docs / 39 feat / 14 fix / others. Median PR open time:
-  ~14 minutes. 171/209 merged within an hour.
+  ~14 minutes. 171/212 merged within an hour.
 - LOC ratio at this date:
   - Product code (`apps/`, `shared/`, `supabase/` source): ~33,880 LOC
   - Tests (`tests/`, `supabase/tests/`): ~24,584 LOC
@@ -85,10 +85,12 @@ sections are append-only — if a future review disagrees, append a new
   [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
   503 lines; [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
   365 lines. Memory index: 29 entries.
-- Latest evidence point: M1 phase 1.3 of the Madrona feedback child
-  epic landed a 539-line scoping doc + 815-line plan doc + 287-line
-  migration + a section component, for one form route + one DB column
-  set. Plan-tree LOC for one phase exceeded the code+SQL it produced.
+- Latest evidence point: M1 phase 1.2 of the Madrona feedback child
+  epic landed a 449-line scoping doc + 657-line plan doc to ship
+  roughly 239 lines of implementation (a 49-line section component,
+  33 lines added to the `EventContent` type, 44 lines of SCSS, 109
+  lines of tests, and 4 lines of composition wiring). Plan-tree LOC
+  exceeded the code it produced by roughly 4.6×.
 
 ### What is being done well
 
@@ -106,8 +108,10 @@ sections are append-only — if a future review disagrees, append a new
   institutional learning.
 - **Incident-driven memory.** Memory entries are dated, structured
   with **Why:** / **How to apply:**, cite concrete PR incidents. The
-  retrieve-before-citing rule (memory `feedback_retrieve_before_citing.md`)
-  came from a real PR-#193 failure and meaningfully changed practice.
+  retrieve-before-citing rule came from a real recall-citation
+  failure (three load-bearing line-number citations on the same
+  artifact, all wrong from recall rather than retrieval) and
+  meaningfully changed practice.
 - **PR hygiene.** Conventional commits throughout; 10-section PR body
   template; reviewer-comment replies cite the fix SHA on the comment
   thread. Worktree workflow real and adopted.
@@ -156,11 +160,13 @@ sections are append-only — if a future review disagrees, append a new
   `madrona-feedback` appeared as a child epic of `madrona-demo-build`.
   Planning docs respond by re-citing each other rather than
   collapsing.
-- **"Fix it with a memory" overuse.** PR #178 (column-name
-  fabrication) produced a *process* memory rule. The faster fix
-  would have been generated-types-as-import in the assertion helper.
-  Watch for cases where a rule is the answer to what should be a
-  one-line code change.
+- **"Fix it with a memory" overuse.** A recent column-name
+  fabrication (a service-role assertion helper referenced a
+  non-existent column; escaped local validation and only failed at
+  Tier 5 production smoke) produced a *process* memory rule. The
+  faster fix would have been generated-types-as-import in the
+  assertion helper. Watch for cases where a rule is the answer to
+  what should be a one-line code change.
 
 ### Verdict
 
@@ -349,8 +355,9 @@ for each instead.
 threshold (file count, surface count, schema-touch yes/no) and put
 the lightweight path first.
 **Activates:** Bet 1, Bet 4 (over time).
+**Status:** candidate.
 **Notes:** current threshold reads as fuzzy and tilted toward
-full structured. Status: candidate.
+full structured.
 
 ### A4: Consolidation pass on shared.md
 
@@ -411,6 +418,112 @@ form.
 **Notes:** this is the empirical version of A2/A3 — proves the
 cap is reachable before the instructions are edited to require
 it. Outcome lands as a Log entry below.
+
+### A8: Codify a tracking/planning-doc drafting template
+
+**Edit:** capture a paste-able three-phase drafting template (Phase
+1 *gather* — list inputs and read fresh, mark anything that would
+require invention as an open question; Phase 2 *draft* — tight
+prose, no code-block bloat, open questions are first-class; Phase
+3 *audit* — walk unsupported claims, internal contradictions, soft
+commitments, drift from conversation, and citations) somewhere
+durable. Candidate locations: a dedicated doc under
+`docs/agents/workflows/`, a Claude skill the contributor can
+invoke, or inline in `docs/agents/planning/shared.md` if it
+generalizes to plan docs as well.
+**Activates:** no direct bet move; quality lever for any future
+tracking or plan doc.
+**Status:** candidate.
+**Notes:** template emerged from a session in early May 2026 and
+was used implicitly during the audit pass on this roadmap (which
+caught one significant factual error and several smaller drift
+issues before this PR went out). Without a durable home it gets
+re-derived each session. Six known gaps to address before
+codifying:
+
+1. Scope is tracking-doc-only by framing (the prior-art template
+   below opens with "Draft `docs/tracking/<filename>.md`..."). The
+   underlying principles generalize to plan docs and scoping docs;
+   either rewrite the template to be doc-type-agnostic or fork
+   into tracking and plan-doc variants.
+2. The audit lacks a scope-creep / unauthorized-addition check —
+   it catches what's there but not what shouldn't be (e.g. five
+   sections agreed on, seven written).
+3. Source classification in the audit should require *surfacing*
+   the source (a quoted span or a `path:line` reference), not just
+   classifying claims as conversation- / file- / inferred-sourced.
+   Self-classification is unfalsifiable; surfacing isn't.
+4. "Drift from conversation" needs an operational rule for lossy
+   recall — "if a commitment can't be quoted from a specific
+   message, downgrade to an open question." Without this the
+   check is aspirational.
+5. The "carrying from memory" footer is a portability leak: it
+   names five rules the user holds mentally that aren't in the
+   prompt text. For non-Claude contexts the rules need to live in
+   the prompt itself, not in the user's head.
+6. The code-block rule lacks the data-structure carve-out the
+   contributor's existing memory has; if the template generalizes
+   to plan docs, that carve-out becomes load-bearing.
+
+Prior-art template (verbatim from the originating session — keep
+embedded so the next codification pass can address the gaps
+against the actual source rather than re-derive):
+
+> Draft `docs/tracking/<filename>.md` with the structure and
+> content we agreed on in this conversation. Treat this drafting
+> as three phases:
+>
+> **Phase 1 — gather.** Before writing anything, list the inputs
+> you'll rely on: the agreed-on section structure, the agreed-on
+> bullet content, and any code/state claims. For any code/state
+> claim, read the file this session — do not rely on
+> earlier-in-buffer recall. If a claim would require inventing
+> detail beyond what's in the conversation or the code, do not
+> invent it; mark it as an open question.
+>
+> **Phase 2 — draft.** Write the doc. Keep prose tight; no code
+> blocks longer than ~5 lines. No ephemeral identifiers (PR
+> numbers, commit hashes, "this PR" placeholders). Open questions
+> and TBDs are first-class content — leaving a section open is
+> correct; fabricating to fill it is not.
+>
+> **Phase 3 — audit.** Re-read the whole doc end-to-end and
+> produce a checklist:
+>
+> - **Unsupported claims:** for every load-bearing assertion,
+>   classify it as (a) sourced from this conversation, (b) sourced
+>   from a file I read this session, or (c) inferred. If (c),
+>   downgrade to an open question or remove.
+> - **Internal contradictions:** does any section contradict
+>   another? (Common: section 3 commits to a decision that section
+>   5's workstreams quietly walk back.)
+> - **Soft commitments:** any "should," "might," "we plan to"
+>   language attached to things stated as decisions elsewhere?
+>   Reconcile.
+> - **Drift from conversation:** for each architectural
+>   commitment, does the wording match what was actually said, or
+>   has it softened/expanded? Snap back to the conversation's
+>   wording.
+> - **Citations:** any `path:line` references? If yes, were they
+>   produced from a tool read this session? If not, remove or
+>   re-verify.
+>
+> Report the audit checklist results inline before declaring done.
+> If the audit found nothing, say so explicitly — that's a
+> positive signal, not filler.
+>
+> I'm already carrying the following from memory, but it can be
+> good to analyze the following options for things to codify in
+> non-Claude contexts:
+>
+> - Plans/tracking docs describe contracts, not implementation;
+>   no code-block bloat
+> - Citations must be retrieved in the same session, never
+>   recalled
+> - Load-bearing claims need adversarial verification of the
+>   actual code path
+> - No ephemeral coordination identifiers in durable docs
+> - "Verbatim" means bytes when copying anything
 
 ## Log
 
