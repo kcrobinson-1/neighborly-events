@@ -3,9 +3,10 @@
 Per-level planning playbook for **epic-drafting** sessions. Loads
 [`shared.md`](./shared.md) for cross-level planning rules
 (`Verified by:` annotations, falsifiability check, rules-vs-
-estimates labeling, plan-code minimalism, planning-artifacts-cite-
-each-other anti-pattern, exact-match label quoting). This file
-covers what is unique to the epic level.
+estimates labeling, plan-code minimalism, plan-doc review
+stance, planning-artifacts-cite-each-other anti-pattern, exact-
+match label quoting). This file covers what is unique to the
+epic level.
 
 ## Scope: what an epic does and does not say
 
