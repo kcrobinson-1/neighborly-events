@@ -1,0 +1,189 @@
+name: Preview deploys
+
+# Implements docs/plans/vercel-preview-deploy-budget.md.
+#
+# Two jobs:
+#  - gate     — runs on every PR push; classifies the diff and posts a
+#               `preview-deploy` status check on the head SHA (success for
+#               docs-only, pending otherwise).
+#  - trigger  — runs on a human signal (PR comment `/deploy-preview`,
+#               `preview` label add, or ready-for-review transition);
+#               fires Vercel preview deployments pinned to the PR head SHA,
+#               polls them to terminal state, and flips `preview-deploy`
+#               to success / failure.
+#
+# Shadow phase: this workflow lands while Vercel's Git auto-deploys are
+# still on for branches and the main ruleset still requires Vercel's
+# auto-attached checks. The `preview-deploy` status check is produced but
+# nothing requires it. The cutover PR flips both atomically.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+concurrency:
+  group: preview-deploys-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  STATUS_CONTEXT: preview-deploy
+  STICKY_HEADER: "<!-- preview-deploy-sticky -->"
+  TRIGGER_PHRASE: "/deploy-preview"
+  TRIGGER_LABEL: preview
+
+jobs:
+  gate:
+    name: Gate (status check on push)
+    if: |
+      github.event_name == 'pull_request' &&
+      contains(fromJSON('["opened","synchronize","reopened"]'), github.event.action)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Classify diff
+        id: classify
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          {
+            echo "Diff range: $BASE_SHA..$HEAD_SHA"
+            echo "Changed files:"
+            git diff --name-only "$BASE_SHA..$HEAD_SHA"
+          } >&2
+          classification=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "Classification: $classification" >&2
+
+      - name: Set preview-deploy status
+        uses: actions/github-script@v7
+        env:
+          CLASSIFICATION: ${{ steps.classify.outputs.classification }}
+        with:
+          script: |
+            const classification = process.env.CLASSIFICATION;
+            const sha = context.payload.pull_request.head.sha;
+            const isDocsOnly = classification === 'docs-only';
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha,
+              context: process.env.STATUS_CONTEXT,
+              state: isDocsOnly ? 'success' : 'pending',
+              description: isDocsOnly
+                ? 'no preview needed for docs-only changes'
+                : `comment ${process.env.TRIGGER_PHRASE} or mark ready for review to deploy`,
+            });
+            core.notice(`Gate set ${isDocsOnly ? 'success' : 'pending'} for ${classification} on ${sha}`);
+
+  trigger:
+    name: Trigger preview deploy
+    if: |
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       startsWith(github.event.comment.body, '/deploy-preview')) ||
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'ready_for_review') ||
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'labeled' &&
+       github.event.label.name == 'preview')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authorize trigger actor
+        id: authz
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const TRUSTED = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            let association;
+            if (context.eventName === 'issue_comment') {
+              association = context.payload.comment.author_association;
+            } else {
+              const { data: perms } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                username: context.payload.sender.login,
+              });
+              association = (perms.permission === 'admin' || perms.permission === 'write')
+                ? 'COLLABORATOR'
+                : 'NONE';
+            }
+            const ok = TRUSTED.has(association);
+            if (!ok) {
+              core.notice(`Trigger from ${association} actor — no-op`);
+            }
+            core.setOutput('ok', ok ? 'true' : 'false');
+            core.setOutput('association', association);
+
+      - name: Resolve PR head
+        if: steps.authz.outputs.ok == 'true'
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let pr;
+            if (context.eventName === 'issue_comment') {
+              const { data } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.issue.number,
+              });
+              pr = data;
+            } else {
+              pr = context.payload.pull_request;
+            }
+            core.setOutput('number', pr.number);
+            core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('base_sha', pr.base.sha);
+            core.setOutput('open', pr.state === 'open' ? 'true' : 'false');
+
+      - name: Checkout PR head
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.pr.outputs.head_sha }}
+
+      - name: Classify diff
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        id: classify
+        env:
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          set -euo pipefail
+          # Base SHA may not be present locally on a deep clone of the head; fetch defensively.
+          git fetch origin "$BASE_SHA" --depth=1 2>/dev/null || true
+          classification=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" | bash scripts/vercel/classify-paths.sh)
+          echo "classification=$classification" >> "$GITHUB_OUTPUT"
+          echo "Classification: $classification" >&2
+
+      - name: Run trigger
+        if: steps.authz.outputs.ok == 'true' && steps.pr.outputs.open == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HEAD_REF: ${{ steps.pr.outputs.head_ref }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+          CLASSIFICATION: ${{ steps.classify.outputs.classification }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID_WEB: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+          VERCEL_PROJECT_ID_SITE: ${{ secrets.VERCEL_PROJECT_ID_SITE }}
+        run: node scripts/vercel/preview-deploy-trigger.mjs

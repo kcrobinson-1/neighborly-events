@@ -2,17 +2,16 @@
 name: Vercel preview-deploy budget — implementation plan
 description: Disable Vercel's automatic per-push preview deploys for branches and replace them with a manual-trigger flow gated by a required "preview-deploy" status check. Branches get exactly the previews they're explicitly asked for, docs-only PRs auto-pass, and the merge button stays grey until a preview has actually rendered.
 type: implementation
-status: Proposed
+status: Active
 ---
 
 # Vercel preview-deploy budget — implementation plan
 
 ## Status
 
-Proposed. Two earlier drafts picked levers that didn't
-actually reduce the deployment count or were
-disproportionate to the problem; the in-PR commit history
-preserves the design walk.
+Active — shadow-phase workflow in flight. Cutover PR will
+flip to Landed once the workflow has been verified on at
+least three real PRs.
 
 ## Why earlier drafts were wrong
 
