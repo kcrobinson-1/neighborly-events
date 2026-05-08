@@ -2,18 +2,19 @@
 
 ## Status
 
-Proposed. Two-PR sub-split per the scoping doc's Decision 1:
-**1.3.1** ships the route, the form component, the disabled-event
-branch, the SCSS, and the Vitest fixture (`madrona.ts`
-unchanged); **1.3.2** ships the `madrona.ts` opt-in literal and
-flips the M1 milestone Status `Proposed` → `Landed`, batch-
-deleting the three M1 scoping docs as the milestone-terminal PR.
+Landed across two PRs per the planned sub-split:
+**1.3.1** in [#217](https://github.com/kcrobinson-1/neighborly-events/pull/217)
+(route + form + disabled-event branch + SCSS + Vitest);
+**1.3.2** in [#219](https://github.com/kcrobinson-1/neighborly-events/pull/219)
+(`madrona.ts` opt-in literal + header-comment extension + M1
+milestone Status flip + batch-deletion of the three M1 scoping
+docs as the milestone-terminal PR).
 
-The deliberation prose with rejected alternatives lives in
-[`scoping/m1-phase-1-3.md`](/docs/plans/epics/madrona-feedback/scoping/m1-phase-1-3.md);
-that scoping doc deletes in batch with sibling scoping docs as
-part of 1.3.2's commit set per the milestone doc's batch-deletion
-commitment.
+Plan doc retained because it owns the route + form contracts the
+1.3.1 implementation encodes; deletes in a future cleanup pass
+once the M1 plan-doc-retention question is resolved at a higher
+level (sibling 1.1 / 1.2 plan docs apply the same retention
+rationale).
 
 ## Context
 
