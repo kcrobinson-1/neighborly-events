@@ -403,10 +403,18 @@ recurred).
 **Activates:** Bet 2 (directly — produces the first numerator
 entry), Bet 1 (over time, by reducing the rules that justify
 long plans).
-**Status:** candidate.
-**Notes:** worth running after one or two consecutive months of
-no carve-out triggers fire. Until then, deleting a carve-out
-risks reintroducing the failure mode it was added to prevent.
+**Status:** partially landed (2026-05-08).
+**Notes:** the 2026-05-08 cascade-fix Log entry below ran a
+narrow A4-shaped consolidation on the "Plan code minimalism"
+section: stripped the data-structure carve-out, the directional-
+pseudocode framing, the author-side falsifier check, and the M1
+phase 1.1 anecdote; added the companion "Plan-doc review stance"
+section. Net delta on `shared.md`: 503 → 489 lines. This produced
+the first deletion-PR numerator for Bet 2. Remaining A4 surface
+(broader merge of redundant rules across the rest of `shared.md`
+and `phase.md`) still gated as before — worth running after one
+or two consecutive months of no carve-out triggers fire on the
+remaining rules.
 
 ### A5: Narrow the AGENTS.md mandatory pre-edit reads
 
@@ -495,9 +503,18 @@ codifying:
    names five rules the user holds mentally that aren't in the
    prompt text. For non-Claude contexts the rules need to live in
    the prompt itself, not in the user's head.
-6. The code-block rule lacks the data-structure carve-out the
+6. ~~The code-block rule lacks the data-structure carve-out the
    contributor's existing memory has; if the template generalizes
-   to plan docs, that carve-out becomes load-bearing.
+   to plan docs, that carve-out becomes load-bearing.~~ Resolved
+   2026-05-08 — the data-structure carve-out was deleted from
+   both the contributor's memory rule and from
+   `docs/agents/planning/shared.md` "Plan code minimalism" as
+   part of the cascade-fix structural change (see Log entry
+   below). The honest version of the rule is now "no fenced code
+   blocks of any kind in plan or scoping docs," which means the
+   template's existing five-line cap is now stricter than the
+   plan-doc rule it would generalize to and needs adjustment if
+   the codification fork lands.
 
 Prior-art template (verbatim from the originating session — keep
 embedded so the next codification pass can address the gaps
@@ -565,7 +582,65 @@ Append-only. Each entry: date + 1–3 bullets on what moved, what
 didn't, and any change to the diagnosis or bets. Do not edit
 prior entries.
 
-- *No log entries yet. Next review trigger options below.*
+### 2026-05-08 — structural fix to break the code-shape review cascade
+
+- **Stripped the data-structure carve-out from `shared.md`
+  "Plan code minimalism."** The carve-out admitted code-shaped
+  content under the framing "shape isn't syntax," which
+  reviewers don't actually distinguish; this was the cascade's
+  entry point. New rule: no fenced code blocks of any kind in
+  plan or scoping docs — inline backticks for identifiers and
+  short signatures stay fine. Same change applied to the
+  contributor's auto-memory rule. Removed alongside the carve-
+  out: the directional-pseudocode framing, the author-side
+  falsifier check, and the M1 phase 1.1 SQL-subquery anecdote.
+  All three existed to triage "is this snippet acceptable" —
+  unnecessary once the answer is "no fenced code blocks."
+- **Added `shared.md` "Plan-doc review stance"** as the
+  companion rule on the demand side. Plan- and scoping-doc PRs
+  now include a `## Review Stance` section in the PR body that
+  names what reviewers should and shouldn't focus on. Header
+  lives in the PR body, not the durable doc — shifting the
+  review interaction without bloating every plan with the same
+  paragraph. Tracking-doc PRs already carried an equivalent
+  stance per this roadmap's own precedent; the new rule
+  generalizes it to the plan and scoping surfaces where the
+  cascade actually originates.
+- **Net delta on `shared.md`**: 503 → 489 lines (−14). The
+  removed Plan code minimalism sub-rules collapsed from ~100
+  lines to ~44; the new Plan-doc review stance adds ~46. First
+  non-zero numerator entry for Bet 2's monthly rule-deletion /
+  rule-addition ratio.
+
+**Effect on bets.** Bet 2 (rule-deletion ratio) gets its first
+numerator entry. Bet 3 (rule-retirement convention) remains a
+roadmap-only convention until A1 lands. Bets 2 and 3 should
+now move faster than the original "two-month" target predicted
+because the cascade's most-recurring rule-addition trigger
+(code-shape Codex findings on plan docs) has been removed at
+its source. Bet 1 (plan LOC ≤ code+test LOC per epic) is not
+directly affected, but the removed sub-rules contributed to
+the rule load that justified long plans, so this fix reduces a
+downstream pressure on Bet 1 and Bet 4.
+
+**Audit done as part of the fix.** Walked `shared.md` and
+`phase.md` for other rules driven by code-shape Codex findings
+on plan docs. None found beyond the sub-rules removed here —
+the cascade's surface area was concentrated in "Plan code
+minimalism." Other rules respond to genuinely-different
+planning-discipline learnings (URL retargets, wrapper-script
+preference, hard navigation for cross-app destinations,
+locator stability after a URL retarget, doc-only phase carve-
+out, etc.). Flagged as a future A4-pass candidate, **not**
+deleted in this fix: the explicit trigger enumeration inside
+the "Verified by:" annotations rule is redundant with the
+section's own "trigger enumeration is illustrative, not
+exhaustive" catch-all sentence. Worth deleting once the
+broader A4 gating timeline elapses without the enumeration's
+specific surfaces re-firing — premature here.
+
+**Action Layer follow-through.** A4 marked partially landed.
+A8 gap 6 (the carve-out gap) marked resolved.
 
 ### Re-review triggers
 
