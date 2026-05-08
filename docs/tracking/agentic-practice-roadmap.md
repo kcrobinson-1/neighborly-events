@@ -237,9 +237,20 @@ ratio in `docs/agents/` to ≥ 0.3.
 **Ties to:** "Rule-density compounding" / no PR has deleted a rule.
 **Measure:** per calendar month, enumerate merge commits that touch
 `docs/agents/**` and classify each by net line-count delta (positive
-or negative). Standard git tooling against the `docs/agents/` path
-suffices; the procedure is prose-described rather than scripted
-because this doc is a tracking doc, not a runbook.
+or negative). Net line direction is a **proxy** for rule
+addition/deletion, not a literal count: a wording-cleanup PR with
+no rule changes counts as deletion-shaped, and a PR that adds a
+rule while consolidating prose elsewhere may net negative. The
+proxy is directionally accurate because the cascade this bet
+measures produces both rules *and* the prose justifying them;
+either reduction is the discipline the bet wants, and a
+rule-add-with-consolidation PR netting negative reflects exactly
+the pattern Bet 3 is trying to encourage. If the proxy starts
+producing systematically misleading signal — e.g., a string of
+net-negative PRs that don't actually retire any rule — revise the
+Measure or rename the Bet to reflect what's actually being
+tracked. Standard git tooling against the `docs/agents/` path
+suffices for the enumeration.
 **Target:** ratio ≥ 0.3 (≥ 1 deletion PR per ~3 addition PRs) within
 two months.
 **Today:** ratio ≈ 0 in the last 30 days.
