@@ -113,6 +113,18 @@ PR.
   is a repo collaborator (owner, member, or collaborator
   status). Comments, labels, and ready-for-review
   transitions from non-collaborators no-op.
+- **Trusted code only in secret-bearing jobs.** The trigger
+  job runs scripts checked out from the default branch, never
+  from a PR-controlled ref. PR content reaches the classifier
+  via fetched git refs (no checkout). Required because the
+  `issue_comment` event runs from the default branch with
+  full secret access regardless of fork status — without this
+  contract a fork could plant a malicious script that fires
+  when a trusted collaborator types `/deploy-preview`. The
+  gate job has no secrets and may continue to run the PR's
+  classifier directly; on fork PRs its `GITHUB_TOKEN` is
+  read-only, so a malicious classifier can't fake a success
+  status.
 - **Stale results can't leak.** Status checks are SHA-keyed.
   A new push posts a fresh pending check on the new SHA;
   the old SHA's prior success is irrelevant to merge.
