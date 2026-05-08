@@ -1,21 +1,32 @@
 name: Preview deploys
 
-# Implements docs/plans/vercel-preview-deploy-budget.md.
+# Manages Vercel preview deployments for pull requests with a SHA-pinned,
+# human-triggered, terminal-state-aware gate that branch protection can
+# require. Two reasons this exists rather than relying on Vercel's Git
+# auto-deploys:
+#
+#  - PR pushes don't auto-burn Vercel deployment quota; the trigger only
+#    fires on an explicit human signal.
+#  - The merge button stays grey until a preview has actually rendered
+#    successfully for the current head SHA — a property Vercel's
+#    auto-attached checks don't enforce on their own.
 #
 # Two jobs:
-#  - gate     — runs on every PR push; classifies the diff and posts a
-#               `preview-deploy` status check on the head SHA (success for
-#               docs-only, pending otherwise).
-#  - trigger  — runs on a human signal (PR comment `/deploy-preview`,
-#               `preview` label add, or ready-for-review transition);
-#               fires Vercel preview deployments pinned to the PR head SHA,
-#               polls them to terminal state, and flips `preview-deploy`
-#               to success / failure.
+#  - gate    — runs on every PR push; classifies the diff via
+#              scripts/vercel/classify-paths.sh and posts a `preview-deploy`
+#              GitHub status check on the head SHA (success for docs-only
+#              diffs, pending otherwise).
+#  - trigger — runs on a human signal (PR comment `/deploy-preview`,
+#              `preview` label add, or `ready_for_review` transition);
+#              delegates to scripts/vercel/preview-deploy-trigger.mjs, which
+#              calls Vercel's create-deployment API once per affected
+#              project (SHA-pinned), polls each to terminal state, posts a
+#              sticky PR comment with results, and flips `preview-deploy`
+#              to success only if every affected project reached READY.
 #
-# Shadow phase: this workflow lands while Vercel's Git auto-deploys are
-# still on for branches and the main ruleset still requires Vercel's
-# auto-attached checks. The `preview-deploy` status check is produced but
-# nothing requires it. The cutover PR flips both atomically.
+# Trusted-actor gate: triggers from non-collaborators no-op.
+# Required secrets: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID_WEB,
+# VERCEL_PROJECT_ID_SITE.
 
 on:
   pull_request:
