@@ -192,7 +192,10 @@ jobs:
           # GitHub mirrors PR heads — including from forks — at
           # refs/pull/<n>/head in the base repo. Fetching this ref makes the
           # PR's tree reachable for `git diff` without ever checking it out.
-          git fetch origin "refs/pull/$PR_NUMBER/head" --depth=50 2>/dev/null || true
+          # Full fetch (no --depth): a long-lived branch whose merge-base is
+          # older than any shallow window would otherwise fail the three-dot
+          # diff in the next step with "no merge base".
+          git fetch origin "refs/pull/$PR_NUMBER/head" 2>/dev/null || true
           git fetch origin "$BASE_REF" 2>/dev/null || true
           # Verify the SHA captured at trigger time is still reachable. If a
           # force-push happened during the trigger run, $HEAD_SHA may have

@@ -11,9 +11,17 @@
 //   the workflow at trigger time; a later push will get its own pending check
 //   from the gate job and override.
 //
-// Configuration is via env vars (no CLI args). All required env presence is
-// validated up front; missing values fail fast with a status-check 'error' and
-// a sticky PR comment so the failure is visible.
+// Configuration is via env vars (no CLI args). Env reads are split into two
+// tiers so that a missing secret surfaces as a `preview-deploy` `error` status
+// + sticky PR comment, rather than crashing the process before the error
+// handler can run:
+//
+//  - module scope: only the env vars needed to *report* errors (GitHub creds
+//    + identifiers). These come from the workflow YAML's env block and are
+//    always present in well-formed runs.
+//  - inside main(): everything else (deploy-side config). A throw here goes
+//    through main().catch() which posts the error via the module-scope
+//    helpers.
 
 const env = (key, { required = true, fallback = null } = {}) => {
   const v = process.env[key];
@@ -24,43 +32,23 @@ const env = (key, { required = true, fallback = null } = {}) => {
   return v;
 };
 
-// Required configuration
+// ─── Reporting config (read at module load) ──────────────────────────────
+//
+// These are always set by the workflow YAML's top-level env block plus
+// the trigger step's secrets passthrough; missing any of them indicates a
+// workflow misconfiguration the script can't recover from anyway.
+
 const GITHUB_TOKEN = env('GITHUB_TOKEN');
 const GITHUB_REPOSITORY = env('GITHUB_REPOSITORY'); // owner/repo
 const PR_NUMBER = parseInt(env('PR_NUMBER'), 10);
-const HEAD_REF = env('HEAD_REF');
 const HEAD_SHA = env('HEAD_SHA');
-const CLASSIFICATION = env('CLASSIFICATION');
-const VERCEL_TOKEN = env('VERCEL_TOKEN');
-const VERCEL_ORG_ID = env('VERCEL_ORG_ID');
-const VERCEL_PROJECT_ID_WEB = env('VERCEL_PROJECT_ID_WEB');
-const VERCEL_PROJECT_ID_SITE = env('VERCEL_PROJECT_ID_SITE');
-
-// Optional configuration with defaults
 const STATUS_CONTEXT = env('STATUS_CONTEXT', { required: false, fallback: 'preview-deploy' });
 const STICKY_HEADER = env('STICKY_HEADER', { required: false, fallback: '<!-- preview-deploy-sticky -->' });
-const POLL_TIMEOUT_SECONDS = parseInt(env('POLL_TIMEOUT_SECONDS', { required: false, fallback: '600' }), 10);
-const POLL_INTERVAL_SECONDS = parseInt(env('POLL_INTERVAL_SECONDS', { required: false, fallback: '10' }), 10);
 
 const [OWNER, REPO] = GITHUB_REPOSITORY.split('/');
 const SHORT_SHA = HEAD_SHA.substring(0, 7);
 
-const PROJECTS = {
-  web: { label: 'apps/web', slug: 'neighborly-scavenger-game-web', id: VERCEL_PROJECT_ID_WEB },
-  site: { label: 'apps/site', slug: 'neighborly-events-site', id: VERCEL_PROJECT_ID_SITE },
-};
-
-const affectedProjects = (() => {
-  switch (CLASSIFICATION) {
-    case 'web': return ['web'];
-    case 'site': return ['site'];
-    case 'both': return ['web', 'site'];
-    case 'docs-only': return [];
-    default: throw new Error(`Unknown classification: ${CLASSIFICATION}`);
-  }
-})();
-
-// ─── API helpers ──────────────────────────────────────────────────────────
+// ─── GitHub API helpers (only depend on reporting config) ────────────────
 
 async function gh(method, path, body) {
   const res = await fetch(`https://api.github.com${path}`, {
@@ -79,25 +67,6 @@ async function gh(method, path, body) {
   return res.status === 204 ? null : res.json();
 }
 
-async function vercel(method, path, body) {
-  const sep = path.includes('?') ? '&' : '?';
-  const res = await fetch(`https://api.vercel.com${path}${sep}teamId=${VERCEL_ORG_ID}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${VERCEL_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(`Vercel ${method} ${path}: ${res.status} ${text}`);
-  }
-  return text ? JSON.parse(text) : null;
-}
-
-// ─── Status check ────────────────────────────────────────────────────────
-
 async function setStatus(state, description, target_url) {
   await gh('POST', `/repos/${OWNER}/${REPO}/statuses/${HEAD_SHA}`, {
     state,
@@ -106,8 +75,6 @@ async function setStatus(state, description, target_url) {
     target_url,
   });
 }
-
-// ─── Sticky PR comment ───────────────────────────────────────────────────
 
 async function findStickyComment() {
   let page = 1;
@@ -134,84 +101,127 @@ async function upsertSticky(body) {
   }
 }
 
-// ─── Vercel deploy ───────────────────────────────────────────────────────
-
-async function createDeployment(projectKey) {
-  const project = PROJECTS[projectKey];
-  const result = await vercel('POST', '/v13/deployments', {
-    name: project.slug,
-    project: project.id,
-    gitSource: {
-      type: 'github',
-      org: OWNER,
-      repo: REPO,
-      ref: HEAD_REF,
-      sha: HEAD_SHA,
-    },
-  });
-  return {
-    projectKey,
-    id: result.id,
-    inspectorUrl: result.inspectorUrl,
-    url: result.url,
-  };
-}
-
-async function pollDeployment(deployment) {
-  const start = Date.now();
-  const deadlineMs = start + POLL_TIMEOUT_SECONDS * 1000;
-  while (Date.now() < deadlineMs) {
-    const result = await vercel('GET', `/v13/deployments/${deployment.id}`);
-    const state = result.readyState || result.status;
-    if (['READY', 'ERROR', 'CANCELED'].includes(state)) {
-      return {
-        ...deployment,
-        state,
-        url: result.url || deployment.url,
-        deployedSha: result.meta?.githubCommitSha,
-      };
-    }
-    await new Promise(r => setTimeout(r, POLL_INTERVAL_SECONDS * 1000));
-  }
-  return { ...deployment, state: 'TIMEOUT' };
-}
-
-// ─── Comment rendering ───────────────────────────────────────────────────
-
-function renderComment(results, { inflight = false } = {}) {
-  const lines = [`**Preview deploys** for \`${SHORT_SHA}\``, ''];
-  for (const r of results) {
-    const project = PROJECTS[r.projectKey];
-    let line;
-    if (inflight && !['ERROR', 'CANCELED', 'TIMEOUT'].includes(r.state)) {
-      line = `- ⏳ **${project.label}** — building ([inspect](${r.inspectorUrl}))`;
-    } else {
-      switch (r.state) {
-        case 'READY':
-          line = `- ✅ **${project.label}** — https://${r.url}`;
-          break;
-        case 'ERROR':
-        case 'CANCELED':
-          line = `- ❌ **${project.label}** — ${r.state.toLowerCase()}`
-            + (r.inspectorUrl ? ` ([inspect](${r.inspectorUrl}))` : '')
-            + (r.error ? ` — ${r.error}` : '');
-          break;
-        case 'TIMEOUT':
-          line = `- ⏱ **${project.label}** — did not terminate within ${POLL_TIMEOUT_SECONDS}s`
-            + (r.inspectorUrl ? ` ([inspect](${r.inspectorUrl}))` : '');
-          break;
-        default:
-          line = `- ❓ **${project.label}** — unknown state '${r.state}'`;
-      }
-    }
-    lines.push(line);
-  }
-  return lines.join('\n');
-}
-
 // ─── Main ────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Deploy-side env reads happen here, inside main(), so failures route
+  // through main().catch() and become a reported `error` status check.
+  const HEAD_REF = env('HEAD_REF');
+  const CLASSIFICATION = env('CLASSIFICATION');
+  const VERCEL_TOKEN = env('VERCEL_TOKEN');
+  const VERCEL_ORG_ID = env('VERCEL_ORG_ID');
+  const VERCEL_PROJECT_ID_WEB = env('VERCEL_PROJECT_ID_WEB');
+  const VERCEL_PROJECT_ID_SITE = env('VERCEL_PROJECT_ID_SITE');
+  const POLL_TIMEOUT_SECONDS = parseInt(env('POLL_TIMEOUT_SECONDS', { required: false, fallback: '600' }), 10);
+  const POLL_INTERVAL_SECONDS = parseInt(env('POLL_INTERVAL_SECONDS', { required: false, fallback: '10' }), 10);
+
+  const PROJECTS = {
+    web: { label: 'apps/web', slug: 'neighborly-scavenger-game-web', id: VERCEL_PROJECT_ID_WEB },
+    site: { label: 'apps/site', slug: 'neighborly-events-site', id: VERCEL_PROJECT_ID_SITE },
+  };
+
+  const affectedProjects = (() => {
+    switch (CLASSIFICATION) {
+      case 'web': return ['web'];
+      case 'site': return ['site'];
+      case 'both': return ['web', 'site'];
+      case 'docs-only': return [];
+      default: throw new Error(`Unknown classification: ${CLASSIFICATION}`);
+    }
+  })();
+
+  // Vercel-side helpers as closures so they capture the local config above
+  // without leaking it to module scope.
+  async function vercel(method, path, body) {
+    const sep = path.includes('?') ? '&' : '?';
+    const res = await fetch(`https://api.vercel.com${path}${sep}teamId=${VERCEL_ORG_ID}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${VERCEL_TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Vercel ${method} ${path}: ${res.status} ${text}`);
+    }
+    return text ? JSON.parse(text) : null;
+  }
+
+  async function createDeployment(projectKey) {
+    const project = PROJECTS[projectKey];
+    const result = await vercel('POST', '/v13/deployments', {
+      name: project.slug,
+      project: project.id,
+      gitSource: {
+        type: 'github',
+        org: OWNER,
+        repo: REPO,
+        ref: HEAD_REF,
+        sha: HEAD_SHA,
+      },
+    });
+    return {
+      projectKey,
+      id: result.id,
+      inspectorUrl: result.inspectorUrl,
+      url: result.url,
+    };
+  }
+
+  async function pollDeployment(deployment) {
+    const start = Date.now();
+    const deadlineMs = start + POLL_TIMEOUT_SECONDS * 1000;
+    while (Date.now() < deadlineMs) {
+      const result = await vercel('GET', `/v13/deployments/${deployment.id}`);
+      const state = result.readyState || result.status;
+      if (['READY', 'ERROR', 'CANCELED'].includes(state)) {
+        return {
+          ...deployment,
+          state,
+          url: result.url || deployment.url,
+          deployedSha: result.meta?.githubCommitSha,
+        };
+      }
+      await new Promise(r => setTimeout(r, POLL_INTERVAL_SECONDS * 1000));
+    }
+    return { ...deployment, state: 'TIMEOUT' };
+  }
+
+  function renderComment(results, { inflight = false } = {}) {
+    const lines = [`**Preview deploys** for \`${SHORT_SHA}\``, ''];
+    for (const r of results) {
+      const project = PROJECTS[r.projectKey];
+      let line;
+      if (inflight && !['ERROR', 'CANCELED', 'TIMEOUT'].includes(r.state)) {
+        line = `- ⏳ **${project.label}** — building ([inspect](${r.inspectorUrl}))`;
+      } else {
+        switch (r.state) {
+          case 'READY':
+            line = `- ✅ **${project.label}** — https://${r.url}`;
+            break;
+          case 'ERROR':
+          case 'CANCELED':
+            line = `- ❌ **${project.label}** — ${r.state.toLowerCase()}`
+              + (r.inspectorUrl ? ` ([inspect](${r.inspectorUrl}))` : '')
+              + (r.error ? ` — ${r.error}` : '');
+            break;
+          case 'TIMEOUT':
+            line = `- ⏱ **${project.label}** — did not terminate within ${POLL_TIMEOUT_SECONDS}s`
+              + (r.inspectorUrl ? ` ([inspect](${r.inspectorUrl}))` : '');
+            break;
+          default:
+            line = `- ❓ **${project.label}** — unknown state '${r.state}'`;
+        }
+      }
+      lines.push(line);
+    }
+    return lines.join('\n');
+  }
+
+  // ── deploy flow ────────────────────────────────────────────────────────
+
   if (affectedProjects.length === 0) {
     await upsertSticky(`No preview needed for \`${SHORT_SHA}\` — diff is docs-only.`);
     await setStatus('success', 'no preview needed for docs-only changes');
