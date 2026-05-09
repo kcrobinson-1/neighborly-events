@@ -323,56 +323,55 @@ identity-fingerprint procedure that captures positive + negative
 response signatures and asserts against both. The load-bearing
 case is exactly when the exercise changes the procedure.
 
-## Cost rejected options at their lightest viable shape
+## Decompose options into shapes before analyzing
 
 When a Choose-One decision (scoping decision, framework / library
-choice, alternative-evaluation in a Risk Register) rejects
-alternatives, evaluate each rejected option at its **lightest viable
-shape** — not at a maximal-cost strawman. The recurring failure mode
-is asymmetric pricing: the chosen option gets fine-grained costing
-while rejected options get bundled into "all the heavyweight forms"
-of their category. The chosen path looks cheaper than it is; the
-rejected paths look more expensive than they are.
+choice, alternative-evaluation in a Risk Register) lays out the
+candidate set, the first step is **enumeration**, not analysis.
+Each named option can hide multiple sub-shapes with materially
+different cost/benefit profiles. Before accepting or rejecting any
+option, ask: **are there sub-shapes — variants of how this option
+could be implemented — that would change the analysis?** Decompose
+first, then analyze each shape on its own merits.
 
-Before locking the decision, ask of each rejected option: **is this
-the cheapest viable form of this option, or am I rejecting the
-maximal version?** When a category name hides multiple distinct
-shapes — "server-mediated write" hides "SECURITY DEFINER RPC via
-`.rpc()`" and "Edge Function wrapping the RPC" as separate cost
-shapes; "abstraction" hides extracted-helper and full hierarchy;
-"framework integration" hides minimal adapter and full rewrite —
-split the category and cost each shape separately. Reject the
-cheapest shape on its own merits, or accept that the category
-retains a viable contender.
+The recurring failure mode is category-level analysis: the option's
+category name is treated as a single thing, the rejection rationale
+holds against one shape that happens to be in the category, and
+sibling shapes slip through unevaluated. The decision looks
+well-reasoned in retrospect because the rationale holds against the
+strawman it cited — the failure is invisible until implementation
+surfaces a constraint (or unlocks a benefit) that an unevaluated
+sibling shape would have caught.
 
-This rule is adjacent to the falsifiability check above but
-distinct: that one asks "is this load-bearing claim provable?"; this
-one asks "is the rejection of this alternative resting on its
-cheapest viable shape?" Asymmetric pricing produces decisions that
-look well-reasoned in retrospect because the rejection rationale
-holds against the strawman it cited — the failure is invisible until
-implementation surfaces a constraint that only the unevaluated light
-shape would have caught.
+Categories that frequently hide multiple shapes: "server-mediated
+write" hides "SECURITY DEFINER RPC via `.rpc()`" and "Edge Function
+wrapping the RPC"; "abstraction" hides extracted-helper,
+shared-module, and full class hierarchy; "framework integration"
+hides minimal adapter, wrapper-with-escape-hatch, and full rewrite;
+"caching layer" hides per-request, per-session, and shared CDN. If
+a candidate's name covers more than one viable shape, split it
+before scoring.
 
 Recurring trap: madrona feedback scoping framed the submission-path
 decision as "direct anon insert" vs "Server Action" vs "Edge
-Function," conflating "SECURITY DEFINER RPC called via `.rpc()`"
-with "Edge Function wrapping the RPC." The lighter RPC-only shape
-(same round-trip count as direct insert, no service-role key, no
-separate runtime) was never priced separately. The heavier
-Edge-Function shape was rightly rejected; its lighter sibling
-slipped through unevaluated, and the chosen option shipped a
-PostgREST/grant interaction (`INSERT … RETURNING` requires `SELECT`,
-anon was INSERT-only) that the lighter shape would have sidestepped.
-See
+Function." Option (c) "Edge Function" was actually two distinct
+shapes — "SECURITY DEFINER RPC called via `.rpc()`" (no separate
+runtime, same round-trip count as direct insert) and "Edge Function
+wrapping the RPC" (separate Deno runtime, multi-write
+orchestration). Both were treated as one. The heavier shape was
+rightly rejected; its lighter sibling was never decomposed out of
+the category. The chosen option shipped a PostgREST/grant
+interaction (`INSERT … RETURNING` requires `SELECT`, anon was
+INSERT-only) that the RPC-alone shape would have sidestepped at
+scoping time. See
 [supabase/migrations/20260506000000_add_feedback_tables.sql](/supabase/migrations/20260506000000_add_feedback_tables.sql)
 for the grant posture and
 [supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
-for the SECURITY DEFINER RPC pattern that was conflated.
+for the RPC pattern that was conflated.
 
 Pre-existing scoping decisions are not retroactively non-conforming;
-scoping sessions opened from this point forward apply the lightest-
-shape pricing check before locking decisions.
+scoping sessions opened from this point forward decompose options
+into shapes before locking the candidate set.
 
 ## Anti-pattern: planning artifacts that only cite each other
 
