@@ -120,32 +120,62 @@ into one canonical store; reads are uniform.
 **Resolution.** Option A. The new subscription table is canonical;
 feedback emits a write-through.
 
-### 2. Subscription-table shape — global table with source attribution columns [Resolved → Option D1]
+### 2. Subscription-table shape — composite (event_slug, email) primary key, event_slug standing in for an org/tenant concept until one exists [Resolved → Option C, with explicit org-stand-in framing]
 
-**What was decided.** One row per email (case-normalized), with
-columns capturing where the subscription originated (surface and
-optional event slug). Per-event "lists" are derived by query filter
-on the source-event column rather than encoded as separate tables.
-Final column types are deferred to the implementing plan; only the
-load-bearing column set is scoped here.
+**What was decided.** Composite primary key on `(event_slug,
+email-normalized)`. Every subscription is event-scoped because every
+public surface that produces one is event-scoped — the feedback form
+lives at `/event/<slug>/feedback`, and the future standalone signup
+widget will live somewhere under `/event/<slug>/*` for the same
+reason every public surface in this product does. There is no
+slug-less subscription shape to model. Per-event consent is recorded
+per-event; the same email opting in to Madrona '26 and Madrona '27
+is two rows, two consents, two unsubscribe entry points — that's
+correct, not a bug. `event_slug` stands in for the org/tenant unit
+of consent for now; if a future epic introduces a real multi-event-
+host concept, it adds an `org_id` column (or equivalent) and the
+unit of consent migrates without the per-event rows becoming wrong.
+
+**Reframed from earlier scoping.** The first draft of this decision
+chose a global-email-keyed shape (then-named D1) on the framing
+"one canonical yes-or-no per email." That framing was wrong on two
+fronts surfaced during review: (a) the product has no slug-less
+surface, so a `source_event_slug = null` row is a shape that can't
+be produced; (b) per-event consent IS the unit of consent in v1,
+not a degenerate case of a global subscription. Reviewer Codex
+caught one symptom directly — first-write-wins on a nullable
+attribution column meant a hypothetical "standalone first, Madrona
+feedback opt-in second" sequence would silently drop the second
+event's row, and Madrona's per-event export would miss it. The
+maintainer caught the deeper framing error: the wrong axis was
+"global vs. per-event" when the right axis was "what's the unit of
+consent." Composite-PK eliminates the whole class of bug; the
+specific Codex case can't occur because both writes carry
+`event_slug = 'madrona'` and resolve to the same row under ON
+CONFLICT.
 
 **Why it mattered.** The shape choice locks how the standalone
-signup feature, the feedback write-through, and any future organizer
-operations (export per-event subscribers, unsubscribe an email
-across all surfaces) compose. Picking a shape that makes a
-plausible v2 use case impossible without migration is the trap.
+signup feature, the feedback write-through, per-event organizer
+exports, and any future organizer operations compose. Picking the
+wrong unit of consent forces either a forward migration that has
+to reconstruct per-event consent records that were never collected,
+or a v1 that silently misclassifies opt-ins.
 
 **Options considered.**
 
-1. **Slug-keyed per-event lists (Option C).** Composite key on
-   `(email, event_slug)`; one row per (email, event) pair.
-2. **Global table, single row per email (Option D).** Email is the
-   primary key; source attribution columns capture origin.
+1. **Composite (event_slug, email-normalized) PK; per-event
+   consent unit (Option C, with org-stand-in framing).** One row
+   per (event_slug, email) pair. Same email across two events =
+   two rows. Per-event export is a primary-key range scan. The
+   `event_slug` column stands in for an org/tenant unit until a
+   future epic introduces one.
+2. **Global table, single row per email (Option D).** Email is
+   the primary key; source attribution columns capture origin.
    Decomposes into:
-   - **D1.** First-write-wins on source attribution. The first
-     surface that subscribes the email records its source; later
-     opt-ins from a different surface are no-ops (or update
-     `last_seen_at` only).
+   - **D1.** Nullable `source_event_slug` column, first-write-
+     wins on attribution. Rejected: relies on a slug-less surface
+     that doesn't exist in this product, and produces the
+     attribution-loss bug Codex flagged.
    - **D2.** Composite primary key on `(email, source_surface)`;
      the same email can have multiple rows if it opted in through
      multiple surfaces.
@@ -153,80 +183,85 @@ plausible v2 use case impossible without migration is the trap.
    subscriber row plus a separate `subscription_events` table
    recording each opt-in moment.
 
-**Came down to.** What information about origin we actually need to
-preserve, against the cost of preserving it.
+**Came down to.** What the unit of consent actually is in v1, and
+whether any of the global-keyed shapes carry their weight against
+that reality.
 
-- *Option C.* Slug-keyed lists make "give me the Madrona '26
-  subscribers" a primary-key range scan, but they foreclose
-  cross-event consolidation: the same email subscribed to two
-  events is two rows with no link between them, "unsubscribe me
-  from everything" is N writes, and the standalone signup
-  surface (which has no event slug) needs a sentinel slug or a
-  separate table. The Madrona '26 → '27 transition specifically
-  would either inherit '26's list (one row per email per event,
-  duplicated) or start fresh, neither of which the maintainer's
-  framing wants.
-- *Option D1.* The lightest shape that satisfies "one canonical
-  yes-or-no per email, with attribution of where they entered."
-  Per-event lists are recovered by `where source_event_slug =
-  'madrona'`. The standalone surface writes rows with
-  `source_event_slug = null`. Re-opting-in via a second surface
-  is a no-op (the email is already a subscriber); the audit
-  signal "this attendee opted in via the feedback form for
-  Madrona '26" is preserved on the feedback row itself
-  (Decision 5), not on the subscription row.
-- *Option D2.* Worth carving out from the D family because the
-  category name "global table" hides it. Records every opt-in
-  surface separately for the same email. Pro: full multi-source
-  history at the subscription store. Con: "is this email
-  subscribed" becomes a `select … limit 1` rather than a primary-
-  key lookup; "unsubscribe me" becomes N writes across all source
-  surfaces; conflict semantics ("opted in via standalone, then
-  opted in via feedback" — what does the row's confirmation
-  status say?) need bespoke resolution. No v1 use case for the
-  history beyond what the per-row audit on `feedback_submissions`
-  already preserves.
-- *Option E.* Same multi-source history concern as D2, paid in a
-  more normalized form (one canonical row + a history join). Pro:
-  "is subscribed" is a clean primary-key lookup against the
-  subscriber row; history is a separate query. Con: two-table
-  schema, two-table writes on every opt-in, two-table queries on
-  every read. The benefit (history) has no v1 consumer.
+- *Option C (chosen).* Matches the surface reality (every signup
+  comes from an event-scoped page). "Give me the Madrona '26
+  subscribers" is a primary-key range scan
+  (`where event_slug = 'madrona'`). ON CONFLICT on
+  `(event_slug, email)` makes "the same attendee opts in twice
+  via different surfaces in the same event" a single-row no-op
+  (or `last_seen_at` refresh). "Unsubscribe me from this event"
+  is a single-row write. "Unsubscribe me from everything" is N
+  writes today, which is correct under the per-event-consent
+  framing — the user signed up N times, they unsubscribe N
+  times. When a real multi-event-host concept emerges, an
+  `org_id` migration adds it; per-event rows remain valid as
+  audit. The Madrona '26 → '27 transition is two distinct lists
+  rather than one shared list, which matches what consent
+  semantics actually require ('27 attendees did not consent to
+  receiving '26 emails and vice versa).
+- *Option D1.* Already rejected above. The "one canonical yes-or-
+  no per email" framing imported a global-newsletter mental model
+  the product doesn't have.
+- *Option D2.* Same surface-reality problem as D1: "the same
+  email opted in through multiple surfaces" is a scenario, but
+  in v1 those surfaces are all event-scoped, so the more
+  meaningful axis is event, not surface. D2's composite key
+  produces multiple rows per email keyed by surface alone (so
+  "Madrona feedback" and "Madrona standalone widget" are two
+  rows for the same event), which is the wrong granularity —
+  it splits per-event consent across surfaces inside the same
+  event.
+- *Option E.* Two-table schema for a history feature with no
+  v1 consumer. Same surface-reality problem.
 
-**Resolution.** Option D1. Load-bearing columns the implementing
-plan will instantiate (final names and types deferred to plan
-time):
+**Resolution.** Option C, with the explicit org-stand-in framing.
+Load-bearing columns the implementing plan will instantiate (final
+names and types deferred to plan time):
 
-- An email column case-normalized at write time, primary key. The
+- An `event_slug` column, NOT NULL, FK against
+  `public.feedback_enabled_events(slug)` (re-using the registry
+  that already gates feedback writes — see Reality-check inputs).
+  When the standalone signup feature ships, its scoping pass
+  decides whether to extend this registry, mint a sibling
+  registry, or relax to free-form text; this scoping doc names
+  the FK as the v1 default since every v1 surface is feedback-
+  registry-gated anyway.
+- An `email` column, NOT NULL, case-normalized at write time. The
   normalization shape (lowercase + trim, `citext`, or a `lower()`
   unique index) is a plan-level call; what's settled is that the
-  same address with different casing is the same subscriber.
-- A first-subscribed timestamp.
-- A source-surface column carrying a small enumerated string
-  ('feedback_form' for the feedback write-through, 'standalone'
-  for the standalone signup surface). The set is closed at the
-  application layer; whether the DB enforces it via CHECK or
-  just by convention is a plan-level call.
-- A nullable source-event-slug column. Set to the event slug for
-  feedback writes; null for standalone signups not associated
-  with any event. Whether to FK against
-  `public.feedback_enabled_events` or carry a free-form text
-  column is a plan-level call (see Reality-check inputs below
-  for what determines the choice).
-- A confirmation-status column (see Decision 7 for the value
-  set).
-- A nullable unsubscribed-at timestamp. Setting it removes the
-  row from "active subscribers" queries; deleting the row is
-  reserved for hard PII redaction. Re-subscribe after
+  same address with different casing is the same subscriber for
+  the same event.
+- The composite primary key over `(event_slug, email)`.
+- A `subscribed_at` timestamp recording the first opt-in for
+  this (event_slug, email) pair.
+- A `source_surface` column ('feedback_form' for the feedback
+  write-through, 'standalone' for the standalone signup widget
+  when it ships). No longer load-bearing for query semantics
+  under composite-PK — kept as audit signal recording which
+  surface produced this row. Closed at the application layer;
+  DB-level CHECK is plan-level.
+- A `confirmation_status` column (see Decision 7 for the value
+  set), per-row so each (event_slug, email) pair carries its
+  own confirmation lifecycle.
+- A nullable `unsubscribed_at` timestamp. Setting it removes the
+  row from "active subscribers for this event" queries; deleting
+  the row is reserved for hard PII redaction. Re-subscribe after
   unsubscribe is plan-level: cleared timestamp on the existing
   row, or new row replacing the old one — the two shapes have
   different audit characteristics and the plan picks.
 
 The table is RLS-locked to service-role writes plus organizer/admin
-read in the same posture as `public.feedback_submissions` (read
-gated on `is_organizer_for_event` or `is_root_admin`); writes from
-the public surfaces go through the SECURITY DEFINER helper named
-in Decision 4.
+read; the read predicate is `is_organizer_for_event` against the
+event identified by `event_slug` or `is_root_admin` — the same
+posture used by `feedback_submissions` at
+[`supabase/migrations/20260506000000_add_feedback_tables.sql:89-98`](/supabase/migrations/20260506000000_add_feedback_tables.sql),
+which now applies cleanly because every row carries a non-null
+`event_slug`. Writes from the public surfaces go through the
+internal SECURITY DEFINER helper named in Decision 4.
 
 ### 3. Backfill — migration-time backfill from existing feedback rows [Resolved → Option F]
 
@@ -292,10 +327,18 @@ them. Decision 7 resolves to single-opt-in v1, which makes F
 straight-line.
 
 **Resolution.** Option F. Implementing migration backfills in the
-same transaction that creates the subscription table, with
-`source_surface = 'feedback_form'` and the existing
-`submitted_at` carried forward as `subscribed_at`. Implementing
-plan owns the SQL; this doc does not draft it.
+same transaction that creates the subscription table, inserting
+one subscription row per `feedback_submissions` row where
+`newsletter_opt_in = true`. Each backfilled row's
+`(event_slug, email)` composite key comes from the feedback row's
+own `event_slug` and (case-normalized) `email`; `source_surface`
+is the literal `'feedback_form'`; `subscribed_at` is the feedback
+row's `submitted_at`. ON CONFLICT on `(event_slug, email)` makes
+the backfill idempotent (re-applying the migration is a no-op),
+and also handles the edge case where the same attendee submitted
+the feedback form twice for the same event with `newsletter_opt_in
+= true` both times — a single subscription row carries forward.
+Implementing plan owns the SQL; this doc does not draft it.
 
 ### 4. Write path from feedback — synchronous write through an internal SECURITY DEFINER helper, called from surface-specific public RPCs [Resolved → Option L, internal-helper variant]
 
@@ -333,9 +376,11 @@ the second axis materially changes the abuse surface:
    inside `submit_feedback`'s transaction; standalone's is
    called inside the standalone RPC's transaction.
 3. **Shared helper, called inside each caller's transaction
-   (Option L).** A single `subscribe_email(p_email,
-   p_source_surface, p_source_event_slug)` SECURITY DEFINER
-   helper. Decomposes into:
+   (Option L).** A single `subscribe_email(p_event_slug, p_email,
+   p_source_surface)` SECURITY DEFINER helper. The
+   composite-PK shape from Decision 2 makes both `p_event_slug`
+   and `p_email` required; `p_source_surface` is the audit-only
+   surface attribution. Decomposes into:
    - **L-public.** Helper is granted EXECUTE to anon and
      authenticated. Surface-specific RPCs are convenience
      wrappers; anon callers may also call the helper directly.
@@ -367,41 +412,49 @@ who controls the source-attribution columns.
   exist to share rules, but the actual sharing is by convention
   not by callsite. Same drift risk, dressed up.
 - *Option L-public.* The category-level "shared helper" answer,
-  rejected on abuse grounds. `p_source_surface` and
-  `p_source_event_slug` are attacker-controlled inputs; granting
-  EXECUTE to anon lets a hostile caller bypass the
-  surface-specific RPCs entirely and write arbitrary attribution
-  tuples — including impersonating the standalone surface from
-  a feedback context, or claiming a `source_event_slug` for an
-  event the attacker has no involvement with. The `submit_feedback`
-  RPC at
+  rejected on abuse grounds. Even with the composite-PK shape
+  from Decision 2 narrowing the helper signature to
+  `(p_event_slug, p_email, p_source_surface)`, two of those
+  three parameters are still attacker-controlled when invoked
+  directly: a hostile anon caller could pick an `event_slug`
+  for any feedback-registered event they want to claim
+  consent against, and stamp `p_source_surface = 'feedback_form'`
+  to forge "they opted in via the feedback form" without ever
+  going through `submit_feedback` (or the inverse: stamp
+  `'standalone'` to forge a signup the standalone surface
+  never produced). The `submit_feedback` RPC at
   [`supabase/migrations/20260509000000_add_submit_feedback_rpc.sql:27-58`](/supabase/migrations/20260509000000_add_submit_feedback_rpc.sql)
   is correctly granted to anon because its parameter set is
-  closed (`p_event_slug` is FK-gated by
-  `feedback_enabled_events`; remaining parameters describe a
-  feedback row's content); the analogy does not transfer to a
-  helper whose parameters include the source-attribution shape
-  itself.
+  closed against this class of attack (`p_event_slug` is FK-
+  gated by `feedback_enabled_events` so only registered slugs
+  are accepted, and the remaining parameters describe a feedback
+  row's content — there is no surface-attribution choice for
+  the caller to make); the analogy does not transfer to a
+  helper that takes `p_source_surface` as a parameter at all.
 - *Option L-internal.* One helper, one set of rules, two
   callers — but the public API is the surface-specific RPCs,
   not the helper. The helper bypasses RLS via SECURITY DEFINER;
   the surface-specific RPCs each control their own attribution
-  by hardcoding `p_source_surface` (and validating
-  `p_source_event_slug` against their own surface's rules — for
-  feedback, the slug must equal the event_slug already gated by
-  the FK in
+  by hardcoding `p_source_surface` (literal in the RPC body,
+  not from a parameter) and pass `p_event_slug` from their own
+  already-gated input — for feedback, the same `p_event_slug`
+  the surrounding `submit_feedback` body uses, gated by the FK
+  in
   [`supabase/migrations/20260506000000_add_feedback_tables.sql:52-53`](/supabase/migrations/20260506000000_add_feedback_tables.sql);
-  for the future standalone surface, the slug is null or
-  validated per that surface's design). ON CONFLICT semantics
-  inside the helper handle duplicate-email opt-ins as no-ops or
-  as a refresh of `last_seen_at` (plan-level call). Failure of
-  the subscription INSERT rolls back the feedback INSERT — a
-  consistency guarantee that matches user expectation: "submit
-  feedback with newsletter checked" should not produce a
-  feedback row claiming opt-in alongside a missing subscription
-  row. The internal-only grant posture is enforced by `revoke
-  execute on function … from public, anon, authenticated`; no
-  matching `grant` is issued for those roles.
+  for the future standalone surface, whatever its scoping pass
+  decides (likely the same FK-gated slug, since the standalone
+  widget renders on event pages). ON CONFLICT on `(event_slug,
+  email)` inside the helper handles duplicate opt-ins (same
+  attendee opts in twice for the same event via different
+  surfaces) as no-ops or as a `last_seen_at` refresh —
+  plan-level call. Failure of the subscription INSERT rolls
+  back the feedback INSERT — a consistency guarantee that
+  matches user expectation: "submit feedback with newsletter
+  checked" should not produce a feedback row claiming opt-in
+  alongside a missing subscription row. The internal-only grant
+  posture is enforced by `revoke execute on function … from
+  public, anon, authenticated`; no matching `grant` is issued
+  for those roles.
 - *Option J.* The async path exposes a window where the feedback
   admin surface says "X opted in" while the subscription store
   doesn't list them. For v1 with manual newsletter export, that
@@ -415,23 +468,27 @@ who controls the source-attribution columns.
   reopens.
 
 **Resolution.** Option L-internal. The implementing plan defines
-the helper's signature and ON CONFLICT semantics; this doc names
-the public API contract (surface-specific RPCs are the boundary;
-the helper is internal-only) and the grant posture (`revoke
-execute … from public, anon, authenticated`; no `grant execute …
-to anon, authenticated` is issued). `submit_feedback`'s body is
-extended to call the helper inside its existing transaction with
-`p_source_surface = 'feedback_form'` (literal, not from a
-parameter) and `p_source_event_slug = p_event_slug` (the same
-already-FK-gated value the existing INSERT uses). The standalone
+the helper's full signature and ON CONFLICT semantics; this doc
+names the parameter shape (`p_event_slug`, `p_email`,
+`p_source_surface` — the composite-PK columns from Decision 2 plus
+the audit-only surface attribution), the public API contract
+(surface-specific RPCs are the boundary; the helper is internal-
+only), and the grant posture (`revoke execute … from public, anon,
+authenticated`; no `grant execute … to anon, authenticated` is
+issued). `submit_feedback`'s body is extended to call the helper
+inside its existing transaction with `p_event_slug = p_event_slug`
+(passing through the already-FK-gated value the existing INSERT
+uses), `p_email = p_email` (passing through the same email value
+the feedback row INSERT writes), and `p_source_surface =
+'feedback_form'` (literal, not from a parameter). The standalone
 signup feature, when scoped, ships its own public SECURITY
 DEFINER RPC that calls the helper with `p_source_surface =
-'standalone'` (literal) and whatever `p_source_event_slug` shape
-that scoping pass settles on. The set of permissible
-`source_surface` values is enforced at the public-RPC boundary
-(each RPC hardcodes one literal); a CHECK constraint on the
-subscription table is a defense-in-depth option the implementing
-plan may add but is not the primary gate.
+'standalone'` (literal); its `p_event_slug` shape is settled in
+that scoping pass. The set of permissible `source_surface` values
+is enforced at the public-RPC boundary (each RPC hardcodes one
+literal); a CHECK constraint on the subscription table is a
+defense-in-depth option the implementing plan may add but is not
+the primary gate.
 
 ### 5. Feedback-row audit flag — keep `newsletter_opt_in` as a denormalized audit signal [Resolved → Option N]
 
@@ -508,14 +565,18 @@ standalone signup is a separate, surface-specific public SECURITY
 DEFINER RPC (working name `submit_newsletter_signup`) granted to
 anon and authenticated. That RPC's body calls the internal
 `subscribe_email` helper from Decision 4 with `p_source_surface =
-'standalone'` (hardcoded literal in the RPC body, not a
-parameter) and whatever `p_source_event_slug` shape the standalone
-scoping pass settles. Per Decision 4's resolution, the helper is
-internal — anon does not call it directly. The helper signature,
-the source-surface literal set ('feedback_form', 'standalone'),
-and the subscription table shape are settled here so the
-standalone feature inherits a contract rather than co-designing
-with this work.
+'standalone'` (hardcoded literal in the RPC body, not a parameter)
+and a `p_event_slug` argument that resolves to the event slug the
+standalone widget renders against (the widget is rendered on event
+pages because every public surface in this product is event-
+scoped per Decision 2's framing; null is not a value the helper
+accepts under the composite-PK shape). Per Decision 4's
+resolution, the helper is internal — anon does not call it
+directly. The helper signature, the source-surface literal set
+('feedback_form', 'standalone'), and the subscription table
+composite-PK shape (Decision 2) are settled here so the standalone
+feature inherits a contract rather than co-designing with this
+work.
 
 **What is deferred to the standalone signup scoping pass.**
 
@@ -523,11 +584,13 @@ with this work.
   embedded component, marketing modal, etc.
 - The trigger for shipping it (which event or organizer ask
   motivates the first deploy).
-- Whether the standalone public RPC accepts a
-  `p_source_event_slug` parameter (for a per-event embed of the
-  widget) or always passes null when calling the internal helper.
-  Either way, the helper itself is reachable only through that
-  surface-specific RPC, never via direct anon execute.
+- Whether the standalone public RPC takes the `event_slug` from
+  its URL path (the widget renders at `/event/<slug>/...` and
+  pulls the slug from route params), from a hidden form field
+  populated by the rendering server component, or via some other
+  mechanism. The helper itself always receives a non-null
+  `p_event_slug` per Decision 2's composite-PK shape; what's
+  deferred is how the public RPC obtains it.
 - Copy, validation feedback, double-submit handling, and any
   thank-you/confirm flow on the standalone surface.
 
@@ -646,13 +709,20 @@ implementing plan re-verifies each at plan time per
   transaction. The plan confirms the function's
   `security definer` posture is preserved and the grant set
   (anon, authenticated) at lines 60-65 is unchanged.
-- **`feedback_enabled_events` registry contents.** Currently
-  contains a single seed for `madrona`
+- **`feedback_enabled_events` registry contents and FK target
+  reuse.** Registry currently contains a single seed for `madrona`
   ([`supabase/migrations/20260506000000_add_feedback_tables.sql:107-109`](/supabase/migrations/20260506000000_add_feedback_tables.sql)).
-  Decision 2's open question on whether the subscription table's
-  `source_event_slug` FKs against this registry depends on whether
-  the standalone signup will ever produce a non-feedback-event
-  slug. Plan-level call.
+  Decision 2 reuses this registry as the FK target for the new
+  subscription table's `event_slug` column, on the basis that
+  every v1 surface that produces a subscription row is event-
+  scoped against a feedback-registered event. The plan confirms
+  the registry's lifecycle (when slugs get added / removed /
+  renamed) accommodates a second downstream FK without
+  introducing weird cross-table coupling at slug-rename time
+  (the existing `on delete restrict` posture at line 53 already
+  blocks slug deletion while feedback rows reference; the new
+  FK extends that block to subscription rows, which is the
+  intended behavior).
 - **Generated types.** `shared/db/types.ts` reflects the current
   feedback table at
   [`shared/db/types.ts:86-126`](/shared/db/types.ts) and the
