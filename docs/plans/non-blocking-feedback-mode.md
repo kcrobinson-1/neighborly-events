@@ -153,6 +153,43 @@ untouched. **Verified by:**
 [apps/web/src/game/gameUtils.ts:43-52](apps/web/src/game/gameUtils.ts:43-52)
 (`getQuestionFeedbackMessage` precedent).
 
+### Pre-game intro copy gains a third branch
+
+[apps/web/src/game/components/GameIntroPanel.tsx:19-22](apps/web/src/game/components/GameIntroPanel.tsx:19-22)
+today computes `modeDescription` from a strict two-way ternary:
+`instant_feedback_required` renders "Answer correctly to unlock
+the next question and a quick sponsor fact," and every other mode
+falls through to "See your score after the last question." A new
+mode added without touching this branch silently inherits the
+score-reveal copy, which directly contradicts the immediate-reveal
+behavior the new mode promises. Non-blocking mode must render its
+own intro copy (working candidate: "See the answer right after
+each question") via either a three-way branch, a `switch`, or a
+`Record<FeedbackMode, string>` mapping — implementer's call. The
+contract is that each `FeedbackMode` value resolves to its own
+copy line, and exhaustiveness is enforced (the `switch` exits
+unreachable, or the `Record` is fully populated, so a future
+fourth mode added without touching this site fails to type-check
+rather than silently falling through).
+
+### Completion-panel answer-review stays scoped to `final_score_reveal`
+
+[apps/web/src/game/components/GameCompletionPanel.tsx:74-75](apps/web/src/game/components/GameCompletionPanel.tsx:74-75)
+gates the end-of-run answer-review section with
+`Boolean(completion) && game.feedbackMode === "final_score_reveal"`.
+The intent is "show the review only when the player hasn't
+already seen their answers during play." For non-blocking mode
+the player has seen each reveal at submit time, so the review
+should stay hidden — and the existing positive-match expression
+already produces this. The contract is that the expression
+**remains a positive match on `final_score_reveal`** rather than
+being broadened to `!== "instant_feedback_required"` or
+`!== "instant_feedback_non_blocking"`; a future fourth mode that
+genuinely needs the end-of-run review would opt in by extending
+the positive list. A regression test in `GameCompletionPanel.test.tsx`
+covers non-blocking mode with `Boolean(completion)` true and
+asserts the answer-review section does **not** render.
+
 ### useGameSession dispatcher branches on the new mode
 
 [apps/web/src/game/useGameSession.ts:126-139](apps/web/src/game/useGameSession.ts:126-139)
@@ -251,6 +288,10 @@ New:
 - Optionally `apps/web/src/game/components/AnswerRevealPanel.tsx`
   — sibling to `CorrectAnswerPanel` for the revealed-incorrect
   case; only if the implementer chooses the two-component shape
+- `tests/web/game/components/GameIntroPanel.test.tsx` — unit
+  coverage for `modeDescription` rendering across all three
+  `FeedbackMode` values (no test file exists for this component
+  today; the new exhaustive branch warrants one)
 
 Modify:
 
@@ -272,6 +313,17 @@ Modify:
 - `apps/web/src/game/components/CurrentQuestionPanel.tsx` — only
   if the inline incorrect-feedback banner needs scoping more
   tightly to `_required`
+- `apps/web/src/game/components/GameIntroPanel.tsx` — turn the
+  two-way `modeDescription` branch into an exhaustive switch /
+  mapping that names copy for the new mode
+- `apps/web/src/game/components/GameCompletionPanel.tsx` — no
+  code change expected; the positive-match expression at
+  [`:74-75`](apps/web/src/game/components/GameCompletionPanel.tsx:74-75)
+  already produces the right behavior for non-blocking mode
+  (review stays hidden because the player saw reveals during
+  play). Listed here for the reviewer's awareness so the
+  expression's scope is not silently broadened during
+  implementation
 - `apps/web/src/pages/GamePage.tsx` — page-level render switch so
   the wrong-but-revealed panel is reachable (two-component shape)
   or `feedbackKind` flows through (one-component shape); see the
@@ -292,6 +344,10 @@ Modify:
   variant (sibling component or extended panel) — assert against
   the rendered chip / heading / correct-answer-label so the
   assertion catches both two-component and one-component shapes
+- `tests/web/game/components/GameCompletionPanel.test.tsx` —
+  non-blocking-mode case asserts the answer-review section does
+  not render (regression guard against the
+  `final_score_reveal`-positive-match expression being broadened)
 - `tests/web/admin/eventDetails.test.ts` — admin dropdown option
 - `tests/shared/game-config/fixtures.ts`,
   `tests/shared/game-config/draft-content.test.ts`,
@@ -319,10 +375,20 @@ Files intentionally not touched (estimate, not a ban):
   insert/update succeeds on a test row and rejects an unrelated
   string.
 - Manual e2e in `dev:web`: configure a test event to
-  `instant_feedback_non_blocking` and exercise four cases. The
-  test event must include at least one question with an
-  `explanation` field, one without, and one multi-select question.
-  Cases:
+  `instant_feedback_non_blocking` and exercise the cases below.
+  Before starting the run, the **pre-game intro panel** must
+  render its non-blocking-mode copy (e.g., "See the answer right
+  after each question"); falsifier here is the panel rendering
+  the `final_score_reveal` fallback ("See your score after the
+  last question"), which is what a forgotten three-way branch in
+  `GameIntroPanel.tsx` would produce. After completing the run,
+  the **completion panel** must **not** render the end-of-run
+  answer-review section (the player has already seen each
+  reveal); falsifier is the section appearing, which is what
+  broadening the `final_score_reveal`-positive-match would
+  produce. The test event must include at least one question
+  with an `explanation` field, one without, and one multi-select
+  question. Cases:
   - **(a) Correct answer with explanation present.** Submitting the
     right option shows the correct panel; the rendered body text
     is the question's `sponsorFact` if defined, else the
