@@ -52,11 +52,14 @@ rather than re-litigating it.
 ## Why now
 
 - The feedback table is freshly landed (migration timestamped
-  2026-05-06) and has not yet served a real event. Reshaping the
-  column posture before any production-significant data accumulates
-  is cheaper than after — strong enough that Decision 3 is able to
-  resolve to "no backfill," since there are no existing consent
-  records worth preserving.
+  2026-05-06, `Verified by:`
+  [`supabase/migrations/20260506000000_add_feedback_tables.sql`](/supabase/migrations/20260506000000_add_feedback_tables.sql)).
+  **Maintainer-attested assumption (recorded inline; not verifiable
+  from in-repo state):** the table has not yet served a real event,
+  so any rows present are test traffic. This assumption underwrites
+  Decision 3's "no backfill" resolution; the implementing pass
+  reality-checks production row count before locking in the
+  no-backfill SQL — see Reality-check inputs.
 - The recent hardening pass is the natural moment to surface
   structural follow-ups against the same table; the maintainer
   flagged the lifecycle conflation while reviewing that diff.
@@ -276,16 +279,21 @@ feedback row's audit flag (per Decision 5) and a subscription row
 (via the helper from Decision 4); the new subscription store starts
 populated only by the helper, never by direct backfill SQL.
 
-**Maintainer direction recorded inline.** Earlier drafts of this
-decision picked Option F (migration-time backfill) on the rationale
-that forward-only would lose real consent records. The maintainer
-direction at scoping time is that there's no production data worth
-preserving — the feedback table has not yet served a real event,
-and any rows present are test traffic. Under that constraint, the
-simplest path wins: skip the backfill SQL entirely. Truncating the
-table first is offered as an alternative the implementing pass may
-pick if a clean-slate state is preferred over a leave-existing-rows
-state, but neither is materially different for the v1 outcome.
+**Maintainer-attested assumption recorded inline.** Earlier drafts
+of this decision picked Option F (migration-time backfill) on the
+rationale that forward-only would lose real consent records. The
+maintainer attests at scoping time that there's no production data
+worth preserving — the feedback table has not yet served a real
+event, and any rows present are test traffic. **This assumption is
+not verifiable from in-repo state** (the migration file proves the
+table exists, not what's in it); production row count is what would
+falsify it. The implementing pass owns the reality check before
+locking in no-backfill SQL (see Reality-check inputs). Under the
+assumption as stated, the simplest path wins: skip the backfill SQL
+entirely. Truncating the table first is offered as an alternative
+the implementing pass may pick if a clean-slate state is preferred
+over a leave-existing-rows state, but neither is materially
+different for the v1 outcome.
 
 **Why this is consistent with Decision 5.** Decision 5 frames
 `newsletter_opt_in` on `feedback_submissions` as a snapshot of
@@ -330,14 +338,19 @@ draft it.
 ### 4. Write path from feedback — synchronous write through an internal SECURITY DEFINER helper, called from surface-specific public RPCs [Resolved → Option L, internal-helper variant]
 
 **What was decided.** The feedback RPC's existing INSERT is wrapped
-in a single transaction with a call to a shared subscription-write
-helper. The same helper is the write entry point for the eventual
-standalone signup RPC. ON CONFLICT semantics inside the helper
-ensure duplicate-email opt-ins are no-ops on the subscription side
-without failing the feedback insert. **The helper is internal —
-not granted to anon or authenticated.** Public callers reach the
-helper only through surface-specific SECURITY DEFINER RPCs
-(`submit_feedback` for the feedback flow; a future
+in a single transaction with a *conditional* call to a shared
+opt-in-capture helper — the helper is invoked only when the caller
+passed `p_newsletter_opt_in = true` (i.e., the attendee actually
+checked the newsletter box). Unchecked submissions still write the
+feedback row but produce no capture row. The same helper is the
+write entry point for the eventual standalone signup RPC, where
+the conditional is trivially true (the standalone surface only
+exists to capture an opt-in). ON CONFLICT semantics inside the
+helper ensure duplicate-email opt-ins are no-ops on the capture
+side without failing the feedback insert. **The helper is
+internal — not granted to anon or authenticated.** Public callers
+reach the helper only through surface-specific SECURITY DEFINER
+RPCs (`submit_feedback` for the feedback flow; a future
 `submit_newsletter_signup` for the standalone signup flow), each
 of which hardcodes its own `source_surface` value and constrains
 its own `source_event_slug` shape before calling the helper.
@@ -463,10 +476,17 @@ the audit-only surface attribution), the public API contract
 only), and the grant posture (`revoke execute … from public, anon,
 authenticated`; no `grant execute … to anon, authenticated` is
 issued). `submit_feedback`'s body is extended to call the helper
-inside its existing transaction with `p_event_slug = p_event_slug`
-(passing through the already-FK-gated value the existing INSERT
-uses), `p_email = p_email` (passing through the same email value
-the feedback row INSERT writes), and `p_source_surface =
+**only when the caller passed `p_newsletter_opt_in = true`** —
+unchecked-box submissions still INSERT the feedback row but do not
+write a capture row, since no opt-in occurred. When the helper is
+called, the arguments are `p_event_slug = p_event_slug` (passing
+through the already-FK-gated value the existing INSERT uses),
+`p_email = p_email` (passing through the same email value the
+feedback row INSERT writes — the existing CHECK constraint
+`feedback_submissions_newsletter_opt_in_requires_email` at
+[`supabase/migrations/20260506000000_add_feedback_tables.sql:62-66`](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+guarantees this is non-null whenever
+`p_newsletter_opt_in = true`), and `p_source_surface =
 'feedback_form'` (literal, not from a parameter). The standalone
 signup feature, when scoped, ships its own public SECURITY
 DEFINER RPC that calls the helper with `p_source_surface =
@@ -775,6 +795,19 @@ implementing plan re-verifies each at plan time per
   [`supabase/migrations/20260506000000_add_feedback_tables.sql:50-67`](/supabase/migrations/20260506000000_add_feedback_tables.sql).
   Decision 5 leaves these unchanged; the plan re-confirms before
   drafting the migration.
+- **`feedback_submissions` production row count (no-backfill
+  assumption falsifier).** Decision 3 rests on a maintainer-attested
+  assumption that the table has not yet served a real event. That
+  claim is not verifiable from in-repo state. The implementing pass
+  reality-checks before locking in no-backfill SQL: query the
+  production database for `select count(*), max(submitted_at) from
+  public.feedback_submissions` (or equivalent), and confirm the row
+  count is consistent with test traffic and that no rows post-date
+  any event-served-yet milestone. If the count is unexpectedly
+  high or rows trace to a real event, the no-backfill resolution
+  must be revisited and either Option F (backfill) or Option G'
+  (truncate) becomes load-bearing again — do not silently ship
+  no-backfill SQL against a populated table.
 - **`submit_feedback` RPC signature and body.** Currently at
   [`supabase/migrations/20260509000000_add_submit_feedback_rpc.sql:27-58`](/supabase/migrations/20260509000000_add_submit_feedback_rpc.sql).
   Decision 4 calls for adding a helper invocation inside its
