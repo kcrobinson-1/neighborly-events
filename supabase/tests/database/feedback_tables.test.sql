@@ -1,16 +1,19 @@
 -- Madrona feedback child epic / M1 / phase 1.1 — DB foundation tests.
 --
 -- Validation gate per the phase plan's Validation Gate section. The
--- seven behavioral cases:
---   1. anon insert with registered slug ('madrona') → success
---   2. insert with unregistered slug → FK violation (23503)
---   3. email_declined = true with non-null email → CHECK violation
---   4. newsletter_opt_in = true with email = null → CHECK violation
---   5. newsletter_opt_in = true with email_declined = true and a
+-- behavioral cases:
+--   1. insert with unregistered slug → FK violation (23503)
+--   2. email_declined = true with non-null email → CHECK violation
+--   3. newsletter_opt_in = true with email = null → CHECK violation
+--   4. newsletter_opt_in = true with email_declined = true and a
 --      non-null email → CHECK violation (consent-record without
 --      valid consent)
---   6. anon SELECT on submissions → 0 rows (RLS denial)
---   7. anon SELECT on registry → 0 rows (RLS denial)
+--   5. anon SELECT on submissions → 42501 (privilege revoked)
+--   6. anon SELECT on registry → 42501 (privilege revoked)
+--
+-- The anon write path (insert from the public form) is exercised in
+-- submit_feedback_rpc.test.sql; this file owns the table-level
+-- structural and constraint surface.
 --
 -- Structural assertions confirm the table shapes, the FK, the index,
 -- the named CHECK constraints, the RLS posture, and the named policies.
@@ -18,7 +21,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(38);
+select plan(37);
 
 -- ─── Structural: tables exist with RLS enabled ────────────────────────
 
@@ -117,17 +120,19 @@ select ok(
   'named CHECK feedback_submissions_newsletter_opt_in_requires_email exists'
 );
 
--- ─── Structural: RLS policies present ─────────────────────────────────
+-- ─── Structural: RLS policies present (read paths only) ───────────────
+-- The original anon-insert policy was dropped by 20260509000000 in
+-- favor of the SECURITY DEFINER submit_feedback RPC; only the
+-- organizer/admin SELECT policies remain on these tables.
 
 select ok(
-  exists (
+  not exists (
     select 1 from pg_policies
     where schemaname = 'public'
       and tablename = 'feedback_submissions'
       and policyname = 'anon can insert feedback for registered events'
-      and cmd = 'INSERT'
   ),
-  'anon-insert policy on feedback_submissions exists'
+  'the legacy anon-insert policy on feedback_submissions is gone'
 );
 select ok(
   exists (
@@ -158,38 +163,27 @@ select is(
   'madrona is seeded into feedback_enabled_events'
 );
 
--- ─── Behavioral case 1: anon insert with registered slug succeeds ─────
-
-select set_config(
-  'request.jwt.claims',
-  '{"role":"anon"}',
-  true
-);
-set local role anon;
+-- ─── Seed a feedback_submissions row for the organizer read tests ────
+--   Anon's table-level INSERT was revoked by 20260509000000; anon must
+--   go through public.submit_feedback. Tests run under the test
+--   superuser role, which bypasses RLS by default — direct INSERT here
+--   is fine and is the cleanest way to seed.
 
 insert into public.feedback_submissions (event_slug, ratings)
 values ('madrona', '{"sound": 4, "venue": 5}'::jsonb);
 
-reset role;
-select set_config('request.jwt.claims', '', true);
-
-select is(
-  (select count(*)::int from public.feedback_submissions where event_slug = 'madrona'),
-  1,
-  'case 1: anon inserted a feedback row for the registered madrona slug'
-);
-
--- ─── Behavioral case 2: insert with unregistered slug fails (FK) ─────
+-- ─── Behavioral case 1: insert with unregistered slug fails (FK) ─────
+--   The FK is the load-bearing integrity gate, regardless of caller.
 
 select throws_ok(
   $$ insert into public.feedback_submissions (event_slug, ratings)
      values ('nonexistent-slug', '{"sound": 3}'::jsonb) $$,
   '23503',
   null,
-  'case 2: insert against an unregistered slug raises FK violation'
+  'case 1: insert against an unregistered slug raises FK violation'
 );
 
--- ─── Behavioral case 3: email_declined + non-null email rejected ─────
+-- ─── Behavioral case 2: email_declined + non-null email rejected ─────
 
 select throws_ok(
   $$ insert into public.feedback_submissions
@@ -199,10 +193,10 @@ select throws_ok(
         'attendee@example.com', true) $$,
   '23514',
   null,
-  'case 3: email_declined=true with non-null email raises CHECK violation'
+  'case 2: email_declined=true with non-null email raises CHECK violation'
 );
 
--- ─── Behavioral case 4: newsletter_opt_in + null email rejected ──────
+-- ─── Behavioral case 3: newsletter_opt_in + null email rejected ──────
 
 select throws_ok(
   $$ insert into public.feedback_submissions
@@ -211,10 +205,10 @@ select throws_ok(
        ('madrona', '{"sound": 3}'::jsonb, null, true) $$,
   '23514',
   null,
-  'case 4: newsletter_opt_in=true with email=null raises CHECK violation'
+  'case 3: newsletter_opt_in=true with email=null raises CHECK violation'
 );
 
--- ─── Behavioral case 5: newsletter_opt_in + email_declined + email ───
+-- ─── Behavioral case 4: newsletter_opt_in + email_declined + email ───
 --   Consent record without valid consent. The plan calls this out as
 --   load-bearing because either single-axis check alone would let it
 --   through.
@@ -227,16 +221,10 @@ select throws_ok(
         'attendee@example.com', true, true) $$,
   '23514',
   null,
-  'case 5: newsletter_opt_in=true with email_declined=true raises CHECK violation'
+  'case 4: newsletter_opt_in=true with email_declined=true raises CHECK violation'
 );
 
--- ─── Behavioral case 6: anon SELECT on submissions returns 0 rows ────
---   The case-1 insert seeded a real row. Under anon, the missing
---   SELECT grant + missing select policy means the SELECT returns
---   zero rows (Postgres treats a no-policy SELECT as filtered, not
---   permission-error, when the privilege is absent — but to be
---   defensive against either outcome the assertion uses count() and
---   tolerates a permission error too).
+-- ─── Behavioral case 5: anon SELECT on submissions denied ────────────
 
 select set_config(
   'request.jwt.claims',
@@ -245,23 +233,20 @@ select set_config(
 );
 set local role anon;
 
--- A SELECT under anon raises 42501 because the SELECT privilege was
--- revoked; that is the same denial the plan calls out, just at the
--- privilege layer rather than the policy layer.
 select throws_ok(
   $$ select * from public.feedback_submissions $$,
   '42501',
   null,
-  'case 6: anon SELECT on feedback_submissions is denied'
+  'case 5: anon SELECT on feedback_submissions is denied'
 );
 
--- ─── Behavioral case 7: anon SELECT on registry returns 0 rows ───────
+-- ─── Behavioral case 6: anon SELECT on registry denied ───────────────
 
 select throws_ok(
   $$ select * from public.feedback_enabled_events $$,
   '42501',
   null,
-  'case 7: anon SELECT on feedback_enabled_events is denied'
+  'case 6: anon SELECT on feedback_enabled_events is denied'
 );
 
 reset role;
@@ -311,7 +296,7 @@ select is(
   (select count(*)::int from public.feedback_submissions
     where event_slug = 'madrona'),
   1,
-  'organizer for madrona reads the case-1 seeded submission via SELECT policy'
+  'organizer for madrona reads the seeded submission via SELECT policy'
 );
 
 select is(
@@ -349,10 +334,13 @@ reset role;
 select set_config('request.jwt.claims', '', true);
 
 -- ─── Privilege layer ─────────────────────────────────────────────────
+-- The anon write path runs through public.submit_feedback (covered in
+-- submit_feedback_rpc.test.sql). Anon must NOT hold direct INSERT on
+-- the table.
 
 select ok(
-  has_table_privilege('anon', 'public.feedback_submissions', 'INSERT'),
-  'anon has INSERT privilege on feedback_submissions'
+  not has_table_privilege('anon', 'public.feedback_submissions', 'INSERT'),
+  'anon does NOT have INSERT privilege on feedback_submissions'
 );
 select ok(
   not has_table_privilege('anon', 'public.feedback_submissions', 'SELECT'),
