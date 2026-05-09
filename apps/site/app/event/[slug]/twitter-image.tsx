@@ -6,6 +6,7 @@ import {
   registeredEventSlugs,
 } from "../../../lib/eventContent.ts";
 import { EventOgImage } from "../../../lib/eventOgImage.tsx";
+import { normalizeEventSlug } from "../../../../../shared/urls";
 
 /**
  * Per-event Twitter card image, served by the Next.js 16 file
@@ -42,7 +43,7 @@ export default async function Image({
   params: Promise<{ slug: string }>;
 }) {
   const { slug: rawSlug } = await params;
-  const slug = rawSlug.toLowerCase();
+  const slug = normalizeEventSlug(rawSlug);
   const content = getEventContentBySlug(slug);
 
   if (!content) {

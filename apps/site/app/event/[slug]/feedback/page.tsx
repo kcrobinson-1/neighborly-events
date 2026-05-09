@@ -10,6 +10,7 @@ import {
   ThemeScope,
   getThemeForSlug,
 } from "../../../../../../shared/styles";
+import { normalizeEventSlug } from "../../../../../../shared/urls";
 import { FeedbackForm } from "./FeedbackForm.tsx";
 
 /**
@@ -37,7 +38,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug: rawSlug } = await params;
-  const slug = rawSlug.toLowerCase();
+  const slug = normalizeEventSlug(rawSlug);
   const content = getEventContentBySlug(slug);
 
   if (!content) {
@@ -76,7 +77,7 @@ export default async function Page({
   params: Promise<{ slug: string }>;
 }) {
   const { slug: rawSlug } = await params;
-  const slug = rawSlug.toLowerCase();
+  const slug = normalizeEventSlug(rawSlug);
   const content = getEventContentBySlug(slug);
 
   if (!content) {

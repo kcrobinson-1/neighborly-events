@@ -19,4 +19,5 @@ export {
   type AppPath,
   type AuthNextPath,
 } from "./routes.ts";
+export { normalizeEventSlug } from "./normalizeEventSlug.ts";
 export { validateNextPath } from "./validateNextPath.ts";
