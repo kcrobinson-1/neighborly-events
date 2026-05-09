@@ -37,22 +37,6 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-- [ ] **`dev` Event slug routing is case-sensitive (silent 404 on capitalized URLs)**
-  `/event/Madrona/game` (capital M) returns HTTP 200 but the SPA renders
-  the not-found / empty state because the slug pulled from `useParams` is
-  compared byte-for-byte against the lowercase DB slug `madrona`. The
-  lowercase URL works. `curl -sI` shows both casings return 200 at the
-  edge, so the breakage is application-layer rather than Vercel routing.
-  A printed QR with an accidentally capitalized letter, or an attendee
-  hand-typing a proper-noun slug, will silently break — the exact failure
-  mode this tier gates. Slug extraction lives in the apps/web event
-  pages: `apps/web/src/event/` (game route) and the
-  `apps/web/src/pages/Event*.tsx` admin / redeem / redemptions surfaces
-  that read `useParams`. Open question for the fix: client-side
-  `.toLowerCase()` normalization at the extraction sites, or an edge 308
-  redirect from any non-canonical casing to the lowercase form before
-  the SPA mounts.
-
 - [ ] **`dev` Constrain event slug shape to URL-safe characters**
   Today nothing prevents an event slug from containing reserved URL
   characters (`/`, `?`, `#`, space, etc.). The admin authoring flow at
@@ -64,9 +48,11 @@ Must be resolved before QR codes are printed or the first real event runs.
   defensively wrap slugs in `encodeURIComponent`, which keeps the
   rendered URLs survivable, but the *stored shape* is unbounded — a
   future organizer authoring an event could save `My Event / Special`
-  and the system would store it. Combined with the case-sensitivity
-  entry above, this is the second slug-shape issue that surfaces on QR
-  flows. Recommended layers: (1) shared validator in `shared/` with
+  and the system would store it. A constrained shape is the write-side
+  defense complement to the read-side case-folding helper in
+  `shared/urls/normalizeEventSlug.ts`; together they bound the
+  failure mode this tier gates against on QR flows.
+  Recommended layers: (1) shared validator in `shared/` with
   the canonical regex (likely `/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/`),
   (2) UX check in the admin authoring flow surfacing a friendly error
   on save, (3) DB CHECK constraint on `game_events.slug` and
