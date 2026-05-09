@@ -323,6 +323,57 @@ identity-fingerprint procedure that captures positive + negative
 response signatures and asserts against both. The load-bearing
 case is exactly when the exercise changes the procedure.
 
+## Cost rejected options at their lightest viable shape
+
+When a Choose-One decision (scoping decision, framework / library
+choice, alternative-evaluation in a Risk Register) rejects
+alternatives, evaluate each rejected option at its **lightest viable
+shape** — not at a maximal-cost strawman. The recurring failure mode
+is asymmetric pricing: the chosen option gets fine-grained costing
+while rejected options get bundled into "all the heavyweight forms"
+of their category. The chosen path looks cheaper than it is; the
+rejected paths look more expensive than they are.
+
+Before locking the decision, ask of each rejected option: **is this
+the cheapest viable form of this option, or am I rejecting the
+maximal version?** When a category name hides multiple distinct
+shapes — "server-mediated write" hides "SECURITY DEFINER RPC via
+`.rpc()`" and "Edge Function wrapping the RPC" as separate cost
+shapes; "abstraction" hides extracted-helper and full hierarchy;
+"framework integration" hides minimal adapter and full rewrite —
+split the category and cost each shape separately. Reject the
+cheapest shape on its own merits, or accept that the category
+retains a viable contender.
+
+This rule is adjacent to the falsifiability check above but
+distinct: that one asks "is this load-bearing claim provable?"; this
+one asks "is the rejection of this alternative resting on its
+cheapest viable shape?" Asymmetric pricing produces decisions that
+look well-reasoned in retrospect because the rejection rationale
+holds against the strawman it cited — the failure is invisible until
+implementation surfaces a constraint that only the unevaluated light
+shape would have caught.
+
+Recurring trap: madrona feedback scoping framed the submission-path
+decision as "direct anon insert" vs "Server Action" vs "Edge
+Function," conflating "SECURITY DEFINER RPC called via `.rpc()`"
+with "Edge Function wrapping the RPC." The lighter RPC-only shape
+(same round-trip count as direct insert, no service-role key, no
+separate runtime) was never priced separately. The heavier
+Edge-Function shape was rightly rejected; its lighter sibling
+slipped through unevaluated, and the chosen option shipped a
+PostgREST/grant interaction (`INSERT … RETURNING` requires `SELECT`,
+anon was INSERT-only) that the lighter shape would have sidestepped.
+See
+[supabase/migrations/20260506000000_add_feedback_tables.sql](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+for the grant posture and
+[supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
+for the SECURITY DEFINER RPC pattern that was conflated.
+
+Pre-existing scoping decisions are not retroactively non-conforming;
+scoping sessions opened from this point forward apply the lightest-
+shape pricing check before locking decisions.
+
 ## Anti-pattern: planning artifacts that only cite each other
 
 If the plan, scoping doc, and milestone doc all cite each other
