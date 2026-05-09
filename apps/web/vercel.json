@@ -3,18 +3,7 @@
     "deploymentEnabled": {
       "main": true,
       "*": false,
-      "build/*": false,
-      "chore/*": false,
-      "ci/*": false,
-      "docs/*": false,
-      "feat/*": false,
-      "fix/*": false,
-      "perf/*": false,
-      "plan/*": false,
-      "refactor/*": false,
-      "revert/*": false,
-      "style/*": false,
-      "test/*": false
+      "*/*": false
     }
   },
   "rewrites": [
