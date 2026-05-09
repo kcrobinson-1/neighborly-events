@@ -24,8 +24,14 @@ Decision on (iii): **Strict — block post-launch rotation when
 entitlements exist.** Reasoning: if we can't guarantee the
 post-launch path is safe, the system should refuse it rather
 than permit and document. Implementation shipped in PR #214 on
-2026-05-07. The "Plan handoff" section below describes what
-shipped (now in past tense as historical record of what was
+2026-05-07. Migration applied and edge function redeployed in
+production by the auto-release workflow
+([run 25513387376](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25513387376),
+2026-05-07 18:04 UTC, ~6 minutes after merge); deployed-surface
+smoke green
+([run 25513421612](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25513421612),
+2026-05-07 18:05 UTC). The "Plan handoff" section below describes
+what shipped (now in past tense as historical record of what was
 scoped vs. what landed).
 
 ## Problem (carryover from phase 1)
