@@ -39,10 +39,6 @@ permissions:
   pull-requests: write
   statuses: write
 
-concurrency:
-  group: preview-deploys-${{ github.event.pull_request.number || github.event.issue.number }}
-  cancel-in-progress: true
-
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   STATUS_CONTEXT: preview-deploy
@@ -57,6 +53,15 @@ jobs:
       github.event_name == 'pull_request' &&
       contains(fromJSON('["opened","synchronize","reopened"]'), github.event.action)
     runs-on: ubuntu-latest
+    # Concurrency lives at job level (not workflow level) so unrelated
+    # `issue_comment created` events — including the bot's own sticky-comment
+    # POST that fires during a trigger run — don't enter the group when their
+    # job's `if:` filter rejects them. Job-level concurrency is evaluated AFTER
+    # the `if:` check, so non-actionable events skip without acquiring the
+    # lock and can't cancel an in-flight gate or trigger run.
+    concurrency:
+      group: preview-deploys-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
 
     steps:
       - name: Checkout
@@ -117,6 +122,12 @@ jobs:
        github.event.action == 'labeled' &&
        github.event.label.name == 'preview')
     runs-on: ubuntu-latest
+    # See gate's concurrency comment — same group, same rationale. The two
+    # jobs share the group so a new push (gate) cancels an in-flight trigger
+    # for the previous SHA, and vice versa.
+    concurrency:
+      group: preview-deploys-${{ github.event.pull_request.number || github.event.issue.number }}
+      cancel-in-progress: true
 
     steps:
       - name: Authorize trigger actor
