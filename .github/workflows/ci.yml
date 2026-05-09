@@ -10,9 +10,6 @@ on:
       - "**/*.md"
       - "*.md"
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   detect-scope:
     name: Detect CI Scope
@@ -111,7 +108,7 @@ jobs:
 
       - name: Setup Supabase CLI
         if: needs.detect-scope.outputs.docs_only != 'true'
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v2
         with:
           version: 2.93.0
 
@@ -169,7 +166,7 @@ jobs:
 
       - name: Upload Playwright artifacts on failure
         if: failure() && needs.detect-scope.outputs.docs_only != 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-test-results
           path: tmp/playwright/test-results*

@@ -10,9 +10,6 @@ on:
     branches:
       - main
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 concurrency:
   group: production-admin-smoke
   cancel-in-progress: false
@@ -86,7 +83,7 @@ jobs:
 
       - name: Upload admin smoke artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: production-admin-smoke-playwright-results
           path: tmp/playwright/test-results-production-admin-smoke
@@ -97,7 +94,7 @@ jobs:
 
       - name: Upload redemption smoke artifacts on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: production-redemption-smoke-playwright-results
           path: tmp/playwright/test-results-production-redemption-smoke
