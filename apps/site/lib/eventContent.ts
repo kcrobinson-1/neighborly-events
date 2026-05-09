@@ -149,7 +149,7 @@ export type EventContent = {
     freeTextPrompt: string;
     emailCopy: {
       label: string;
-      declineLabel: string;
+      placeholder?: string;
       newsletterOptInLabel: string;
     };
     thankYouMessage: string;

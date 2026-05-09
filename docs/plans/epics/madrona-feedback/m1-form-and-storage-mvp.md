@@ -23,8 +23,8 @@ against the actually-merged code at phase-start.
 
 Build the form-and-storage MVP such that a Madrona '26 attendee can
 reach `/event/madrona/feedback` from the event landing page, submit
-ratings + optional free text + optional email + the decline / newsletter
-checkboxes in under a minute on a phone, and see a thank-you state
+ratings + optional free text + optional email + an optional newsletter
+opt-in in under a minute on a phone, and see a thank-you state
 in-place — and the submission persists to Supabase against a schema
 whose integrity is enforced at the database, not in the application
 layer.
@@ -76,9 +76,14 @@ After M1:
   origin. (`Verified by:`
   [apps/web/vercel.json:23-26](/apps/web/vercel.json))
 - The form collects: per-dimension 1–5 star ratings (each with N/A),
-  one optional free-text prompt, an email field with a decline
-  checkbox, and a newsletter opt-in checkbox. Submit replaces the
-  form in-place with a thank-you message; no redirect.
+  one optional free-text prompt, an optional email field, and a
+  newsletter opt-in checkbox (visible at all times; disabled while
+  the email field is empty). A blank email at submit is the implicit
+  decline. Submit replaces the form in-place with a thank-you
+  message; no redirect. (Original M1 form shipped a separate "I'd
+  rather not share my email" checkbox; the post-landing UX revamp
+  swapped to blank-as-implicit-decline — see m1-phase-1-3-plan.md
+  Status block.)
 - The phase 1.1 migration registers `madrona` in
   `feedback_enabled_events` as part of the schema-creation change,
   per epic Invariant 6's "the M1 migration introduces both the
@@ -284,14 +289,15 @@ when multiple phases interact:
   "Newsletter consent is load-bearing legally" at
   [docs/plans/epics/madrona-feedback/epic.md:437-444](/docs/plans/epics/madrona-feedback/epic.md))
 - **Submit-without-email is a first-class path, not a hidden
-  one.** The form's decline-email checkbox is visible and
-  labeled in plain language; submission with no email and
-  the decline flag set is accepted by the schema; analytics
-  / read-through tooling distinguishes "declined" from "left
-  blank by accident" via the `email_declined` column. Both
-  the form (phase 1.3) and the schema (phase 1.1) bind this
-  rule. (`Verified by:` epic Risk Register "Email field as
-  dark pattern" at
+  one.** The email field is explicitly labeled optional; an
+  attendee leaves it blank to submit without one, and the form
+  accepts that as the implicit decline (no separate checkbox
+  to find). The schema accepts `email: null` with
+  `email_declined: true`; reads of "decliners" via
+  `email_declined = true` continue to resolve correctly. Both
+  the form (phase 1.3, post-landing UX revamp) and the schema
+  (phase 1.1) bind this rule. (`Verified by:` epic Risk
+  Register "Email field as dark pattern" at
   [docs/plans/epics/madrona-feedback/epic.md:445-450](/docs/plans/epics/madrona-feedback/epic.md))
 - **Disabled-event behavior is render-friendly, not 404.** The
   `/event/<slug>/feedback` route handles three cases:
@@ -381,8 +387,8 @@ Recorded so phase planning sessions do not re-derive.
   applies to `/event/madrona/feedback` without modification. M1
   ships no vercel.json change. (`Verified by:`
   [apps/web/vercel.json:60-64](/apps/web/vercel.json))
-- **No name field.** The form collects ratings, free text, email,
-  decline-email checkbox, newsletter opt-in checkbox — that is
+- **No name field.** The form collects ratings, free text, an
+  optional email, and a newsletter opt-in checkbox — that is
   the complete field set. (`Verified by:` epic Resolved Decisions
   at
   [docs/plans/epics/madrona-feedback/epic.md:485-488](/docs/plans/epics/madrona-feedback/epic.md))
@@ -448,11 +454,12 @@ planning finds them, with the constraints that bound resolution.
   (`Verified by:`
   [docs/plans/epics/madrona-feedback/epic.md:255-268](/docs/plans/epics/madrona-feedback/epic.md))
 - **Form copy.** Phase 1.3 owns the free-text prompt, the
-  email-field copy ("Email — so we can follow up if you want"
-  is a starting point per the epic Product Surface), the
-  decline-email label, the newsletter opt-in label, the submit
-  button label, and the thank-you message. The epic names the
-  posture (push for the email; opt-in not opt-out on
+  email-field copy ("Email — so we can follow up if you'd
+  like (optional)" is the current shape after the post-landing
+  UX revamp), the optional email placeholder, the newsletter
+  opt-in label, the submit button label, and the thank-you
+  message. The epic names the posture (push for the email but
+  treat blank as implicit decline; opt-in not opt-out on
   newsletter; thank-you replaces form in-place); phase 1.3
   picks the words.
 - **Light client-side email validation rule.** Phase 1.3 owns.

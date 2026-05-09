@@ -23,30 +23,15 @@ const STAR_VALUES = [1, 2, 3, 4, 5] as const;
 // with at least one non-whitespace non-`@` character on each side.
 // Intentionally minimal — the rule is "structurally email-shaped,"
 // not RFC 5322 conformance. Attendees with edge-case addresses can
-// decline and submit without email.
+// leave the field blank and submit without email.
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/**
- * Attendee feedback form. Client component (`'use client'`) because
- * it owns local input state, runs client-side validation guards, and
- * issues the anon Supabase insert directly from the browser per
- * scoping Decision 2 — no Server Action, no Edge Function in M1.
- *
- * Four-state machine: `idle` (filling) → `submitting` (insert in
- * flight, all inputs disabled) → `success` (thank-you replaces the
- * form in place) or `error` (inline error, fields preserved, retry
- * re-enters `submitting`). No `success → idle` transition; the
- * milestone-invariant landing-state is "thank-you replaces form
- * in-place; no redirect."
- *
- * Rating-dimension keys are content-authored (epic Invariant 3); the
- * form iterates over `feedback.ratingDimensions` and emits the `key`
- * strings verbatim into the `ratings` jsonb. Decline-as-first-class
- * (epic Invariant 4) hides the email row and the newsletter row;
- * newsletter is opt-in not opt-out (epic Invariant 5) so the
- * checkbox defaults unchecked and is structurally unreachable when
- * email is blank or decline is checked.
- */
+// Empty email at submit = implicit decline. The decline checkbox
+// the form originally shipped with was awkward UX (extra step to
+// say "no thanks"); the new shape is: leave the email blank and
+// submit. `email_declined` is set true on a blank submission so
+// existing reads ("did the attendee leave email blank") still
+// resolve via the same column.
 export function FeedbackForm({
   feedback,
   slug,
@@ -56,14 +41,13 @@ export function FeedbackForm({
 }) {
   const [ratings, setRatings] = useState<RatingsState>({});
   const [freeText, setFreeText] = useState("");
-  const [emailDeclined, setEmailDeclined] = useState(false);
   const [email, setEmail] = useState("");
   const [newsletter, setNewsletter] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [state, setState] = useState<FormState>({ tag: "idle" });
 
   const trimmedEmail = email.trim();
-  const newsletterReachable = !emailDeclined && trimmedEmail.length > 0;
+  const newsletterEligible = trimmedEmail.length > 0;
   const isSubmitting = state.tag === "submitting";
 
   const dimensions = useMemo(
@@ -83,14 +67,6 @@ export function FeedbackForm({
 
   function setRating(key: string, value: RatingValue) {
     setRatings((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function handleDeclineToggle(checked: boolean) {
-    setEmailDeclined(checked);
-    if (checked) {
-      setNewsletter(false);
-      setEmailError(null);
-    }
   }
 
   function handleEmailChange(value: string) {
@@ -114,17 +90,13 @@ export function FeedbackForm({
     let emailDeclinedOut: boolean;
     let newsletterOut: boolean;
 
-    if (emailDeclined) {
+    if (trimmedEmail.length === 0) {
       emailOut = null;
       emailDeclinedOut = true;
       newsletterOut = false;
-    } else if (trimmedEmail.length === 0) {
-      emailOut = null;
-      emailDeclinedOut = false;
-      newsletterOut = false;
     } else {
       if (!EMAIL_PATTERN.test(trimmedEmail)) {
-        setEmailError("Enter an email like name@example.com, or check decline.");
+        setEmailError("Enter an email like name@example.com, or leave it blank.");
         return;
       }
       emailOut = trimmedEmail;
@@ -237,55 +209,45 @@ export function FeedbackForm({
           />
         </label>
 
-        <label className="event-feedback-form-decline">
+        <label className="event-feedback-form-email">
+          <span>{feedback.emailCopy.label}</span>
           <input
-            type="checkbox"
-            checked={emailDeclined}
-            onChange={(e) => handleDeclineToggle(e.target.checked)}
+            type="email"
+            className="event-feedback-form-email-input"
+            value={email}
+            onChange={(e) => handleEmailChange(e.target.value)}
             disabled={isSubmitting}
+            inputMode="email"
+            autoComplete="email"
+            placeholder={feedback.emailCopy.placeholder}
+            aria-invalid={emailError ? true : undefined}
+            aria-describedby={
+              emailError ? "event-feedback-form-email-error" : undefined
+            }
           />
-          <span>{feedback.emailCopy.declineLabel}</span>
+          {emailError ? (
+            <span
+              id="event-feedback-form-email-error"
+              className="event-feedback-form-email-error"
+              role="alert"
+            >
+              {emailError}
+            </span>
+          ) : null}
         </label>
 
-        {!emailDeclined ? (
-          <label className="event-feedback-form-email">
-            <span>{feedback.emailCopy.label}</span>
-            <input
-              type="email"
-              className="event-feedback-form-email-input"
-              value={email}
-              onChange={(e) => handleEmailChange(e.target.value)}
-              disabled={isSubmitting}
-              inputMode="email"
-              autoComplete="email"
-              aria-invalid={emailError ? true : undefined}
-              aria-describedby={
-                emailError ? "event-feedback-form-email-error" : undefined
-              }
-            />
-            {emailError ? (
-              <span
-                id="event-feedback-form-email-error"
-                className="event-feedback-form-email-error"
-                role="alert"
-              >
-                {emailError}
-              </span>
-            ) : null}
-          </label>
-        ) : null}
-
-        {newsletterReachable ? (
-          <label className="event-feedback-form-newsletter">
-            <input
-              type="checkbox"
-              checked={newsletter}
-              onChange={(e) => setNewsletter(e.target.checked)}
-              disabled={isSubmitting}
-            />
-            <span>{feedback.emailCopy.newsletterOptInLabel}</span>
-          </label>
-        ) : null}
+        <label
+          className="event-feedback-form-newsletter"
+          data-disabled={!newsletterEligible ? "true" : undefined}
+        >
+          <input
+            type="checkbox"
+            checked={newsletter && newsletterEligible}
+            onChange={(e) => setNewsletter(e.target.checked)}
+            disabled={isSubmitting || !newsletterEligible}
+          />
+          <span>{feedback.emailCopy.newsletterOptInLabel}</span>
+        </label>
 
         {state.tag === "error" ? (
           <p className="event-feedback-form-error" role="alert">

@@ -304,8 +304,8 @@ export const madronaContent: EventContent = {
     ],
     freeTextPrompt: "Anything specific you'd like the organizer to hear?",
     emailCopy: {
-      label: "Email — so we can follow up if you'd like",
-      declineLabel: "I'd rather not share my email",
+      label: "Email — so we can follow up if you'd like (optional)",
+      placeholder: "you@example.com",
       newsletterOptInLabel: "Add me to the Madrona Neighborhood Association mailing list",
     },
     thankYouMessage: "Thanks — every response goes straight to the organizers.",

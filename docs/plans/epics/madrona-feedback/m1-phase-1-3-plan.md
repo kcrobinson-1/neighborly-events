@@ -10,6 +10,16 @@ Landed across two PRs per the planned sub-split:
 milestone Status flip + batch-deletion of the three M1 scoping
 docs as the milestone-terminal PR).
 
+**Email-field UX revamped post-landing.** The original 1.3.1 form
+shipped a visible "I'd rather not share my email" checkbox alongside
+the email field; live-event UX feedback judged the extra control
+awkward. The form was revamped to a blank-as-implicit-decline shape:
+the email field is always visible and optional; the newsletter
+checkbox is always rendered but disabled until the email field has
+content; submitting with a blank email writes
+`email_declined: true, email: null, newsletter_opt_in: false`. The
+contract sections below reflect the current shape, not the original.
+
 Plan doc retained because it owns the route + form contracts the
 1.3.1 implementation encodes; deletes in a future cleanup pass
 once the M1 plan-doc-retention question is resolved at a higher
@@ -25,9 +35,9 @@ and one half remaining: the route + form + madrona content
 opt-in. After this phase, an attendee on a phone after the
 Madrona '26 show can tap the `EventFeedbackCTA` button on
 `/event/madrona`, land on `/event/madrona/feedback`, fill out
-ratings + optional free text + optional email + the decline /
-newsletter checkboxes, submit, and see a thank-you message
-replace the form in place. The submission lands as a row in
+ratings + optional free text + an optional email (with an
+optional newsletter opt-in once an email is entered), submit,
+and see a thank-you message replace the form in place. The submission lands as a row in
 `feedback_submissions` against the `'madrona'` slug the 1.1
 migration registered.
 
@@ -64,8 +74,9 @@ After 1.3 ships (both sub-phases):
   `feedback` object and the `slug` string as props, renders
   per-dimension rating rows (custom buttons, not native radios,
   per scoping Decision 5), an optional free-text textarea, an
-  email field with a decline checkbox and a newsletter opt-in
-  checkbox, and a submit button. Submission writes a single
+  optional email field, a newsletter opt-in checkbox (visible at
+  all times; disabled while the email is empty), and a submit
+  button. Submission writes a single
   `feedback_submissions` row through the existing
   `getBrowserSupabaseClient()` helper. Success replaces the
   form in place with `feedback.thankYouMessage`.
@@ -124,9 +135,11 @@ moves on:
   `ratings` jsonb. No platform-defined dimension list, no
   enum, no validation against an allowlist.
 - **Epic Invariant 4 (decline-as-first-class-path).** The form
-  renders the decline checkbox alongside the email field;
-  checking it hides the email row and the newsletter row, and
-  submission writes `email_declined: true` with `email: null`.
+  treats a blank email as implicit decline — submitting with the
+  email field empty writes `email_declined: true` with
+  `email: null`. No separate decline checkbox; the email field's
+  optional framing (label + placeholder) carries the
+  first-class-path rule.
 - **Epic Invariant 5 (newsletter is opt-in not opt-out).** The
   newsletter checkbox defaults unchecked. The form does not
   pre-check it under any circumstance.
@@ -162,8 +175,8 @@ moves on:
   `.event-feedback-form-na-button` (the N/A toggle),
   `.event-feedback-form-textarea`,
   `.event-feedback-form-email`,
-  `.event-feedback-form-decline`,
-  `.event-feedback-form-newsletter`,
+  `.event-feedback-form-newsletter`
+  (carries `data-disabled="true"` while the email field is empty),
   `.event-feedback-form-submit`,
   `.event-feedback-form-error`,
   `.event-feedback-form-thanks`,
@@ -200,31 +213,30 @@ are the actual contract:
   event_slug: string,             // from route param
   ratings: Record<string, number | "n/a">,   // jsonb keyed by dimension.key
   free_text: string | null,       // null when the textarea is empty after trim
-  email: string | null,           // null when declined OR when blank-after-trim
-  email_declined: boolean,        // true iff the decline checkbox is checked
-  newsletter_opt_in: boolean,     // true iff the checkbox is checked AND email is present non-declined
+  email: string | null,           // null when blank-after-trim
+  email_declined: boolean,        // true iff email is null (implicit decline)
+  newsletter_opt_in: boolean,     // true iff the checkbox is checked AND email is present
 }
 ```
 
 The component does not set `id` (UUID default), does not set
 `submitted_at` (default `now()`).
 
-The submit handler is responsible for the four
-client-side guards before insert:
+The submit handler is responsible for the three client-side
+guards before insert:
 
 1. Strip whitespace from `free_text`; if empty, write `null`
    not `""`.
-2. If decline is checked: write `email_declined: true`,
-   `email: null`, `newsletter_opt_in: false` regardless of any
-   transient state in the email or newsletter fields.
-3. If decline is unchecked and `email` is non-empty: validate
-   format (Decision 6 regex). On fail, abort submit, surface
-   inline error on the email field, no insert.
-4. If decline is unchecked and `email` is empty: write
-   `email: null`, `email_declined: false`, `newsletter_opt_in:
-   false` (the milestone invariant on opt-in-requires-email
-   means a checked-newsletter-but-blank-email is a UX
-   inconsistency the form prevents at the boundary).
+2. If `email` is empty after trim: write `email: null`,
+   `email_declined: true`, `newsletter_opt_in: false`. The
+   newsletter checkbox is structurally unreachable in this
+   branch (disabled while the email field is empty), so the
+   guard reflects what the UI already enforces.
+3. If `email` is non-empty: validate format (Decision 6 regex).
+   On fail, abort submit, surface inline error on the email
+   field, no insert. On pass, write the trimmed email,
+   `email_declined: false`, and the newsletter checkbox state
+   verbatim.
 
 ### Form state machine
 
@@ -349,8 +361,10 @@ This section is an estimate per
   literal block before the existing `footer` field. Field set
   per the 1.2 type contract: `cta.heading`, optional
   `cta.body`, `ratingDimensions[5–7]`, `freeTextPrompt`,
-  `emailCopy.{label, declineLabel, newsletterOptInLabel}`,
-  `thankYouMessage`. Plan-drafting locks the exact strings.
+  `emailCopy.{label, newsletterOptInLabel}` plus optional
+  `emailCopy.placeholder` (post-landing UX revamp dropped
+  `declineLabel`; see Status block), `thankYouMessage`.
+  Plan-drafting locks the exact strings.
 - `apps/site/events/madrona.ts` header comment — extend to
   name the feedback opt-in (per the milestone Doc Currency
   map: "phase 1.3's content opt-in extends the comment to
@@ -413,9 +427,11 @@ This section is an estimate per
    `registeredEventSlugs`.
 3. Author `FeedbackForm.tsx` (`'use client'`). Render rating
    rows from `feedback.ratingDimensions`, the free-text
-   textarea, the email + decline + newsletter rows, the submit
-   button. Implement the four-state state machine, the
-   client-side validation rules, and the Supabase anon insert.
+   textarea, the email + newsletter rows, the submit button.
+   Implement the four-state state machine, the client-side
+   validation rules, and the Supabase anon insert. (The
+   original 1.3.1 form included a decline checkbox; the
+   post-landing UX revamp dropped it — see Status block.)
 4. Author the disabled-event state inline in the route's
    conditional branch (a small inline `<main>` per the
    contract).
@@ -427,7 +443,8 @@ This section is an estimate per
    1.2 consequence check). Adjust SCSS until both branches
    read coherently.
 6. Author the Vitest fixture. Cover the form's behavioral
-   surface (rating selection, decline-toggle, email-validation,
+   surface (rating selection, email-validation, blank-email
+   implicit decline, newsletter gating on email presence,
    state-machine transitions, thank-you replacement); cover
    the route's three branches if the test fixture supports
    Server Components, otherwise fall back to manual dev-server
@@ -508,9 +525,11 @@ render unchanged after `madrona.ts` opts in.
 2. **Tapping a star sets the rating; tapping N/A clears the
    stars and marks N/A.** Visible state changes; the
    `aria-pressed` invariants hold.
-3. **Decline checkbox hides the email field and the newsletter
-   row.** Synthetic render with decline checked → no email
-   input visible, no newsletter checkbox visible.
+3. **No decline checkbox; email field is always visible.**
+   Synthetic render confirms the form has no
+   "I'd rather not share my email" control and the email input
+   is always present. (Post-landing UX revamp; see Status
+   block.)
 4. **Email validation rejects malformed strings on submit.**
    Submit with `not-an-email` → inline error appears, no
    insert is attempted (verify by mocking the Supabase client
@@ -527,16 +546,16 @@ render unchanged after `madrona.ts` opts in.
 7. **Empty free-text submits as `null`, not empty string.**
    Submit with empty textarea → insert payload's `free_text`
    is `null`.
-8. **Decline state submits the canonical shape.** Submit with
-   decline checked → insert payload has
+8. **Blank email submits the implicit-decline shape.** Submit
+   with the email field empty → insert payload has
    `email_declined: true`, `email: null`,
    `newsletter_opt_in: false`.
-9. **Newsletter-without-email is structurally impossible from
-   the form.** The newsletter checkbox is not reachable when
-   email is blank or decline is checked. Verify by trying to
-   produce that state through the UI surface and asserting it
-   can't happen, *or* by reading the form's conditional render
-   logic.
+9. **Newsletter is gated on a non-empty email.** The newsletter
+   checkbox is rendered at all times but disabled (and
+   unchecked) while the email field is empty; typing an email
+   enables it; clearing the email after ticking it un-ticks
+   and re-disables it. Submit-time invariant: a payload with
+   `newsletter_opt_in: true` always carries a non-null `email`.
 
 ### 1.3.1 route-shape coverage
 
@@ -568,8 +587,8 @@ Required, recorded in the PR body. Procedure:
    `email` matches, `email_declined = false`,
    `newsletter_opt_in` matches the checkbox state, and
    `submitted_at` is a recent timestamp.
-6. Submit a second row with decline checked. Confirm
-   `email = null`, `email_declined = true`,
+6. Submit a second row with the email field left blank.
+   Confirm `email = null`, `email_declined = true`,
    `newsletter_opt_in = false`.
 7. (Optional, expanded confidence) submit against an
    unregistered slug by temporarily editing a test event's
@@ -602,7 +621,7 @@ matches audit names to the diff surfaces below.
   `Database['public']['Tables']['feedback_submissions']['Insert']`.
   No `as any`, no manual cast.
 - **Cross-cutting invariant walk:** every field-name foreclosure
-  rule, decline-as-first-class-path rule, opt-in-not-opt-out
+  rule, blank-email-as-implicit-decline rule, opt-in-not-opt-out
   rule, and rating-dimension-keys-are-content-authored rule
   has at least one Vitest case asserting it. Self-review walks
   each invariant against the test list.
@@ -717,13 +736,16 @@ outstanding from the milestone Doc Currency map after 1.3.2.
   organizer surface reads per-event, so the cross-event
   ambiguity has no consumer.
 - **Newsletter checkbox visible-but-disabled vs. hidden when
-  decline is checked.** The epic says "disabled / hidden when
-  the decline-email checkbox is checked." Both shapes
-  satisfy the invariant. Decision: **hidden** is cleaner UX
-  (less visual clutter) and eliminates the "why is this
-  disabled" question. If an accessibility reviewer surfaces
-  a "missing context" concern with hidden, switch to
-  disabled-with-explanation; record as Estimate Deviation.
+  the email field is empty.** Both shapes satisfy the
+  opt-in-requires-email invariant. The original 1.3.1 form
+  hid the row when the (then-present) decline checkbox was
+  checked or the email was blank; the post-landing UX revamp
+  switched to **visible-but-disabled** so the relationship
+  ("type an email to enable this") is discoverable from the
+  empty state without the user having to type to learn it
+  exists. The disabled affordance is communicated via
+  `data-disabled="true"` on the label plus the input's native
+  `disabled` attribute.
 - **Long free-text input opens an abuse surface.** No
   client-side length cap is added (epic Resolved Decision —
   defer to application-layer cap if abuse signals). The DB
@@ -736,8 +758,8 @@ outstanding from the milestone Doc Currency map after 1.3.2.
   rejected; international domains may be rejected too).
   Accepted — the rule is "presence of `@` and a dot," not
   "comprehensive RFC 5322 validation." Attendees with
-  unusually-formatted addresses can decline and submit
-  without email.
+  unusually-formatted addresses can leave the field blank and
+  submit without email.
 - **Madrona's content opt-in lands without the form route
   ready.** If 1.3.2 ships before 1.3.1 (or 1.3.1 reverts
   while 1.3.2 stays merged), the `EventFeedbackCTA` link goes
