@@ -7,6 +7,7 @@ import {
   registeredEventSlugs,
 } from "../../../lib/eventContent.ts";
 import { ThemeScope, getThemeForSlug } from "../../../../../shared/styles";
+import { normalizeEventSlug } from "../../../../../shared/urls";
 
 /**
  * Static enumeration of every registered event slug so apps/site
@@ -50,7 +51,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeEventSlug(rawSlug);
   const content = getEventContentBySlug(slug);
 
   if (!content) {
@@ -102,7 +104,8 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = normalizeEventSlug(rawSlug);
   const content = getEventContentBySlug(slug);
 
   if (!content) {

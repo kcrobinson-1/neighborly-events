@@ -1,3 +1,5 @@
+import { normalizeEventSlug } from "./normalizeEventSlug.ts";
+
 /** Application routes supported by the lightweight client-side router. */
 export type AppPath =
   | "/"
@@ -77,7 +79,7 @@ export function matchGamePath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = normalizeEventSlug(decodeURIComponent(encodedSlug));
 
     if (!slug || slug.includes("/")) {
       return null;
@@ -115,7 +117,7 @@ export function matchEventAdminPath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = normalizeEventSlug(decodeURIComponent(encodedSlug));
 
     if (!slug || slug.includes("/")) {
       return null;
@@ -153,7 +155,7 @@ export function matchGameRedeemPath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = normalizeEventSlug(decodeURIComponent(encodedSlug));
 
     if (!slug || slug.includes("/")) {
       return null;
@@ -191,7 +193,7 @@ export function matchGameRedemptionsPath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = normalizeEventSlug(decodeURIComponent(encodedSlug));
 
     if (!slug || slug.includes("/")) {
       return null;
