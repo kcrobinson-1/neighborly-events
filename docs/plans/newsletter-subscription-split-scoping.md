@@ -50,10 +50,11 @@ rather than re-litigating it.
 ## Why now
 
 - The feedback table is freshly landed (migration timestamped
-  2026-05-06) and has not yet served Madrona '26 traffic. Reshaping
-  the column posture before any production-significant data
-  accumulates is cheaper than after — backfill volume is at most
-  whatever Madrona '26 produces, not a multi-event corpus.
+  2026-05-06) and has not yet served a real event. Reshaping the
+  column posture before any production-significant data accumulates
+  is cheaper than after — strong enough that Decision 3 is able to
+  resolve to "no backfill," since there are no existing consent
+  records worth preserving.
 - The recent hardening pass is the natural moment to surface
   structural follow-ups against the same table; the maintainer
   flagged the lifecycle conflation while reviewing that diff.
@@ -263,82 +264,66 @@ which now applies cleanly because every row carries a non-null
 `event_slug`. Writes from the public surfaces go through the
 internal SECURITY DEFINER helper named in Decision 4.
 
-### 3. Backfill — migration-time backfill from existing feedback rows [Resolved → Option F]
+### 3. Backfill — none; existing rows (if any) stay as audit-only on `feedback_submissions` [Resolved → Option G, simplified per maintainer direction]
 
-**What was decided.** When the implementing migration applies, all
-`public.feedback_submissions` rows where `newsletter_opt_in = true`
-are inserted into the new subscription table with `source_surface =
-'feedback_form'`, `source_event_slug = event_slug`, and
-`subscribed_at = submitted_at`. The confirmation status applied to
-backfilled rows is determined by Decision 7.
+**What was decided.** No backfill SQL in the implementing migration.
+Pre-migration `feedback_submissions` rows where `newsletter_opt_in =
+true` keep that flag set but do not propagate to the new
+subscription table. Fresh post-migration submissions write both the
+feedback row's audit flag (per Decision 5) and a subscription row
+(via the helper from Decision 4); the new subscription store starts
+populated only by the helper, never by direct backfill SQL.
 
-**Why it mattered.** Forward-only migration would silently lose any
-existing newsletter consent records from the canonical store, even
-though the consent itself was given. The compliance question is
-real but resolves cleanly under Decision 7's posture.
+**Maintainer direction recorded inline.** Earlier drafts of this
+decision picked Option F (migration-time backfill) on the rationale
+that forward-only would lose real consent records. The maintainer
+direction at scoping time is that there's no production data worth
+preserving — the feedback table has not yet served a real event,
+and any rows present are test traffic. Under that constraint, the
+simplest path wins: skip the backfill SQL entirely. Truncating the
+table first is offered as an alternative the implementing pass may
+pick if a clean-slate state is preferred over a leave-existing-rows
+state, but neither is materially different for the v1 outcome.
+
+**Why this is consistent with Decision 5.** Decision 5 frames
+`newsletter_opt_in` on `feedback_submissions` as a snapshot of
+intent at submission moment that may diverge from current
+subscription state. A pre-migration row with `newsletter_opt_in =
+true` and no corresponding subscription row is a valid state under
+that framing — it's a snapshot of "they opted in at this submission
+moment, before the canonical subscription store existed." No drift
+correction needed; the audit semantic absorbs the unmigrated rows
+cleanly.
 
 **Options considered.**
 
 1. **Migration-time backfill (Option F).** Insert subscription
    rows for every `newsletter_opt_in = true` feedback row at
-   migration apply.
-2. **Forward-only (Option G).** New subscription rows only land
-   from opt-ins after the migration. Pre-existing feedback rows
-   keep their `newsletter_opt_in` boolean as the only record.
-3. **Backfill plus distinct backfill marker (Option H).** Same as
-   F, but with an extra column or sentinel value flagging
-   backfilled rows so they can be excluded from operations that
-   should only apply to "fresh" opt-ins.
+   migration apply. Initially picked on the (then-correct)
+   rationale that real consent records shouldn't be lost. Becomes
+   over-engineering once the maintainer confirms there are no
+   such records to preserve.
+2. **Forward-only, no backfill SQL (Option G).** New subscription
+   rows only land from opt-ins after the migration. Pre-existing
+   feedback rows keep their `newsletter_opt_in` boolean as
+   audit-only signals consistent with Decision 5.
+3. **Truncate `feedback_submissions` in the migration (Option G',
+   variant).** Same as G but adds an explicit `truncate
+   public.feedback_submissions` step before creating the
+   subscription table. Yields a guaranteed-clean starting state
+   at the cost of a destructive verb in the migration.
+4. **Backfill plus distinct backfill marker (Option H).** Same as
+   F but with a sentinel value flagging backfilled rows. Rejected
+   under any of the above framings — premature flexibility.
 
-**Came down to.** The expected backfill volume and whether
-backfilled rows differ semantically from forward rows.
-
-- The feedback table landed 2026-05-06 (
-  [`supabase/migrations/20260506000000_add_feedback_tables.sql:50-67`](/supabase/migrations/20260506000000_add_feedback_tables.sql)).
-  Madrona '26 has not yet happened. At the moment the
-  implementing migration applies, the row count is bounded by
-  any test traffic plus whatever Madrona '26 produces between
-  M1 and the implementation moment — practically dozens to low
-  hundreds, not thousands. Backfill cost is trivial.
-- *Option F.* The semantically correct shape if Decision 7
-  resolves to single-opt-in (no double-opt-in confirmation).
-  Backfilled rows carry the same confirmation_status as
-  forward-written rows because the consent semantics they were
-  collected under match what the new system enforces.
-- *Option G.* Loses real consent records from the canonical
-  store. The organizer's "manual newsletter export" workflow
-  (epic Resolved Decision: "Newsletter delivery pipeline:
-  manual export") would have to read both surfaces during the
-  transition window, which is exactly the conflation this
-  scoping aims to remove.
-- *Option H.* Pays for a column that would only matter if
-  forward and backfilled rows were treated differently
-  downstream. They are not, under Decision 7's resolution.
-  Premature flexibility.
-
-If Decision 7 had resolved to "double-opt-in required v1," F
-would not be straight-line: existing feedback rows were
-collected under single-opt-in semantics and cannot be retro-
-fitted with a confirmation event. In that world F still applies
-but with `confirmation_status = 'legacy_single_opt_in'` (a
-distinct sentinel), and the v1 newsletter pipeline would have to
-either include those rows on grandfather rationale or omit
-them. Decision 7 resolves to single-opt-in v1, which makes F
-straight-line.
-
-**Resolution.** Option F. Implementing migration backfills in the
-same transaction that creates the subscription table, inserting
-one subscription row per `feedback_submissions` row where
-`newsletter_opt_in = true`. Each backfilled row's
-`(event_slug, email)` composite key comes from the feedback row's
-own `event_slug` and (case-normalized) `email`; `source_surface`
-is the literal `'feedback_form'`; `subscribed_at` is the feedback
-row's `submitted_at`. ON CONFLICT on `(event_slug, email)` makes
-the backfill idempotent (re-applying the migration is a no-op),
-and also handles the edge case where the same attendee submitted
-the feedback form twice for the same event with `newsletter_opt_in
-= true` both times — a single subscription row carries forward.
-Implementing plan owns the SQL; this doc does not draft it.
+**Resolution.** Option G. The implementing migration creates the
+new subscription table, the internal helper, and the
+`submit_feedback` body update without any data-movement SQL. The
+implementing pass may instead pick Option G' (add a `truncate`
+step) if it judges a clean-slate start to be operationally
+clearer; both options satisfy the scoping resolution. The
+implementing plan owns whichever SQL it picks; this doc does not
+draft it.
 
 ### 4. Write path from feedback — synchronous write through an internal SECURITY DEFINER helper, called from surface-specific public RPCs [Resolved → Option L, internal-helper variant]
 
@@ -645,9 +630,10 @@ self-service link, manual) is not scoped here — the plan
 implementing this work names whatever the v1 path is, but the
 column is in the schema from day one.
 
-**Why it mattered.** The compliance shape governs both the
-backfill semantics (Decision 3) and whether the standalone surface
-needs an email-sending pipeline at v1 launch.
+**Why it mattered.** The compliance shape governs whether the
+standalone surface needs an email-sending pipeline at v1 launch
+and whether the schema must accommodate a confirmation step from
+day one.
 
 **Came down to.** The epic-level Risk Register entry "Newsletter
 consent is load-bearing legally" at
@@ -684,14 +670,18 @@ madrona-feedback epic's table without belonging to that epic's
 milestone structure. The plan would own: the new subscription-
 table migration, the internal `subscribe_email` helper RPC
 (SECURITY DEFINER, EXECUTE revoked from public/anon/authenticated
-per Decision 4), the backfill INSERT, the `submit_feedback` RPC
-body update to call the helper with hardcoded
-`p_source_surface = 'feedback_form'`, the regenerated
-`shared/db/types.ts`, and any clarifying comments on
-`feedback_submissions.newsletter_opt_in`'s snapshot semantics. The
-standalone signup public RPC and any UI shipping the standalone
-surface are *not* in scope for that plan — they belong to the
-standalone signup feature's own scoping pass.
+per Decision 4), the `submit_feedback` RPC body update to call
+the helper with hardcoded `p_source_surface = 'feedback_form'`,
+the regenerated `shared/db/types.ts`, and any clarifying comments
+on `feedback_submissions.newsletter_opt_in`'s snapshot semantics.
+Per Decision 3, no backfill SQL is needed; the implementing pass
+may add a `truncate public.feedback_submissions` step if it
+prefers a clean-slate state, but that's a destructive verb that
+requires its own review attention rather than landing silently.
+The standalone signup public RPC and any UI shipping the
+standalone surface (or any other surface absorbed into the
+feedback + subscription plugin) are *not* in scope for that plan
+— they belong to the plugin's own scoping pass per Decision 6.
 
 If the next step is direct implementation, the same scope applies;
 the implementing PR carries its own contract via the diff.
@@ -735,17 +725,17 @@ Per the maintainer's framing, this scoping doc does not lock the
 PR boundary. Initial read on shape, for the implementing plan or
 direct PR to confirm or revise:
 
-- **Single PR.** The migration (new subscription table + backfill +
-  shared helper RPC), the `submit_feedback` body update to call
-  the helper, the `shared/db/types.ts` regeneration, and any
-  doc updates fit one cohesive review chunk well below the
-  AGENTS.md ">5 distinct subsystems" or ">300 LOC of substantive
-  logic" thresholds. Subsystems touched: SQL migration, RPC body,
+- **Single PR.** The migration (new subscription table + internal
+  helper RPC), the `submit_feedback` body update to call the
+  helper, the `shared/db/types.ts` regeneration, and any doc
+  updates fit one cohesive review chunk well below the AGENTS.md
+  ">5 distinct subsystems" or ">300 LOC of substantive logic"
+  thresholds. Subsystems touched: SQL migration, RPC body,
   generated types, doc surface — four, not five.
-- A split is justifiable only if the implementing pass surfaces
-  unexpected backfill cardinality (it should not — the row count
-  is bounded by current Madrona '26 traffic, which is near zero
-  at scoping time per the migration's 2026-05-06 timestamp).
+- A split is unlikely to be justified given Decision 3's "no
+  backfill" resolution; the implementing diff is bounded by
+  schema + helper + RPC-body update, all of which are tightly
+  coupled.
 
 The implementing pass re-derives this against actual diff size per
 [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
