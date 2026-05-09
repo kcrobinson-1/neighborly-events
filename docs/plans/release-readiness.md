@@ -49,7 +49,7 @@ Owner docs this file coordinates:
 - [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface that ships in the current MVP
 - [security-and-abuse.md](/docs/tracking/security-and-abuse.md) — trust-boundary follow-ups beyond the MVP gate
 - [continuous-deployment-roadmap.md](/docs/tracking/continuous-deployment-roadmap.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
-- [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
+- [cloud-agent-reliability-roadmap.md](/docs/tracking/cloud-agent-reliability-roadmap.md) — agent-tooling reliability work that intersects PR CI evidence
 - [epics/madrona-demo-build/epic.md](/docs/plans/epics/madrona-demo-build/epic.md) — current real-event work (demo-build phase: Theme registration, content authoring, end-to-end attendee journey through a stakeholder-shareable demo URL); launch readiness deferred to a far-future Madrona-launch sibling
 - [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md) — completed M1–M3 (ThemeScope wiring, home rebuild, demo-mode auth bypass) that shipped between this doc's establishment and the next pass
 
@@ -890,4 +890,4 @@ Candidates currently open:
 - [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface
 - [security-and-abuse.md](/docs/tracking/security-and-abuse.md) — trust-boundary follow-ups beyond the MVP gate
 - [continuous-deployment-roadmap.md](/docs/tracking/continuous-deployment-roadmap.md) — release-pipeline evolution context
-- [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
+- [cloud-agent-reliability-roadmap.md](/docs/tracking/cloud-agent-reliability-roadmap.md) — agent-tooling reliability work that intersects PR CI evidence
