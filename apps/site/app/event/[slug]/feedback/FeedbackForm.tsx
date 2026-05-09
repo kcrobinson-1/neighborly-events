@@ -143,14 +143,21 @@ export function FeedbackForm({
     setState({ tag: "submitting" });
     try {
       const client = getBrowserSupabaseClient();
-      const { error } = await client.from("feedback_submissions").insert({
-        event_slug: slug,
-        ratings: ratingsOut,
-        free_text: freeTextOut,
-        email: emailOut,
-        email_declined: emailDeclinedOut,
-        newsletter_opt_in: newsletterOut,
-      });
+      // `Prefer: return=minimal` keeps PostgREST from emitting `RETURNING`,
+      // which would require SELECT on `feedback_submissions` — anon has only
+      // INSERT (migration 20260506000000), so the default RETURNING fails
+      // with 42501. The form discards the inserted row, so minimal is fine.
+      const { error } = await client
+        .from("feedback_submissions")
+        .insert({
+          event_slug: slug,
+          ratings: ratingsOut,
+          free_text: freeTextOut,
+          email: emailOut,
+          email_declined: emailDeclinedOut,
+          newsletter_opt_in: newsletterOut,
+        })
+        .setHeader("Prefer", "return=minimal");
       if (error) {
         setState({ tag: "error" });
         return;

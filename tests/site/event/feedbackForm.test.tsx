@@ -9,10 +9,23 @@ import {
   within,
 } from "@testing-library/react";
 
-const { mockGetBrowserSupabaseClient, insertSpy } = vi.hoisted(() => ({
-  mockGetBrowserSupabaseClient: vi.fn(),
-  insertSpy: vi.fn(),
-}));
+const { mockGetBrowserSupabaseClient, insertSpy, setHeaderSpy } = vi.hoisted(
+  () => ({
+    mockGetBrowserSupabaseClient: vi.fn(),
+    insertSpy: vi.fn(),
+    setHeaderSpy: vi.fn(),
+  }),
+);
+
+// The form chains `.insert(...).setHeader("Prefer", "return=minimal")` so
+// PostgREST skips its default `RETURNING *` (anon has INSERT-only on the
+// table). The test double mirrors that chain: insertSpy records the row
+// payload, setHeaderSpy records the header args and returns a thenable
+// resolving to the configured result.
+function makeInsertBuilder<T>(resultPromise: Promise<T>) {
+  setHeaderSpy.mockReturnValueOnce(resultPromise);
+  return { setHeader: setHeaderSpy };
+}
 
 vi.mock("../../../apps/site/lib/supabaseBrowser.ts", () => ({
   getBrowserSupabaseClient: mockGetBrowserSupabaseClient,
@@ -43,11 +56,14 @@ function makeFeedback(overrides: Partial<FeedbackContent> = {}): FeedbackContent
 }
 
 function setInsertResult(result: { error: { message: string } | null }) {
-  insertSpy.mockResolvedValueOnce(result);
+  insertSpy.mockReturnValueOnce(
+    makeInsertBuilder(Promise.resolve(result)),
+  );
 }
 
 beforeEach(() => {
   insertSpy.mockReset();
+  setHeaderSpy.mockReset();
   mockGetBrowserSupabaseClient.mockReset();
   mockGetBrowserSupabaseClient.mockReturnValue({
     from: () => ({ insert: insertSpy }),
@@ -152,6 +168,18 @@ describe("FeedbackForm — submission validation", () => {
     expect(payload.event_slug).toBe("madrona");
   });
 
+  it("sends Prefer: return=minimal so PostgREST skips RETURNING (anon lacks SELECT)", async () => {
+    setInsertResult({ error: null });
+    render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Submit feedback" }),
+      );
+    });
+    await waitFor(() => expect(setHeaderSpy).toHaveBeenCalledTimes(1));
+    expect(setHeaderSpy).toHaveBeenCalledWith("Prefer", "return=minimal");
+  });
+
   it("decline state submits with email_declined=true, email=null, newsletter_opt_in=false", async () => {
     setInsertResult({ error: null });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
@@ -183,9 +211,11 @@ describe("FeedbackForm — state machine", () => {
   it("transitions idle → submitting → success and replaces the form with the thank-you message", async () => {
     let resolveInsert: (value: { error: null }) => void = () => {};
     insertSpy.mockReturnValueOnce(
-      new Promise<{ error: null }>((resolve) => {
-        resolveInsert = resolve;
-      }),
+      makeInsertBuilder(
+        new Promise<{ error: null }>((resolve) => {
+          resolveInsert = resolve;
+        }),
+      ),
     );
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     fireEvent.change(screen.getByLabelText("Email"), {
