@@ -46,106 +46,91 @@ step count.
 ## Plan code minimalism
 
 Keep plans at the level of contracts and prose, not implementation
-detail. One-line function signatures, short type declarations, and
-short file-path references are fine; full function bodies, multi-line
-shell pipelines, SCSS rule bodies, or any code block longer than
-roughly five lines is implementation that belongs in the PR, not the
-plan. Plans attract code review; every bug in a code snippet inside a
-plan costs a review round on the plan doc itself before the
-implementation even starts, which is pure churn.
+detail. **No fenced code blocks of any kind in plan or scoping
+docs.** Inline backticks for identifiers, file paths with optional
+`:line` suffixes, and one-line type or function names embedded in
+prose are fine — those are citations, not code under contract.
+Anything more belongs in the PR that implements the plan (commit
+message, code, comment), not in the plan doc itself.
 
-**Code shapes in plans are directional pseudocode.** Whatever code-
-shaped content the five-line rule above admits — a backticked
-field-value pair, a one-line type signature, a short expression — is
-*shape*, not source. It communicates contract structure (what field
-exists where, what shape it takes, how it relates to other fields),
-not exact syntax. The implementer translates shapes into
-syntactically-correct code at PR time, against the surrounding prose
-that frames the shape. Agents reviewing a plan-doc PR (Claude,
-Codex, similar bots, human reviewers) apply this stance directly
-from this rule: focus on shape-level questions — is the right field
-named? does the shape match what the prose around it describes? is
-the contract self-consistent? — not on syntax-level findings
-(template-literal quotes, shell precedence, missing imports,
-semicolons). The five-line rule caps how much code-shaped content
-lives here even under this framing; this rule shifts the reviewer's
-stance on whatever content the cap admits.
+The protective intent is structural, not formatting preference.
+Code-shaped content in plan docs attracts code-shaped review:
+reviewers (Codex, line-level humans) reach for the same toolkit
+they use on a feature PR, surface syntax-shaped findings, and the
+contributor either patches the snippet in place — making review
+hostage to the next syntax revision — or adds a new rule to
+prevent the class of finding, which compounds the rule layer.
+The agentic-practice diagnosis at
+[`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md)
+named the cascade explicitly: plan-doc LOC ran roughly 64k
+against ~34k product code at the early-May 2026 snapshot, with
+no rule-deletion PRs in `docs/agents/` for the prior month, and
+this very section had accreted a falsifier check, a directional-
+pseudocode framing, a data-structure carve-out, and a self-flag
+heuristic to triage "is this snippet acceptable." Removing the
+entry point — fenced code blocks — is cheaper than auditing each
+snippet against four overlapping carve-out tests.
 
-**Author-side falsifier — would a reviewer find a syntax bug?**
-The five-line cap is necessary but not sufficient: short snippets
-can still attract syntax-level review when they contain exact
-syntax the implementer must transcribe verbatim. Before committing
-any code-shaped content, ask: could a careful reviewer find a
-syntax bug in this snippet? If yes, the content is exact syntax
-(not directional shape), regardless of length, and belongs in the
-implementation PR. Patterns that consistently fail this test: SQL
-policy bodies and subqueries with column references, function-call
-expressions with literal arguments the implementer cannot
-mechanically derive from the surrounding prose, regex literals,
-JSON / object literals with field-value pairs that must match a
-downstream consumer exactly, multi-statement shell pipelines.
-Replace each with prose that names the contract structure
-("policy resolves slug → event_id by joining through `game_events`,"
-not a `using (...)` body; "the script invokes the publish RPC with
-the same `event_id` and an actor uuid," not the call expression).
-A self-flag is the strongest signal that this rule is firing: if
-you find yourself writing a parenthetical like "implementer audits
-this against the actual parser diagnostic," "alias the row
-reference if the database surfaces ambiguity," or "adjust if X"
-next to a code snippet, that uncertainty *is* the rule firing —
-delete the snippet, keep (and tighten) the prose. Annotating a
-snippet with a "fix this later" note doesn't satisfy the rule; it
-just hands reviewers more code to review, and them finding the
-very thing the annotation flagged is the predictable outcome.
-Recurring trap (M1 phase 1.1 planning, 2026-05-06): a phase plan's
-SELECT-policy contract included a 3-line scalar-subquery SQL body
-— short enough to slip under the line cap but exact-syntax enough
-that an unqualified column reference made the subquery
-tautological and runtime-broken; the author noticed the ambiguity
-at write time and added a parenthetical fix-later annotation
-instead of removing the snippet, and Codex review caught the very
-ambiguity the annotation flagged. The shape-not-syntax test plus
-the self-flag check would have caught it regardless of line count.
+When a reviewer comment targets a code-shaped artifact inside a
+plan, the correction is to **remove or summarize the snippet**,
+not to fix the code in place. Code-correctness iteration belongs
+in the PR that implements the plan. Exception: if the comment
+surfaces a genuine design flaw whose phrasing happens to be code
+(an ordering race, an invariant violation), fix the *prose
+contract* in the plan and move the code to the implementation
+PR — don't fix both in the plan.
 
-**Data-structure-shaped illustrations are the one carve-out.**
-A code block whose entire body is a *data structure* — a
-TypeScript type literal, a JSON / object shape, a SQL column list,
-a table schema sketch — communicates contract structure faster as
-a code block than as nested prose, and the readability gain is
-real even past five lines. The carve-out applies only when:
+Pre-existing plans drafted before this strengthened rule are not
+retroactively non-conforming. Plans drafted from this point
+forward carry no fenced code blocks; reviewers may flag fenced
+blocks in new plans as a structural issue rather than reviewing
+their content. The companion rule on the reviewer side lives in
+the next section.
 
-- the block is an inert shape (no function bodies, no JSX, no
-  control flow, no expressions that *do* anything);
-- it is explicitly framed as illustrative, not contractual,
-  immediately before or after the block (e.g. "illustrative
-  shape — plan-drafting may refine," "contract structure
-  sketch," wording that names the block as plan-time-shape, not
-  implementation-time-syntax);
-- the surrounding prose is the load-bearing contract — the
-  shape block adds readability over prose, it does not replace
-  it.
+## Plan-doc review stance
 
-Behavioral pseudocode does **not** get this carve-out, regardless
-of length: function bodies, function signatures with parameter
-types, JSX trees, SQL policy bodies, multi-statement shell
-pipelines, and any block where a reviewer would naturally check
-whether the *code* is correct (rather than whether the *shape*
-is right) belong in prose or in the implementation PR. A
-TypeScript signature like `function Foo({ x, y }: { x: A; y: B }):
-JSX.Element;` is behavioral — it describes *what the function
-takes and returns* — and reads as something a reviewer should
-verify, not a shape they should accept as illustrative. Replace
-with prose that names the contract ("`Foo` accepts `x: A` and
-`y: B` and returns the rendered section element").
+Plan- and scoping-doc PRs carry the same review hazard the
+"Plan code minimalism" rule above addresses on the supply
+side: code-trained reviewers default to line-level findings
+even on prose-shaped content, and the cascade compounds when
+each finding produces either a snippet patch or a new rule.
+The supply-side fix (no code blocks) is cheaper if the demand-
+side stance is also explicit, so reviewers don't reach for the
+wrong toolkit at review-open time.
 
-When a reviewer comment targets a code snippet inside a plan, the
-correction is to **remove or summarize the snippet**, not to fix the
-code in place. Code-correctness iteration belongs in the PR that
-implements the plan. Exception: if the comment surfaces a genuine
-design flaw whose phrasing happens to be code (e.g. an ordering
-race, an invariant violation), fix the *prose contract* in the plan
-and move the code to the implementation PR — don't fix both in the
-plan.
+A PR whose primary diff is in `docs/plans/**` (plan doc or
+scoping doc) carries a `## Review Stance` section in the PR
+body. Canonical wording, which the PR may copy verbatim or
+adapt to the doc's content:
+
+> **Review Stance.** Review for: factual accuracy of claims
+> about the codebase and supporting services (with attention to
+> `Verified by:` citations); internal coherence between
+> contract / invariant / validation sections; decision-
+> completeness on Contracts; that estimate-shaped sections are
+> labeled per the "Plan content is a mix of rules and
+> estimates" rule in `shared.md`; that load-bearing claims pass
+> the "Falsifiability check" rule in the same file. **Do not
+> review for line-level correctness** on identifiers or
+> signatures embedded in prose — per "Plan code minimalism" in
+> `shared.md`, fenced code blocks belong in the implementing
+> PR, and anything short enough to live inline in prose is a
+> citation, not code under contract.
+
+The stance lives in the PR body (where reviewers see it at
+review-open time), not in the plan doc itself. Adding it to the
+durable doc would be its own form of bloat — every plan and
+scoping doc would carry the same paragraph. The PR body is the
+natural place because the stance shifts the *review interaction*,
+not the durable artifact. Tracking-doc PRs under
+`docs/tracking/**` already carry an equivalent stance per the
+[agentic-practice roadmap](/docs/tracking/agentic-practice-roadmap.md)
+precedent; this rule extends the pattern to the plan and scoping
+surfaces where the cascade originates.
+
+Pre-existing plans without this header are not retroactively
+non-conforming. Plan- and scoping-doc PRs opened from this point
+forward include the section.
 
 ## Cross-Cutting Invariants section
 
