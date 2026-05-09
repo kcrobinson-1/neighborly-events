@@ -164,7 +164,36 @@ implementer's call). The shape of the dispatched action is the
 implementer's call; the contract is that the right reducer
 transition fires for each mode value.
 
-### Game UI: post-submit panel renders both correct and revealed-incorrect cases
+### Game UI: page-level render switch reaches both panels
+
+[apps/web/src/pages/GamePage.tsx:121-128](apps/web/src/pages/GamePage.tsx:121-128)
+today mounts only `CorrectAnswerPanel` when `isShowingCorrectFeedback`
+fires. A sibling reveal panel (or an extended single panel that
+branches on `feedbackKind`) is unreachable without updating this
+conditional. The page already destructures `feedbackKind` from
+`useGameSession` ([apps/web/src/pages/GamePage.tsx:32](apps/web/src/pages/GamePage.tsx:32)),
+so the switch is wireable without hook changes. The contract is:
+
+- If the implementer chooses the **two-component** shape
+  (`CorrectAnswerPanel` + `AnswerRevealPanel`), the page-level
+  conditional renders `CorrectAnswerPanel` when `feedbackKind ===
+  "correct"` and `AnswerRevealPanel` when `feedbackKind ===
+  "incorrect"`, both gated on the same post-submit-phase
+  predicate that today is `isShowingCorrectFeedback` (or its
+  renamed equivalent if the phase rename happens).
+- If the implementer chooses the **one-component** shape (extend
+  `CorrectAnswerPanel` to render both cases), the page-level
+  conditional stays single-mount but passes `feedbackKind` and
+  whatever else the component needs to render the reveal copy
+  through; the component itself branches internally.
+
+Either shape is acceptable; what is **not** acceptable is shipping
+a sibling component without updating `GamePage.tsx`. Validation
+gate cases (b) and (c) below are the falsifier — a forgotten
+page-level switch surfaces as the wrong panel rendering on a
+wrong submission.
+
+### Post-submit panel: correct and revealed-incorrect cases
 
 [apps/web/src/game/components/CorrectAnswerPanel.tsx](apps/web/src/game/components/CorrectAnswerPanel.tsx)
 renders the post-submit success state in
@@ -175,12 +204,11 @@ result, shows the correct answer label(s) (resolved from
 `question.options` against `question.correctAnswerIds` via
 `getOptionLabels`, **Verified by:**
 [apps/web/src/game/gameUtils.ts:32-41](apps/web/src/game/gameUtils.ts:32-41)),
-and renders the explanation. Whether the incorrect case lives in
-the same component (extended) or in a sibling component
-(`AnswerRevealPanel.tsx`) is an implementer's call; the contract
-is one panel renders the correct case, one renders the
-revealed-incorrect case, and both expose the same `Continue` /
-`See your results` advance affordance.
+and renders the explanation. The two-vs-one component shape choice
+is named in the page-level contract above; this section's contract
+is what each rendered panel contains. Both correct and
+revealed-incorrect renderings expose the same `Continue` / `See
+your results` advance affordance.
 
 [apps/web/src/game/components/CurrentQuestionPanel.tsx:60-65](apps/web/src/game/components/CurrentQuestionPanel.tsx:60-65)'s
 inline `feedback-banner-error` "Try again" rendering remains
@@ -244,6 +272,10 @@ Modify:
 - `apps/web/src/game/components/CurrentQuestionPanel.tsx` — only
   if the inline incorrect-feedback banner needs scoping more
   tightly to `_required`
+- `apps/web/src/pages/GamePage.tsx` — page-level render switch so
+  the wrong-but-revealed panel is reachable (two-component shape)
+  or `feedbackKind` flows through (one-component shape); see the
+  page-level contract above
 - `apps/web/src/admin/AdminEventDetailsForm.tsx` — add the
   dropdown option
 - `tests/web/game/gameSessionState.test.ts` — non-blocking submit
@@ -254,6 +286,12 @@ Modify:
 - `tests/web/game/gameSessionSelectors.test.ts` — view-state for
   non-blocking
 - `tests/web/game/useGameSession.test.ts` — dispatcher branch
+- `tests/web/pages/GamePage.test.tsx` — page-level render
+  coverage for non-blocking mode: correct-feedback case mounts
+  `CorrectAnswerPanel`; incorrect-feedback case mounts the reveal
+  variant (sibling component or extended panel) — assert against
+  the rendered chip / heading / correct-answer-label so the
+  assertion catches both two-component and one-component shapes
 - `tests/web/admin/eventDetails.test.ts` — admin dropdown option
 - `tests/shared/game-config/fixtures.ts`,
   `tests/shared/game-config/draft-content.test.ts`,
