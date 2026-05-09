@@ -35,14 +35,29 @@ plan layout in
 After this plan lands, an event author can choose
 `instant_feedback_non_blocking` from the Feedback Mode dropdown in
 the admin event-details form. A player on an event configured that
-way submits an answer, immediately sees a per-question reveal panel
-that names whether they were right, shows which option(s) were
-correct, and renders the question's explanation when present, then
-continues to the next question with one button. The player's
-score reflects whichever answer they actually submitted (correct
-counts as 1, incorrect counts as 0; backend re-scores from trusted
-published content as today). The two existing modes' behavior is
-unchanged.
+way submits an answer and immediately sees a post-submit panel that
+resolves the question, then advances to the next question with one
+button regardless of whether their submission was right. Panel
+content is case-specific:
+
+- **Correct submission:** the panel renders identically to today's
+  `instant_feedback_required` correct-feedback panel — sponsor
+  fact if defined, else explanation, else the generic correct
+  default copy. This is intentional inheritance: authors who
+  attached a sponsor fact to a question want it surfaced when the
+  player gets the question right, and that hook should not diverge
+  between the two instant-feedback modes.
+- **Wrong submission:** the panel names which option(s) were
+  actually correct, then renders the question's `explanation`
+  when present, falling back to a labelled generic ("The correct
+  answer is X") when no explanation is defined. The wrong-case
+  path does **not** route through `sponsorFact` — a sponsor brag
+  attached to a missed question reads as a non-sequitur.
+
+The player's score reflects whichever answer they actually
+submitted (correct counts as 1, incorrect counts as 0; backend
+re-scores from trusted published content as today). The two
+existing modes' behavior is unchanged.
 
 ## Cross-Cutting Invariants
 
