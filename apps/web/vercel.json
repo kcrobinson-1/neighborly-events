@@ -2,7 +2,19 @@
   "git": {
     "deploymentEnabled": {
       "main": true,
-      "**": false
+      "*": false,
+      "build/*": false,
+      "chore/*": false,
+      "ci/*": false,
+      "docs/*": false,
+      "feat/*": false,
+      "fix/*": false,
+      "perf/*": false,
+      "plan/*": false,
+      "refactor/*": false,
+      "revert/*": false,
+      "style/*": false,
+      "test/*": false
     }
   },
   "rewrites": [
