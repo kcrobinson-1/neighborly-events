@@ -323,6 +323,56 @@ identity-fingerprint procedure that captures positive + negative
 response signatures and asserts against both. The load-bearing
 case is exactly when the exercise changes the procedure.
 
+## Decompose options into shapes before analyzing
+
+When a Choose-One decision (scoping decision, framework / library
+choice, alternative-evaluation in a Risk Register) lays out the
+candidate set, the first step is **enumeration**, not analysis.
+Each named option can hide multiple sub-shapes with materially
+different cost/benefit profiles. Before accepting or rejecting any
+option, ask: **are there sub-shapes — variants of how this option
+could be implemented — that would change the analysis?** Decompose
+first, then analyze each shape on its own merits.
+
+The recurring failure mode is category-level analysis: the option's
+category name is treated as a single thing, the rejection rationale
+holds against one shape that happens to be in the category, and
+sibling shapes slip through unevaluated. The decision looks
+well-reasoned in retrospect because the rationale holds against the
+strawman it cited — the failure is invisible until implementation
+surfaces a constraint (or unlocks a benefit) that an unevaluated
+sibling shape would have caught.
+
+Categories that frequently hide multiple shapes: "server-mediated
+write" hides "SECURITY DEFINER RPC via `.rpc()`" and "Edge Function
+wrapping the RPC"; "abstraction" hides extracted-helper,
+shared-module, and full class hierarchy; "framework integration"
+hides minimal adapter, wrapper-with-escape-hatch, and full rewrite;
+"caching layer" hides per-request, per-session, and shared CDN. If
+a candidate's name covers more than one viable shape, split it
+before scoring.
+
+Recurring trap: madrona feedback scoping framed the submission-path
+decision as "direct anon insert" vs "Server Action" vs "Edge
+Function." Option (c) "Edge Function" was actually two distinct
+shapes — "SECURITY DEFINER RPC called via `.rpc()`" (no separate
+runtime, same round-trip count as direct insert) and "Edge Function
+wrapping the RPC" (separate Deno runtime, multi-write
+orchestration). Both were treated as one. The heavier shape was
+rightly rejected; its lighter sibling was never decomposed out of
+the category. The chosen option shipped a PostgREST/grant
+interaction (`INSERT … RETURNING` requires `SELECT`, anon was
+INSERT-only) that the RPC-alone shape would have sidestepped at
+scoping time. See
+[supabase/migrations/20260506000000_add_feedback_tables.sql](/supabase/migrations/20260506000000_add_feedback_tables.sql)
+for the grant posture and
+[supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql](/supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql)
+for the RPC pattern that was conflated.
+
+Pre-existing scoping decisions are not retroactively non-conforming;
+scoping sessions opened from this point forward decompose options
+into shapes before locking the candidate set.
+
 ## Anti-pattern: planning artifacts that only cite each other
 
 If the plan, scoping doc, and milestone doc all cite each other
