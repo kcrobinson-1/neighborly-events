@@ -297,22 +297,31 @@ same transaction that creates the subscription table, with
 `submitted_at` carried forward as `subscribed_at`. Implementing
 plan owns the SQL; this doc does not draft it.
 
-### 4. Write path from feedback — synchronous write through a shared SECURITY DEFINER helper [Resolved → Option L]
+### 4. Write path from feedback — synchronous write through an internal SECURITY DEFINER helper, called from surface-specific public RPCs [Resolved → Option L, internal-helper variant]
 
 **What was decided.** The feedback RPC's existing INSERT is wrapped
 in a single transaction with a call to a shared subscription-write
 helper. The same helper is the write entry point for the eventual
 standalone signup RPC. ON CONFLICT semantics inside the helper
 ensure duplicate-email opt-ins are no-ops on the subscription side
-without failing the feedback insert.
+without failing the feedback insert. **The helper is internal —
+not granted to anon or authenticated.** Public callers reach the
+helper only through surface-specific SECURITY DEFINER RPCs
+(`submit_feedback` for the feedback flow; a future
+`submit_newsletter_signup` for the standalone signup flow), each
+of which hardcodes its own `source_surface` value and constrains
+its own `source_event_slug` shape before calling the helper.
 
-**Why it mattered.** Naming the transactional shape now closes off
-the failure-mode surface area; deciding it later means the
+**Why it mattered.** Naming the transactional shape and the
+public-vs-internal API boundary now closes off the failure-mode
+and abuse-mode surface areas; deciding either later means the
 implementing plan inherits a multi-shape decision rather than a
 contract.
 
 **Options considered.** Per the "Decompose options into shapes"
-rule, the "shared helper" framing was decomposed before scoring:
+rule, the "shared helper" framing was decomposed twice — first by
+transactional shape, then by public/internal API boundary, since
+the second axis materially changes the abuse surface:
 
 1. **Inline write inside `submit_feedback` (Option I).** The RPC
    body is extended to insert into both tables inline; no shared
@@ -324,19 +333,27 @@ rule, the "shared helper" framing was decomposed before scoring:
    inside `submit_feedback`'s transaction; standalone's is
    called inside the standalone RPC's transaction.
 3. **Shared helper, called inside each caller's transaction
-   (Option L = K2).** A single `subscribe_email(p_email,
+   (Option L).** A single `subscribe_email(p_email,
    p_source_surface, p_source_event_slug)` SECURITY DEFINER
-   helper. The feedback RPC calls it inside its own transaction
-   after the feedback INSERT succeeds; the standalone signup
-   RPC calls it as its sole INSERT.
+   helper. Decomposes into:
+   - **L-public.** Helper is granted EXECUTE to anon and
+     authenticated. Surface-specific RPCs are convenience
+     wrappers; anon callers may also call the helper directly.
+   - **L-internal.** Helper has EXECUTE revoked from public,
+     anon, and authenticated. Reachable only from inside other
+     SECURITY DEFINER functions whose effective role is the
+     function owner. Surface-specific RPCs (`submit_feedback`
+     and a future `submit_newsletter_signup`) are the only
+     public API; each hardcodes its own `source_surface`.
 4. **Async event with eventual consistency (Option J).** The
    feedback RPC inserts into `feedback_submissions` only; a
    trigger or background job propagates to the subscription
    table. The standalone signup writes directly.
 
 **Came down to.** Where the subscription-write rules live (one
-place vs. drifting copies) and what the failure mode looks like
-when the subscription write fails.
+place vs. drifting copies), what the failure mode looks like when
+the subscription write fails, and — at the L sub-shape level —
+who controls the source-attribution columns.
 
 - *Option I.* Logic duplication is the dominant cost: the moment
   the standalone surface ships, the rules (normalization, ON
@@ -349,17 +366,42 @@ when the subscription write fails.
 - *Option K1.* Better than I but worse than L: the two helpers
   exist to share rules, but the actual sharing is by convention
   not by callsite. Same drift risk, dressed up.
-- *Option L.* One helper, one set of rules, two callers. The
-  helper bypasses RLS via SECURITY DEFINER, so neither caller's
-  RLS posture matters (the feedback RPC is already SECURITY
-  DEFINER and the standalone RPC will be). ON CONFLICT semantics
+- *Option L-public.* The category-level "shared helper" answer,
+  rejected on abuse grounds. `p_source_surface` and
+  `p_source_event_slug` are attacker-controlled inputs; granting
+  EXECUTE to anon lets a hostile caller bypass the
+  surface-specific RPCs entirely and write arbitrary attribution
+  tuples — including impersonating the standalone surface from
+  a feedback context, or claiming a `source_event_slug` for an
+  event the attacker has no involvement with. The `submit_feedback`
+  RPC at
+  [`supabase/migrations/20260509000000_add_submit_feedback_rpc.sql:27-58`](/supabase/migrations/20260509000000_add_submit_feedback_rpc.sql)
+  is correctly granted to anon because its parameter set is
+  closed (`p_event_slug` is FK-gated by
+  `feedback_enabled_events`; remaining parameters describe a
+  feedback row's content); the analogy does not transfer to a
+  helper whose parameters include the source-attribution shape
+  itself.
+- *Option L-internal.* One helper, one set of rules, two
+  callers — but the public API is the surface-specific RPCs,
+  not the helper. The helper bypasses RLS via SECURITY DEFINER;
+  the surface-specific RPCs each control their own attribution
+  by hardcoding `p_source_surface` (and validating
+  `p_source_event_slug` against their own surface's rules — for
+  feedback, the slug must equal the event_slug already gated by
+  the FK in
+  [`supabase/migrations/20260506000000_add_feedback_tables.sql:52-53`](/supabase/migrations/20260506000000_add_feedback_tables.sql);
+  for the future standalone surface, the slug is null or
+  validated per that surface's design). ON CONFLICT semantics
   inside the helper handle duplicate-email opt-ins as no-ops or
   as a refresh of `last_seen_at` (plan-level call). Failure of
   the subscription INSERT rolls back the feedback INSERT — a
   consistency guarantee that matches user expectation: "submit
   feedback with newsletter checked" should not produce a
   feedback row claiming opt-in alongside a missing subscription
-  row.
+  row. The internal-only grant posture is enforced by `revoke
+  execute on function … from public, anon, authenticated`; no
+  matching `grant` is issued for those roles.
 - *Option J.* The async path exposes a window where the feedback
   admin surface says "X opted in" while the subscription store
   doesn't list them. For v1 with manual newsletter export, that
@@ -372,12 +414,24 @@ when the subscription write fails.
   fan-out, not the cross-table consistency, and the design space
   reopens.
 
-**Resolution.** Option L. The implementing plan defines the
-helper's signature and ON CONFLICT semantics; this doc names that
-the helper exists, is shared, and is called synchronously inside
-the feedback RPC's transaction. The helper is granted EXECUTE to
-anon and authenticated by analogy to
-[`supabase/migrations/20260509000000_add_submit_feedback_rpc.sql:60-65`](/supabase/migrations/20260509000000_add_submit_feedback_rpc.sql).
+**Resolution.** Option L-internal. The implementing plan defines
+the helper's signature and ON CONFLICT semantics; this doc names
+the public API contract (surface-specific RPCs are the boundary;
+the helper is internal-only) and the grant posture (`revoke
+execute … from public, anon, authenticated`; no `grant execute …
+to anon, authenticated` is issued). `submit_feedback`'s body is
+extended to call the helper inside its existing transaction with
+`p_source_surface = 'feedback_form'` (literal, not from a
+parameter) and `p_source_event_slug = p_event_slug` (the same
+already-FK-gated value the existing INSERT uses). The standalone
+signup feature, when scoped, ships its own public SECURITY
+DEFINER RPC that calls the helper with `p_source_surface =
+'standalone'` (literal) and whatever `p_source_event_slug` shape
+that scoping pass settles on. The set of permissible
+`source_surface` values is enforced at the public-RPC boundary
+(each RPC hardcodes one literal); a CHECK constraint on the
+subscription table is a defense-in-depth option the implementing
+plan may add but is not the primary gate.
 
 ### 5. Feedback-row audit flag — keep `newsletter_opt_in` as a denormalized audit signal [Resolved → Option N]
 
@@ -450,14 +504,18 @@ subscription state — exact wording is plan-level.
 ### 6. Standalone signup surface — anchor only, full scoping deferred [Carryover]
 
 **What this scoping doc resolves.** The contract surface for the
-standalone signup is a SECURITY DEFINER RPC (or equivalent
-`subscribe_email(p_email, p_source_surface, p_source_event_slug)`
-caller) that calls the same helper from Decision 4 with
-`p_source_surface = 'standalone'` and a nullable
-`p_source_event_slug`. The helper signature, the source-surface
-enum membership, and the subscription table shape are settled here
-so the standalone feature inherits a contract rather than co-
-designing with this work.
+standalone signup is a separate, surface-specific public SECURITY
+DEFINER RPC (working name `submit_newsletter_signup`) granted to
+anon and authenticated. That RPC's body calls the internal
+`subscribe_email` helper from Decision 4 with `p_source_surface =
+'standalone'` (hardcoded literal in the RPC body, not a
+parameter) and whatever `p_source_event_slug` shape the standalone
+scoping pass settles. Per Decision 4's resolution, the helper is
+internal — anon does not call it directly. The helper signature,
+the source-surface literal set ('feedback_form', 'standalone'),
+and the subscription table shape are settled here so the
+standalone feature inherits a contract rather than co-designing
+with this work.
 
 **What is deferred to the standalone signup scoping pass.**
 
@@ -465,8 +523,11 @@ designing with this work.
   embedded component, marketing modal, etc.
 - The trigger for shipping it (which event or organizer ask
   motivates the first deploy).
-- Whether the standalone RPC accepts a `p_source_event_slug` from
-  a per-event embed of the widget, or always writes null.
+- Whether the standalone public RPC accepts a
+  `p_source_event_slug` parameter (for a per-event embed of the
+  widget) or always passes null when calling the internal helper.
+  Either way, the helper itself is reachable only through that
+  surface-specific RPC, never via direct anon execute.
 - Copy, validation feedback, double-submit handling, and any
   thank-you/confirm flow on the standalone surface.
 
@@ -531,13 +592,16 @@ cutting plan at the same top-level location (alongside this
 scoping doc), since the implementing PR touches the
 madrona-feedback epic's table without belonging to that epic's
 milestone structure. The plan would own: the new subscription-
-table migration, the shared subscription-write helper RPC, the
-backfill INSERT, the `submit_feedback` RPC update to call the
-helper, the regenerated `shared/db/types.ts`, and any clarifying
-comments on `feedback_submissions.newsletter_opt_in`'s snapshot
-semantics. The standalone signup RPC and any UI shipping the
-standalone surface are *not* in scope for that plan — they belong
-to the standalone signup feature's own scoping pass.
+table migration, the internal `subscribe_email` helper RPC
+(SECURITY DEFINER, EXECUTE revoked from public/anon/authenticated
+per Decision 4), the backfill INSERT, the `submit_feedback` RPC
+body update to call the helper with hardcoded
+`p_source_surface = 'feedback_form'`, the regenerated
+`shared/db/types.ts`, and any clarifying comments on
+`feedback_submissions.newsletter_opt_in`'s snapshot semantics. The
+standalone signup public RPC and any UI shipping the standalone
+surface are *not* in scope for that plan — they belong to the
+standalone signup feature's own scoping pass.
 
 If the next step is direct implementation, the same scope applies;
 the implementing PR carries its own contract via the diff.
@@ -611,6 +675,22 @@ implementing plan re-verifies each at plan time per
   [`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
   motivate Decision 4's shared helper. The plan confirms the
   guardrail wording when drafting the helper's contract.
+- **Helper grant posture (Decision 4 load-bearing claim).** The
+  scoping resolution requires the implementing migration to
+  REVOKE EXECUTE on `subscribe_email(...)` from `public, anon,
+  authenticated`, with no matching `grant execute … to anon,
+  authenticated` issued for the helper. This is the structural
+  enforcement that prevents anon callers from bypassing the
+  surface-specific public RPCs and writing arbitrary
+  `source_surface` / `source_event_slug` attribution. Reality-
+  check at plan time: confirm Postgres semantics that a SECURITY
+  DEFINER function called from inside another SECURITY DEFINER
+  function whose owner is the same role does not require the
+  inner function to be granted to anon (the effective role is
+  the function owner, not the calling user). If a plan-level
+  test reveals otherwise, the helper grant posture must be
+  revisited; do not silently grant EXECUTE to anon to make the
+  call work.
 
 ## Out of scope for this scoping doc
 
