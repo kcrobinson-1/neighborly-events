@@ -77,7 +77,9 @@ export function matchGamePath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    // Case-fold so a printed QR or hand-typed URL with capital letters
+    // resolves against the lowercase canonical slug stored in the DB.
+    const slug = decodeURIComponent(encodedSlug).toLowerCase();
 
     if (!slug || slug.includes("/")) {
       return null;
@@ -115,7 +117,7 @@ export function matchEventAdminPath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = decodeURIComponent(encodedSlug).toLowerCase();
 
     if (!slug || slug.includes("/")) {
       return null;
@@ -153,7 +155,7 @@ export function matchGameRedeemPath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = decodeURIComponent(encodedSlug).toLowerCase();
 
     if (!slug || slug.includes("/")) {
       return null;
@@ -191,7 +193,7 @@ export function matchGameRedemptionsPath(pathname: string) {
   }
 
   try {
-    const slug = decodeURIComponent(encodedSlug);
+    const slug = decodeURIComponent(encodedSlug).toLowerCase();
 
     if (!slug || slug.includes("/")) {
       return null;

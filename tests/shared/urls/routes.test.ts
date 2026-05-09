@@ -112,3 +112,32 @@ describe("redemptions monitoring routes", () => {
     ).toBeNull();
   });
 });
+
+// A printed QR with an accidentally capitalized letter or an attendee
+// hand-typing a proper-noun slug must resolve against the lowercase
+// canonical slug stored in the DB. The matchers case-fold after decode
+// so every event-route entry point in apps/web is covered uniformly.
+describe("slug case-folding", () => {
+  it("lowercases mixed-case slugs across every event route", () => {
+    expect(matchGamePath("/event/Madrona/game")).toEqual({
+      slug: "madrona",
+    });
+    expect(matchEventAdminPath("/event/Madrona/admin")).toEqual({
+      slug: "madrona",
+    });
+    expect(matchGameRedeemPath("/event/Madrona/game/redeem")).toEqual({
+      slug: "madrona",
+    });
+    expect(
+      matchGameRedemptionsPath("/event/Madrona/game/redemptions"),
+    ).toEqual({ slug: "madrona" });
+  });
+
+  it("lowercases percent-encoded uppercase characters", () => {
+    // %4D is "M" — exercises the post-decode lowercase, not just the
+    // pathname-string lowercase.
+    expect(matchGamePath("/event/%4Dadrona/game")).toEqual({
+      slug: "madrona",
+    });
+  });
+});
