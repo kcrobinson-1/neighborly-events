@@ -29,14 +29,16 @@ row.
   email-for-followup are tied to one specific submission event and
   carry no meaning outside that event. This is the row's natural
   shape.
-- **Ongoing subscription.** The `newsletter_opt_in boolean` on the
-  same row encodes a long-lived "yes, send me future emails"
-  relationship that should outlive the feedback row. A feedback row
-  correctly retained as historical event data may correspond to an
-  attendee who later unsubscribed; conversely, a feedback row later
-  purged for PII redaction or abuse cleanup should not delete the
-  consent record. The current shape couples the two in a way that
-  forces either-both-or-neither retention.
+- **Newsletter opt-in capture.** The `newsletter_opt_in boolean` on
+  the same row encodes a consent record meant to be exported for
+  the org's downstream mailing-list tool. That consent record
+  should outlive the feedback row in some directions and be
+  purgeable independently in others — a feedback row later purged
+  for PII redaction or abuse cleanup should not delete the consent
+  record (the export still owes the consent fact to the downstream
+  tool), and the consent record persists for export use whether or
+  not the feedback row remains. The current shape couples the two
+  in a way that forces either-both-or-neither retention.
 
 The maintainer-agreed direction is to ship a standalone newsletter
 signup feature as a peer surface to the feedback form, and reshape
@@ -75,65 +77,68 @@ Per [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
 is decomposed into the sub-shapes that materially change the
 analysis before being scored.
 
-### 1. Source of truth — subscription table is canonical, feedback writes through [Resolved → Option A]
+### 1. Source of truth — opt-in capture table is canonical for the consent moment, feedback writes through [Resolved → Option A]
 
-**What was decided.** The new subscription table is the canonical
-record of "this email has agreed to receive newsletter emails."
-The feedback form's opt-in checkbox emits a write-through into that
-table when an attendee opts in. The `feedback_submissions` row
-retains a denormalized boolean as audit trail (see Decision 5).
+**What was decided.** The new opt-in capture table is the canonical
+record within Neighborly of "this email opted in to a newsletter for
+this event at this moment." Per Decision 7, Neighborly is not the
+persistent maintainer of the org's mailing list — that role lives in
+whatever tool the org imports the export into (Mailchimp is the v1
+named case). So "canonical" here means canonical for the
+event-bound consent capture, not for current-subscription state.
+The feedback form's opt-in checkbox emits a write-through into the
+capture table; the `feedback_submissions` row retains a
+denormalized boolean as audit trail (see Decision 5).
 
 **Why it mattered.** This is the load-bearing axis: every other
-shape decision (column set, write path, backfill posture) reads
-differently depending on which surface owns the canonical record.
+shape decision (column set, write path) reads differently depending
+on which surface owns the canonical record of the opt-in.
 
 **Options considered.**
 
-1. **Subscription table is canonical (Option A).** The subscription
-   store is the single source of truth for "is this email a current
-   subscriber." The feedback form's opt-in is one of multiple
-   surfaces that can write into it; queries about "who is currently
-   subscribed" run against the subscription table only.
-2. **Feedback row is canonical, subscription is derived (Option
-   B).** The feedback row carries the consent fact; a view, trigger,
-   or ETL job projects subscriptions for newsletter-delivery
-   purposes. The subscription store is a cache; deleting a feedback
-   row deletes the corresponding subscription on next projection.
+1. **Opt-in capture table is canonical (Option A).** The capture
+   table is the single source of truth within Neighborly for "this
+   email opted in via Neighborly at this moment." The feedback form's
+   opt-in is one of multiple surfaces that write into it.
+2. **Feedback row is canonical, capture table is derived (Option
+   B).** The feedback row carries the opt-in fact; a view, trigger,
+   or ETL job projects capture rows for export purposes. The
+   capture table is a cache; deleting a feedback row deletes the
+   corresponding capture row on next projection.
 
-**Came down to.** The lifecycle divergence the maintainer named.
-Under Option B, deleting a feedback row for PII redaction
-necessarily deletes the consent record; the only escape is to
-treat the projected subscription store as authoritative *after*
-projection, at which point B has degenerated into A with extra
-steps. Under Option A, feedback purge and unsubscribe are
-independent operations against independent rows, which matches the
-two lifecycles' natural cardinalities (a single attendee may
-submit feedback once and stay subscribed for years; another may
-submit feedback every event without ever opting in).
+**Came down to.** The lifecycle divergence between the feedback
+event and the opt-in record. Under Option B, deleting a feedback
+row for PII redaction necessarily deletes the opt-in record. Under
+Option A, feedback purge and the opt-in record are independent
+operations against independent rows — the consent record persists
+for export use even if the surrounding feedback row is later purged
+for unrelated reasons.
 
-A second consequence: the standalone signup surface, when it
-ships, has no feedback row to derive from. Under B that surface
-would have to either invent a synthetic feedback row or fork the
-"is this email subscribed" reads to consult two sources. Under A
-the standalone surface and the feedback form are peer writers
-into one canonical store; reads are uniform.
+A second consequence: the standalone signup surface, when it ships,
+has no feedback row to derive from. Under B that surface would have
+to either invent a synthetic feedback row or fork its read path.
+Under A the standalone surface and the feedback form are peer
+writers into one capture table.
 
-**Resolution.** Option A. The new subscription table is canonical;
-feedback emits a write-through.
+**Resolution.** Option A. The new opt-in capture table is
+canonical; feedback emits a write-through. "Canonical" applies
+within Neighborly's scope; persistent subscription state lives
+downstream per Decision 7.
 
 ### 2. Subscription-table shape — composite (event_slug, email) primary key, event_slug standing in for an org/tenant concept until one exists [Resolved → Option C, with explicit org-stand-in framing]
 
 **What was decided.** Composite primary key on `(event_slug,
-email-normalized)`. Every subscription is event-scoped because every
+email-normalized)`. Every opt-in is event-scoped because every
 public surface that produces one is event-scoped — the feedback form
 lives at `/event/<slug>/feedback`, and the future standalone signup
 widget will live somewhere under `/event/<slug>/*` for the same
 reason every public surface in this product does. There is no
-slug-less subscription shape to model. Per-event consent is recorded
+slug-less opt-in shape to model. Per-event consent is recorded
 per-event; the same email opting in to Madrona '26 and Madrona '27
-is two rows, two consents, two unsubscribe entry points — that's
-correct, not a bug. `event_slug` stands in for the org/tenant unit
-of consent for now; if a future epic introduces a real multi-event-
+is two rows, two consent records — that's correct, not a bug, and
+matches what the downstream tool will see when it imports each
+event's export. `event_slug` stands in for the org/tenant unit of
+consent for now; if a future epic introduces a real multi-event-
 host concept, it adds an `org_id` column (or equivalent) and the
 unit of consent migrates without the per-event rows becoming wrong.
 
@@ -190,20 +195,19 @@ that reality.
 
 - *Option C (chosen).* Matches the surface reality (every signup
   comes from an event-scoped page). "Give me the Madrona '26
-  subscribers" is a primary-key range scan
+  opt-ins for export" is a primary-key range scan
   (`where event_slug = 'madrona'`). ON CONFLICT on
   `(event_slug, email)` makes "the same attendee opts in twice
-  via different surfaces in the same event" a single-row no-op
-  (or `last_seen_at` refresh). "Unsubscribe me from this event"
-  is a single-row write. "Unsubscribe me from everything" is N
-  writes today, which is correct under the per-event-consent
-  framing — the user signed up N times, they unsubscribe N
-  times. When a real multi-event-host concept emerges, an
-  `org_id` migration adds it; per-event rows remain valid as
-  audit. The Madrona '26 → '27 transition is two distinct lists
-  rather than one shared list, which matches what consent
-  semantics actually require ('27 attendees did not consent to
-  receiving '26 emails and vice versa).
+  via different surfaces in the same event" a single-row no-op.
+  Unsubscribe is not modeled in our schema (Decision 7 — the
+  downstream tool owns it); deletion when needed is single-row.
+  When a real multi-event-host concept emerges, an `org_id`
+  migration adds it; per-event rows remain valid as the
+  consent-moment record. The Madrona '26 → '27 transition is two
+  distinct opt-in records rather than one shared record, which
+  matches what consent semantics actually require ('27 attendees
+  did not consent to '26 emails and vice versa) and what the
+  downstream tool sees on import.
 - *Option D1.* Already rejected above. The "one canonical yes-or-
   no per email" framing imported a global-newsletter mental model
   the product doesn't have.
@@ -245,15 +249,13 @@ names and types deferred to plan time):
   under composite-PK — kept as audit signal recording which
   surface produced this row. Closed at the application layer;
   DB-level CHECK is plan-level.
-- A `confirmation_status` column (see Decision 7 for the value
-  set), per-row so each (event_slug, email) pair carries its
-  own confirmation lifecycle.
-- A nullable `unsubscribed_at` timestamp. Setting it removes the
-  row from "active subscribers for this event" queries; deleting
-  the row is reserved for hard PII redaction. Re-subscribe after
-  unsubscribe is plan-level: cleared timestamp on the existing
-  row, or new row replacing the old one — the two shapes have
-  different audit characteristics and the plan picks.
+
+That is the entire column set. There is no `confirmation_status`
+column, no `unsubscribed_at` column, no other lifecycle metadata.
+Per Decision 7, Neighborly captures the consent moment for export;
+persistent subscription state and its lifecycle (confirmation,
+unsubscribe, delivery) live downstream in whatever tool the org
+imports the export into.
 
 The table is RLS-locked to service-role writes plus organizer/admin
 read; the read predicate is `is_organizer_for_event` against the
@@ -386,10 +388,10 @@ the subscription write fails, and — at the L sub-shape level —
 who controls the source-attribution columns.
 
 - *Option I.* Logic duplication is the dominant cost: the moment
-  the standalone surface ships, the rules (normalization, ON
-  CONFLICT semantics, default confirmation_status) live in two
-  places. The recurring trap of two surfaces silently disagreeing
-  about what subscribing means is exactly what the
+  the standalone surface ships, the rules (email normalization,
+  ON CONFLICT semantics on the composite key) live in two places.
+  The recurring trap of two surfaces silently disagreeing about
+  what opt-in capture means is exactly what the
   "no-business-rule-duplication" guardrail in
   [`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
   pushes against.
@@ -479,60 +481,60 @@ the primary gate.
 
 **What was decided.** The existing
 `feedback_submissions.newsletter_opt_in` boolean stays. Its semantics
-are clarified to "the attendee asserted opt-in at the moment of
-this submission," which may differ from the current state of the
-subscription store (e.g., they later unsubscribed). The CHECK
-constraint
+are "the attendee asserted opt-in at the moment of this
+submission" — a snapshot of intent at submission time, durable on
+the feedback row regardless of what later happens to the
+corresponding capture row (PII purge, etc.). The CHECK constraint
 `feedback_submissions_newsletter_opt_in_requires_email` at
 [`supabase/migrations/20260506000000_add_feedback_tables.sql:62-66`](/supabase/migrations/20260506000000_add_feedback_tables.sql)
-remains in force — you cannot audit-flag a subscription against a
-row with no email. No FK from feedback row to subscription row.
+remains in force — you cannot audit-flag an opt-in against a row
+with no email. No FK from feedback row to capture row.
 
-**Why it mattered.** Without an audit signal, deleting a
-subscription row (PII redaction or unsubscribe-via-deletion) erases
-the historical fact "this attendee opted in via the feedback
-surface at this submission moment." With an FK, the foreign-key
-side of that deletion has to either cascade or restrict; both have
-sharp edges (cascade hides the audit, restrict blocks legitimate
-deletes).
+**Why it mattered.** Without an audit signal, a future PII
+redaction of a capture row would erase the historical fact "this
+attendee opted in via the feedback surface at this submission
+moment." With an FK, the foreign-key side of that deletion has to
+either cascade or restrict; both have sharp edges (cascade hides
+the audit, restrict blocks legitimate deletes).
 
 **Options considered.**
 
 1. **Drop `newsletter_opt_in` from `feedback_submissions` entirely
-   (Option M).** The subscription store is the only record of opt-
-   in. Feedback rows say nothing about subscription state.
+   (Option M).** The opt-in capture table is the only record of
+   opt-in. Feedback rows say nothing about whether the attendee
+   opted in.
 2. **Keep `newsletter_opt_in` as a boolean denormalized audit
-   (Option N).** The column persists; semantics change from "is
-   this email subscribed" to "did this attendee assert opt-in at
-   this submission moment."
-3. **Replace the boolean with an FK to the subscription row
-   (Option O).** Strongest referential integrity; the feedback
-   row points at the subscription it caused.
+   (Option N).** The column persists; semantics are "did this
+   attendee assert opt-in at this submission moment."
+3. **Replace the boolean with an FK to the capture row (Option
+   O).** Strongest referential integrity; the feedback row points
+   at the capture row it caused.
 
-**Came down to.** Whether the feedback row should be able to
-truthfully record an opt-in moment that has since been reversed
-(unsubscribed), and what happens at PII purge time.
+**Came down to.** What happens at PII purge time and whether the
+feedback record can stand on its own as an audit signal.
 
 - *Option M.* Loses the moment-in-time audit. If the organizer
   reads feedback later and sees a row with `email = null` and
   `email_declined = true`, that is unambiguous. If the organizer
   reads a row with `email` present and wants to know whether the
-  attendee opted into the newsletter at that moment, M offers no
-  answer — the subscription store may not list them now (they
-  unsubscribed) but did then, and the feedback record is silent.
-- *Option N.* The denormalized boolean is a snapshot, intentionally
-  out of sync with the canonical store. Reading it answers "did
-  they opt in at this moment"; reading the subscription store
-  answers "are they currently subscribed." Two rows, two facts.
-  PII purge of a feedback row leaves the subscription row alone;
-  unsubscribe leaves the feedback row alone. The CHECK constraint
+  attendee opted in at that moment, M offers no answer — the
+  capture row may have since been purged, and the feedback record
+  is silent on what was true at submission time.
+- *Option N.* The denormalized boolean is a snapshot of the
+  consent assertion at submission time, durable on the feedback
+  row itself. PII purge of a feedback row removes the snapshot
+  and leaves the capture row intact (the export downstream is
+  unaffected); PII purge of a capture row removes the canonical
+  consent record but leaves the feedback row's audit signal
+  showing "they opted in at this moment." The CHECK constraint at
+  [`supabase/migrations/20260506000000_add_feedback_tables.sql:62-66`](/supabase/migrations/20260506000000_add_feedback_tables.sql)
   carries forward unchanged because the invariant ("can't audit
   opt-in without an email") still holds.
-- *Option O.* The FK creates a write-order coupling: subscription
-  row must exist before feedback row, which is fine under the
+- *Option O.* The FK creates a write-order coupling: capture row
+  must exist before feedback row, which is fine under the
   synchronous write-through (Decision 4) but adds rigidity. PII
-  redaction of a subscription row either cascades (audit lost,
-  same as M) or restricts (cannot redact while feedback rows
+  redaction of a capture row either cascades (audit lost, same
+  as M) or restricts (cannot redact while feedback rows
   reference). Both are operationally worse than N. The
   referential-integrity benefit is paid for no use case beyond
   what N already covers.
@@ -540,8 +542,7 @@ truthfully record an opt-in moment that has since been reversed
 **Resolution.** Option N. The implementing migration does not
 modify `newsletter_opt_in`'s shape on `feedback_submissions`. A
 header comment on the table or column documents the snapshot
-semantics so future readers don't mistake it for the canonical
-subscription state — exact wording is plan-level.
+semantics — exact wording is plan-level.
 
 ### 6. Future-feature absorption — feedback + subscription is anticipated to be one plugin under the platform's plugin architecture, full scoping deferred to that pass [Carryover]
 
@@ -609,52 +610,73 @@ and regardless of whether the implementing PR for *this* scoping
 ships in `public.*` today or in a plugin namespace later (see
 Plan structure handoff).
 
-### 7. Compliance posture — single opt-in v1, schema forward-compatible for double opt-in [Resolved]
+### 7. Compliance posture — Neighborly is a consent-capture surface; persistent list state lives downstream [Resolved]
 
-**What was decided.** v1 ships with single-opt-in semantics: an
-attendee checking the box and submitting is recorded as a
-subscriber and may receive newsletter emails. No email-confirmation
-round-trip is required pre-delivery in v1. The subscription
-table's `confirmation_status` column carries values that allow
-double-opt-in to be added in a future migration without reshaping
-the table — values along the lines of `unconfirmed`, `confirmed`,
-`legacy_single_opt_in` (the implementing plan picks the exact set
-and CHECK encoding). v1 reads treat `unconfirmed` and `confirmed`
-as deliverable; a future tightening adds the gate.
+**What was decided.** Neighborly's role in the newsletter pipeline
+is **consent capture for export**, not persistent subscriber-list
+maintenance. Single opt-in semantics: an attendee checking the box
+and submitting is recorded as having opted in at that moment, and
+the row is exported (CSV or equivalent) for the organizer to
+import into whatever mailing-list tool they actually run their
+list out of (Mailchimp is the named v1 case; the architecture
+doesn't anticipate Neighborly being the persistent maintainer of
+any org's list, since the org's real list is assumed to be larger
+than just events run on Neighborly). The downstream tool owns
+confirmation flows, unsubscribe state, send/delivery, and
+list-membership truth from the moment of import forward.
 
-Unsubscribe in v1 is a row-level `unsubscribed_at` timestamp.
-Setting it removes the email from active-subscriber queries while
-preserving the consent audit trail. Hard deletion is reserved for
-PII redaction requests. The unsubscribe surface itself (admin tool,
-self-service link, manual) is not scoped here — the plan
-implementing this work names whatever the v1 path is, but the
-column is in the schema from day one.
+This reframes the schema substantially:
 
-**Why it mattered.** The compliance shape governs whether the
-standalone surface needs an email-sending pipeline at v1 launch
-and whether the schema must accommodate a confirmation step from
-day one.
+- **No `confirmation_status` column.** Earlier drafts kept this as
+  forward-compatibility for a v2 double-opt-in. The reframing
+  makes that v2 not coming — confirmation lives in Mailchimp's
+  import flow, not in our schema. Storing a column we will never
+  populate beyond a default is overengineering against an
+  imagined future.
+- **No `unsubscribed_at` column.** Same logic. Once the export
+  reaches the downstream tool, that tool's unsubscribe link is
+  the user-facing path; its database is the source of truth for
+  "is this email currently subscribed." Our row is a record of
+  the consent moment, not of current subscription state. If
+  someone in Mailchimp clicks unsubscribe, our row stays as it
+  was — and that's correct, because our row never claimed to
+  represent current state.
+- **Append-only opt-in capture.** The table is best understood
+  as a log of consent events, not a list of current subscribers.
+  Re-exports are full snapshots of opt-ins-since-last-export (or
+  full snapshots full-stop, with the downstream tool deduping on
+  import). Mailchimp respects the unsubscribe state it already
+  has during import; Neighborly does not need to know.
+
+**Why it mattered.** The earlier "schema forward-compatible for
+double opt-in" framing imported a mental model where Neighborly
+was the persistent subscription manager and Mailchimp (or
+whatever) was an output destination. The reverse is true:
+Mailchimp (or whatever) is the persistent manager and Neighborly
+is one input source among many for the org's list. Schema
+designed for the wrong role carries persistent overhead — every
+future plan reads the empty `confirmation_status` and
+`unsubscribed_at` columns and asks "what populates these?"
 
 **Came down to.** The epic-level Risk Register entry "Newsletter
 consent is load-bearing legally" at
 [`docs/plans/epics/madrona-feedback/epic.md:474-481`](/docs/plans/epics/madrona-feedback/epic.md)
-already locked the consent posture: opt-in (default unchecked,
-explicit affirmative action), with the organizer's downstream
-newsletter tool respecting unsubscribes. That is single-opt-in
-semantics. Double-opt-in is the GDPR/CAN-SPAM gold standard but
-requires an email-sending pipeline the platform does not have and
-the feedback epic explicitly defers
-([`docs/plans/epics/madrona-feedback/epic.md:514-516`](/docs/plans/epics/madrona-feedback/epic.md):
-"manual export by the organizer post-event. No automated sync to
-a newsletter tool from this epic"). Tightening to double-opt-in
-later is a forward migration the schema accommodates; reversing
-from double to single is the migration that would be awkward.
+locked single-opt-in semantics with downstream-tool unsubscribe
+respect — and the epic's "Newsletter delivery pipeline" Resolved
+Decision at
+[`docs/plans/epics/madrona-feedback/epic.md:514-516`](/docs/plans/epics/madrona-feedback/epic.md)
+("manual export by the organizer post-event. No automated sync
+to a newsletter tool from this epic") locked the export-not-sync
+shape. Earlier drafts read that constraint as "v1 doesn't sync,
+v2 might"; the maintainer's clarification is "Neighborly is not
+in the persistent-list business at all," which makes the v2
+implication wrong and motivates the column trim.
 
-**Resolution.** Single opt-in v1, with a `confirmation_status`
-column whose value set is plan-level but explicitly designed to
-accept a `confirmed`-vs-`unconfirmed` distinction without
-reshaping. Unsubscribe via `unsubscribed_at` timestamp from day
-one.
+**Resolution.** Single opt-in capture only. The schema models the
+consent moment (event, email, when, source surface) and nothing
+else. No confirmation state, no unsubscribe state, no delivery
+metadata. Export is the downstream contract; what the org does
+with the export is outside Neighborly's scope.
 
 ## Plan structure handoff
 
@@ -840,18 +862,20 @@ implementing plan re-verifies each at plan time per
   See Plan structure handoff "Namespace placement under the
   in-flight plugin architecture" — the decision is made by the
   implementing pass based on plugin-framing-state at that time.
-- The unsubscribe surface (admin tool, self-service link, or
-  manual). The schema accommodates unsubscribe via
-  `unsubscribed_at` from day one; how a row gets that timestamp
-  set in v1 is a plan-level call or a deliberate deferral.
-- Any organizer-facing read surface for the new subscription
+- Unsubscribe semantics in Neighborly's schema. Per Decision 7,
+  unsubscribe is owned by the org's downstream tool (Mailchimp or
+  equivalent); Neighborly's table does not model it.
+- Any organizer-facing read surface for the new opt-in capture
   table beyond what madrona-feedback M2 already sketches at
   [`docs/plans/epics/madrona-feedback/m2-organizer-readable-surface.md`](/docs/plans/epics/madrona-feedback/m2-organizer-readable-surface.md)
   (which is `Deferred` and non-prescriptive per its Status
   block). When M2 reopens, its scoping reads against the new
   table shape rather than the current `newsletter_opt_in`
-  column.
+  column. Notably, the export-to-CSV operation Decision 7 names
+  as the v1 downstream contract is part of this deferred surface
+  — its shape is M2's call.
 - Email-sending pipelines, double-opt-in confirmation flows, and
-  any external-system fan-out (Mailchimp, etc.). The
-  `confirmation_status` column is forward-compatible for
-  double-opt-in but v1 does not implement it.
+  any automated fan-out to Mailchimp or other external systems.
+  Per Decision 7, Neighborly is a consent-capture surface, not a
+  delivery system; these features are not anticipated as future
+  Neighborly work either.
