@@ -41,21 +41,39 @@ chosen between proxy rewrites, iframes, and runtime federation. This
 plan resolves the **game-specific case** in a way that's compatible
 with future plugins, without designing a generic plugin platform.
 
-The two `*.vercel.app` URLs above are not final; both will eventually
-move to a real domain (today's domain situation is itself an open
-question — see "Open questions" below). The plan is written in terms
-of "the canonical site origin" and "the plugin's deployment origin"
-so the sequencing survives the eventual domain rollout.
+There is no platform-owned custom domain today and none in flight.
+The architecture doc's claim that "`apps/web` is the primary Vercel
+project owning the production custom domain"
+([`docs/architecture.md:32-35`](/docs/architecture.md)) is **stale
+framing** that this plan corrects: today's customer-reachable URLs
+are exactly the two `*.vercel.app` hosts above, with no platform-
+owned domain layered on top. The canonical site origin in this
+plan's end state is therefore `apps/site`'s `*.vercel.app`
+alias — not a placeholder for a real domain.
+
+The first real-event launch model (Madrona Music in the Playfield)
+is **per-event subdomain CNAME**, organizer-owned: Madrona points
+`music.madrona.us` at `apps/site`'s Vercel project as a per-domain
+custom alias resolving to the `/event/madrona` route family. Future
+event organizers follow the same pattern. The platform itself
+neither owns nor brokers a top-level customer domain. The plan is
+written in terms of "the canonical site origin" so the sequencing
+survives any future shift if a platform-owned domain ever does
+arrive, but no phase below depends on one materializing.
 
 ## Goal
 
 After this plan lands its full sequence:
 
-- Customers see exactly one canonical origin (today's
-  `apps/site` `*.vercel.app` until the real domain rolls; the real
-  domain after that). Every shared customer-visible URL — landing
-  page, event landings, admin entry, auth callback, role-door
-  navigations — resolves on this single origin.
+- Customers see exactly one canonical origin: `apps/site`'s
+  `*.vercel.app` alias (today: `https://neighborly-events-site.vercel.app`).
+  Every shared customer-visible URL — landing page, event landings,
+  admin entry, auth callback, role-door navigations — resolves on
+  this single origin. Per-event organizer subdomains (Madrona's
+  `music.madrona.us`, future organizers' equivalents) CNAME to the
+  same `apps/site` project as additional aliases; the topology
+  treats them as siblings of the canonical alias rather than as a
+  separate canonical surface.
 - The game (`apps/web` deployment) is reached **only** through the
   canonical site origin. Its plugin-owned route prefixes
   (`/event/:slug/game*`, `/event/:slug/admin*`) are routed from the
@@ -186,14 +204,14 @@ that rolls). The Edge Function CORS allowlist
 is updated to admit the canonical origin and its branch / preview
 siblings rather than the stale plugin origin.
 
-**Dependencies.** Coordinates with whoever holds the canonical URL
-pointer today. If a real custom domain is in use today and points at
-`apps/web`, this phase requires a Vercel-level domain reassignment to
-`apps/site` (separate track per the user's framing — see "Out of
-scope"). If today's customer-facing URL is the auto-generated
-`*.vercel.app` host (per the user's prompt framing), the equivalent
-flip is "communicate the new URL," not a Vercel-config change. The
-phase's scoping doc resolves this dependency.
+**Dependencies.** No Vercel custom-domain action required — there is
+no platform-owned domain (resolved during this scoping pass; see
+"Investigations resolved in-PR"). The canonical-origin "flip" is
+purely structural: rewrite reshape, env-var update, dashboard
+allowlist update, CORS allowlist update. The customer-facing change
+is a communications one — the URL we share for internal-partner
+demos changes from whatever surface points at `apps/web` today to
+`apps/site`'s `*.vercel.app` alias.
 
 **Phase 2 likely covers** (estimative): rewrite-rule reshape in both
 projects, env-var flip, Supabase dashboard update, CORS allowlist
@@ -245,25 +263,19 @@ the plugin URL — the open question of how-aggressive-to-block
 factors in. Phase 3 scoping resolves this against actual analytics
 data on plugin-origin traffic at the time the phase opens.
 
-### Phase 4 (potentially deferred) — Custom-domain rollout
+### No Phase 4 (custom-domain rollout removed from this plan)
 
-**What this phase does.** Point a real custom domain at the
-`apps/site` Vercel project, retire the `*.vercel.app` URL as the
-canonical advertised customer URL.
-
-**Pre-state and dependencies.** This is a separate track per the
-user's framing; it depends on domain-acquisition work outside this
-plan's scope. Sequenced here for completeness — once a real domain
-exists, the canonical-origin work above absorbs it without further
-restructuring (the topology is already shaped to receive it). If the
-real domain rolls before Phase 2, it slots into Phase 2 directly;
-if after, Phase 4 simply updates the canonical-origin pointer one
-more time.
-
-**Post-state.** Customers see `https://<real-domain>/...`. Both
-`*.vercel.app` URLs become deployment-only artifacts.
-
-**Out of scope for this plan.** See "Out of scope" below.
+Earlier drafts of this plan carried a Phase 4 for a platform-owned
+custom-domain rollout. That phase is removed: no platform-owned
+domain is in flight, and the launch model uses per-event
+organizer-owned subdomain CNAMEs onto the `apps/site` Vercel project
+(the Madrona launch is the worked example). Per-event subdomain
+onboarding is each event's own concern, owned by the organizer plus
+whoever wires the Vercel-side custom-alias addition; it does not
+belong to the canonical-origin plan. If a platform-owned domain
+ever does materialize later, the topology this plan establishes
+absorbs it without further restructuring — pointing a new alias at
+the same `apps/site` Vercel project is additive.
 
 ## Investigations resolved in-PR
 
@@ -322,6 +334,17 @@ during this scoping pass; they do **not** carry into "Open questions."
   Practical implication: Phase 3's lockdown options operate at the
   **application layer** (vercel.json `redirects`, `headers`, or app-
   level middleware), not at the platform layer.
+- **No platform-owned custom domain today or in flight; launch
+  model is per-event organizer subdomain CNAME.** Resolved by user
+  during this scoping pass: there is no platform-owned domain in
+  flight, and the assumed first real launch (Madrona) is a CNAME
+  of `music.madrona.us` pointing at `apps/site`'s Vercel project.
+  The architecture doc's claim at
+  [`docs/architecture.md:32-35`](/docs/architecture.md) that
+  "`apps/web` is the primary Vercel project owning the production
+  custom domain" is stale framing this plan corrects. Implication:
+  Phase 2 carries no Vercel-level domain-reassignment dependency;
+  the canonical-origin flip is purely structural.
 - **`NEXT_PUBLIC_SITE_ORIGIN` semantics.** Today's `apps/site`
   documentation and runtime resolution treat this var as
   "apps/web's canonical custom-domain origin" — which makes
@@ -340,18 +363,7 @@ during this scoping pass; they do **not** carry into "Open questions."
 These need user / team input before per-phase scoping can lock its
 contracts.
 
-1. **What is the canonical customer URL today, and is there a real
-   domain in flight?** Architecture doc says `apps/web` "owns the
-   production custom domain"
-   ([`docs/architecture.md:32-35`](/docs/architecture.md)); the
-   user's prompt framing said "today the auto-generated `*.vercel.app`
-   host." Reconcile: does a real domain exist that points at
-   `apps/web` today? If yes, Phase 2's "flip the pointer" is a
-   Vercel-level domain reassignment. If no, Phase 2 is a
-   communications change ("the canonical URL is now this site
-   `*.vercel.app`"). The answer changes the cost and
-   coordination shape of Phase 2 substantially.
-2. **Embedding mechanism for the game (and pattern for future
+1. **Embedding mechanism for the game (and pattern for future
    plugins).** Three concrete options: (a) proxy rewrite from
    canonical origin to plugin origin (matches today's shape; the
    default proposal); (b) iframe embed inside an `apps/site` shell
@@ -363,11 +375,11 @@ contracts.
    game-specific case can be "pick proxy rewrite for parity with
    today" without locking the generic answer; explicit confirmation
    from the user keeps the call from being inferred.
-3. **Behavior on direct plugin-origin access.** Phase 3's choice
+2. **Behavior on direct plugin-origin access.** Phase 3's choice
    between (a) 308 redirect, (b) 410 tombstone, (c) passthrough — see
    the phase description above. SEO posture and analytics on plugin-
    origin traffic at the time the phase opens both factor in.
-4. **Whether the plugin's `*.vercel.app` is deployed as customer-
+3. **Whether the plugin's `*.vercel.app` is deployed as customer-
    facing at all post-canonical-origin.** Operationally, the plugin
    needs a deployment URL for the canonical-origin proxy / iframe /
    federation mechanism to point at. That deployment URL is by
@@ -378,7 +390,7 @@ contracts.
    to a host that isn't a customer-facing CDN, or use Vercel's
    Trusted IPs feature on Enterprise). Likely deferred to a later
    plan; tracked here so it doesn't lurk.
-5. **Supabase Auth dashboard redirect-URL update mechanics.** The
+4. **Supabase Auth dashboard redirect-URL update mechanics.** The
    dashboard's allowlist is operator-managed and lives outside the
    repo. Confirm: who has access to update it, and is there a
    change-window concern (i.e., can old + new origins be in the
@@ -386,13 +398,21 @@ contracts.
    any in-flight magic links broken)? Likely a non-issue (the
    allowlist is additive), but Phase 2 scoping confirms before
    committing to a change-window.
-6. **Where the `metadataBase` rule lives.** Phase 2 flips
+5. **Where the `metadataBase` rule lives.** Phase 2 flips
    `NEXT_PUBLIC_SITE_ORIGIN`'s production value but keeps the
    resolver's shape. Confirm whether the resolver's documentation
    ([`apps/site/app/layout.tsx:29-58`](/apps/site/app/layout.tsx))
    needs a structural rewrite to reflect the canonical-origin
    semantics, or just a value-flip + comment update. Estimate-shaped
    call; per-phase plan-drafting picks.
+6. **Architecture-doc update.** [`docs/architecture.md`](/docs/architecture.md)
+   carries multiple stale claims this plan corrects (apps/web as
+   primary, custom-domain ownership, the routing-topology table at
+   lines 951-1002 reflecting today's bidirectional-rewrite shape).
+   Whether the architecture doc updates **alongside** Phase 2's
+   implementing PR (so the doc and the topology stay in sync) or as
+   a follow-up doc-only PR is a small sequencing call. The Phase 2
+   plan-drafting picks.
 
 ## Out of scope
 
@@ -404,10 +424,15 @@ contracts.
   game-specific case. Future plugins inherit the canonical-origin
   topology this plan establishes; their embedding mechanism is each
   plugin's own scoping question.
-- Custom-domain rollout (Phase 4 above). Sequenced for completeness
-  but executed as a separate track. The canonical-origin work in
-  Phases 1–3 absorbs a real domain whenever it rolls without further
-  restructuring.
+- Per-event organizer subdomain onboarding (the Madrona
+  `music.madrona.us` CNAME and successor analogues). Each event's
+  subdomain wiring belongs to that event's launch track, not to this
+  plan; the canonical-origin topology this plan establishes already
+  receives those subdomains as additional `apps/site` Vercel-project
+  aliases without further restructuring.
+- Future platform-owned custom-domain rollout. None is in flight; if
+  one materializes later, it lands as an additional `apps/site` alias
+  and slots into the topology this plan establishes.
 - Generic "plugin platform" design — registration model, shared
   component contracts beyond what already exists in `shared/`,
   developer-experience tooling for plugin onboarding. Aspirational
