@@ -229,3 +229,12 @@ Prefer targeted fixes over speculative refactors.
 Do not introduce new frameworks, new backend services, or broad architecture rewrites unless the task clearly calls for that.
 
 This repository is still in a focused MVP stage. Favor clarity, reliability, and maintainable incremental progress over premature platform expansion.
+
+## Rule additions in `docs/agents/`
+
+A PR that adds a new rule to `docs/agents/**` must either (a) name a
+rule it deletes or merges into the new one, or (b) state in the PR
+body why no existing rule could be retired. The convention forces
+the trade-off to be articulated at addition time rather than deferred
+to a future consolidation pass. Tracked under Bet 3 in
+[`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md).
