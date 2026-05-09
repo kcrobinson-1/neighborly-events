@@ -512,9 +512,10 @@ codifying:
    part of the cascade-fix structural change (see Log entry
    below). The honest version of the rule is now "no fenced code
    blocks of any kind in plan or scoping docs," which means the
-   template's existing five-line cap is now stricter than the
-   plan-doc rule it would generalize to and needs adjustment if
-   the codification fork lands.
+   template's existing five-line cap is now looser than the
+   plan-doc rule it would generalize to (the template still
+   admits ≤5-line blocks; the plan-doc rule admits none) and
+   needs tightening if the codification fork lands.
 
 Prior-art template (verbatim from the originating session — keep
 embedded so the next codification pass can address the gaps
