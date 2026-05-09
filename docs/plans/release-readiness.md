@@ -47,7 +47,7 @@ Owner docs this file coordinates:
 - [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) — post-release smoke triage
 - [dev.md](/docs/dev.md) — validation commands and local workflow source of truth
 - [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface that ships in the current MVP
-- [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
+- [security-and-abuse.md](/docs/tracking/security-and-abuse.md) — trust-boundary follow-ups beyond the MVP gate
 - [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
 - [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
 - [epics/madrona-demo-build/epic.md](/docs/plans/epics/madrona-demo-build/epic.md) — current real-event work (demo-build phase: Theme registration, content authoring, end-to-end attendee journey through a stakeholder-shareable demo URL); launch readiness deferred to a far-future Madrona-launch sibling
@@ -888,6 +888,6 @@ Candidates currently open:
 - [operations.md](/docs/operations.md) — platform-managed settings
 - [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) — post-release smoke coverage and triage
 - [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface
-- [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
+- [security-and-abuse.md](/docs/tracking/security-and-abuse.md) — trust-boundary follow-ups beyond the MVP gate
 - [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context
 - [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence

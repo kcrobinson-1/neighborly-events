@@ -1,4 +1,4 @@
-# Security And Abuse Plan
+# Security And Abuse
 
 ## Document Role
 
