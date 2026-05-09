@@ -141,10 +141,14 @@ $focus-ring: 3px solid var(--secondary-focus);
   --radius-card: 22px;
   --radius-control: 18px;
 
-  // --- Brand-tied derived shades — computed via color-mix() per
-  // option (a) with centralized derivation. Theme authors do not
-  // override these directly; they follow from the brand bases by
-  // construction. See `docs/styling.md`. ---
+  // --- Brand-tied derived shades — fallback declarations for
+  // surfaces outside `<ThemeScope>` (the outer `.site-shell`, the
+  // demo-overview landing, future non-event apps/web routes).
+  // Inside `<ThemeScope>`, `shared/styles/themeToStyle.ts` emits
+  // resolved-hex `color-mix()` literals on the wrapper element,
+  // overriding these per CSS specificity. See
+  // `docs/plans/themescope-derived-shade-cascade.md` and
+  // `docs/styling.md` §Color-Derivation Policy. ---
   --primary-surface: color-mix(in srgb, var(--primary) 12%, transparent);
   --primary-surface-strong: color-mix(in srgb, var(--primary) 14%, transparent);
   --primary-border: color-mix(in srgb, var(--primary) 24%, transparent);

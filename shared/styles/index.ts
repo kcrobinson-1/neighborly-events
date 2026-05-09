@@ -5,8 +5,11 @@
  * `Theme`, and the per-event registry.
  *
  * Per-event brand-tied derived shades (`--primary-surface`, etc.)
- * live in each app's `:root` block as `color-mix()` derivations of
- * the brand bases — they are not Theme fields. Status colors,
+ * are computed by `themeToStyle.ts` from the brand bases and emitted
+ * on the `<ThemeScope>` wrapper as resolved-hex `color-mix()`
+ * literals; `:root` `var()`-form fallbacks in
+ * `apps/web/src/styles/_tokens.scss` cover non-`<ThemeScope>`
+ * apps/web surfaces. They are not Theme fields. Status colors,
  * neutral drop-shadow, modal scrim, spacing, motion, font weights,
  * control sizes, focus-ring metrics, pill radius, and composite
  * shadow / focus recipes are platform-shared and not Theme fields.

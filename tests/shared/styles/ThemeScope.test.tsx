@@ -74,7 +74,7 @@ describe("ThemeScope", () => {
     expect(style).toContain("--radius-control: 6px");
   });
 
-  it("does not emit derived shades — those are computed in :root", () => {
+  it("emits derived shades as resolved-hex color-mix literals on the wrapper", () => {
     render(
       <ThemeScope theme={baseSyntheticTheme}>
         <span data-testid="child">Hello</span>
@@ -85,14 +85,28 @@ describe("ThemeScope", () => {
     if (!wrapper) throw new Error("wrapper missing");
     const style = wrapper.getAttribute("style") ?? "";
 
-    // Brand-tied derived shades are computed in :root via color-mix()
-    // from the brand bases, not emitted by ThemeScope. If any of
-    // these appeared, the model would have leaked.
-    expect(style).not.toContain("--primary-surface");
-    expect(style).not.toContain("--secondary-focus");
-    expect(style).not.toContain("--accent-glow");
-    expect(style).not.toContain("--text-disabled-surface");
-    expect(style).not.toContain("--grid-line");
+    // Each derived shade must bake the resolved brand-base hex into
+    // the color-mix() expression so descendants inherit a literal
+    // string with no var() reference (the `:root`-pinning trap that
+    // motivated this emission). One spot-check per brand-base group
+    // plus the two text-derived shades; the derivation table is
+    // data-driven, so a single emission failure surfaces across
+    // the group.
+    expect(style).toContain(
+      "--primary-surface: color-mix(in srgb, #666 12%, transparent)",
+    );
+    expect(style).toContain(
+      "--secondary-focus: color-mix(in srgb, #777 42%, transparent)",
+    );
+    expect(style).toContain(
+      "--accent-glow: color-mix(in srgb, #888 28%, transparent)",
+    );
+    expect(style).toContain(
+      "--text-disabled-surface: color-mix(in srgb, #111 18%, transparent)",
+    );
+    expect(style).toContain(
+      "--grid-line: color-mix(in srgb, #111 4%, transparent)",
+    );
   });
 
   it("nested ThemeScope wrappers override outer values for descendants", () => {

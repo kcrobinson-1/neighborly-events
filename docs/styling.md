@@ -99,12 +99,14 @@ M1 phase 1.1).
 
 These are pure alpha tints of `$color-primary`, `$color-secondary`, or
 `$color-accent`, plus two text-derived overlay tints. Per the
-**color-derivation policy** below, M1 phase 1.5.2 emits these as CSS
-custom properties in `:root` derived from the corresponding base via
-`color-mix()`, so per-event themes only specify brand bases and the
-derived shades follow automatically. SCSS consumers continue to read
-flat `var(--…)` references — no `color-mix()` call sites in
-partials.
+**color-derivation policy** below, derived shades are emitted as CSS
+custom properties via `color-mix()` from the corresponding base, so
+per-event themes only specify brand bases and the derived shades
+follow automatically. The emit site is `<ThemeScope>` for themed
+scopes (resolved-hex literals on the wrapper element) and `:root`
+for non-themed apps/web defaults (fallback `var()`-form
+declarations). SCSS consumers continue to read flat `var(--…)`
+references — no `color-mix()` call sites in partials.
 
 | Today's token | Today's value | Derives from | Mix percentage | CSS custom property |
 | --- | --- | --- | --- | --- |
@@ -218,10 +220,16 @@ component remains themable through the base it derives from.
 
 ## Color-Derivation Policy
 
-The audit picks **option (a) with centralized derivation**: per-event
-Themes specify only the brand bases (~10 fields plus typography and
-radii), and CSS derives every brand-tied surface / border / glow /
-shadow tint via `color-mix()` definitions in `:root`. SCSS consumers
+The audit picks **option (a) with centralized derivation logic**:
+per-event Themes specify only the brand bases (~10 fields plus
+typography and radii), and the derivation produces every brand-tied
+surface / border / glow / shadow tint via `color-mix()`. The emit
+site is `<ThemeScope>` for themed scopes — `themeToStyle.ts` bakes
+the resolved brand-base hex into a literal `color-mix()` string on
+the wrapper element so descendants inherit per-Theme values rather
+than the `:root`-substituted form. `:root` keeps fallback `var()`-
+form declarations for apps/web surfaces outside `<ThemeScope>` (the
+outer `.site-shell`, the demo-overview landing). SCSS consumers
 read flat `var(--…)` references — no `color-mix()` call sites in
 SCSS partials.
 

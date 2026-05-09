@@ -20,16 +20,13 @@ export type ThemeScopeProps = {
  * contents` on it); it carries no styling itself.
  *
  * Brand-tied derived shades (`--primary-surface`, etc.) are not
- * Theme fields and are not emitted here — they are computed in
- * `:root` via `color-mix()` from the brand bases. See
+ * Theme fields but are emitted here: `themeToStyle.ts` bakes the
+ * resolved brand-base hex into a literal `color-mix()` string per
+ * derived shade, so descendants inherit per-Theme values rather
+ * than the `:root`-substituted form. `:root` keeps fallback
+ * `var()`-form declarations in `apps/web/src/styles/_tokens.scss`
+ * for surfaces outside `<ThemeScope>`. See
  * [`docs/styling.md`](../../docs/styling.md) for the binding model.
- * Note: derived shades inherit the `:root`-substituted value into
- * descendants and do not re-evaluate against a `<ThemeScope>`'s
- * brand-base override. Direct `var(--primary)` consumers carry the
- * per-event Theme; derived-shade consumers carry the apps/web
- * `:root` warm-cream (or apps/site Sage Civic) defaults. Closing
- * this gap is tracked in
- * [`docs/plans/themescope-derived-shade-cascade.md`](../../docs/plans/themescope-derived-shade-cascade.md).
  *
  * Wiring sites:
  * - apps/web per-event admin (`/event/:slug/admin`) wires in M2

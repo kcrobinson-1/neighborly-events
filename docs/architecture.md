@@ -426,13 +426,11 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   carries today's warm-cream values as the source-of-truth for
   apps/web defaults outside `<ThemeScope>` (the outer `.site-shell`
   and any future non-event apps/web route). Brand-tied derived
-  shades (`--primary-surface`, etc.) are computed in each app's
-  `:root` via `color-mix()` from the brand bases — they are not
-  Theme fields. (Note: derived shades inherit the `:root`-
-  substituted value into `<ThemeScope>` descendants and do not
-  re-evaluate against the scope's brand-base override; closing
-  this gap is tracked in
-  [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md).)
+  shades (`--primary-surface`, etc.) are not Theme fields; the
+  derivation lives in `themeToStyle.ts`, which emits resolved-hex
+  `color-mix()` literals on the `<ThemeScope>` wrapper for themed
+  scopes and falls back to `:root` `var()`-form declarations for
+  apps/web surfaces outside `<ThemeScope>`.
   `shared/styles/` reads no env, holds no module-level singleton,
   and imports nothing app-specific.
 
