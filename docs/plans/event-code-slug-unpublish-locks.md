@@ -11,11 +11,9 @@ status: Landed 2026-05-07
 
 Landed 2026-05-07. **Phase 1 scoping (slug only)** for the Tier 1
 backlog entry "Event-code and slug locks survive unpublish
-(organizer UX gap)" in [`docs/backlog.md`](/docs/backlog.md). The
-backlog entry is the parent that holds the full picture and names
-both phases: phase 1 (slug, this doc, now landed) and phase 2
-(event_code, scoping yet to begin — the backlog entry lists the
-open questions phase 2 must resolve).
+(organizer UX gap)". Both phases shipped, so the parent backlog
+entry was removed from [`docs/backlog.md`](/docs/backlog.md) when
+phase 2 landed (PR #214, 2026-05-07).
 
 This doc resolved phase 1 only. The slug fix shipped as the single
 implementation handoff from this scoping: the
@@ -27,11 +25,14 @@ landed in `supabase/tests/database/slug_lock.test.sql`. Migration
 applied and edge function redeployed in production; deployed-surface
 smoke green.
 
-Phase 2 starts whenever scoped and writes its own scoping doc; the
+Phase 2 (event_code) shipped 2026-05-07 in PR #214. Its scoping
+doc lives at
+[`docs/plans/event-code-rotation-safety.md`](/docs/plans/event-code-rotation-safety.md);
+that doc carried the design analysis from the
 [Carryover for phase 2 scoping](#carryover-for-phase-2-scoping)
-section below gives that pass the design analysis already produced
-here so it doesn't have to re-derive. The parent backlog entry
-stays open until phase 2 also lands.
+section below into a fully scoped Strict outcome. The Carryover
+section is preserved as historical record of the phase-1 →
+phase-2 handoff, not as forward-looking work.
 
 ## Problem
 

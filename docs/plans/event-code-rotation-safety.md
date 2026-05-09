@@ -1,27 +1,32 @@
 ---
 name: event-code rotation safety — phase 2 scoping
-description: Phase 2 scoping for the Tier 1 unpublish-locks parent. Resolves the design space for relaxing the event_code lock without silently stranding unredeemed entitlements. Decision deferred pending a permissibility call: should the system explicitly block event_code changes after the event goes live, or allow them as a permissive side-effect that is undocumented and untested?
+description: Phase 2 scoping for the Tier 1 unpublish-locks parent. Resolved the design space for relaxing the event_code lock without silently stranding unredeemed entitlements; Strict outcome shipped in PR #214 on 2026-05-07.
 type: scoping
-status: Active
+status: Landed 2026-05-07
 ---
 
 # Event-code rotation safety — phase 2 scoping
 
 ## Status
 
-Active. **Phase 2 scoping (event_code only)** for the Tier 1
-backlog entry "Event-code and slug locks survive unpublish
-(organizer UX gap)" in [`docs/backlog.md`](/docs/backlog.md). The
-backlog entry is the parent that holds the full picture.
+Landed 2026-05-07. **Phase 2 scoping (event_code only)** for the
+Tier 1 backlog entry "Event-code and slug locks survive unpublish
+(organizer UX gap)". Both phases shipped, so the parent backlog
+entry was removed from [`docs/backlog.md`](/docs/backlog.md) when
+phase 2 landed; the Tier 3 "Authoring affordance for clearing test
+entitlements on a draft event" follow-up that Strict pushed into
+the authoring surface remains open in the same file.
 
 Phase 1 (slug) shipped 2026-05-07. Phase 1 scoping doc:
 [`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md).
 
-Decision on (iii) landed: **Strict — block post-launch rotation
-when entitlements exist.** Reasoning: if we can't guarantee the
+Decision on (iii): **Strict — block post-launch rotation when
+entitlements exist.** Reasoning: if we can't guarantee the
 post-launch path is safe, the system should refuse it rather
-than permit and document. Implementation handoff at the bottom
-of this doc.
+than permit and document. Implementation shipped in PR #214 on
+2026-05-07. The "Plan handoff" section below describes what
+shipped (now in past tense as historical record of what was
+scoped vs. what landed).
 
 ## Problem (carryover from phase 1)
 
@@ -246,36 +251,46 @@ corruption.
 
 ## Plan handoff
 
-The phase 2 fix PR ships:
+The phase 2 fix shipped in PR #214:
 
-- **Migration** `<today>_relax_event_code_lock_with_entitlements_guard.sql`
+- **Migration**
+  [`20260507010000_relax_event_code_lock_with_entitlements_guard.sql`](/supabase/migrations/20260507010000_relax_event_code_lock_with_entitlements_guard.sql)
   recreating `public.enforce_game_event_draft_event_code_lock`.
   Function-body checks two conditions in order:
   1. If `game_events.published_at is not null` for the matching
-     `id`, raise `event_code_locked` with detail "Event code
+     `id`, raises `event_code_locked` with detail "Event code
      cannot be changed while the event is currently live."
   2. Else if any `game_entitlements` row exists for the
-     `event_id`, raise `event_code_locked_by_entitlements` with
+     `event_id`, raises `event_code_locked_by_entitlements` with
      detail naming the count and instructing the organizer to
      clear pending entitlements first.
 
-  Trigger `WHEN` simplifies to
+  Trigger `WHEN` simplified to
   `(new.event_code is distinct from old.event_code)` —
-  drop the `last_published_version_number` predicate. Pattern
-  mirrors phase 1's slug trigger
+  the `last_published_version_number` predicate dropped. Pattern
+  mirrored phase 1's slug trigger
   ([`supabase/migrations/20260507000000_relax_slug_lock_to_currently_live.sql`](/supabase/migrations/20260507000000_relax_slug_lock_to_currently_live.sql))
-  with the additional entitlements probe.
+  with the additional entitlements probe. The same migration also
+  added a `FOR SHARE` lookup on the `game_events` row in
+  `complete_game_and_award_entitlement` to serialize entitlement
+  creation against a concurrent rotation (planning-time addition
+  surfaced during implementation; see the migration header for
+  the concurrency contract).
 - **Edge Function** update to the event_code branch of the
   `save-draft` pre-check
-  ([`save-draft/index.ts:111-124`](/supabase/functions/save-draft/index.ts)).
-  Replace the `last_published_version_number !== null` test
+  ([`save-draft/index.ts`](/supabase/functions/save-draft/index.ts)).
+  The `last_published_version_number !== null` test was replaced
   with a parallel two-part check: query `game_events.published_at`
   for the live case, query `game_entitlements` count for the
-  entitlements case, and return the matching structured error
+  entitlements case, returning the matching structured error
   code (`event_code_locked` or
   `event_code_locked_by_entitlements`). Mirrors the slug
   pre-check shift phase 1 made.
-- **pgTAP coverage** for the event_code trigger. Five cases:
+- **pgTAP coverage** at
+  [`supabase/tests/database/event_code_lock.test.sql`](/supabase/tests/database/event_code_lock.test.sql),
+  sibling to phase 1's
+  [`slug_lock.test.sql`](/supabase/tests/database/slug_lock.test.sql).
+  Five cases:
   (a) live event → `event_code_locked`,
   (b) unpublished + has entitlements → `event_code_locked_by_entitlements`,
   (c) unpublished + no entitlements → succeeds,
@@ -283,28 +298,19 @@ The phase 2 fix PR ships:
   (e) never-published + has entitlements → `event_code_locked_by_entitlements`
   (defensive — entitlements created by the enroll path require
   a live event, so this case shouldn't arise, but the trigger
-  must still block it). Likely lives as a sibling to
-  [`supabase/tests/database/slug_lock.test.sql`](/supabase/tests/database/slug_lock.test.sql)
-  in `event_code_lock.test.sql`; or extend
-  [`event_code_data_model.test.sql`](/supabase/tests/database/event_code_data_model.test.sql)
-  if that file's conventions fit better. Implementation picks.
-- **Edge Function unit test** parallel to phase 1's
-  `tests/supabase/functions/save-draft.test.ts` updates: cover
-  both new error branches.
-- **Backlog entry** in [`docs/backlog.md`](/docs/backlog.md)
-  closes (both phases landed). Phase 1 already shipped; phase 2
-  shipping completes the parent.
+  blocks it).
+- **Edge Function unit test** additions in
+  `tests/supabase/functions/save-draft.test.ts` covering both new
+  error branches.
+- **Backlog entry** in [`docs/backlog.md`](/docs/backlog.md):
+  parent Tier 1 entry removed when phase 2 landed (both phases
+  shipped). The Tier 3 "Authoring affordance for clearing test
+  entitlements" follow-up remains open.
 
-**Estimated size.** One migration, one Edge Function patch,
-one pgTAP file, save-draft test additions. Comparable to phase
-1's footprint. One PR.
-
-**Authoring UI follow-up (not in this PR).** Strict pushes a
-small piece of work into the authoring surface: organizers
-need a UI path to delete test entitlements on a draft event so
-they can rotate `event_code` after issuing then deciding to
-change it. Tracked as a Tier 3 (admin authoring polish) backlog
-entry — "Authoring affordance for clearing test entitlements on
-a draft event" — surfaced concurrent with this scoping doc so
-phase 2 implementation and the authoring follow-up are visible
-together.
+**Authoring UI follow-up (separate work).** Strict pushes a small
+piece of work into the authoring surface: organizers need a UI
+path to delete test entitlements on a draft event so they can
+rotate `event_code` after issuing then deciding to change it.
+Tracked as a Tier 3 (admin authoring polish) backlog entry —
+"Authoring affordance for clearing test entitlements on a draft
+event" — open in [`docs/backlog.md`](/docs/backlog.md).
