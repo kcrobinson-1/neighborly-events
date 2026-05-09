@@ -27,7 +27,6 @@ const feedbackFixture: NonNullable<EventContent["feedback"]> = {
   freeTextPrompt: "Anything specific you'd like the organizer to hear?",
   emailCopy: {
     label: "Email — so we can follow up",
-    declineLabel: "I'd rather not share my email",
     newsletterOptInLabel: "Add me to the newsletter",
   },
   thankYouMessage: "Thanks — we read every response.",

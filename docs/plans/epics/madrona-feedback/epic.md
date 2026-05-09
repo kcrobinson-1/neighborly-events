@@ -61,12 +61,13 @@ End state for the MVP:
   `EventCTA` and `EventFooter`, linking to the feedback route.
 - Form contents: a small set of 1–5 star rating questions
   (each with an N/A option), an optional free-text prompt, an
-  email field with a decline checkbox, and a newsletter
-  opt-in checkbox. Submission replaces the form in-place with
-  a thank-you message.
+  optional email field, and a newsletter opt-in checkbox
+  (visible at all times; disabled while the email field is
+  empty). Submission replaces the form in-place with a
+  thank-you message.
 - Submissions persist to a Supabase table keyed by event slug
-  with timestamp, ratings, free text, email + decline flag,
-  and newsletter opt-in flag. The schema supports later
+  with timestamp, ratings, free text, email + implicit-decline
+  flag, and newsletter opt-in flag. The schema supports later
   analysis (aggregation per question, free-text read-through,
   manual newsletter export).
 - Submissions are durable across the demo phase and the launch
@@ -85,8 +86,9 @@ End state out of scope for the MVP (see Out Of Scope below).
   triggers"), not MVP scope.
 - **Identity / login required to submit.** The MVP is
   submission-without-auth. The email field is the only
-  identifier path and is itself optional via the decline
-  checkbox; no name field, no login gate.
+  identifier path and is itself optional — leaving it blank at
+  submit is the implicit decline path; no name field, no login
+  gate.
 - **Real-time organizer dashboard.** Organizer reads through a
   static admin surface or direct table query; live aggregation
   UI is out of scope.
@@ -209,18 +211,19 @@ End state out of scope for the MVP (see Out Of Scope below).
    specific you'd like the organizer to hear?" (exact copy is
    a milestone-planning call).
 5. **Email ask.** A prominent email field with copy that pushes
-   for it ("Email — so we can follow up if you want"), plus
-   two checkboxes:
-   - "I'd rather not share my email" — when checked, hides /
-     disables the email field and lets submission proceed
-     without one. Default unchecked; the design pushes for the
-     email rather than treating opt-out as the path of least
-     resistance.
+   for it ("Email — so we can follow up if you'd like
+   (optional)"). The field is optional: an attendee who doesn't
+   want to share leaves it blank and submits — implicit decline,
+   no separate checkbox to find or click. (Original M1 form
+   shipped a "I'd rather not share my email" checkbox; the
+   post-landing UX revamp dropped it for the blank-as-implicit-
+   decline shape — see m1-phase-1-3-plan.md Status block.)
+   Below the email field, one checkbox:
    - "Add me to the Madrona Neighborhood Association
      newsletter." Default unchecked (opt-in, not opt-out — see
-     Risk Register on consent posture). Disabled / hidden when
-     the decline-email checkbox is checked, since there's no
-     address to add.
+     Risk Register on consent posture). Visible at all times so
+     the relationship is discoverable, but disabled while the
+     email field is empty since there's no address to add.
 6. Submit button. After submission, the form is replaced
    in-place with a short thank-you message ("Thanks — we read
    every response"). No redirect, no further nudges.
@@ -293,9 +296,12 @@ event slugs accept submissions. Roughly:
   `1..5 | "n/a"`
 - `free_text` — text, nullable
 - `email` — text, nullable (null when attendee declined)
-- `email_declined` — boolean, true when the decline checkbox
-  was checked (distinguishes "declined to share" from "left
-  blank by accident / didn't reach the field")
+- `email_declined` — boolean, true when the attendee submitted
+  with no email. (Originally collected from a separate decline
+  checkbox; post-landing UX revamp made blank-email-on-submit
+  the implicit-decline signal, so the column now mirrors
+  `email IS NULL`. Reads of "decliners" via
+  `email_declined = true` continue to resolve correctly.)
 - `newsletter_opt_in` — boolean, default false. True only when
   the attendee checked the newsletter box AND provided an
   email. Stored on the same row as the feedback so the consent
@@ -474,11 +480,11 @@ real-attendee volume.
   newsletter tool must respect unsubscribes; that's out of
   this epic's scope but named so it isn't forgotten.
 - **Email field as dark pattern.** Pushing for an email and
-  burying the decline checkbox would harm trust. Mitigation:
-  the decline checkbox is visible and labeled in plain
-  language; submission without an email is a first-class path,
-  not a hidden one. The "push" is in copy and visual weight,
-  not in friction asymmetry.
+  hiding the no-email path would harm trust. Mitigation:
+  the email field is explicitly labeled optional, and an empty
+  submission is accepted as implicit decline — no extra control
+  to find, no extra click required to opt out. The "push" is
+  in copy and visual weight, not in friction asymmetry.
 
 ## Open Questions
 

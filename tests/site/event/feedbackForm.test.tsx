@@ -47,7 +47,6 @@ function makeFeedback(overrides: Partial<FeedbackContent> = {}): FeedbackContent
     freeTextPrompt: "Anything else?",
     emailCopy: {
       label: "Email",
-      declineLabel: "I'd rather not share my email",
       newsletterOptInLabel: "Add me to the newsletter",
     },
     thankYouMessage: "Thanks — we read every response.",
@@ -98,46 +97,39 @@ describe("FeedbackForm — rating rows", () => {
   });
 });
 
-describe("FeedbackForm — decline / email / newsletter conditional rendering", () => {
-  it("decline checkbox hides the email field and the newsletter row", () => {
+describe("FeedbackForm — email / newsletter coupling", () => {
+  it("the form has no decline checkbox; the email field is always visible", () => {
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
-    // Email visible by default.
     expect(screen.getByLabelText("Email")).toBeTruthy();
-    // Newsletter row not reachable yet (email blank).
     expect(
-      screen.queryByLabelText("Add me to the newsletter"),
-    ).toBeNull();
-
-    fireEvent.click(
-      screen.getByLabelText("I'd rather not share my email"),
-    );
-    expect(screen.queryByLabelText("Email")).toBeNull();
-    expect(
-      screen.queryByLabelText("Add me to the newsletter"),
+      screen.queryByLabelText("I'd rather not share my email"),
     ).toBeNull();
   });
 
-  it("newsletter row is structurally unreachable when email is blank or decline is checked", () => {
+  it("newsletter checkbox renders but is disabled when email is blank, enabled once an email is typed, and re-disabled when the email is cleared", () => {
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
-    // Blank email: newsletter not in the DOM.
-    expect(
-      screen.queryByLabelText("Add me to the newsletter"),
-    ).toBeNull();
+    const newsletter = screen.getByLabelText(
+      "Add me to the newsletter",
+    ) as HTMLInputElement;
+    // Always rendered; disabled when email is blank.
+    expect(newsletter.disabled).toBe(true);
+    expect(newsletter.checked).toBe(false);
 
-    // Type an email: newsletter appears.
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "fan@example.com" },
     });
-    expect(screen.getByLabelText("Add me to the newsletter")).toBeTruthy();
+    expect(newsletter.disabled).toBe(false);
 
-    // Tick decline: email + newsletter both hidden.
-    fireEvent.click(
-      screen.getByLabelText("I'd rather not share my email"),
-    );
-    expect(screen.queryByLabelText("Email")).toBeNull();
-    expect(
-      screen.queryByLabelText("Add me to the newsletter"),
-    ).toBeNull();
+    // Tick it.
+    fireEvent.click(newsletter);
+    expect(newsletter.checked).toBe(true);
+
+    // Clear the email — newsletter unchecks and re-disables.
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "" },
+    });
+    expect(newsletter.disabled).toBe(true);
+    expect(newsletter.checked).toBe(false);
   });
 });
 
@@ -180,18 +172,9 @@ describe("FeedbackForm — submission validation", () => {
     expect(setHeaderSpy).toHaveBeenCalledWith("Prefer", "return=minimal");
   });
 
-  it("decline state submits with email_declined=true, email=null, newsletter_opt_in=false", async () => {
+  it("blank email submits as the implicit decline: email=null, email_declined=true, newsletter_opt_in=false", async () => {
     setInsertResult({ error: null });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
-    // Type an email and tick newsletter, THEN click decline — decline must
-    // override both per the Submission Shape contract guard 2.
-    fireEvent.change(screen.getByLabelText("Email"), {
-      target: { value: "fan@example.com" },
-    });
-    fireEvent.click(screen.getByLabelText("Add me to the newsletter"));
-    fireEvent.click(
-      screen.getByLabelText("I'd rather not share my email"),
-    );
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: "Submit feedback" }),
@@ -203,6 +186,51 @@ describe("FeedbackForm — submission validation", () => {
       email: null,
       email_declined: true,
       newsletter_opt_in: false,
+    });
+  });
+
+  it("clearing a typed email after ticking newsletter resets newsletter to false on submit", async () => {
+    setInsertResult({ error: null });
+    render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "fan@example.com" },
+    });
+    fireEvent.click(screen.getByLabelText("Add me to the newsletter"));
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "" },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Submit feedback" }),
+      );
+    });
+    await waitFor(() => expect(insertSpy).toHaveBeenCalledTimes(1));
+    const payload = insertSpy.mock.calls[0][0];
+    expect(payload).toMatchObject({
+      email: null,
+      email_declined: true,
+      newsletter_opt_in: false,
+    });
+  });
+
+  it("email + newsletter ticked submits both and email_declined=false", async () => {
+    setInsertResult({ error: null });
+    render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "fan@example.com" },
+    });
+    fireEvent.click(screen.getByLabelText("Add me to the newsletter"));
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Submit feedback" }),
+      );
+    });
+    await waitFor(() => expect(insertSpy).toHaveBeenCalledTimes(1));
+    const payload = insertSpy.mock.calls[0][0];
+    expect(payload).toMatchObject({
+      email: "fan@example.com",
+      email_declined: false,
+      newsletter_opt_in: true,
     });
   });
 });

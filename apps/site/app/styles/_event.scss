@@ -575,17 +575,24 @@
 
 .event-feedback-form-textarea-label,
 .event-feedback-form-email,
-.event-feedback-form-decline,
 .event-feedback-form-newsletter {
   display: grid;
   gap: 6px;
 }
 
-.event-feedback-form-decline,
 .event-feedback-form-newsletter {
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: 10px;
+}
+
+.event-feedback-form-newsletter[data-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.event-feedback-form-newsletter[data-disabled="true"] input {
+  cursor: not-allowed;
 }
 
 .event-feedback-form-textarea,
