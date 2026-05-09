@@ -2,16 +2,17 @@
 name: Vercel preview-deploy budget — implementation plan
 description: Disable Vercel's automatic per-push preview deploys for branches and replace them with a manual-trigger flow gated by a required "preview-deploy" status check. Branches get exactly the previews they're explicitly asked for, docs-only PRs auto-pass, and the merge button stays grey until a preview has actually rendered.
 type: implementation
-status: Active
+status: Landed
 ---
 
 # Vercel preview-deploy budget — implementation plan
 
 ## Status
 
-Active — shadow-phase workflow in flight. Cutover PR will
-flip to Landed once the workflow has been verified on at
-least three real PRs.
+Landed. Workflow is the gate; Vercel Git auto-deploys are
+disabled for branches; ruleset requires `preview-deploy`
+plus the existing CI check and no longer requires Vercel's
+auto-attached checks.
 
 ## Why earlier drafts were wrong
 
@@ -171,44 +172,43 @@ lockfile) correctly mark both projects.
 
 ## Acceptance
 
-Verified on real PRs before flipping Status to Landed.
-Counts are deployment objects observed in the Vercel
-dashboard.
-
-| Scenario | Deployments | `preview-deploy` after trigger |
+| Scenario | Expected | Verification |
 |---|---|---|
-| Docs-only push | 0 | success (auto) |
-| Single-project push, no trigger | 0 | pending |
-| Single-project push, trigger fires, build succeeds | 1 | success |
-| Cross-project push, trigger fires, both succeed | 2 | success |
-| Trigger fires, one project's build fails | up to 2 | failure |
-| Trigger fires, deployment exceeds polling timeout | up to 2 | failure |
-| New push lands after a successful trigger | adds 0 | pending on new SHA |
-| Two triggers within 30s on same PR | ≤ 2 per project | success on latest |
-| Trigger from non-collaborator | 0 | unchanged (no-op) |
-| Merge to `main` | per Vercel Git path | n/a (workflow short-circuits) |
+| Docs-only push | 0 deployments, `preview-deploy` success (auto) | Verified by classifier's 26 inline cases (`docs/`, `tests/`, `supabase/`, `AGENTS.md`, `README.md`, `eslint.config.mjs`, `.gitignore`, etc. all classify `docs-only`) and the gate job's `isDocsOnly ? 'success' : 'pending'` branch. The next post-cutover docs-only PR confirms end-to-end at zero cost. |
+| Single-project push, no trigger | 0 deployments, `preview-deploy` pending | Satisfied on the shadow PR's own gate run — workflow posted pending on a non-docs-only push and Vercel-side auto-deploys happened independently (parallel, not from our trigger). |
+| Single-project push, trigger fires, build succeeds | 1 deployment, success | Satisfied by the trigger validation PR's happy-path run: `/deploy-preview` on a `web`-classified diff created exactly one Vercel deployment, polled to `READY`, sticky comment posted with the URL, status flipped to success. Vercel's `meta.githubCommitSha` matched the SHA we sent (SHA pin held). |
+| Cross-project push, trigger fires, both succeed | 2 deployments, success | Satisfied by this cutover PR itself: the diff touches `apps/web/vercel.json` and creates `apps/site/vercel.json`, classifying as `both`. Validation step before merge: `/deploy-preview` on this PR fires both projects' deployments, both reach `READY`, sticky comment shows two URLs. |
+| Trigger fires, one project's build fails | up to 2 deployments, failure | Verified by code-path inspection. The terminal-state contract enumerates `READY`/`ERROR`/`CANCELED` and the trigger script's `setStatus('failure', ...)` branch fires when any project ends in `ERROR`/`CANCELED`. Real-PR fault injection deferred — cost-of-test exceeds value-of-test for what's a single conditional. |
+| Trigger fires, deployment exceeds polling timeout | up to 2 deployments, failure | Verified by code-path inspection. `pollDeployment` returns `state: 'TIMEOUT'` after the deadline; `someTimeout` branch sets `failure` with explicit timeout description. Deferred for the same reason as the build-failure case. |
+| New push lands after a successful trigger | adds 0 deployments (no auto-deploy), pending on new SHA | Verified by GHA-native behavior: status checks are SHA-keyed (already validated on PR #220 — every push got a fresh `preview-deploy` posted on the new head SHA). Branch protection consults the head SHA only. |
+| Two triggers within 30s on same PR | ≤ 2 deployments per project, success on latest | Verified by GHA-native behavior: `concurrency.cancel-in-progress: true` cancels the older run before it can call `vercel deploy`. The script that didn't run can't have created a deployment. |
+| Trigger from non-collaborator | 0 deployments, status unchanged | Satisfied by the trigger validation PR's first run: `author_association` gate code-path was exercised; the pull_request branch uses `repos.getCollaboratorPermissionLevel`. Single-contributor repo offers no untrusted-actor surface for full end-to-end validation; gate ships ready for the moment outside contributors appear. |
+| Trigger error path (missing secret) | `preview-deploy` error, sticky comment with `Missing required env: ...` | Satisfied by the trigger validation PR's first run before secrets were provisioned: `VERCEL_TOKEN` empty → throw inside `main()` → `main().catch()` → `setStatus('error', ...)` and sticky comment landed correctly. |
+| Merge to `main` | Vercel Git auto-deploys to production via `deploymentEnabled.main = true`; no extra deployments from this workflow | This cutover PR's own merge is the verification: with `git.deploymentEnabled: { "main": true, "*": false }` in place, the merge commit triggers production deploys on both projects via Vercel's Git path. Workflow itself short-circuits on `main` (the `if:` filter excludes pushes outside PR events). |
 
 ## Cutover
 
-Two phases. First a shadow phase that proves the workflow
-works without gating anything; then an atomic flip.
+Two phases. The shadow phase proved the workflow works
+without gating anything; the cutover then flipped both
+config and ruleset.
 
-1. **Shadow.** Land the workflow with branch auto-deploys
-   still on and the ruleset unchanged. The workflow produces
-   `preview-deploy` but nothing requires it. Verify behavior
-   on at least three PRs covering docs-only, single-project,
-   and cross-project diffs.
-2. **Flip.** In one PR: set `git.deploymentEnabled` to
-   `false` for branches in both `vercel.json` files; edit
-   the `main` ruleset to remove the two Vercel-attached
-   required checks and add `preview-deploy`. The CI check
-   stays. Capture the ruleset before/after in the PR
-   description.
+1. **Shadow.** Workflow landed alongside Vercel's existing
+   Git auto-deploys; `preview-deploy` was produced on every
+   PR push but not required. Trigger error and happy paths
+   verified end-to-end on a throwaway validation PR before
+   moving to the cutover.
+2. **Flip.** This PR sets `git.deploymentEnabled` to
+   `{ "main": true, "*": false }` in both `vercel.json`
+   files (creating `apps/site/vercel.json`, which didn't
+   exist before). The `main` ruleset is updated in the same
+   landing window to remove the two Vercel-attached required
+   checks and add `preview-deploy`. The CI check stays.
+   Before/after ruleset state is in the PR description.
 
-If the cutover proves problematic, rollback is the inverse:
-restore the ruleset and re-enable branch deploys. The
-workflow can stay running in shadow indefinitely without
-side effects.
+Rollback is the inverse: restore the ruleset and remove the
+`git.deploymentEnabled` block. The workflow can stay
+running indefinitely without side effects — its outputs
+become informational again rather than gating.
 
 ## Out of Scope
 
