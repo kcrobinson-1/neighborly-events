@@ -9,23 +9,10 @@ import {
   within,
 } from "@testing-library/react";
 
-const { mockGetBrowserSupabaseClient, insertSpy, setHeaderSpy } = vi.hoisted(
-  () => ({
-    mockGetBrowserSupabaseClient: vi.fn(),
-    insertSpy: vi.fn(),
-    setHeaderSpy: vi.fn(),
-  }),
-);
-
-// The form chains `.insert(...).setHeader("Prefer", "return=minimal")` so
-// PostgREST skips its default `RETURNING *` (anon has INSERT-only on the
-// table). The test double mirrors that chain: insertSpy records the row
-// payload, setHeaderSpy records the header args and returns a thenable
-// resolving to the configured result.
-function makeInsertBuilder<T>(resultPromise: Promise<T>) {
-  setHeaderSpy.mockReturnValueOnce(resultPromise);
-  return { setHeader: setHeaderSpy };
-}
+const { mockGetBrowserSupabaseClient, rpcSpy } = vi.hoisted(() => ({
+  mockGetBrowserSupabaseClient: vi.fn(),
+  rpcSpy: vi.fn(),
+}));
 
 vi.mock("../../../apps/site/lib/supabaseBrowser.ts", () => ({
   getBrowserSupabaseClient: mockGetBrowserSupabaseClient,
@@ -54,19 +41,14 @@ function makeFeedback(overrides: Partial<FeedbackContent> = {}): FeedbackContent
   };
 }
 
-function setInsertResult(result: { error: { message: string } | null }) {
-  insertSpy.mockReturnValueOnce(
-    makeInsertBuilder(Promise.resolve(result)),
-  );
+function setRpcResult(result: { error: { message: string } | null }) {
+  rpcSpy.mockReturnValueOnce(Promise.resolve(result));
 }
 
 beforeEach(() => {
-  insertSpy.mockReset();
-  setHeaderSpy.mockReset();
+  rpcSpy.mockReset();
   mockGetBrowserSupabaseClient.mockReset();
-  mockGetBrowserSupabaseClient.mockReturnValue({
-    from: () => ({ insert: insertSpy }),
-  });
+  mockGetBrowserSupabaseClient.mockReturnValue({ rpc: rpcSpy });
 });
 
 afterEach(cleanup);
@@ -134,7 +116,7 @@ describe("FeedbackForm — email / newsletter coupling", () => {
 });
 
 describe("FeedbackForm — submission validation", () => {
-  it("rejects malformed email on submit and does not insert", () => {
+  it("rejects malformed email on submit and does not call the RPC", () => {
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "not-an-email" },
@@ -143,54 +125,65 @@ describe("FeedbackForm — submission validation", () => {
     expect(screen.getByRole("alert").textContent).toMatch(
       /Enter an email like/,
     );
-    expect(insertSpy).not.toHaveBeenCalled();
+    expect(rpcSpy).not.toHaveBeenCalled();
+  });
+
+  it("calls the submit_feedback RPC with the expected payload shape", async () => {
+    setRpcResult({ error: null });
+    render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "fan@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Submit feedback" }),
+      );
+    });
+    await waitFor(() => expect(rpcSpy).toHaveBeenCalledTimes(1));
+    expect(rpcSpy).toHaveBeenCalledWith("submit_feedback", {
+      p_event_slug: "madrona",
+      p_ratings: {},
+      p_email_declined: false,
+      p_newsletter_opt_in: false,
+      // free_text empty → key omitted via `?? undefined`; DB default null applies.
+      p_free_text: undefined,
+      p_email: "fan@example.com",
+    });
   });
 
   it("empty free-text submits as null, not empty string", async () => {
-    setInsertResult({ error: null });
+    setRpcResult({ error: null });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: "Submit feedback" }),
       );
     });
-    await waitFor(() => expect(insertSpy).toHaveBeenCalledTimes(1));
-    const payload = insertSpy.mock.calls[0][0];
-    expect(payload.free_text).toBeNull();
-    expect(payload.event_slug).toBe("madrona");
+    await waitFor(() => expect(rpcSpy).toHaveBeenCalledTimes(1));
+    const [, payload] = rpcSpy.mock.calls[0];
+    expect(payload.p_free_text).toBeUndefined();
+    expect(payload.p_event_slug).toBe("madrona");
   });
 
-  it("sends Prefer: return=minimal so PostgREST skips RETURNING (anon lacks SELECT)", async () => {
-    setInsertResult({ error: null });
+  it("blank email submits as the implicit decline: p_email omitted, p_email_declined=true, p_newsletter_opt_in=false", async () => {
+    setRpcResult({ error: null });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: "Submit feedback" }),
       );
     });
-    await waitFor(() => expect(setHeaderSpy).toHaveBeenCalledTimes(1));
-    expect(setHeaderSpy).toHaveBeenCalledWith("Prefer", "return=minimal");
-  });
-
-  it("blank email submits as the implicit decline: email=null, email_declined=true, newsletter_opt_in=false", async () => {
-    setInsertResult({ error: null });
-    render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: "Submit feedback" }),
-      );
-    });
-    await waitFor(() => expect(insertSpy).toHaveBeenCalledTimes(1));
-    const payload = insertSpy.mock.calls[0][0];
+    await waitFor(() => expect(rpcSpy).toHaveBeenCalledTimes(1));
+    const [, payload] = rpcSpy.mock.calls[0];
+    expect(payload.p_email).toBeUndefined();
     expect(payload).toMatchObject({
-      email: null,
-      email_declined: true,
-      newsletter_opt_in: false,
+      p_email_declined: true,
+      p_newsletter_opt_in: false,
     });
   });
 
   it("clearing a typed email after ticking newsletter resets newsletter to false on submit", async () => {
-    setInsertResult({ error: null });
+    setRpcResult({ error: null });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "fan@example.com" },
@@ -204,17 +197,17 @@ describe("FeedbackForm — submission validation", () => {
         screen.getByRole("button", { name: "Submit feedback" }),
       );
     });
-    await waitFor(() => expect(insertSpy).toHaveBeenCalledTimes(1));
-    const payload = insertSpy.mock.calls[0][0];
+    await waitFor(() => expect(rpcSpy).toHaveBeenCalledTimes(1));
+    const [, payload] = rpcSpy.mock.calls[0];
+    expect(payload.p_email).toBeUndefined();
     expect(payload).toMatchObject({
-      email: null,
-      email_declined: true,
-      newsletter_opt_in: false,
+      p_email_declined: true,
+      p_newsletter_opt_in: false,
     });
   });
 
-  it("email + newsletter ticked submits both and email_declined=false", async () => {
-    setInsertResult({ error: null });
+  it("email + newsletter ticked submits both and p_email_declined=false", async () => {
+    setRpcResult({ error: null });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "fan@example.com" },
@@ -225,25 +218,23 @@ describe("FeedbackForm — submission validation", () => {
         screen.getByRole("button", { name: "Submit feedback" }),
       );
     });
-    await waitFor(() => expect(insertSpy).toHaveBeenCalledTimes(1));
-    const payload = insertSpy.mock.calls[0][0];
+    await waitFor(() => expect(rpcSpy).toHaveBeenCalledTimes(1));
+    const [, payload] = rpcSpy.mock.calls[0];
     expect(payload).toMatchObject({
-      email: "fan@example.com",
-      email_declined: false,
-      newsletter_opt_in: true,
+      p_email: "fan@example.com",
+      p_email_declined: false,
+      p_newsletter_opt_in: true,
     });
   });
 });
 
 describe("FeedbackForm — state machine", () => {
   it("transitions idle → submitting → success and replaces the form with the thank-you message", async () => {
-    let resolveInsert: (value: { error: null }) => void = () => {};
-    insertSpy.mockReturnValueOnce(
-      makeInsertBuilder(
-        new Promise<{ error: null }>((resolve) => {
-          resolveInsert = resolve;
-        }),
-      ),
+    let resolveRpc: (value: { error: null }) => void = () => {};
+    rpcSpy.mockReturnValueOnce(
+      new Promise<{ error: null }>((resolve) => {
+        resolveRpc = resolve;
+      }),
     );
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     fireEvent.change(screen.getByLabelText("Email"), {
@@ -259,7 +250,7 @@ describe("FeedbackForm — state machine", () => {
     ).toBe(true);
 
     await act(async () => {
-      resolveInsert({ error: null });
+      resolveRpc({ error: null });
     });
     await waitFor(() =>
       expect(screen.getByText("Thanks — we read every response.")).toBeTruthy(),
@@ -267,8 +258,8 @@ describe("FeedbackForm — state machine", () => {
     expect(screen.queryByRole("button", { name: "Submit feedback" })).toBeNull();
   });
 
-  it("transitions submitting → error on insert failure, preserves field values, and supports retry", async () => {
-    setInsertResult({ error: { message: "boom" } });
+  it("transitions submitting → error on RPC failure, preserves field values, and supports retry", async () => {
+    setRpcResult({ error: { message: "boom" } });
     render(<FeedbackForm feedback={makeFeedback()} slug="madrona" />);
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "fan@example.com" },
@@ -294,8 +285,8 @@ describe("FeedbackForm — state machine", () => {
       (screen.getByLabelText("Anything else?") as HTMLTextAreaElement).value,
     ).toBe("Loved the show.");
 
-    // Retry path: insert succeeds, form transitions to success.
-    setInsertResult({ error: null });
+    // Retry path: rpc succeeds, form transitions to success.
+    setRpcResult({ error: null });
     await act(async () => {
       fireEvent.click(
         screen.getByRole("button", { name: "Submit feedback" }),
@@ -304,6 +295,6 @@ describe("FeedbackForm — state machine", () => {
     await waitFor(() =>
       expect(screen.getByText("Thanks — we read every response.")).toBeTruthy(),
     );
-    expect(insertSpy).toHaveBeenCalledTimes(2);
+    expect(rpcSpy).toHaveBeenCalledTimes(2);
   });
 });

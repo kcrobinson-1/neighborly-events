@@ -576,6 +576,17 @@ export type Database = {
         Args: { p_code_suffix: string; p_event_id: string; p_reason?: string }
         Returns: Json
       }
+      submit_feedback: {
+        Args: {
+          p_email?: string
+          p_email_declined: boolean
+          p_event_slug: string
+          p_free_text?: string
+          p_newsletter_opt_in: boolean
+          p_ratings: Json
+        }
+        Returns: undefined
+      }
       unpublish_game_event: {
         Args: { p_actor_id: string; p_event_id: string }
         Returns: {
