@@ -35,7 +35,7 @@ the release candidate.
 **Methodology refresh:**
 
 - Owner-doc list expanded to cite reward-redemption-mvp-design.md,
-  security-and-abuse.md, continuous-deployment-plan.md,
+  security-and-abuse.md, continuous-deployment-roadmap.md,
   cloud-agent-reliability-plan.md, and the active epic docs.
 - Scope and Release-Target checklist now name the cross-app rewrite,
   the redemption MVP, the event-scoped role helpers, and demo-mode

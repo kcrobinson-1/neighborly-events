@@ -50,7 +50,7 @@ is tracked in [`backlog.md`](/docs/backlog.md).
 
 No currently open questions in this section under the current tracking rule.
 Workflow direction and remaining implementation are tracked in
-[`continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md),
+[`continuous-deployment-roadmap.md`](/docs/tracking/continuous-deployment-roadmap.md),
 [`dev.md`](/docs/dev.md), and [`backlog.md`](/docs/backlog.md).
 
 ## Trust Boundary And Abuse Controls

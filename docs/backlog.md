@@ -24,7 +24,7 @@ steps, and validation commands.
 - Admin live-status fix plan: [`docs/plans/archive/admin-live-status-plan.md`](/docs/plans/archive/admin-live-status-plan.md)
 - Admin UX polish: [`docs/tracking/admin-ux-roadmap.md`](/docs/tracking/admin-ux-roadmap.md)
 - Contributor workflow tooling: [`docs/tracking/dev-workflow-improvements.md`](/docs/tracking/dev-workflow-improvements.md)
-- Continuous deployment planning: [`docs/plans/continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md)
+- Continuous deployment roadmap: [`docs/tracking/continuous-deployment-roadmap.md`](/docs/tracking/continuous-deployment-roadmap.md)
 - Security and abuse tracking: [`docs/tracking/security-and-abuse.md`](/docs/tracking/security-and-abuse.md)
 - Code refactors: [`docs/tracking/code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md)
 - Test coverage rollout: [`docs/testing.md`](/docs/testing.md)

@@ -135,7 +135,7 @@ Phase 1 baseline settings for this repo's solo-operator workflow:
   - `Vercel` (Vercel deploy check) — keeps merges gated on a successful
     Vercel build for the same SHA; recorded as the Phase 1 Vercel-before-CI
     decision in
-    [`continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md)
+    [`continuous-deployment-roadmap.md`](/docs/tracking/continuous-deployment-roadmap.md)
 - monitor `Release / Sync Supabase Production` as the post-CI production
   deployment gate; it runs after successful CI on `main` and should not be a
   pre-merge required branch check
