@@ -43,7 +43,7 @@ authoring follow-up work is tracked in [`backlog.md`](/docs/backlog.md).
 
 No currently open questions in this section under the current tracking rule.
 Recommended first metrics and sponsor-proof baseline are documented in
-[`analytics-strategy.md`](/docs/plans/analytics-strategy.md), and implementation priority
+[`analytics-strategy.md`](/docs/tracking/analytics-strategy.md), and implementation priority
 is tracked in [`backlog.md`](/docs/backlog.md).
 
 ## Development And Release Workflow

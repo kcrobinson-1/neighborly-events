@@ -41,7 +41,7 @@ If you want:
   [plans/archive/admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md)
 - the testing strategy, current coverage snapshot, command-selection matrix, and rollout plan, read [testing.md](/docs/testing.md)
 - the platform ownership model and live monitoring runbook for GitHub, Vercel, and Supabase, read [operations.md](/docs/operations.md)
-- the analytics strategy, tool recommendations, and dashboard goals, read [plans/analytics-strategy.md](/docs/plans/analytics-strategy.md)
+- the analytics strategy, tool recommendations, and dashboard goals, read [tracking/analytics-strategy.md](/docs/tracking/analytics-strategy.md)
 - the unresolved product, UX, and workflow decisions, read [open-questions.md](/docs/open-questions.md)
 - the documentation maintenance plan, read [tracking/documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md)
 - the living release readiness plan and quality-check methodology, read [plans/release-readiness.md](/docs/plans/release-readiness.md)
@@ -82,7 +82,7 @@ Use these boundaries to keep the docs tidy:
   current live monitoring and log-triage runbook
 - `docs/open-questions.md`
   unresolved decisions that should stay explicit instead of being guessed in canonical docs
-- `docs/plans/analytics-strategy.md`
+- `docs/tracking/analytics-strategy.md`
   end goal of analytics, approaches, evaluation criteria, third-party tool guidance, and dashboard goals
 - `docs/tracking/documentation-quality-checklist.md`
   recurring documentation maintenance checklist and quality-improvement plan

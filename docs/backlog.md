@@ -221,7 +221,7 @@ prioritization before starting.
   and sponsor question engagement. Follow-on: an organizer-facing reporting
   section in the admin workspace that surfaces those views for a selected event
   without requiring Supabase Studio access.
-  Detail: [`docs/plans/analytics-strategy.md`](/docs/plans/analytics-strategy.md)
+  Detail: [`docs/tracking/analytics-strategy.md`](/docs/tracking/analytics-strategy.md)
 
 - [ ] **`ux` Organizer-managed agent assignment**
   Now that organizers have full event-scoped write access via M2's RLS
