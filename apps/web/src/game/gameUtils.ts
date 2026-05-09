@@ -50,3 +50,37 @@ export function getQuestionFeedbackMessage(question: Question) {
       : "Correct.")
   );
 }
+
+function joinCorrectAnswerLabels(labels: string[]) {
+  if (labels.length === 0) {
+    return "";
+  }
+
+  if (labels.length === 1) {
+    return labels[0];
+  }
+
+  if (labels.length === 2) {
+    return `${labels[0]} and ${labels[1]}`;
+  }
+
+  return `${labels.slice(0, -1).join(", ")}, and ${labels[labels.length - 1]}`;
+}
+
+/** Builds the reveal copy shown after a wrong answer in non-blocking mode. */
+export function getRevealedAnswerMessage(question: Question) {
+  if (question.explanation) {
+    return question.explanation;
+  }
+
+  const correctLabels = getOptionLabels(question, question.correctAnswerIds);
+  const joined = joinCorrectAnswerLabels(correctLabels);
+
+  if (!joined) {
+    return "Here is the answer.";
+  }
+
+  return question.selectionMode === "multiple" && correctLabels.length > 1
+    ? `The correct answers are ${joined}.`
+    : `The correct answer is ${joined}.`;
+}

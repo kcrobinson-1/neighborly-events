@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { GameConfig } from "../data/games";
 import { featuredGameSlug } from "../data/games";
+import { AnswerRevealPanel } from "../game/components/AnswerRevealPanel";
 import { CorrectAnswerPanel } from "../game/components/CorrectAnswerPanel";
 import { CurrentQuestionPanel } from "../game/components/CurrentQuestionPanel";
 import { GameCompletionPanel } from "../game/components/GameCompletionPanel";
@@ -26,14 +27,14 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
     canGoBack,
     canSubmit,
     completionError,
-    continueFromCorrectFeedback,
+    continueFromAnswerReveal,
     currentIndex,
     currentQuestion,
     feedbackKind,
     feedbackMessage,
     goBack,
     isComplete,
-    isShowingCorrectFeedback,
+    isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,
     isSubmittingCompletion,
@@ -118,13 +119,22 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             <div className="progress-track" aria-hidden="true">
               <div className="progress-fill" style={{ width: `${progressValue}%` }} />
             </div>
-            {isShowingCorrectFeedback && feedbackMessage ? (
-              <CorrectAnswerPanel
-                feedbackMessage={feedbackMessage}
-                isLastQuestion={currentIndex === questionCount - 1}
-                onContinue={continueFromCorrectFeedback}
-                question={currentQuestion}
-              />
+            {isShowingAnswerReveal && feedbackMessage ? (
+              feedbackKind === "incorrect" ? (
+                <AnswerRevealPanel
+                  feedbackMessage={feedbackMessage}
+                  isLastQuestion={currentIndex === questionCount - 1}
+                  onContinue={continueFromAnswerReveal}
+                  question={currentQuestion}
+                />
+              ) : (
+                <CorrectAnswerPanel
+                  feedbackMessage={feedbackMessage}
+                  isLastQuestion={currentIndex === questionCount - 1}
+                  onContinue={continueFromAnswerReveal}
+                  question={currentQuestion}
+                />
+              )
             ) : null}
             {isShowingQuestion ? (
               <CurrentQuestionPanel

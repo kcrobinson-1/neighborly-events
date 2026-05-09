@@ -81,6 +81,46 @@ function createFinalScoreGame(questionCount = 2): GameConfig {
   };
 }
 
+function createNonBlockingGame(): GameConfig {
+  return {
+    id: "test-non-blocking",
+    slug: "test-non-blocking",
+    name: "Test Non Blocking",
+    location: "Seattle",
+    estimatedMinutes: 2,
+    entitlementLabel: "reward ticket",
+    intro: "Test intro",
+    summary: "Test summary",
+    feedbackMode: "instant_feedback_non_blocking",
+    questions: [
+      {
+        id: "q1",
+        sponsor: "Sponsor One",
+        prompt: "Question one?",
+        selectionMode: "single",
+        correctAnswerIds: ["b"],
+        explanation: "Explanation one.",
+        sponsorFact: "Sponsor fact for the first answer.",
+        options: [
+          { id: "a", label: "Option A" },
+          { id: "b", label: "Option B" },
+        ],
+      },
+      {
+        id: "q2",
+        sponsor: "Sponsor Two",
+        prompt: "Question two?",
+        selectionMode: "single",
+        correctAnswerIds: ["a"],
+        options: [
+          { id: "a", label: "Option A" },
+          { id: "b", label: "Option B" },
+        ],
+      },
+    ],
+  };
+}
+
 function createInstantFeedbackGame(): GameConfig {
   return {
     id: "test-instant-feedback",
@@ -201,18 +241,59 @@ describe("useGameSession", () => {
       result.current.submit();
     });
 
-    expect(result.current.isShowingCorrectFeedback).toBe(true);
+    expect(result.current.isShowingAnswerReveal).toBe(true);
     expect(result.current.feedbackKind).toBe("correct");
     expect(result.current.feedbackMessage).toBe("Sponsor fact for the first answer.");
     expect(result.current.answers).toEqual({ q1: ["b"] });
 
     act(() => {
-      result.current.continueFromCorrectFeedback();
+      result.current.continueFromAnswerReveal();
     });
 
     expect(result.current.currentIndex).toBe(1);
     expect(result.current.isShowingQuestion).toBe(true);
     expect(result.current.feedbackKind).toBeNull();
+  });
+
+  it("stores the wrong answer and reveals the explanation in non-blocking mode, then advances", () => {
+    const { result } = renderHook(() => useGameSession(createNonBlockingGame()));
+
+    act(() => {
+      result.current.start();
+      result.current.selectOption("a");
+      result.current.submit();
+    });
+
+    // Wrong answer in non-blocking mode lands on the reveal phase, persists
+    // the player's submission (so backend scoring sees it), and surfaces the
+    // explanation rather than the sponsor fact.
+    expect(result.current.isShowingAnswerReveal).toBe(true);
+    expect(result.current.feedbackKind).toBe("incorrect");
+    expect(result.current.feedbackMessage).toBe("Explanation one.");
+    expect(result.current.answers).toEqual({ q1: ["a"] });
+
+    act(() => {
+      result.current.continueFromAnswerReveal();
+    });
+
+    expect(result.current.currentIndex).toBe(1);
+    expect(result.current.isShowingQuestion).toBe(true);
+    expect(result.current.feedbackKind).toBeNull();
+  });
+
+  it("routes correct submissions through the sponsor-fact precedence in non-blocking mode", () => {
+    const { result } = renderHook(() => useGameSession(createNonBlockingGame()));
+
+    act(() => {
+      result.current.start();
+      result.current.selectOption("b");
+      result.current.submit();
+    });
+
+    expect(result.current.isShowingAnswerReveal).toBe(true);
+    expect(result.current.feedbackKind).toBe("correct");
+    expect(result.current.feedbackMessage).toBe("Sponsor fact for the first answer.");
+    expect(result.current.answers).toEqual({ q1: ["b"] });
   });
 
   it("restores the saved answer when navigating back to a previous question", () => {

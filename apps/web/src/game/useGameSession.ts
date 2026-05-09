@@ -33,7 +33,7 @@ export function useGameSession(game: GameConfig) {
     canSubmit,
     currentQuestion,
     isComplete,
-    isShowingCorrectFeedback,
+    isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,
     isSubmittingCompletion,
@@ -123,23 +123,32 @@ export function useGameSession(game: GameConfig) {
       questions.length,
     );
 
-    dispatch(
-      game.feedbackMode === "final_score_reveal"
-        ? {
-            type: "submitFinalScore",
-            completionRequestId,
-            nextQuestionId: nextQuestion?.id ?? null,
-            question: currentQuestion,
-            questionCount: questions.length,
-          }
-        : {
-            type: "submitRequired",
-            question: currentQuestion,
-          },
-    );
+    if (game.feedbackMode === "final_score_reveal") {
+      dispatch({
+        type: "submitFinalScore",
+        completionRequestId,
+        nextQuestionId: nextQuestion?.id ?? null,
+        question: currentQuestion,
+        questionCount: questions.length,
+      });
+      return;
+    }
+
+    if (game.feedbackMode === "instant_feedback_non_blocking") {
+      dispatch({
+        type: "submitNonBlocking",
+        question: currentQuestion,
+      });
+      return;
+    }
+
+    dispatch({
+      type: "submitRequired",
+      question: currentQuestion,
+    });
   };
 
-  const continueFromCorrectFeedback = () => {
+  const continueFromAnswerReveal = () => {
     const nextQuestion = questions[state.currentIndex + 1];
     const completionRequestId = createCompletionRequestId(
       state.currentIndex,
@@ -199,7 +208,7 @@ export function useGameSession(game: GameConfig) {
     feedbackMessage: state.feedbackMessage,
     goBack,
     isComplete,
-    isShowingCorrectFeedback,
+    isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,
     isSubmittingCompletion,
@@ -213,6 +222,6 @@ export function useGameSession(game: GameConfig) {
     selectOption,
     start,
     submit,
-    continueFromCorrectFeedback,
+    continueFromAnswerReveal,
   };
 }

@@ -157,8 +157,71 @@ describe("gameSessionState", () => {
       feedbackKind: "correct",
       feedbackMessage: "Sponsor fact for the first answer.",
       pendingSelection: ["b"],
-      phase: "correct_feedback",
+      phase: "answer_revealed",
     });
+  });
+
+  it("stores the submitted answer and reveals the correct answer in non-blocking mode", () => {
+    const question = createQuestion({
+      sponsorFact: "Sponsor fact for the first answer.",
+      explanation: "Explanation one.",
+    });
+    const baseState = {
+      ...createGameState("question", 100),
+      pendingSelection: ["a"],
+    };
+
+    expect(
+      gameReducer(baseState, {
+        type: "submitNonBlocking",
+        question,
+      }),
+    ).toEqual({
+      ...baseState,
+      answers: { q1: ["a"] },
+      completionError: null,
+      feedbackKind: "incorrect",
+      feedbackMessage: "Explanation one.",
+      pendingSelection: ["a"],
+      phase: "answer_revealed",
+    });
+
+    expect(
+      gameReducer(
+        {
+          ...baseState,
+          pendingSelection: ["b"],
+        },
+        {
+          type: "submitNonBlocking",
+          question,
+        },
+      ),
+    ).toEqual({
+      ...baseState,
+      answers: { q1: ["b"] },
+      completionError: null,
+      feedbackKind: "correct",
+      feedbackMessage: "Sponsor fact for the first answer.",
+      pendingSelection: ["b"],
+      phase: "answer_revealed",
+    });
+  });
+
+  it("falls back to a labelled correct-answer message when no explanation is set", () => {
+    const question = createQuestion();
+    const baseState = {
+      ...createGameState("question", 100),
+      pendingSelection: ["a"],
+    };
+
+    const next = gameReducer(baseState, {
+      type: "submitNonBlocking",
+      question,
+    });
+
+    expect(next.feedbackKind).toBe("incorrect");
+    expect(next.feedbackMessage).toBe("The correct answer is Option B.");
   });
 
   it("restores the saved answer when going back to a previous question", () => {

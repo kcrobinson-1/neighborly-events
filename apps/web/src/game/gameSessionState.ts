@@ -6,6 +6,7 @@ import {
   answersMatch,
   getNextSelection,
   getQuestionFeedbackMessage,
+  getRevealedAnswerMessage,
   normalizeOptionIds,
 } from "./gameUtils";
 
@@ -13,7 +14,7 @@ import {
 export type GamePhase =
   | "intro"
   | "question"
-  | "correct_feedback"
+  | "answer_revealed"
   | "submitting_completion"
   | "complete";
 
@@ -52,6 +53,7 @@ export type GameAction =
       questionCount: number;
     }
   | { type: "submitRequired"; question: Question }
+  | { type: "submitNonBlocking"; question: Question }
   | {
       type: "goForwardAfterFeedback";
       completionRequestId: string | null;
@@ -213,11 +215,37 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         feedbackKind: "correct",
         feedbackMessage: getQuestionFeedbackMessage(action.question),
         pendingSelection: submittedSelection,
-        phase: "correct_feedback",
+        phase: "answer_revealed",
+      };
+    }
+    case "submitNonBlocking": {
+      if (state.phase !== "question" || state.pendingSelection.length === 0) {
+        return state;
+      }
+
+      const submittedSelection = normalizeOptionIds(state.pendingSelection);
+      const isCorrect = answersMatch(
+        submittedSelection,
+        action.question.correctAnswerIds,
+      );
+
+      return {
+        ...state,
+        answers: {
+          ...state.answers,
+          [action.question.id]: submittedSelection,
+        },
+        completionError: null,
+        feedbackKind: isCorrect ? "correct" : "incorrect",
+        feedbackMessage: isCorrect
+          ? getQuestionFeedbackMessage(action.question)
+          : getRevealedAnswerMessage(action.question),
+        pendingSelection: submittedSelection,
+        phase: "answer_revealed",
       };
     }
     case "goForwardAfterFeedback": {
-      if (state.phase !== "correct_feedback") {
+      if (state.phase !== "answer_revealed") {
         return state;
       }
 

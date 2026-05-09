@@ -316,11 +316,11 @@ The game should feel brisk and reassuring.
 
 Different games may need different answer-feedback behavior. The product should support this as a game-level configuration rather than assuming every game behaves the same way.
 
-Recommended modes:
+Supported modes:
 
 - `final_score_reveal`
 - `instant_feedback_required`
-- optional later: `instant_feedback_non_blocking`
+- `instant_feedback_non_blocking`
 
 Important requirement:
 
@@ -354,6 +354,22 @@ Recommended sequence:
 5. continue to the next question
 
 This mode makes the game feel more game-like and gives sponsors a natural educational moment, but it adds friction and should be used intentionally.
+
+This mode depends on each question having a correct answer available at runtime.
+
+### Instant Feedback Non-Blocking
+
+In this mode, the attendee submits an answer and immediately sees whether they were right, the correct answer, and any explanation, then advances regardless of correctness.
+
+Recommended sequence:
+
+1. attendee selects an answer
+2. on submit, the interface reveals correctness and the correct answer
+3. for correct answers, surface the sponsor fact / explanation as in instant-feedback-required
+4. for wrong answers, name the correct option(s) and render the question's explanation; do not surface the sponsor fact
+5. continue to the next question
+
+This mode preserves the educational hook of instant feedback without the friction of gating progress on getting questions right. Use it when the goal is "tell me the answer in the moment I cared" rather than "make me get it right."
 
 This mode depends on each question having a correct answer available at runtime.
 

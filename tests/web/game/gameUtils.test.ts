@@ -3,6 +3,7 @@ import {
   getNextSelection,
   getOptionLabels,
   getQuestionFeedbackMessage,
+  getRevealedAnswerMessage,
   getSelectionLabel,
 } from "../../../apps/web/src/game/gameUtils.ts";
 
@@ -78,5 +79,35 @@ describe("gameUtils", () => {
     expect(
       getQuestionFeedbackMessage({ ...singleSelectQuestion, sponsor: null }),
     ).toBe("Correct.");
+  });
+
+  it("prefers the question explanation for the revealed-answer message", () => {
+    expect(
+      getRevealedAnswerMessage({
+        ...singleSelectQuestion,
+        explanation: "Explanation only.",
+      }),
+    ).toBe("Explanation only.");
+  });
+
+  it("never routes a sponsor fact into the revealed-answer message", () => {
+    expect(
+      getRevealedAnswerMessage({
+        ...singleSelectQuestion,
+        sponsorFact: "Sponsor brag that does not belong on a wrong answer.",
+      }),
+    ).toBe("The correct answer is Option B.");
+  });
+
+  it("falls back to a labelled correct-answer copy when no explanation is set", () => {
+    expect(getRevealedAnswerMessage(singleSelectQuestion)).toBe(
+      "The correct answer is Option B.",
+    );
+  });
+
+  it("renders the full correct option set for multi-select questions in the fallback copy", () => {
+    expect(getRevealedAnswerMessage(multiSelectQuestion)).toBe(
+      "The correct answers are Option A and Option C.",
+    );
   });
 });

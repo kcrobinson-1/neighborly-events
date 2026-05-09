@@ -10,7 +10,7 @@ export type GameSessionViewState = {
   canSubmit: boolean;
   currentQuestion: GameConfig["questions"][number] | undefined;
   isComplete: boolean;
-  isShowingCorrectFeedback: boolean;
+  isShowingAnswerReveal: boolean;
   isShowingQuestion: boolean;
   isStarted: boolean;
   isSubmittingCompletion: boolean;
@@ -33,7 +33,7 @@ export function getGameSessionViewState(
   const currentQuestion = game.questions[state.currentIndex];
   const isComplete = state.phase === "complete";
   const isStarted = state.phase !== "intro";
-  const isShowingCorrectFeedback = state.phase === "correct_feedback";
+  const isShowingAnswerReveal = state.phase === "answer_revealed";
   const isShowingQuestion = state.phase === "question";
   const isSubmittingCompletion = state.phase === "submitting_completion";
   const allowBackNavigation = game.allowBackNavigation ?? true;
@@ -45,7 +45,7 @@ export function getGameSessionViewState(
     canSubmit: state.pendingSelection.length > 0,
     currentQuestion,
     isComplete,
-    isShowingCorrectFeedback,
+    isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,
     isSubmittingCompletion,
