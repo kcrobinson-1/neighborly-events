@@ -558,7 +558,7 @@ header comment on the table or column documents the snapshot
 semantics so future readers don't mistake it for the canonical
 subscription state — exact wording is plan-level.
 
-### 6. Standalone signup surface — anchor only, full scoping deferred [Carryover]
+### 6. Future-feature absorption — feedback + subscription is anticipated to be one plugin under the platform's plugin architecture, full scoping deferred to that pass [Carryover]
 
 **What this scoping doc resolves.** The contract surface for the
 standalone signup is a separate, surface-specific public SECURITY
@@ -574,28 +574,55 @@ accepts under the composite-PK shape). Per Decision 4's
 resolution, the helper is internal — anon does not call it
 directly. The helper signature, the source-surface literal set
 ('feedback_form', 'standalone'), and the subscription table
-composite-PK shape (Decision 2) are settled here so the standalone
-feature inherits a contract rather than co-designing with this
-work.
+composite-PK shape (Decision 2) are settled here so any later
+surface that ships against this data inherits a contract rather
+than co-designing with this work.
 
-**What is deferred to the standalone signup scoping pass.**
+**What is deferred — and the absorbed scope is larger than the
+standalone signup alone.** A platform-wide plugin-architecture
+framing is in active scoping (separately tracked) under which
+`apps/site` is the canonical product origin and the existing
+`apps/web` game deployment is the first plugin. Under that
+framing, feedback + subscription is anticipated to be a sibling
+plugin — one module that owns the feedback page, the standalone
+signup page, an embeddable email-entry widget exportable to
+event homepages, the data tables, and the future organizer-facing
+data-export and analysis tools. The "standalone signup feature's
+own scoping pass" earlier drafts of this doc named is more
+accurately framed as the **feedback + subscription plugin's own
+scoping pass**: a single absorbed surface that this scoping doc
+is upstream of.
 
-- The standalone surface's UI shape — page, footer widget,
-  embedded component, marketing modal, etc.
-- The trigger for shipping it (which event or organizer ask
-  motivates the first deploy).
-- Whether the standalone public RPC takes the `event_slug` from
-  its URL path (the widget renders at `/event/<slug>/...` and
-  pulls the slug from route params), from a hidden form field
-  populated by the rendering server component, or via some other
-  mechanism. The helper itself always receives a non-null
-  `p_event_slug` per Decision 2's composite-PK shape; what's
-  deferred is how the public RPC obtains it.
-- Copy, validation feedback, double-submit handling, and any
-  thank-you/confirm flow on the standalone surface.
+Specifically deferred to that pass:
 
-These do not affect the data shape or write contract scoped here;
-deferring them is safe.
+- The plugin's overall shape — what it owns vs. what it imports
+  from the platform (auth, theming, registry conventions).
+- The plugin's UI surfaces — the standalone signup page, the
+  embeddable widget's API and embedding mechanism (component
+  export, iframe, runtime federation), the feedback page's
+  relocation into the plugin namespace.
+- Where the plugin's RPCs and tables physically live in the
+  database (shared `public.*` schema vs. a plugin-specific
+  schema namespace) — see Plan structure handoff below for the
+  sequencing implication.
+- The plugin's organizer-facing data-export and analysis tools.
+- The trigger for shipping any individual surface and the
+  per-surface UX details (copy, validation feedback,
+  double-submit handling, confirm flows).
+- For the standalone signup specifically: whether the public RPC
+  takes the `event_slug` from its URL path (widget renders at
+  `/event/<slug>/...` and pulls the slug from route params),
+  from a hidden form field populated by the rendering server
+  component, or via some other mechanism. The helper itself
+  always receives a non-null `p_event_slug` per Decision 2's
+  composite-PK shape; what's deferred is how the surrounding
+  public RPC obtains it.
+
+The data-shape and write-contract decisions in this doc bind
+regardless of where the plugin scoping lands those decisions,
+and regardless of whether the implementing PR for *this* scoping
+ships in `public.*` today or in a plugin namespace later (see
+Plan structure handoff).
 
 ### 7. Compliance posture — single opt-in v1, schema forward-compatible for double opt-in [Resolved]
 
@@ -668,6 +695,39 @@ standalone signup feature's own scoping pass.
 
 If the next step is direct implementation, the same scope applies;
 the implementing PR carries its own contract via the diff.
+
+**Namespace placement under the in-flight plugin architecture.**
+The scoping above is written in `public.*` schema and current-
+architecture language because that is what the codebase contains
+today. A plugin-architecture framing is in active scoping
+(separately tracked); under it, feedback + subscription is
+anticipated to be its own plugin owning a plugin-specific schema.
+Two paths the implementing pass picks between based on actual
+state at implementation time:
+
+- **Land in `public.*` now, mechanical migration later.** Default
+  if the plugin architecture has not produced concrete
+  scaffolding (a settled namespace convention, a plan-doc
+  contract for the feedback + subscription plugin, or migration
+  shells the implementer can land into) by the time
+  implementation opens. Future plugin scoping's job at that
+  point is `ALTER SCHEMA` + RPC namespace move plus relocating
+  the feedback page into the plugin's UI tree — mechanical, not
+  a redesign. The seven shape decisions are invariant across the
+  move.
+- **Land directly in the plugin namespace.** Available only if
+  the plugin scaffolding has settled enough that the
+  implementing PR can land into it without adding scaffolding
+  scope — i.e., the plugin namespace exists, the RPC-grant
+  conventions are settled, the registry-FK target is named.
+  Adding plugin-architecture scaffolding inside the implementing
+  PR for this scoping would be scope creep against the seven
+  decisions resolved here; that work belongs to the plugin
+  scoping itself, not to this implementation pass.
+
+The implementing pass walks the Reality-check inputs below
+(specifically the plugin-framing-state check) before picking the
+path.
 
 ## Recommended PR shape (non-binding)
 
@@ -761,11 +821,35 @@ implementing plan re-verifies each at plan time per
   test reveals otherwise, the helper grant posture must be
   revisited; do not silently grant EXECUTE to anon to make the
   call work.
+- **Plugin-architecture framing state (namespace path
+  selection).** Decision 6's carryover and the namespace-
+  placement paragraph in Plan structure handoff both reference an
+  in-flight plugin-architecture framing under which feedback +
+  subscription becomes one plugin. The implementing pass checks
+  whether that framing has produced concrete scaffolding by the
+  time implementation opens — a settled plugin-namespace
+  convention, a plan-doc contract for the feedback + subscription
+  plugin, or migration shells the implementer can land into —
+  and picks the namespace path accordingly: `public.*` today
+  with a future mechanical migration, or directly into the
+  plugin namespace if the scaffolding is ready. The shape
+  decisions in this scoping are invariant across the choice;
+  what the check determines is *where* the implementation lands,
+  not *what* it implements.
 
 ## Out of scope for this scoping doc
 
-- The standalone signup feature's UI shape, trigger, and copy
+- The feedback + subscription plugin's overall shape, UI surfaces
+  (standalone signup page, embeddable email-entry widget, the
+  feedback page's relocation into the plugin namespace),
+  organizer-facing data-export and analysis tools, and the
+  triggers / copy / UX details for any individual surface
   (Decision 6 carryover).
+- The choice between landing this scoping's implementation in
+  `public.*` today vs. directly in a future plugin namespace.
+  See Plan structure handoff "Namespace placement under the
+  in-flight plugin architecture" — the decision is made by the
+  implementing pass based on plugin-framing-state at that time.
 - The unsubscribe surface (admin tool, self-service link, or
   manual). The schema accommodates unsubscribe via
   `unsubscribed_at` from day one; how a row gets that timestamp
