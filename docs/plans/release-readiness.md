@@ -42,14 +42,14 @@ Owner docs this file coordinates:
 - [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md) — behavior-preserving refactor tasks
 - [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) — docs maintenance
 - [open-questions.md](/docs/open-questions.md) — unresolved product/UX/architecture decisions
-- [analytics-strategy.md](/docs/plans/analytics-strategy.md) — analytics rollout and the only current telemetry surface
+- [analytics-strategy.md](/docs/tracking/analytics-strategy.md) — analytics rollout and the only current telemetry surface
 - [operations.md](/docs/operations.md) — platform-managed settings and production responsibilities
 - [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) — post-release smoke triage
 - [dev.md](/docs/dev.md) — validation commands and local workflow source of truth
-- [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface that ships in the current MVP
-- [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
-- [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
-- [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
+- [redemption-design.md](/docs/redemption-design.md) — role/auth model and entitlement-redemption surface that ships in the current MVP
+- [security-and-abuse.md](/docs/tracking/security-and-abuse.md) — trust-boundary follow-ups beyond the MVP gate
+- [continuous-deployment-roadmap.md](/docs/tracking/continuous-deployment-roadmap.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
+- [cloud-agent-reliability-roadmap.md](/docs/tracking/cloud-agent-reliability-roadmap.md) — agent-tooling reliability work that intersects PR CI evidence
 - [epics/madrona-demo-build/epic.md](/docs/plans/epics/madrona-demo-build/epic.md) — current real-event work (demo-build phase: Theme registration, content authoring, end-to-end attendee journey through a stakeholder-shareable demo URL); launch readiness deferred to a far-future Madrona-launch sibling
 - [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md) — completed M1–M3 (ThemeScope wiring, home rebuild, demo-mode auth bypass) that shipped between this doc's establishment and the next pass
 
@@ -201,10 +201,10 @@ when a gate counts as met:
 | G1 | Trust-path behavior is validated against real Supabase, not mocks only | `npm run test:supabase` passes locally; pgTAP confirms entitlement uniqueness, request idempotency, verification-code stability, redemption idempotency (`redeem_entitlement` / `reverse_entitlement_redemption` RPCs), and event-scoped role helpers (`is_agent_for_event`, `is_organizer_for_event`, `is_root_admin`) | [testing.md — Trust-Path Validation Strategy](/docs/testing.md) |
 | G2 | Attendee mobile flow works end to end in a real browser | `npm run test:e2e` passes and the captured mobile smoke sequence covers intro → answer → completion → direct route load on `/event/:slug/game` | [testing.md — UX And End-To-End Browser Flow](/docs/testing.md) |
 | G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | Both phases of the `Production Deployed-Surface Smoke` workflow have passed for the release candidate commit (`npm run test:e2e:admin:production-smoke` followed by `npm run test:e2e:redemption:production-smoke` against deployed Supabase + the deployed apps/web origin, automatic on release or via `workflow_dispatch`). The admin phase exercises the cross-app `apps/web` → `apps/site` `/admin` rewrite. The redemption phase exercises the agent redeem path (`/event/:slug/game/redeem`), the organizer list/filter/sheet path (`/event/:slug/game/redemptions`), and the organizer reverse-redemption path against the dedicated production smoke event. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
-| G4 | Completion, starts, and redemption instrumentation is in place for the event | `game_starts`, `game_completions`, `game_entitlements`, and the redemption columns/RPCs populate correctly in a local Supabase run; the production Supabase project has every migration through `20260427010000_broaden_event_scoped_rls.sql` applied before attendees arrive | [analytics-strategy.md — Phase 1 Implementation Plan](/docs/plans/analytics-strategy.md) and [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) |
+| G4 | Completion, starts, and redemption instrumentation is in place for the event | `game_starts`, `game_completions`, `game_entitlements`, and the redemption columns/RPCs populate correctly in a local Supabase run; the production Supabase project has every migration through `20260427010000_broaden_event_scoped_rls.sql` applied before attendees arrive | [analytics-strategy.md](/docs/tracking/analytics-strategy.md) and [redemption-design.md](/docs/redemption-design.md) |
 | G5 | Release-blocking open questions are either decided or explicitly deferred | Each item mirrored under the **Release-blocking open questions** subheading of the current pass entry in [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) has a linked decision or a recorded post-event deferral, per the mirror contract in [Release-Blocking Open Questions](#release-blocking-open-questions) below; the pass also confirms that no item in [open-questions.md](/docs/open-questions.md) that should be release-blocking is missing from that mirror | [open-questions.md](/docs/open-questions.md) |
-| G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/plans/analytics-strategy.md) and this doc |
-| G7 | Docs describe the implemented state of the release candidate | The doc currency walkthrough in [AGENTS.md — Doc Currency Is a PR Gate](/AGENTS.md) has been executed for the release branch; `README.md`, `docs/architecture.md`, `docs/dev.md`, `docs/testing.md`, `docs/operations.md`, `docs/backlog.md`, `docs/open-questions.md`, the active epic doc(s) under `docs/plans/epics/`, and `docs/plans/reward-redemption-mvp-design.md` match the shipped code | [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) |
+| G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/tracking/analytics-strategy.md) and this doc |
+| G7 | Docs describe the implemented state of the release candidate | The doc currency walkthrough in [AGENTS.md — Doc Currency Is a PR Gate](/AGENTS.md) has been executed for the release branch; `README.md`, `docs/architecture.md`, `docs/dev.md`, `docs/testing.md`, `docs/operations.md`, `docs/backlog.md`, `docs/open-questions.md`, the active epic doc(s) under `docs/plans/epics/`, and `docs/redemption-design.md` match the shipped code | [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) |
 | G8 | PR CI covers the pre-release change set at a meaningful depth | For non-doc changes, lint, unit, `npm run test:functions` (Deno runtime tests), `deno check` over every function under `supabase/functions/*/index.ts`, `npm run test:supabase` (local Supabase integration + pgTAP), attendee-trusted-backend Playwright smoke, and both web (`build:web`) and site (`build:site`) builds pass on the release candidate commit via `.github/workflows/ci.yml`; the `release.yml` workflow then promotes Supabase migrations + Vercel deploys, and `production-admin-smoke.yml` validates the deployed admin surface. The `deno check` requirement covers all functions under the directory (including `read-demo-event`, `get-redemption-status`, `redeem-entitlement`, `reverse-entitlement-redemption`), not only the ones currently named in `ci.yml`. Docs-only pull requests still produce the required CI check but intentionally short-circuit heavy validation, and markdown/docs-only commits to `main` do not trigger production release. Any intentional gap is a known item in `backlog.md` | [testing.md — Where Tests Should Run](/docs/testing.md) and [backlog.md Tier 2](/docs/backlog.md) |
 | G9 | Demo-mode auth bypass on test-event slugs is consistent and contained | `npm run test:e2e:demo-mode-bypass` passes on the release candidate; the `evaluateDemoModeRejection` helper in `supabase/functions/_shared/` rejects writes on test slugs across `save-draft`, `publish-draft`, `unpublish-event`, `redeem-entitlement`, and `reverse-entitlement-redemption`; the single catchall `X-Robots-Tag: noindex, nofollow` header in `apps/web/vercel.json` covers every `/event/(harvest-block-party|riverside-jam)/:path*` route, and `apps/site` emits parallel `robots: { index: false, follow: false }` metadata on the matching routes | [test-event-noindex-uniformity-plan.md](/docs/plans/test-event-noindex-uniformity-plan.md) and [epics/demo-expansion/m3-demo-mode-auth-bypass.md](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md) |
 
@@ -463,7 +463,7 @@ How to run:
    `20260427010000_broaden_event_scoped_rls.sql` applied before the first
    live event. The release-blocking ones are `game_starts` (start data is
    permanently unrecoverable otherwise — see
-   [analytics-strategy.md](/docs/plans/analytics-strategy.md)) and the
+   [analytics-strategy.md](/docs/tracking/analytics-strategy.md)) and the
    redemption series (`20260421000000_add_redemption_columns.sql` →
    `20260421000500_add_redemption_rls_policies.sql`), without which the
    redemption operator path cannot run.
@@ -502,7 +502,7 @@ Where findings live:
   logging, observability** subheading of the current pass entry in
   [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)
 - analytics-adjacent gaps: add to
-  [analytics-strategy.md](/docs/plans/analytics-strategy.md) in the relevant phase
+  [analytics-strategy.md](/docs/tracking/analytics-strategy.md) in the relevant phase
 
 Release bar (see G6):
 
@@ -658,7 +658,7 @@ How to run:
    demo-mode 403 short-circuit must not double-parse the body), and the
    `_shared/redemption-operator-auth.ts` helper.
 4. Review `supabase/migrations/` for indexes that would be touched by:
-   - the funnel query in [analytics-strategy.md](/docs/plans/analytics-strategy.md)
+   - the funnel query in [analytics-strategy.md](/docs/tracking/analytics-strategy.md)
      (starts → completions → entitlements)
    - the admin authoring path (draft read by `event_id`, publish transaction)
    - the public route lookup by `slug`
@@ -884,10 +884,10 @@ Candidates currently open:
 - [open-questions.md](/docs/open-questions.md) — unresolved decisions
 - [code-refactor-checklist.md](/docs/tracking/code-refactor-checklist.md) — behavior-preserving refactor candidates
 - [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) — docs maintenance checklist
-- [analytics-strategy.md](/docs/plans/analytics-strategy.md) — analytics and the only current telemetry surface
+- [analytics-strategy.md](/docs/tracking/analytics-strategy.md) — analytics and the only current telemetry surface
 - [operations.md](/docs/operations.md) — platform-managed settings
 - [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) — post-release smoke coverage and triage
-- [reward-redemption-mvp-design.md](/docs/plans/reward-redemption-mvp-design.md) — role/auth model and entitlement-redemption surface
-- [security-and-abuse-plan.md](/docs/plans/security-and-abuse-plan.md) — trust-boundary follow-ups beyond the MVP gate
-- [continuous-deployment-plan.md](/docs/plans/continuous-deployment-plan.md) — release-pipeline evolution context
-- [cloud-agent-reliability-plan.md](/docs/plans/cloud-agent-reliability-plan.md) — agent-tooling reliability work that intersects PR CI evidence
+- [redemption-design.md](/docs/redemption-design.md) — role/auth model and entitlement-redemption surface
+- [security-and-abuse.md](/docs/tracking/security-and-abuse.md) — trust-boundary follow-ups beyond the MVP gate
+- [continuous-deployment-roadmap.md](/docs/tracking/continuous-deployment-roadmap.md) — release-pipeline evolution context
+- [cloud-agent-reliability-roadmap.md](/docs/tracking/cloud-agent-reliability-roadmap.md) — agent-tooling reliability work that intersects PR CI evidence

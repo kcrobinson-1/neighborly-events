@@ -2,7 +2,7 @@
 
 ## Document Role
 
-This document plans the analytics approach for Neighborly Events. It covers the end goal of analytics in this project, the approaches to consider, how to evaluate them, best practices at this scale, guidance on third-party tools versus custom solutions, and the goal of an analytics dashboard.
+This document tracks the analytics approach for Neighborly Events. It covers the end goal of analytics in this project, the approaches to consider, how to evaluate them, best practices at this scale, guidance on third-party tools versus custom solutions, and the goal of an analytics dashboard.
 
 Related docs:
 
@@ -230,16 +230,16 @@ After the product is validated at multiple events, evaluate whether question-lev
 
 ## Phase 1 Implementation Plan
 
-Phase 1 is two pull requests. They cannot be combined because they require different reviewer mental contexts and touch completely different parts of the system. PR 1 is a type-system and data model fix whose changes ripple through UI rendering and shared validation. PR 2 is new infrastructure — a new table, edge function changes, and a client API update — where the reviewer needs to hold "does start tracking work correctly and fail gracefully" as the focus. They share no files.
+Landed. Phase 1 was two pull requests. They could not be combined because they required different reviewer mental contexts and touched completely different parts of the system. PR 1 was a type-system and data model fix whose changes rippled through UI rendering and shared validation. PR 2 was new infrastructure — a new table, edge function changes, and a client API update — where the reviewer needed to hold "does start tracking work correctly and fail gracefully" as the focus. They shared no files.
 
 ### PR 1 — Make `sponsor` nullable
 
-**Why:** The `game_questions.sponsor` column is currently `NOT NULL`, which prevents modeling unsponsored house questions. This is a prerequisite for analytics views that need to correctly distinguish sponsored from unsponsored questions. It is also a standalone data model correctness fix.
+**Why:** The `game_questions.sponsor` column was `NOT NULL`, which prevented modeling unsponsored house questions. This was a prerequisite for analytics views that need to correctly distinguish sponsored from unsponsored questions. It was also a standalone data model correctness fix.
 
 **Files:**
 
 - `supabase/migrations/` — new migration: `ALTER TABLE public.game_questions ALTER COLUMN sponsor DROP NOT NULL`
-- `shared/game-config/types.ts` — change `sponsor: string` to `sponsor: string | null` on the `Question` type; the TypeScript compiler will surface every downstream call site that needs updating
+- `shared/game-config/types.ts` — change `sponsor: string` to `sponsor: string | null` on the `Question` type; the TypeScript compiler surfaces every downstream call site that needs updating
 - `shared/game-config/db-content.ts` — update the sponsor type annotation in the DB row type
 - `shared/game-config/draft-content.ts` — update the sponsor field validation to accept null/undefined in addition to a string; update the type annotation
 - `apps/web/src/game/components/CurrentQuestionPanel.tsx` — wrap the "Sponsored by" label in a null guard so it only renders when `question.sponsor` is set
@@ -248,13 +248,13 @@ Phase 1 is two pull requests. They cannot be combined because they require diffe
 - `apps/web/src/game/components/GameCompletionPanel.tsx` — null guard on any sponsor label
 - `supabase/functions/_shared/published-game-loader.ts` — the sponsor field is selected and mapped; update the type to allow null
 
-**Validation:** `npm run lint`, `npm test`, `npm run test:functions`, `deno check` on `issue-session` and `complete-game`, `npm run build:web`. The type change on `Question.sponsor` will cause compiler errors at every unguarded call site, so the build itself enforces completeness.
+**Validation:** `npm run lint`, `npm test`, `npm run test:functions`, `deno check` on `issue-session` and `complete-game`, `npm run build:web`. The type change on `Question.sponsor` causes compiler errors at every unguarded call site, so the build itself enforces completeness.
 
 ---
 
 ### PR 2 — Add game start tracking
 
-**Why:** `issue-session` currently mints a signed session credential but writes nothing to the database. Adding a single INSERT into a new `game_starts` table provides the funnel denominator — how many people started the quiz — which is permanently unrecoverable for any event that runs without this in place.
+**Why:** `issue-session` minted a signed session credential but wrote nothing to the database. Adding a single INSERT into a new `game_starts` table provides the funnel denominator — how many people started the quiz — which is permanently unrecoverable for any event that runs without this in place.
 
 **Files:**
 

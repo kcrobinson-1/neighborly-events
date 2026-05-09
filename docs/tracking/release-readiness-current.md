@@ -34,16 +34,16 @@ the release candidate.
 
 **Methodology refresh:**
 
-- Owner-doc list expanded to cite reward-redemption-mvp-design.md,
-  security-and-abuse-plan.md, continuous-deployment-plan.md,
-  cloud-agent-reliability-plan.md, and the active epic docs.
+- Owner-doc list expanded to cite redemption-design.md,
+  security-and-abuse.md, continuous-deployment-roadmap.md,
+  cloud-agent-reliability-roadmap.md, and the active epic docs.
 - Scope and Release-Target checklist now name the cross-app rewrite,
   the redemption MVP, the event-scoped role helpers, and demo-mode
   bypass containment.
 - Release Gates: G1/G3/G4 broadened to include redemption RPCs and
   event-scoped role enforcement; G6 broadened to include both Vercel
   projects and the cross-app rewrite; G7 doc list expanded to include
-  the active epic doc(s) and reward-redemption-mvp-design.md; G8 now
+  the active epic doc(s) and redemption-design.md; G8 now
   names `release.yml` and the `build:site` step; new gate **G9**
   added for demo-mode bypass containment.
 - Methodology dimensions 1–5 refreshed to cover all 10 deployed Edge

@@ -43,21 +43,21 @@ authoring follow-up work is tracked in [`backlog.md`](/docs/backlog.md).
 
 No currently open questions in this section under the current tracking rule.
 Recommended first metrics and sponsor-proof baseline are documented in
-[`analytics-strategy.md`](/docs/plans/analytics-strategy.md), and implementation priority
+[`analytics-strategy.md`](/docs/tracking/analytics-strategy.md), and implementation priority
 is tracked in [`backlog.md`](/docs/backlog.md).
 
 ## Development And Release Workflow
 
 No currently open questions in this section under the current tracking rule.
 Workflow direction and remaining implementation are tracked in
-[`continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md),
+[`continuous-deployment-roadmap.md`](/docs/tracking/continuous-deployment-roadmap.md),
 [`dev.md`](/docs/dev.md), and [`backlog.md`](/docs/backlog.md).
 
 ## Trust Boundary And Abuse Controls
 
 No currently open questions in this section under the current tracking rule.
-Trust-boundary and abuse-control planning now lives in
-[`security-and-abuse-plan.md`](/docs/plans/security-and-abuse-plan.md), and concrete
+Trust-boundary and abuse-control tracking now lives in
+[`security-and-abuse.md`](/docs/tracking/security-and-abuse.md), and concrete
 hardening work should be tracked via [`backlog.md`](/docs/backlog.md).
 
 ## Event Platform Epic — Phase 0.3 Verification

@@ -24,8 +24,8 @@ steps, and validation commands.
 - Admin live-status fix plan: [`docs/plans/archive/admin-live-status-plan.md`](/docs/plans/archive/admin-live-status-plan.md)
 - Admin UX polish: [`docs/tracking/admin-ux-roadmap.md`](/docs/tracking/admin-ux-roadmap.md)
 - Contributor workflow tooling: [`docs/tracking/dev-workflow-improvements.md`](/docs/tracking/dev-workflow-improvements.md)
-- Continuous deployment planning: [`docs/plans/continuous-deployment-plan.md`](/docs/plans/continuous-deployment-plan.md)
-- Security and abuse planning: [`docs/plans/security-and-abuse-plan.md`](/docs/plans/security-and-abuse-plan.md)
+- Continuous deployment roadmap: [`docs/tracking/continuous-deployment-roadmap.md`](/docs/tracking/continuous-deployment-roadmap.md)
+- Security and abuse tracking: [`docs/tracking/security-and-abuse.md`](/docs/tracking/security-and-abuse.md)
 - Code refactors: [`docs/tracking/code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md)
 - Test coverage rollout: [`docs/testing.md`](/docs/testing.md)
 - Deferred authoring features: [`docs/plans/archive/quiz-authoring-plan.md`](/docs/plans/archive/quiz-authoring-plan.md)
@@ -221,7 +221,7 @@ prioritization before starting.
   and sponsor question engagement. Follow-on: an organizer-facing reporting
   section in the admin workspace that surfaces those views for a selected event
   without requiring Supabase Studio access.
-  Detail: [`docs/plans/analytics-strategy.md`](/docs/plans/analytics-strategy.md)
+  Detail: [`docs/tracking/analytics-strategy.md`](/docs/tracking/analytics-strategy.md)
 
 - [ ] **`ux` Organizer-managed agent assignment**
   Now that organizers have full event-scoped write access via M2's RLS
