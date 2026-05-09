@@ -82,14 +82,14 @@ function createSessionState(game: GameConfig, overrides = {}) {
     canGoBack: false,
     canSubmit: false,
     completionError: null,
-    continueFromCorrectFeedback: vi.fn(),
+    continueFromAnswerReveal: vi.fn(),
     currentIndex: 0,
     currentQuestion: game.questions[0],
     feedbackKind: null,
     feedbackMessage: null,
     goBack: vi.fn(),
     isComplete: false,
-    isShowingCorrectFeedback: false,
+    isShowingAnswerReveal: false,
     isShowingQuestion: false,
     isStarted: false,
     isSubmittingCompletion: false,
@@ -176,6 +176,49 @@ describe("GamePage", () => {
     ).toBeTruthy();
     expect(sessionState.selectOption).toHaveBeenCalledWith("b");
     expect(sessionState.submit).toHaveBeenCalledTimes(1);
+  });
+
+  it("mounts the correct-answer panel during the answer-reveal phase when the player got it right", () => {
+    const game = createGame({ feedbackMode: "instant_feedback_non_blocking" });
+    const sessionState = createSessionState(game, {
+      answers: { q1: ["b"] },
+      feedbackKind: "correct",
+      feedbackMessage: "Sponsor fact for the first answer.",
+      isShowingAnswerReveal: true,
+      isStarted: true,
+      pendingSelection: ["b"],
+    });
+    mockUseGameSession.mockReturnValue(sessionState);
+
+    render(<GamePage game={game} onNavigate={() => {}} />);
+
+    expect(screen.getByText("Correct")).toBeTruthy();
+    expect(screen.getByText("Sponsor fact for the first answer.")).toBeTruthy();
+    expect(screen.queryByText("Not quite")).toBeNull();
+  });
+
+  it("mounts the answer-reveal panel during the reveal phase when the player got it wrong", () => {
+    const game = createGame({ feedbackMode: "instant_feedback_non_blocking" });
+    const sessionState = createSessionState(game, {
+      answers: { q1: ["a"] },
+      feedbackKind: "incorrect",
+      feedbackMessage: "Explanation one.",
+      isShowingAnswerReveal: true,
+      isStarted: true,
+      pendingSelection: ["a"],
+    });
+    mockUseGameSession.mockReturnValue(sessionState);
+
+    render(<GamePage game={game} onNavigate={() => {}} />);
+
+    expect(screen.getByText("Not quite")).toBeTruthy();
+    // The reveal panel must surface the correct option label so the player
+    // knows the right answer, not just that they were wrong.
+    expect(
+      screen.getByText("Option B", { exact: false, selector: "p" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Explanation one.")).toBeTruthy();
+    expect(screen.queryByText("Correct")).toBeNull();
   });
 
   it("keeps the attendee status hook inert during completion submission", () => {

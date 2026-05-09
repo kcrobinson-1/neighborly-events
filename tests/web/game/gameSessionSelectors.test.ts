@@ -82,7 +82,7 @@ describe("gameSessionSelectors", () => {
       canSubmit: true,
       currentQuestion: game.questions[1],
       isComplete: false,
-      isShowingCorrectFeedback: false,
+      isShowingAnswerReveal: false,
       isShowingQuestion: true,
       isStarted: true,
       isSubmittingCompletion: false,
@@ -103,12 +103,29 @@ describe("gameSessionSelectors", () => {
       canSubmit: false,
       currentQuestion: undefined,
       isComplete: true,
-      isShowingCorrectFeedback: false,
+      isShowingAnswerReveal: false,
       isShowingQuestion: false,
       isStarted: true,
       isSubmittingCompletion: false,
       progressValue: 100,
     });
+  });
+
+  it("flags the answer-reveal phase regardless of correctness for non-blocking mode", () => {
+    const game = createGame({ feedbackMode: "instant_feedback_non_blocking" });
+    const state = {
+      ...createGameState("answer_revealed", 100),
+      answers: { q1: ["a"] },
+      currentIndex: 0,
+      feedbackKind: "incorrect" as const,
+      feedbackMessage: "Explanation one.",
+      pendingSelection: ["a"],
+    };
+
+    const view = getGameSessionViewState(game, state);
+
+    expect(view.isShowingAnswerReveal).toBe(true);
+    expect(view.isShowingQuestion).toBe(false);
   });
 
   it("prefers the trusted backend score over the local fallback score", () => {

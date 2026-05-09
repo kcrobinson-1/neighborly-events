@@ -2,7 +2,7 @@
 
 ## Status
 
-In draft.
+Landed.
 
 ## Context
 
@@ -289,93 +289,108 @@ rendering the consequence" rule in
 the implementer renders the dropdown and confirms the three labels
 read together before merging.
 
-## Files to touch
+## Files touched
 
-Estimate of expected diff shape; implementation may revise
-per the "Plan content is a mix of rules and estimates" rule in
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md).
+Reconciled at land time to describe what actually shipped.
 
 New:
 
-- `supabase/migrations/<timestamp>_extend_game_events_feedback_mode_check.sql` —
-  drops and recreates the CHECK constraint to include
-  `instant_feedback_non_blocking`
-- Optionally `apps/web/src/game/components/AnswerRevealPanel.tsx`
-  — sibling to `CorrectAnswerPanel` for the revealed-incorrect
-  case; only if the implementer chooses the two-component shape
-- `tests/web/game/components/GameIntroPanel.test.tsx` — unit
-  coverage for `modeDescription` rendering across all three
-  `FeedbackMode` values (no test file exists for this component
-  today; the new exhaustive branch warrants one)
+- `supabase/migrations/20260509170000_extend_game_events_feedback_mode_check.sql` —
+  drops and recreates `game_events_feedback_mode_check` to accept
+  `instant_feedback_non_blocking` alongside the two existing values
+- `apps/web/src/game/components/AnswerRevealPanel.tsx` — sibling
+  to `CorrectAnswerPanel` for the revealed-incorrect case
+  (the two-component shape was chosen over extending
+  `CorrectAnswerPanel`)
+- `tests/web/game/components/GameIntroPanel.test.tsx` — exhaustive
+  `modeDescription` coverage across all three `FeedbackMode` values
 
-Modify:
+Modified:
 
-- `shared/game-config/types.ts` — extend `FeedbackMode` union
-- `shared/game-config/draft-question-parsing.ts` — extend
-  `expectFeedbackMode`
-- `apps/web/src/game/gameSessionState.ts` — non-blocking submit
-  branch; possible phase rename
-- `apps/web/src/game/gameUtils.ts` — add the
-  `getRevealedAnswerMessage` helper named in the reducer contract
-  (explanation-first, sponsor-fact-never, with a labelled fallback)
-- `apps/web/src/game/gameSessionSelectors.ts` — view-state field
-  follow-through if the phase renames
-- `apps/web/src/game/useGameSession.ts` — dispatcher branch on the
-  new mode
-- `apps/web/src/game/components/CorrectAnswerPanel.tsx` — extend
-  for revealed-incorrect rendering, or keep as-is if a sibling
-  component is added
-- `apps/web/src/game/components/CurrentQuestionPanel.tsx` — only
-  if the inline incorrect-feedback banner needs scoping more
-  tightly to `_required`
-- `apps/web/src/game/components/GameIntroPanel.tsx` — turn the
-  two-way `modeDescription` branch into an exhaustive switch /
-  mapping that names copy for the new mode
-- `apps/web/src/game/components/GameCompletionPanel.tsx` — no
-  code change expected; the positive-match expression at
-  [`:74-75`](apps/web/src/game/components/GameCompletionPanel.tsx:74-75)
-  already produces the right behavior for non-blocking mode
-  (review stays hidden because the player saw reveals during
-  play). Listed here for the reviewer's awareness so the
-  expression's scope is not silently broadened during
-  implementation
-- `apps/web/src/pages/GamePage.tsx` — page-level render switch so
-  the wrong-but-revealed panel is reachable (two-component shape)
-  or `feedbackKind` flows through (one-component shape); see the
-  page-level contract above
-- `apps/web/src/admin/AdminEventDetailsForm.tsx` — add the
-  dropdown option
+- `shared/game-config/types.ts` — extended `FeedbackMode` union
+- `shared/game-config/draft-question-parsing.ts` — extended
+  `expectFeedbackMode` accept-list and error message
+- `shared/game-config/sample-games.ts` — added `revealedAnswerGame`
+  fixture (slug `neighborhood-reveal`) so the new mode is
+  exercisable through the local prototype-fallback path; not
+  named in the original Files-to-touch list and added because the
+  manual-e2e Validation Gate cases (a)–(d) require a fixture with
+  explanation-present, explanation-absent, and multi-select
+  questions in one event
+- `apps/web/src/game/gameSessionState.ts` — added `submitNonBlocking`
+  action variant; renamed phase `correct_feedback` → `answer_revealed`
+  (the rename happened — selector field, view-state, and tests
+  follow through in the same diff)
+- `apps/web/src/game/gameUtils.ts` — added `getRevealedAnswerMessage`
+  helper (explanation-first, sponsor-fact-never, with a labelled
+  fallback that handles single- and multi-select shapes)
+- `apps/web/src/game/gameSessionSelectors.ts` — renamed
+  `isShowingCorrectFeedback` → `isShowingAnswerReveal` per the
+  phase rename; phase-string check updated to `answer_revealed`
+- `apps/web/src/game/useGameSession.ts` — three-way dispatcher
+  branch by `FeedbackMode`; renamed
+  `continueFromCorrectFeedback` → `continueFromAnswerReveal`
+- `apps/web/src/pages/GamePage.tsx` — page-level conditional
+  switches on `feedbackKind`: mounts `CorrectAnswerPanel` when
+  `feedbackKind === "correct"`, `AnswerRevealPanel` when
+  `feedbackKind === "incorrect"`
+- `apps/web/src/game/components/GameIntroPanel.tsx` — two-way
+  `modeDescription` ternary replaced by a `Record<FeedbackMode, string>`
+  mapping (exhaustiveness enforced by the type)
+- `apps/web/src/admin/AdminEventDetailsForm.tsx` — added the new
+  dropdown option AND relabeled the two existing options to read
+  as a coherent player-experience triple ("Show score at the end" /
+  "Require correct answer to continue" / "Reveal answer after each
+  question") — implementation-time decision recorded in the PR
 - `tests/web/game/gameSessionState.test.ts` — non-blocking submit
-  cases (correct stores answer; incorrect stores answer)
+  cases (correct stores answer; incorrect stores answer; labelled
+  fallback)
 - `tests/web/game/gameUtils.test.ts` — `getRevealedAnswerMessage`
   cases (explanation present; explanation absent; multi-select
   fallback; sponsor-fact ignored)
-- `tests/web/game/gameSessionSelectors.test.ts` — view-state for
-  non-blocking
-- `tests/web/game/useGameSession.test.ts` — dispatcher branch
+- `tests/web/game/gameSessionSelectors.test.ts` — view-state
+  coverage for non-blocking-mode `answer_revealed` phase
+- `tests/web/game/useGameSession.test.ts` — non-blocking
+  dispatcher: wrong-answer reveals explanation; correct-answer
+  routes through sponsor-fact precedence
 - `tests/web/pages/GamePage.test.tsx` — page-level render
-  coverage for non-blocking mode: correct-feedback case mounts
-  `CorrectAnswerPanel`; incorrect-feedback case mounts the reveal
-  variant (sibling component or extended panel) — assert against
-  the rendered chip / heading / correct-answer-label so the
-  assertion catches both two-component and one-component shapes
+  coverage for non-blocking mode (asserts chip/heading/explanation
+  text so both component shapes would be caught)
 - `tests/web/game/components/GameCompletionPanel.test.tsx` —
-  non-blocking-mode case asserts the answer-review section does
-  not render (regression guard against the
-  `final_score_reveal`-positive-match expression being broadened)
-- `tests/web/admin/eventDetails.test.ts` — admin dropdown option
-- `tests/shared/game-config/fixtures.ts`,
-  `tests/shared/game-config/draft-content.test.ts`,
-  `tests/shared/game-config/db-content.test.ts` — accept the third
-  mode value
-- `docs/experience.md` — flip the `instant_feedback_non_blocking`
-  bullet from "optional later" to a landed mode in the
-  three-mode list
+  regression guard asserting the answer-review block stays hidden
+  in `instant_feedback_non_blocking` AND `instant_feedback_required`
+- `tests/web/admin/eventDetails.test.ts` — admin form pipeline
+  accepts the new mode value
+- `tests/shared/game-config/draft-content.test.ts` — error message
+  updated; positive case for the new mode added
+- `docs/experience.md` — flipped the `instant_feedback_non_blocking`
+  bullet from "optional later" to a landed mode and added a
+  full sub-section describing the mode
+- `docs/architecture.md` — added the third bullet to the
+  feedback-modes list
 
-Files intentionally not touched (estimate, not a ban):
+Files in the original estimate that were NOT modified:
+
+- `apps/web/src/game/components/CorrectAnswerPanel.tsx` — the
+  two-component shape was chosen, so this component stayed as-is
+- `apps/web/src/game/components/CurrentQuestionPanel.tsx` — the
+  inline incorrect-feedback banner is naturally unreachable in
+  non-blocking mode because the reducer transitions out of
+  `phase: "question"` on submit; no scoping change needed
+- `apps/web/src/game/components/GameCompletionPanel.tsx` — the
+  positive-match expression `=== "final_score_reveal"` already
+  produces the right behavior; verified by the new regression
+  test rather than by code change
+- `tests/shared/game-config/fixtures.ts`,
+  `tests/shared/game-config/db-content.test.ts` — these test
+  surfaces use `final_score_reveal` and pipe through the
+  `FeedbackMode` type; no per-mode assertions needed updates
+
+Files intentionally not touched (held):
 
 - `supabase/functions/complete-game/**` — backend re-scores from
-  trusted published content; no mode-specific code path
+  trusted published content; no mode-specific code path. Confirmed
+  green via `npm run test:functions` (122 passed).
 - `shared/events/published.ts`, `shared/game-config/db-content.ts`
   — typed via `FeedbackMode` alias; the type extension flows
   through automatically

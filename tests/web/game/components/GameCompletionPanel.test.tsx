@@ -228,6 +228,50 @@ describe("GameCompletionPanel", () => {
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
   });
 
+  it("hides the answer-review block in non-blocking mode because reveals were shown during play", () => {
+    render(
+      <GameCompletionPanel
+        answers={{ q1: ["a"] }}
+        completion={createCompletionResult()}
+        completionError={null}
+        game={createGame({ feedbackMode: "instant_feedback_non_blocking" })}
+        isSubmitting={false}
+        onReset={() => {}}
+        onRetake={() => {}}
+        onRetrySubmission={() => {}}
+        score={1}
+        showRetake={true}
+        status={createStatus("unredeemed")}
+      />,
+    );
+
+    // Verification block must still render; the answer-review block must not.
+    expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
+    expect(screen.queryByText("Final score")).toBeNull();
+    expect(screen.queryByText("Your answer:", { exact: false })).toBeNull();
+    expect(screen.queryByText("Correct answer:", { exact: false })).toBeNull();
+  });
+
+  it("hides the answer-review block in instant-feedback-required mode for the same reason", () => {
+    render(
+      <GameCompletionPanel
+        answers={{ q1: ["b"] }}
+        completion={createCompletionResult()}
+        completionError={null}
+        game={createGame({ feedbackMode: "instant_feedback_required" })}
+        isSubmitting={false}
+        onReset={() => {}}
+        onRetake={() => {}}
+        onRetrySubmission={() => {}}
+        score={1}
+        showRetake={true}
+        status={createStatus("unredeemed")}
+      />,
+    );
+
+    expect(screen.queryByText("Final score")).toBeNull();
+  });
+
   it("shows retry actions when completion failed", () => {
     const onReset = vi.fn();
     const onRetrySubmission = vi.fn();

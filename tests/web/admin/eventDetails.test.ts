@@ -71,6 +71,15 @@ describe("applyEventDetailsFormValues", () => {
     ).toThrow("Event name is required.");
   });
 
+  it("accepts the non-blocking feedback mode value through the form pipeline", () => {
+    const nextContent = applyEventDetailsFormValues(sampleGame, {
+      ...createEventDetailsFormValues(sampleGame),
+      feedbackMode: "instant_feedback_non_blocking",
+    });
+
+    expect(nextContent.feedbackMode).toBe("instant_feedback_non_blocking");
+  });
+
   it("rejects non-positive estimated minutes", () => {
     expect(() =>
       applyEventDetailsFormValues(sampleGame, {

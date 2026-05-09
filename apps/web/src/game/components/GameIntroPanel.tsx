@@ -1,4 +1,5 @@
 /** Intro panel for the pre-game state before the player starts an attempt. */
+import type { FeedbackMode } from "../../../../../shared/game-config";
 import type { GameConfig } from "../../data/games";
 
 /** Props for the pre-game intro panel. */
@@ -9,6 +10,14 @@ type GameIntroPanelProps = {
   startError: string | null;
 };
 
+const MODE_DESCRIPTIONS: Record<FeedbackMode, string> = {
+  final_score_reveal: "See your score after the last question.",
+  instant_feedback_required:
+    "Answer correctly to unlock the next question and a quick sponsor fact.",
+  instant_feedback_non_blocking:
+    "See the answer right after each question.",
+};
+
 /** Intro panel shown before the player starts a game attempt. */
 export function GameIntroPanel({
   game,
@@ -16,10 +25,7 @@ export function GameIntroPanel({
   onStart,
   startError,
 }: GameIntroPanelProps) {
-  const modeDescription =
-    game.feedbackMode === "instant_feedback_required"
-      ? "Answer correctly to unlock the next question and a quick sponsor fact."
-      : "See your score after the last question.";
+  const modeDescription = MODE_DESCRIPTIONS[game.feedbackMode];
 
   return (
     <section className="panel intro-panel">

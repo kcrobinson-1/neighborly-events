@@ -237,9 +237,14 @@ export function AdminEventDetailsForm({
             onChange={updateTextValue("feedbackMode")}
             value={values.feedbackMode}
           >
-            <option value="final_score_reveal">Final score reveal</option>
+            <option value="final_score_reveal">
+              Show score at the end
+            </option>
             <option value="instant_feedback_required">
-              Instant feedback required
+              Require correct answer to continue
+            </option>
+            <option value="instant_feedback_non_blocking">
+              Reveal answer after each question
             </option>
           </select>
         </label>

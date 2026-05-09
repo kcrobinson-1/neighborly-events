@@ -63,8 +63,17 @@ describe("parseAuthoringGameDraftContent", () => {
         feedbackMode: "invalid_mode",
       })
     ).toThrow(
-      'Draft content "feedbackMode" must be "final_score_reveal" or "instant_feedback_required".',
+      'Draft content "feedbackMode" must be "final_score_reveal", "instant_feedback_required", or "instant_feedback_non_blocking".',
     );
+  });
+
+  it("accepts the non-blocking feedback mode value", () => {
+    expect(() =>
+      parseAuthoringGameDraftContent({
+        ...createAuthoringDraft(),
+        feedbackMode: "instant_feedback_non_blocking",
+      }),
+    ).not.toThrow();
   });
 
   it("rejects invalid question selection mode values", () => {

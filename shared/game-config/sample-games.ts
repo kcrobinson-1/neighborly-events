@@ -250,9 +250,86 @@ const communityChecklistGame: GameConfig = {
   ],
 };
 
+/** Sample game that reveals the answer after each submit without blocking. */
+const revealedAnswerGame: GameConfig = {
+  id: "neighborhood-reveal-2026",
+  slug: "neighborhood-reveal",
+  name: "Neighborhood Reveal",
+  allowBackNavigation: true,
+  allowRetake: true,
+  location: "Seattle",
+  estimatedMinutes: 3,
+  entitlementLabel: "reward ticket",
+  summary:
+    "Submit each answer and see whether you got it right immediately, then advance regardless of correctness.",
+  feedbackMode: "instant_feedback_non_blocking",
+  intro:
+    "Answer four quick questions. You'll see the answer right after each submit and keep moving.",
+  questions: [
+    {
+      id: "q1",
+      sponsor: "Hi Spot Cafe",
+      prompt: "Which of these is a Madrona neighborhood brunch spot?",
+      selectionMode: "single",
+      correctAnswerIds: ["a"],
+      sponsorFact:
+        "Hi Spot Cafe has been a Madrona neighborhood favorite for brunch since long before this game existed.",
+      explanation:
+        "Hi Spot Cafe is the Madrona-area brunch spot featured in the sponsor lineup.",
+      options: [
+        { id: "a", label: "Hi Spot Cafe" },
+        { id: "b", label: "Pike Place Fish Throwers" },
+        { id: "c", label: "Space Needle" },
+      ],
+    },
+    {
+      id: "q2",
+      sponsor: "Bottlehouse",
+      prompt:
+        "What submit behavior does this feedback mode show after each question?",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      options: [
+        { id: "a", label: "Block until you guess correctly" },
+        { id: "b", label: "Reveal the answer and advance" },
+        { id: "c", label: "Skip feedback until the very end" },
+      ],
+    },
+    {
+      id: "q3",
+      sponsor: "Madrona Farmers Market",
+      prompt: "Which behaviors keep an outdoor-event game easy to finish?",
+      selectionMode: "multiple",
+      correctAnswerIds: ["a", "c"],
+      explanation:
+        "Large tap targets and visible progress are what keep the experience finish-able outdoors on a phone.",
+      options: [
+        { id: "a", label: "Large tap targets" },
+        { id: "b", label: "Tiny multi-column forms" },
+        { id: "c", label: "Visible progress" },
+      ],
+    },
+    {
+      id: "q4",
+      sponsor: "Cafe Flora",
+      prompt: "What's the smallest unit of meaningful sponsor surface here?",
+      selectionMode: "single",
+      correctAnswerIds: ["b"],
+      explanation:
+        "A short sponsor fact at the right moment is more meaningful than a banner that nobody reads.",
+      options: [
+        { id: "a", label: "A persistent banner ad" },
+        { id: "b", label: "A short sponsor fact at the right moment" },
+        { id: "c", label: "A pre-roll video on every question" },
+      ],
+    },
+  ],
+};
+
 /** All sample games bundled with the prototype. */
 export const games: GameConfig[] = [
   firstSampleGame,
   sponsorSpotlightGame,
   communityChecklistGame,
+  revealedAnswerGame,
 ];

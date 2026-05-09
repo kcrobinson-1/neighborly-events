@@ -681,6 +681,7 @@ The current shared game model and frontend support more than one game behavior:
 
 - `final_score_reveal`
 - `instant_feedback_required`
+- `instant_feedback_non_blocking`
 
 This capability is implemented in both the shared config model and the `useGameSession` reducer flow.
 

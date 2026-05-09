@@ -7,7 +7,8 @@ export type AnswerOption = {
 /** Controls when the player sees correctness feedback during a game. */
 export type FeedbackMode =
   | "final_score_reveal"
-  | "instant_feedback_required";
+  | "instant_feedback_required"
+  | "instant_feedback_non_blocking";
 
 /** Defines whether a question accepts one choice or many. */
 export type SelectionMode = "single" | "multiple";

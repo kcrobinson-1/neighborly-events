@@ -18,10 +18,11 @@ function expectFeedbackMode(
 
   if (
     value !== "final_score_reveal" &&
-    value !== "instant_feedback_required"
+    value !== "instant_feedback_required" &&
+    value !== "instant_feedback_non_blocking"
   ) {
     throw new Error(
-      `${label} must be "final_score_reveal" or "instant_feedback_required".`,
+      `${label} must be "final_score_reveal", "instant_feedback_required", or "instant_feedback_non_blocking".`,
     );
   }
 
