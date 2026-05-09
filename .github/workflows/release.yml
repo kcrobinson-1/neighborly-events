@@ -10,9 +10,6 @@ on:
       - main
   workflow_dispatch:
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 concurrency:
   group: production-release
   cancel-in-progress: false
@@ -56,7 +53,7 @@ jobs:
           ref: ${{ steps.release_target.outputs.sha }}
 
       - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
+        uses: supabase/setup-cli@v2
         with:
           version: 2.93.0
 
