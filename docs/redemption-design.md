@@ -1,4 +1,4 @@
-# Reward Redemption MVP Design
+# Redemption Design
 
 ## Purpose
 

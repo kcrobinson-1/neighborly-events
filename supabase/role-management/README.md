@@ -2,9 +2,8 @@
 
 This directory holds the operator-facing SQL snippets and process for
 assigning and revoking event-scoped redemption roles. It is the canonical
-entry point referenced by the reward redemption MVP design
-(`docs/plans/reward-redemption-mvp-design.md`, checklist item 9) and the
-Phase A.1 plan (`docs/plans/reward-redemption-phase-a-1-plan.md`).
+entry point referenced by the redemption design
+(`docs/redemption-design.md`, checklist item 9).
 
 ## Role model
 
