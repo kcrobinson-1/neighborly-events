@@ -361,11 +361,15 @@ rule to `docs/agents/**` either name a rule it deletes or merges
 into the new one, or explicitly state in the PR body why no rule
 could be retired.
 **Activates:** Bet 3 (directly), Bet 2 (over time).
-**Status:** candidate.
+**Status:** landed (2026-05-09).
 **Notes:** smallest possible diff (one sentence in one file) with
 the largest footprint — loads on every planning session. Without
 this, Bet 3 is a roadmap-only convention that no agent sees at the
-moment of rule-addition.
+moment of rule-addition. Outcome: landed as a new "Rule additions
+in `docs/agents/`" section in `AGENTS.md` (~7 lines). Trigger
+scope is `docs/agents/**`, not `AGENTS.md` itself, matching the
+original Bet 3 framing; expanding the trigger to cover `AGENTS.md`
+would be a separate move.
 
 ### A2: Lightweight phase-planning path
 
@@ -582,6 +586,28 @@ against the actual source rather than re-derive):
 Append-only. Each entry: date + 1–3 bullets on what moved, what
 didn't, and any change to the diagnosis or bets. Do not edit
 prior entries.
+
+### 2026-05-09 — A1 landed: rule-retirement convention in `AGENTS.md`
+
+- **Added "Rule additions in `docs/agents/`" section to
+  `AGENTS.md`.** Rule-adding PRs to `docs/agents/**` must either
+  (a) name a retired rule or (b) state in the PR body why no rule
+  could be retired. ~7 lines added to `AGENTS.md`; no other
+  durable rule files touched.
+- **Effect on bets.** Bet 3 (rule-retirement convention) is no
+  longer roadmap-only — the convention now loads on every session
+  that reads `AGENTS.md` (i.e., every non-trivial session). Bet 2
+  (rule-deletion ratio) is unchanged as a measurement; whether the
+  convention actually moves the inflow rate is the bet itself. A1
+  is the inflow-side complement to the 2026-05-08 outflow-side
+  fix; together they're the durable shape, not the
+  consolidation-only treadmill.
+- **Trigger scope.** The rule's trigger is `docs/agents/**`, not
+  `AGENTS.md` itself, matching the original A1 / Bet 3 framing.
+  This PR adds a rule to `AGENTS.md`, so the new rule does not
+  fire on its own introduction. Expanding the trigger to cover
+  `AGENTS.md` would be a separate move; deferred until / unless
+  `AGENTS.md` itself starts compounding.
 
 ### 2026-05-08 — structural fix to break the code-shape review cascade
 
