@@ -4,8 +4,8 @@
  * token audit; see [`docs/styling.md`](../../docs/styling.md) for the
  * themable / structural classification table and the derivation
  * policy that keeps brand-tied derived shades (surfaces, borders,
- * glows, shadows) out of this type — those are computed in `:root`
- * via `color-mix()` from the brand bases below.
+ * glows, shadows) out of this type — those are computed by
+ * `themeToStyle.ts` via `color-mix()` from the brand bases below.
  *
  * Status colors, neutral drop-shadow, modal scrim, spacing scale,
  * motion, font weights, control sizes, focus-ring metrics, pill
@@ -19,7 +19,7 @@ export type Theme = {
   // `--border`, `--border-soft`, `--border-muted`, `--primary`,
   // `--secondary`, `--accent`, `--white-warm`, `--white-panel`,
   // `--white-tint`. Brand-tied derived shades (`--primary-surface`,
-  // etc.) are computed in `:root` from these bases.
+  // etc.) are computed by `themeToStyle.ts` from these bases.
   bg: string;
   surface: string;
   surfaceStrong: string;
