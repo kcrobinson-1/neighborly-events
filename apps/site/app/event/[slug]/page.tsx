@@ -50,7 +50,10 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  // Case-fold so a hand-typed URL with capital letters resolves against
+  // the lowercase canonical slug; mirrors apps/web's matcher behavior.
+  const slug = rawSlug.toLowerCase();
   const content = getEventContentBySlug(slug);
 
   if (!content) {
@@ -102,7 +105,8 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.toLowerCase();
   const content = getEventContentBySlug(slug);
 
   if (!content) {
