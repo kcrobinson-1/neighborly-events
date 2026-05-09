@@ -75,17 +75,26 @@ After this plan lands its full sequence:
   treats them as siblings of the canonical alias rather than as a
   separate canonical surface.
 - The game (`apps/web` deployment) is reached **only** through the
-  canonical site origin. Its plugin-owned route prefixes
-  (`/event/:slug/game*`, `/event/:slug/admin*`) are routed from the
-  canonical origin into the plugin's deployment via a mechanism named
-  in Phase 2 (default proposal: proxy rewrite, matching the existing
-  shape; final choice is one of the deferred decisions).
-- Direct customer access to the plugin's deployment origin (anyone
-  hitting `https://neighborly-scavenger-game-web.vercel.app/...` or a
-  branch-alias variant) lands on a deterministic non-canonical-origin
-  state — either a redirect to the canonical origin's equivalent path,
-  or a tombstone — chosen in Phase 3 from the options laid out in
-  "Open questions."
+  canonical site origin in normal use. Its plugin-owned route
+  prefixes (`/event/:slug/game*`, `/event/:slug/admin*`) are routed
+  from the canonical origin into the plugin's deployment via **proxy
+  rewrite** — the same shape today's `apps/site/next.config.ts`
+  already uses for the cheap-unblock case
+  ([`apps/site/next.config.ts:64-86`](/apps/site/next.config.ts)).
+  Iframe embedding and runtime federation were considered and
+  rejected by the user during this scoping pass; proxy rewrite is
+  the settled mechanism for the game and the default for future
+  plugins (each plugin's onboarding may revisit if its constraints
+  warrant).
+- The plugin's deployment origin (`apps/web`'s `*.vercel.app`)
+  remains technically reachable but is not advertised as a
+  customer-facing URL. No active lockdown (no redirect, no
+  tombstone): there is no live traffic today, no launched site, and
+  no external stale links to protect against. If that calculus
+  changes in the future (organic search picks up the URL, an
+  external link surfaces, or the plugin URL otherwise accumulates
+  customer-bound traffic), a redirect or tombstone can be added
+  then; this plan does not pre-emptively build it.
 - The bidirectional cross-app rewrite topology is gone:
   `apps/web/vercel.json` carries no proxy to `apps/site`, and
   `apps/site/next.config.ts` carries proxy rewrites only in the
@@ -127,22 +136,19 @@ shape.
 | `/admin*` | Canonical site origin (`apps/site`) | Native Next.js route |
 | `/auth/callback` | Canonical site origin (`apps/site`) | Native Next.js route (client component, owns route physically). **Verified by:** [`apps/site/app/(authenticated)/auth/callback/page.tsx`](/apps/site/app/%28authenticated%29/auth/callback/page.tsx) and [`docs/architecture.md:241-244`](/docs/architecture.md). |
 | `/event/:slug` (landing) | Canonical site origin (`apps/site`) | Native Next.js route, SSR per-slug |
-| `/event/:slug/game*` | Plugin (`apps/web`), routed through canonical site origin | Embedding mechanism (Phase 2 deferred decision; default proposal: proxy rewrite from `apps/site` to `apps/web`, matching the shape already present at [`apps/site/next.config.ts:65-72`](/apps/site/next.config.ts)) |
+| `/event/:slug/game*` | Plugin (`apps/web`), routed through canonical site origin | Proxy rewrite from `apps/site` to `apps/web`, matching the shape already present at [`apps/site/next.config.ts:65-72`](/apps/site/next.config.ts) |
 | `/event/:slug/admin*` | Plugin (`apps/web`), routed through canonical site origin | Same mechanism as `/event/:slug/game*` |
 | `/event/:slug/game/redeem` | Plugin (`apps/web`), routed through canonical site origin | Subsumed by `/event/:slug/game*` |
 | `/event/:slug/game/redemptions` | Plugin (`apps/web`), routed through canonical site origin | Subsumed by `/event/:slug/game*` |
 | `/_next/*` | Canonical site origin (`apps/site`) | Native Next.js asset path |
 | `/assets/*` (Vite hashed bundles) | Plugin (`apps/web`), routed through canonical site origin | Same mechanism as `/event/:slug/game*` |
-| Plugin-deployment-origin direct access (`*.vercel.app/...`) | Tombstone or redirect (Phase 3 deferred decision) | See "Open questions" |
+| Plugin-deployment-origin direct access (`*.vercel.app/...`) | Reachable, no lockdown | Resolved during this scoping pass — see "Investigations resolved in-PR" |
 
 Status code expectations: cross-origin embedding via proxy rewrite
 preserves the customer-visible URL (status code is whatever the
-plugin's render returns — typically 200). Direct-access lockdown in
-Phase 3 emits 308 (preferred over 301 to preserve method on the
-unlikely chance of a non-GET hitting the deployment origin) **iff**
-that phase chooses the redirect option. The exact code is one of the
-Phase 3 open questions; preference for 308 is recorded here for the
-implementer to follow unless overridden.
+plugin's render returns — typically 200). No status-code change
+applies to direct plugin-origin access — that surface is unchanged
+by this plan.
 
 ## Path to end state
 
@@ -218,50 +224,23 @@ projects, env-var flip, Supabase dashboard update, CORS allowlist
 update, hardcoded-URL sweep (the inventory below names the touch
 points). Concrete file inventory deferred to per-phase plan-drafting.
 
-### Phase 3 — Lock down direct plugin-origin access
+### No Phase 3 (plugin-origin lockdown not needed)
 
-**What this phase does.** Decide and implement what happens when a
-customer reaches the plugin's deployment origin directly (stale
-bookmark, in-the-wild link, search-engine straggler). Three options
-to evaluate at phase-scoping time, deliberately framed as concrete
-mechanisms rather than aspirations:
+Earlier drafts of this plan carried a Phase 3 to choose and
+implement a lockdown for direct access to the plugin's `*.vercel.app`
+origin (308 redirect / 410 tombstone / passthrough). That phase is
+removed: the user confirmed during this scoping pass that the site
+is unlaunched, no live traffic exists, and no external links to the
+plugin origin are in the wild. There is nothing to protect against
+today.
 
-- **Redirect** (308) every customer-bound path on the plugin's origin
-  to the canonical origin's equivalent path. Mechanism: `redirects`
-  in `apps/web/vercel.json` (matches Vercel's documented redirect
-  feature; status code configurable — 308 preserves method, 301 is
-  the SEO-equivalent permanent code; default proposal is 308 unless
-  Phase 3 scoping surfaces a reason to prefer 301). **Verified by:**
-  [Vercel redirect docs](https://nextjs.org/docs/app/api-reference/config/next-config-js/redirects)
-  apply at the Next.js layer; the `vercel.json` redirect schema is
-  the analog for Vite SPAs.
-- **Tombstone** (410 Gone) every customer-bound path on the plugin's
-  origin to a static "this URL has moved" page. Mechanism: a small
-  static fallback in `apps/web` plus a vercel.json rule that catches
-  every non-internal route. Stronger SEO-deindex signal than 308.
-- **Passthrough** — leave the plugin origin reachable; rely on the
-  canonical-origin `<link rel="canonical">` and structured-data hints
-  to consolidate SEO. Lowest-effort but leaves stale bookmarks
-  silently divergent from canonical-origin behavior (e.g., the auth
-  callback won't work, since `requestMagicLink` composes against
-  `window.location.origin`).
-  **Verified by:** [`shared/auth/api.ts:45-47`](/shared/auth/api.ts).
-
-**Pre-state.** Phase 2 complete: canonical origin is `apps/site`,
-plugin-origin direct access is reachable but produces undefined-
-correctness behavior (auth callback proxy gone, role-door links
-might be okay through the existing reverse rewrites if those stay).
-
-**Post-state.** Plugin-origin direct access has a deterministic,
-named behavior. `apps/web/vercel.json` no longer contains any
-proxy-to-`apps/site` rule; the cheap-unblock entries are removed
-because their purpose is satisfied by the canonical-origin routing
-in Phase 2.
-
-**Dependencies.** Coordinates with the SEO discoverability story for
-the plugin URL — the open question of how-aggressive-to-block
-factors in. Phase 3 scoping resolves this against actual analytics
-data on plugin-origin traffic at the time the phase opens.
+The plugin's deployment origin remains reachable post-Phase-2 with
+the auth-callback caveat noted in "End state" — this is an accepted
+state, not an unaddressed one. If the calculus ever changes (organic
+search picks the URL up, an external link surfaces, or the plugin
+URL otherwise accumulates customer-bound traffic), a future plan
+can add a redirect or tombstone then; this plan does not pre-emptively
+build the mechanism.
 
 ### No Phase 4 (custom-domain rollout removed from this plan)
 
@@ -310,11 +289,14 @@ during this scoping pass; they do **not** carry into "Open questions."
   origin or a build-time env var. So magic-link return URLs follow
   whichever origin the user signed in on. **Verified by:**
   [`shared/auth/api.ts:44-49`](/shared/auth/api.ts). Implication:
-  signing in from the plugin origin (post-Phase-2 stale bookmark)
-  composes a redirect to `<plugin-origin>/auth/callback` — which the
-  Supabase Auth dashboard probably won't have allowlisted, so the
-  email flow would fail. This is one of the considerations Phase 3
-  weighs when choosing redirect vs tombstone vs passthrough.
+  signing in from the plugin origin (post-Phase-2 direct access)
+  would compose a redirect to `<plugin-origin>/auth/callback` —
+  which the Supabase Auth dashboard probably won't have
+  allowlisted, so the email flow would fail. This is the
+  theoretical failure mode named in the Risk Register; with no
+  active lockdown shipped today, the failure is accepted as
+  "would only manifest if a customer somehow navigated to the
+  plugin's `*.vercel.app` URL and attempted sign-in there."
 - **Supabase config assertions.** `supabase/config.toml` carries no
   origin-bound URL configuration; only `verify_jwt` toggles per
   Edge Function. Auth callback URLs / Site URL settings live in the
@@ -331,9 +313,11 @@ during this scoping pass; they do **not** carry into "Open questions."
   [Vercel — Methods to Protect Deployments](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments),
   [Vercel — Trusted IPs](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments/trusted-ips),
   [Vercel community thread on alias removal](https://community.vercel.com/t/remove-vercel-deployment-aliases/2674).
-  Practical implication: Phase 3's lockdown options operate at the
+  Practical implication: any future lockdown of the plugin origin
+  (not in scope for this plan) would have to operate at the
   **application layer** (vercel.json `redirects`, `headers`, or app-
-  level middleware), not at the platform layer.
+  level middleware), not at the platform layer. Cited so a future
+  planner doesn't mis-assume a Vercel feature exists for this.
 - **No platform-owned custom domain today or in flight; launch
   model is per-event organizer subdomain CNAME.** Resolved by user
   during this scoping pass: there is no platform-owned domain in
@@ -345,6 +329,23 @@ during this scoping pass; they do **not** carry into "Open questions."
   custom domain" is stale framing this plan corrects. Implication:
   Phase 2 carries no Vercel-level domain-reassignment dependency;
   the canonical-origin flip is purely structural.
+- **Embedding mechanism for the game is proxy rewrite.** Resolved
+  by user during this scoping pass: iframe rejected (the user
+  stated it is not the right choice), runtime federation not
+  pursued, and the current proxy-rewrite shape works as expected.
+  The settled mechanism for the game is the same proxy-rewrite
+  pattern already present at
+  [`apps/site/next.config.ts:64-86`](/apps/site/next.config.ts).
+  Future plugins inherit this default; each plugin's onboarding
+  may revisit if its constraints warrant.
+- **No active lockdown needed for plugin-origin direct access.**
+  Resolved by user during this scoping pass: the site is
+  unlaunched, no live traffic exists today, and no external stale
+  links are in the wild. The plugin's `*.vercel.app` origin remains
+  reachable post-Phase-2 with no redirect / tombstone / advertised
+  status; if the calculus changes later (search-engine pickup,
+  external links accumulate), a follow-up plan can add a mechanism
+  then. This plan ships nothing for that case pre-emptively.
 - **`NEXT_PUBLIC_SITE_ORIGIN` semantics.** Today's `apps/site`
   documentation and runtime resolution treat this var as
   "apps/web's canonical custom-domain origin" — which makes
@@ -363,34 +364,7 @@ during this scoping pass; they do **not** carry into "Open questions."
 These need user / team input before per-phase scoping can lock its
 contracts.
 
-1. **Embedding mechanism for the game (and pattern for future
-   plugins).** Three concrete options: (a) proxy rewrite from
-   canonical origin to plugin origin (matches today's shape; the
-   default proposal); (b) iframe embed inside an `apps/site` shell
-   page; (c) runtime federation (module federation, micro-frontends,
-   or similar). The choice has downstream implications for SEO,
-   asset-path resolution, auth-cookie scope, and how a future plugin
-   onboards. The user's framing says this is aspirational context
-   and not to design a generic platform here, so the call for the
-   game-specific case can be "pick proxy rewrite for parity with
-   today" without locking the generic answer; explicit confirmation
-   from the user keeps the call from being inferred.
-2. **Behavior on direct plugin-origin access.** Phase 3's choice
-   between (a) 308 redirect, (b) 410 tombstone, (c) passthrough — see
-   the phase description above. SEO posture and analytics on plugin-
-   origin traffic at the time the phase opens both factor in.
-3. **Whether the plugin's `*.vercel.app` is deployed as customer-
-   facing at all post-canonical-origin.** Operationally, the plugin
-   needs a deployment URL for the canonical-origin proxy / iframe /
-   federation mechanism to point at. That deployment URL is by
-   nature reachable. The question is whether we explicitly advertise
-   or operate around it as a customer-facing URL. Implicitly, Phase 3
-   already chooses for the canonical case; this question is whether
-   the team wants to go further (e.g., move the plugin off Vercel
-   to a host that isn't a customer-facing CDN, or use Vercel's
-   Trusted IPs feature on Enterprise). Likely deferred to a later
-   plan; tracked here so it doesn't lurk.
-4. **Supabase Auth dashboard redirect-URL update mechanics.** The
+1. **Supabase Auth dashboard redirect-URL update mechanics.** The
    dashboard's allowlist is operator-managed and lives outside the
    repo. Confirm: who has access to update it, and is there a
    change-window concern (i.e., can old + new origins be in the
@@ -398,14 +372,14 @@ contracts.
    any in-flight magic links broken)? Likely a non-issue (the
    allowlist is additive), but Phase 2 scoping confirms before
    committing to a change-window.
-5. **Where the `metadataBase` rule lives.** Phase 2 flips
+2. **Where the `metadataBase` rule lives.** Phase 2 flips
    `NEXT_PUBLIC_SITE_ORIGIN`'s production value but keeps the
    resolver's shape. Confirm whether the resolver's documentation
    ([`apps/site/app/layout.tsx:29-58`](/apps/site/app/layout.tsx))
    needs a structural rewrite to reflect the canonical-origin
    semantics, or just a value-flip + comment update. Estimate-shaped
    call; per-phase plan-drafting picks.
-6. **Architecture-doc update.** [`docs/architecture.md`](/docs/architecture.md)
+3. **Architecture-doc update.** [`docs/architecture.md`](/docs/architecture.md)
    carries multiple stale claims this plan corrects (apps/web as
    primary, custom-domain ownership, the routing-topology table at
    lines 951-1002 reflecting today's bidirectional-rewrite shape).
@@ -444,13 +418,14 @@ contracts.
 ## Risk register
 
 - **Vercel offers no platform-level "block direct origin access"
-  primitive on this plan tier.** The Phase 3 lockdown is application-
-  layer (vercel.json `redirects` / `headers`, or app middleware), not
-  platform-layer. Mitigation: Phase 3 scoping picks an application-
-  layer option that suffices for the actual SEO and abuse posture;
-  the Trusted-IPs option is named in "Open questions" as a future
-  consideration if the application-layer lockdown turns out to leak.
-  **Verified by:**
+  primitive on this plan tier.** Mitigation: this plan does not
+  attempt origin-level blocking; the user confirmed no lockdown is
+  needed today (no live traffic, no stale links). If a future plan
+  does need to lock the plugin origin down, it operates at the
+  application layer (vercel.json `redirects` / `headers`, or app
+  middleware), not the platform layer. The platform-tier ceiling is
+  cited so a future planner doesn't mis-assume a Vercel feature
+  exists for this. **Verified by:**
   [Vercel — Methods to Protect Deployments](https://vercel.com/docs/deployment-protection/methods-to-protect-deployments).
 - **Supabase Auth redirect-URL allowlist is operator-managed and
   lives outside the repo.** A misconfigured cutover (new origin not
@@ -461,25 +436,22 @@ contracts.
   window. The change is additive (Supabase Auth supports multiple
   redirect URLs), so no in-flight link is invalidated by adding the
   new origin; old-origin removal happens after Phase 2 stabilizes.
-- **Stale bookmarks / external links pointing at the plugin's origin
-  survive in the wild long-tail.** Even with Phase 3's lockdown,
-  external surfaces (search results, embedded link unfurls, partner-
-  shared QR codes) may retain plugin-origin URLs. Mitigation: Phase 3
-  picks a redirect (308) over a tombstone (410) if the long-tail
-  matters more than the SEO-deindex signal; the redirect preserves
-  the path so most stale links resolve to a working canonical-origin
-  equivalent. The opposite tradeoff (tombstone wins on SEO) is also
-  defensible; Phase 3 decides.
+- **External links to the plugin's origin could accumulate post-launch
+  even though none exist today.** No active mitigation: the user
+  confirmed the site is unlaunched, no live traffic exists, and no
+  stale links are in the wild. The accepted state is "monitor; if
+  external traffic to the plugin URL ever shows up, address then."
+  This is an explicit deferral, not an oversight.
 - **`window.location.origin`-derived auth flow assumes the user is
   on the canonical origin at sign-in time.** Post-Phase-2, a
-  signed-out user reaching the plugin origin directly composes a
-  magic-link redirect to `<plugin-origin>/auth/callback` — which
-  fails (allowlist), then succeeds only via the canonical-origin
-  proxy / redirect chain. Mitigation: Phase 3's lockdown converts
-  plugin-origin entry into a canonical-origin redirect before the
-  sign-in form is even reachable. The redirect option (308) handles
-  this cleanly; passthrough does not, which weighs against
-  passthrough. **Verified by:** [`shared/auth/api.ts:44-49`](/shared/auth/api.ts).
+  signed-out user who somehow reaches the plugin origin directly
+  composes a magic-link redirect to `<plugin-origin>/auth/callback`
+  — which fails (allowlist). Mitigation: this is theoretical given
+  no live traffic today; the failure mode would manifest only if
+  someone actively navigates to the plugin's `*.vercel.app` URL and
+  attempts sign-in there. Accepted state for the current launch
+  posture; a future redirect / tombstone (if added) resolves it.
+  **Verified by:** [`shared/auth/api.ts:44-49`](/shared/auth/api.ts).
 - **`NEXT_PUBLIC_SITE_ORIGIN` value flip during Phase 2 is a
   metadata-correctness risk.** A misconfigured production env after
   the flip ships OG image / unfurl URLs pointing at the wrong
