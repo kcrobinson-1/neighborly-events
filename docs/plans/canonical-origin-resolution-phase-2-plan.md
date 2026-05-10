@@ -515,6 +515,34 @@ CORS pattern-matching). The gate is:
     is rejected with a CORS error, the matching mechanism in
     cors.ts did not catch the preview alias.
 
+The CORS helper change additionally carries a **branch-test
+contract** the implementing PR must satisfy before merge:
+
+- The helper admits the canonical site origin (exact-match path).
+- The helper admits a representative apps/site preview-alias
+  hostname (Vercel's documented `<project>-<unique>-<scope>.vercel.app`
+  and `<project>-git-<branch>-<scope>.vercel.app` shapes against the
+  apps/site project name).
+- **Negative test (load-bearing isolation):** the helper rejects an
+  alias from a hypothetical sibling Vercel project whose name shares
+  apps/site's prefix (e.g., a deployment hostname that begins with
+  the apps/site project name plus an additional suffix segment, then
+  ends in `.vercel.app`). This test exists specifically to prove the
+  matching strategy isolates the apps/site project rather than any
+  project sharing its name prefix; it is the contract requirement
+  that constrains the precise predicate spelling chosen at
+  implementation time. Falsifier: if a sibling-prefix project's
+  alias is admitted, the predicate is too loose and must be
+  tightened (e.g., by anchoring on a delimiter after the project
+  name, or by enumerating the exact allowed suffix shapes).
+
+These three tests are the implementing PR's branch-level proof that
+the helper change satisfies the cross-cutting plan's CORS contract.
+The matching strategy chosen at scoping time
+([`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md)
+Decision 1) is the planning-layer answer; these tests are the
+correctness gate.
+
 The post-deploy validation is operator-performed at cutover, not
 CI-gated. It is named here as the load-bearing falsifier that
 distinguishes "topology flipped successfully" from "topology

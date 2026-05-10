@@ -69,63 +69,61 @@ posture).
 
 ## Decisions made at scoping time
 
-### Decision 1: CORS matching mechanism is suffix-and-prefix on the apps/site project token
+### Decision 1: CORS matching strategy is project-scoped pattern matching
 
 The cross-cutting plan binds the contract — admit canonical site
 origin and Vercel-generated preview / branch aliases of the apps/site
 project — and explicitly defers the matching mechanism to per-phase
 plan-drafting per
 [`docs/plans/canonical-origin-resolution.md:130-134`](/docs/plans/canonical-origin-resolution.md).
-The candidate shapes are:
+The candidate strategies are:
 
 1. **Exact-string match against an enumerated set, expanded.**
-   Today's helper at
-   [`supabase/functions/_shared/cors.ts:11-24`](/supabase/functions/_shared/cors.ts)
-   uses `Set.has(...)` against an enumerated allowlist. Extending
-   this to cover preview aliases requires regenerating the allowlist
-   on every preview deploy or naming all possible aliases ahead of
-   time — neither is workable, since Vercel mints a new alias
-   per branch and per deploy, with names of the form
-   `neighborly-events-site-<branch-slug>-<scope>.vercel.app` and
-   `neighborly-events-site-git-<branch>-<scope>.vercel.app`.
-2. **Regex match against a `*.vercel.app` pattern.** Permissive in
-   the wrong direction — admits any `*.vercel.app` deployment, not
-   just apps/site's preview aliases. A malicious or unrelated
-   Vercel project on a different account could call the Edge
-   Functions with credentials.
-3. **Suffix-and-prefix match anchored to the apps/site project's
-   stable token.** Admits origins whose hostname starts with
-   `neighborly-events-site` (the Vercel project's stable name
-   token) AND ends with `.vercel.app`. Vercel preview aliases
-   include the project name as their hostname prefix and the
-   `vercel.app` suffix is structurally fixed by the platform, so
-   this admits exactly the apps/site project's preview/branch
-   aliases without admitting unrelated Vercel deployments.
+   Today's helper uses an exact-string membership check against an
+   enumerated allowlist. Extending this to cover preview aliases
+   would require regenerating the allowlist on every preview deploy
+   or naming all possible aliases ahead of time — neither is
+   workable, since Vercel mints a new alias per branch and per
+   deploy.
+2. **Permissive `*.vercel.app` pattern.** Admits any deployment on
+   the platform, not just apps/site's preview aliases. A malicious
+   or unrelated Vercel project on a different account could call
+   the Edge Functions with credentials.
+3. **Project-scoped pattern matching.** Admits origins that match
+   the apps/site Vercel project's preview-alias shape — i.e., the
+   project's stable name token in the hostname plus the `.vercel.app`
+   suffix. Vercel's preview-alias naming includes the project name
+   as the hostname prefix and the platform suffix is structurally
+   fixed, so this admits exactly the apps/site project's
+   preview/branch aliases without admitting unrelated Vercel
+   deployments.
 4. **Known-pattern enumeration (regex per known alias shape).**
-   Equivalent in admission set to (3), but more verbose and harder
-   to audit than a simple suffix-and-prefix check.
+   Equivalent admission set to (3), but more verbose and harder to
+   audit.
 
-**Chose: option 3.** Suffix-and-prefix match anchored to the
-`neighborly-events-site` token, alongside continuing exact-string
-match for the enumerated localhost set + the canonical production
-alias. Reasoning: (a) the admission set is exactly what the
-contract names — apps/site's preview/branch aliases plus the
-canonical alias, no more — without overmatching to unrelated
-projects; (b) the implementation stays simple (a single
-`startsWith` + `endsWith` check alongside the existing `Set.has`),
-which keeps the helper's audit surface small; (c) survives branch-
-name churn and Vercel's preview-naming variants without per-deploy
-maintenance; (d) the project-name token is stable across the
-project's lifetime — renaming the Vercel project would break the
-match, which is a deliberate property (a project rename is a
-config event that should require a CORS revisit anyway).
+**Chose: option 3.** Project-scoped pattern matching anchored to
+the apps/site Vercel project's stable name token, alongside
+continuing exact-string match for the enumerated localhost set +
+the canonical production alias. Reasoning: (a) the admission set
+is exactly what the contract names — apps/site's preview/branch
+aliases plus the canonical alias, no more — without overmatching
+to unrelated projects; (b) the implementation stays small alongside
+the existing exact-match check; (c) survives branch-name churn and
+Vercel's preview-naming variants without per-deploy maintenance;
+(d) the project-name token is stable across the project's lifetime
+— renaming the Vercel project would break the match, which is a
+deliberate property (a project rename is a config event that
+should require a CORS revisit anyway).
 
-The mechanism is recorded here for the implementing PR; per the
-"Plan code minimalism" rule the plan doc names the contract ("the
-matching mechanism chosen at scoping time") without restating the
-mechanism, and the implementation lands the helper change in the
-implementing PR. The `ALLOWED_ORIGINS` env var continues to take
-precedence when set, matching today's helper shape.
+The strategy is recorded at this layer; the precise predicate
+spelling is the implementing PR's responsibility — per the "Plan
+code minimalism" rule's inline-code clause, predicate spellings
+belong with the implementation. The implementing PR delivers the
+helper change with branch-test coverage that proves the
+admission-set matches the contract, including the negative-test
+contract requirement named in the Phase 2 plan's Validation Gate
+(an alias from a hypothetical sibling Vercel project whose name
+shares apps/site's prefix is rejected).
 
 **Verified by:**
 [`supabase/functions/_shared/cors.ts:1-24`](/supabase/functions/_shared/cors.ts)

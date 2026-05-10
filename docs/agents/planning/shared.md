@@ -50,8 +50,13 @@ detail. **No fenced code blocks of any kind in plan or scoping
 docs.** Inline backticks for identifiers, file paths with optional
 `:line` suffixes, and one-line type or function names embedded in
 prose are fine — those are citations, not code under contract.
-Anything more belongs in the PR that implements the plan (commit
-message, code, comment), not in the plan doc itself.
+**Inline backticks for executable expressions or predicate spellings
+are still code, even at one line** — a literal predicate such as
+`startsWith(...) && endsWith(...)`, a regex literal, or a function-
+body fragment attracts the same code-shaped review fenced blocks do
+and belongs in the implementing PR alongside them. Anything more
+belongs in the PR that implements the plan (commit message, code,
+comment), not in the plan doc itself.
 
 The protective intent is structural, not formatting preference.
 Code-shaped content in plan docs attracts code-shaped review:
