@@ -545,32 +545,53 @@ CORS pattern-matching). The gate is:
     cors.ts did not catch the preview alias.
 
 The CORS helper change additionally carries a **branch-test
-contract** the implementing PR must satisfy before merge:
+contract** the implementing PR must satisfy before merge.
+
+Positive admission tests:
 
 - The helper admits the canonical site origin (exact-match path).
-- The helper admits a representative apps/site preview-alias
-  hostname (Vercel's documented `<project>-<unique>-<scope>.vercel.app`
-  and `<project>-git-<branch>-<scope>.vercel.app` shapes against the
-  apps/site project name).
-- **Negative test (load-bearing isolation):** the helper rejects an
-  alias from a hypothetical sibling Vercel project whose name shares
-  apps/site's prefix (e.g., a deployment hostname that begins with
-  the apps/site project name plus an additional suffix segment, then
-  ends in `.vercel.app`). This test exists specifically to prove the
-  matching strategy isolates the apps/site project rather than any
-  project sharing its name prefix; it is the contract requirement
-  that constrains the precise predicate spelling chosen at
-  implementation time. Falsifier: if a sibling-prefix project's
-  alias is admitted, the predicate is too loose and must be
-  tightened (e.g., by anchoring on a delimiter after the project
-  name, or by enumerating the exact allowed suffix shapes).
+- With the operator-pinned scope env var set, the helper admits a
+  representative apps/site preview-alias hostname (Vercel's
+  documented `<project>-<unique>-<scope>.vercel.app` and
+  `<project>-git-<branch>-<scope>.vercel.app` shapes against the
+  apps/site project name and the configured scope).
+- With both the operator-pinned exact allowlist AND the scope env
+  var set, both admit paths work independently (exact-match for the
+  pinned origins; preview-alias matching for apps/site's previews).
 
-These three tests are the implementing PR's branch-level proof that
-the helper change satisfies the cross-cutting plan's CORS contract.
-The matching strategy chosen at scoping time
-(the now-deleted Phase 2 scoping doc (decisions absorbed into this plan; git history preserves the original scoping prose)
-Decision 1) is the planning-layer answer; these tests are the
-correctness gate.
+Negative isolation tests (load-bearing):
+
+- **Sibling-prefix rejection:** the helper rejects an alias from a
+  hypothetical sibling Vercel project whose name shares apps/site's
+  prefix plus an additional segment (e.g., a hostname that begins
+  with the apps/site project name plus an extra slug segment).
+  Falsifier: if admitted, the predicate is too loose and must be
+  tightened by anchoring on a delimiter after the project name.
+- **Cross-team scope rejection:** the helper rejects an alias whose
+  scope segment names a Vercel team other than the configured one.
+  This is the load-bearing test that proves the configured scope is
+  pinned in the predicate (rather than admitting any `*.vercel.app`
+  scope value). Falsifier: if a different scope is admitted, the
+  matching mechanism doesn't isolate apps/site from other Vercel
+  teams that may create same-named projects.
+- **Scope-required (preview matcher is opt-in):** with the scope env
+  var unset, NO preview aliases are admitted, even on the apps/site
+  project name. Falsifier: if admitted, the preview matcher has a
+  silent-default behavior that an operator can't disable.
+- **Operator-lockdown honored (`ALLOWED_ORIGINS` does not silently
+  re-open access):** with the exact allowlist env var set AND the
+  scope env var unset, NO preview aliases are admitted. Falsifier:
+  if admitted, an operator who explicitly pins origins for
+  production lockdown is silently bypassed by the preview matcher.
+- **HTTPS-only enforcement:** an `http://` variant of an apps/site
+  preview-alias hostname is rejected.
+
+These tests are the implementing PR's branch-level proof that the
+helper change satisfies the cross-cutting plan's CORS contract. The
+matching strategy chosen at scoping time (the now-deleted Phase 2
+scoping doc; decisions absorbed into this plan; git history preserves
+the original scoping prose) is the planning-layer answer; these
+tests are the correctness gate.
 
 The post-deploy validation is operator-performed at cutover, not
 CI-gated. It is named here as the load-bearing falsifier that

@@ -1,7 +1,7 @@
 /**
- * Stable hostname token of the apps/site Vercel project. Drives the
- * preview-alias matcher below — Vercel's generated preview and branch
- * URLs all start with `<project-slug>-` and end with `.vercel.app`.
+ * Stable hostname token of the apps/site Vercel project. The
+ * `<project>-` prefix is the first half of the apps/site preview-
+ * alias matcher below.
  *
  * If the apps/site Vercel project is ever renamed, update this token
  * (and the canonical-origin entry in `defaultAllowedOrigins`) — a
@@ -9,41 +9,6 @@
  * the canonical-origin Phase 2 scoping decision.
  */
 const APPS_SITE_PROJECT_SLUG = "neighborly-events-site";
-
-/**
- * Matches Vercel-generated preview/branch aliases scoped to the
- * apps/site project. Two documented Vercel alias shapes are admitted:
- *
- * - `<project>-<unique-id>-<scope>.vercel.app` (per-deployment alias).
- *   The unique-id is a 9-character lowercase alphanumeric hash.
- * - `<project>-git-<branch>-<scope>.vercel.app` (per-branch alias).
- *
- * The unique-id-hash anchor and the literal `git-` anchor are what
- * isolate apps/site's preview aliases from most hypothetical sibling
- * Vercel projects whose names extend apps/site's slug as a prefix
- * (e.g., `neighborly-events-site-extra-...`): such a sibling's alias
- * would have `extra` (or another non-hash, non-`git` segment) at the
- * position the matcher requires either `git` or a hash. The negative-
- * test case in `tests/supabase/functions/cors.test.ts` is the
- * load-bearing falsifier for that common case.
- *
- * Known limitation (architectural, not bug): a hypothetical sibling
- * Vercel project whose name happens to be apps/site's slug plus an
- * exactly-9-character lowercase alphanumeric extension (e.g.,
- * `neighborly-events-site-clone1234`) would produce preview aliases
- * indistinguishable from a real apps/site deployment alias by the
- * URL alone. Real-world risk is low (project-naming collision of
- * exactly that shape is improbable), and the only fully-precise
- * alternative — maintaining a per-deployment URL allowlist —
- * defeats the pattern's purpose. If the calculus ever changes,
- * tightening lives in the implementing PR for whichever plan
- * surfaces the need.
- *
- * Vendor reference: https://vercel.com/docs/deployments/generated-urls
- */
-const APPS_SITE_PREVIEW_ALIAS_PATTERN = new RegExp(
-  `^https://${APPS_SITE_PROJECT_SLUG}-(git-[a-z0-9-]+|[a-z0-9]{9})-[a-z0-9-]+\\.vercel\\.app$`,
-);
 
 /** Built-in origins allowed to call edge functions when env config is absent. */
 const defaultAllowedOrigins = new Set([
@@ -70,17 +35,74 @@ function getAllowedOrigins() {
   );
 }
 
-/**
- * Returns true when the origin matches an apps/site Vercel preview /
- * branch alias. Applied alongside the exact-string allowlist so an
- * operator who pins origins via `ALLOWED_ORIGINS` still gets per-PR
- * preview-alias admission for the apps/site project automatically.
- */
-function matchesAppsSitePreviewAlias(origin: string) {
-  return APPS_SITE_PREVIEW_ALIAS_PATTERN.test(origin);
+/** Escape a string for safe use as a literal inside a RegExp source. */
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/** Returns the request origin only when it is explicitly allowed. */
+/**
+ * Builds the apps/site preview-alias matcher when the operator has
+ * opted in via `APPS_SITE_VERCEL_SCOPE`. Returns `null` when the env
+ * var is unset — in that case no preview/branch aliases are admitted
+ * (only the explicit allowlist applies).
+ *
+ * Two documented Vercel alias shapes match:
+ *
+ * - `<project>-<unique-id>-<scope>.vercel.app` (per-deployment alias).
+ *   The unique-id is a 9-character lowercase alphanumeric hash.
+ * - `<project>-git-<branch>-<scope>.vercel.app` (per-branch alias).
+ *
+ * The trailing `<scope>` segment is **pinned to the configured value**
+ * — Vercel uses the team or personal-account slug here, and projects
+ * with the same name on a different team produce hostnames with a
+ * different `<scope>`. Pinning isolates apps/site's previews from
+ * any other Vercel team (including ones that might create a
+ * same-named project deliberately or accidentally).
+ *
+ * Both `APPS_SITE_PROJECT_SLUG` and the configured scope are
+ * regex-escaped before insertion so unexpected characters in either
+ * configuration value cannot widen the pattern.
+ *
+ * Vendor reference: https://vercel.com/docs/deployments/generated-urls
+ */
+function getAppsSitePreviewAliasPattern(): RegExp | null {
+  const scope = Deno.env.get("APPS_SITE_VERCEL_SCOPE");
+  if (!scope) {
+    return null;
+  }
+  return new RegExp(
+    `^https://${escapeRegex(APPS_SITE_PROJECT_SLUG)}-` +
+      `(git-[a-z0-9-]+|[a-z0-9]{9})-` +
+      `${escapeRegex(scope)}\\.vercel\\.app$`,
+  );
+}
+
+/**
+ * Returns true when the origin matches an apps/site Vercel preview /
+ * branch alias scoped to the configured Vercel team. Always returns
+ * false when `APPS_SITE_VERCEL_SCOPE` is unset.
+ */
+function matchesAppsSitePreviewAlias(origin: string) {
+  return getAppsSitePreviewAliasPattern()?.test(origin) ?? false;
+}
+
+/**
+ * Returns the request origin only when it is explicitly allowed.
+ *
+ * Two independent admission paths:
+ *
+ * 1. **Explicit allowlist.** Either the in-code `defaultAllowedOrigins`
+ *    set (when `ALLOWED_ORIGINS` is unset) or the operator-pinned
+ *    `ALLOWED_ORIGINS` set (when set). Exact-string membership.
+ * 2. **apps/site preview-alias matcher.** Active only when
+ *    `APPS_SITE_VERCEL_SCOPE` is set. Admits Vercel preview/branch
+ *    aliases for the apps/site project under the configured team.
+ *    The two env vars are independent: setting `ALLOWED_ORIGINS`
+ *    does **not** silently enable the preview matcher, and unsetting
+ *    `APPS_SITE_VERCEL_SCOPE` disables preview admission regardless
+ *    of `ALLOWED_ORIGINS`. The operator's explicit configuration is
+ *    respected on both axes.
+ */
 export function getAllowedOrigin(request: Request) {
   const requestOrigin = request.headers.get("origin");
 
