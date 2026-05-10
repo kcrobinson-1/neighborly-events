@@ -272,6 +272,17 @@ that the set can shift without code changes.
 
 ## Data Shape (sketch, not contract)
 
+The shape described below was the M1-time estimate. The shape that
+actually shipped, and the post-M1 evolution, is canonically defined
+by the migrations under `supabase/migrations/` and the regenerated
+`shared/db/types.ts`. Notable post-M1 evolution: newsletter opt-in
+capture was split off into a separate append-only log
+(`public.newsletter_opt_ins`) per the [newsletter-subscription-split
+plan](/docs/plans/newsletter-subscription-split.md); the
+`newsletter_opt_in` boolean on `feedback_submissions` survives as a
+moment-in-time snapshot rather than the canonical consent record.
+The pre-split sketch is preserved below as historical narrative.
+
 Two tables land together in the M1 migration so the integrity
 invariant (Cross-Cutting Invariant 6) holds from the first
 write:
