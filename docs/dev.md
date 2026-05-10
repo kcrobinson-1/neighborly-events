@@ -474,8 +474,8 @@ the same scripts on a contributor machine:
 1. Copy [`scripts/.env.example`](/scripts/.env.example) to `scripts/.env`
    and fill in real values (the file is gitignored).
 2. Run the script normally — for example,
-   `npm run release:seed:madrona` or
-   `npm run smoke:production:redemption`. The shared loader at
+   `npm run release:seed -- --content shared/events/madrona-demo-game-content.ts`
+   or `npm run smoke:production:redemption`. The shared loader at
    [`scripts/lib/load-env.cjs`](/scripts/lib/load-env.cjs) reads
    `scripts/.env` and populates only variables that are not already set,
    so a workflow's `env:` block always wins over an on-disk file.

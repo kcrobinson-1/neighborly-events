@@ -189,7 +189,8 @@ export const harvestBlockPartyContent: EventContent = {
   ],
   cta: {
     label: "Play the Harvest Block Party game",
-    sublabel: "Earn stamps at participating booths to unlock prizes.",
+    sublabel:
+      "Answer five quick questions about the weekend's programming and sponsors to earn a raffle entry redeemable at the Maple Street welcome booth.",
   },
   footer: {
     attribution:
