@@ -163,6 +163,70 @@ review**, not with **planning**.
   closing PR will land the decisions into the durable
   artifact (either by promoting the scoping doc or by drafting
   a thin plan that links to it for the deliberation prose)
+- **Narrow-surface phases may skip the scoping doc.** A phase
+  whose estimated implementation surface is bounded enough that
+  options-considered analysis and reality-check input gathering
+  would not produce material content may go straight to drafting
+  the plan doc. A phase qualifies as **narrow-surface** when ALL
+  of these hold:
+
+  1. **Single subsystem.** Touches one of: a UI surface (route,
+     section, component), a data-model layer (table, migration),
+     or backend logic (RPC, edge function). Phases spanning more
+     than one of these classes are multi-subsystem and do not
+     qualify.
+  2. **Bounded file count.** Plan estimates ≤ 8 files touched
+     (excluding generated types and test files).
+  3. **No new public-API contract.** No new RPC, no new auth /
+     authz boundary, no new route family. Schema-touch is allowed
+     only when **purely additive** — net-new tables (CREATE
+     TABLE), net-new columns on existing tables (ALTER TABLE …
+     ADD COLUMN), net-new indexes — without altering the meaning
+     of existing rows or breaking existing read paths. Any change
+     that modifies or removes an existing structure (DROP COLUMN,
+     ALTER COLUMN type / default / nullability, RENAME, FK
+     refactor, RLS rewrite) requires the full path. The
+     discriminator is "modifies or removes existing structures,"
+     not the SQL verb — `ALTER TABLE … ADD COLUMN` is additive,
+     `ALTER TABLE … ALTER COLUMN` is not.
+  4. **No new cross-cutting invariant.** The change does not
+     introduce a rule that multiple files must agree on.
+     Cross-cutting invariants are the load-bearing reason scoping
+     docs exist; their absence is the load-bearing reason to skip.
+  5. **No novel mechanism.** Uses patterns already established in
+     the codebase. Novel mechanisms (a new auth shape, a new
+     framework idiom, a new SECURITY DEFINER pattern) trigger the
+     "Spike before plan for novel mechanisms" rule below and
+     warrant scoping.
+
+  All five must hold. If any fails, draft the scoping doc as the
+  "Scoping precedes plan drafting" rule above requires. This
+  carve-out is an exception the planner explicitly invokes; the
+  default direction stays "scoping first," matching the precedent
+  of the "Doc-only decision phases" carve-out above (also an
+  explicitly-invoked exception to the same rule).
+
+  **Verification protocols are not optional under this carve-out.**
+  Narrow-surface phases must still carry the reality-check inputs
+  the implementing pass walks (per the "Reality-check gate between
+  scoping and plan" rule below). The plan doc absorbs them inline
+  when the scoping doc is skipped — the *form* compresses (a
+  Reality-check inputs section in the plan rather than a separate
+  scoping artifact), the *function* (falsifier protocol against
+  load-bearing claims) does not. A narrow-surface phase whose plan
+  doc has no Reality-check inputs section has skipped the
+  carve-out's protective intent, not just its prose.
+
+  **Recent M1 phases as ground truth.** Phase 1.2 (one TypeScript
+  field on `EventContent` + one section component, ~6 files, no
+  DB, no auth, no novel mechanism) qualifies. Phase 1.3 (form
+  route + additive DB) is borderline on criterion 1 (UI surface +
+  data-model layer = two subsystems) and likely does not qualify.
+  Phase 1.1 (DB foundation including initial RLS policies and
+  grants) does not qualify because it introduces cross-cutting
+  RLS / grants invariants. Pre-existing phases drafted before this
+  rule are not retroactively non-conforming; phases drafted from
+  this point forward apply the carve-out when its criteria hold.
 - **Plan opens with a plain-language context preamble.** Before any
   implementation specifics (file paths, framework names, function
   signatures, phase-numbering shorthand), the plan must contain
