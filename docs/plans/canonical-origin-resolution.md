@@ -154,6 +154,7 @@ shape.
 | `/_next/*` | Canonical site origin (`apps/site`) | Native Next.js asset path |
 | `/assets/*` (Vite hashed bundles) | Plugin (`apps/web`), routed through canonical site origin | Same mechanism as `/event/:slug/game*` |
 | Plugin-deployment-origin direct access (`*.vercel.app/...`) | Reachable, no lockdown | Resolved during this scoping pass — see "Investigations resolved in-PR" |
+| **Test-event noindex coverage** for `harvest-block-party`, `riverside-jam`, `madrona` | Both apps emit `noindex, nofollow` at parity strength on every URL under those slugs (canonical-site landings via `generateMetadata` `robots`; plugin paths via apps/web's `headers` block) | apps/web's `headers` block at [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) is **preserved** through Phase 2; apps/site's `generateMetadata` emit is unchanged. Pairing is load-bearing for both plugin-origin direct hits and canonical-origin proxied paths under `/event/:slug/{game,admin}*` (Vercel proxy rewrites propagate the destination's response headers). |
 
 Status code expectations: cross-origin embedding via proxy rewrite
 preserves the customer-visible URL (status code is whatever the
@@ -203,8 +204,14 @@ inventory deferred to per-phase plan-drafting.
 
 **What this phase does.** Make the canonical customer URL point at
 the `apps/site` Vercel project. Move all public-routing responsibility
-into `apps/site/next.config.ts`. Strip `apps/web/vercel.json` to its
-own SPA rewrites only.
+into `apps/site/next.config.ts`. Strip the **cross-app proxy
+rewrites** from `apps/web/vercel.json`; preserve the SPA rewrites
+**and** the test-event `X-Robots-Tag` `headers` block at
+[`apps/web/vercel.json:59-72`](/apps/web/vercel.json) untouched, so
+the noindex coverage that pairs with apps/site's `generateMetadata`
+`robots` emit on test-event landings continues to apply at parity
+strength on both plugin-origin direct hits and canonical-origin
+proxied paths.
 
 **Pre-state.** Phase 1 complete: `apps/site` origin is self-sufficient.
 
@@ -235,9 +242,41 @@ demos changes from whatever surface points at `apps/web` today to
 `apps/site`'s `*.vercel.app` alias.
 
 **Phase 2 likely covers** (estimative): rewrite-rule reshape in both
-projects, env-var flip, Supabase dashboard update, CORS allowlist
+projects (preserving apps/web's `headers` block per the post-state
+above), env-var flip, Supabase dashboard update, CORS allowlist
 update, hardcoded-URL sweep (the inventory below names the touch
-points). Concrete file inventory deferred to per-phase plan-drafting.
+points), and the doc-currency sweep below. Concrete file inventory
+deferred to per-phase plan-drafting.
+
+**Doc-currency update set** (rule-shaped, not estimative): Phase 2
+must update at least the following docs in the same PR as the
+topology flip, because each one carries instructions that go stale
+the instant the canonical pointer flips:
+
+- [`docs/dev.md`](/docs/dev.md) — the repo workflow source of
+  truth. Carries stale `NEXT_PUBLIC_SITE_ORIGIN` guidance at
+  [`docs/dev.md:881-892`](/docs/dev.md) ("It must be apps/web's
+  hostname (not apps/site's), because apps/site sits behind an
+  apps/web Vercel rewrite") plus the broader "apps/web is the
+  primary Vercel project owning the production custom domain"
+  framing at [`docs/dev.md:794-810`](/docs/dev.md) and the
+  cookie-boundary verification narrative around
+  [`docs/dev.md:897-927`](/docs/dev.md). All three sections invert
+  with Phase 2.
+- [`docs/architecture.md`](/docs/architecture.md) — the topology
+  table at [`docs/architecture.md:951-1002`](/docs/architecture.md)
+  describes today's bidirectional-rewrite shape; the "apps/web is
+  the primary Vercel project owning the production custom domain"
+  framing at [`docs/architecture.md:32-35`](/docs/architecture.md)
+  is stale (already noted as such in this plan's Context).
+- [`apps/site/.env.example`](/apps/site/.env.example) — the
+  comment block at lines 3-9 says "Set this to apps/web's
+  hostname"; flips with Phase 2.
+
+The doc updates land **alongside** the implementing PR, not as a
+follow-up doc-only PR — the Plan-to-PR Completion Gate's
+documentation-current-state requirement makes this a same-PR
+obligation rather than a deferred clean-up.
 
 ### No Phase 3 (plugin-origin lockdown not needed)
 
@@ -281,6 +320,20 @@ during this scoping pass; they do **not** carry into "Open questions."
   and `apps/site/next.config.ts` (5 rules — see
   [`apps/site/next.config.ts:64-86`](/apps/site/next.config.ts)) read
   end-to-end and inventoried in the End State table above.
+- **`apps/web/vercel.json` carries more than rewrites.** Lines 59-72
+  hold the `headers` block emitting `X-Robots-Tag: noindex, nofollow`
+  for the three test/demo event slug patterns (harvest-block-party,
+  riverside-jam, madrona). This pairs with apps/site's
+  `generateMetadata` `robots` emit on test-event landings to keep
+  test-event URLs invisible to search across both apps at parity
+  strength. The headers block is preserved through Phase 2 — the
+  earlier draft's "strip apps/web/vercel.json to SPA rewrites only"
+  wording is corrected to "strip the cross-app proxy rewrites;
+  preserve SPA rewrites and headers." Surfaced by reviewer Codex
+  feedback on this PR. **Verified by:**
+  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json),
+  [`docs/architecture.md`](/docs/architecture.md) noindex-uniformity
+  framing.
 - **Native apps/site route enumeration.** Walked the apps/site app
   tree (`find apps/site/app -name "page.tsx" -o -name "route.ts"`)
   to confirm every customer-visible native route is named in the
@@ -409,14 +462,6 @@ contracts.
    needs a structural rewrite to reflect the canonical-origin
    semantics, or just a value-flip + comment update. Estimate-shaped
    call; per-phase plan-drafting picks.
-3. **Architecture-doc update.** [`docs/architecture.md`](/docs/architecture.md)
-   carries multiple stale claims this plan corrects (apps/web as
-   primary, custom-domain ownership, the routing-topology table at
-   lines 951-1002 reflecting today's bidirectional-rewrite shape).
-   Whether the architecture doc updates **alongside** Phase 2's
-   implementing PR (so the doc and the topology stay in sync) or as
-   a follow-up doc-only PR is a small sequencing call. The Phase 2
-   plan-drafting picks.
 
 ## Out of scope
 
@@ -493,6 +538,24 @@ contracts.
   `apps/site`'s Vercel project as part of the cutover, validated by
   a post-deploy meta-tag spot-check. The build-time throw catches
   unset; the spot-check catches misset.
+- **Per-plugin noindex `headers`-block maintenance cost compounds as
+  plugins multiply.** Today's pattern (apps/web's vercel.json carries
+  its own `X-Robots-Tag` headers block with a regex that hand-mirrors
+  `TEST_EVENT_SLUGS`) works for one plugin. Each future plugin would
+  inherit the same shape — its own headers block, its own hand-copied
+  regex — and the manual sync between code's `TEST_EVENT_SLUGS` and
+  per-plugin vercel.json regexes drifts on every test-slug add or
+  remove. Mitigation: accepted state for the canonical-origin plan;
+  the centralizing alternative (apps/site middleware emitting noindex
+  for proxied test-event paths) becomes the right shape **only** if
+  one of two conditions holds: (1) plugin-origin direct access is
+  locked down (the deferred Phase-3 work), so apps/site can speak
+  authoritatively for the only customer-reachable surface, or (2)
+  plugin count multiplies enough that per-plugin headers-block bloat
+  starts hurting in practice. Neither condition holds today, and the
+  paired-emission shape is endorsed by the architecture doc as
+  parity-strength coverage. Recorded so a future planner inherits
+  the conditions rather than re-deriving them.
 
 ## Related docs
 
@@ -502,8 +565,16 @@ contracts.
   [`docs/architecture.md:951-1002`](/docs/architecture.md) —
   current Vercel routing topology and the "transitional" framing
   the architecture doc calls out for the bidirectional-rewrite shape.
+- [`docs/dev.md:794-810`](/docs/dev.md),
+  [`docs/dev.md:881-892`](/docs/dev.md),
+  [`docs/dev.md:897-927`](/docs/dev.md) — repo workflow source of
+  truth; named in Phase 2's doc-currency update set above because
+  each section carries instructions that invert with the
+  canonical-origin flip.
 - [`apps/web/vercel.json`](/apps/web/vercel.json) — the apps/web
-  rewrite layer this plan strips.
+  rewrite layer this plan reshapes (cross-app proxy rewrites
+  stripped; SPA rewrites and the test-event `headers` block at
+  lines 59-72 preserved).
 - [`apps/site/next.config.ts`](/apps/site/next.config.ts) — the
   apps/site rewrite layer this plan grows into the single routing
   authority.
