@@ -1,5 +1,24 @@
 # Newsletter subscription split from feedback table
 
+## Summary
+
+Splits newsletter opt-in capture off the feedback row into a
+separate append-only log so the consent record's lifecycle is
+independent of the feedback row's. Ships three DB artifacts: a new
+`public.newsletter_opt_ins` table (one row per consent event,
+keyed by surrogate uuid, FK to the feedback registry); an internal
+`public.subscribe_email(...)` SECURITY DEFINER helper with EXECUTE
+revoked from anon/authenticated; an updated `public.submit_feedback`
+body that conditionally calls the helper when the attendee opted
+in. The feedback form's user-visible behavior is unchanged. The
+boolean `feedback_submissions.newsletter_opt_in` survives as a
+moment-in-time audit snapshot. No data backfill — the no-real-event
+maintainer assumption (Decision 3) underwrites that. Out of scope:
+the standalone signup widget (deferred to the feedback +
+subscription plugin's own scoping pass — Decision 6) and any
+organizer-facing read or CSV-export surface (deferred to
+madrona-feedback M2).
+
 ## Status
 
 Landed. Cross-cutting plan — the subject (a newsletter subscription
