@@ -90,7 +90,7 @@ Reduce deployment risk and contributor friction before the live event.
   apps/web's `/` rewrite, redirect direct apps/site access to apps/web,
   or formally adopt apps/site as canonical with full reverse proxy for
   apps/web routes.
-  Detail: [`docs/architecture.md`](/docs/architecture.md)
+  Detail: [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md) (In draft)
 
 - [x] **`infra` Reduce Vercel preview-deploy consumption on draft PRs**
   Landed via the GitHub Actions-driven preview-deploy workflow with a
