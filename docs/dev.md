@@ -280,10 +280,12 @@ https, omitted on http://localhost). `@supabase/ssr` 0.10.x does
 passes `secure` explicitly via `cookieOptions`. Do not remove the
 explicit flag under the assumption the package handles it; auth
 cookies would ship without `Secure` on production HTTPS. No
-`Domain=` attribute means the cookie is host-only on the apps/web
-frontend domain. `HttpOnly` is impossible because apps/web is a SPA
-writing the cookie from JS — same exposure surface as the prior
-`localStorage` path.
+`Domain=` attribute means the cookie is host-only on whichever
+origin sets it (the canonical site origin for apps/site sign-ins;
+the apps/web origin if a sign-in ever happens directly there).
+`HttpOnly` is impossible because the SPA browser adapter writes the
+cookie from JS — same exposure surface as the prior `localStorage`
+path.
 
 The factory uses `@supabase/ssr`'s internal
 [`createStorageFromOptions`](/node_modules/@supabase/ssr/dist/module/cookies.d.ts)
@@ -790,48 +792,59 @@ historical row, set `active = false` for that email.
 
 ### Vercel
 
-The repo deploys two Vercel projects from one monorepo, with `apps/web`
-as the primary project that owns the production custom domain and
-proxy-rewrites event-scoped non-game/admin URLs to `apps/site`.
+The repo deploys two Vercel projects from one monorepo. `apps/site` is
+the canonical user-facing project: every customer-visible URL resolves
+on apps/site's Vercel project, and the apps/web plugin deployment is
+reached only through one-direction proxy rewrites from apps/site for
+the plugin-owned routes (`/event/:slug/{game,admin}*`, `/assets/*`).
+There is no platform-owned custom domain today — the canonical site
+origin is `apps/site`'s primary `*.vercel.app` alias, and per-event
+organizer subdomains CNAME to the same Vercel project as additional
+aliases (see [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)).
 
-- create the primary Vercel project for `apps/web` (Root Directory `apps/web`)
-- create the second Vercel project for `apps/site` (Root Directory `apps/site`)
-- keep the rewrites in `apps/web/vercel.json` — they implement the
-  transitional cross-app routing topology (see "Vercel two-project
-  monorepo layout" below)
-- update the absolute destination URL for `/event/:slug` and
-  `/event/:slug/:path*` rewrites to match the production alias of the
-  `apps/site` Vercel project
+- create the apps/site Vercel project (Root Directory `apps/site`) — this is
+  the canonical project that owns customer-visible URLs
+- create the apps/web Vercel project (Root Directory `apps/web`) — this is
+  the plugin deployment reached through site → plugin rewrites
+- keep the site → plugin rewrites in `apps/site/next.config.ts` — they
+  route the plugin-owned routes from the canonical origin into the
+  apps/web deployment (see "Vercel two-project monorepo layout" below)
 - create your own local `.vercel/` link metadata after checkout; the folder is git-ignored on purpose
 
 ### Vercel two-project monorepo layout
 
 `apps/web` and `apps/site` are deployed as separate Vercel projects from
-the same git repository. `apps/web` is the primary project: it owns the
-production custom domain and its `vercel.json` hosts the cross-app
-rewrites that proxy `/admin*`, the auth callback, the platform landing,
-and event-scoped non-game/admin URLs to `apps/site`.
+the same git repository. `apps/site` is the canonical project: customer-
+visible URLs resolve on its primary alias, and `apps/site/next.config.ts`
+hosts the site → plugin rewrites that route `/event/:slug/{game,admin}*`
+and `/assets/*` into the apps/web plugin deployment. `apps/web/vercel.json`
+holds only the SPA's own internal rewrites (`/event/:slug/game*`,
+`/event/:slug/admin*`, `/event/:path*` → `/index.html`) plus the test-
+event `X-Robots-Tag` `headers` block — no cross-app proxy rewrites.
 
-The transitional routing contract is documented in
+The post-Phase-2 routing contract is documented in
 [`docs/architecture.md`](/docs/architecture.md#vercel-routing-topology) and
-the implementing plan is
-[`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md).
+established by [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
+(Phase 2 plan: [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md)).
 
-In short, the rule precedence inside `apps/web/vercel.json` is:
+In short, the routing authority lives in `apps/site/next.config.ts`:
 
-1. `/event/:slug/game` and `/event/:slug/game/:path*` → `apps/web` SPA
-   (covers `/game/redeem` and `/game/redemptions` operator routes)
-2. `/event/:slug/admin` and `/event/:slug/admin/:path*` → `apps/web` SPA
-   (per-event admin shell from M2 phase 2.2)
-3. `/event/:slug` and `/event/:slug/:path*` → `apps/site`
-4. `/event/:path*` SPA fallback → `apps/web` (transitional)
-5. `/_next/:path*` → `apps/site` (apps/site asset path resolution)
-6. `/admin` and `/admin/:path*` → `apps/site` (platform admin)
-7. `/auth/callback` and `/` → `apps/site`
+1. `/event/:slug/game` and `/event/:slug/game/:path*` → apps/web plugin
+   deployment via proxy rewrite (covers `/game/redeem` and
+   `/game/redemptions` operator routes)
+2. `/event/:slug/admin` and `/event/:slug/admin/:path*` → apps/web plugin
+   deployment via proxy rewrite (per-event admin shell)
+3. `/assets/:path*` → apps/web plugin deployment via proxy rewrite
+   (covers Vite-emitted hashed bundles referenced from the proxied SPA)
+4. Every other route — `/`, `/admin*`, `/auth/callback`, `/event/:slug`,
+   `/event/:slug/feedback`, `/event/:slug/{opengraph,twitter}-image`, and
+   any future event-scoped path not carved out for the plugin — resolves
+   natively on apps/site (Next.js App Router).
 
-Most-specific rules must come first. The rule 4 SPA fallback is
-explicitly transitional. M2 plan authors are responsible for
-narrowing it as event-scoped routes finalize.
+apps/web's own `vercel.json` rewrites (`/event/:slug/{game,admin}*` and
+`/event/:path*` → `/index.html`) are SPA-internal and exist so the
+proxied plugin paths render against the SPA's `index.html`. They never
+proxy back to apps/site.
 
 ### Local-dev story for `/auth/callback` e2e fixtures
 
@@ -878,57 +891,57 @@ apps/site's root layout also reads:
 
 - `NEXT_PUBLIC_SITE_ORIGIN`
 
-This is the canonical user-facing origin used as `metadataBase` for
+This is the canonical user-facing site origin used as `metadataBase` for
 SSR-emitted `og:url`, `og:image`, and `twitter:image` URLs. It must be
-apps/web's hostname (not apps/site's), because apps/site sits behind an
-apps/web Vercel rewrite per
-[`apps/web/vercel.json`](/apps/web/vercel.json) — unfurl clicks should
-land on apps/web first so the proxy fires. In the apps/site Vercel
-project's Production environment, set the value to apps/web's primary
-custom-domain alias; for local dev, use the apps/web local origin you
-test against (typically `http://localhost:3000`). All three
-`NEXT_PUBLIC_*` vars above flow through the `env` block in
+apps/site's primary alias (not apps/web's), because apps/site is the
+canonical project per
+[`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md) —
+unfurl clicks land on apps/site directly, with no cross-app proxy in
+between. In the apps/site Vercel project's Production environment, set
+the value to apps/site's primary Vercel alias; for local dev, use
+`http://localhost:3000`. All three `NEXT_PUBLIC_*` vars above flow
+through the `env` block in
 [`apps/site/next.config.ts`](/apps/site/next.config.ts) per the
 documented Turbopack substitution-trap workaround.
 
 ### Cookie-boundary verification
 
-M0 phase 0.3 stood up the apps/site Vercel project with a
-proxy-rewrite from apps/web's frontend domain. Verifying that
-cookies set on apps/web's origin are visible to apps/site through
-the rewrite was originally scoped to phase 0.3 but **deferred to M1
-phase 1.3.2** when implementation surfaced a planning-time bug: the
-`neighborly_session` cookie phase 0.3 chose for the gate is set by
-`issue-session` on the Supabase Edge Function origin
-(`*.supabase.co`), not on the apps/web frontend domain, so it is
-never readable by Next.js `cookies()` in apps/site routes regardless
-of the rewrite topology. See
+The auth cookie is set by `@supabase/ssr`'s frontend-origin adapter
+(cookie name `sb-<project-ref>-auth-token`, see "Supabase Auth
+surface" above) on the canonical site origin — apps/site, where
+`/admin` and `/auth/callback` natively render. apps/site routes read
+the cookie via Next.js `cookies()`. Post-Phase-2 the cookie story
+operates entirely within apps/site (no cross-app boundary to verify
+through); historically the question of whether apps/web-set cookies
+were visible to apps/site through a proxy rewrite was the open
+verification, traced through M0 phase 0.3's deferral to M1 phase
+1.3.2's resolution via the `@supabase/ssr` adapter — git history
+preserves the analysis. See
 [`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
-"Verification Evidence" for the full analysis.
+"Verification Evidence" for the historical write-up.
 
-M1 phase 1.3.2 introduced `@supabase/ssr`'s frontend-origin cookie
-adapter (cookie name `sb-<project-ref>-auth-token`, see "Supabase
-Auth surface" above). apps/site's placeholder at `/event/:slug`
-reads the cookie via Next.js `cookies()` and renders a presence-only
-readout (`Auth cookie: present` / `Auth cookie: not present`) — it
-never echoes the cookie value.
+apps/site's placeholder at `/event/:slug` reads the cookie via
+Next.js `cookies()` and renders a presence-only readout (`Auth
+cookie: present` / `Auth cookie: not present`) — it never echoes
+the cookie value.
 
-To re-verify the boundary on the production domain at any time:
+To re-verify cookie visibility on the canonical site origin at any
+time:
 
-1. Open the production apps/web frontend domain and sign in via the
-   admin shell at `/admin` (or `/event/:slug/admin` for any event
-   the admin authors). Complete the magic-link round-trip.
+1. Open the canonical site origin (apps/site's primary alias) and
+   sign in via the admin shell at `/admin` (or `/event/:slug/admin`
+   for any event the admin authors). Complete the magic-link
+   round-trip.
 2. In browser DevTools → Application → Cookies, confirm a cookie
    named `sb-<project-ref>-auth-token` (or chunked siblings
-   `.0`/`.1`) is present on the apps/web frontend origin with
+   `.0`/`.1`) is present on the canonical site origin with
    `Path=/` and `SameSite=Lax`.
 3. In the same browser session, navigate to `/event/<any-slug>` —
    any slug works because the placeholder is a fallback for any
-   `[slug]`. The proxy-rewrite forwards to apps/site.
+   `[slug]`. The route renders natively on apps/site.
 4. Confirm the placeholder reads `Auth cookie: present`. A `not
-   present` readout means either the cookie was not set on the
-   right origin in step 2 or the proxy-rewrite is not forwarding
-   cookies — either case fails the gate.
+   present` readout means the cookie was not set on the canonical
+   site origin in step 2 — that fails the gate.
 
 The placeholder is intentionally fail-closed: missing cookie ⇒
 loud `not present` rather than a vacuous pass.
