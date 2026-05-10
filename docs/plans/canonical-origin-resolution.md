@@ -117,17 +117,18 @@ After this plan lands its full sequence:
   [`apps/site/app/layout.tsx:29-90`](/apps/site/app/layout.tsx) keeps
   its current shape but its production-required value flips with the
   topology.
-- The Edge Function CORS allowlist admits the canonical site origin
-  and no longer admits the stale plugin origin by default. The
-  helper's matching strategy is exact-string `Set.has(...)` against an
-  enumerated allowlist (the default set in code plus any value of the
-  `ALLOWED_ORIGINS` env var), so any non-production origin that needs
-  CORS access — preview deploys, branch aliases, contributor local
-  dev — is admitted only by being added to the env var. Whether
-  preview / branch-alias origins need to call Edge Functions at all
-  is an operational question Phase 2's per-phase scoping resolves;
-  the contract here binds only the production-canonical case.
-  **Verified by:** [`supabase/functions/_shared/cors.ts:11-24`](/supabase/functions/_shared/cors.ts).
+- The Edge Function CORS allowlist admits the canonical site
+  origin and Vercel-generated preview / branch aliases of the
+  `apps/site` project (so per-PR preview deploys keep working
+  end-to-end against Edge Functions), and no longer admits the
+  stale plugin origin by default. Today's helper at
+  [`supabase/functions/_shared/cors.ts:11-24`](/supabase/functions/_shared/cors.ts)
+  performs exact-string matching against an enumerated allowlist
+  and cannot match preview-alias patterns as written; delivering
+  this contract therefore requires a small helper update in
+  Phase 2. The matching strategy is an implementation detail picked
+  at Phase 2's per-phase plan-drafting time, not by this scoping
+  plan.
 
 ## End state — concretely
 
@@ -217,12 +218,12 @@ to name the canonical origin's `/auth/callback`.
 origin (`apps/site`'s primary alias on Vercel; the real domain when
 that rolls). The Edge Function CORS allowlist
 ([`supabase/functions/_shared/cors.ts:1-8`](/supabase/functions/_shared/cors.ts))
-is updated to admit the canonical origin (and to drop the stale
-plugin origin from the in-code default set, if Phase 2 chooses to
-remove it). Any non-canonical origin that needs CORS access is
-enumerated via the `ALLOWED_ORIGINS` env var per the helper's
-exact-match contract; that operational decision is not bound by
-this plan.
+is updated to admit the canonical site origin and Vercel-generated
+preview / branch aliases of the `apps/site` project. Today's helper
+matches via exact-string `Set.has(...)` and cannot match preview-
+alias patterns as written, so this phase includes a small helper
+update; the matching strategy itself is picked at this phase's
+per-phase plan-drafting time, not here.
 
 **Dependencies.** No Vercel custom-domain action required — there is
 no platform-owned domain (resolved during this scoping pass; see
