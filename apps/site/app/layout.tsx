@@ -28,27 +28,23 @@ const fraunces = Fraunces({
 /**
  * Resolves the canonical user-facing origin used as `metadataBase`.
  *
+ * `NEXT_PUBLIC_SITE_ORIGIN` names the canonical user-facing site
+ * origin. apps/site is the canonical project per the canonical-origin
+ * topology (see [`docs/plans/canonical-origin-resolution.md`](../../../docs/plans/canonical-origin-resolution.md)),
+ * so the env var resolves to apps/site's primary alias on production
+ * and to apps/site's own per-branch alias on preview.
+ *
  * - **Local dev / non-Vercel CI** (`VERCEL_ENV` unset): falls back
  *   to `http://localhost:3000` so contributor builds stay green.
  * - **Vercel production**: the env var **must** be operator-set to
- *   apps/web's canonical custom-domain origin. We throw at build
+ *   apps/site's primary Vercel alias (or, when a platform-owned
+ *   custom domain ever materializes, that domain). We throw at build
  *   time when it's missing so a misconfigured deploy can't silently
- *   ship localhost-shaped meta tags. Auto-derivation from `VERCEL_URL`
- *   was rejected at scoping time (`docs/plans/scoping/m3-phase-3-1-2.md`
- *   "metadataBase source") because apps/site sits behind apps/web's
- *   Vercel rewrite — `VERCEL_URL` resolves to apps/site's own hostname,
- *   not apps/web's canonical user-facing origin.
+ *   ship localhost-shaped meta tags.
  * - **Vercel preview**: prefers the env var when set, otherwise
  *   derives from apps/site's own `VERCEL_BRANCH_URL` (or
- *   `VERCEL_URL`). The `VERCEL_URL`-rejection rationale above only
- *   applies to *production*, where the canonical origin is
- *   apps/web's. For preview, apps/web's per-branch alias isn't
- *   knowable from inside apps/site's build, so apps/site's own
- *   per-branch URL is the right pragmatic shape — the PR's preview
- *   unfurls render the PR's content (bypassing the apps/web rewrite
- *   layer that only matters for production user traffic). Operator
- *   can still pin a preview origin explicitly via the env var if
- *   they need to.
+ *   `VERCEL_URL`). Operator can still pin a preview origin
+ *   explicitly via the env var if they need to.
  *
  * The env var reads through `next.config.ts`'s `env` block (the
  * Turbopack substitution-trap workaround the Supabase pair also
@@ -65,10 +61,11 @@ function resolveMetadataBaseOrigin(): string {
   if (vercelEnv === "production") {
     throw new Error(
       `NEXT_PUBLIC_SITE_ORIGIN must be set on Vercel production ` +
-        `builds. Set it to apps/web's canonical custom-domain origin ` +
-        `per docs/dev.md "apps/site environment variables." Falling ` +
-        `back to a dev origin would silently ship broken Open Graph ` +
-        `URLs to every consumer client.`,
+        `builds. Set it to apps/site's primary Vercel alias ` +
+        `(the canonical user-facing site origin) per docs/dev.md ` +
+        `"apps/site environment variables." Falling back to a dev ` +
+        `origin would silently ship broken Open Graph URLs to every ` +
+        `consumer client.`,
     );
   }
 
