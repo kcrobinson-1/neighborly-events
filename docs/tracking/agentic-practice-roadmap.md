@@ -463,7 +463,33 @@ form.
 **Status:** candidate.
 **Notes:** this is the empirical version of A2/A3 — proves the
 cap is reachable before the instructions are edited to require
-it. Outcome lands as a Log entry below.
+it. Outcome lands as a Log entry below. Scoped to phase plans;
+the cross-cutting sibling is A7a.
+
+### A7a: First-pass cross-cutting plan / scoping doc against an artifact-appropriate cap
+
+**Edit:** none to instructions — a behavior commitment. Sibling
+to A7, scoped to cross-cutting docs (filed at
+`docs/plans/<name>.md`, not under an epic). The next cross-cutting
+plan or scoping doc drafted is drafted against an artifact-
+appropriate cap, and the Log entry records what survived, what
+got cut, and per-section LOC.
+**Activates:** Bet 1 (over time); informs A2 / A3 threshold
+design for the cross-cutting doc class.
+**Status:** candidate.
+**Notes:** the 2026-05-10 retroactive exercise on
+[`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
+(650 lines) and
+[`docs/plans/newsletter-subscription-split-scoping.md`](/docs/plans/newsletter-subscription-split-scoping.md)
+(948 lines) found Bet 4's flat caps wildly wrong for this class
+— a 250-line cap on a 7-decision scoping doc forces removing all
+rejected-alternative reasoning, all Reality-check inputs, and all
+pivot history. The hypothesis A7a tests: the right cap shape for
+cross-cutting is **per-section, not per-doc** (e.g., "each
+decision in a scoping doc ≤ 80 lines," "each Investigation in a
+plan ≤ 12 lines"). Verification protocols (Reality-check inputs)
+should be carved out as not-bloat. See the 2026-05-10 Log entry
+for the full exercise.
 
 ### A8: Codify a tracking/planning-doc drafting template
 
@@ -586,6 +612,68 @@ against the actual source rather than re-derive):
 Append-only. Each entry: date + 1–3 bullets on what moved, what
 didn't, and any change to the diagnosis or bets. Do not edit
 prior entries.
+
+### 2026-05-10 — retroactive cap-fit exercise on two cross-cutting docs
+
+Ran the empirical version of A7 retroactively on two recently-
+landed cross-cutting docs to test whether Bet 4's caps generalize
+to that class. Findings inform A7a (added to Action Layer in this
+same PR).
+
+**Subjects.**
+
+- [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
+  — 650-line cross-cutting plan. Bet 4 plan cap is ≤ 400.
+- [`docs/plans/newsletter-subscription-split-scoping.md`](/docs/plans/newsletter-subscription-split-scoping.md)
+  — 948-line cross-cutting scoping doc. Bet 4 scoping cap is ≤ 250.
+
+**Findings.**
+
+- **Cross-cutting plans need a different cap from phase plans.**
+  The canonical-origin doc's compressibility ceiling without
+  load-bearing loss is roughly 500–520 lines. Forcing 400 trims
+  one or two of the knowledge-dense Investigations (encoded
+  knowledge that costs work to re-derive: Vercel platform-feature
+  ceiling, embedding-mechanism rationale, `NEXT_PUBLIC_SITE_ORIGIN`
+  semantics) plus the deliberate "No Phase 3 / No Phase 4"
+  decisions. Bet 4's 400 cap is roughly 25% too tight for this
+  class.
+- **Cross-cutting scoping docs need a *much* different cap.** The
+  newsletter doc has a real ceiling around 700. The 250 cap is
+  roughly 3× too tight. At 250, the only survivable structure is
+  title + chosen option + one-paragraph rationale per decision;
+  rejected alternatives, came-down-to analysis, pivot history, and
+  Reality-check inputs all get gutted. The doc loses the *why* of
+  every decision, the falsifier protocol the implementing pass
+  needs, and the institutional learning recorded in pivot history
+  (Decision 2's two-pivot history is exactly the shape this
+  roadmap values).
+- **Per-section caps fit the data better than per-doc caps.**
+  Scoping-doc LOC scales with decision count (the newsletter
+  doc's roughly 660-line decisions section ≈ 7 decisions × ~95
+  lines each, structurally driven). A flat per-doc cap measures
+  the wrong axis; per-section caps ("each decision ≤ 80 lines,"
+  "each Investigation ≤ 12 lines") compress real bloat without
+  forcing structural loss.
+- **Verification protocols are not bloat.** The 98-line Reality-
+  check inputs section in the newsletter doc was the single
+  largest "would be cut at the cap, would be a disaster to cut"
+  surface across both docs. Any A2 / A3 / A7a design needs an
+  explicit carve-out: the falsifier-list shape is the visible
+  artifact of the falsifiability and reality-check rules in
+  `shared.md` and protects against shipping against unverified
+  assumptions.
+
+**Effect on bets.** Bet 4 unchanged in scope — its Measure is the
+phase-plan path glob, and the exercise found Bet 4's framing
+doesn't *generalize*, not that it's wrong on its own surface. A2
+and A3 inputs widened: both consume this Log entry at planning
+time; neither's Notes are pre-decorated, in keeping with the
+"every finding becomes a rule" anti-pattern the diagnosis flags.
+
+**Action Layer follow-through.** A7a added (cross-cutting sibling
+to A7). A7's Notes tightened with a one-sentence scope clarifier
+pointing at A7a.
 
 ### 2026-05-09 — A1 landed: rule-retirement convention in `AGENTS.md`
 
