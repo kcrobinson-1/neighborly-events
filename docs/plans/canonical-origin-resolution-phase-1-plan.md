@@ -73,7 +73,7 @@ does not modify them:
   coverage on `harvest-block-party`, `riverside-jam`, `madrona` is
   paired: apps/site emits via `generateMetadata` `robots`, apps/web
   emits via the headers block at
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json). Both must
+  [`apps/web/vercel.json`](/apps/web/vercel.json). Both must
   hold simultaneously.
 - **Auth-callback origin equals canonical site origin.**
   `requestMagicLink` composes `emailRedirectTo` against
@@ -151,7 +151,7 @@ session;
 
 The proxy rewrites preserve the destination's response headers. The
 apps/web headers block at
-[`apps/web/vercel.json:59-72`](/apps/web/vercel.json) emits
+[`apps/web/vercel.json`](/apps/web/vercel.json) emits
 `X-Robots-Tag: noindex, nofollow` for the three test-event slug
 patterns; this header is observable on the response when the path is
 fetched through apps/site origin. Concretely,
@@ -164,7 +164,7 @@ a header, per the Cross-Cutting Invariants section above and
 
 **Verified by:** `curl -sI` response captured during the audit
 session;
-[`apps/web/vercel.json:59-72`](/apps/web/vercel.json),
+[`apps/web/vercel.json`](/apps/web/vercel.json),
 [`apps/site/app/event/[slug]/page.tsx:77-80`](/apps/site/app/event/%5Bslug%5D/page.tsx).
 
 ### Finding 5: No hardcoded apps/web origin in apps/site application code other than the documented constant
@@ -367,7 +367,7 @@ plan-doc structural ones:
   [`docs/architecture.md`](/docs/architecture.md),
   [`apps/site/.env.example`](/apps/site/.env.example)) — Phase 2.
 - Any change to
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) headers block
+  [`apps/web/vercel.json`](/apps/web/vercel.json) headers block
   — preserved through Phase 2 too.
 - The Finding 7 fix (OG/Twitter unfurl URLs pointing at apps/web
   origin) — Phase 2 owns this via the env-var flip.

@@ -47,7 +47,7 @@ platform.
 There is no platform-owned custom domain today and none in flight.
 The architecture doc's claim that "`apps/web` is the primary Vercel
 project owning the production custom domain"
-([`docs/architecture.md:32-35`](/docs/architecture.md)) is **stale
+([`docs/architecture.md`](/docs/architecture.md)) is **stale
 framing** that this plan corrects: today's customer-reachable URLs
 are exactly the two `*.vercel.app` hosts above, with no platform-
 owned domain layered on top. The canonical site origin in this
@@ -145,7 +145,7 @@ shape.
 | --- | --- | --- |
 | `/` | Canonical site origin (`apps/site`) | Native Next.js route |
 | `/admin*` | Canonical site origin (`apps/site`) | Native Next.js route |
-| `/auth/callback` | Canonical site origin (`apps/site`) | Native Next.js route (client component, owns route physically). **Verified by:** [`apps/site/app/(authenticated)/auth/callback/page.tsx`](/apps/site/app/%28authenticated%29/auth/callback/page.tsx) and [`docs/architecture.md:241-244`](/docs/architecture.md). |
+| `/auth/callback` | Canonical site origin (`apps/site`) | Native Next.js route (client component, owns route physically). **Verified by:** [`apps/site/app/(authenticated)/auth/callback/page.tsx`](/apps/site/app/%28authenticated%29/auth/callback/page.tsx) and [`docs/architecture.md`](/docs/architecture.md). |
 | `/event/:slug` (landing) | Canonical site origin (`apps/site`) | Native Next.js route, SSR per-slug. **Verified by:** [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx). |
 | `/event/:slug/feedback` | Canonical site origin (`apps/site`) | Native Next.js route, prerendered per registered slug. **Verified by:** [`apps/site/app/event/[slug]/feedback/page.tsx`](/apps/site/app/event/%5Bslug%5D/feedback/page.tsx). |
 | `/event/:slug/opengraph-image`, `/event/:slug/twitter-image` | Canonical site origin (`apps/site`) | Native Next.js file-convention metadata routes (background unfurl-consumer fetches, not customer-clickable). **Verified by:** [`apps/site/app/event/[slug]/opengraph-image.tsx`](/apps/site/app/event/%5Bslug%5D/opengraph-image.tsx), [`apps/site/app/event/[slug]/twitter-image.tsx`](/apps/site/app/event/%5Bslug%5D/twitter-image.tsx). |
@@ -157,7 +157,7 @@ shape.
 | `/_next/*` | Canonical site origin (`apps/site`) | Native Next.js asset path |
 | `/assets/*` (Vite hashed bundles) | Plugin (`apps/web`), routed through canonical site origin | Same mechanism as `/event/:slug/game*` |
 | Plugin-deployment-origin direct access (`*.vercel.app/...`) | Reachable, no lockdown | Resolved during this scoping pass — see "Investigations resolved in-PR" |
-| **Test-event noindex coverage** for `harvest-block-party`, `riverside-jam`, `madrona` | Both apps emit `noindex, nofollow` at parity strength on every URL under those slugs (canonical-site landings via `generateMetadata` `robots`; plugin paths via apps/web's `headers` block) | apps/web's `headers` block at [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) is **preserved** through Phase 2; apps/site's `generateMetadata` emit is unchanged. Pairing is load-bearing for both plugin-origin direct hits and canonical-origin proxied paths under `/event/:slug/{game,admin}*` (Vercel proxy rewrites propagate the destination's response headers). |
+| **Test-event noindex coverage** for `harvest-block-party`, `riverside-jam`, `madrona` | Both apps emit `noindex, nofollow` at parity strength on every URL under those slugs (canonical-site landings via `generateMetadata` `robots`; plugin paths via apps/web's `headers` block) | apps/web's `headers` block at [`apps/web/vercel.json`](/apps/web/vercel.json) is **preserved** through Phase 2; apps/site's `generateMetadata` emit is unchanged. Pairing is load-bearing for both plugin-origin direct hits and canonical-origin proxied paths under `/event/:slug/{game,admin}*` (Vercel proxy rewrites propagate the destination's response headers). |
 
 Status code expectations: cross-origin embedding via proxy rewrite
 preserves the customer-visible URL (status code is whatever the
@@ -194,7 +194,7 @@ through every phase.
   `riverside-jam`, `madrona`) is paired: apps/site emits via
   `generateMetadata` `robots` on test-event landings; apps/web emits
   via the `headers` block at
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) for every
+  [`apps/web/vercel.json`](/apps/web/vercel.json) for every
   URL under those slugs. Both must hold simultaneously — breaking
   either side leaks indexability silently on the surface that side
   covers (apps/site landings, or plugin paths reached either via
@@ -235,7 +235,7 @@ reachable directly (e.g., the auto-generated `*.vercel.app` host or
 preview URLs), where role-door links work via the cheap-unblock
 reverse rewrites already in place. `apps/web` is the canonical
 primary per architecture-doc framing.
-**Verified by:** [`docs/architecture.md:32-35`](/docs/architecture.md),
+**Verified by:** [`docs/architecture.md`](/docs/architecture.md),
 [`apps/site/next.config.ts:65-86`](/apps/site/next.config.ts).
 
 **Post-state.** `apps/site` origin renders every public surface
@@ -261,7 +261,7 @@ the `apps/site` Vercel project. Move all public-routing responsibility
 into `apps/site/next.config.ts`. Strip the **cross-app proxy
 rewrites** from `apps/web/vercel.json`; preserve the SPA rewrites
 **and** the test-event `X-Robots-Tag` `headers` block at
-[`apps/web/vercel.json:59-72`](/apps/web/vercel.json) untouched, so
+[`apps/web/vercel.json`](/apps/web/vercel.json) untouched, so
 the noindex coverage that pairs with apps/site's `generateMetadata`
 `robots` emit on test-event landings continues to apply at parity
 strength on both plugin-origin direct hits and canonical-origin
@@ -320,10 +320,10 @@ the instant the canonical pointer flips:
   [`docs/dev.md:897-927`](/docs/dev.md). All three sections invert
   with Phase 2.
 - [`docs/architecture.md`](/docs/architecture.md) — the topology
-  table at [`docs/architecture.md:951-1002`](/docs/architecture.md)
+  table at [`docs/architecture.md`](/docs/architecture.md)
   describes today's bidirectional-rewrite shape; the "apps/web is
   the primary Vercel project owning the production custom domain"
-  framing at [`docs/architecture.md:32-35`](/docs/architecture.md)
+  framing at [`docs/architecture.md`](/docs/architecture.md)
   is stale (already noted as such in this plan's Context).
 - [`apps/site/.env.example`](/apps/site/.env.example) — the
   comment block at lines 3-9 says "Set this to apps/web's
@@ -372,13 +372,13 @@ The following items were resolved by reading code and vendor docs
 during this scoping pass; they do **not** carry into "Open questions."
 
 - **Cross-app rewrite inventory.** Both `apps/web/vercel.json` (12
-  rules total — see [`apps/web/vercel.json:9-58`](/apps/web/vercel.json))
-  and `apps/site/next.config.ts` (5 rules — see
-  [`apps/site/next.config.ts:64-86`](/apps/site/next.config.ts)) read
-  end-to-end and inventoried in the End State table above.
-- **`apps/web/vercel.json` carries more than rewrites.** Lines 59-72
-  hold the `headers` block emitting `X-Robots-Tag: noindex, nofollow`
-  for the three test/demo event slug patterns (harvest-block-party,
+  rules total in the `rewrites` array at scoping time, since reduced
+  by Phase 2's strip) and `apps/site/next.config.ts` (5 rules in the
+  `rewrites` function) read end-to-end and inventoried in the End
+  State table above.
+- **`apps/web/vercel.json` carries more than rewrites.** The
+  `headers` block emits `X-Robots-Tag: noindex, nofollow` for the
+  three test/demo event slug patterns (harvest-block-party,
   riverside-jam, madrona). This pairs with apps/site's
   `generateMetadata` `robots` emit on test-event landings to keep
   test-event URLs invisible to search across both apps at parity
@@ -387,7 +387,7 @@ during this scoping pass; they do **not** carry into "Open questions."
   wording is corrected to "strip the cross-app proxy rewrites;
   preserve SPA rewrites and headers." Surfaced by reviewer Codex
   feedback on this PR. **Verified by:**
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json),
+  [`apps/web/vercel.json`](/apps/web/vercel.json),
   [`docs/architecture.md`](/docs/architecture.md) noindex-uniformity
   framing.
 - **Native apps/site route enumeration.** Walked the apps/site app
@@ -398,9 +398,10 @@ during this scoping pass; they do **not** carry into "Open questions."
   `opengraph-image` / `twitter-image` file-convention metadata
   routes under `/event/:slug/`. The feedback route was missed in
   the first table draft and surfaced by reviewer Codex feedback on
-  this PR; it works today only because `apps/web/vercel.json:31-33`'s
-  broad `/event/:slug/:path*` catch-all proxies it through to
-  apps/site, and works post-Phase-2 because apps/site is canonical
+  this PR; at scoping time it worked only because the broad
+  `/event/:slug/:path*` catch-all rule in `apps/web/vercel.json`
+  proxied it through to apps/site (Phase 2 has since stripped that
+  rule), and works post-Phase-2 because apps/site is canonical
   and renders it natively. Adding the row plus the **default rule**
   (any other event-scoped path → native apps/site) makes the table
   contract resilient to future apps/site additions without
@@ -417,12 +418,16 @@ during this scoping pass; they do **not** carry into "Open questions."
 - **Auth-callback ownership.** `apps/site` owns `/auth/callback`
   physically as a client route at
   [`apps/site/app/(authenticated)/auth/callback/page.tsx`](/apps/site/app/%28authenticated%29/auth/callback/page.tsx);
-  `apps/web` reaches it today only via proxy rewrite at
-  [`apps/web/vercel.json:51-53`](/apps/web/vercel.json). Once Phase 2
-  flips the canonical origin, the proxy is removable because the
-  customer is already on `apps/site`. **Verified by:**
-  [`docs/architecture.md:241-244`](/docs/architecture.md),
-  [`apps/web/vercel.json:51-53`](/apps/web/vercel.json).
+  at scoping time `apps/web` reached it only via the
+  `/auth/callback` proxy rewrite in `apps/web/vercel.json` (which
+  Phase 2 has since stripped). Phase 2's flip of the canonical
+  origin made the proxy removable because the customer is already
+  on `apps/site`. **Verified by:**
+  [`docs/architecture.md`](/docs/architecture.md) (Frontend
+  Structure section, `apps/site/app/(authenticated)/auth/callback/page.tsx` entry),
+  [`apps/web/vercel.json`](/apps/web/vercel.json) (current state
+  shows no cross-app proxy rewrites; pre-Phase-2 git history shows
+  the auth/callback proxy rule).
 - **Auth-redirect origin composition.** `requestMagicLink` composes
   `emailRedirectTo` against `window.location.origin`, not a hardcoded
   origin or a build-time env var. So magic-link return URLs follow
@@ -463,7 +468,7 @@ during this scoping pass; they do **not** carry into "Open questions."
   flight, and the assumed first real launch (Madrona) is a CNAME
   of `music.madrona.us` pointing at `apps/site`'s Vercel project.
   The architecture doc's claim at
-  [`docs/architecture.md:32-35`](/docs/architecture.md) that
+  [`docs/architecture.md`](/docs/architecture.md) that
   "`apps/web` is the primary Vercel project owning the production
   custom domain" is stale framing this plan corrects. Implication:
   Phase 2 carries no Vercel-level domain-reassignment dependency;
@@ -617,8 +622,8 @@ contracts.
 
 - [`docs/backlog.md:80-93`](/docs/backlog.md) — backlog entry this plan
   resolves; carries the original three-options framing.
-- [`docs/architecture.md:32-35`](/docs/architecture.md),
-  [`docs/architecture.md:951-1002`](/docs/architecture.md) —
+- [`docs/architecture.md`](/docs/architecture.md),
+  [`docs/architecture.md`](/docs/architecture.md) —
   current Vercel routing topology and the "transitional" framing
   the architecture doc calls out for the bidirectional-rewrite shape.
 - [`docs/dev.md:794-810`](/docs/dev.md),

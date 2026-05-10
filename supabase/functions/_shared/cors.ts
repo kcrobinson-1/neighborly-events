@@ -19,13 +19,25 @@ const APPS_SITE_PROJECT_SLUG = "neighborly-events-site";
  * - `<project>-git-<branch>-<scope>.vercel.app` (per-branch alias).
  *
  * The unique-id-hash anchor and the literal `git-` anchor are what
- * isolate apps/site's preview aliases from a hypothetical sibling
- * Vercel project whose name extends apps/site's slug as a prefix
+ * isolate apps/site's preview aliases from most hypothetical sibling
+ * Vercel projects whose names extend apps/site's slug as a prefix
  * (e.g., `neighborly-events-site-extra-...`): such a sibling's alias
  * would have `extra` (or another non-hash, non-`git` segment) at the
  * position the matcher requires either `git` or a hash. The negative-
- * test branch in `tests/supabase/functions/cors.test.ts` is the
- * load-bearing falsifier for this isolation.
+ * test case in `tests/supabase/functions/cors.test.ts` is the
+ * load-bearing falsifier for that common case.
+ *
+ * Known limitation (architectural, not bug): a hypothetical sibling
+ * Vercel project whose name happens to be apps/site's slug plus an
+ * exactly-9-character lowercase alphanumeric extension (e.g.,
+ * `neighborly-events-site-clone1234`) would produce preview aliases
+ * indistinguishable from a real apps/site deployment alias by the
+ * URL alone. Real-world risk is low (project-naming collision of
+ * exactly that shape is improbable), and the only fully-precise
+ * alternative — maintaining a per-deployment URL allowlist —
+ * defeats the pattern's purpose. If the calculus ever changes,
+ * tightening lives in the implementing PR for whichever plan
+ * surfaces the need.
  *
  * Vendor reference: https://vercel.com/docs/deployments/generated-urls
  */

@@ -32,7 +32,7 @@ carries 5 reverse-direction rewrites for the plugin-owned routes
 (`/event/:slug/{game,admin}*`, `/assets/*`). Phase 2 strips the
 cross-app proxy rewrites from `apps/web/vercel.json` (preserving the
 SPA rewrites and the test-event `X-Robots-Tag` `headers` block at
-[`apps/web/vercel.json:59-72`](/apps/web/vercel.json) untouched);
+[`apps/web/vercel.json`](/apps/web/vercel.json) untouched);
 keeps [`apps/site/next.config.ts`](/apps/site/next.config.ts)'s
 existing site → plugin rewrites as the canonical routing layer; flips
 `NEXT_PUBLIC_SITE_ORIGIN`'s production value from apps/web's primary
@@ -71,7 +71,7 @@ Ship a single PR that:
 - Strips the cross-app proxy rewrites from
   [`apps/web/vercel.json`](/apps/web/vercel.json) while preserving
   its SPA rewrites and the test-event `X-Robots-Tag` `headers`
-  block at [`apps/web/vercel.json:59-72`](/apps/web/vercel.json).
+  block at [`apps/web/vercel.json`](/apps/web/vercel.json).
 - Leaves [`apps/site/next.config.ts`](/apps/site/next.config.ts)'s
   rewrite layer at its current site → plugin shape; the existing
   rewrites are exactly what the canonical-origin contract names.
@@ -139,7 +139,7 @@ flip:
 - The shared route table at [`shared/urls/routes.ts`](/shared/urls/routes.ts)
   is unchanged.
 - Test-event noindex parity is preserved by retaining the
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) headers block
+  [`apps/web/vercel.json`](/apps/web/vercel.json) headers block
   through Phase 2; apps/site's `generateMetadata` `robots` emit is
   unchanged. Both surfaces continue to emit; the canonical-origin
   proxy from apps/site to apps/web for `/event/:slug/{game,admin}*`
@@ -185,7 +185,7 @@ The 7 cross-app proxy rewrites at lines 26-33 and lines 38-57
 topology mapping) are removed. No absolute `*.vercel.app` URL appears
 anywhere in the file post-Phase-2.
 
-**Verified by:** [`apps/web/vercel.json:1-73`](/apps/web/vercel.json)
+**Verified by:** [`apps/web/vercel.json`](/apps/web/vercel.json)
 (file under contract, read this scoping pass).
 
 ### Contract 2: apps/site/next.config.ts retains its current rewrite layer
@@ -419,7 +419,7 @@ callout.
 - [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs) —
   out of scope per scoping Decision 6.
 - The 3 test-event noindex regex constraints in
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) — preserved
+  [`apps/web/vercel.json`](/apps/web/vercel.json) — preserved
   per the cross-cutting plan's End State table row 11. The
   cross-cutting plan's Risk Register entry on per-plugin noindex
   maintenance cost (lines 593-610) records why this stays as-is

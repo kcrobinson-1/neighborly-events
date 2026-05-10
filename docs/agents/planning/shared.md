@@ -262,20 +262,41 @@ conventions, Deno / Vite / Playwright runtime semantics — and any
 other claim asserting something specific about how the codebase or
 an external service behaves) **must** carry an inline "Verified
 by:" reference to the source that proves them. Acceptable sources:
-a code citation (file path + line number, not "per scoping doc" or
-"per epic"), generated test output, an already-merged sibling
-artifact, or the upstream / vendor documentation URL for claims
-about external-service behavior the codebase doesn't contain proof
-of. Claims that cannot carry a verification reference are
-re-phrased as assumptions (clearly tagged as such) or removed.
-This is not formatting preference — it is the protective check
-that keeps the reality-check gate (named in
-[`phase.md`](./phase.md) "Reality-check gate between scoping and
-plan") from being rolled back during plan-drafting. The trigger
-enumeration is illustrative, not exhaustive: the rule binds any
-load-bearing claim about the codebase or supporting services, and
-agents do not get to argue "my claim isn't on the list, so the
-rule doesn't apply."
+a code citation (file path with optional symbol or section anchor,
+or `:N-M` line range — see "Anchor preference" below), generated
+test output, an already-merged sibling artifact, or the upstream /
+vendor documentation URL for claims about external-service behavior
+the codebase doesn't contain proof of. "Per scoping doc" or "per
+epic" are not acceptable verification sources. Claims that cannot
+carry a verification reference are re-phrased as assumptions
+(clearly tagged as such) or removed. This is not formatting
+preference — it is the protective check that keeps the
+reality-check gate (named in [`phase.md`](./phase.md)
+"Reality-check gate between scoping and plan") from being rolled
+back during plan-drafting. The trigger enumeration is illustrative,
+not exhaustive: the rule binds any load-bearing claim about the
+codebase or supporting services, and agents do not get to argue
+"my claim isn't on the list, so the rule doesn't apply."
+
+**Anchor preference: prefer symbol- or section-anchored references
+over `:N-M` line ranges when the cited target has a stable name.**
+Function names, JSON key paths, exported symbols, markdown section
+headings — any stable identifier the cited file already carries —
+survive structural edits to the file (a strip of unrelated lines
+shifts every `:N-M` citation but doesn't move the symbol). Line
+numbers remain permitted (and remain required at write time per
+the retrieve-before-citing rule) but should be treated as
+**directional navigation aids, not exact contracts** — line
+numbers drift as files get edited, and there is no docs-equivalent
+of an IDE's "rename all references" tool to keep them in sync
+across the plan tree. Reviewers do **not** flag stale or imprecise
+`:N-M` citations as findings; the symbolic content of the
+surrounding prose is the load-bearing anchor, and an off-by-N line
+range is a navigation hint to refresh, not a review issue. This
+preference is not a prohibition: paragraph-level precision inside a
+long section, files without stable named targets (plain config,
+flat SQL), and citations the author judges clearer with line
+numbers all stay valid uses.
 
 ## Quote labels whose enforcement depends on exact-match matching
 
