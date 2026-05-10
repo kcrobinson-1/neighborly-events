@@ -50,9 +50,17 @@ review**, not with **planning**.
   for pre-convention epics, scoping at
   `docs/plans/scoping/m<N>-phase-<X>-<Y>.md` and plan at
   `docs/plans/m<N>-phase-<X>-<Y>-plan.md`. The next bullet
-  specifies what each owns; both docs may carry a Status block and
-  a one-paragraph phase summary for orientation, and that is the
-  only intentional overlap.
+  specifies what each owns; both docs may carry a one-paragraph
+  phase summary for orientation, and that is the only intentional
+  overlap. **Scoping docs do NOT carry a Status block** — the
+  `In draft → Proposed → Landed` lifecycle is for plans (which
+  the implementing PR consumes); scoping docs are transient
+  deliberation that delete at terminal-state, so the lifecycle
+  doesn't apply to them and a Status block on a scoping doc can
+  only become wrong (a `Proposed` scoping doc has no consumer for
+  the promotion claim, and an `In draft` scoping doc becomes stale
+  the moment the sibling plan flips to `Proposed`). Sibling plans
+  alone carry Status.
 - **Scoping owns / plan owns.** Because scoping deletes at
   milestone-terminal PR, the durable plan must end up with
   everything worth persisting in record after the feature
