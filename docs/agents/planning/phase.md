@@ -170,10 +170,17 @@ review**, not with **planning**.
   2. **Bounded file count.** Plan estimates ≤ 8 files touched
      (excluding generated types and test files).
   3. **No new public-API contract.** No new RPC, no new auth /
-     authz boundary, no new route family. Additive schema-touch
-     (CREATE TABLE, ADD COLUMN) is allowed; non-additive changes
-     (ALTER on existing tables, FK refactor, RLS rewrite) require
-     the full path.
+     authz boundary, no new route family. Schema-touch is allowed
+     only when **purely additive** — net-new tables (CREATE
+     TABLE), net-new columns on existing tables (ALTER TABLE …
+     ADD COLUMN), net-new indexes — without altering the meaning
+     of existing rows or breaking existing read paths. Any change
+     that modifies or removes an existing structure (DROP COLUMN,
+     ALTER COLUMN type / default / nullability, RENAME, FK
+     refactor, RLS rewrite) requires the full path. The
+     discriminator is "modifies or removes existing structures,"
+     not the SQL verb — `ALTER TABLE … ADD COLUMN` is additive,
+     `ALTER TABLE … ALTER COLUMN` is not.
   4. **No new cross-cutting invariant.** The change does not
      introduce a rule that multiple files must agree on.
      Cross-cutting invariants are the load-bearing reason scoping

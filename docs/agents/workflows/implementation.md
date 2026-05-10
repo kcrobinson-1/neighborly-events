@@ -28,7 +28,7 @@ Work should follow the repo process even when the prompt only describes the end 
 A change qualifies for the **lightweight path** when ALL of these hold:
 
 1. **≤ 5 files touched** (excluding generated types).
-2. **Single subsystem.** Touches one of: a UI surface (route, section, component), a data-model layer (table, migration), or backend logic (RPC, edge function). Changes spanning more than one are multi-subsystem.
+2. **Single subsystem.** Touches one of: a UI surface (route, section, component) or backend logic (RPC, edge function). Changes spanning more than one are multi-subsystem. Data-model changes (tables, migrations) always route to the full path per criterion 4 below; they're excluded from the lightweight subsystem set even when otherwise single-subsystem.
 3. **No public-API contract change.** No new or modified RPC, no auth / authz change, no route addition or removal.
 4. **No schema change.** Migrations of any kind (additive or otherwise) require the full path; the schema is the persistence contract and changes to it warrant the full discipline.
 5. **Test surface is local.** Added or updated tests cover only the touched files; no new e2e, integration, or cross-file fixture work.
