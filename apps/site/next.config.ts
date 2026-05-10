@@ -24,14 +24,14 @@ import type { NextConfig } from "next";
  * client and dropped to its timeout-state UI.
  */
 /**
- * Cross-app proxy rewrites mirroring `apps/web/vercel.json`'s
- * apps/site rewrites in reverse direction. Visitors on apps/site
- * origin (preview URLs, the auto-generated `*.vercel.app` host, or
- * any domain mapped to the apps/site Vercel project) clicking the
- * home-page role-door links land on `/event/:slug/game`,
- * `/event/:slug/admin`, or their sub-paths — routes that exist only
- * on apps/web's SPA. Without these rewrites the navigations 404
- * on apps/site origin.
+ * Site → plugin proxy rewrites. apps/site is the canonical user-facing
+ * origin: every customer-visible URL resolves on apps/site's Vercel
+ * project (or a per-event organizer subdomain CNAME'd to it), and the
+ * plugin-owned routes (`/event/:slug/game*`, `/event/:slug/admin*`,
+ * `/assets/*`) are routed from apps/site into the apps/web plugin
+ * deployment via these proxy rewrites. apps/web's Vercel project is
+ * reachable directly at its own `*.vercel.app` host, but is not
+ * advertised as a customer-facing origin.
  *
  * `/assets/:path*` is also rewritten because apps/web's Vite build
  * emits its hashed JS/CSS bundles as root-relative `/assets/...`
@@ -42,13 +42,11 @@ import type { NextConfig } from "next";
  * `/assets/*` route of its own (Next.js puts its build output under
  * `/_next/*`), so the rewrite is collision-free.
  *
- * The destination origin is hardcoded to apps/web's auto-generated
- * Vercel host, matching the precedent in `apps/web/vercel.json`
- * (which hardcodes apps/site's host the same way). Asymmetry vs.
- * the documented "apps/web is canonical" topology is tracked in
- * `docs/backlog.md` under "Canonical-origin design conversation"
- * — this rewrite is the cheapest unblock for the home-page
- * broken-links symptom, not a settled design.
+ * `APPS_WEB_ORIGIN` names the plugin deployment's Vercel-generated
+ * host as the proxy destination. The canonical-origin contract is
+ * documented in [`docs/plans/canonical-origin-resolution.md`](../../docs/plans/canonical-origin-resolution.md)
+ * and the topology flip that established this shape ships per
+ * [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](../../docs/plans/canonical-origin-resolution-phase-2-plan.md).
  */
 const APPS_WEB_ORIGIN = "https://neighborly-scavenger-game-web.vercel.app";
 
