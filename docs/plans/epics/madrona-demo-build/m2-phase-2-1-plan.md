@@ -9,6 +9,15 @@ milestone doc's top-level status, deleted the scoping doc per
 the milestone-doc batch-deletion commitment, and reconciled the
 epic's Sizing Summary M2 line against actuals.
 
+> **Post-landing note (2026-05-10).** The per-event
+> `release:seed:madrona` npm alias described below was dropped
+> in favor of the generic `release:seed` script that takes
+> `--content <path>` directly. References to the alias in the
+> body text are accurate as a record of what M2 phase 2.1
+> shipped; current operators run
+> `npm run release:seed -- --content shared/events/madrona-demo-game-content.ts`.
+> The underlying script and seed-module shape are unchanged.
+
 ## Context
 
 This phase ships the wiring that lets a stakeholder visit
