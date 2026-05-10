@@ -222,6 +222,8 @@ here is the sequencing.
 
 ### Phase 1 — Verify `apps/site` is self-sufficient on its own origin
 
+**Per-phase plan:** [`docs/plans/canonical-origin-resolution-phase-1-plan.md`](/docs/plans/canonical-origin-resolution-phase-1-plan.md) (Status: Landed). Transient scoping at [`docs/plans/scoping/canonical-origin-resolution-phase-1.md`](/docs/plans/scoping/canonical-origin-resolution-phase-1.md).
+
 **What this phase does.** Audit and patch any gap that prevents
 `apps/site` from being a complete customer experience on its own
 origin **without** the cross-app routing favors it currently receives
@@ -251,6 +253,8 @@ inventory deferred to per-phase plan-drafting.
 **Dependencies.** None blocking. Can ship today.
 
 ### Phase 2 — Flip the canonical pointer
+
+**Per-phase plan:** [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md) (Status: Proposed). Transient scoping at [`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md).
 
 **What this phase does.** Make the canonical customer URL point at
 the `apps/site` Vercel project. Move all public-routing responsibility
