@@ -25,13 +25,17 @@ appropriate session moment.
 
 Work should follow the repo process even when the prompt only describes the end state.
 
-Use the lightweight path only when the change is small and low-risk, for example:
+A change qualifies for the **lightweight path** when ALL of these hold:
 
-- a single-file fix
-- a narrow copy or style adjustment
-- a small test update that does not change structure
+1. **≤ 5 files touched** (excluding generated types).
+2. **Single subsystem.** Touches one of: a UI surface (route, section, component), a data-model layer (table, migration), or backend logic (RPC, edge function). Changes spanning more than one are multi-subsystem.
+3. **No public-API contract change.** No new or modified RPC, no auth / authz change, no route addition or removal.
+4. **No schema change.** Migrations of any kind (additive or otherwise) require the full path; the schema is the persistence contract and changes to it warrant the full discipline.
+5. **Test surface is local.** Added or updated tests cover only the touched files; no new e2e, integration, or cross-file fixture work.
 
-Use the full structured path when the change is multi-file, architectural, refactor-heavy, or changes tests, validation, documentation, or workflow.
+If ANY of these fails, use the **full structured path**. The classes that recurringly need the full path: multi-file refactors, architectural changes, anything introducing a new mechanism or cross-cutting invariant, anything touching workflow / validation / build / CI surfaces.
+
+The thresholds here are deliberately stricter than the narrow-surface criteria in [`docs/agents/planning/phase.md`](../planning/phase.md) "Narrow-surface phases may skip the scoping doc." That rule governs whether a *planned phase* writes a scoping doc; this rule governs whether *unplanned implementation work* uses lightweight or full execution discipline. A change that qualifies as narrow-surface for phase planning may still need the full structured path here — phase planning's narrow-surface threshold is about scoping artifact necessity, not about commit/validation discipline.
 
 ### Lightweight Path
 
