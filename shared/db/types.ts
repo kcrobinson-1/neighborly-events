@@ -503,6 +503,38 @@ export type Database = {
           },
         ]
       }
+      newsletter_opt_ins: {
+        Row: {
+          email: string
+          event_slug: string
+          id: string
+          opted_in_at: string
+          source_surface: string
+        }
+        Insert: {
+          email: string
+          event_slug: string
+          id?: string
+          opted_in_at?: string
+          source_surface: string
+        }
+        Update: {
+          email?: string
+          event_slug?: string
+          id?: string
+          opted_in_at?: string
+          source_surface?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "newsletter_opt_ins_event_slug_fkey"
+            columns: ["event_slug"]
+            isOneToOne: false
+            referencedRelation: "feedback_enabled_events"
+            referencedColumns: ["slug"]
+          },
+        ]
+      }
     }
     Views: {
       game_event_admin_status: {
@@ -584,6 +616,14 @@ export type Database = {
           p_free_text?: string
           p_newsletter_opt_in: boolean
           p_ratings: Json
+        }
+        Returns: undefined
+      }
+      subscribe_email: {
+        Args: {
+          p_email: string
+          p_event_slug: string
+          p_source_surface: string
         }
         Returns: undefined
       }
