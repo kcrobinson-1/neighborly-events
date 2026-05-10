@@ -381,10 +381,16 @@ opt-in for the full scoping-doc + plan-doc path.
 **Activates:** Bet 4 (directly), Bet 1 (over time).
 **Status:** landed (2026-05-10).
 **Notes:** `phase.md` currently assumes every phase needs both
-docs. The Madrona feedback M1 phases (1.1, 1.2, 1.3) would all
-have qualified for the lightweight path under a reasonable
-threshold; the contributor wrote 449–815 line scoping+plan docs
-for each instead. **Outcome:** landed as a new "Narrow-surface
+docs. Phase 1.2 specifically — one TypeScript field + one
+section component — is the headline case: qualifies for the
+lightweight path under any reasonable threshold, but the
+contributor wrote a 657-line plan doc plus a 449-line scoping
+doc for it anyway. Sibling phases 1.1 and 1.3 do not cleanly
+qualify (see Outcome below) — earlier drafts of this entry
+carried a "would all have qualified" framing imported uncritically
+from the diagnosis prose; the concrete-threshold walk reveals
+that hand-wavy applicability claims over-estimate carve-out
+reach. **Outcome:** landed as a new "Narrow-surface
 phases may skip the scoping doc" bullet in `phase.md` (~58 lines)
 with five enumerated criteria (single subsystem, ≤8 files, no new
 public-API contract, no new cross-cutting invariant, no novel
