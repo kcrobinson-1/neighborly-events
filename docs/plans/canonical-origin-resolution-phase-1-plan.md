@@ -6,8 +6,9 @@ Landed.
 
 This is the durable per-phase plan for Phase 1 of the cross-cutting
 plan at [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md).
-The transient scoping doc lives at
-[`docs/plans/scoping/canonical-origin-resolution-phase-1.md`](/docs/plans/scoping/canonical-origin-resolution-phase-1.md).
+The transient scoping doc was deleted on Phase 2 land per the
+scoping-doc-transience convention; git history preserves the
+original scoping prose.
 
 ## Context
 
@@ -276,8 +277,9 @@ ship.
 
 ### New
 
-- [`docs/plans/scoping/canonical-origin-resolution-phase-1.md`](/docs/plans/scoping/canonical-origin-resolution-phase-1.md) —
-  transient scoping doc.
+- The transient Phase 1 scoping doc (subsequently deleted on Phase 2
+  land per the scoping-doc-transience convention; git history
+  preserves it).
 - [`docs/plans/canonical-origin-resolution-phase-1-plan.md`](/docs/plans/canonical-origin-resolution-phase-1-plan.md) —
   this plan doc.
 
