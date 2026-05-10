@@ -1,18 +1,15 @@
-# Scoping — Newsletter subscription split from feedback table
+# Newsletter subscription split from feedback table
 
 ## Status
 
-In draft. Cross-cutting scoping doc — the subject (a newsletter
-subscription store and its write-through from the feedback form)
-spans the madrona-feedback epic's data shape and a yet-unscoped
-standalone newsletter-signup feature, so this doc does not file
-under a single epic. Filed at the cross-cutting top-level location
-per [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
-"In-Repo Layout Convention" (`docs/plans/<name>.md` for
-cross-cutting plans not bound to a single epic). Promotion to
-`Proposed` runs the
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-"`In draft` → `Proposed` promotion gate" walk before the flip.
+Landed. Cross-cutting plan — the subject (a newsletter subscription
+store and its write-through from the feedback form) spans the
+madrona-feedback epic's data shape and a yet-unscoped standalone
+newsletter-signup feature, so this doc does not file under a single
+epic. Filed at the cross-cutting top-level location per
+[`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
+"In-Repo Layout Convention" (`docs/plans/<name>.md` for cross-cutting
+plans not bound to a single epic).
 
 ## Context
 
@@ -44,7 +41,7 @@ The maintainer-agreed direction is to ship a standalone newsletter
 signup feature as a peer surface to the feedback form, and reshape
 the feedback form's opt-in into a write into the same subscription
 store rather than a column on `feedback_submissions`. The standalone
-signup feature itself is a separate scoping pass — this doc resolves
+signup feature itself is a separate scoping pass — this plan resolves
 the data-shape questions that bind both surfaces so the standalone
 signup's eventual scoping inherits a settled write-through contract
 rather than re-litigating it.
@@ -71,8 +68,7 @@ rather than re-litigating it.
 ## Decisions made at scoping time
 
 Each decision below carries a `Verified by:` reference to the source
-that proves the load-bearing claim. Decisions are absorbed into
-whatever plan doc follows; this scoping doc owns the deliberation
+that proves the load-bearing claim. This doc owns the deliberation
 prose (rejected alternatives) for the lifetime of the discussion.
 
 Per [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
@@ -152,40 +148,6 @@ multi-event-host concept, it adds an `org_id` column (or
 equivalent) and the unit of consent migrates without the per-event
 rows becoming wrong.
 
-**Reframed from earlier scoping (twice).** This decision has
-flipped twice during the scoping pass. Recording both pivots so
-future readers see the framing trajectory:
-
-- *First pivot:* the first draft chose a global-email-keyed shape
-  (then-named D1) on the framing "one canonical yes-or-no per
-  email." That framing relied on a slug-less surface that doesn't
-  exist in this product and produced an attribution-loss bug
-  reviewer Codex flagged (first-write-wins on a nullable
-  `source_event_slug` would silently drop a second event's row).
-  Maintainer caught the deeper framing error: the wrong axis was
-  "global vs. per-event" when the right axis was "what's the unit
-  of consent." Resolution flipped to a composite (event_slug,
-  email) primary key.
-- *Second pivot:* the composite-PK resolution carried `ON
-  CONFLICT (event_slug, email) DO NOTHING` semantics — repeat
-  opt-ins from the same email for the same event would silently
-  no-op. Maintainer caught a structural contradiction with
-  Decision 7's "append-only log of consent events" framing during
-  a post-Proposed-gate read: those two cannot both be true. Log
-  shape is the more honest fit under Decision 7's consent-capture-
-  for-export role; repeat opt-ins are real signal worth preserving
-  (source attribution per event, time progression, surface-
-  conversion analysis), and export-time dedup is cheap. The right
-  axis is "row-uniqueness vs append-only," and the doc had been
-  silently importing row-uniqueness from earlier persistent-store
-  drafts. Resolution flipped to surrogate-PK append-only log.
-
-The promotion-gate "read end-to-end as a coherent whole" walk
-should have caught the second contradiction before it was merged
-into the doc's body; it didn't, and that's the kind of failure
-mode worth recording so the next promotion gate audits more
-adversarially.
-
 **Why it mattered.** The shape choice locks how the standalone
 signup feature, the feedback write-through, per-event organizer
 exports, and any future organizer operations compose. Picking
@@ -204,21 +166,25 @@ is the former; log shape matches it.
    correct. Plain-INSERT semantics in the helper; no ON CONFLICT.
 2. **Composite (event_slug, email) PK with row-uniqueness (Option
    C).** Single row per (event_slug, email) pair, ON CONFLICT DO
-   NOTHING (or DO UPDATE) on repeat opt-ins. Rejected on
-   Decision-7-contradiction grounds — see "Reframed from earlier
-   scoping" above.
-3. **Global table, single row per email (Option D).** Already
-   rejected in the first pivot above. Decomposes into D1 (nullable
-   source_event_slug, first-write-wins) and D2 (composite on
-   email + source_surface); both rely on a slug-less surface that
-   doesn't exist or split per-event consent across surfaces in the
-   wrong direction.
+   NOTHING (or DO UPDATE) on repeat opt-ins. Rejected because
+   row-uniqueness contradicts Decision 7's "append-only log of
+   consent events" framing: every silent no-op discards real
+   signal (the second consent event tells us the second surface
+   converted; row-uniqueness throws that away).
+3. **Global table, single row per email (Option D).** Decomposes
+   into D1 (nullable source_event_slug, first-write-wins) and D2
+   (composite on email + source_surface); both rely on a slug-less
+   surface that doesn't exist in this product (every public surface
+   that captures an opt-in is event-scoped — feedback form lives
+   at `/event/<slug>/feedback`, standalone signup widget renders
+   under `/event/<slug>/*`) or split per-event consent across
+   surfaces in the wrong direction.
 4. **Email + history join table (Option E).** Two-table schema
    where the canonical row per email lives in one table and an
-   opt-in-event log lives in another. Already rejected as
-   over-engineered for v1; under the log-shape resolution it's
-   even less useful (Option Log already IS the log half of E
-   without the redundant canonical-row table).
+   opt-in-event log lives in another. Over-engineered for v1;
+   under the log-shape resolution it's even less useful (Option
+   Log already IS the log half of E without the redundant
+   canonical-row table).
 
 **Came down to.** Whether row-uniqueness or append-only-log is
 the right fit under Decision 7's consent-capture-for-export role.
@@ -239,7 +205,8 @@ the right fit under Decision 7's consent-capture-for-export role.
   via the standalone widget, the second event tells us the
   widget converted them — composite-PK throws that away. Under
   the consent-capture-for-export role, that's the wrong default.
-- *Option D1, D2, E.* Already rejected above; not revisited.
+- *Option D1, D2, E.* Rejected as named in the Options list
+  above.
 
 **Resolution.** Option Log. Load-bearing columns the implementing
 plan will instantiate (final names and types deferred to plan
@@ -253,9 +220,8 @@ time):
   that already gates feedback writes — see Reality-check inputs).
   When the standalone signup feature ships, its scoping pass
   decides whether to extend this registry, mint a sibling
-  registry, or relax to free-form text; this scoping doc names
-  the FK as the v1 default since every v1 surface is feedback-
-  registry-gated anyway.
+  registry, or relax to free-form text; the FK is the v1 default
+  since every v1 surface is feedback-registry-gated anyway.
 - An `email` column, NOT NULL, case-normalized at write time. The
   normalization shape (lowercase + trim, `citext`, or a `lower()`
   index) is a plan-level call; what's settled is that the same
@@ -263,7 +229,7 @@ time):
   the same event at export-time deduplication.
 - An `opted_in_at` timestamp recording the moment of this
   consent event. (Column-name finalization is plan-level;
-  `subscribed_at` is the alternative — the implementing plan
+  `subscribed_at` is the alternative — the implementing pass
   picks a name that aligns with the consent-capture framing
   rather than the persistent-subscription framing.)
 - A `source_surface` column ('feedback_form' for the feedback
@@ -304,21 +270,17 @@ audit flag (per Decision 5) and a capture-log row (via the helper
 from Decision 4); the new capture log starts populated only by the
 helper, never by direct backfill SQL.
 
-**Maintainer-attested assumption recorded inline.** Earlier drafts
-of this decision picked Option F (migration-time backfill) on the
-rationale that forward-only would lose real consent records. The
-maintainer attests at scoping time that there's no production data
-worth preserving — the feedback table has not yet served a real
-event, and any rows present are test traffic. **This assumption is
-not verifiable from in-repo state** (the migration file proves the
-table exists, not what's in it); production row count is what would
-falsify it. The implementing pass owns the reality check before
-locking in no-backfill SQL (see Reality-check inputs). Under the
-assumption as stated, the simplest path wins: skip the backfill SQL
-entirely. Truncating the table first is offered as an alternative
-the implementing pass may pick if a clean-slate state is preferred
-over a leave-existing-rows state, but neither is materially
-different for the v1 outcome.
+**Maintainer-attested assumption.** The feedback table has not yet
+served a real event; any rows present are test traffic. **This
+assumption is not verifiable from in-repo state** (the migration
+file proves the table exists, not what's in it); production row
+count is what would falsify it. The implementing pass discharges
+the reality check before locking in no-backfill SQL — see
+Reality-check inputs. Under the assumption as stated, the simplest
+path wins: skip the backfill SQL entirely. Truncating the table
+first is offered as an alternative the implementing pass may pick
+if a clean-slate state is preferred over a leave-existing-rows
+state, but neither is materially different for the v1 outcome.
 
 **Why this is consistent with Decision 5.** Decision 5 frames
 `newsletter_opt_in` on `feedback_submissions` as a snapshot of
@@ -333,10 +295,10 @@ audit semantic absorbs the unmigrated rows cleanly.
 
 1. **Migration-time backfill (Option F).** Insert capture-log rows
    for every `newsletter_opt_in = true` feedback row at migration
-   apply. Initially picked on the (then-correct) rationale that
-   real consent records shouldn't be lost. Becomes over-engineering
-   once the maintainer confirms there are no such records to
-   preserve.
+   apply. Right answer if the table has served real consent
+   events; over-engineering against the maintainer-attested
+   assumption that no such records exist yet (see assumption
+   above).
 2. **Forward-only, no backfill SQL (Option G).** New capture-log
    rows only land from opt-ins after the migration. Pre-existing
    feedback rows keep their `newsletter_opt_in` boolean as
@@ -355,8 +317,8 @@ new capture log, the internal helper, and the `submit_feedback`
 body update without any data-movement SQL. The
 implementing pass may instead pick Option G' (add a `truncate`
 step) if it judges a clean-slate start to be operationally
-clearer; both options satisfy the scoping resolution. The
-implementing plan owns whichever SQL it picks; this doc does not
+clearer; both options satisfy the resolution. The
+implementing pass owns whichever SQL it picks; this doc does not
 draft it.
 
 ### 4. Write path from feedback — synchronous write through an internal SECURITY DEFINER helper, called from surface-specific public RPCs [Resolved → Option L, internal-helper variant]
@@ -385,7 +347,7 @@ constrains its own `event_slug` shape before calling the helper.
 **Why it mattered.** Naming the transactional shape and the
 public-vs-internal API boundary now closes off the failure-mode
 and abuse-mode surface areas; deciding either later means the
-implementing plan inherits a multi-shape decision rather than a
+implementing pass inherits a multi-shape decision rather than a
 contract.
 
 **Options considered.** Per the "Decompose options into shapes"
@@ -498,7 +460,7 @@ who controls the source-attribution columns.
   fan-out, not the cross-table consistency, and the design space
   reopens.
 
-**Resolution.** Option L-internal. The implementing plan defines
+**Resolution.** Option L-internal. The implementing pass defines
 the helper's full signature and INSERT body; this doc names the
 parameter shape (`p_event_slug`, `p_email`, `p_source_surface` —
 two non-null inputs gating event and identity, plus the audit-only
@@ -527,7 +489,7 @@ DEFINER RPC that calls the helper with `p_source_surface =
 that scoping pass. The set of permissible `source_surface` values
 is enforced at the public-RPC boundary (each RPC hardcodes one
 literal); a DB-level CHECK on `source_surface` is a
-defense-in-depth option the implementing plan may add but is not
+defense-in-depth option the implementing pass may add but is not
 the primary gate.
 
 ### 5. Feedback-row audit flag — keep `newsletter_opt_in` as a denormalized audit signal [Resolved → Option N]
@@ -599,7 +561,7 @@ semantics — exact wording is plan-level.
 
 ### 6. Future-feature absorption — feedback + subscription is anticipated to be one plugin under the platform's plugin architecture, full scoping deferred to that pass [Carryover]
 
-**What this scoping doc resolves.** The contract surface for the
+**What this plan resolves.** The contract surface for the
 standalone signup is a separate, surface-specific public SECURITY
 DEFINER RPC (working name `submit_newsletter_signup`) granted to
 anon and authenticated. That RPC's body calls the internal
@@ -624,13 +586,11 @@ framing is in active scoping (separately tracked) under which
 `apps/web` game deployment is the first plugin. Under that
 framing, feedback + subscription is anticipated to be a sibling
 plugin — one module that owns the feedback page, the standalone
-signup page, an embeddable email-entry widget exportable to
-event homepages, the data tables, and the future organizer-facing
-data-export and analysis tools. The "standalone signup feature's
-own scoping pass" earlier drafts of this doc named is more
-accurately framed as the **feedback + subscription plugin's own
-scoping pass**: a single absorbed surface that this scoping doc
-is upstream of.
+signup page, an embeddable email-entry widget exportable to event
+homepages, the data tables, and the future organizer-facing
+data-export and analysis tools. The next absorber is the
+**feedback + subscription plugin's own scoping pass**: a single
+absorbed surface that this plan is upstream of.
 
 Specifically deferred to that pass:
 
@@ -659,9 +619,8 @@ Specifically deferred to that pass:
 
 The data-shape and write-contract decisions in this doc bind
 regardless of where the plugin scoping lands those decisions,
-and regardless of whether the implementing PR for *this* scoping
-ships in `public.*` today or in a plugin namespace later (see
-Plan structure handoff).
+and regardless of whether the implementation ships in `public.*`
+today or in a plugin namespace later (see Plan structure handoff).
 
 ### 7. Compliance posture — Neighborly is a consent-capture surface; persistent list state lives downstream [Resolved]
 
@@ -680,12 +639,10 @@ list-membership truth from the moment of import forward.
 
 This reframes the schema substantially:
 
-- **No `confirmation_status` column.** Earlier drafts kept this as
-  forward-compatibility for a v2 double-opt-in. The reframing
-  makes that v2 not coming — confirmation lives in Mailchimp's
-  import flow, not in our schema. Storing a column we will never
-  populate beyond a default is overengineering against an
-  imagined future.
+- **No `confirmation_status` column.** Confirmation lives in
+  Mailchimp's import flow, not in Neighborly's schema. Storing a
+  column we will never populate beyond a default is
+  overengineering against an imagined future.
 - **No `unsubscribed_at` column.** Same logic. Once the export
   reaches the downstream tool, that tool's unsubscribe link is
   the user-facing path; its database is the source of truth for
@@ -733,97 +690,65 @@ with the export is outside Neighborly's scope.
 
 ## Plan structure handoff
 
-This scoping doc resolves all seven open questions named in the
-maintainer's framing; no Open Decisions remain for plan-drafting
-to resolve. Whether the next step is a phase plan doc or direct
-implementation is a maintainer decision.
+This plan resolves all seven open questions named in the
+maintainer's framing; no Open Decisions remain. The implementing
+PR ships directly against this doc rather than synthesizing a
+separate phase plan.
 
-If the next step is a plan doc, the natural shape is one cross-
-cutting plan at the same top-level location (alongside this
-scoping doc), since the implementing PR touches the
-madrona-feedback epic's table without belonging to that epic's
-milestone structure. The plan would own: the new capture-log
-migration (append-only shape per Decision 2), the internal
-`subscribe_email` helper RPC (SECURITY DEFINER, EXECUTE revoked
-from public/anon/authenticated per Decision 4), the
-`submit_feedback` RPC body update to conditionally call the
-helper with hardcoded `p_source_surface = 'feedback_form'` when
-`p_newsletter_opt_in = true`, the regenerated
-`shared/db/types.ts`, and any clarifying comments on
-`feedback_submissions.newsletter_opt_in`'s snapshot semantics.
+The implementing scope is one cross-cutting PR at the same
+top-level location, since it touches the madrona-feedback epic's
+table without belonging to that epic's milestone structure. The
+PR owns: the new capture-log migration (append-only shape per
+Decision 2), the internal `subscribe_email` helper RPC (SECURITY
+DEFINER, EXECUTE revoked from public/anon/authenticated per
+Decision 4), the `submit_feedback` RPC body update to
+conditionally call the helper with hardcoded `p_source_surface =
+'feedback_form'` when `p_newsletter_opt_in = true`, the
+regenerated `shared/db/types.ts`, and a clarifying column comment
+on `feedback_submissions.newsletter_opt_in`'s snapshot semantics.
 Per Decision 3, no backfill SQL is needed; the implementing pass
 may add a `truncate public.feedback_submissions` step if it
-prefers a clean-slate state, but that's a destructive verb that
+prefers a clean-slate start, but that's a destructive verb that
 requires its own review attention rather than landing silently.
 The standalone signup public RPC and any UI shipping the
 standalone surface (or any other surface absorbed into the
-feedback + subscription plugin) are *not* in scope for that plan
-— they belong to the plugin's own scoping pass per Decision 6.
-
-If the next step is direct implementation, the same scope applies;
-the implementing PR carries its own contract via the diff.
+feedback + subscription plugin) are *not* in scope — they belong
+to the plugin's own scoping pass per Decision 6.
 
 **Namespace placement under the in-flight plugin architecture.**
-The scoping above is written in `public.*` schema and current-
+The contract above is written in `public.*` schema and current-
 architecture language because that is what the codebase contains
 today. A plugin-architecture framing is in active scoping
 (separately tracked); under it, feedback + subscription is
 anticipated to be its own plugin owning a plugin-specific schema.
-Two paths the implementing pass picks between based on actual
-state at implementation time:
+The implementing PR landed in `public.*` because at implementation
+time the plugin scoping had not produced concrete schema
+scaffolding (no settled plugin namespace convention, no plan-doc
+contract for the feedback + subscription plugin, no migration
+shells to land into) — see Reality-check inputs for the read.
+Future plugin scoping's job is `ALTER SCHEMA` + RPC namespace
+move plus relocating the feedback page into the plugin's UI tree
+— mechanical, not a redesign. The seven shape decisions are
+invariant across the move.
 
-- **Land in `public.*` now, mechanical migration later.** Default
-  if the plugin architecture has not produced concrete
-  scaffolding (a settled namespace convention, a plan-doc
-  contract for the feedback + subscription plugin, or migration
-  shells the implementer can land into) by the time
-  implementation opens. Future plugin scoping's job at that
-  point is `ALTER SCHEMA` + RPC namespace move plus relocating
-  the feedback page into the plugin's UI tree — mechanical, not
-  a redesign. The seven shape decisions are invariant across the
-  move.
-- **Land directly in the plugin namespace.** Available only if
-  the plugin scaffolding has settled enough that the
-  implementing PR can land into it without adding scaffolding
-  scope — i.e., the plugin namespace exists, the RPC-grant
-  conventions are settled, the registry-FK target is named.
-  Adding plugin-architecture scaffolding inside the implementing
-  PR for this scoping would be scope creep against the seven
-  decisions resolved here; that work belongs to the plugin
-  scoping itself, not to this implementation pass.
+## PR shape
 
-The implementing pass walks the Reality-check inputs below
-(specifically the plugin-framing-state check) before picking the
-path.
+Single PR. The migration (new capture log + internal helper RPC +
+`submit_feedback` body update), the regenerated
+`shared/db/types.ts`, the column comment, the pgTAP test, and the
+doc reframe + trim ship as one cohesive review chunk well below
+the AGENTS.md ">5 distinct subsystems" or ">300 LOC of substantive
+logic" thresholds. Subsystems touched: SQL migration, generated
+types, db tests, doc surface — four, not five. A split would be
+artificial: the schema + helper + RPC-body update are tightly
+coupled at the public anon write path; landing them separately
+would leave anon writes inconsistent at intermediate commits.
 
-## Recommended PR shape (non-binding)
+## Reality-check inputs
 
-Per the maintainer's framing, this scoping doc does not lock the
-PR boundary. Initial read on shape, for the implementing plan or
-direct PR to confirm or revise:
-
-- **Single PR.** The migration (new capture log + internal helper
-  RPC), the `submit_feedback` body update to call the helper, the
-  `shared/db/types.ts` regeneration, and any doc updates fit one
-  cohesive review chunk well below the AGENTS.md ">5 distinct
-  subsystems" or ">300 LOC of substantive logic" thresholds.
-  Subsystems touched: SQL migration, RPC body, generated types,
-  doc surface — four, not five.
-- A split is unlikely to be justified given Decision 3's "no
-  backfill" resolution; the implementing diff is bounded by
-  schema + helper + RPC-body update, all of which are tightly
-  coupled.
-
-The implementing pass re-derives this against actual diff size per
-[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
-"PR-count predictions need a branch test."
-
-## Reality-check inputs the implementing plan must verify
-
-These are the load-bearing claims this scoping doc rests on. The
-implementing plan re-verifies each at plan time per
-[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
-"Reality-check gate between scoping and plan."
+These are the load-bearing claims the contract above rests on. The
+implementing pass discharges each before opening the PR; the PR
+body records the evidence per check.
 
 - **`feedback_submissions` shape and CHECK constraint set.** The
   current table definition is at
@@ -846,29 +771,29 @@ implementing plan re-verifies each at plan time per
 - **`submit_feedback` RPC signature and body.** Currently at
   [`supabase/migrations/20260509000000_add_submit_feedback_rpc.sql:27-58`](/supabase/migrations/20260509000000_add_submit_feedback_rpc.sql).
   Decision 4 calls for adding a helper invocation inside its
-  transaction. The plan confirms the function's
-  `security definer` posture is preserved and the grant set
-  (anon, authenticated) at lines 60-65 is unchanged.
+  transaction. The implementing migration preserves the function's
+  `security definer` posture and re-issues the grant set (anon,
+  authenticated) at lines 60-65 unchanged.
 - **`feedback_enabled_events` registry contents and FK target
   reuse.** Registry currently contains a single seed for `madrona`
   ([`supabase/migrations/20260506000000_add_feedback_tables.sql:107-109`](/supabase/migrations/20260506000000_add_feedback_tables.sql)).
   Decision 2 reuses this registry as the FK target for the new
   capture log's `event_slug` column, on the basis that every v1
   surface that produces a capture row is event-scoped against a
-  feedback-registered event. The plan confirms the registry's
-  lifecycle (when slugs get added / removed / renamed)
-  accommodates a second downstream FK without introducing weird
-  cross-table coupling at slug-rename time (the existing
-  `on delete restrict` posture at line 53 already blocks slug
-  deletion while feedback rows reference; the new FK extends that
-  block to capture-log rows, which is the intended behavior).
+  feedback-registered event. The registry's lifecycle (when slugs
+  get added / removed / renamed) accommodates a second downstream
+  FK without introducing weird cross-table coupling at slug-rename
+  time: the existing `on delete restrict` posture at line 53
+  already blocks slug deletion while feedback rows reference, and
+  the new FK extends that block to capture-log rows, which is the
+  intended behavior.
 - **Generated types.** `shared/db/types.ts` reflects the current
   feedback table at
   [`shared/db/types.ts:86-126`](/shared/db/types.ts) and the
   current `submit_feedback` RPC at
-  [`shared/db/types.ts:585`](/shared/db/types.ts). The plan
-  regenerates these after the migration lands and verifies the
-  feedback form
+  [`shared/db/types.ts:585`](/shared/db/types.ts). The implementing
+  pass regenerates these after the migration applies and confirms
+  the feedback form
   ([`apps/site/app/event/[slug]/feedback/FeedbackForm.tsx:124-130`](/apps/site/app/event/[slug]/feedback/FeedbackForm.tsx))
   still typechecks against the regenerated types.
 - **Epic Risk Register consent posture.** The "Newsletter consent
@@ -876,47 +801,44 @@ implementing plan re-verifies each at plan time per
   [`docs/plans/epics/madrona-feedback/epic.md:474-481`](/docs/plans/epics/madrona-feedback/epic.md)
   and the "Newsletter delivery pipeline" Resolved Decision at
   [`docs/plans/epics/madrona-feedback/epic.md:514-516`](/docs/plans/epics/madrona-feedback/epic.md)
-  bound Decision 7's single-opt-in posture. The plan confirms
-  these are still authoritative at plan time and not superseded
-  by a later epic update.
+  bound Decision 7's single-opt-in posture. These remain
+  authoritative and are not superseded by a later epic update.
 - **Architecture guardrails.** The
   no-business-rule-duplication and shared-source-of-truth rules in
   [`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
-  motivate Decision 4's shared helper. The plan confirms the
-  guardrail wording when drafting the helper's contract.
+  motivate Decision 4's shared helper.
 - **Helper grant posture (Decision 4 load-bearing claim).** The
-  scoping resolution requires the implementing migration to
-  REVOKE EXECUTE on `subscribe_email(...)` from `public, anon,
-  authenticated`, with no matching `grant execute … to anon,
-  authenticated` issued for the helper. This is the structural
-  enforcement that prevents anon callers from bypassing the
-  surface-specific public RPCs and writing arbitrary
-  `source_surface` / `event_slug` attribution. Reality-
-  check at plan time: confirm Postgres semantics that a SECURITY
-  DEFINER function called from inside another SECURITY DEFINER
-  function whose owner is the same role does not require the
-  inner function to be granted to anon (the effective role is
-  the function owner, not the calling user). If a plan-level
-  test reveals otherwise, the helper grant posture must be
-  revisited; do not silently grant EXECUTE to anon to make the
-  call work.
+  contract requires the implementing migration to REVOKE EXECUTE
+  on `subscribe_email(...)` from `public, anon, authenticated`,
+  with no matching `grant execute … to anon, authenticated` issued
+  for the helper. This is the structural enforcement that prevents
+  anon callers from bypassing the surface-specific public RPCs and
+  writing arbitrary `source_surface` / `event_slug` attribution.
+  The implementing pass discharges this with a pgTAP test that
+  exercises the public anon write path end-to-end with the helper's
+  EXECUTE revoked from anon — confirming Postgres semantics that a
+  SECURITY DEFINER function called from inside another SECURITY
+  DEFINER function whose owner is the same role does not require
+  the inner function to be granted to anon (the effective role is
+  the function owner, not the calling user). If the test reveals
+  otherwise, the helper grant posture must be revisited; do not
+  silently grant EXECUTE to anon to make the call work.
 - **Plugin-architecture framing state (namespace path
   selection).** Decision 6's carryover and the namespace-
   placement paragraph in Plan structure handoff both reference an
   in-flight plugin-architecture framing under which feedback +
   subscription becomes one plugin. The implementing pass checks
-  whether that framing has produced concrete scaffolding by the
-  time implementation opens — a settled plugin-namespace
-  convention, a plan-doc contract for the feedback + subscription
-  plugin, or migration shells the implementer can land into —
-  and picks the namespace path accordingly: `public.*` today
-  with a future mechanical migration, or directly into the
-  plugin namespace if the scaffolding is ready. The shape
-  decisions in this scoping are invariant across the choice;
-  what the check determines is *where* the implementation lands,
-  not *what* it implements.
+  whether that framing has produced concrete schema scaffolding —
+  a settled plugin-namespace convention, a plan-doc contract for
+  the feedback + subscription plugin, or migration shells the
+  implementer can land into — and picks the namespace path
+  accordingly: `public.*` today with a future mechanical
+  migration, or directly into the plugin namespace if the
+  scaffolding is ready. The shape decisions in this contract are
+  invariant across the choice; what the check determines is
+  *where* the implementation lands, not *what* it implements.
 
-## Out of scope for this scoping doc
+## Out of scope
 
 - The feedback + subscription plugin's overall shape, UI surfaces
   (standalone signup page, embeddable email-entry widget, the
@@ -924,11 +846,6 @@ implementing plan re-verifies each at plan time per
   organizer-facing data-export and analysis tools, and the
   triggers / copy / UX details for any individual surface
   (Decision 6 carryover).
-- The choice between landing this scoping's implementation in
-  `public.*` today vs. directly in a future plugin namespace.
-  See Plan structure handoff "Namespace placement under the
-  in-flight plugin architecture" — the decision is made by the
-  implementing pass based on plugin-framing-state at that time.
 - Unsubscribe semantics in Neighborly's schema. Per Decision 7,
   unsubscribe is owned by the org's downstream tool (Mailchimp or
   equivalent); Neighborly's table does not model it.
