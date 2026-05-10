@@ -373,18 +373,40 @@ would be a separate move.
 
 ### A2: Lightweight phase-planning path
 
-**Edit:** add a "skip the scoping doc" branch to
+**Edit:** add a "skip the scoping doc" carve-out to
 `docs/agents/planning/phase.md` for narrow-surface phases (one
 route or one TypeScript field or one migration with no behavior
-fork). Make it the default for that class; require explicit
-opt-in for the full scoping-doc + plan-doc path.
+fork). Carve-out shape: planner explicitly invokes the exception
+when the criteria hold; default direction stays "scoping first."
+(Original framing called for making narrow-surface the default
+with explicit opt-in to scoping; revised at landing because
+under-scoping silently ships wrong assumptions while over-scoping
+just costs author time — see Outcome below.)
 **Activates:** Bet 4 (directly), Bet 1 (over time).
-**Status:** candidate.
+**Status:** landed (2026-05-10).
 **Notes:** `phase.md` currently assumes every phase needs both
-docs. The Madrona feedback M1 phases (1.1, 1.2, 1.3) would all
-have qualified for the lightweight path under a reasonable
-threshold; the contributor wrote 449–815 line scoping+plan docs
-for each instead.
+docs. Phase 1.2 specifically — one TypeScript field + one
+section component — is the headline case: qualifies for the
+lightweight path under any reasonable threshold, but the
+contributor wrote a 657-line plan doc plus a 449-line scoping
+doc for it anyway. Sibling phases 1.1 and 1.3 do not cleanly
+qualify (see Outcome below) — earlier drafts of this entry
+carried a "would all have qualified" framing imported uncritically
+from the diagnosis prose; the concrete-threshold walk reveals
+that hand-wavy applicability claims over-estimate carve-out
+reach. **Outcome:** landed as a new "Narrow-surface
+phases may skip the scoping doc" bullet in `phase.md` (~58 lines)
+with five enumerated criteria (single subsystem, ≤8 files, no new
+public-API contract, no new cross-cutting invariant, no novel
+mechanism). Final shape was the **carve-out** (planner explicitly
+invokes the exception), not a default flip — under-scoping
+silently ships wrong assumptions, over-scoping just costs author
+time; the asymmetry favored the safer default. The verification-
+protocols-are-not-optional clause from the 2026-05-10 cap-fit
+findings is embedded inline. Empirical-fit walk against M1
+phases 1.1 (does not qualify, RLS / grants invariants), 1.2
+(qualifies), 1.3 (borderline) is preserved in-rule as ground
+truth.
 
 ### A3: Sharpen the lightweight-vs-full threshold in implementation.md
 
@@ -393,9 +415,18 @@ for each instead.
 threshold (file count, surface count, schema-touch yes/no) and put
 the lightweight path first.
 **Activates:** Bet 1, Bet 4 (over time).
-**Status:** candidate.
+**Status:** landed (2026-05-10).
 **Notes:** current threshold reads as fuzzy and tilted toward
-full structured.
+full structured. **Outcome:** rewrote the section's gate with
+five concrete criteria (≤5 files, single subsystem, no public-API
+change, no schema change at all, local test surface). The
+Lightweight Path / Full Structured Path numbered steps are
+unchanged — only the gate tightens. A3's cutoffs are deliberately
+stricter than A2's because A3 governs unplanned implementation
+work (commit / validation discipline) while A2 governs scoping
+artifact necessity for planned phases — different decisions,
+different cutoffs, same threshold family. Landed in the same PR
+as A2 to prevent drift on the shared criteria definitions.
 
 ### A4: Consolidation pass on shared.md
 
@@ -612,6 +643,51 @@ against the actual source rather than re-derive):
 Append-only. Each entry: date + 1–3 bullets on what moved, what
 didn't, and any change to the diagnosis or bets. Do not edit
 prior entries.
+
+### 2026-05-10 — A2 + A3 landed: narrow-surface phase carve-out + concrete lightweight thresholds
+
+- **A2 landed.** Added "Narrow-surface phases may skip the
+  scoping doc" carve-out to `docs/agents/planning/phase.md`
+  (~58 lines). A phase qualifies as narrow-surface when ALL of:
+  single subsystem, ≤8 files, no new public-API contract, no
+  new cross-cutting invariant, no novel mechanism. Structurally
+  parallel to the existing "Doc-only decision phases" carve-out
+  (also an explicitly-invoked exception to the same scoping-
+  mandatory rule). Default direction stays "scoping first"; the
+  carve-out is invoked, not defaulted. Verification protocols
+  (Reality-check inputs) are explicitly non-optional even on the
+  carve-out path — the form compresses (inline in the plan), the
+  falsifier function does not.
+- **A3 landed.** Rewrote `docs/agents/workflows/implementation.md`
+  "Lightweight vs full structured" section's gate. Five concrete
+  criteria (≤5 files, single subsystem, no public-API change, no
+  schema change at all, local test surface) replace three fuzzy
+  examples. The Lightweight / Full Structured numbered steps are
+  unchanged — only the gate tightens. A3's cutoffs are deliberately
+  stricter than A2's because A3 governs unplanned implementation
+  work (commit / validation discipline) while A2 governs scoping
+  artifact necessity for planned phases — different decisions,
+  different cutoffs, same threshold family.
+- **Effect on bets.** Bet 4 (phase plans fit in 400 lines) gains
+  its first inflow-side mechanism: the carve-out routes qualifying
+  phases past the scoping-doc step, and the Reality-check-inputs
+  carve-out preserves verification protocols. The next narrow-
+  surface phase drafted is the empirical test; if the carve-out
+  fires (and produces a tighter plan doc), Bet 4 advances. If it
+  under-fires (planners default to full scoping even when phases
+  qualify), the cutoffs revise — that's the bet's "If failing"
+  branch in advance.
+- **Net rule-count change in `docs/agents/`.** +1 (the narrow-
+  surface carve-out). The implementation.md rewrite tightens an
+  existing section's threshold without adding a parallel rule. Per
+  the A1 rule-retirement convention (landed 2026-05-09 per the
+  prior Log entry), the implementing PR carries the (b)
+  justification — both edits are exceptions to or refinements of
+  existing rules; no rule could honestly be retired by them.
+
+**Action Layer follow-through.** A2 marked landed (2026-05-10).
+A3 marked landed (2026-05-10). A7 / A7a remain as the empirical-
+input items that calibrate future revisions to the cutoffs.
 
 ### 2026-05-10 — retroactive cap-fit exercise on two cross-cutting docs
 
