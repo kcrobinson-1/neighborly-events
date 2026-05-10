@@ -135,11 +135,14 @@ shape.
 | `/` | Canonical site origin (`apps/site`) | Native Next.js route |
 | `/admin*` | Canonical site origin (`apps/site`) | Native Next.js route |
 | `/auth/callback` | Canonical site origin (`apps/site`) | Native Next.js route (client component, owns route physically). **Verified by:** [`apps/site/app/(authenticated)/auth/callback/page.tsx`](/apps/site/app/%28authenticated%29/auth/callback/page.tsx) and [`docs/architecture.md:241-244`](/docs/architecture.md). |
-| `/event/:slug` (landing) | Canonical site origin (`apps/site`) | Native Next.js route, SSR per-slug |
+| `/event/:slug` (landing) | Canonical site origin (`apps/site`) | Native Next.js route, SSR per-slug. **Verified by:** [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/%5Bslug%5D/page.tsx). |
+| `/event/:slug/feedback` | Canonical site origin (`apps/site`) | Native Next.js route, prerendered per registered slug. **Verified by:** [`apps/site/app/event/[slug]/feedback/page.tsx`](/apps/site/app/event/%5Bslug%5D/feedback/page.tsx). |
+| `/event/:slug/opengraph-image`, `/event/:slug/twitter-image` | Canonical site origin (`apps/site`) | Native Next.js file-convention metadata routes (background unfurl-consumer fetches, not customer-clickable). **Verified by:** [`apps/site/app/event/[slug]/opengraph-image.tsx`](/apps/site/app/event/%5Bslug%5D/opengraph-image.tsx), [`apps/site/app/event/[slug]/twitter-image.tsx`](/apps/site/app/event/%5Bslug%5D/twitter-image.tsx). |
 | `/event/:slug/game*` | Plugin (`apps/web`), routed through canonical site origin | Proxy rewrite from `apps/site` to `apps/web`, matching the shape already present at [`apps/site/next.config.ts:65-72`](/apps/site/next.config.ts) |
 | `/event/:slug/admin*` | Plugin (`apps/web`), routed through canonical site origin | Same mechanism as `/event/:slug/game*` |
 | `/event/:slug/game/redeem` | Plugin (`apps/web`), routed through canonical site origin | Subsumed by `/event/:slug/game*` |
 | `/event/:slug/game/redemptions` | Plugin (`apps/web`), routed through canonical site origin | Subsumed by `/event/:slug/game*` |
+| **Default rule:** any other event-scoped path not carved out for the plugin (`/event/:slug/<future-route>`) | Canonical site origin (`apps/site`) | Native Next.js route. Future apps/site additions under `/event/[slug]/...` inherit this row without requiring a plan amendment; the protective intent is that the plugin carve-outs above are the **only** event-scoped exceptions, and any new event-scoped surface defaults to apps/site-native. |
 | `/_next/*` | Canonical site origin (`apps/site`) | Native Next.js asset path |
 | `/assets/*` (Vite hashed bundles) | Plugin (`apps/web`), routed through canonical site origin | Same mechanism as `/event/:slug/game*` |
 | Plugin-deployment-origin direct access (`*.vercel.app/...`) | Reachable, no lockdown | Resolved during this scoping pass — see "Investigations resolved in-PR" |
@@ -266,6 +269,21 @@ during this scoping pass; they do **not** carry into "Open questions."
   and `apps/site/next.config.ts` (5 rules — see
   [`apps/site/next.config.ts:64-86`](/apps/site/next.config.ts)) read
   end-to-end and inventoried in the End State table above.
+- **Native apps/site route enumeration.** Walked the apps/site app
+  tree (`find apps/site/app -name "page.tsx" -o -name "route.ts"`)
+  to confirm every customer-visible native route is named in the
+  End State table. Found: `/`, `/admin`, `/auth/callback`,
+  `/event/:slug` (landing), and `/event/:slug/feedback` plus the
+  `opengraph-image` / `twitter-image` file-convention metadata
+  routes under `/event/:slug/`. The feedback route was missed in
+  the first table draft and surfaced by reviewer Codex feedback on
+  this PR; it works today only because `apps/web/vercel.json:31-33`'s
+  broad `/event/:slug/:path*` catch-all proxies it through to
+  apps/site, and works post-Phase-2 because apps/site is canonical
+  and renders it natively. Adding the row plus the **default rule**
+  (any other event-scoped path → native apps/site) makes the table
+  contract resilient to future apps/site additions without
+  amendment.
 - **Hardcoded-URL touch points across the repo.** Three production-
   affecting files name a `*.vercel.app` URL: `apps/web/vercel.json`
   (7 occurrences of `neighborly-events-site.vercel.app` across the
