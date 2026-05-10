@@ -373,11 +373,15 @@ would be a separate move.
 
 ### A2: Lightweight phase-planning path
 
-**Edit:** add a "skip the scoping doc" branch to
+**Edit:** add a "skip the scoping doc" carve-out to
 `docs/agents/planning/phase.md` for narrow-surface phases (one
 route or one TypeScript field or one migration with no behavior
-fork). Make it the default for that class; require explicit
-opt-in for the full scoping-doc + plan-doc path.
+fork). Carve-out shape: planner explicitly invokes the exception
+when the criteria hold; default direction stays "scoping first."
+(Original framing called for making narrow-surface the default
+with explicit opt-in to scoping; revised at landing because
+under-scoping silently ships wrong assumptions while over-scoping
+just costs author time — see Outcome below.)
 **Activates:** Bet 4 (directly), Bet 1 (over time).
 **Status:** landed (2026-05-10).
 **Notes:** `phase.md` currently assumes every phase needs both
