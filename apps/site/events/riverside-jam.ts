@@ -197,7 +197,8 @@ export const riversideJamContent: EventContent = {
   ],
   cta: {
     label: "Play the Riverside Jam game",
-    sublabel: "Earn stamps at participating booths to unlock prizes.",
+    sublabel:
+      "A four-question pop quiz on the festival lineup — earn a drink voucher redeemable at the harbor stage bar.",
   },
   footer: {
     attribution:

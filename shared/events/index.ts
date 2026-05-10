@@ -40,3 +40,5 @@ export {
 } from "./draftCreation.ts";
 export type { GameSeedConfig } from "./seed-config.ts";
 export { seedConfig as madronaDemoSeedConfig } from "./madrona-demo-game-content.ts";
+export { seedConfig as harvestBlockPartyDemoSeedConfig } from "./harvest-block-party-game-content.ts";
+export { seedConfig as riversideJamDemoSeedConfig } from "./riverside-jam-game-content.ts";
