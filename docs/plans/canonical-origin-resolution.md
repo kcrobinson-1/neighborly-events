@@ -2,7 +2,7 @@
 
 ## Status
 
-In draft.
+Proposed.
 
 ## Context
 
@@ -36,10 +36,13 @@ standalone apps following the same shape (sharing backend, auth, and
 styling but living in their own deployments) are expected over time.
 The long-term direction is that customers see one canonical site
 origin; plugins have no customer-facing origin of their own and are
-embedded into the site's URL space via a mechanism that's not yet
-chosen between proxy rewrites, iframes, and runtime federation. This
-plan resolves the **game-specific case** in a way that's compatible
-with future plugins, without designing a generic plugin platform.
+embedded into the site's URL space. The embedding mechanism for the
+game is settled at **proxy rewrite** (resolved during this scoping
+pass — see "Investigations resolved in-PR"); future plugins inherit
+that default and may revisit only if their own constraints warrant.
+This plan resolves the **game-specific case** in a way that's
+compatible with future plugins, without designing a generic plugin
+platform.
 
 There is no platform-owned custom domain today and none in flight.
 The architecture doc's claim that "`apps/web` is the primary Vercel
@@ -162,6 +165,53 @@ plugin's render returns — typically 200). No status-code change
 applies to direct plugin-origin access — that surface is unchanged
 by this plan.
 
+## Cross-cutting invariants
+
+Rules that thread through multiple files (rewrite configs, env vars,
+auth flow, allowlists) and break silently if any one site drifts.
+The End State table above prescribes per-route topology; these
+invariants prescribe what stays true across the whole topology
+through every phase.
+
+- **Single canonical front door.** The canonical site origin
+  (`apps/site` Vercel project's primary alias) is the only customer-
+  advertised origin. Plugin origins (`apps/web`'s `*.vercel.app` and
+  any future plugin's deployment URL) remain technically reachable
+  but are never advertised, hardcoded into customer-visible URLs, or
+  surfaced as link destinations. Drift looks like a hardcoded plugin
+  URL leaking into apps/site code, an env-var default re-pointing at
+  the plugin origin, or a doc instruction telling contributors to
+  share the plugin URL.
+- **Origin-agnostic shared route table.** [`shared/urls/routes.ts`](/shared/urls/routes.ts)
+  remains the single origin-agnostic route map both apps consume;
+  per-app code never composes route strings inline against a
+  hardcoded origin. This is what lets the canonical-origin flip be
+  purely structural — no per-app route rewrites needed. Drift looks
+  like an `apps/web` or `apps/site` file building an absolute URL
+  by concatenating an origin string with a hand-written path.
+- **Test-event noindex parity across both apps.** `noindex, nofollow`
+  coverage on the test/demo event slugs (`harvest-block-party`,
+  `riverside-jam`, `madrona`) is paired: apps/site emits via
+  `generateMetadata` `robots` on test-event landings; apps/web emits
+  via the `headers` block at
+  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) for every
+  URL under those slugs. Both must hold simultaneously — breaking
+  either side leaks indexability silently on the surface that side
+  covers (apps/site landings, or plugin paths reached either via
+  direct plugin-origin access or via the canonical-origin proxy
+  whose response inherits the plugin's headers).
+- **Auth-callback origin equals canonical site origin.**
+  `requestMagicLink` composes `emailRedirectTo` against
+  `window.location.origin`
+  ([`shared/auth/api.ts:44-49`](/shared/auth/api.ts)); the Supabase
+  Auth dashboard's redirect-URL allowlist must list that exact
+  origin; therefore the customer must sign in from the canonical
+  origin for the magic-link return to land on a Next.js-rendered
+  callback rather than failing the allowlist check. Drift looks
+  like the dashboard allowlist diverging from the deployed
+  canonical origin, or any sign-in entry point hosted on a
+  non-canonical origin.
+
 ## Path to end state
 
 The phased path below is **estimate-shaped**: each phase's scope and
@@ -217,7 +267,9 @@ proxied paths.
 
 **Post-state.** Customers reaching the canonical URL land on
 `apps/site`. `/event/:slug/game*` and similar plugin paths are
-embedded from `apps/site` via the chosen embedding mechanism. The
+embedded from `apps/site` into the plugin via proxy rewrite (the
+settled embedding mechanism — see "Investigations resolved in-PR").
+The
 auth callback resolves on the canonical origin natively (no cross-
 project proxy). The Supabase Auth redirect-URL allowlist is updated
 to name the canonical origin's `/auth/callback`.
