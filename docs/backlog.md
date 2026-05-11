@@ -13,7 +13,8 @@ steps, and validation commands.
 - Keep this file focused on active work.
 - When an item is complete, update the owning detail file and remove the item
   from this backlog instead of leaving closed history inline.
-- Add new items in the correct tier with a one-line why and a detail link.
+- Add new items in the correct tier with a one-line why and a `Detail:` link, `N/A`, or `TBD`.
+- Frame entries by goal/problem, not solution. One illustrative option allowed; mark it as one option among several, not the prescription.
 - `decision` items require a product or design choice before dev work can
   start. `dev`, `ux`, and `infra` items are ready to execute.
 
@@ -62,16 +63,17 @@ Reduce deployment risk and contributor friction before the live event.
   contract is automated rather than relying on contributor recall.
   Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G9 + Follow-ups](/docs/tracking/release-readiness-current.md)
 
-- [ ] **`dev` Emit a structured log line on demo-mode rejection**
+- [ ] **`dev` Demo-mode misuse should be diagnosable from backend logs alone**
   `evaluateDemoModeRejection` in
   `supabase/functions/_shared/demo-mode-rejection.ts` returns a
   structured 403 response without writing a `console` log. The
-  intentional design (caller-visible failure surfacing to the UI) holds
-  for normal use, but accidental misuse on a real-event slug is
-  invisible in Supabase Edge Function logs until UI feedback surfaces
-  it. Add a single structured log line (`{ event: "demo_mode_rejected",
-  function, slug }`) so misuse is diagnosable from the backend logs
-  alone.
+  design (caller-visible failure surfacing to the UI) is correct for
+  normal use, but accidental misuse on a real-event slug is invisible
+  in Supabase Edge Function logs until UI feedback surfaces it. Goal:
+  misuse is diagnosable from the backend logs alone without depending
+  on UI feedback. One option: emit a structured log line (e.g.
+  `{ event: "demo_mode_rejected", function, slug }`) at rejection
+  time.
   Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G6 + Follow-ups](/docs/tracking/release-readiness-current.md)
 
 ---
@@ -81,23 +83,21 @@ Reduce deployment risk and contributor friction before the live event.
 Improve the authoring experience before the organizer uses it to set up a real
 event.
 
-- [ ] **`ux` Authoring affordance for clearing test entitlements on a draft event**
+- [ ] **`ux` Organizers can clear test entitlements on a draft event without engineering help**
   Phase 2 of the unpublish-locks fix landed Strict — `event_code`
-  rotation blocks when any entitlements exist for the event,
-  even on an unpublished draft. The intended use case is
-  organizers issuing a few test entitlements during pre-launch
-  authoring (to walk through the redemption flow themselves),
-  then deciding to rotate `event_code` before going live. Today
-  there is no organizer-facing path to delete entitlements on a
-  draft event — it falls back to engineer-mediated SQL, which
-  is the same shape of gap the original Tier 1 unpublish-locks
-  entry was created to close. Add a delete affordance scoped to
-  draft events (no `published_at` on `game_events`) so an
-  organizer can clear test entitlements before rotating. Surface
-  on the admin event workspace alongside the event-details form;
-  copy must distinguish "delete test entitlement"
-  (pre-launch tooling) from any operator-facing redemption
-  affordance.
+  rotation blocks when any entitlements exist for the event, even
+  on an unpublished draft. The intended use case is organizers
+  issuing a few test entitlements during pre-launch authoring (to
+  walk through the redemption flow themselves), then deciding to
+  rotate `event_code` before going live. Today there's no
+  organizer-facing path to delete entitlements on a draft event;
+  it falls back to engineer-mediated SQL — the same shape of gap
+  the original Tier 1 unpublish-locks entry was created to close.
+  Goal: organizers can clear test entitlements on draft events on
+  their own, with copy that clearly distinguishes pre-launch test
+  cleanup from operator-facing redemption flows so the affordance
+  doesn't bleed into live-event surfaces.
+  Detail: N/A
 
 - [ ] **`cleanup` Remove orphan `generate-event-code` Edge Function**
   The admin "Regenerate" button surfaced random server-generated event
@@ -110,8 +110,9 @@ event.
   and its Deno tests at [`tests/supabase/functions/generate-event-code.test.ts`](/tests/supabase/functions/generate-event-code.test.ts)
   stayed in place because removing them requires a Supabase function-
   delete step on the deployed project, which is out of scope for a UI
-  PR. Drop the function directory + tests in a follow-up PR and delete
-  the deployed function from the Supabase project.
+  PR. Goal: the dead server code is removed from both the repo and the
+  deployed Supabase project.
+  Detail: N/A
 
 - [ ] **`docs` Rewrite `database-backed-quiz-content.md` and `quiz-authoring-plan.md` to target terminology**
   These two plan docs still use legacy `quiz`/`raffle` language (12 and 27
@@ -181,6 +182,7 @@ prioritization before starting.
   broadening, add a way for an organizer to maintain event agents without
   requiring manual root-admin SQL edits. Unblocked by M2 phases 2.1 + 2.1.1
   + 2.1.2 (organizer authorization across PostgREST + Edge Functions).
+  Detail: N/A
 
 - [ ] **`dev` Richer publish controls**
   Expiry windows, scheduled publish, multiple games per event, and friendlier
@@ -227,6 +229,7 @@ prioritization before starting.
   `newsletter_opt_ins` log. The plugin scoping decides UI shape,
   embedding mechanism, namespace placement, and per-surface trigger
   / copy / UX.
+  Detail: TBD
 
 ---
 
@@ -272,6 +275,26 @@ Execute in any order.
   Add `npm run ui:review:upload` backed by a scriptable durable provider so
   agents have a consistent, documented path for uploading UX review images.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Add a stable PR screenshot upload path](/docs/tracking/dev-workflow-improvements.md)
+
+- [ ] **`db` Test-entitlement deletion requires manual unwinding of circular FK**
+  Deleting an event's entitlements today requires a three-step
+  transaction — clear `first_completion_id` on entitlements, delete
+  the related completions, then delete the entitlements — because
+  `game_entitlements` and `game_completions` reference each other
+  with double-`ON DELETE RESTRICT` FKs. Surfaced during walkthrough
+  validation of the event_code rotation flow; the friction recurs
+  every time a maintainer resets test state on a draft event. **Goal:**
+  deleting an event's entitlements should be straightforward and not
+  depend on the operator knowing the FK topology. Several approaches
+  could reach that goal — for example, relaxing the back-edge FK
+  (`game_entitlements_first_completion_fk`) to `ON DELETE SET NULL`
+  collapses the unwind to a single ordered cascade while preserving
+  the denormalization for normal reads, but cascade-deleting
+  completions on entitlement delete, dropping the back-edge entirely
+  and deriving the first-completion lookup on demand, or wrapping the
+  unwind in a service-role helper are all worth comparing at scoping
+  time.
+  Detail: N/A
 
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
