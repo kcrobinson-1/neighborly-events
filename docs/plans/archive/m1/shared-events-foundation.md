@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M1, Phase 1.4. Sibling phases: 1.1 `shared/db/` — Landed,
 1.2 `shared/urls/` — Landed, 1.3 `shared/auth/` — Landed,
 1.5 `shared/styles/` — Proposed. The epic's M1 row stays `Proposed`
@@ -452,7 +452,7 @@ the PR opens:
 - [`docs/dev.md`](/docs/dev.md) — updated only if existing prose
   names a per-app rule about event-data imports that should
   now include `shared/events/`.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   the phase 1.4 paragraph already reflects the implemented
   scope (updated in the same branch as this plan). M1 row
   stays `Proposed` until 1.5 also lands.
@@ -544,7 +544,7 @@ the parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M1 milestone owns the foundation extraction.
   Sibling phase plans:
   [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md),

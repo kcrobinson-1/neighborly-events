@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M1, Phase 1.2. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases (1.1 `shared/db/` —
 Landed, 1.3 `shared/auth/`, 1.4 `shared/events/`, 1.5 `shared/styles/`)
@@ -184,7 +184,7 @@ reflect the deferred rename.
   `shared/db/` is the precedent), the rule is extended to cover
   `shared/urls/`. No new validation command is introduced in this
   phase.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   phase 1.2 paragraph tightened on three points: (1) builder names
   for the operator routes are `eventRedeem`/`eventRedemptions` in
   this phase, with the rename to `gameRedeem`/`gameRedemptions`
@@ -354,7 +354,7 @@ PR opens:
 - [`docs/dev.md`](/docs/dev.md) — updated only if existing prose names
   a per-app rule about route imports that should now include
   `shared/urls/`.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   phase 1.2 paragraph tightened per "Files to touch — modify."
   M1 row stays `Proposed`.
 - [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.2. The
@@ -448,7 +448,7 @@ parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M1 milestone owns the foundation extraction; sibling
   phases 1.1, 1.3, 1.4, 1.5 own their own plans.
 - [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) — the

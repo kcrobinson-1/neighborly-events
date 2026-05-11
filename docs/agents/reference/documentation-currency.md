@@ -106,8 +106,7 @@ references rot:
 What to use instead in durable docs:
 
 - file paths + line numbers (`apps/web/vercel.json:54`)
-- function / module / decision-doc names
-  ([`docs/plans/test-event-noindex-uniformity.md`](/docs/plans/test-event-noindex-uniformity.md),
+- function / module / decision-doc names (e.g.,
   `publish_game_event_draft`)
 - the rule or contract by name, not by where it shipped
 - date of resolution (`Resolved 2026-05-04`) when historical timing matters

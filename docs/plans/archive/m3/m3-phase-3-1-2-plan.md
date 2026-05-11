@@ -23,7 +23,7 @@ in the same implementing PR per
 SHAs are recorded in the row (`git log` and `git blame` are
 authoritative).
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M3, Phase 3.1 (children 3.1.1 + 3.1.2).
 **Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phase:** 3.1.1 (rendering pipeline + first test event +
@@ -709,7 +709,7 @@ Cross-cutting process artifacts updated in the same PR (not
     - [`docs/open-questions.md`](/docs/open-questions.md) —
       no change. Owned by 3.3.
     - [`docs/backlog.md`](/docs/backlog.md) — no change.
-    - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+    - [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
       M3 row — stays `Proposed`. The epic's M3 row flips to
       `Landed` only in 3.3's PR.
     - This plan — Status flips from `Proposed` to `Landed` in
@@ -895,7 +895,7 @@ relevant doc updates this branch must carry:
 - [`docs/open-questions.md`](/docs/open-questions.md) — no
   change. Owned by 3.3.
 - [`docs/backlog.md`](/docs/backlog.md) — no change.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   M3 row — stays `Proposed` (epic flip is 3.3's job).
 - This plan — Status flips from `Proposed` to `Landed` in the
   implementing PR.
@@ -1115,7 +1115,7 @@ to land before 3.3 closes the milestone.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M3 phase paragraphs are pre-milestone-planning
   estimate.
 - [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —

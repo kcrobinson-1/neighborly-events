@@ -510,9 +510,9 @@ design for the cross-cutting doc class.
 **Status:** candidate.
 **Notes:** the 2026-05-10 retroactive exercise on
 [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
-(650 lines) and
-[`docs/plans/newsletter-subscription-split-scoping.md`](/docs/plans/newsletter-subscription-split-scoping.md)
-(948 lines) found Bet 4's flat caps wildly wrong for this class
+(650 lines) and the newsletter-subscription-split scoping doc
+(948 lines, since deleted per the transient-scoping-doc convention)
+found Bet 4's flat caps wildly wrong for this class
 — a 250-line cap on a 7-decision scoping doc forces removing all
 rejected-alternative reasoning, all Reality-check inputs, and all
 pivot history. The hypothesis A7a tests: the right cap shape for
@@ -700,8 +700,9 @@ same PR).
 
 - [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
   — 650-line cross-cutting plan. Bet 4 plan cap is ≤ 400.
-- [`docs/plans/newsletter-subscription-split-scoping.md`](/docs/plans/newsletter-subscription-split-scoping.md)
-  — 948-line cross-cutting scoping doc. Bet 4 scoping cap is ≤ 250.
+- The newsletter-subscription-split scoping doc — 948-line
+  cross-cutting scoping doc, since deleted per the
+  transient-scoping-doc convention. Bet 4 scoping cap is ≤ 250.
 
 **Findings.**
 

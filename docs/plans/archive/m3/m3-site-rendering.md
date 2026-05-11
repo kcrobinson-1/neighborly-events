@@ -3,7 +3,7 @@
 ## Status
 
 Landed. Status mirrors the
-[epic milestone row](/docs/plans/event-platform-epic.md). Flipped to
+[epic milestone row](/docs/plans/archive/event-platform-epic.md). Flipped to
 `Landed` in M3 phase 3.3's PR alongside the epic M3-row flip.
 
 This milestone doc is the durable coordination artifact for M3:
@@ -26,7 +26,7 @@ added to phase planning. The epic's M3/M4 phase paragraphs were
 marked as pre-milestone-planning estimates accordingly. M3's
 epic paragraphs (under the "### M3 — Site Rendering
 Infrastructure With Test Events" subsection of
-[event-platform-epic.md](/docs/plans/event-platform-epic.md))
+[event-platform-epic.md](/docs/plans/archive/event-platform-epic.md))
 are preserved as pre-milestone-planning historical estimate and
 point to this milestone doc as canonical; the epic's Sizing
 Summary line for M3 is updated similarly. Note: the epic's M3
@@ -436,7 +436,7 @@ by the named phase; M3 is not complete until all are landed.
   phase 4.2 (Madrona content), not M3 — M3 ships
   infrastructure only. No backlog status changes expected
   inside M3.
-- [event-platform-epic.md](/docs/plans/event-platform-epic.md) —
+- [event-platform-epic.md](/docs/plans/archive/event-platform-epic.md) —
   the milestone doc PR (this PR) marks the epic's M3 phase
   paragraphs as pre-milestone-planning historical estimate
   (preserved as-is, not rewritten to match the new 3-phase
@@ -487,7 +487,7 @@ by the named phase; M3 is not complete until all are landed.
 
 ## Related Docs
 
-- [event-platform-epic.md](/docs/plans/event-platform-epic.md) —
+- [event-platform-epic.md](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M3 phase paragraphs (under the
   "### M3 — Site Rendering Infrastructure With Test Events"
   subsection) are preserved as pre-milestone-planning estimate

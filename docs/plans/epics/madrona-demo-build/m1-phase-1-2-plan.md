@@ -946,7 +946,7 @@ milestone-doc Cross-Phase Risks (which inherit by reference):
     review surfaces structural mis-classification beyond
     one-line correction (analogous to demo-expansion epic M1
     phase 1.1's
-    [themescope-derived-shade-cascade.md](/docs/plans/themescope-derived-shade-cascade.md)
+    [themescope-derived-shade-cascade.md](/docs/plans/archive/themescope-derived-shade-cascade.md)
     spinout).
 
 ## Related Docs

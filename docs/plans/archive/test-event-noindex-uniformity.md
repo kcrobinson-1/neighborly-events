@@ -16,7 +16,7 @@ slugs remain fully indexable (the regex constraint excludes
 them).
 
 The implementation plan is at
-[`docs/plans/test-event-noindex-uniformity-plan.md`](/docs/plans/test-event-noindex-uniformity-plan.md);
+[`docs/plans/archive/test-event-noindex-uniformity-plan.md`](/docs/plans/archive/test-event-noindex-uniformity-plan.md);
 the implementation lands in the same PR that flips this doc's
 Status. The Tier 4 backlog entry that pointed here closes with
 that PR per the backlog convention "When an item is complete,

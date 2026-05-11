@@ -20,10 +20,8 @@ import { routes } from "../../../../shared/urls/index.ts";
  * Brand-tied surfaces (border, link affordance, eyebrow) read
  * `var(--primary)` / `var(--secondary)` / `var(--accent)`. Derived
  * shades (e.g. `var(--primary-surface)`) pin to the apps/site
- * `:root` substitution and do not re-evaluate inside `<ThemeScope>`
- * per the M1-recorded empirical finding tracked at
- * `docs/plans/themescope-derived-shade-cascade.md`; the card avoids
- * them on brand-bearing surfaces.
+ * `:root` substitution and do not re-evaluate inside `<ThemeScope>`;
+ * the card avoids them on brand-bearing surfaces.
  */
 export function EventShowcaseCard({
   content,

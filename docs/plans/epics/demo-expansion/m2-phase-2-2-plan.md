@@ -165,7 +165,7 @@ or `var(--bg)`. They do **not** consume derived shades like
 `var(--primary-surface)` or `var(--secondary-focus)`, which
 pin to the apps/site `:root` substitution and do not
 re-evaluate inside `<ThemeScope>` per the empirical finding at
-[`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md).
+[`docs/plans/archive/themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md).
 
 ### Per-persona auth-honesty copy contract
 
@@ -800,11 +800,11 @@ addition in the PR body.
   ThemeScope wiring the narrative's organizer / volunteer
   subsections reference contextually (the auth-gated apps/web
   surfaces M1 themed).
-- [`themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md)
+- [`themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md)
   — follow-up that frames the derived-shade discipline rule
   the brand-token discipline contract above binds by reference.
   M2 phase 2.2 does not depend on this follow-up landing first.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   — predecessor epic. Delivered the apps/web admin / redeem /
   gameplay surfaces the narrative's persona subsections
   reference.

@@ -139,7 +139,7 @@ M1's wiring lands.
 **Inherited from event-platform-epic.** This epic inherits the URL
 contract, theme route scoping, theme token discipline, in-place auth,
 auth integration, and trust-boundary invariants from
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md). M1's
+[`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md). M1's
 ThemeScope wiring satisfies the "Deferred ThemeScope wiring" item from
 event-platform-epic for the apps/web event-route shells, scoped to test
 events; that invariant remains open for any future non-test-event slug
@@ -395,7 +395,7 @@ estimate at deferral time, not binding spec.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — the
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — the
   predecessor epic; this epic extends its M3-delivered platform with a
   marketing/demo experience and intervenes between M3's closing and
   Madrona launch

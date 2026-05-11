@@ -278,7 +278,7 @@ by the migrations under `supabase/migrations/` and the regenerated
 `shared/db/types.ts`. Notable post-M1 evolution: newsletter opt-in
 capture was split off into a separate append-only log
 (`public.newsletter_opt_ins`) per the [newsletter-subscription-split
-plan](/docs/plans/newsletter-subscription-split.md); the
+plan](/docs/plans/archive/newsletter-subscription-split.md); the
 `newsletter_opt_in` boolean on `feedback_submissions` survives as a
 moment-in-time snapshot rather than the canonical consent record.
 The pre-split sketch is preserved below as historical narrative.

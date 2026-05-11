@@ -31,7 +31,7 @@ table M3 row travel in lockstep with this plan's Status — all
 three move `Proposed` → `In progress pending prod smoke` →
 `Landed` together.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M3, Phase 3.3.
 **Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phases:** 3.1.1 + 3.1.2 (rendering pipeline + first test
@@ -164,7 +164,7 @@ Close M3 honestly. Three deliverables:
    consequence."
 
 3. **Milestone closure paperwork.** Flip the M3 row in
-   [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)'s
+   [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)'s
    Milestone Status table, the top Status block in
    [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md), the
    3.3 row in the same milestone doc's Phase Status table, and this
@@ -400,7 +400,7 @@ durable cross-phase coordination unchanged by 3.3 shipping.
 
 ### Epic Milestone Status table flip
 
-Module: [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+Module: [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
 (modified). One flip:
 
 - **M3 row in the Milestone Status table (line 20).** Currently
@@ -410,7 +410,7 @@ Module: [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md
   this plan's and the milestone doc's Status. After the M3 row
   flips `Landed`, only the M4 row remains `Proposed`; the epic's
   top Status (line 5) stays `Proposed` per
-  [the epic's lines 23-24](/docs/plans/event-platform-epic.md)
+  [the epic's lines 23-24](/docs/plans/archive/event-platform-epic.md)
   ("When all five rows show `Landed`, the top-level Status above
   flips from `Proposed` to `Landed` in the same PR that lands M4").
 
@@ -557,7 +557,7 @@ invariants apply:
   — top Status block flip + Phase Status table row 3.3 update
   (Plan link on plan-drafting commit, Status column flip on the
   two-phase pattern, PR column on the implementing PR).
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   — Milestone Status table M3 row's Status column flip on the
   two-phase pattern.
 - This plan ([`docs/plans/archive/m3/m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md))
@@ -653,7 +653,7 @@ invariants apply:
   — no edit. All already `Landed`; 3.3 does not retroactively
   edit sibling plans.
 - The epic's M3 phase paragraphs at
-  [`docs/plans/event-platform-epic.md` lines 711-779](/docs/plans/event-platform-epic.md)
+  [`docs/plans/archive/event-platform-epic.md` lines 711-779](/docs/plans/archive/event-platform-epic.md)
   — no edit. Already marked as pre-milestone-planning estimates
   by the milestone-doc PR; the milestone doc is canonical for M3
   phase shape per AGENTS.md "Epic Drafting." Per the M3 milestone
@@ -932,7 +932,7 @@ relevant doc updates this branch must carry:
   per Contracts. The two-phase pattern: `Proposed` →
   `In progress pending prod smoke` (PR-merge commit) →
   `Landed` (post-deploy follow-up).
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   — Milestone Status table M3 row Status column flip per
   Contracts. Same two-phase pattern as the milestone doc.
 - This plan ([`docs/plans/archive/m3/m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md))
@@ -1126,7 +1126,7 @@ tracked backlog items, so they don't imply backlog edits.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M3 phase paragraphs are pre-milestone-planning
   estimate per AGENTS.md "Epic Drafting." 3.3's PR flips the
   Milestone Status table M3 row to `Landed` per the two-phase

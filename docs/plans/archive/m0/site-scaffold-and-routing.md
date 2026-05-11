@@ -6,7 +6,7 @@ Landed. Cookie-boundary verification deferred to M1 phase 1.3 — see
 "Verification Evidence" below for the planning-time bug that forced
 the deferral.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M0, Phase 0.3. The epic's M0 row stays `Proposed` until this
 phase's plan flips to `Landed`. Sibling phases:
 [`repo-rename.md`](/docs/plans/archive/m0/repo-rename.md) (0.1, Landed) and
@@ -230,7 +230,7 @@ the PR adds:
   event landing pages today, expanding to top-level surfaces in M2).
   Routing-topology table cross-referencing this plan, with the
   transitional/permanent column.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   M0 row Status flipped from `Proposed` to `Landed`, and Phase 0.3
   paragraph Status flipped to `Landed` with a deferral note pointing
   at this plan's "Verification Evidence." Original intent was to
@@ -509,7 +509,7 @@ state by the time this PR opens:
   `In progress pending production cookie-boundary verification`
   in PR #91; flipped to `Landed` (with deferral rationale instead
   of verification evidence) in the Stage 2 follow-up PR.
-- `docs/plans/event-platform-epic.md` — M0 row stayed `Proposed`
+- `docs/plans/archive/event-platform-epic.md` — M0 row stayed `Proposed`
   through PR #91; flipped to `Landed` (with the cookie-boundary
   gate deferred into M1 phase 1.3) in the Stage 2 follow-up PR,
   which also flipped the Phase 0.3 paragraph's `**Status:**` to
@@ -700,7 +700,7 @@ proxy (rules 7–8).
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 phases 2.2, 2.3, 2.4, 2.5 own the routing migrations
   this phase prepares for
 - [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) — sibling

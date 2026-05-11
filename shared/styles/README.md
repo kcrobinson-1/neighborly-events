@@ -2,11 +2,8 @@
 
 Platform theme model shared across `apps/web` and `apps/site`. Owns
 the `Theme` type, the universal `<ThemeScope>` React component, the
-`getThemeForSlug` resolver, and the platform Sage Civic Theme. The
-per-event registry was empty in M1 phase 1.5.2 and grew with M3
-phase 3.2's test events and the
-[Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
-M1 phase 1.1's Madrona registration.
+`getThemeForSlug` resolver, the platform Sage Civic Theme, and the
+per-event Theme registry.
 
 ## What this module owns
 
@@ -14,8 +11,7 @@ M1 phase 1.1's Madrona registration.
   surface a per-event theme can override (brand bases, brand-tied
   gradient stops and admin surfaces, body and heading typography,
   panel/card/control radii). Field set is the binding output of the
-  M1 phase 1.5.1 audit
-  ([`docs/styling.md`](/docs/styling.md)).
+  token audit documented in [`docs/styling.md`](/docs/styling.md).
 - `ThemeScope` — universal React component (no `'use client'`, no
   effects, no state) that emits the Theme as inline-style CSS custom
   properties on a `<div className="theme-scope">` wrapper. SSR-safe;
@@ -27,7 +23,7 @@ M1 phase 1.1's Madrona registration.
   Sage Civic Theme.
 - `platformTheme` — the platform Sage Civic Theme, consumed as
   apps/site's root-layout default and as the resolver fallback.
-- `themes` — the per-event registry. Slug → Theme. Empty in 1.5.2.
+- `themes` — the per-event registry. Slug → Theme.
 
 ## Brand-only skin model
 
@@ -64,44 +60,27 @@ with no `'use client'` directive. `bodyFontFamily` and
 
 ## ThemeScope placement
 
-Per the parent epic's "Deferred ThemeScope wiring" cross-cutting
-invariant, ThemeScope is centralized in apps/web's
-[`App.tsx`](/apps/web/src/App.tsx) routing dispatcher (not
-per-page), and apps/site uses its framework-equivalent
-(`apps/site/app/event/[slug]/layout.tsx` in M3 phase 3.1). 1.5.2
-ships the component with **no production wiring**. Wiring sites:
-
-- M2 phase 2.2 — apps/web per-event admin (`/event/:slug/admin`)
-- M3 phase 3.1 — apps/site event landing pages
-- demo-expansion epic M1 phase 1.1 — apps/web event routes (game,
-  redeem, redemptions) wrapped in centralized `<ThemeScope>` blocks
-- [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
-  M1 phase 1.1 — Madrona's Theme registers under `slug=madrona`,
-  driving the brand-launch visual transition from today's warm-cream
-  defaults to Madrona's palette on every apps/web event-route shell
-  resolving `slug=madrona`
+ThemeScope is centralized in apps/web's
+[`App.tsx`](/apps/web/src/App.tsx) routing dispatcher (not per-page),
+and apps/site uses its framework-equivalent at
+`apps/site/app/event/[slug]/layout.tsx`. Wiring sites in apps/web
+cover the per-event admin, game, redeem, and redemptions routes;
+apps/site wires ThemeScope on event landing pages.
 
 ## Source-of-truth split for `:root` defaults
 
 apps/web's `:root` block (in
 [`_tokens.scss`](/apps/web/src/styles/_tokens.scss)) carries
-today's warm-cream values byte-identically. apps/site's root layout
-emits the platform Sage Civic Theme. The two are deliberately
-independent sources, not a sync gap — apps/web's `:root` defaults
-remain in place for any event-route shell whose slug does not
-resolve to a registered Theme. With Madrona registered (Madrona
-demo-build epic M1 phase 1.1), apps/web event-route shells carrying
-`slug=madrona` render against Madrona's palette via the centralized
-`<ThemeScope>` wraps from demo-expansion epic M1 phase 1.1.
+today's warm-cream values. apps/site's root layout emits the
+platform Sage Civic Theme. The two are deliberately independent
+sources, not a sync gap — apps/web's `:root` defaults remain in
+place for any event-route shell whose slug does not resolve to a
+registered Theme. Event-route shells whose slug DOES resolve render
+against the registered Theme via the centralized `<ThemeScope>`
+wraps.
 
-## Plan reference
+## Reference
 
-- [`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
-  — phase 1.5 plan (subphase tables, execution steps, validation
-  gate)
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
-  — parent epic (M1 phase 1.5 description carries the Sage Civic
-  palette source of truth)
 - [`docs/styling.md`](/docs/styling.md) — themable vs.
   structural classification, derivation policy, Theme model,
   procedure for adding a new theme

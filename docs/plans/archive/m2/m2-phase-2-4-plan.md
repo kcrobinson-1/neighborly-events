@@ -17,7 +17,7 @@ Gate For Plans That Touch Production Smoke** from
 additive, production unchanged) and 2.4.3 (deletes already-unreachable
 code) land under the regular Tier 1–4 gate.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M2, Phase 2.4. Sibling phases: 2.1 RLS broadening — Landed
 ([`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md),
 [`m2-phase-2-1-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-1-plan.md),
@@ -469,7 +469,7 @@ Doc edits distribute across sub-phases per
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; Cross-Phase Decisions §3 / §6 / §7 / "Settled by

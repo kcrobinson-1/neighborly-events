@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M1, Phase 1.3. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases:
 [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) (1.1, Landed),
@@ -396,7 +396,7 @@ decision belongs to phase 1.4's plan, not this one.
   Supabase Auth code goes through `shared/auth/` consumed via the
   per-app adapter, not directly. No new validation command in
   1.3.1.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   phase 1.3 paragraph tightened on three points: (1) name
   subphases 1.3.1 and 1.3.2 in place of "One PR"; (2) clarify
   that role-resolution hooks (`useOrganizerForEvent`,
@@ -758,7 +758,7 @@ None.
   visible to apps/site server-rendered routes through Vercel's
   proxy-rewrite. The earlier `localStorage` description is
   replaced, not appended.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   strike the M1 phase 1.3 inheritance language pointing at the
   M0 phase 0.3 deferred verification (the gate has now run);
   flip subphase 1.3.2's row in this plan's status table to
@@ -856,7 +856,7 @@ None.
    reference; admin re-sign-in note),
    [`docs/architecture.md`](/docs/architecture.md) (auth trust
    boundary: cookie storage),
-   [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+   [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
    (strike the M1 phase 1.3 inheritance language; mark
    subphase 1.3.2 row in this plan as
    `In progress pending prod smoke`), and this plan's subphase
@@ -1057,7 +1057,7 @@ implemented state by the time each subphase's PR opens:
   adapter pattern note) and 1.3.2 (cookie-boundary
   verification procedure with the new cookie name; cookie
   attributes reference; admin re-sign-in note).
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   updated in 1.3.1 (phase 1.3 paragraph subphased; role-resolution
   hook clarification; Sizing Summary line and epic total
   updated). Updated in 1.3.2 (strike the M1 phase 1.3
@@ -1263,7 +1263,7 @@ relationship lives in the parent epic, not this plan.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M1 milestone owns the foundation extraction;
   sibling phases 1.1, 1.2, 1.4, 1.5 own their own plans
 - [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) —

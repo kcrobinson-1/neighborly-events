@@ -19,7 +19,7 @@ these items that blocks the current release target is mirrored under the
 **Release-blocking open questions** subheading of the current pass entry in
 [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md);
 the contract for the mirror is defined under
-[Release-Blocking Open Questions in `release-readiness.md`](/docs/plans/release-readiness.md#release-blocking-open-questions).
+[Release-Blocking Open Questions in `release-readiness.md`](/docs/tracking/release-readiness.md#release-blocking-open-questions).
 Do not duplicate the question body in the mirror; mirror the title and link
 back to this file.
 
@@ -32,12 +32,9 @@ including the event landing route model, and should be tracked there.
 ## Authoring And Publishing
 
 No currently open questions in this section under the current tracking rule.
-Post-MVP authoring ownership resolved in M2 (organizer RLS broadening +
-authoring Edge Functions accept organizer callers); see
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md) "Open Questions
-Resolved By This Epic" and the M2 milestone doc
-[`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md). Outstanding
-authoring follow-up work is tracked in [`backlog.md`](/docs/backlog.md).
+Post-MVP authoring ownership is resolved (organizer RLS broadening +
+authoring Edge Functions accept organizer callers). Outstanding authoring
+follow-up work is tracked in [`backlog.md`](/docs/backlog.md).
 
 ## Reporting And Sponsor Measurement
 
@@ -60,12 +57,11 @@ Trust-boundary and abuse-control tracking now lives in
 [`security-and-abuse.md`](/docs/tracking/security-and-abuse.md), and concrete
 hardening work should be tracked via [`backlog.md`](/docs/backlog.md).
 
-## Event Platform Epic — Phase 0.3 Verification
+## Multi-Project Hosting — Production Verifications
 
-Surfaced by [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) (Event
-Platform Epic, M0 phase 0.2). Each item is a hypothesis from the
-documentation that M0 phase 0.3 must verify on the production domain
-before subsequent milestones depend on it.
+Each item is a hypothesis surfaced during the framework decision that
+needs end-to-end verification on the production domain before any
+behavior in production code depends on it.
 
 ### Cookie boundary across path-routed Vercel projects
 
@@ -74,7 +70,7 @@ project rewrites under one domain. Web-platform fundamentals say a
 cookie set on `example.com/` (path=`/`) is sent to every request under
 that domain regardless of which Vercel project handles a path, but the
 interaction with Vercel's rewrite/Microfrontends header rewriting is
-unverified. Phase 0.3 verifies end-to-end that a session cookie set in
+unverified. Verification: end-to-end that a session cookie set in
 `apps/web` is readable by `apps/site` on the production domain.
 
 ### Cross-app token-refresh visibility
@@ -87,27 +83,23 @@ writes the auth cookie independently. The risk is that one app's
 refresh is not observable by the other on the next cross-app
 navigation — for example, a token refreshed by `apps/site`'s
 middleware is not picked up by the next `apps/web` browser request, or
-vice versa. Phase 0.3 verifies end-to-end that a token refreshed in
-either app is observable by a subsequent server-rendered or
-browser-side read in the other app.
+vice versa. Verification: end-to-end that a token refreshed in either
+app is observable by a subsequent server-rendered or browser-side read
+in the other app.
 
 ### Streaming-metadata behavior for HTML-limited bots
 
 Next.js auto-detects `facebookexternalhit` and similar HTML-limited bots
 and serves them full `<head>` metadata at the cost of TTFB. The
 behavioral envelope (which bots, which fields) is not exhaustively
-documented. M3 phase 3.1 validates against at least one real unfurl
-client (per [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md);
-the original 4-phase epic estimate placed unfurl validation in a
-since-superseded phase 3.4).
+documented. Verification: validate against at least one real unfurl
+client.
 
 ### Proxy-rewrite project vs. Vercel Microfrontends
 
 Two documented routing models for path-routed multi-project deploys
 under one domain. The proxy-rewrite path is lower-cost and simpler; the
 Microfrontends path adds CDN-level routing observability and per-project
-deploy independence (with dedicated pricing). M0 phase 0.3 chooses
-between them based on routing-feature needs surfaced during the
-scaffold, and updates [`docs/operations.md`](/docs/operations.md) with the
-chosen topology.
+deploy independence (with dedicated pricing). The chosen topology is
+recorded in [`docs/operations.md`](/docs/operations.md).
 

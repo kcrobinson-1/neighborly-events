@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M1, Phase 1.1. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases (1.2 `shared/urls/`,
 1.3 `shared/auth/`, 1.4 `shared/events/`, 1.5 `shared/styles/`) own
@@ -166,7 +166,7 @@ split is below). Behavior-preserving.
   Supabase-using browser code goes through the per-app adapter, not
   through `shared/db/client.ts` directly. No new validation command
   in this subphase.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   update the Phase 1.1 paragraph to name subphases 1.1.1 and 1.1.2
   in place of the current "One PR." sentence. Update the Sizing
   Summary line for M1 from "5 phases (phase 1.5 contains 2
@@ -447,7 +447,7 @@ implemented state by the time each subphase's PR opens:
   source of truth).
 - [`docs/dev.md`](/docs/dev.md) — updated in 1.1.1 (per-app adapter
   pattern note) and 1.1.2 (`db:gen-types` workflow).
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   updated in 1.1.1 to name subphases 1.1.1 and 1.1.2 and update the
   Sizing Summary line for M1; M1 row stays `Proposed`.
 - [`AGENTS.md`](/AGENTS.md) — not touched by phase 1.1. The
@@ -543,7 +543,7 @@ none. Backlog impact accumulates at the M1 gate per the parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic;
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent epic;
   M1 milestone owns the foundation extraction; sibling phases 1.2,
   1.3, 1.4, 1.5 own their own plans
 - [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR

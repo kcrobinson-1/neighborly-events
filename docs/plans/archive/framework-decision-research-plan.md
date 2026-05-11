@@ -7,7 +7,7 @@ which captures the chosen framework and rationale. This document is
 preserved in the archive as a methodology reference for future
 documentation-only research passes.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md), Milestone
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md), Milestone
 M0, Phase 0.2. The parent epic uses the word "spike" for this phase, which
 historically implies a hands-on side-by-side build. This plan deliberately
 narrows that to **documentation and consensus research only** — no code is
@@ -77,7 +77,7 @@ In scope:
 - a decision doc capturing candidates, criteria, evidence sources, choice,
   and rationale, plus any open questions surfaced for later milestones
 - a small wording update to phase 0.2 in
-  [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) so the epic
+  [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) so the epic
   reflects the research-only posture
 
 Out of scope:
@@ -159,7 +159,7 @@ subsequent epic work the decision touches.
 
 Before opening either framework's docs, the researcher reads:
 
-- `docs/plans/event-platform-epic.md` — full epic, with attention to
+- `docs/plans/archive/event-platform-epic.md` — full epic, with attention to
   M0/M1/M3 dependencies on the framework choice and the URL contract
   invariant
 - `docs/architecture.md` — current `apps/web` shape, trust boundary, and
@@ -298,7 +298,7 @@ single PR against `main`. The PR contains exactly:
 
 - the new decision doc
 - a small wording update to phase 0.2 in
-  `docs/plans/event-platform-epic.md` reflecting research-only posture
+  `docs/plans/archive/event-platform-epic.md` reflecting research-only posture
   (replacing the "throwaway branch" language)
 - this plan doc itself, deleted in the same PR per AGENTS.md "delete
   temporary execution-plan/checklist docs," unless the team explicitly
@@ -372,7 +372,7 @@ itself, plus the parent-epic wording tweak. The epic's M0 row is not
 flipped by this phase; M0 status flips when phase 0.3 lands. The
 decision doc cross-references but does not modify:
 
-- `docs/plans/event-platform-epic.md` — referenced as parent; only the
+- `docs/plans/archive/event-platform-epic.md` — referenced as parent; only the
   phase 0.2 wording is touched
 - `docs/architecture.md` — referenced for current SPA shape; updated in
   later milestones, not this PR
@@ -437,7 +437,7 @@ commit boundary:
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent epic
 - [`docs/architecture.md`](/docs/architecture.md) — current SPA shape
 - [`docs/dev.md`](/docs/dev.md) — current contributor workflow baseline
 - [`docs/open-questions.md`](/docs/open-questions.md) — log destination for

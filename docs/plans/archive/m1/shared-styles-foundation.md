@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M1, Phase 1.5. The epic's M1 row stays `Proposed` until every
 phase 1.x plan flips to `Landed`. Sibling phases:
 [`shared-db-foundation.md`](/docs/plans/archive/m1/shared-db-foundation.md) (1.1, Landed),
@@ -464,7 +464,7 @@ section that this phase touches must reflect the implemented state by the
   description gains `shared/styles/` bullet (1.5.2).
 - **[`AGENTS.md`](/AGENTS.md)** — "Styling Token Discipline" section
   rewritten (1.5.2).
-- **[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)** —
+- **[`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)** —
   M1 phase 1.5 description rewritten in this plan's branch alongside
   the cascade edits to M2 phase 2.2, M2 phase 2.5, and M4 phase 4.1.
   M1 row in the milestone status table flips to `Landed` when 1.5.2
@@ -479,7 +479,7 @@ section that this phase touches must reflect the implemented state by the
 - [`docs/architecture.md`](/docs/architecture.md) — current system shape
 - [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) — named
   self-review audits per surface
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic
 - [`docs/plans/archive/m0/framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) —
   Next.js 16 App Router decision; describes `shared/styles/` as

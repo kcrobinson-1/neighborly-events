@@ -86,7 +86,7 @@ already-verified cutover. Neither has a post-deploy verifier, so
 the regular `Proposed` → `Landed` flip in the implementing PR
 applies.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M2, Phase 2.5. Sibling phases: 2.1 RLS broadening — Landed
 ([`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md),
 [`m2-phase-2-1-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-1-plan.md),
@@ -98,7 +98,7 @@ admin shell — Landed
 admin migration — Landed
 ([`m2-phase-2-4-plan.md`](/docs/plans/archive/m2/m2-phase-2-4-plan.md)). **This is M2's
 terminal phase**: 2.5.3's PR flips the
-[epic's M2 row](/docs/plans/event-platform-epic.md) from `Proposed` to
+[epic's M2 row](/docs/plans/archive/event-platform-epic.md) from `Proposed` to
 `Landed` and the
 [M2 milestone doc](/docs/plans/archive/m2/m2-admin-restructuring.md)'s top-level Status
 to `Landed`.
@@ -565,7 +565,7 @@ Doc edits distribute across sub-phases per
   refs and Repo Shape apps/web ownership prose.
   [`docs/open-questions.md`](/docs/open-questions.md) close entry.
   [`docs/backlog.md`](/docs/backlog.md) close + unblock.
-  [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+  [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   M2 row flip. [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   Phase Status row + top-level Status flips. Umbrella (this doc)
   Status flips to `Landed`. Sub-phase 2.5.3 plan Status flips to
@@ -604,7 +604,7 @@ Doc edits distribute across sub-phases per
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 row flips to `Landed` in 2.5.3's PR.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   M2 milestone doc; Phase Status row for 2.5 + top-level Status

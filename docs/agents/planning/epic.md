@@ -50,12 +50,7 @@ per-phase plans nested inside (paths named in
 Per-epic milestone numbering is canonical: each epic counts from
 M1 independently, and sibling epics may reuse the same milestone
 numbers without collision because the path's epic segment
-disambiguates. Pre-convention epics
-([`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
-and its M0–M3 phase plans) stay in their existing flat locations
-under [`docs/plans/`](/docs/plans/); retroactive migration is
-deferred and out of scope unless specifically planned. The path
-templates in milestone.md and phase.md name both shapes — the
-going-forward epic-folder shape and the pre-convention flat shape
-— so authors of either pick the right one for the epic they're
-working in.
+disambiguates. The path templates in milestone.md and phase.md name
+both shapes — the going-forward epic-folder shape and the older
+flat shape that some pre-convention plans use — so authors of
+either pick the right one for the epic they're working in.

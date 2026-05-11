@@ -29,7 +29,7 @@ the row per [`AGENTS.md`](/AGENTS.md) "Plan-to-PR Completion Gate"
 (`git log` and `git blame` are authoritative for navigating from
 plan to history).
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M3, Phase 3.1.
 **Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phases:** 3.2 (second test event + distinct theme) —
@@ -876,7 +876,7 @@ following epic-level invariants apply:
       a whole is not done until 3.1.2 lands.
     - This plan — Status flips from `Proposed` to `Landed`
       in the implementing PR.
-    - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+    - [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
       M3 row — stays `Proposed` (its flip lands with 3.3).
 15. **Automated code-review feedback loop.** Walk the diff
     from a senior-reviewer stance against the Cross-Cutting
@@ -1128,7 +1128,7 @@ relevant doc updates this branch must carry:
   in-progress note is 3.3's responsibility per the
   milestone doc.
 - [`docs/backlog.md`](/docs/backlog.md) — no change.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   M3 row — stays `Proposed`.
 - [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md)
   Phase Status table — Phase 3.1 row's `Plan` column
@@ -1325,7 +1325,7 @@ infrastructure phases.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M3 phase paragraphs at lines 712-779 are
   pre-milestone-planning estimate (the epic still lists a
   4-phase shape including a defunct Phase 3.4); the M3

@@ -320,7 +320,7 @@ Verified by:
   [`README.md`](/README.md),
   [`docs/open-questions.md`](/docs/open-questions.md),
   [`docs/backlog.md`](/docs/backlog.md) — owned by 2.5.3.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   M2 row, [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
   Status — owned by 2.5.3.
 - M2 scoping docs (deleted in 2.5.3's batch deletion; see git

@@ -218,7 +218,7 @@ must hold simultaneously at every call site.
 **Inherited from upstream invariants.** M2 also inherits the URL
 contract, theme route scoping, theme token discipline, in-place
 auth, and trust-boundary invariants from
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md);
+[`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md);
 the test-event noindex + disclaimer banner invariant from
 [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md); and
 the cross-app theme-continuity capability from
@@ -258,7 +258,7 @@ does not re-derive them.
   Showcase cards and the Harvest narrative read this shape; they
   do **not** introduce a parallel home-page-only event-summary
   type. The "single source of truth for event content" rule from
-  [event-platform-epic.md](/docs/plans/event-platform-epic.md)
+  [event-platform-epic.md](/docs/plans/archive/event-platform-epic.md)
   binds.
 - **Theme resolution reads `content.themeSlug`, not the URL
   slug.** Each showcase card or narrative-fragment that needs
@@ -286,7 +286,7 @@ does not re-derive them.
 - **Demo-overview content from the previous `/` route.** Did
   apps/web's pre-event-platform-epic `/` carry demo-overview
   content worth preserving? Yes —
-  [event-platform-epic M2 phase 2.3](/docs/plans/event-platform-epic.md)
+  [event-platform-epic M2 phase 2.3](/docs/plans/archive/event-platform-epic.md)
   migrated `/` from apps/web to apps/site and "preserved the
   demo-overview content (or a small platform landing page that
   subsumes it)." The current
@@ -414,7 +414,7 @@ level. Phase-level risks live in each phase plan's Risk Register.
   Theme is applying), and the same binding propagates to phases
   2.2 and 2.3 if they ship per-Theme rendering surfaces.
   Closure of the broader derived-shade-cascade gap is tracked at
-  [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md);
+  [`docs/plans/archive/themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md);
   M2 does not depend on that follow-up landing first.
 - **Demo-overview content loss from the M2-of-event-platform-epic
   subsume.** event-platform-epic M2 phase 2.3 subsumed the
@@ -422,7 +422,7 @@ level. Phase-level risks live in each phase plan's Risk Register.
   page. Whatever editorial content the pre-2.3 `/` carried is
   not in the current `apps/site/app/page.tsx`. Mitigation: phase
   2.1's reality-check reviews
-  [event-platform-epic.md M2 phase 2.3](/docs/plans/event-platform-epic.md)
+  [event-platform-epic.md M2 phase 2.3](/docs/plans/archive/event-platform-epic.md)
   for what the pre-subsume content looked like (likely git
   history before commit `5bf9dd0`) and decides whether any of
   it is worth carrying forward. The expectation is "no, M2
@@ -503,7 +503,7 @@ etc.) that get added to the backlog at phase-time per AGENTS.md
   predecessor milestone doc; M1 just landed and supplies the
   apps/web ThemeScope wiring M2's two-event showcase narrative
   depends on visually.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic; M2 phase 2.3 of *that* epic delivered the
   current apps/site `/` page (the stub this M2 rebuilds).
 - [`apps/site/app/page.tsx`](/apps/site/app/page.tsx) — the file
@@ -525,7 +525,7 @@ etc.) that get added to the backlog at phase-time per AGENTS.md
   the Next.js you know" — phase planning must read
   `node_modules/next/dist/docs/` for relevant Next.js APIs
   before naming them in contracts.
-- [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md) —
+- [`docs/plans/archive/themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md) —
   M1-surfaced follow-up that may or may not land before M2's
   phases run; M2 does not depend on it.
 - [`AGENTS.md`](/AGENTS.md) — Milestone Planning Sessions, Phase

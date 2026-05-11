@@ -87,7 +87,7 @@ in production for any reason — at that point exercising the
 flow becomes free, and there's no current operational driver to
 seed it just for this verification.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M2, Phase 2.2. Sibling phases: 2.1 RLS broadening + Edge
 Function organizer gate — Landed
 ([`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md));
@@ -698,7 +698,7 @@ following epic-level invariants apply:
     organizer-managed-agent-assignment unblock lands with 2.5);
     `docs/open-questions.md` does not update (the post-MVP
     authoring-ownership entry closes with 2.5);
-    [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) M2 row
+    [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) M2 row
     stays `Proposed` (its flip lands with 2.5).
 16. **Automated code-review feedback loop.** Walk the diff from a
     senior-reviewer stance against the Cross-Cutting Invariants
@@ -799,7 +799,7 @@ named upfront:
 Drawn from
 [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) and
 matched to this phase's diff surfaces. The M2 paragraph in
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md) already names
+[`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) already names
 the Platform-auth-gate, Silent-no-op-on-missing-lookup,
 Error-surfacing-for-user-initiated-mutations,
 Rename-aware-diff-classification, and CLI-tooling-pinning audits as
@@ -890,7 +890,7 @@ relevant doc updates this branch must carry:
 - [`docs/backlog.md`](/docs/backlog.md) — no change. The
   organizer-managed-agent-assignment unblock is recorded with M2's
   terminal PR (2.5).
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — M2 row
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — M2 row
   stays `Proposed`. Its flip lands with 2.5.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   Phase Status table row for 2.2 updates from `not yet drafted` to
@@ -1046,7 +1046,7 @@ resolution path so reviewer attention does not relitigate them.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.

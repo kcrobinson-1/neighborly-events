@@ -20,9 +20,7 @@ import { NarrativePersona } from "./NarrativePersona.tsx";
  * Brand-bearing surfaces consume brand-base tokens (`--primary`,
  * `--secondary`, `--accent`, `--bg`) only — never derived shades
  * (`--primary-surface`, `--secondary-focus`, etc.) which pin to
- * apps/site `:root` and don't re-evaluate inside `<ThemeScope>` per
- * the M1-recorded empirical finding tracked at
- * `docs/plans/themescope-derived-shade-cascade.md`.
+ * apps/site `:root` and don't re-evaluate inside `<ThemeScope>`.
  *
  * The narrative carries zero outbound `<a href>` / `<Link href>`.
  * Click-through into live surfaces is the showcase cards' job

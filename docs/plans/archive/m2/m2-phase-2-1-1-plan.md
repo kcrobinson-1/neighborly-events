@@ -8,7 +8,7 @@ Landed.
 Milestone M2, Phase 2.1. Sibling sub-phase: 2.1.2 Edge Function
 authorization migration + docs — Proposed (plan TBD). Sibling phases
 2.2 / 2.3 / 2.4 / 2.5 — Proposed; M2 row in
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md) stays `Proposed`
+[`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) stays `Proposed`
 until 2.5 lands.
 
 This sub-phase plan flips Status to `Landed` when its implementation
@@ -588,7 +588,7 @@ resolution path so reviewer attention does not relitigate them.
 
 - [`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md) — parent phase
   plan; this sub-phase compresses its database slice.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.

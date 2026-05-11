@@ -185,7 +185,7 @@ phase plan deletes pressure may shrink contract restatements).
 **Inherited from upstream invariants.** M1 also inherits the URL
 contract, theme route scoping, and theme token discipline
 invariants from
-[event-platform-epic.md](/docs/plans/event-platform-epic.md), and
+[event-platform-epic.md](/docs/plans/archive/event-platform-epic.md), and
 the test-event noindex + disclaimer banner invariant from
 [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md). Self-
 review walks them against the M1 diff even though the diff is not
@@ -337,7 +337,7 @@ PR(s).
   only if the README's current capability description references
   the deferred-wiring state explicitly; phase planning re-derives
   by grepping the README for relevant prose). **Owned by 1.1.**
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   the "Deferred ThemeScope wiring" invariant gets a footnote or
   paragraph noting partial closure: the apps/web wrapping
   infrastructure shipped via demo-expansion epic M1; the
@@ -374,7 +374,7 @@ closing. The phase plan owns the final call.
   deferred from event-platform-epic M3 phase 3.3 to M4 phase 4.1
   closes for the two test events. Closure is recorded in the M1
   PR via the
-  [event-platform-epic.md](/docs/plans/event-platform-epic.md)
+  [event-platform-epic.md](/docs/plans/archive/event-platform-epic.md)
   M3 / M4 paragraph updates above; no separate backlog entry to
   flip.
 - **Unblocked by M1.** The future Madrona-launch epic's M4 phase
@@ -393,7 +393,7 @@ closing. The phase plan owns the final call.
 
 - [`docs/plans/epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md) —
   parent epic; M1 paragraph at lines 180–198.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic; "Deferred ThemeScope wiring" invariant at
   lines 152–165, M3 phase 3.3 cross-app verification deferral at
   the M3 paragraph below.

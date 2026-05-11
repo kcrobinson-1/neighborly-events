@@ -18,7 +18,7 @@ entitlements on a draft event" follow-up that Strict pushed into
 the authoring surface remains open in the same file.
 
 Phase 1 (slug) shipped 2026-05-07. Phase 1 scoping doc:
-[`docs/plans/event-code-slug-unpublish-locks.md`](/docs/plans/event-code-slug-unpublish-locks.md).
+[`event-code-slug-unpublish-locks.md`](/docs/plans/archive/event-code-slug-unpublish-locks.md).
 
 Decision on (iii): **Strict — block post-launch rotation when
 entitlements exist.** Reasoning: if we can't guarantee the
