@@ -150,6 +150,22 @@ describe("validateAuthoringGameDraftContent", () => {
     ).not.toThrow();
   });
 
+  it("rejects a draft whose slug violates the canonical shape", () => {
+    expect(() =>
+      validateAuthoringGameDraftContent(
+        createAuthoringDraft({ slug: "Bad Slug" }),
+      )
+    ).toThrow(/lowercase letters, digits, and hyphens/);
+  });
+
+  it("rejects a draft whose slug exceeds the length cap", () => {
+    expect(() =>
+      validateAuthoringGameDraftContent(
+        createAuthoringDraft({ slug: "a".repeat(65) }),
+      )
+    ).toThrow(/lowercase letters, digits, and hyphens/);
+  });
+
   it("rejects duplicate question ids", () => {
     const draft = createAuthoringDraft({
       questions: [

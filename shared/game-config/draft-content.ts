@@ -1,3 +1,4 @@
+import { validateEventSlug } from "../urls/eventSlugShape.ts";
 import { validateGameConfig } from "./game-validation.ts";
 import {
   expectOptionalBoolean,
@@ -101,6 +102,7 @@ export function parseAuthoringGameDraftContent(
 export function validateAuthoringGameDraftContent(
   draft: AuthoringGameDraftContent,
 ) {
+  validateEventSlug(draft.slug);
   mapAuthoringGameDraftContentToGameConfig(draft);
 }
 

@@ -20,4 +20,11 @@ export {
   type AuthNextPath,
 } from "./routes.ts";
 export { normalizeEventSlug } from "./normalizeEventSlug.ts";
+export {
+  EVENT_SLUG_MAX_LENGTH,
+  EVENT_SLUG_PATTERN,
+  EVENT_SLUG_RULE_MESSAGE,
+  isValidEventSlug,
+  validateEventSlug,
+} from "./eventSlugShape.ts";
 export { validateNextPath } from "./validateNextPath.ts";

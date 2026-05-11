@@ -4,6 +4,7 @@ import {
   type AuthoringGameDraftContent,
 } from "../../../shared/game-config";
 import { getGameById } from "../../../shared/game-config/sample-fixtures";
+import { EVENT_SLUG_MAX_LENGTH } from "../../../shared/urls";
 import type { DraftEventDetail, DraftEventSummary } from "../../../shared/events";
 import {
   createDuplicatedDraftContent,
@@ -81,5 +82,22 @@ describe("createDuplicatedDraftContent", () => {
     createDuplicatedDraftContent(sourceDraft, [], "copy1");
 
     expect(sourceDraft.content).toEqual(sourceContentBefore);
+  });
+
+  it("keeps the duplicated slug under the shared length cap for long event names", () => {
+    const longName = "Annual Neighborhood Block Party 2026 Community Edition";
+    const sourceDraft = createSourceDraft({
+      ...sampleGame,
+      name: longName,
+    });
+
+    const duplicate = createDuplicatedDraftContent(
+      sourceDraft,
+      [],
+      "abcdef1234567890",
+    );
+
+    expect(duplicate.slug.length).toBeLessThanOrEqual(EVENT_SLUG_MAX_LENGTH);
+    expect(() => validateAuthoringGameDraftContent(duplicate)).not.toThrow();
   });
 });

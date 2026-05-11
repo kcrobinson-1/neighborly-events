@@ -3,6 +3,10 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { AdminEventDetailsForm } from "../../../apps/web/src/admin/AdminEventDetailsForm";
 import { getGameById } from "../../../shared/game-config/sample-fixtures";
+import {
+  EVENT_SLUG_MAX_LENGTH,
+  EVENT_SLUG_PATTERN,
+} from "../../../shared/urls";
 import type { DraftEventDetail } from "../../../apps/web/src/lib/adminGameApi";
 
 const sampleGame = getGameById("madrona-music-2026");
@@ -93,5 +97,14 @@ describe("AdminEventDetailsForm event_code lock", () => {
 
     const slugInput = screen.getByLabelText("Slug") as HTMLInputElement;
     expect(slugInput.disabled).toBe(true);
+  });
+
+  it("renders slug-shape pattern and length constraints on the slug input", () => {
+    renderForm(makeDraft());
+
+    const slugInput = screen.getByLabelText("Slug") as HTMLInputElement;
+    expect(slugInput.pattern).toBe(EVENT_SLUG_PATTERN.source);
+    expect(slugInput.maxLength).toBe(EVENT_SLUG_MAX_LENGTH);
+    expect(slugInput.title).toMatch(/lowercase letters, digits, and hyphens/);
   });
 });
