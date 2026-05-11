@@ -428,9 +428,9 @@ npm run dev:web:local
 Notes:
 
 - Vercel access is not required for routine local development
-- if you use remote Supabase locally, the project `ALLOWED_ORIGINS` secret must include your exact local origin
+- if you use remote Supabase locally on a non-default origin, set the project's `EXTRA_ALLOWED_ORIGINS` env var to include your exact local origin (additive — defaults stay applied)
 - `http://127.0.0.1:4173` and `http://localhost:4173` are distinct origins
-- the shared project already allows `http://127.0.0.1:4173`, `http://localhost:4173`, `http://127.0.0.1:5173`, and `http://localhost:5173`
+- the in-code defaults at [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts) already include `http://127.0.0.1:4173`, `http://localhost:4173`, `http://127.0.0.1:5173`, and `http://localhost:5173`
 - landing-page summaries and `/event/:slug/game` now expect published event rows in
   the connected Supabase project; the repo migrations seed the current demo
   events for local and fresh-project setup
@@ -758,7 +758,10 @@ npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 npx supabase secrets set SESSION_SIGNING_SECRET=your-long-random-secret
-npx supabase secrets set ALLOWED_ORIGINS=http://127.0.0.1:4173,http://localhost:4173,http://127.0.0.1:5173,http://localhost:5173,https://your-production-web-origin.example
+# CORS allowlist is in code at supabase/functions/_shared/cors.ts.
+# Only set EXTRA_ALLOWED_ORIGINS if you need extras beyond the defaults
+# (canonical apps/site Vercel alias + localhost dev hosts), e.g.:
+# npx supabase secrets set EXTRA_ALLOWED_ORIGINS=https://your-extra-origin.example
 npx supabase functions deploy issue-session
 npx supabase functions deploy complete-game
 npx supabase functions deploy save-draft
@@ -1035,7 +1038,7 @@ settings (vars and secrets):
 Important boundary:
 
 - Vercel environment variable values remain managed in Vercel
-- Supabase secrets such as `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` remain managed in the Supabase project
+- Supabase secrets such as `SESSION_SIGNING_SECRET` remain managed in the Supabase project; the CORS allowlist lives in code at [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts), with optional `EXTRA_ALLOWED_ORIGINS` / `APPS_SITE_VERCEL_SCOPE` env vars for additive extras
 - the GitHub `SUPABASE_DB_PASSWORD` secret is the production database password
   used only by the release workflow to apply migrations
 - the release workflow promotes code and migrations, not Supabase Edge Function

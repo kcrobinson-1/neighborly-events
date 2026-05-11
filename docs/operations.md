@@ -177,7 +177,16 @@ Why manual for now:
 - org/team membership and billing settings
 - runtime secret values:
   - `SESSION_SIGNING_SECRET`
-  - `ALLOWED_ORIGINS`
+- runtime non-secret config (optional, additive):
+  - `EXTRA_ALLOWED_ORIGINS` — comma-separated extras unioned with the
+    in-code `defaultAllowedOrigins` set in
+    [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts).
+    Leave unset unless you have origins to admit beyond the defaults
+    (the canonical apps/site Vercel alias plus the localhost dev
+    hosts are already in defaults). Cannot remove a default origin.
+  - `APPS_SITE_VERCEL_SCOPE` — Vercel team slug; opts in to admitting
+    apps/site preview/branch aliases scoped to that team. Independent
+    of `EXTRA_ALLOWED_ORIGINS`.
 - Auth URL configuration for magic-link sign-in:
   - deployed web origin as the Supabase Auth Site URL
   - local `<origin>/auth/callback` redirect URL
@@ -209,7 +218,12 @@ For a new deployment from a fork:
 6. Add `NEXT_PUBLIC_SUPABASE_URL` and
    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in the apps/site
    Vercel project.
-7. Set `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS` in Supabase.
+7. Set `SESSION_SIGNING_SECRET` in Supabase. CORS allowlist origins
+   live in code at
+   [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts);
+   only set the optional `EXTRA_ALLOWED_ORIGINS` /
+   `APPS_SITE_VERCEL_SCOPE` env vars if you need extras beyond the
+   canonical defaults.
 8. Set the Supabase Auth Site URL to the deployed web origin and add
    `<origin>/auth/callback` as a redirect URL for each of your local
    and deployed origins.
@@ -321,7 +335,10 @@ Open the production Supabase project and inspect:
   - redirect URLs include the deployed `/admin` origin
 - project secrets:
   - `SESSION_SIGNING_SECRET`
-  - `ALLOWED_ORIGINS`
+- non-secret runtime config (in code at
+  [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts);
+  also `EXTRA_ALLOWED_ORIGINS` / `APPS_SITE_VERCEL_SCOPE` env vars if
+  the operator opted into extras)
 - database logs when Edge Function logs indicate an RPC, policy, or migration
   failure
 

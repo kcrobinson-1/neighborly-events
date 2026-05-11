@@ -4,6 +4,15 @@
 
 Proposed.
 
+> **Post-PR note (2026-05-10).** The Supabase Edge Function CORS env
+> var named `ALLOWED_ORIGINS` throughout this doc was renamed to
+> `EXTRA_ALLOWED_ORIGINS` and changed from override-the-defaults to
+> additive (unioned with the in-code `defaultAllowedOrigins`) in a
+> follow-up PR motivated by the Phase 2 cutover surfacing how unsafe
+> the prior write-only-secret + override-semantics combination was for
+> operator updates. The conceptual flow described below is unchanged;
+> only the env var name and merge semantics differ.
+
 ## Context
 
 The platform deploys two Vercel projects out of one monorepo: `apps/web`

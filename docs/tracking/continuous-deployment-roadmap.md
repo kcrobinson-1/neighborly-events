@@ -264,9 +264,12 @@ these platform and proof-run steps:
 - verify Supabase production settings:
   - no Supabase staging project, branching setup, or account upgrade is required
     for Phase 1
-  - production function secrets exist: `SESSION_SIGNING_SECRET` and
-    `ALLOWED_ORIGINS`
-  - `ALLOWED_ORIGINS` includes the production Vercel origin
+  - production function secrets exist: `SESSION_SIGNING_SECRET`
+  - the canonical apps/site Vercel alias is in
+    [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
+    `defaultAllowedOrigins` (CORS allowlist lives in code, not in a
+    secret); the optional `EXTRA_ALLOWED_ORIGINS` env var is set only
+    if the operator has admitted-origin extras beyond the defaults
   - Supabase Auth Site URL and redirect URLs include the production `/admin`
     origin
   - at least one active admin email exists in `public.admin_users`

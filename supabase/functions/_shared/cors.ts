@@ -10,7 +10,16 @@
  */
 const APPS_SITE_PROJECT_SLUG = "neighborly-events-site";
 
-/** Built-in origins allowed to call edge functions when env config is absent. */
+/**
+ * Built-in origins allowed to call edge functions. The canonical site
+ * origin and dev-loop hosts live here in code (visible, version-
+ * controlled, reviewable) — not in a Supabase secret. CORS allowlists
+ * are not sensitive (each admitted origin is reflected back in the
+ * `Access-Control-Allow-Origin` response header), so encoding the
+ * canonical set as a write-only secret made safe operator updates
+ * impossible. This list is the floor; `EXTRA_ALLOWED_ORIGINS` (below)
+ * can supplement it but never replaces it.
+ */
 const defaultAllowedOrigins = new Set([
   "http://127.0.0.1:4173",
   "http://127.0.0.1:5173",
@@ -19,20 +28,35 @@ const defaultAllowedOrigins = new Set([
   "https://neighborly-events-site.vercel.app",
 ]);
 
-/** Returns the set of browser origins that may call the edge functions. */
+/**
+ * Returns the set of browser origins that may call the edge functions.
+ *
+ * The result is the union of `defaultAllowedOrigins` (always applied)
+ * and `EXTRA_ALLOWED_ORIGINS` (operator-supplied, comma-separated, may
+ * be unset). The env var is **additive only** — it cannot remove a
+ * default origin, so an operator setting it can never accidentally
+ * drop a canonical origin. This is the load-bearing difference from
+ * the prior `ALLOWED_ORIGINS` env var (which overrode defaults
+ * entirely): under override semantics, an operator who set the secret
+ * had to know every default origin and re-enter them, and Supabase's
+ * write-only secret UI made it impossible to read what was already
+ * there. The rename to `EXTRA_ALLOWED_ORIGINS` signals the additive
+ * contract by name.
+ */
 function getAllowedOrigins() {
-  const configuredOrigins = Deno.env.get("ALLOWED_ORIGINS");
+  const merged = new Set(defaultAllowedOrigins);
+  const configuredOrigins = Deno.env.get("EXTRA_ALLOWED_ORIGINS");
 
-  if (!configuredOrigins) {
-    return defaultAllowedOrigins;
+  if (configuredOrigins) {
+    for (const origin of configuredOrigins.split(",")) {
+      const trimmed = origin.trim();
+      if (trimmed) {
+        merged.add(trimmed);
+      }
+    }
   }
 
-  return new Set(
-    configuredOrigins
-      .split(",")
-      .map((origin) => origin.trim())
-      .filter(Boolean),
-  );
+  return merged;
 }
 
 /** Escape a string for safe use as a literal inside a RegExp source. */
@@ -91,17 +115,17 @@ function matchesAppsSitePreviewAlias(origin: string) {
  *
  * Two independent admission paths:
  *
- * 1. **Explicit allowlist.** Either the in-code `defaultAllowedOrigins`
- *    set (when `ALLOWED_ORIGINS` is unset) or the operator-pinned
- *    `ALLOWED_ORIGINS` set (when set). Exact-string membership.
+ * 1. **Explicit allowlist.** The union of `defaultAllowedOrigins`
+ *    (always applied) and `EXTRA_ALLOWED_ORIGINS` (additive operator
+ *    extras). Exact-string membership.
  * 2. **apps/site preview-alias matcher.** Active only when
  *    `APPS_SITE_VERCEL_SCOPE` is set. Admits Vercel preview/branch
  *    aliases for the apps/site project under the configured team.
- *    The two env vars are independent: setting `ALLOWED_ORIGINS`
+ *    The two env vars are independent: setting `EXTRA_ALLOWED_ORIGINS`
  *    does **not** silently enable the preview matcher, and unsetting
  *    `APPS_SITE_VERCEL_SCOPE` disables preview admission regardless
- *    of `ALLOWED_ORIGINS`. The operator's explicit configuration is
- *    respected on both axes.
+ *    of `EXTRA_ALLOWED_ORIGINS`. The operator's explicit configuration
+ *    is respected on both axes.
  */
 export function getAllowedOrigin(request: Request) {
   const requestOrigin = request.headers.get("origin");

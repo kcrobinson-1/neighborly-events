@@ -11,9 +11,9 @@ import { createOriginRequest, withEnvironment } from "./helpers.ts";
 
 const TEST_SCOPE = "myteam";
 
-Deno.test("getAllowedOrigin uses the built-in allowlist when ALLOWED_ORIGINS is absent", async () => {
+Deno.test("getAllowedOrigin uses the built-in defaults when EXTRA_ALLOWED_ORIGINS is absent", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
     () => {
       const allowedRequest = createOriginRequest("https://example.com");
       const disallowedRequest = createOriginRequest(
@@ -30,7 +30,7 @@ Deno.test("getAllowedOrigin uses the built-in allowlist when ALLOWED_ORIGINS is 
 
 Deno.test("getAllowedOrigin admits the canonical apps/site Vercel alias by default", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
     () => {
       const canonicalOrigin = "https://neighborly-events-site.vercel.app";
       const request = createOriginRequest(
@@ -46,7 +46,7 @@ Deno.test("getAllowedOrigin admits the canonical apps/site Vercel alias by defau
 
 Deno.test("getAllowedOrigin admits apps/site Vercel deployment-hash preview aliases when scope is configured", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
     () => {
       const previewOrigin =
         `https://neighborly-events-site-abc123def-${TEST_SCOPE}.vercel.app`;
@@ -63,7 +63,7 @@ Deno.test("getAllowedOrigin admits apps/site Vercel deployment-hash preview alia
 
 Deno.test("getAllowedOrigin admits apps/site Vercel git-branch preview aliases when scope is configured", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
     () => {
       const branchOrigin =
         `https://neighborly-events-site-git-feat-canonical-origin-flip-${TEST_SCOPE}.vercel.app`;
@@ -82,7 +82,7 @@ Deno.test("getAllowedOrigin REJECTS preview aliases when APPS_SITE_VERCEL_SCOPE 
   // Operator who doesn't configure APPS_SITE_VERCEL_SCOPE gets no
   // preview-alias admission. Falsifies any silent-default behavior.
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
     () => {
       const previewOrigin =
         `https://neighborly-events-site-abc123def-${TEST_SCOPE}.vercel.app`;
@@ -105,13 +105,15 @@ Deno.test("getAllowedOrigin REJECTS preview aliases when APPS_SITE_VERCEL_SCOPE 
   );
 });
 
-Deno.test("getAllowedOrigin REJECTS preview aliases when ALLOWED_ORIGINS is set but APPS_SITE_VERCEL_SCOPE is unset (operator lockdown intent honored)", async () => {
-  // Load-bearing P2 falsifier: an operator who explicitly pins
-  // ALLOWED_ORIGINS for production lockdown gets exactly that set.
-  // The preview matcher does not silently re-open access.
+Deno.test("getAllowedOrigin still REJECTS preview aliases when EXTRA_ALLOWED_ORIGINS is set but APPS_SITE_VERCEL_SCOPE is unset (env vars are independent axes)", async () => {
+  // The two env vars admit on independent paths: setting
+  // EXTRA_ALLOWED_ORIGINS adds those exact origins to the explicit
+  // allowlist; it does not silently enable the preview matcher. A
+  // preview alias not listed verbatim in EXTRA_ALLOWED_ORIGINS only
+  // gets admitted via the matcher, which requires APPS_SITE_VERCEL_SCOPE.
   await withEnvironment(
     {
-      ALLOWED_ORIGINS: "https://operator-pinned.example",
+      EXTRA_ALLOWED_ORIGINS: "https://operator-extra.example",
       APPS_SITE_VERCEL_SCOPE: null,
     },
     () => {
@@ -128,18 +130,20 @@ Deno.test("getAllowedOrigin REJECTS preview aliases when ALLOWED_ORIGINS is set 
   );
 });
 
-Deno.test("getAllowedOrigin admits preview aliases alongside an explicit ALLOWED_ORIGINS set when both env vars are configured", async () => {
-  // The two env vars are independent. Operator can pin a tight
-  // production allowlist AND opt in to apps/site preview admission.
+Deno.test("getAllowedOrigin admits preview aliases alongside EXTRA_ALLOWED_ORIGINS extras when both env vars are configured", async () => {
+  // The two env vars are independent. Operator can add explicit extras
+  // AND opt in to apps/site preview admission. Both paths admit; the
+  // canonical-origin defaults remain admitted alongside.
   await withEnvironment(
     {
-      ALLOWED_ORIGINS: "https://operator-pinned.example",
+      EXTRA_ALLOWED_ORIGINS: "https://operator-extra.example",
       APPS_SITE_VERCEL_SCOPE: TEST_SCOPE,
     },
     () => {
       const previewOrigin =
         `https://neighborly-events-site-abc123def-${TEST_SCOPE}.vercel.app`;
-      const pinnedOrigin = "https://operator-pinned.example";
+      const extraOrigin = "https://operator-extra.example";
+      const canonicalOrigin = "https://neighborly-events-site.vercel.app";
 
       assertEquals(
         getAllowedOrigin(
@@ -149,9 +153,15 @@ Deno.test("getAllowedOrigin admits preview aliases alongside an explicit ALLOWED
       );
       assertEquals(
         getAllowedOrigin(
-          createOriginRequest("https://example.com", {}, pinnedOrigin),
+          createOriginRequest("https://example.com", {}, extraOrigin),
         ),
-        pinnedOrigin,
+        extraOrigin,
+      );
+      assertEquals(
+        getAllowedOrigin(
+          createOriginRequest("https://example.com", {}, canonicalOrigin),
+        ),
+        canonicalOrigin,
       );
     },
   );
@@ -163,7 +173,7 @@ Deno.test("getAllowedOrigin REJECTS apps/site preview aliases scoped to a differ
   // own preview deploys to call the Edge Functions. The scope segment
   // is pinned to the configured team's slug.
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
     () => {
       const otherTeamPreview =
         "https://neighborly-events-site-abc123def-othersteam.vercel.app";
@@ -192,7 +202,7 @@ Deno.test("getAllowedOrigin rejects sibling Vercel project aliases that share ap
   // project token is `extra` — neither the literal `git` anchor nor a
   // 9-character deployment hash. The matcher MUST reject these.
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
     () => {
       const siblingDeploymentOrigin =
         `https://neighborly-events-site-extra-abc123def-${TEST_SCOPE}.vercel.app`;
@@ -217,7 +227,7 @@ Deno.test("getAllowedOrigin rejects sibling Vercel project aliases that share ap
 
 Deno.test("getAllowedOrigin rejects unrelated *.vercel.app deployments", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
     () => {
       const unrelatedOrigin =
         `https://some-other-project-abc123def-${TEST_SCOPE}.vercel.app`;
@@ -234,7 +244,7 @@ Deno.test("getAllowedOrigin rejects unrelated *.vercel.app deployments", async (
 
 Deno.test("getAllowedOrigin rejects http:// preview-alias spoofs (https-only enforcement)", async () => {
   await withEnvironment(
-    { ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },
     () => {
       const httpSpoofOrigin =
         `http://neighborly-events-site-abc123def-${TEST_SCOPE}.vercel.app`;
@@ -249,22 +259,42 @@ Deno.test("getAllowedOrigin rejects http:// preview-alias spoofs (https-only enf
   );
 });
 
-Deno.test("getAllowedOrigin uses the configured allowlist when ALLOWED_ORIGINS is set", async () => {
+Deno.test("getAllowedOrigin unions EXTRA_ALLOWED_ORIGINS with the in-code defaults (additive semantics)", async () => {
+  // Load-bearing falsifier for the ALLOWED_ORIGINS → EXTRA_ALLOWED_ORIGINS
+  // rename: setting the env var must not drop a default origin. An
+  // operator who supplies extras still gets the canonical apps/site
+  // alias and the localhost dev hosts admitted alongside the extras.
+  // Whitespace and trailing commas in the env var value are tolerated.
   await withEnvironment(
     {
-      ALLOWED_ORIGINS: "https://game.example, https://preview.example ",
+      EXTRA_ALLOWED_ORIGINS: "https://game.example, https://preview.example ,",
       APPS_SITE_VERCEL_SCOPE: null,
     },
     () => {
-      const configuredRequest = createOriginRequest(
+      const extraRequest = createOriginRequest(
         "https://example.com",
         {},
         "https://preview.example",
       );
-      const defaultOnlyRequest = createOriginRequest("https://example.com");
+      const defaultLocalhostRequest = createOriginRequest("https://example.com");
+      const defaultCanonicalRequest = createOriginRequest(
+        "https://example.com",
+        {},
+        "https://neighborly-events-site.vercel.app",
+      );
+      const unrelatedRequest = createOriginRequest(
+        "https://example.com",
+        {},
+        "https://not-allowed.example",
+      );
 
-      assertEquals(getAllowedOrigin(configuredRequest), "https://preview.example");
-      assertEquals(getAllowedOrigin(defaultOnlyRequest), null);
+      assertEquals(getAllowedOrigin(extraRequest), "https://preview.example");
+      assertEquals(getAllowedOrigin(defaultLocalhostRequest), "http://127.0.0.1:4173");
+      assertEquals(
+        getAllowedOrigin(defaultCanonicalRequest),
+        "https://neighborly-events-site.vercel.app",
+      );
+      assertEquals(getAllowedOrigin(unrelatedRequest), null);
     },
   );
 });

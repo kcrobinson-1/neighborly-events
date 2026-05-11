@@ -235,7 +235,7 @@ In short:
 - create your own Vercel project for `apps/web`
 - create your own Vercel project for `apps/site`
 - set the frontend env vars in both Vercel projects
-- set Supabase secrets such as `SESSION_SIGNING_SECRET` and `ALLOWED_ORIGINS`
+- set Supabase secrets such as `SESSION_SIGNING_SECRET` (CORS allowlist lives in code at `supabase/functions/_shared/cors.ts`; only set the optional `EXTRA_ALLOWED_ORIGINS` env var if you have origins beyond the canonical defaults)
 
 ## Release Model
 

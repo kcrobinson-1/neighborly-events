@@ -44,7 +44,7 @@ Backend nuance:
 
 - prefer remote Supabase-backed UI review when the project env vars are configured locally
 - the normal backend-backed review path is a configured remote Supabase project tested from a local frontend via `npm run dev:web` or `npm run dev:web:local`
-- if you use remote Supabase from a local web app, make sure the project `ALLOWED_ORIGINS` secret includes the local origin you are using
+- if you use remote Supabase from a local web app on a non-default origin, set the project's `EXTRA_ALLOWED_ORIGINS` env var to include the local origin you are using (additive — defaults stay applied; the four standard localhost dev origins are already in defaults)
 - if `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY` are not configured locally, run UI review against the Vite dev server, not a production preview build
 - the browser-only completion fallback is development-only and should only be used when explicitly enabled with `VITE_ENABLE_LOCAL_PROTOTYPE_FALLBACK=true`
 - when you need a fixed host and port for Playwright, prefer `npm run dev:web:local`

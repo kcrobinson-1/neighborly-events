@@ -14,7 +14,13 @@ function writeFunctionsServeEnvFile(envFilePath, { allowedOrigins, sessionSignin
     envFilePath,
     [
       `SESSION_SIGNING_SECRET=${sessionSigningSecret}`,
-      `ALLOWED_ORIGINS=${allowedOrigins.join(",")}`,
+      // EXTRA_ALLOWED_ORIGINS is additive on top of the in-code
+      // defaultAllowedOrigins set (which already includes the
+      // localhost dev origins these tests use), so duplicate values
+      // are harmless. Kept here so individual e2e scripts can pin
+      // their own origin list explicitly without depending on the
+      // exact contents of the in-code defaults.
+      `EXTRA_ALLOWED_ORIGINS=${allowedOrigins.join(",")}`,
       "",
     ].join("\n"),
   );
