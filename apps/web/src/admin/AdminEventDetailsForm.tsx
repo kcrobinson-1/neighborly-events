@@ -1,6 +1,5 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
-import { generateEventCode } from "../lib/adminGameApi";
 import {
   createEventDetailsFormValues,
   type AdminEventDetailsFormValues,
@@ -46,8 +45,6 @@ export function AdminEventDetailsForm({
     useState<AdminEventDetailsFormValues>(baselineValues);
 
   const [localEventCode, setLocalEventCode] = useState(draft.eventCode ?? "");
-  const [isRegenerating, setIsRegenerating] = useState(false);
-  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   const baselineEventCode = draft.eventCode ?? "";
   const isDirty =
@@ -63,29 +60,28 @@ export function AdminEventDetailsForm({
     setLocalEventCode(draft.eventCode ?? "");
   }, [draft.eventCode]);
 
-  // When publish transitions the slug and event code to locked, discard any
-  // unsaved edits so a stale value cannot be re-sent on the next save.
+  // Slug locks on first publish and never re-unlocks in the UI; discard any
+  // stale slug edit when that transition fires so it cannot be re-sent.
   const prevHasBeenPublished = useRef(draft.hasBeenPublished);
   useEffect(() => {
     if (draft.hasBeenPublished && !prevHasBeenPublished.current) {
       setValues((currentValues) => ({ ...currentValues, slug: baselineValues.slug }));
-      setLocalEventCode(draft.eventCode ?? "");
     }
     prevHasBeenPublished.current = draft.hasBeenPublished;
-  }, [draft.hasBeenPublished, baselineValues.slug, draft.eventCode]);
+  }, [draft.hasBeenPublished, baselineValues.slug]);
 
-  const handleRegenerateEventCode = async () => {
-    setIsRegenerating(true);
-    setRegenerateError(null);
-    try {
-      const newCode = await generateEventCode(draft.id);
-      setLocalEventCode(newCode);
-    } catch {
-      setRegenerateError("We couldn't generate an event code right now.");
-    } finally {
-      setIsRegenerating(false);
+  // Event code locks only while the event is currently live (DB trigger may
+  // also block at save time when entitlements exist, but that surfaces via the
+  // save error). Discard stale event-code edits whenever the event transitions
+  // back into the live-locked state — including re-publish after unpublish, so
+  // an unsaved edit made during the unpublished window cannot be re-sent.
+  const prevIsLive = useRef(draft.isLive);
+  useEffect(() => {
+    if (draft.isLive && !prevIsLive.current) {
+      setLocalEventCode(draft.eventCode ?? "");
     }
-  };
+    prevIsLive.current = draft.isLive;
+  }, [draft.isLive, draft.eventCode]);
 
   const updateTextValue =
     (field: TextFieldName) =>
@@ -161,41 +157,27 @@ export function AdminEventDetailsForm({
           <label htmlFor="admin-event-code">
             <span className="admin-field-label">Event code</span>
           </label>
-          <div className="admin-input-with-action">
-            <input
-              className="admin-input"
-              disabled={disabled || draft.hasBeenPublished}
-              id="admin-event-code"
-              maxLength={3}
-              onBlur={(e) => setLocalEventCode(e.target.value.toUpperCase())}
-              onChange={(e) => setLocalEventCode(e.target.value.toUpperCase())}
-              pattern="[A-Z]{3}"
-              title={
-                draft.hasBeenPublished
-                  ? "Event code is locked after publishing."
-                  : undefined
-              }
-              type="text"
-              value={localEventCode}
-            />
-            <button
-              className="secondary-button"
-              disabled={disabled || draft.hasBeenPublished || isRegenerating}
-              onClick={() => { void handleRegenerateEventCode(); }}
-              type="button"
-            >
-              {isRegenerating ? "Generating..." : "Regenerate"}
-            </button>
-          </div>
-          {regenerateError ? (
-            <span className="admin-field-hint admin-field-hint-error">{regenerateError}</span>
-          ) : (
-            <span className="admin-field-hint">
-              {draft.hasBeenPublished
-                ? "Locked after publishing — entitlement codes depend on this."
-                : "3-letter prefix used in entitlement codes (e.g. ABC-1234). Auto-generated — change it if you want a more memorable prefix."}
-            </span>
-          )}
+          <input
+            className="admin-input"
+            disabled={disabled || draft.isLive}
+            id="admin-event-code"
+            maxLength={3}
+            onBlur={(e) => setLocalEventCode(e.target.value.toUpperCase())}
+            onChange={(e) => setLocalEventCode(e.target.value.toUpperCase())}
+            pattern="[A-Z]{3}"
+            title={
+              draft.isLive
+                ? "Event code is locked while the event is currently live."
+                : undefined
+            }
+            type="text"
+            value={localEventCode}
+          />
+          <span className="admin-field-hint">
+            {draft.isLive
+              ? "Locked while the event is currently live — entitlement codes depend on this."
+              : "3-letter prefix used in entitlement codes (e.g. ABC-1234). Save is rejected if any entitlements already exist for this event."}
+          </span>
         </div>
         <label className="admin-field">
           <span className="admin-field-label">Location</span>

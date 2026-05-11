@@ -146,6 +146,20 @@ event.
   affordance.
   Detail: [`docs/plans/event-code-rotation-safety.md` — Plan handoff (Authoring UI follow-up)](/docs/plans/event-code-rotation-safety.md)
 
+- [ ] **`cleanup` Remove orphan `generate-event-code` Edge Function**
+  The admin "Regenerate" button surfaced random server-generated event
+  codes via the `generate-event-code` Edge Function. The button was removed
+  in the event_code rotation UX fix once the rotation flow itself made
+  it clear there's no real use case for "pick me a random new prefix"
+  (the rotation use case is "I want to type a specific new code"). The
+  client wrapper and its unit test came out at the same time, but the
+  Edge Function under [`supabase/functions/generate-event-code/`](/supabase/functions/generate-event-code)
+  and its Deno tests at [`tests/supabase/functions/generate-event-code.test.ts`](/tests/supabase/functions/generate-event-code.test.ts)
+  stayed in place because removing them requires a Supabase function-
+  delete step on the deployed project, which is out of scope for a UI
+  PR. Drop the function directory + tests in a follow-up PR and delete
+  the deployed function from the Supabase project.
+
 - [ ] **`docs` Rewrite `database-backed-quiz-content.md` and `quiz-authoring-plan.md` to target terminology**
   These two plan docs still use legacy `quiz`/`raffle` language (12 and 27
   occurrences respectively). All other docs were swept in Phases 1 and 5; these
