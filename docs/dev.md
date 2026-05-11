@@ -17,7 +17,7 @@ System shape and data ownership live in `architecture.md`. UX intent lives in `e
 Testing scope, layer ownership, and rollout priorities live in `testing.md`.
 Unresolved contributor-workflow and release questions live in `open-questions.md`.
 Release gates, the senior-engineer quality-check methodology, and the living
-release-blocking view live in [`release-readiness.md`](/docs/plans/release-readiness.md).
+release-blocking view live in [`release-readiness.md`](/docs/tracking/release-readiness.md).
 
 ## Current Tooling
 
@@ -103,7 +103,7 @@ Avoid comment noise:
   describe
 
 Release-readiness documentation checks are defined in
-[`release-readiness.md` — Code Documentation And Comments](/docs/plans/release-readiness.md#2-code-documentation-and-comments).
+[`release-readiness.md` — Code Documentation And Comments](/docs/tracking/release-readiness.md#2-code-documentation-and-comments).
 
 File-level headers should answer "what is this file responsible for?" and,
 when useful, "what does this file deliberately not own?" For example, a

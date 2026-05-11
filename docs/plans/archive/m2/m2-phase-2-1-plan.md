@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M2, Phase 2.1. Sibling phases: 2.2 per-event admin shell —
 Proposed; 2.3 `/auth/callback` and `/` migration — Proposed; 2.4
 platform admin migration — Proposed; 2.5 `/game/*` URL migration —
@@ -652,7 +652,7 @@ resolution path so reviewer attention does not relitigate them.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   M2 milestone doc; cross-phase decisions, sequencing, invariants.

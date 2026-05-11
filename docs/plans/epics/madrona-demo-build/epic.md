@@ -3,7 +3,7 @@
 ## Status
 
 Proposed. Supersedes the prior `madrona-launch/` stub deferred
-from [`event-platform-epic.md`](/docs/plans/event-platform-epic.md);
+from [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md);
 the launch-readiness scope from that stub's inherited M4
 paragraphs (volunteer training, QR posters, production smoke run,
 real attendee operations) is reassigned to a future Madrona-launch
@@ -306,11 +306,11 @@ authoring time of this epic the surfaced docs are:
 - [`docs/styling.md`](/docs/styling.md) — per-event Theme
   procedure that names the Madrona-launch epic as the Theme
   registration site.
-- [`docs/plans/release-readiness.md`](/docs/plans/release-readiness.md) —
+- [`docs/tracking/release-readiness.md`](/docs/tracking/release-readiness.md) —
   "current real-event launch epic" reference; reframe to point
   at the demo-build epic as the active real-event work, with
   launch noted as a deferred far-future sibling.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   multiple inline references (M4 row in milestone table, "moved
   to" notes, deferred-phase references); replace
   `epics/madrona-launch/` with the demo-build path; note that
@@ -451,7 +451,7 @@ Total: 4–7 PRs across the epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic; brand-launch context inherited from its M4
   paragraphs informs this epic's M1 visual transition framing.
 - [`epics/demo-expansion/epic.md`](/docs/plans/epics/demo-expansion/epic.md) —

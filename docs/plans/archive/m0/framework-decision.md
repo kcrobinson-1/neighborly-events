@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M0, Phase 0.2. M0's milestone Status remains `Proposed` until
 phase 0.3 lands.
 
@@ -481,7 +481,7 @@ same PR that lands this decision.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent epic
 - [`docs/architecture.md`](/docs/architecture.md) — current SPA shape;
   updated in later milestones
 - [`docs/dev.md`](/docs/dev.md) — current contributor workflow; updated

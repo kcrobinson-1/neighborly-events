@@ -5,7 +5,7 @@
 Landed.
 
 This is a small post-M3-close follow-up. The decision walked in
-[`test-event-noindex-uniformity.md`](/docs/plans/test-event-noindex-uniformity.md)
+[`test-event-noindex-uniformity.md`](/docs/plans/archive/test-event-noindex-uniformity.md)
 (Option B, confirmed 2026-05-04) is implemented in the same PR
 that flips this plan's Status. The deliberation lives in the
 decision doc; this plan owns the implementation contract and the
@@ -173,13 +173,13 @@ glob).
 [`shared/events/testEventAllowlist.ts:18-21`](/shared/events/testEventAllowlist.ts)
 (`TEST_EVENT_SLUGS` array literal — the source of truth the
 test reads against);
-[`docs/plans/test-event-noindex-uniformity.md`](/docs/plans/test-event-noindex-uniformity.md)
+[`docs/plans/archive/test-event-noindex-uniformity.md`](/docs/plans/archive/test-event-noindex-uniformity.md)
 (the decision-doc framing for why the catchall shape is the
 right contract).
 
 ### Decision-doc + backlog closure
 
-- `docs/plans/test-event-noindex-uniformity.md` Status flips
+- `docs/plans/archive/test-event-noindex-uniformity.md` Status flips
   `Open` → `Resolved (Option B chosen, 2026-05-04)`. The
   options walkthrough below the Status block remains as the
   durable record of the deliberation.
@@ -220,7 +220,7 @@ right contract).
 
 ### New
 
-- `docs/plans/test-event-noindex-uniformity-plan.md` — this
+- `docs/plans/archive/test-event-noindex-uniformity-plan.md` — this
   file. Status flips through `Proposed` → `Landed` in the
   implementing PR.
 
@@ -230,7 +230,7 @@ right contract).
   catchall.
 - `tests/web/demo-mode-bypass-noindex.test.ts` — rewrite for
   single-entry shape per Contracts above.
-- `docs/plans/test-event-noindex-uniformity.md` — flip Status
+- `docs/plans/archive/test-event-noindex-uniformity.md` — flip Status
   `Open` → `Resolved`; record the decision rationale.
 - `docs/backlog.md` — remove the Tier 4 decision entry pointing
   at the decision doc.
@@ -384,9 +384,9 @@ Per AGENTS.md "Plan-to-PR Completion Gate":
   bullet revised).
 - **`docs/backlog.md`** — satisfied (Tier 4 decision entry
   removed).
-- **`docs/plans/test-event-noindex-uniformity.md`** — satisfied
+- **`docs/plans/archive/test-event-noindex-uniformity.md`** — satisfied
   (Status flipped `Open` → `Resolved`; decision recorded).
-- **`docs/plans/test-event-noindex-uniformity-plan.md`** (this
+- **`docs/plans/archive/test-event-noindex-uniformity-plan.md`** (this
   file) — satisfied (Status flipped `Proposed` → `Landed`).
 - **NOT edited (intentional):** `docs/operations.md`,
   `docs/styling.md`, `docs/dev.md`, `docs/open-questions.md`,
@@ -467,7 +467,7 @@ Per AGENTS.md "Plan-to-PR Completion Gate":
 
 ## Related Docs
 
-- [`docs/plans/test-event-noindex-uniformity.md`](/docs/plans/test-event-noindex-uniformity.md)
+- [`docs/plans/archive/test-event-noindex-uniformity.md`](/docs/plans/archive/test-event-noindex-uniformity.md)
   — sibling decision doc; owns the deliberation prose; Status
   flips `Open` → `Resolved` in the same PR as this plan flips
   `Proposed` → `Landed`.

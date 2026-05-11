@@ -2,9 +2,7 @@
 
 **Mandatory pre-edit read** for any session whose diff surface
 intersects `apps/web/`, `apps/site/`, `shared/`, `supabase/`, or
-styling — see "Mandatory pre-edit reference reads" in
-[`docs/plans/agents-md-restructure.md`](/docs/plans/agents-md-restructure.md)
-and the pre-edit-gate routing in
+styling — see the pre-edit-gate routing in
 [`workflows/implementation.md`](../workflows/implementation.md).
 Despite living under `reference/`, this file is **not** an optional
 lookup; the rules below bind before the first edit, not at PR-open

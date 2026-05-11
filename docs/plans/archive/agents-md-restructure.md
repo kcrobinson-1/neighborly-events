@@ -14,7 +14,7 @@ in this PR's body under `## Estimate Deviations` and reconciled
 into the relevant estimate-shaped sections of this plan below.
 
 This is a cross-cutting plan (not bound to a single epic) and lives at
-`docs/plans/agents-md-restructure.md` per the in-repo layout convention
+`docs/plans/archive/agents-md-restructure.md` per the in-repo layout convention
 in [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md).
 
 ## Context
@@ -815,7 +815,7 @@ Walk the triggers from AGENTS.md "Doc Currency Is a PR Gate":
   content copies, so they pass the duplication test by construction
   and are in scope per the same decision.
 - Migrating pre-convention plan docs (the
-  [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+  [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   set and its M0–M3 phase plans) into the
   `docs/plans/epics/<slug>/` shape. That is its own deferred
   refactor per

@@ -4,14 +4,9 @@ import type { Theme } from "../types.ts";
  * Platform Sage Civic Theme. apps/site's root layout emits these as
  * inline CSS custom properties on `<html>`; `getThemeForSlug`
  * returns this Theme for any slug not registered in
- * [`themes/index.ts`](./index.ts) (every unregistered slug; through
- * M3 phase 3.2's test events the registry held only those, and the
- * [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
- * M1 phase 1.1 added Madrona as the first non-test entry).
+ * [`themes/index.ts`](./index.ts).
  *
- * Source-of-truth values live in the parent epic
- * ([`docs/plans/event-platform-epic.md`](../../../docs/plans/event-platform-epic.md))
- * M1 phase 1.5 description; cross-referenced in
+ * Source-of-truth for the field model and classification policy:
  * [`docs/styling.md`](../../../docs/styling.md). apps/web's `:root`
  * defaults (today's warm-cream values) are deliberately not driven
  * by this Theme — they live byte-identically in

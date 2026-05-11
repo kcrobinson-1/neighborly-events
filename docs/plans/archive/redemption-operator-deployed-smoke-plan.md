@@ -529,14 +529,14 @@ same lexical neighborhood as the existing
   - **`docs/dev.md`** — no contributor-workflow change.
   - **`docs/styling.md`, `docs/open-questions.md`,
     `docs/self-review-catalog.md`** — no surface added.
-  - **`docs/plans/release-readiness.md`** — gate methodology
+  - **`docs/tracking/release-readiness.md`** — gate methodology
     unchanged; this PR exercises G3 rather than redefining it.
 
 ## Files To Touch
 
 ### New
 
-- `docs/plans/redemption-operator-deployed-smoke-plan.md` —
+- `docs/plans/archive/redemption-operator-deployed-smoke-plan.md` —
   this file. Status flow: `In draft` → `Proposed` (on user
   sign-off, complete) → `In progress pending prod smoke` (in
   the implementing PR) → `Landed` (in the follow-up doc
@@ -617,9 +617,9 @@ Per the Non-Goals + Contracts above:
   cross-app rewrite unchanged.
 - `.github/workflows/ci.yml`, `.github/workflows/release.yml`
   — workflows unchanged.
-- `docs/plans/release-readiness.md`,
+- `docs/tracking/release-readiness.md`,
   `docs/plans/planning-doc-location.md`,
-  `docs/plans/event-platform-epic.md` — plan docs unchanged.
+  `docs/plans/archive/event-platform-epic.md` — plan docs unchanged.
 - `AGENTS.md` — no new rules.
 - `docs/architecture.md` redemption-routes prose, `README.md`
   implemented-slice bullet — already accurate.
@@ -937,7 +937,7 @@ edit is in tree.
 - **`docs/backlog.md`** — Tier 1 entry "Add redemption
   operator path to deployed-surface smoke" removed per the
   backlog convention. Satisfied by the implementing PR.
-- **`docs/plans/redemption-operator-deployed-smoke-plan.md`**
+- **`docs/plans/archive/redemption-operator-deployed-smoke-plan.md`**
   (this file) — Status flipped `Proposed` → `In progress
   pending prod smoke`. Satisfied by the implementing PR; the
   `Landed` flip is the follow-up doc commit's responsibility,
@@ -945,7 +945,7 @@ edit is in tree.
 
 **Edited in the follow-up doc commit (post-release):**
 
-- **`docs/plans/redemption-operator-deployed-smoke-plan.md`**
+- **`docs/plans/archive/redemption-operator-deployed-smoke-plan.md`**
   (this file) — Status flipped `In progress pending prod
   smoke` → `Landed`; the post-release `Production
   Deployed-Surface Smoke` run URL captured via
@@ -963,9 +963,9 @@ edit is in tree.
 `docs/dev.md`, `docs/architecture.md`, `docs/styling.md`,
 `docs/open-questions.md`, `docs/self-review-catalog.md`,
 `README.md`, `docs/product.md`,
-`docs/plans/release-readiness.md`,
+`docs/tracking/release-readiness.md`,
 `docs/plans/planning-doc-location.md`,
-`docs/plans/event-platform-epic.md`,
+`docs/plans/archive/event-platform-epic.md`,
 `docs/plans/cloud-agent-reliability-plan.md`,
 `docs/testing-tiers.md` (already accurately covers the gate
 this plan invokes).

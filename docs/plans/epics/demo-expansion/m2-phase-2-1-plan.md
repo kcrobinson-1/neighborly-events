@@ -104,7 +104,7 @@ phase's diff.
   `--primary-surface`, `--secondary-focus`) pin to the
   apps/site `:root` substitution and do not re-evaluate inside
   `<ThemeScope>` per the empirical finding recorded at
-  [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md);
+  [`docs/plans/archive/themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md);
   the showcase card avoids them on brand-bearing surfaces.
 
 ## Contracts
@@ -168,7 +168,7 @@ bearing for the two-theme visible distinction.
 This rule mitigates the milestone doc's "Multi-theme rendering
 visible in showcase but broken in practice" Cross-Phase Risk
 and aligns with the empirical finding recorded at
-[`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md).
+[`docs/plans/archive/themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md).
 
 ### Showcase-card link contract
 
@@ -624,11 +624,11 @@ addition in the PR body.
 - [`m1-phase-1-1-plan.md`](/docs/plans/epics/demo-expansion/m1-phase-1-1-plan.md) —
   predecessor plan. Single-PR shape, capture-pair validation,
   brand-token discipline precedent.
-- [`themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md) —
+- [`themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md) —
   M1-surfaced follow-up that frames the derived-shade discipline
   rule the brand-token contract above binds. M2 phase 2.1 does
   not depend on this follow-up landing first.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic. M2 phase 2.3 of *that* epic delivered the
   current `/` stub this phase rebuilds.
 - [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx) —

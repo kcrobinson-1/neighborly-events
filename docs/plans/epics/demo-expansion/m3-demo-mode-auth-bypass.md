@@ -437,7 +437,7 @@ demo-mode surfaces that must satisfy it.
 **Inherited from upstream invariants.** M3 also inherits the URL
 contract, theme route scoping, theme token discipline, in-place
 auth, auth integration, and trust-boundary invariants from
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md);
+[`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md);
 the test-event noindex + disclaimer banner invariant from
 [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md); the
 apps/web ThemeScope wiring infrastructure delivered by
@@ -938,7 +938,7 @@ Capture."
   the M2 phase plan that ships the role-door cards whose
   copy M3-closing phase revises. The plan's role-door copy
   contract is the artifact M3 walks against at closing time.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic; supplies the URL contract, theme route
   scoping, in-place auth, and trust-boundary invariants M3
   inherits. Event-platform-epic M2 phase 2.2 shipped the

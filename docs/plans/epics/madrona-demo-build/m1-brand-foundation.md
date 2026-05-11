@@ -280,7 +280,7 @@ when multiple phases interact:
 **Inherited from upstream invariants.** M1 also inherits the
 URL contract, theme route scoping, and theme token discipline
 invariants from the predecessor epic
-([event-platform-epic.md](/docs/plans/event-platform-epic.md))
+([event-platform-epic.md](/docs/plans/archive/event-platform-epic.md))
 and the apps/web ThemeScope-wrap centralization invariant from
 the sibling demo-expansion epic
 ([m1-themescope-wiring.md §Cross-Phase Invariants](/docs/plans/epics/demo-expansion/m1-themescope-wiring.md));
@@ -558,7 +558,7 @@ new open questions surfaced during planning into
   phase 1.1 surfaces structural mis-classification beyond
   one-line correction (analogous to demo-expansion epic M1
   phase 1.1's
-  [themescope-derived-shade-cascade.md](/docs/plans/themescope-derived-shade-cascade.md)
+  [themescope-derived-shade-cascade.md](/docs/plans/archive/themescope-derived-shade-cascade.md)
   spinout); a noindex-flip-mechanism follow-up the future
   Madrona-launch epic inherits.
 
@@ -568,7 +568,7 @@ new open questions surfaced during planning into
   — parent epic. M1 paragraph in Milestone Structure (lines
   213-221), Sizing Summary M1 line, Cross-Cutting Invariants
   this milestone binds.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   — predecessor epic. Inherited URL contract, theme route
   scoping, and theme token discipline invariants.
 - [`docs/plans/epics/demo-expansion/m1-themescope-wiring.md`](/docs/plans/epics/demo-expansion/m1-themescope-wiring.md)

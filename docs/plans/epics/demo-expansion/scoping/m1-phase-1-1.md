@@ -116,7 +116,7 @@ Subsystems touched by Option A:
    ([App.tsx](/apps/web/src/App.tsx)).
 2. Doc surface (`docs/styling.md`,
    `docs/architecture.md`, `README.md`,
-   `docs/plans/event-platform-epic.md`,
+   `docs/plans/archive/event-platform-epic.md`,
    `docs/plans/epics/demo-expansion/epic.md`,
    `docs/plans/epics/demo-expansion/m1-themescope-wiring.md`).
 3. Source-comment surface
@@ -318,7 +318,7 @@ two concerns separate.
 **Verified by:**
 [ThemeScope.tsx:27-33](/shared/styles/ThemeScope.tsx) (existing
 comment text);
-[event-platform-epic.md:152-165](/docs/plans/event-platform-epic.md)
+[event-platform-epic.md:152-165](/docs/plans/archive/event-platform-epic.md)
 (the "Deferred ThemeScope wiring" invariant the comment
 mirrors).
 
@@ -362,7 +362,7 @@ reading docs and components against actually-merged code at
 plan-time, not against the scoping snapshot:
 
 - **Sentence-level edits in `docs/styling.md`,
-  `docs/architecture.md`, `docs/plans/event-platform-epic.md`,
+  `docs/architecture.md`, `docs/plans/archive/event-platform-epic.md`,
   and `README.md`** to reflect the wrap landing. Plan-drafting
   greps each file against the current main, identifies the
   paragraphs naming "M4 phase 4.1" / "deferred ThemeScope
@@ -371,7 +371,7 @@ plan-time, not against the scoping snapshot:
   (read on 2026-05-01) found the relevant paragraphs at
   `docs/styling.md:334-337`, `docs/styling.md:393-397`,
   `docs/architecture.md:380-385`, `docs/architecture.md:388-391`,
-  and `docs/plans/event-platform-epic.md:152-165`; plan-drafting
+  and `docs/plans/archive/event-platform-epic.md:152-165`; plan-drafting
   re-verifies these still match.
 - **Source-comment edits in
   [ThemeScope.tsx](/shared/styles/ThemeScope.tsx) and
@@ -480,7 +480,7 @@ scoping and plan":
   parent milestone doc; phase 1.1 row at the Phase Status table.
 - [`epic.md`](/docs/plans/epics/demo-expansion/epic.md) — parent
   epic; M1 paragraph at lines 180-198.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic; "Deferred ThemeScope wiring" invariant at
   lines 152-165 narrows partially in M1's PR.
 - [`m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md) —

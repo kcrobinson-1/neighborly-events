@@ -89,7 +89,7 @@ have the new routes pre-merge) rather than the branch's local
 Next.js dev server. M1 phase 1.3.2's cookie-boundary verification
 is the precedent for the post-deploy gate this plan followed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M2, Phase 2.3. Sibling phases: 2.1 RLS broadening + Edge
 Function organizer gate — Landed
 ([`m2-phase-2-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-plan.md)); 2.2 per-event admin
@@ -857,7 +857,7 @@ epic-level invariants apply:
     `docs/backlog.md` does not update; `docs/open-questions.md`
     does not update (the post-MVP authoring-ownership entry
     closes with 2.5);
-    [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) M2 row
+    [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) M2 row
     stays `Proposed` (its flip lands with 2.5).
 12. **Validation re-run.** All baseline commands from step 2 must
     still pass. `npm run lint` covers the apps/site source under
@@ -1312,7 +1312,7 @@ relevant doc updates this branch must carry:
 - [`README.md`](/README.md) — update route ownership and setup
   guidance. The repo-level README names `/`, `/auth/callback`, Vercel
   app ownership, and contributor env vars.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — M2 row
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — M2 row
   stays `Proposed`. Its flip lands with 2.5.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   Phase Status table row for 2.3 updates from `not yet drafted`
@@ -1571,7 +1571,7 @@ resolution path so reviewer attention does not relitigate them.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions §3-5 + Settled by default

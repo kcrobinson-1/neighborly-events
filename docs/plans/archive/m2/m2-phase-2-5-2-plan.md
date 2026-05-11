@@ -391,7 +391,7 @@ the post-deploy manual verification captures.
   [`README.md`](/README.md),
   [`docs/open-questions.md`](/docs/open-questions.md),
   [`docs/backlog.md`](/docs/backlog.md),
-  [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+  [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
   [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md),
   [`docs/plans/m2-phase-2-5-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-plan.md),
   M2 scoping docs (deleted in M2 phase 2.5.3 batch deletion; see

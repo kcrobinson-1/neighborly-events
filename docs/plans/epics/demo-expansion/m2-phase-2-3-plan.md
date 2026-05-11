@@ -1175,13 +1175,13 @@ addition in the PR body.
   ThemeScope wiring on the role-door target surfaces (admin,
   redeem) so partners clicking through see per-event Themed
   apps/web shells.
-- [`themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md)
+- [`themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md)
   — follow-up that frames the derived-shade discipline rule
   the brand-token discipline contract above binds by reference.
   M2 phase 2.3 does not depend on this follow-up landing first;
   the no-`<ThemeScope>`-wrap contract sidesteps the cascade
   issue entirely for this phase.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   — predecessor epic. Delivered the apps/web admin / redeem /
   gameplay surfaces the role-doors target.
 - [`apps/site/components/event/EventCTA.tsx`](/apps/site/components/event/EventCTA.tsx)

@@ -16,7 +16,7 @@ The pass results live in two sibling files:
   — the append-only archive of prior passes
 
 This split keeps the methodology stable and short-to-read while letting
-pass evidence accumulate without bloating the plan. When you change the
+pass evidence accumulate without bloating this doc. When you change the
 methodology, edit this file. When you record what happened during a pass,
 edit `release-readiness-current.md`.
 
@@ -51,7 +51,6 @@ Owner docs this file coordinates:
 - [continuous-deployment-roadmap.md](/docs/tracking/continuous-deployment-roadmap.md) — release-pipeline evolution context for `release.yml` + `production-admin-smoke.yml`
 - [cloud-agent-reliability-roadmap.md](/docs/tracking/cloud-agent-reliability-roadmap.md) — agent-tooling reliability work that intersects PR CI evidence
 - [epics/madrona-demo-build/epic.md](/docs/plans/epics/madrona-demo-build/epic.md) — current real-event work (demo-build phase: Theme registration, content authoring, end-to-end attendee journey through a stakeholder-shareable demo URL); launch readiness deferred to a far-future Madrona-launch sibling
-- [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md) — completed M1–M3 (ThemeScope wiring, home rebuild, demo-mode auth bypass) that shipped between this doc's establishment and the next pass
 
 ## Scope And Release Target
 
@@ -93,10 +92,9 @@ Out of scope for this doc:
   organizer self-service onboarding, root-admin UI)
 - infrastructure-as-code settings migration (see the future option note in
   [operations.md](/docs/operations.md))
-- demo-expansion epic milestones M4 (role-door redemption seeding), M5
-  (configuration tour), and M6 (behind-the-scenes / polish), which are
-  explicit deferrals in
-  [epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md)
+- post-MVP demo-expansion milestones — role-door redemption seeding,
+  configuration tour, and behind-the-scenes / polish — which are
+  explicit deferrals
 
 ## Status Snapshot
 
@@ -206,7 +204,7 @@ when a gate counts as met:
 | G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/tracking/analytics-strategy.md) and this doc |
 | G7 | Docs describe the implemented state of the release candidate | The doc currency walkthrough in [AGENTS.md — Doc Currency Is a PR Gate](/AGENTS.md) has been executed for the release branch; `README.md`, `docs/architecture.md`, `docs/dev.md`, `docs/testing.md`, `docs/operations.md`, `docs/backlog.md`, `docs/open-questions.md`, the active epic doc(s) under `docs/plans/epics/`, and `docs/redemption-design.md` match the shipped code | [documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md) |
 | G8 | PR CI covers the pre-release change set at a meaningful depth | For non-doc changes, lint, unit, `npm run test:functions` (Deno runtime tests), `deno check` over every function under `supabase/functions/*/index.ts`, `npm run test:supabase` (local Supabase integration + pgTAP), attendee-trusted-backend Playwright smoke, and both web (`build:web`) and site (`build:site`) builds pass on the release candidate commit via `.github/workflows/ci.yml`; the `release.yml` workflow then promotes Supabase migrations + Vercel deploys, and `production-admin-smoke.yml` validates the deployed admin surface. The `deno check` requirement covers all functions under the directory (including `read-demo-event`, `get-redemption-status`, `redeem-entitlement`, `reverse-entitlement-redemption`), not only the ones currently named in `ci.yml`. Docs-only pull requests still produce the required CI check but intentionally short-circuit heavy validation, and markdown/docs-only commits to `main` do not trigger production release. Any intentional gap is a known item in `backlog.md` | [testing.md — Where Tests Should Run](/docs/testing.md) and [backlog.md Tier 2](/docs/backlog.md) |
-| G9 | Demo-mode auth bypass on test-event slugs is consistent and contained | `npm run test:e2e:demo-mode-bypass` passes on the release candidate; the `evaluateDemoModeRejection` helper in `supabase/functions/_shared/` rejects writes on test slugs across `save-draft`, `publish-draft`, `unpublish-event`, `redeem-entitlement`, and `reverse-entitlement-redemption`; the single catchall `X-Robots-Tag: noindex, nofollow` header in `apps/web/vercel.json` covers every `/event/(harvest-block-party|riverside-jam)/:path*` route, and `apps/site` emits parallel `robots: { index: false, follow: false }` metadata on the matching routes | [test-event-noindex-uniformity-plan.md](/docs/plans/test-event-noindex-uniformity-plan.md) and [epics/demo-expansion/m3-demo-mode-auth-bypass.md](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md) |
+| G9 | Demo-mode auth bypass on test-event slugs is consistent and contained | `npm run test:e2e:demo-mode-bypass` passes on the release candidate; the `evaluateDemoModeRejection` helper in `supabase/functions/_shared/` rejects writes on test slugs across `save-draft`, `publish-draft`, `unpublish-event`, `redeem-entitlement`, and `reverse-entitlement-redemption`; the single catchall `X-Robots-Tag: noindex, nofollow` header in `apps/web/vercel.json` covers every `/event/(harvest-block-party|riverside-jam)/:path*` route, and `apps/site` emits parallel `robots: { index: false, follow: false }` metadata on the matching routes | inline above |
 
 Gate status is recorded in
 [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md)

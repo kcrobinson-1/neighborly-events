@@ -3,7 +3,7 @@
 ## Status
 
 Landed. Status mirrors the
-[epic milestone row](/docs/plans/event-platform-epic.md). Flipped to
+[epic milestone row](/docs/plans/archive/event-platform-epic.md). Flipped to
 `Landed` in M2 phase 2.5.3's PR alongside the epic M2-row flip.
 
 This milestone doc is the durable coordination artifact for M2:
@@ -666,7 +666,7 @@ the named phase; M2 is not complete until all are landed.
   don't touch backlog.md.
 - [README.md](/README.md) — touched by 2.5 if URL references
   in the README mention bare-path operator URLs.
-- [event-platform-epic.md](/docs/plans/event-platform-epic.md) — M2 row flips
+- [event-platform-epic.md](/docs/plans/archive/event-platform-epic.md) — M2 row flips
   to `Landed` in 2.5's PR per the Plan-to-PR Completion Gate.
 - This doc — Status flips to `Landed` in 2.5's PR; phase status
   table rows update as each plan drafts and as each PR merges.
@@ -689,7 +689,7 @@ the named phase; M2 is not complete until all are landed.
 
 ## Related Docs
 
-- [event-platform-epic.md](/docs/plans/event-platform-epic.md) — parent
+- [event-platform-epic.md](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [m2-phase-2-1-plan.md](/docs/plans/archive/m2/m2-phase-2-1-plan.md),
   [m2-phase-2-1-1-plan.md](/docs/plans/archive/m2/m2-phase-2-1-1-plan.md),

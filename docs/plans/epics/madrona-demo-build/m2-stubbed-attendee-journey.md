@@ -282,7 +282,7 @@ specifically:
   `--secondary`, `--bg`), not derived shades — the same
   finding from demo-expansion epic M1 phase 1.1's
   derived-shade-cascade work
-  ([docs/plans/themescope-derived-shade-cascade.md](/docs/plans/themescope-derived-shade-cascade.md)).
+  ([docs/plans/archive/themescope-derived-shade-cascade.md](/docs/plans/archive/themescope-derived-shade-cascade.md)).
   Phase 2.1's plan owns the exact capture set and the freshness
   check (build-id assertion or capture timestamps within N
   minutes of the latest deploy) per demo-expansion epic M1
@@ -318,7 +318,7 @@ specifically:
 **Inherited from upstream invariants.** M2 also inherits the
 URL contract, theme route scoping, and theme token discipline
 invariants from the predecessor epic
-([event-platform-epic.md](/docs/plans/event-platform-epic.md)),
+([event-platform-epic.md](/docs/plans/archive/event-platform-epic.md)),
 the apps/web ThemeScope-wrap centralization invariant from the
 sibling demo-expansion epic
 ([m1-themescope-wiring.md §Cross-Phase Invariants](/docs/plans/epics/demo-expansion/m1-themescope-wiring.md)),
@@ -677,7 +677,7 @@ audit shape.
   shape extensions, `meta.robots: "noindex"` posture) all
   landed in M1 phases 1.1 / 1.2. M2's cross-app theme-
   continuity capture extends M1's apps/site-only capture set.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   — predecessor epic. URL contract, theme route scoping, theme
   token discipline, in-place auth, and trust-boundary
   invariants inherited.

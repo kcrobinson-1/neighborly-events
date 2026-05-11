@@ -27,7 +27,7 @@ smoke green.
 
 Phase 2 (event_code) shipped 2026-05-07 in PR #214. Its scoping
 doc lives at
-[`docs/plans/event-code-rotation-safety.md`](/docs/plans/event-code-rotation-safety.md);
+[`event-code-rotation-safety.md`](/docs/plans/archive/event-code-rotation-safety.md);
 that doc carried the design analysis from the
 [Carryover for phase 2 scoping](#carryover-for-phase-2-scoping)
 section below into a fully scoped Strict outcome. The Carryover

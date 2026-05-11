@@ -14,7 +14,7 @@ Use this doc to track:
 - guardrails for frontend/backend compatibility during rollout
 
 This document is planning guidance, not a release checklist. Day-to-day release
-gates remain in [`release-readiness.md`](/docs/plans/release-readiness.md).
+gates remain in [`release-readiness.md`](/docs/tracking/release-readiness.md).
 
 ## Current State
 

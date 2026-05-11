@@ -4,7 +4,7 @@
 
 This file holds the **most recent** release-readiness quality-check pass.
 Methodology, gate definitions, and how-to-run-a-pass instructions live in
-[`/docs/plans/release-readiness.md`](/docs/plans/release-readiness.md).
+[`/docs/tracking/release-readiness.md`](/docs/tracking/release-readiness.md).
 
 When a new pass runs:
 
@@ -124,7 +124,7 @@ the release candidate.
   shipped state of apps/site, cross-app rewrites, demo-mode bypass,
   and the redemption MVP. This pass updated the methodology and
   gate language in
-  [`release-readiness.md`](/docs/plans/release-readiness.md) to
+  [`release-readiness.md`](/docs/tracking/release-readiness.md) to
   match.
 - G8 PR CI depth: **not met** — `ci.yml` covers lint, `npm test`,
   `npm run test:functions`, `npm run test:supabase`,
@@ -183,7 +183,7 @@ the release candidate.
 - This pass refreshed the release-readiness methodology in place
   (Owner Docs, Scope, Release Gates, all five Methodology dimensions,
   and the dated-pass template's Gates list) in
-  [`release-readiness.md`](/docs/plans/release-readiness.md).
+  [`release-readiness.md`](/docs/tracking/release-readiness.md).
 - `docs/architecture.md` and `docs/operations.md` already describe
   the cross-app routing model, demo-mode bypass, and redemption
   surfaces; `docs/dev.md` already names the Vite/Next.js bundler

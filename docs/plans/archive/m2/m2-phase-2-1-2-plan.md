@@ -8,7 +8,7 @@ Landed.
 Milestone M2, Phase 2.1. Sibling sub-phase: 2.1.1 — Landed (database
 RLS read-broadening + staffing-table writes). Sibling phases
 2.2 / 2.3 / 2.4 / 2.5 — Proposed; M2 row in
-[`event-platform-epic.md`](/docs/plans/event-platform-epic.md) stays `Proposed`
+[`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) stays `Proposed`
 until 2.5 lands.
 
 This sub-phase plan flips Status to `Landed` when its implementation
@@ -477,7 +477,7 @@ doesn't relitigate them):
   the parent Status to `Landed`.
 - [`m2-phase-2-1-1-plan.md`](/docs/plans/archive/m2/m2-phase-2-1-1-plan.md) — sibling
   sub-phase that landed the database side.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 paragraph at lines 544–669.
 - [`m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) — M2
   milestone doc; cross-phase decisions, sequencing, invariants.

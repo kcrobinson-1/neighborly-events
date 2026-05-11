@@ -2,15 +2,10 @@
 
 ## Status
 
-Audit landed in M1 phase 1.5.1 of the Event Platform Epic. The
-classification and color-derivation policy below are **binding** for
-the implementation in M1 phase 1.5.2; any token misclassification
-surfaced during 1.5.2 sends a doc fix back here in the same PR before
-the implementation continues. See
-[`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
-and the parent epic
-[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
-for context.
+Living reference for the platform's token classification, color-derivation
+policy, and per-event `Theme` model. The classification and color-derivation
+policy below are **binding**: token misclassification surfaced during
+implementation work sends a doc fix back here in the same PR.
 
 ## Purpose
 
@@ -242,15 +237,11 @@ The two candidates the plan named were:
 
 Option (a) is chosen because:
 
-1. **Theme author burden scales.** The platform horizon ships 3–4
-   themes within the event-platform-epic's own boundary (Sage Civic
-   platform palette in 1.5.2; two test event themes in M3 phases
-   3.1 and 3.2 — see
-   [m3-site-rendering.md](/docs/plans/archive/m3/m3-site-rendering.md);
-   Madrona in the
-   [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
-   M1 phase 1.1) and many more after. ~10 fields per theme vs ~30 compounds in author
-   ergonomics across that horizon.
+1. **Theme author burden scales.** The platform horizon ships several
+   themes (Sage Civic platform palette, two test event themes —
+   `harvest-block-party` and `riverside-jam` —, Madrona, and more
+   after). ~10 fields per theme vs ~30 compounds in author ergonomics
+   across that horizon.
 2. **Visual consistency by construction.** Brand-tied surfaces always
    derive from the corresponding brand base, so an author cannot
    accidentally desync (for example) `secondary-surface` from
@@ -307,8 +298,7 @@ detail; the audit binds the field set, not the literal type
 declaration.
 
 Every field corresponds to a flat CSS custom property
-(`--token-name`, no `--theme-` prefix — see "Naming" in
-[`shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)).
+(`--token-name`, no `--theme-` prefix).
 `<ThemeScope theme={…}>` emits the CSS custom properties as inline
 style on a wrapper element. Brand-tied derived shades
 (`--secondary-surface`, etc.) are not Theme fields; they are
@@ -370,17 +360,15 @@ theme needs an escape hatch. The resolution path is to revise this
 doc and the `:root` derivation policy in a follow-up — and the
 revision should consider whether the standard alpha applies less
 universally than the current model assumes — before the new theme
-lands. No theme on the epic's M3 / M4 horizon (Sage Civic, the M3
-test events, Madrona) has surfaced such a need.
+lands. None of the current themes (Sage Civic, the test events
+`harvest-block-party` and `riverside-jam`, Madrona) has surfaced such
+a need.
 
 ## Platform Sage Civic Theme
 
-These values land in `shared/styles/themes/platform.ts` and apps/site's
-root layout in M1 phase 1.5.2. They are recorded here for
-cross-reference; the parent epic
-[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) M1
-phase 1.5 description is the source of truth for the values
-themselves.
+These values are the source of truth for the platform's Sage Civic
+palette, consumed from `shared/styles/themes/platform.ts` by
+apps/site's root layout.
 
 ```text
 Colors
@@ -407,32 +395,20 @@ Radii (themable subset)
 ```
 
 apps/web keeps today's `$font-stack` (Avenir Next system stack) and
-today's chunky panel/card/control radii through 1.5.2. apps/web's
-`:root` is not Sage Civic-themed; apps/web event-route shells now
-wrap in `<ThemeScope>` (admin from event-platform-epic M2 phase
-2.2; game / redeem / redemptions from demo-expansion epic M1 phase
-1.1) and resolve per-event Themes from the registry for registered
-slugs. Non-test-event slugs continue to resolve to the platform
-Sage Civic Theme via `getThemeForSlug`'s fallback, so apps/web's
-warm-cream `:root` defaults remain in place for non-test-event
-slugs until a future per-event Theme registers (the
+today's chunky panel/card/control radii. apps/web's `:root` is not
+Sage Civic-themed; apps/web event-route shells wrap in
+`<ThemeScope>` and resolve per-event Themes from the registry for
+registered slugs. Non-test-event slugs continue to resolve to the
+platform Sage Civic Theme via `getThemeForSlug`'s fallback, so
+apps/web's warm-cream `:root` defaults remain in place for
+non-test-event slugs until a future per-event Theme registers (the
 [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
-owns Madrona's `Theme` registration in its M1). Sage Civic
-landing in apps/site in 1.5.2 was the only intentional visual
-change in that phase.
+owns Madrona's `Theme` registration).
 
 ## Related Docs
 
 - [`docs/agents/reference/architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
-  — Styling Token Discipline (rule for when to add a token;
-  updated in 1.5.2 to point here for the themable/structural
-  binding)
-- [`docs/plans/archive/m1/shared-styles-foundation.md`](/docs/plans/archive/m1/shared-styles-foundation.md)
-  — phase 1.5 plan (subphase tables, execution steps, validation
-  gate)
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
-  — parent epic; M1 phase 1.5 carries the Sage Civic palette source
-  of truth
+  — Styling Token Discipline (rule for when to add a token; points
+  here for the themable/structural binding)
 - [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
-  — current token source for apps/web (today's warm-cream values
-  preserved byte-identically through 1.5.2)
+  — current token source for apps/web (today's warm-cream values)

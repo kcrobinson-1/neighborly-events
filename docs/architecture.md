@@ -418,11 +418,9 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   (the registry holds the `harvest-block-party` and `riverside-jam`
   test event Themes; the [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md) adds Madrona in its M1).
   apps/site event routes resolve per-event Themes through
-  `<ThemeScope>` from M3 phase 3.1; apps/web event-route shells
+  `<ThemeScope>`; apps/web event-route shells
   (`/event/:slug/{game,admin,game/redeem,game/redemptions}`) wrap
-  in `<ThemeScope>` from event-platform-epic M2 phase 2.2 (admin)
-  and demo-expansion epic M1 phase 1.1 (game, redeem,
-  redemptions). apps/site's root layout consumes the platform
+  in `<ThemeScope>`. apps/site's root layout consumes the platform
   Theme via inline-style emission of CSS custom properties on
   `<html>` plus `next/font` for Inter (body) and Fraunces (heading);
   apps/web's `:root` block in

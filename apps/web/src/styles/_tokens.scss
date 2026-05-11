@@ -1,5 +1,5 @@
-// Per the M1 phase 1.5.1 token audit (`docs/styling.md`), this file
-// is split into two halves:
+// Per the token classification policy in `docs/styling.md`, this
+// file is split into two halves:
 //
 // 1. **Structural — platform-shared SCSS variables.** Status palette,
 //    neutral drop-shadow, modal scrim, spacing, motion, font weights,
@@ -10,9 +10,7 @@
 //    plus brand-tied derived shades computed via `color-mix()` from
 //    the brand bases. Consumed in SCSS as `var(--…)`. apps/web
 //    event-route shells (game, admin, redeem, redemptions) wrap in
-//    `<ThemeScope>` (admin from event-platform-epic M2 phase 2.2;
-//    game / redeem / redemptions from demo-expansion epic M1 phase
-//    1.1) and resolve per-event Themes from
+//    `<ThemeScope>` and resolve per-event Themes from
 //    `shared/styles/themes/` for registered slugs (today: the test
 //    events `harvest-block-party` and `riverside-jam`). Non-test-
 //    event slugs continue to resolve to the platform Sage Civic
@@ -146,9 +144,8 @@ $focus-ring: 3px solid var(--secondary-focus);
   // demo-overview landing, future non-event apps/web routes).
   // Inside `<ThemeScope>`, `shared/styles/themeToStyle.ts` emits
   // resolved-hex `color-mix()` literals on the wrapper element,
-  // overriding these per CSS specificity. See
-  // `docs/plans/themescope-derived-shade-cascade.md` and
-  // `docs/styling.md` §Color-Derivation Policy. ---
+  // overriding these per CSS specificity. See `docs/styling.md`
+  // §Color-Derivation Policy. ---
   --primary-surface: color-mix(in srgb, var(--primary) 12%, transparent);
   --primary-surface-strong: color-mix(in srgb, var(--primary) 14%, transparent);
   --primary-border: color-mix(in srgb, var(--primary) 24%, transparent);

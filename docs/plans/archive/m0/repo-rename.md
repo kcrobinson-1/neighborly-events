@@ -4,7 +4,7 @@
 
 Landed.
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M0, Phase 0.1. The epic's M0 row stays `Proposed` until phase 0.3
 lands; this plan governs phase 0.1 only.
 
@@ -87,7 +87,7 @@ renamed in this PR.
   product description.
 
 **Docs that reference the product or repo by name.**
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) — two
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — two
   surfaces, both rewritten in this PR per the AGENTS.md Plan-to-PR
   Completion Gate (when reality diverges from a plan's predicted
   scope, the plan is updated, not silently exceeded):
@@ -108,7 +108,7 @@ renamed in this PR.
      plan), names the deliberately preserved prefixes, and references
      this plan as the executed contract. M0's Status row stays
      `Proposed`; only the phase 0.1 paragraph and intro line change.
-- [`docs/plans/release-readiness.md`](/docs/plans/release-readiness.md) — first
+- [`docs/tracking/release-readiness.md`](/docs/tracking/release-readiness.md) — first
   paragraph product reference.
 - [`docs/plans/analytics-strategy.md`](/docs/plans/analytics-strategy.md) —
   Document Role and End Goal product references.
@@ -210,9 +210,9 @@ present because skipping it has burned this repo before.
    copy" sections. No other edits.
 4. **Doc reference rename, with parent-epic phase 0.1 paragraph
    rewrite.** Apply textual replacements in
-   `docs/plans/release-readiness.md` and `docs/plans/analytics-strategy.md`
+   `docs/tracking/release-readiness.md` and `docs/plans/analytics-strategy.md`
    per the "Files To Touch" enumeration. Then handle
-   [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) as
+   [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) as
    two distinct edits, not a textual replace:
    - Rewrite the platform-repo intro line (currently line 42) from
      "The repo currently named `neighborly-scavenger-game` becomes the
@@ -267,8 +267,8 @@ present because skipping it has burned this repo before.
    separately if a separate commit improves the history.
 9. **Documentation currency check.** Walk the AGENTS.md "Doc Currency
    Is a PR Gate" trigger list. For phase 0.1: `README.md` (yes —
-   updated), `docs/plans/event-platform-epic.md` (yes — updated; M0
-   row stays `Proposed`), `docs/plans/release-readiness.md` and
+   updated), `docs/plans/archive/event-platform-epic.md` (yes — updated; M0
+   row stays `Proposed`), `docs/tracking/release-readiness.md` and
    `docs/plans/analytics-strategy.md` (yes — updated). The remaining
    docs the parent epic enumerates (`docs/architecture.md`,
    `docs/dev.md`, `docs/operations.md`, `docs/product.md`,
@@ -338,9 +338,9 @@ The complete list of named docs that must reflect post-rename state by
 the time this PR opens:
 
 - `README.md` — updated (title + lead paragraph).
-- `docs/plans/event-platform-epic.md` — updated (lines 42 and 162; M0
+- `docs/plans/archive/event-platform-epic.md` — updated (lines 42 and 162; M0
   row stays `Proposed`).
-- `docs/plans/release-readiness.md` — updated (first paragraph).
+- `docs/tracking/release-readiness.md` — updated (first paragraph).
 - `docs/plans/analytics-strategy.md` — updated (Document Role + End
   Goal paragraphs).
 - `docs/plans/archive/m0/repo-rename.md` — Status flipped to `Landed`.
@@ -378,7 +378,7 @@ gates per the parent epic.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent epic
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent epic
 - [`framework-decision.md`](/docs/plans/archive/m0/framework-decision.md) — sibling phase
   0.2 plan (already landed) for naming-convention reference
 - [`AGENTS.md`](/AGENTS.md) — planning depth, plan-to-PR gate,

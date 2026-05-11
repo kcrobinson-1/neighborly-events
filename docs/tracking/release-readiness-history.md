@@ -6,7 +6,7 @@ This file is the **append-only archive** of release-readiness quality-check
 passes. The most recent pass lives in
 [`/docs/tracking/release-readiness-current.md`](/docs/tracking/release-readiness-current.md);
 methodology and gate definitions live in
-[`/docs/plans/release-readiness.md`](/docs/plans/release-readiness.md).
+[`/docs/tracking/release-readiness.md`](/docs/tracking/release-readiness.md).
 
 Editing rules:
 

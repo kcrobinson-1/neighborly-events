@@ -164,7 +164,7 @@ This PR satisfies every entry. Per-file edit shapes:
   state, the sentence updates. The plan-drafting agent runs the
   grep and writes either the edit or "no edit needed" under
   this contract.
-- **[docs/plans/event-platform-epic.md](/docs/plans/event-platform-epic.md)** —
+- **[docs/plans/archive/event-platform-epic.md](/docs/plans/archive/event-platform-epic.md)** —
   partial-closure footnote on the "Deferred ThemeScope wiring"
   invariant at lines 152-165. The invariant text stays; an
   added closing paragraph or footnote records that demo-
@@ -191,7 +191,7 @@ structural call requires deviating, recorded in the PR body's
 
 ### New
 
-- [docs/plans/themescope-derived-shade-cascade.md](/docs/plans/themescope-derived-shade-cascade.md) —
+- [docs/plans/archive/themescope-derived-shade-cascade.md](/docs/plans/archive/themescope-derived-shade-cascade.md) —
   focused follow-up plan added during M1 phase 1.1 implementation
   to capture the empirically-verified derived-shade pinning at
   `:root` (rule-deviation handling per AGENTS.md "Plan-to-PR
@@ -211,7 +211,7 @@ structural call requires deviating, recorded in the PR body's
   doc-edit contract
 - [docs/architecture.md](/docs/architecture.md) — paragraph
   rewrite per doc-edit contract
-- [docs/plans/event-platform-epic.md](/docs/plans/event-platform-epic.md) —
+- [docs/plans/archive/event-platform-epic.md](/docs/plans/archive/event-platform-epic.md) —
   "Deferred ThemeScope wiring" partial-closure footnote + M4
   phase 4.1 paragraph scope trim
 - [docs/plans/epics/demo-expansion/epic.md](/docs/plans/epics/demo-expansion/epic.md) —
@@ -473,7 +473,7 @@ Plan-implementation-level risks not already covered:
   headings, page background — is achieved, matching the admin
   precedent). The derived-shade re-evaluation question becomes
   a focused follow-up at
-  [`docs/plans/themescope-derived-shade-cascade.md`](/docs/plans/themescope-derived-shade-cascade.md),
+  [`docs/plans/archive/themescope-derived-shade-cascade.md`](/docs/plans/archive/themescope-derived-shade-cascade.md),
   unblocked by M1 and tracked in
   [`docs/backlog.md`](/docs/backlog.md). Per AGENTS.md
   "Plan-to-PR Completion Gate," this rule rewrite ships in
@@ -499,7 +499,7 @@ that map. No phase-level additions.
   milestone-terminal PR.
 - [`epic.md`](/docs/plans/epics/demo-expansion/epic.md) — parent
   epic. M1 row flips to `Landed` in this PR.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   predecessor epic. "Deferred ThemeScope wiring" invariant
   partial-closure footnoted in this PR.
 - [`m3-phase-3-3-plan.md`](/docs/plans/archive/m3/m3-phase-3-3-plan.md) —

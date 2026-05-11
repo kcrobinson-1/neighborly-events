@@ -273,7 +273,7 @@ The following docs were confirmed clean across Phase 1 and Phase 5:
 - `docs/testing.md`
 - `docs/dev.md`
 - `docs/operations.md`
-- `docs/plans/release-readiness.md`
+- `docs/tracking/release-readiness.md`
 - `docs/backlog.md`
 - `docs/plans/analytics-strategy.md`
 - `docs/plans/security-and-abuse-plan.md`

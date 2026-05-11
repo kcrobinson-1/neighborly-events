@@ -455,12 +455,12 @@ structural call requires deviating, recorded in the PR body's
   update any registration-site references that name the
   predecessor epic; the line 75 `madrona-launch-day` reference
   is a stable test slug and stays.
-- [docs/plans/event-platform-epic.md](/docs/plans/event-platform-epic.md) —
+- [docs/plans/archive/event-platform-epic.md](/docs/plans/archive/event-platform-epic.md) —
   multiple "M4 phase 4.1" / "M4 phase 4.2" inline refs (8 lines
   surfaced in the grep) re-verified at edit time; some may
   already be cleaned by the epic-creation PR — re-grep
   authoritatively at PR-time.
-- [docs/plans/release-readiness.md](/docs/plans/release-readiness.md) —
+- [docs/tracking/release-readiness.md](/docs/tracking/release-readiness.md) —
   the milestone-doc Doc Currency map names this file as
   potentially carrying refs; re-grep at PR-time and update any
   surfaced refs.
@@ -509,7 +509,7 @@ structural call requires deviating, recorded in the PR body's
   `tests/e2e/demo-mode-bypass.spec.ts`) — `madrona-launch-day`
   is a deliberately-stable test slug per the CLAUDE.md note;
   no rewrite.
-- `docs/plans/redemption-operator-deployed-smoke-plan.md` and
+- `docs/plans/archive/redemption-operator-deployed-smoke-plan.md` and
   `docs/plans/test-event-noindex-uniformity*.md` — uses
   `madrona-launch-day` as a stable test slug; no rewrite.
 - `docs/plans/archive/**` — landed historical artifacts; do
@@ -579,8 +579,8 @@ mix of rules and estimates"; the implementer may refine.
     `apps/site/lib/eventContent.ts` per content registry
     contract.
 13. **Doc updates.** Per doc-edit contracts: `docs/styling.md`,
-    `docs/architecture.md`, `docs/plans/event-platform-epic.md`
-    surfaced refs, `docs/plans/release-readiness.md`,
+    `docs/architecture.md`, `docs/plans/archive/event-platform-epic.md`
+    surfaced refs, `docs/tracking/release-readiness.md`,
     `docs/product.md` if needed, harvest/riverside header
     comments, README.md grep verification.
 14. **Validation pre-deploy.** `npm run lint` +
@@ -649,8 +649,8 @@ mix of rules and estimates":
   `apps/site/events/harvest-block-party.ts` and `riverside-jam.ts`
   (header comment refresh).
 - **Commit 4 — Doc updates + Status flips.** `docs/styling.md`,
-  `docs/architecture.md`, `docs/plans/event-platform-epic.md`,
-  `docs/plans/release-readiness.md`, `docs/product.md` (if
+  `docs/architecture.md`, `docs/plans/archive/event-platform-epic.md`,
+  `docs/tracking/release-readiness.md`, `docs/product.md` (if
   needed), `README.md` (if needed),
   `m1-brand-foundation.md` (Phase Status row),
   `m1-phase-1-1-plan.md` (Status flip),
@@ -928,7 +928,7 @@ milestone-doc Cross-Phase Risks (which inherit by reference):
     capture review surfaces structural mis-classification
     beyond one-line correction (analogous to demo-expansion
     epic M1 phase 1.1's
-    [themescope-derived-shade-cascade.md](/docs/plans/themescope-derived-shade-cascade.md)
+    [themescope-derived-shade-cascade.md](/docs/plans/archive/themescope-derived-shade-cascade.md)
     spinout).
 
 ## Related Docs

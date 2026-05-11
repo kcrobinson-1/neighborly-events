@@ -261,7 +261,7 @@ present in the repo): root `package.json` `name`, `package-lock.json`
 regenerated, `apps/web/index.html` `<title>` and meta description,
 `README.md` title and lead paragraph, `supabase/config.toml`
 `project_id`, the platform-repo intro line in this plan, this phase's
-own paragraph, `docs/plans/release-readiness.md` first paragraph, and
+own paragraph, `docs/tracking/release-readiness.md` first paragraph, and
 `docs/plans/analytics-strategy.md` Document Role plus End Goal
 paragraphs. The GitHub repo rename itself is a `gh repo rename`
 operator step executed post-merge. Deliberately preserved with rationale

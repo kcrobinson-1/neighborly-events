@@ -15,7 +15,7 @@ Status flipped from `Proposed` to `Landed` in the same PR per
 SHAs are recorded in the row (`git log` and `git blame` are
 authoritative).
 
-**Parent epic:** [`event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+**Parent epic:** [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 Milestone M3, Phase 3.2.
 **Milestone doc:** [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md).
 **Sibling phases:** 3.1 (rendering pipeline + first test event +
@@ -546,7 +546,7 @@ invariants apply:
 - [`docs/plans/scoping/m3-phase-3-2.md`](/docs/plans/scoping/m3-phase-3-2.md)
   — no edit. Deletes in batch with the rest of M3's scoping docs
   in 3.3's PR per the milestone doc.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)'s
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)'s
   M3 row — stays `Proposed`. The epic's M3 row flips to `Landed`
   only in 3.3's PR (M3 closure).
 
@@ -689,7 +689,7 @@ invariants apply:
     - [`docs/open-questions.md`](/docs/open-questions.md) — no
       change. Owned by 3.3.
     - [`docs/backlog.md`](/docs/backlog.md) — no change.
-    - [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+    - [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
       M3 row — stays `Proposed`. Flips to `Landed` only in 3.3's
       PR.
     - [`docs/plans/scoping/m3-phase-3-2.md`](/docs/plans/scoping/m3-phase-3-2.md)
@@ -915,7 +915,7 @@ relevant doc updates this branch must carry:
 - [`docs/open-questions.md`](/docs/open-questions.md) — no
   change. Owned by 3.3.
 - [`docs/backlog.md`](/docs/backlog.md) — no change.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
   M3 row — stays `Proposed`. Flips to `Landed` only in 3.3's PR.
 - [`docs/plans/archive/m3/m3-phase-3-1-1-plan.md`](/docs/plans/archive/m3/m3-phase-3-1-1-plan.md)
   and
@@ -1132,7 +1132,7 @@ the milestone closes.
 
 ## Related Docs
 
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   parent epic; M3 phase paragraphs are pre-milestone-planning
   estimate per the milestone doc.
 - [`m3-site-rendering.md`](/docs/plans/archive/m3/m3-site-rendering.md) —

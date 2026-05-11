@@ -27,7 +27,7 @@ this PR. As of plan-drafting,
 milestone doc
 ([`m2-admin-restructuring.md:50-53`](/docs/plans/archive/m2/m2-admin-restructuring.md#L50)),
 2.5.3's PR carries the M2-row flip in
-[`event-platform-epic.md:19`](/docs/plans/event-platform-epic.md#L19) and the
+[`event-platform-epic.md:19`](/docs/plans/archive/event-platform-epic.md#L19) and the
 top-level Status flip in
 [`m2-admin-restructuring.md:5`](/docs/plans/archive/m2/m2-admin-restructuring.md#L5).
 
@@ -36,7 +36,7 @@ top-level Status flip in
 [`docs/dev.md`](/docs/dev.md), [`docs/product.md`](/docs/product.md),
 [`README.md`](/README.md), [`docs/open-questions.md`](/docs/open-questions.md));
 backlog: 1 modify ([`docs/backlog.md`](/docs/backlog.md)); plans: 4
-modifies ([`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md),
+modifies ([`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md),
 [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md),
 [`docs/plans/m2-phase-2-5-plan.md`](/docs/plans/archive/m2/m2-phase-2-5-plan.md), this
 file); link-rewrites: ~9 plan files touched to rewrite scoping-doc
@@ -126,7 +126,7 @@ Land the doc-currency edits the umbrella's "Doc currency split"
 invariant assigned to this sub-phase, close the open-question and
 unblock the backlog entry per the epic's "Open Questions Resolved
 By This Epic"
-([`event-platform-epic.md:166-172`](/docs/plans/event-platform-epic.md#L166)),
+([`event-platform-epic.md:166-172`](/docs/plans/archive/event-platform-epic.md#L166)),
 delete the five M2 scoping docs in batch (with the link-rewrite
 contract from
 [`m2-phase-2-5-plan.md:579-648`](/docs/plans/archive/m2/m2-phase-2-5-plan.md#L579)
@@ -289,7 +289,7 @@ Verified by:
 The "Post-MVP authoring ownership and permission management"
 section at lines 29–54 closes per the epic's "Open Questions
 Resolved By This Epic"
-([`event-platform-epic.md:166-172`](/docs/plans/event-platform-epic.md#L166)).
+([`event-platform-epic.md:166-172`](/docs/plans/archive/event-platform-epic.md#L166)).
 The resolution: M2's 2.1 RLS broadening + 2.1.2 Edge Function
 broadening landed full organizer write capability for
 event-scoped data through PostgREST + Edge Functions. The
@@ -302,7 +302,7 @@ open questions in this section under the current tracking rule"
 matching the existing pattern at lines 25–27, 58–61, 65–68, and
 72–75. Verified by:
 [`docs/open-questions.md:29-54`](/docs/open-questions.md#L29) and
-[`docs/plans/event-platform-epic.md:166-172`](/docs/plans/event-platform-epic.md#L166).
+[`docs/plans/archive/event-platform-epic.md:166-172`](/docs/plans/archive/event-platform-epic.md#L166).
 
 **[`docs/backlog.md`](/docs/backlog.md) (modify, unblock organizer-agent-assignment entry).**
 The "Organizer-managed agent assignment" entry at lines 140–144
@@ -317,7 +317,7 @@ Replacement reads:
 `Unblocked by M2's organizer RLS broadening (phases 2.1 + 2.1.1 + 2.1.2). Implementation is a focused post-epic follow-up.`
 Detail link to `docs/open-questions.md` removes (the section
 closes); replacement detail link points to
-[`docs/plans/event-platform-epic.md`](/docs/plans/archive/m2/plans/event-platform-epic.md)
+[`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/m2/plans/event-platform-epic.md)
 "Open Questions Resolved By This Epic" or stays absent. Adjacent
 backlog entries unchanged. The companion
 `Post-MVP authoring ownership and permission model` decision
@@ -328,22 +328,22 @@ decision is now made and recorded in the epic) and the entry
 text updates to record the resolution outcome ("self-serve
 direction confirmed; organizers have full event-scoped write
 access via M2's RLS broadening"), with the detail link pointing
-to [`docs/plans/event-platform-epic.md`](/docs/plans/archive/m2/plans/event-platform-epic.md)
+to [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/m2/plans/event-platform-epic.md)
 "Open Questions Resolved By This Epic." Verified by:
 [`docs/backlog.md:131-144`](/docs/backlog.md#L131) and
-[`docs/plans/event-platform-epic.md:166-172`](/docs/plans/event-platform-epic.md#L166).
+[`docs/plans/archive/event-platform-epic.md:166-172`](/docs/plans/archive/event-platform-epic.md#L166).
 
-**[`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) (modify, M2 row flip).**
+**[`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) (modify, M2 row flip).**
 The milestone status table row for M2 at line 19 flips from
 `Proposed` to `Landed`. The other rows (M0 Landed, M1 Landed, M3
 Proposed, M4 Proposed) stay verbatim. The top-level Status at
 line 5 (`Proposed.`) stays `Proposed.` — that flip is owned by
 M4's terminal PR per
-[`event-platform-epic.md:23-24`](/docs/plans/event-platform-epic.md#L23)
+[`event-platform-epic.md:23-24`](/docs/plans/archive/event-platform-epic.md#L23)
 ("When all five rows show `Landed`, the top-level Status above
 flips from `Proposed` to `Landed` in the same PR that lands M4").
 Verified by:
-[`docs/plans/event-platform-epic.md:5,15-24`](/docs/plans/event-platform-epic.md#L5).
+[`docs/plans/archive/event-platform-epic.md:5,15-24`](/docs/plans/archive/event-platform-epic.md#L5).
 
 **[`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) (modify, milestone-doc closure).**
 Three surfaces update:
@@ -486,7 +486,7 @@ doc-only against an already-verified cutover).
 
 ### Modify (plans + closure)
 
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   M2 row flip to `Landed`.
 - [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   top-level Status flip + Phase Status table row flips for 2.5
@@ -610,7 +610,7 @@ doc-only against an already-verified cutover).
    inventory table — durable surfaces have zero scoping-doc
    links.
 7. **Plan + milestone + epic Status flips.** Edit
-   [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md)
+   [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md)
    line 19 to flip M2 row from `Proposed` to `Landed`. Edit
    [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md)
    line 5 (top-level Status), line 43 (2.1 row drift correction
@@ -772,7 +772,7 @@ Drawn from
   ownership decision entry (lines 131–138) closes; organizer-
   managed agent assignment entry (lines 140–144) unblocks per
   Contracts.
-- [`docs/plans/event-platform-epic.md`](/docs/plans/event-platform-epic.md) —
+- [`docs/plans/archive/event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) —
   M2 row flip per Contracts.
 - [`docs/plans/m2-admin-restructuring.md`](/docs/plans/archive/m2/m2-admin-restructuring.md) —
   top-level Status + Phase Status table 2.1 + 2.5 rows + scoping
@@ -797,7 +797,7 @@ Scope.
 - **`shared/urls/README.md` re-edit.** Already current per 2.5.1.
 - **`docs/operations.md` re-edit.** Already current per 2.5.2.
 - **Top-level epic Status flip.** Owned by M4's terminal PR
-  per [`event-platform-epic.md:23-24`](/docs/plans/event-platform-epic.md#L23);
+  per [`event-platform-epic.md:23-24`](/docs/plans/archive/event-platform-epic.md#L23);
   this PR flips only the M2 row.
 - **Sibling plan Status edits.** Sibling sub-phase plans
   (2.5.1, 2.5.2, all 2.x) have already-`Landed` Status; this
@@ -892,7 +892,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   decision entry at
   [`docs/backlog.md:131-138`](/docs/backlog.md#L131) per the epic's
   "Open Questions Resolved By This Epic"
-  ([`event-platform-epic.md:166-172`](/docs/plans/event-platform-epic.md#L166)).
+  ([`event-platform-epic.md:166-172`](/docs/plans/archive/event-platform-epic.md#L166)).
 - **Unblocks:** "Organizer-managed agent assignment" entry at
   [`docs/backlog.md:140-144`](/docs/backlog.md#L140) per the
   umbrella's "Backlog Impact" subsection.
@@ -936,7 +936,7 @@ Sub-phase-local risks. See umbrella for cross-sub-phase risks.
   M2 milestone; top-level Status + Phase Status table flips in
   this PR. Link-rewrite contract receiver for option-1
   rewrites.
-- [`event-platform-epic.md`](/docs/plans/event-platform-epic.md) — parent
+- [`event-platform-epic.md`](/docs/plans/archive/event-platform-epic.md) — parent
   epic; M2 row flips in this PR; "Open Questions Resolved By
   This Epic" is the source of the open-question close + backlog
   unblock decisions.

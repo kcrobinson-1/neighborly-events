@@ -29,7 +29,7 @@ steps, and validation commands.
 - Code refactors: [`docs/tracking/code-refactor-checklist.md`](/docs/tracking/code-refactor-checklist.md)
 - Test coverage rollout: [`docs/testing.md`](/docs/testing.md)
 - Deferred authoring features: [`docs/plans/archive/quiz-authoring-plan.md`](/docs/plans/archive/quiz-authoring-plan.md)
-- Release gates, quality-check methodology, and live release-blocking view: [`docs/plans/release-readiness.md`](/docs/plans/release-readiness.md)
+- Release gates, quality-check methodology, and live release-blocking view: [`docs/tracking/release-readiness.md`](/docs/tracking/release-readiness.md)
 
 ---
 
@@ -52,13 +52,6 @@ Reduce deployment risk and contributor friction before the live event.
   policy changes cannot widen access silently.
   Detail: [`docs/plans/archive/admin-live-status-plan.md`](/docs/plans/archive/admin-live-status-plan.md)
 
-
-- [x] **`infra` Reduce Vercel preview-deploy consumption on draft PRs**
-  Landed via the GitHub Actions-driven preview-deploy workflow with a
-  required `preview-deploy` status check that gates merge on a
-  human-triggered, SHA-pinned, terminal-state-aware build. Vercel
-  Git auto-deploys are off for branches; production on `main`
-  unchanged. Detail: [`docs/plans/vercel-preview-deploy-budget.md`](/docs/plans/vercel-preview-deploy-budget.md)
 
 - [ ] **`dev` Wire demo-mode bypass Playwright suite into PR CI**
   `playwright.demo-mode-bypass.config.ts` exists and exercises the G9
@@ -105,7 +98,6 @@ event.
   copy must distinguish "delete test entitlement"
   (pre-launch tooling) from any operator-facing redemption
   affordance.
-  Detail: [`docs/plans/event-code-rotation-safety.md` — Plan handoff (Authoring UI follow-up)](/docs/plans/event-code-rotation-safety.md)
 
 - [ ] **`cleanup` Remove orphan `generate-event-code` Edge Function**
   The admin "Regenerate" button surfaced random server-generated event
@@ -189,7 +181,6 @@ prioritization before starting.
   broadening, add a way for an organizer to maintain event agents without
   requiring manual root-admin SQL edits. Unblocked by M2 phases 2.1 + 2.1.1
   + 2.1.2 (organizer authorization across PostgREST + Edge Functions).
-  Detail: [`docs/plans/event-platform-epic.md` — Open Questions Resolved By This Epic](/docs/plans/event-platform-epic.md)
 
 - [ ] **`dev` Richer publish controls**
   Expiry windows, scheduled publish, multiple games per event, and friendlier
@@ -235,9 +226,7 @@ prioritization before starting.
   `source_surface` literal, against the append-only
   `newsletter_opt_ins` log. The plugin scoping decides UI shape,
   embedding mechanism, namespace placement, and per-surface trigger
-  / copy / UX. Forward-references this scoping in Decision 6 of the
-  parent contract.
-  Detail: [`docs/plans/newsletter-subscription-split.md` — Decision 6 carryover and Plan structure handoff](/docs/plans/newsletter-subscription-split.md)
+  / copy / UX.
 
 ---
 
