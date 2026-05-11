@@ -30,10 +30,14 @@ The current implementation is:
   admin), and `apps/site` (Next.js 16 App Router, internal-partner
   demo home page at `/`, auth callback, platform admin at `/admin*`,
   and SSR/SSG public event landing pages rendered from per-event
-  TypeScript content modules). `apps/web` is the primary
-  Vercel project owning the production custom domain; cross-app routing
-  is implemented as proxy-rewrites in `apps/web/vercel.json` and is
-  **transitional** until M2 inverts the URL ownership balance
+  TypeScript content modules). `apps/site` is the canonical
+  Vercel project hosting customer-visible URLs; there is no platform-
+  owned custom domain today, and per-event organizer subdomains CNAME
+  to apps/site as additional aliases (the
+  [`canonical-origin-resolution plan`](/docs/plans/canonical-origin-resolution.md)
+  Goal section names the launch model). `apps/web` is reached only
+  through one-direction proxy rewrites from apps/site for the
+  plugin-owned routes
 - a Supabase Auth-backed admin route for private draft visibility
 - Supabase-backed published event content tables for routes and landing-page summaries
 - private authoring draft, version, and event-role-assignment tables
@@ -961,44 +965,53 @@ Those services have distinct roles:
 - `Vercel` is not the backend of record. It serves the built SPA and handles route rewrites for browser navigation.
 - `Supabase` is not rendering the game UI. It stores data and runs the trusted completion/session logic.
 
-In this repo, [apps/web/vercel.json](/apps/web/vercel.json) hosts both
-the SPA route rewrites and the cross-app proxy rewrites that route
-`apps/site`-owned URLs to the second Vercel project. See
-"Vercel routing topology" below.
+In this repo, [apps/site/next.config.ts](/apps/site/next.config.ts)
+hosts the canonical routing layer — the site → plugin proxy rewrites
+that route the apps/web plugin's owned routes from the canonical site
+origin into the apps/web deployment. [apps/web/vercel.json](/apps/web/vercel.json)
+holds only SPA-internal rewrites plus the test-event noindex
+`headers` block. See "Vercel routing topology" below.
 
 ### Vercel routing topology
 
-Routing is **transitional** through M2 of the
-[Event Platform Epic](/docs/plans/event-platform-epic.md). Today,
-`apps/web` is the primary Vercel project owning the production custom
-domain; its `vercel.json` proxy-rewrites the platform admin, the auth
-callback, the platform landing, and event-scoped non-game/admin URLs
-to the `apps/site` Vercel project. Vercel applies rewrites in file
-order ("first match wins"), so most-specific rules must come first.
+apps/site is the canonical Vercel project, established by
+[`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
+(Phase 2: [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md)).
+Customer-visible URLs resolve on apps/site's primary alias; the
+apps/web plugin deployment is reached only through one-direction
+proxy rewrites from apps/site for the plugin-owned route prefixes.
+`apps/site/next.config.ts` is the routing authority. Vercel applies
+rewrites in file order ("first match wins"), so most-specific rules
+must come first.
 
 | # | Path pattern | Destination | Lifetime |
 | --- | --- | --- | --- |
-| 1 | `/event/:slug/game` | `apps/web` SPA | Permanent (event-scoped) |
-| 2 | `/event/:slug/game/:path*` | `apps/web` SPA | Permanent (event-scoped); covers `/game/redeem` and `/game/redemptions` operator routes |
-| 3 | `/event/:slug/admin` | `apps/web` SPA | Permanent (event-scoped); per-event admin shell |
-| 4 | `/event/:slug/admin/:path*` | `apps/web` SPA | Permanent (event-scoped) |
-| 5 | `/event/:slug` | `apps/site` Vercel project | Permanent (event-scoped landing) |
-| 6 | `/event/:slug/:path*` | `apps/site` Vercel project | Permanent (catches every event-scoped path not carved out above) |
-| 7 | `/event/:path*` (SPA fallback) | `apps/web` SPA | Transitional; narrows as event-scoped routes finalize |
-| 8 | `/_next/:path*` | `apps/site` Vercel project | Permanent; covers apps/site asset path resolution |
-| 9 | `/admin` | `apps/site` Vercel project | Permanent (platform admin) |
-| 10 | `/admin/:path*` | `apps/site` Vercel project | Permanent (platform admin) |
-| 11 | `/auth/callback` | `apps/site` Vercel project | Permanent auth callback route |
-| 12 | `/` | `apps/site` Vercel project | Platform landing |
+| 1 | `/event/:slug/game` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped) |
+| 2 | `/event/:slug/game/:path*` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped); covers `/game/redeem` and `/game/redemptions` operator routes |
+| 3 | `/event/:slug/admin` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped); per-event admin shell |
+| 4 | `/event/:slug/admin/:path*` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped) |
+| 5 | `/assets/:path*` | apps/web plugin (proxy rewrite from apps/site) | Permanent; covers Vite-emitted hashed bundles referenced from the proxied SPA |
+| 6 | `/event/:slug` | apps/site Next.js route | Permanent (event-scoped landing) |
+| 7 | `/event/:slug/feedback` | apps/site Next.js route | Permanent (event-scoped feedback page) |
+| 8 | `/event/:slug/{opengraph,twitter}-image` | apps/site file-convention metadata route | Permanent (background unfurl-consumer fetches) |
+| 9 | Any other event-scoped path not carved out above (`/event/:slug/<future-route>`) | apps/site Next.js route | Permanent default — apps/site owns event-scoped paths by default |
+| 10 | `/_next/:path*` | apps/site Next.js asset path | Permanent (native) |
+| 11 | `/admin` and `/admin/:path*` | apps/site Next.js route | Permanent (platform admin) |
+| 12 | `/auth/callback` | apps/site Next.js route (client component) | Permanent auth callback route |
+| 13 | `/` | apps/site Next.js route | Permanent platform landing |
 
-The cross-app destinations (rules 5, 6, 8, 9, 10, 11, and 12) point
-at the production alias of the `apps/site` Vercel project via
-Vercel's path-rewrite-to-URL syntax. Whether `apps/site` later
-becomes the primary Vercel project (owning the custom domain) is a
-routing-config decision belonging to M2 plan authors.
+The proxy-rewrite destinations (rules 1-5) point at apps/web's
+Vercel-generated host via the `APPS_WEB_ORIGIN` constant in
+[`apps/site/next.config.ts`](/apps/site/next.config.ts). The plugin
+deployment is reachable directly at its own `*.vercel.app` host but
+is not advertised as a customer-facing origin.
 
-The rule 7 SPA fallback is explicitly transitional. M2 plan authors
-are responsible for narrowing it as event-scoped routes finalize.
+apps/web's own `vercel.json` carries SPA-internal rewrites
+(`/event/:slug/game*`, `/event/:slug/admin*`, `/event/:path*` →
+`/index.html`) plus the test-event `X-Robots-Tag` `headers` block
+that pairs with apps/site's `generateMetadata` `robots` emit at
+parity strength on every URL under the test/demo event slugs. No
+cross-app proxy rewrites live in `apps/web/vercel.json`.
 
 The current deployment discipline is simpler:
 

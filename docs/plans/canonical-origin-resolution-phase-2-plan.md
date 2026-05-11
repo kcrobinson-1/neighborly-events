@@ -2,12 +2,23 @@
 
 ## Status
 
-Proposed.
+In progress pending deployed-origin verification.
 
 This is the durable per-phase plan for Phase 2 of the cross-cutting
 plan at [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md).
-The transient scoping doc lives at
-[`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md).
+The transient scoping doc was deleted on land per the
+scoping-doc-transience convention; the decisions absorbed into this
+plan and the cross-cutting plan's investigations-resolved section.
+
+Per the Plan-to-Landed Gate for plans with post-release validation
+([`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
+Gate For Plans With Post-Release Validation"), the implementing PR
+merges with this intermediate Status; a follow-up doc-only PR flips
+to `Landed` after the operator runs the post-deploy validation
+checklist (sign-in round-trip, OG-tag origin spot-check, plugin-path
+proxy check, preview-alias CORS check) named in the Validation Gate
+below. The follow-up PR also flips the cross-cutting plan's Status
+to `Landed` in the same commit.
 
 ## Context
 
@@ -21,7 +32,7 @@ carries 5 reverse-direction rewrites for the plugin-owned routes
 (`/event/:slug/{game,admin}*`, `/assets/*`). Phase 2 strips the
 cross-app proxy rewrites from `apps/web/vercel.json` (preserving the
 SPA rewrites and the test-event `X-Robots-Tag` `headers` block at
-[`apps/web/vercel.json:59-72`](/apps/web/vercel.json) untouched);
+[`apps/web/vercel.json`](/apps/web/vercel.json) untouched);
 keeps [`apps/site/next.config.ts`](/apps/site/next.config.ts)'s
 existing site → plugin rewrites as the canonical routing layer; flips
 `NEXT_PUBLIC_SITE_ORIGIN`'s production value from apps/web's primary
@@ -60,7 +71,7 @@ Ship a single PR that:
 - Strips the cross-app proxy rewrites from
   [`apps/web/vercel.json`](/apps/web/vercel.json) while preserving
   its SPA rewrites and the test-event `X-Robots-Tag` `headers`
-  block at [`apps/web/vercel.json:59-72`](/apps/web/vercel.json).
+  block at [`apps/web/vercel.json`](/apps/web/vercel.json).
 - Leaves [`apps/site/next.config.ts`](/apps/site/next.config.ts)'s
   rewrite layer at its current site → plugin shape; the existing
   rewrites are exactly what the canonical-origin contract names.
@@ -85,15 +96,24 @@ Ship a single PR that:
   `ALLOWED_ORIGINS` on the Supabase project, and the Supabase Auth
   dashboard redirect-URL allowlist. Per scoping Decision 2, the
   cutover is single-step with no coexistence window.
-- Flips this plan's Status from `Proposed` (set in the planning
-  PR that lands this doc, after the In-draft → Proposed promotion
-  gate runs) to `Landed` in the implementing PR per the
-  Plan-to-PR Completion Gate.
-- Flips the cross-cutting plan
-  [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
-  from `Proposed` to `Landed` in the same implementing PR (Phase 2
-  is the cross-cutting plan's terminal phase — see the "No Phase 3"
-  section at
+- Flips this plan's Status from `Proposed` to
+  `In progress pending deployed-origin verification` in the
+  implementing PR per the Plan-to-Landed Gate's two-phase pattern
+  for post-release validation
+  ([`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
+  Gate For Plans With Post-Release Validation"). The Validation Gate
+  below names operator-driven post-deploy checks that genuinely
+  cannot run pre-merge (sign-in round-trip against the real Supabase
+  Auth dashboard allowlist; OG meta-tag origin spot-check on the
+  deployed canonical origin; preview-alias CORS round-trip), so the
+  intermediate Status is mandatory rather than optional.
+- Updates the cross-cutting plan
+  [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)'s
+  Phase 2 backlink to reflect this intermediate Status. The
+  cross-cutting plan stays at `Proposed` until the same follow-up
+  doc-only PR that flips this plan to `Landed` flips it to `Landed`
+  alongside (Phase 2 is the cross-cutting plan's terminal phase —
+  see the "No Phase 3" section at
   [`docs/plans/canonical-origin-resolution.md:333-349`](/docs/plans/canonical-origin-resolution.md)
   and the "No Phase 4" section at
   [`docs/plans/canonical-origin-resolution.md:351-363`](/docs/plans/canonical-origin-resolution.md)).
@@ -119,7 +139,7 @@ flip:
 - The shared route table at [`shared/urls/routes.ts`](/shared/urls/routes.ts)
   is unchanged.
 - Test-event noindex parity is preserved by retaining the
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) headers block
+  [`apps/web/vercel.json`](/apps/web/vercel.json) headers block
   through Phase 2; apps/site's `generateMetadata` `robots` emit is
   unchanged. Both surfaces continue to emit; the canonical-origin
   proxy from apps/site to apps/web for `/event/:slug/{game,admin}*`
@@ -165,7 +185,7 @@ The 7 cross-app proxy rewrites at lines 26-33 and lines 38-57
 topology mapping) are removed. No absolute `*.vercel.app` URL appears
 anywhere in the file post-Phase-2.
 
-**Verified by:** [`apps/web/vercel.json:1-73`](/apps/web/vercel.json)
+**Verified by:** [`apps/web/vercel.json`](/apps/web/vercel.json)
 (file under contract, read this scoping pass).
 
 ### Contract 2: apps/site/next.config.ts retains its current rewrite layer
@@ -210,7 +230,7 @@ message at lines 67-72 are rewritten per scoping Decision 3:
 **Verified by:** [`apps/site/app/layout.tsx:28-90`](/apps/site/app/layout.tsx)
 (file under contract, read this scoping pass);
 scoping Decision 3 in
-[`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md).
+the now-deleted Phase 2 scoping doc (decisions absorbed into this plan; git history preserves the original scoping prose).
 
 ### Contract 4: CORS helper admits apps/site canonical + preview/branch aliases
 
@@ -223,7 +243,7 @@ admits the following origin set:
   primary alias is removed.
 - apps/site's Vercel-generated preview and branch aliases via the
   matching mechanism chosen at scoping time (see
-  [scoping Decision 1](/docs/plans/scoping/canonical-origin-resolution-phase-2.md)).
+  scoping Decision 1 in the now-deleted Phase 2 scoping doc (git history preserves it)).
   The mechanism narrows admission to apps/site's project specifically;
   it does not admit unrelated `*.vercel.app` deployments. The
   implementation lands in this PR; the plan does not restate the
@@ -239,7 +259,7 @@ project.
 **Verified by:** [`supabase/functions/_shared/cors.ts:1-46`](/supabase/functions/_shared/cors.ts)
 (file under contract, read this scoping pass);
 scoping Decision 1 in
-[`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md);
+the now-deleted Phase 2 scoping doc (decisions absorbed into this plan; git history preserves the original scoping prose);
 [Vercel — Generated URLs](https://vercel.com/docs/deployments/generated-urls)
 for the preview-alias hostname formats the matching mechanism
 catches.
@@ -273,7 +293,7 @@ the post-flip topology:
 
 **Verified by:** [`docs/dev.md:791-934`](/docs/dev.md) (sections
 under contract, read this scoping pass); scoping Decisions 5 in
-[`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md).
+the now-deleted Phase 2 scoping doc (decisions absorbed into this plan; git history preserves the original scoping prose).
 
 ### Contract 6: docs/architecture.md framing and topology table reflect post-Phase-2
 
@@ -294,7 +314,7 @@ coherently:
 **Verified by:** [`docs/architecture.md:25-90`](/docs/architecture.md),
 [`docs/architecture.md:945-1002`](/docs/architecture.md) (sections
 under contract, read this scoping pass); scoping Decision 7 in
-[`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md).
+the now-deleted Phase 2 scoping doc (decisions absorbed into this plan; git history preserves the original scoping prose).
 
 ### Contract 7: apps/site/.env.example comment describes post-Phase-2 semantics
 
@@ -335,7 +355,7 @@ rather than shipping localhost-shaped meta tags.
 **Verified by:** [`apps/site/app/layout.tsx:65-72`](/apps/site/app/layout.tsx)
 (the build-time throw on production with unset
 `NEXT_PUBLIC_SITE_ORIGIN`); scoping Decisions 2 and 4 in
-[`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md);
+the now-deleted Phase 2 scoping doc (decisions absorbed into this plan; git history preserves the original scoping prose);
 [`docs/plans/canonical-origin-resolution.md:108-113`](/docs/plans/canonical-origin-resolution.md)
 (the binding contract on the post-Phase-2 allowlist contents).
 
@@ -370,10 +390,14 @@ None. Phase 2 modifies existing files only.
 - [`apps/site/.env.example`](/apps/site/.env.example) — comment at
   lines 3-7. Per Contract 7.
 - [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md) —
-  Status flips `Proposed` → `Landed` in the implementing PR (the
-  cross-cutting plan's terminal phase — see Goal).
-- This plan doc — Status flips `Proposed` → `Landed` in the
-  implementing PR.
+  Phase 2 backlink updated to reflect this plan's intermediate
+  Status; the cross-cutting plan's own Status stays `Proposed` and
+  flips to `Landed` in the same follow-up doc-only PR that flips
+  this plan to `Landed` (see Goal for the two-phase pattern).
+- This plan doc — Status flips `Proposed` →
+  `In progress pending deployed-origin verification` in the
+  implementing PR; flips to `Landed` in a follow-up doc-only PR
+  after the operator runs the post-deploy checklist.
 
 ### Intentionally not touched
 
@@ -395,7 +419,7 @@ callout.
 - [`scripts/testing/run-auth-e2e-dev-server.cjs`](/scripts/testing/run-auth-e2e-dev-server.cjs) —
   out of scope per scoping Decision 6.
 - The 3 test-event noindex regex constraints in
-  [`apps/web/vercel.json:59-72`](/apps/web/vercel.json) — preserved
+  [`apps/web/vercel.json`](/apps/web/vercel.json) — preserved
   per the cross-cutting plan's End State table row 11. The
   cross-cutting plan's Risk Register entry on per-plugin noindex
   maintenance cost (lines 593-610) records why this stays as-is
@@ -439,9 +463,14 @@ implementation may resequence when a structural call requires it.
    update `ALLOWED_ORIGINS` Supabase secret, update Supabase Auth
    dashboard redirect-URL allowlist.
 10. Merge; Vercel redeploys both projects; topology flips.
-11. Flip both plan Statuses to `Landed` in the implementing PR
-    per the Plan-to-PR Completion Gate; this plan doc and the
-    cross-cutting plan both flip.
+11. Operator runs the post-deploy validation checklist (sign-in,
+    OG-tag spot-check, plugin-path proxy check, preview-alias CORS
+    check). Once each falsifier passes, open a follow-up doc-only PR
+    that flips this plan's Status from
+    `In progress pending deployed-origin verification` to `Landed`
+    and the cross-cutting plan's Status from `Proposed` to `Landed`,
+    recording any external evidence (deploy URL, sign-in test
+    timestamp) the operator captured.
 
 ## Commit Boundaries
 
@@ -516,32 +545,53 @@ CORS pattern-matching). The gate is:
     cors.ts did not catch the preview alias.
 
 The CORS helper change additionally carries a **branch-test
-contract** the implementing PR must satisfy before merge:
+contract** the implementing PR must satisfy before merge.
+
+Positive admission tests:
 
 - The helper admits the canonical site origin (exact-match path).
-- The helper admits a representative apps/site preview-alias
-  hostname (Vercel's documented `<project>-<unique>-<scope>.vercel.app`
-  and `<project>-git-<branch>-<scope>.vercel.app` shapes against the
-  apps/site project name).
-- **Negative test (load-bearing isolation):** the helper rejects an
-  alias from a hypothetical sibling Vercel project whose name shares
-  apps/site's prefix (e.g., a deployment hostname that begins with
-  the apps/site project name plus an additional suffix segment, then
-  ends in `.vercel.app`). This test exists specifically to prove the
-  matching strategy isolates the apps/site project rather than any
-  project sharing its name prefix; it is the contract requirement
-  that constrains the precise predicate spelling chosen at
-  implementation time. Falsifier: if a sibling-prefix project's
-  alias is admitted, the predicate is too loose and must be
-  tightened (e.g., by anchoring on a delimiter after the project
-  name, or by enumerating the exact allowed suffix shapes).
+- With the operator-pinned scope env var set, the helper admits a
+  representative apps/site preview-alias hostname (Vercel's
+  documented `<project>-<unique>-<scope>.vercel.app` and
+  `<project>-git-<branch>-<scope>.vercel.app` shapes against the
+  apps/site project name and the configured scope).
+- With both the operator-pinned exact allowlist AND the scope env
+  var set, both admit paths work independently (exact-match for the
+  pinned origins; preview-alias matching for apps/site's previews).
 
-These three tests are the implementing PR's branch-level proof that
-the helper change satisfies the cross-cutting plan's CORS contract.
-The matching strategy chosen at scoping time
-([`docs/plans/scoping/canonical-origin-resolution-phase-2.md`](/docs/plans/scoping/canonical-origin-resolution-phase-2.md)
-Decision 1) is the planning-layer answer; these tests are the
-correctness gate.
+Negative isolation tests (load-bearing):
+
+- **Sibling-prefix rejection:** the helper rejects an alias from a
+  hypothetical sibling Vercel project whose name shares apps/site's
+  prefix plus an additional segment (e.g., a hostname that begins
+  with the apps/site project name plus an extra slug segment).
+  Falsifier: if admitted, the predicate is too loose and must be
+  tightened by anchoring on a delimiter after the project name.
+- **Cross-team scope rejection:** the helper rejects an alias whose
+  scope segment names a Vercel team other than the configured one.
+  This is the load-bearing test that proves the configured scope is
+  pinned in the predicate (rather than admitting any `*.vercel.app`
+  scope value). Falsifier: if a different scope is admitted, the
+  matching mechanism doesn't isolate apps/site from other Vercel
+  teams that may create same-named projects.
+- **Scope-required (preview matcher is opt-in):** with the scope env
+  var unset, NO preview aliases are admitted, even on the apps/site
+  project name. Falsifier: if admitted, the preview matcher has a
+  silent-default behavior that an operator can't disable.
+- **Operator-lockdown honored (`ALLOWED_ORIGINS` does not silently
+  re-open access):** with the exact allowlist env var set AND the
+  scope env var unset, NO preview aliases are admitted. Falsifier:
+  if admitted, an operator who explicitly pins origins for
+  production lockdown is silently bypassed by the preview matcher.
+- **HTTPS-only enforcement:** an `http://` variant of an apps/site
+  preview-alias hostname is rejected.
+
+These tests are the implementing PR's branch-level proof that the
+helper change satisfies the cross-cutting plan's CORS contract. The
+matching strategy chosen at scoping time (the now-deleted Phase 2
+scoping doc; decisions absorbed into this plan; git history preserves
+the original scoping prose) is the planning-layer answer; these
+tests are the correctness gate.
 
 The post-deploy validation is operator-performed at cutover, not
 CI-gated. It is named here as the load-bearing falsifier that
@@ -569,9 +619,12 @@ and applicable to this PR's diff surfaces:
   separately for its own diff surface.
 - **Plan-to-PR Completion Gate** (per
   [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)):
-  walk Goal, Contracts, Validation Gate; this plan's Status flips
-  `Proposed` → `Landed` and the cross-cutting plan's Status flips
-  `Proposed` → `Landed` in the implementing PR.
+  walk Goal, Contracts, Validation Gate. This plan's Status flips
+  `Proposed` → `In progress pending deployed-origin verification`
+  in the implementing PR; the `Landed` flip and the cross-cutting
+  plan's `Proposed` → `Landed` flip live in the follow-up doc-only
+  PR that runs after operator validation, per the Plan-to-Landed
+  Gate's two-phase pattern for post-release validation.
 - **Estimate Deviations callout** (per
   [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)):
   if implementation surfaces a structural call that requires
@@ -645,7 +698,7 @@ prose against the post-Phase-2 topology before merge.
   breaks. The Validation Gate names this as the post-deploy
   falsifier. **Verified by:**
   [`docs/plans/canonical-origin-resolution.md:557-565`](/docs/plans/canonical-origin-resolution.md),
-  [scoping Decision 2](/docs/plans/scoping/canonical-origin-resolution-phase-2.md).
+  scoping Decision 2 in the now-deleted Phase 2 scoping doc (git history preserves it).
 
 - **`NEXT_PUBLIC_SITE_ORIGIN` value flip is a metadata-correctness
   risk.** Misconfigured production env after the flip ships OG
@@ -673,7 +726,7 @@ prose against the post-Phase-2 topology before merge.
   matching logic against scoping Decision 1's spec — admit only
   origins whose hostname starts with the project token AND ends
   with `.vercel.app`. **Verified by:**
-  [scoping Decision 1](/docs/plans/scoping/canonical-origin-resolution-phase-2.md),
+  scoping Decision 1 in the now-deleted Phase 2 scoping doc (git history preserves it),
   [`supabase/functions/_shared/cors.ts:1-46`](/supabase/functions/_shared/cors.ts).
 
 - **Doc-currency sweep misses a section that drifts post-Phase-2.**
@@ -692,14 +745,16 @@ prose against the post-Phase-2 topology before merge.
 
 ## Backlog Impact
 
-No backlog entry to delete in this PR — the cross-cutting plan
-[`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
-already resolves backlog entry "Canonical-origin design conversation"
-at [`docs/backlog.md:80-93`](/docs/backlog.md). That backlog entry
-gets deleted in the same PR that flips the cross-cutting plan to
-`Landed`, which (per Goal) is this implementing PR. The deletion
-ships alongside the topology flip per the "Close out tracking
-surfaces in the implementing PR" memory rule.
+The backlog entry "Canonical-origin design conversation" at
+[`docs/backlog.md`](/docs/backlog.md) is resolved by the topology
+flip this implementing PR ships. The entry's deletion travels with
+the cross-cutting plan's `Landed` flip — i.e., it ships in the same
+follow-up doc-only PR that flips both plan Statuses after the
+operator runs the post-deploy validation checklist. Deferring the
+deletion to the follow-up PR keeps the backlog entry visible until
+the operator has confirmed the flip actually held in production
+(rather than dropping the breadcrumb prematurely on a deploy that
+might surface a misconfiguration).
 
-**Verified by:** [`docs/backlog.md:80-93`](/docs/backlog.md) (the
-backlog entry under deletion in the implementing PR).
+**Verified by:** [`docs/backlog.md`](/docs/backlog.md) (the
+backlog entry under deletion in the follow-up doc-only PR).
