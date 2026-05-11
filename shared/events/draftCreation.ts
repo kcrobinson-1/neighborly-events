@@ -1,8 +1,12 @@
 import type { AuthoringGameDraftContent } from "../game-config";
+import { EVENT_SLUG_MAX_LENGTH } from "../urls";
 import type { DraftEventDetail, DraftEventSummary } from "./admin.ts";
 
 const STARTER_DRAFT_BASE_NAME = "Untitled event";
 const DEFAULT_SUFFIX_LENGTH = 6;
+// Reserve room for a collision-avoidance "-NNN" tail so retries stay under the
+// shared slug-shape limit even with three-digit attempts.
+const COLLISION_TAIL_HEADROOM = 4;
 
 type ExistingDraftIdentity = Pick<DraftEventSummary, "id" | "slug">;
 
@@ -23,6 +27,20 @@ function slugify(value: string) {
   return slug || "draft-event";
 }
 
+function truncateBaseSlug(baseSlug: string, maxLength: number) {
+  if (maxLength <= 0) {
+    // Suffix alone consumes the whole budget; fall back to a stable single
+    // character so the validator's "must start with [a-z0-9]" rule holds.
+    return "x";
+  }
+
+  if (baseSlug.length <= maxLength) {
+    return baseSlug;
+  }
+
+  return baseSlug.slice(0, maxLength).replace(/-+$/, "") || "x";
+}
+
 function createUniqueIdentity(
   baseName: string,
   existingDrafts: ExistingDraftIdentity[],
@@ -30,12 +48,15 @@ function createUniqueIdentity(
 ) {
   const existingIds = new Set(existingDrafts.map((draft) => draft.id));
   const existingSlugs = new Set(existingDrafts.map((draft) => draft.slug));
-  const baseSlug = slugify(baseName);
-  let candidate = `${baseSlug}-${slugify(suffix)}`;
+  const slugifiedSuffix = slugify(suffix);
+  const maxBaseLength =
+    EVENT_SLUG_MAX_LENGTH - 1 - slugifiedSuffix.length - COLLISION_TAIL_HEADROOM;
+  const baseSlug = truncateBaseSlug(slugify(baseName), maxBaseLength);
+  let candidate = `${baseSlug}-${slugifiedSuffix}`;
   let attempt = 2;
 
   while (existingIds.has(candidate) || existingSlugs.has(candidate)) {
-    candidate = `${baseSlug}-${slugify(suffix)}-${attempt}`;
+    candidate = `${baseSlug}-${slugifiedSuffix}-${attempt}`;
     attempt += 1;
   }
 
