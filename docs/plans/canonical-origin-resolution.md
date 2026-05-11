@@ -2,7 +2,17 @@
 
 ## Status
 
-Proposed.
+Landed.
+
+> **Deployed-origin verification (2026-05-11).** Phase 2 deployed-origin
+> verification passed all four post-deploy checks (plugin-path proxy,
+> OG-tag origin, magic-link round-trip, preview-alias CORS) against the
+> deployed apps/site primary alias. Detailed evidence recorded in the
+> Phase 2 plan's Status block at
+> [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md).
+> Both the cross-cutting plan and the Phase 2 plan flip to `Landed`
+> together in the close-out PR per the Plan-to-Landed Gate's
+> two-phase pattern for plans with post-release validation.
 
 > **Post-PR note (2026-05-10).** The Supabase Edge Function CORS env
 > var named `ALLOWED_ORIGINS` throughout this doc was renamed to
