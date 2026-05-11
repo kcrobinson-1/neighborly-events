@@ -4,6 +4,20 @@
 
 In progress pending deployed-origin verification.
 
+> **Post-PR note (2026-05-10).** The deployed-origin verification surfaced
+> that the operator-managed `ALLOWED_ORIGINS` Supabase secret had the
+> wrong shape for safe updates: it was write-only (no read access from
+> the dashboard) and overrode the in-code defaults entirely, so any
+> operator update risked silently dropping a canonical origin. A
+> follow-up PR renamed the env var to `EXTRA_ALLOWED_ORIGINS` and
+> changed the merge semantics from override to additive (unioned with
+> `defaultAllowedOrigins`). References to `ALLOWED_ORIGINS` below
+> describe the original Phase 2 cutover surface; the operator step
+> for the rename was: delete the secret, then optionally set
+> `EXTRA_ALLOWED_ORIGINS` only if extras beyond the defaults are
+> needed. The CORS helper change in the Branch-Test Contract is
+> unchanged; the rename did not affect the preview-alias matcher.
+
 This is the durable per-phase plan for Phase 2 of the cross-cutting
 plan at [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md).
 The transient scoping doc was deleted on land per the

@@ -4,6 +4,16 @@
 
 Landed.
 
+> **Post-landing note (2026-05-10).** The Supabase Edge Function CORS
+> env var named `ALLOWED_ORIGINS` referenced below was renamed to
+> `EXTRA_ALLOWED_ORIGINS` and made additive (unioned with the in-code
+> `defaultAllowedOrigins`) in a follow-up PR. The smoke-related
+> guidance below is unchanged in substance — only the env var name and
+> merge semantics differ. The CORS allowlist now lives in code at
+> [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts);
+> operators no longer set the env var unless they have origins to
+> admit beyond the canonical defaults.
+
 Post-release `Production Deployed-Surface Smoke` run on the hot-fix
 merge SHA `533a326` passed both phases (admin + redemption operator):
 [run 25345598914](https://github.com/kcrobinson-1/neighborly-events/actions/runs/25345598914).

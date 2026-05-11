@@ -100,7 +100,7 @@ Optional fixture overrides:
 - Auth Site URL and redirect URL allowlist must include the deployed
   `<origin>/auth/callback` entry used by smoke and admin sign-in
 - `public.admin_users` allowlist must permit the smoke admin and deny the smoke denied user
-- `ALLOWED_ORIGINS` must allow the deployed web origin used by smoke
+- the deployed web origin used by smoke must be admitted by [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts) — either present in `defaultAllowedOrigins` (the canonical apps/site Vercel alias is) or added via the additive `EXTRA_ALLOWED_ORIGINS` env var
 - `save-draft`, `publish-draft`, and `unpublish-event` must be deployed and healthy
 
 ## Dedicated Smoke Fixture Ownership
@@ -282,7 +282,7 @@ should not be on contributor laptops anyway per
 
 | Risk | Why it matters | Mitigation in current implementation | Deferred follow-up |
 | --- | --- | --- | --- |
-| Deployed CORS regression breaks credentialed fetch | The fixture/spec rely on the deployed Edge Functions emitting `Access-Control-Allow-Credentials: true` and an exact-origin Allow-Origin via `supabase/functions/_shared/cors.ts` | Source-level audit during the implementing PR confirmed the shared helper emits credentialed CORS for deployed origins in `ALLOWED_ORIGINS`; the post-merge run is the deployed-end observation | Add a Playwright `page.route` proxy mirroring the local-Supabase Kong workaround if the deployed CORS shape ever regresses |
+| Deployed CORS regression breaks credentialed fetch | The fixture/spec rely on the deployed Edge Functions emitting `Access-Control-Allow-Credentials: true` and an exact-origin Allow-Origin via `supabase/functions/_shared/cors.ts` | Source-level audit during the implementing PR confirmed the shared helper emits credentialed CORS for origins admitted by `defaultAllowedOrigins` and the additive `EXTRA_ALLOWED_ORIGINS` extras; the post-merge run is the deployed-end observation | Add a Playwright `page.route` proxy mirroring the local-Supabase Kong workaround if the deployed CORS shape ever regresses |
 | Fixture state coupling produces flakes | Admin ends with event unpublished; redemption re-publishes; a misordered or partially-failed run could observe transient state | Workflow concurrency lock; redemption fixture's `ensurePublishedSmokeEvent` is idempotent; contributor docs warn against local invocations during workflow runs | Tighten if observed in practice |
 | Magic-link leakage in workflow logs | Two new magic links per run; one missing mask exposes a one-time auth token in public logs | The shared `maskValueForGitHubActions` helper masks both links before Playwright uses them, mirroring the admin fixture | Stricter artifact scrubbing if new attachments are introduced |
 | Role-assignment scope drift | Smoke identities receiving `admin_users` rows would silently broaden their access | Self-review audit asserts these identities live in `event_role_assignments` only; smoke runs never touch `admin_users` for them | Periodic service-role read of `admin_users` to confirm |
@@ -304,8 +304,9 @@ In addition to the admin-phase triage above:
      allowlisted on the deployed Supabase project
 9. **Redeem call fails with CORS error in the spec network trace**
    - likely deployed CORS regression; check
-     `supabase/functions/_shared/cors.ts` and the deployed
-     `ALLOWED_ORIGINS` setting
+     `supabase/functions/_shared/cors.ts` (the canonical defaults) and
+     the deployed `EXTRA_ALLOWED_ORIGINS` env var if the operator added
+     extras beyond the defaults
 10. **Reversal fails or persisted state mismatch**
     - likely RLS regression on `game_entitlements` or role-helper
       predicate drift; inspect
