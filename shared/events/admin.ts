@@ -259,16 +259,6 @@ export async function saveDraftEvent(
   );
 }
 
-/** Requests a server-generated random 3-letter event code for the named event. */
-export async function generateEventCode(eventId: string): Promise<string> {
-  const result = await callAuthoringFunction<{ eventCode: string }>(
-    "generate-event-code",
-    { eventId },
-    "We couldn't generate an event code right now.",
-  );
-  return result.eventCode;
-}
-
 /** Publishes a private draft into the live attendee-facing game projection. */
 export async function publishDraftEvent(eventId: string): Promise<PublishDraftResult> {
   return await callAuthoringFunction<PublishDraftResult>(

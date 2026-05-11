@@ -17,7 +17,6 @@ export {
   type PublishedGameSummary,
 } from "./published.ts";
 export {
-  generateEventCode,
   getGameAdminStatus,
   listDraftEventSummaries,
   loadDraftEvent,

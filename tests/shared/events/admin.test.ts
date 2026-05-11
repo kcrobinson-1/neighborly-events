@@ -8,7 +8,6 @@ import type { Database } from "../../../shared/db";
 import { _resetSharedEventsForTests } from "../../../shared/events/configure.ts";
 import {
   configureSharedEvents,
-  generateEventCode,
   getGameAdminStatus,
   listDraftEventSummaries,
   loadDraftEvent,
@@ -309,31 +308,6 @@ describe("shared/events admin API", () => {
       Authorization: "Bearer admin-access-token",
       "Content-Type": "application/json",
     });
-  });
-
-  it("generates event codes through the dedicated authoring function", async () => {
-    client = createSupabaseClientMock({
-      session: {
-        access_token: "admin-access-token",
-      },
-    });
-    const fetchMock = vi.fn().mockResolvedValue(
-      createJsonResponse({
-        eventCode: "ABC",
-      }),
-    );
-    vi.stubGlobal("fetch", fetchMock);
-
-    await expect(generateEventCode()).resolves.toBe("ABC");
-
-    expect(fetchMock).toHaveBeenCalledWith(
-      "https://example.supabase.co/functions/v1/generate-event-code",
-      expect.objectContaining({
-        body: JSON.stringify({}),
-        credentials: "include",
-        method: "POST",
-      }),
-    );
   });
 
   it("publishes and unpublishes through the dedicated authoring functions", async () => {
