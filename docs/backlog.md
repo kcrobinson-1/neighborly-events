@@ -273,6 +273,29 @@ Execute in any order.
   agents have a consistent, documented path for uploading UX review images.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Add a stable PR screenshot upload path](/docs/tracking/dev-workflow-improvements.md)
 
+- [ ] **`db` Relax `game_entitlements_first_completion_fk` to `ON DELETE SET NULL`**
+  `game_entitlements` and `game_completions` reference each other with
+  FKs, both currently `ON DELETE RESTRICT`. The entitlement-side
+  back-edge (`game_entitlements.first_completion_id` pointing at
+  `game_completions.id`) is a denormalization for fast lookup of "which
+  completion first earned this entitlement" — never strictly required,
+  always derivable from `game_completions.entitlement_awarded = true`.
+  The combination of circular FK + double-RESTRICT means deleting an
+  event's entitlements requires a three-step transaction (clear the
+  back-reference, delete completions, delete entitlements) before the
+  schema will let go. Surfaced during walkthrough validation of the
+  event_code rotation flow — clearing test entitlements on a draft
+  event needed the manual unwind. Changing the back-edge FK to
+  `ON DELETE SET NULL` collapses step 1: completions can be deleted
+  directly, and the entitlement's `first_completion_id` quietly nulls
+  out. The denormalization stays in place for normal-operation reads;
+  only the deletion path simplifies. Scope: one `alter table` migration
+  (drop + recreate the constraint), refresh of pgTAP coverage on the
+  FK behavior (`throws_ok` on completion-delete becomes `lives_ok` +
+  assertion that `first_completion_id` nulled out), no application
+  code changes since `complete_game_and_award_entitlement` inserts a
+  completion before setting `first_completion_id`.
+
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
   plan-archive-maintenance PRs inflate the repo PR count, and plan PRs need
