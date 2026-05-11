@@ -988,6 +988,32 @@ before any polling starts; the same minimum is encoded as a constant in
 and exercised by
 [`tests/scripts/post-merge-smoke-watch.test.ts`](/tests/scripts/post-merge-smoke-watch.test.ts).
 
+### Triggering a preview deploy
+
+Per-PR preview deploys are **human-triggered**, not automatic — Vercel
+Git auto-deploys are turned off for branches per the
+[`vercel-preview-deploy-budget`](/docs/plans/vercel-preview-deploy-budget.md)
+plan that landed the workflow. To trigger one, **comment `/deploy-preview`
+on the PR**. The
+[`Preview deploys` GitHub Action](/.github/workflows/preview-deploys.yml)
+picks up the comment, runs a SHA-pinned Vercel build for each affected
+project (`apps/web` and/or `apps/site`), and reports back through the
+required `preview-deploy` status check on the PR.
+
+The `preview-deploy` status check gates merge. Without it green, the PR
+sits in `mergeStateStatus: BLOCKED` even when every other check passes.
+Docs-only PRs auto-skip — the scope-detection job classifies the diff
+and returns `no preview needed for docs-only changes`, marking the
+check successful without a Vercel build, so no manual `/deploy-preview`
+comment is needed for those.
+
+The check is **SHA-pinned**: the deploy reflects the commit at trigger
+time. Pushing new commits after triggering does NOT auto-redeploy.
+Re-comment `/deploy-preview` after a new commit (or force-push) to get
+a fresh preview against the latest head SHA. The trigger also fires on
+`preview` label add and on `ready_for_review` transition; see the
+workflow file's header for the full trigger matrix and job decomposition.
+
 ### Pull Request Notes
 
 Pull requests use [`.github/pull_request_template.md`](/.github/pull_request_template.md)
