@@ -991,14 +991,15 @@ and exercised by
 ### Triggering a preview deploy
 
 Per-PR preview deploys are **human-triggered**, not automatic — Vercel
-Git auto-deploys are turned off for branches per the
-[`vercel-preview-deploy-budget`](/docs/plans/vercel-preview-deploy-budget.md)
-plan that landed the workflow. To trigger one, **comment `/deploy-preview`
-on the PR**. The
+Git auto-deploys are turned off for branches so PR pushes don't burn
+Vercel deployment quota, and the merge button stays grey until a
+preview has actually rendered successfully for the current head SHA.
+To trigger one, **comment `/deploy-preview` on the PR**. The
 [`Preview deploys` GitHub Action](/.github/workflows/preview-deploys.yml)
-picks up the comment, runs a SHA-pinned Vercel build for each affected
-project (`apps/web` and/or `apps/site`), and reports back through the
-required `preview-deploy` status check on the PR.
+(see the workflow file's header for the full rationale) picks up the
+comment, runs a SHA-pinned Vercel build for each affected project
+(`apps/web` and/or `apps/site`), and reports back through the required
+`preview-deploy` status check on the PR.
 
 The `preview-deploy` status check gates merge. Without it green, the PR
 sits in `mergeStateStatus: BLOCKED` even when every other check passes.
