@@ -2,7 +2,39 @@
 
 ## Status
 
-In progress pending deployed-origin verification.
+Landed.
+
+> **Deployed-origin verification (2026-05-11).** All four post-deploy
+> checks named in the Validation Gate below passed against the
+> deployed apps/site primary alias (`https://neighborly-events-site.vercel.app`)
+> and a real apps/site preview-alias origin. Recorded evidence:
+>
+> - **Plugin-path proxy:** `GET /event/harvest-block-party/game` on
+>   the canonical origin returned the apps/web Vite SPA `index.html`
+>   shape (HTTP 200, `content-disposition: inline; filename="index.html"`,
+>   `<title>Neighborly Events</title>`, Vite-built `/assets/...`
+>   bundle references, `<div id="root">`).
+> - **OG tags on canonical origin:** `og:url` and `og:image` on
+>   `/event/harvest-block-party` both resolved against
+>   `https://neighborly-events-site.vercel.app/...` (apps/site) after
+>   the redeploy with the flipped `NEXT_PUBLIC_SITE_ORIGIN` value
+>   landed (~3 minutes after env-var update).
+> - **Magic-link round-trip:** sign-in at `https://neighborly-events-site.vercel.app/admin`
+>   composed `emailRedirectTo` against apps/site origin
+>   (decoded magic-link `redirect_to`:
+>   `https://neighborly-events-site.vercel.app/auth/callback?next=/admin`);
+>   click landed at `/admin` signed in, no error states.
+> - **Preview-alias CORS:** OPTIONS preflight to the deployed
+>   `read-demo-event` Edge Function with `Origin:
+>   https://neighborly-events-site-77sy5jj83-kcrobinson-6062s-projects.vercel.app`
+>   returned `Access-Control-Allow-Origin` echoing that exact origin.
+>   Confirms `APPS_SITE_VERCEL_SCOPE` is set on Supabase secrets and
+>   the project-scoped pattern matcher admits apps/site preview
+>   aliases as designed.
+>
+> The cross-cutting plan at
+> [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
+> flips to `Landed` in the same close-out PR.
 
 > **Post-PR note (2026-05-10).** The deployed-origin verification surfaced
 > that the operator-managed `ALLOWED_ORIGINS` Supabase secret had the
