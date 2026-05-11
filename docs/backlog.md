@@ -37,32 +37,7 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-- [ ] **`dev` Constrain event slug shape to URL-safe characters**
-  Today nothing prevents an event slug from containing reserved URL
-  characters (`/`, `?`, `#`, space, etc.). The admin authoring flow at
-  `apps/web/src/admin/eventDetails.ts:113` only runs `trimRequiredString`
-  — no kebab-case regex, no URL-safety check. The DB has `UNIQUE` on
-  `game_events.slug` (and PK on `feedback_enabled_events.slug`) but **no
-  CHECK constraint on shape**. URL-rendering helpers like
-  `shared/urls/routes.ts:30-38` and `apps/site/components/event/EventFeedbackCTA.tsx`
-  defensively wrap slugs in `encodeURIComponent`, which keeps the
-  rendered URLs survivable, but the *stored shape* is unbounded — a
-  future organizer authoring an event could save `My Event / Special`
-  and the system would store it. A constrained shape is the write-side
-  defense complement to the read-side case-folding helper in
-  `shared/urls/normalizeEventSlug.ts`; together they bound the
-  failure mode this tier gates against on QR flows.
-  Recommended layers: (1) shared validator in `shared/` with
-  the canonical regex (likely `/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/`),
-  (2) UX check in the admin authoring flow surfacing a friendly error
-  on save, (3) DB CHECK constraint on `game_events.slug` and
-  `feedback_enabled_events.slug` as defense-in-depth. Open questions
-  for the fix: exact regex (allow underscores? digits-only? max length?),
-  whether existing data needs a migration backfill check (today's three
-  slugs are all kebab-case ASCII so this is precautionary, not
-  remediation), and whether the constraint blocks publish or save.
-  Surfaced by Codex review on PR #213 (encodeURIComponent fix landed
-  there; the upstream prevention is this entry).
+_No open items._
 
 ---
 

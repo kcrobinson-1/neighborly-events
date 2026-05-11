@@ -1,4 +1,9 @@
 import { type ChangeEvent, type FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import {
+  EVENT_SLUG_MAX_LENGTH,
+  EVENT_SLUG_PATTERN,
+  EVENT_SLUG_RULE_MESSAGE,
+} from "../../../../shared/urls";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
 import {
   createEventDetailsFormValues,
@@ -137,11 +142,13 @@ export function AdminEventDetailsForm({
             className="admin-input"
             disabled={disabled || draft.hasBeenPublished}
             id="admin-event-slug"
+            maxLength={EVENT_SLUG_MAX_LENGTH}
             onChange={updateTextValue("slug")}
+            pattern={EVENT_SLUG_PATTERN.source}
             title={
               draft.hasBeenPublished
                 ? "Slug is locked after publishing — printed QR codes and URLs depend on it."
-                : undefined
+                : EVENT_SLUG_RULE_MESSAGE
             }
             type="text"
             value={values.slug}
@@ -151,7 +158,12 @@ export function AdminEventDetailsForm({
               Locked after publishing — printed QR codes and URLs depend on
               this.
             </span>
-          ) : null}
+          ) : (
+            <span className="admin-field-hint">
+              Lowercase letters, digits, and hyphens (no leading/trailing
+              hyphen). Used in printed QR URLs.
+            </span>
+          )}
         </div>
         <div className="admin-field">
           <label htmlFor="admin-event-code">
