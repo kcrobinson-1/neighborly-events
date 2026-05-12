@@ -4,9 +4,12 @@
 
 Proposed. One-time correction sweep against the top-level canonical
 docs, scoped to land within ~one week across four PRs. Closes out on
-PR 4 landing by archiving the epic folder to a single flat entry under
-`docs/plans/archive/docs-canonical-corrections.md` and removing the
-active-effort pointer from
+PR 4 landing by flipping this doc's Status to `Landed` in place — the
+epic folder stays at
+`docs/plans/epics/docs-canonical-corrections/` per the in-place-as-
+archive convention in
+[`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
+(lines 37–40) — and by removing the active-effort pointer from
 [`documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md)
 in the same PR.
 
@@ -335,8 +338,11 @@ Surfaces:
 - [`docs/README.md`](/docs/README.md)
 - [`docs/tracking/documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md)
   — remove the active-effort pointer added when this epic opened.
-- Epic Status flipped to Landed and the epic folder archived to a
-  single flat file at `docs/plans/archive/docs-canonical-corrections.md`.
+- Epic Status flipped to `Landed` in place. The epic folder stays at
+  `docs/plans/epics/docs-canonical-corrections/` per the in-place-as-
+  archive convention in
+  [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
+  (lines 37–40); no move into `docs/plans/archive/`.
 
 Contracts:
 
@@ -458,10 +464,15 @@ PRs.
   the standard `npm run lint`, `npm run build:web`,
   `npm run build:site` gate runs per repo convention, but no new
   tests are introduced.
-- **Archive shape on close-out.** On PR 4 landing, the epic folder
-  collapses to a single flat archive entry at
-  `docs/plans/archive/docs-canonical-corrections.md`, matching the
-  existing archive layout where landed epics flatten on archive.
+- **Close-out shape: in-place, not archived.** On PR 4 landing the
+  epic's Status flips to `Landed` and the folder stays at
+  `docs/plans/epics/docs-canonical-corrections/`, per the
+  in-place-as-archive convention in
+  [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
+  (lines 37–40): new epics are not bulk-moved into
+  `docs/plans/archive/` on landing. The flat-file pattern under
+  `docs/plans/archive/` applies only to plans authored before that
+  convention (per line 42), which this epic is not.
 
 ## Related Docs
 
