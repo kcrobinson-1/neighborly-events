@@ -6,12 +6,13 @@ Per-level planning playbook for **phase-planning** sessions. Loads
 estimates labeling, plans-describe-contracts-not-implementation
 (structural code minimalism plus contract-altitude discipline
 across all plan content), plan-doc review stance, planning-
-artifacts-cite-each-other anti-pattern, exact-match label quoting,
-`In draft` → `Proposed` promotion gate,
-and the Plan-to-PR Completion Gate including the Status
-lifecycle the implementing PR consumes — all in
-[`shared.md`](./shared.md)). This file covers what is unique to
-the phase level.
+artifacts-cite-each-other anti-pattern, exact-match label
+quoting) and [`plan.md`](./plan.md) for implementation-layer
+rules that bind task and phase plans alike (Planning Depth, the
+`` `In draft` → `Proposed` `` promotion gate, the Plan-to-PR
+Completion Gate including the Status lifecycle the implementing
+PR consumes). This file covers what is unique to the phase
+level.
 
 A phase planning session produces the per-phase plan that an
 implementing PR consumes. Run this session just-in-time before a
@@ -29,8 +30,8 @@ unattributed-prose entries do not count and must be resolved
 (either by citing the surface or by deciding the question now)
 before they can be carried as inputs. The plan's `Status:` stays
 `In draft` (not `Proposed`) until every named input has settled —
-this is the canonical pre-`Proposed` label per [`shared.md`](./shared.md)
-"`In draft` → `Proposed` promotion gate," and the gate's full
+this is the canonical pre-`Proposed` label per [`plan.md`](./plan.md)
+"`` `In draft` → `Proposed` `` promotion gate," and the gate's full
 self-review walk runs before the flip. Updating
 the next-phase draft if the prior phase shifts during
 implementation or review is an accepted cost — preferable to

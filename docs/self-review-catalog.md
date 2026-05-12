@@ -21,7 +21,7 @@ tell you you're safe.
    not only at the end. Small diffs are easier to audit honestly.
 
 PR plans should name the audits they commit to running — see
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 "Planning Depth" and [`AGENTS.md`](/AGENTS.md) "Pre-Edit Gate."
 
 ## Contributing

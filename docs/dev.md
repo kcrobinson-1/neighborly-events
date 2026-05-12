@@ -500,7 +500,7 @@ surfaces. The catalog collects recurring review findings so self-review is
 targeted (which specific failure modes to look for, what concrete checks
 tell you you're safe) rather than generic. PR plans should list the
 applicable audits upfront — see
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 "Planning Depth."
 
 ## Validation Commands

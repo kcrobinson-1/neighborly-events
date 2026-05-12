@@ -1,47 +1,29 @@
 # Cross-Level Planning Rules
 
 Cross-level rules that bind every plan-drafting session regardless
-of level (epic / milestone / phase / cross-cutting plan / plan-to-PR
-close-out). Per-level files
-([`epic.md`](./epic.md), [`milestone.md`](./milestone.md),
-[`phase.md`](./phase.md)) **reference** these rules; they do not
-duplicate them. The Plan-to-PR Completion Gate (Status lifecycle,
-Estimate Deviations, soft-commitment ban) lives below in this file
-because it is a cross-level rule too — it binds every plan with a
-Status block.
+of level (epic / milestone / task plan / phase plan). Per-level
+files ([`epic.md`](./epic.md), [`milestone.md`](./milestone.md),
+[`plan.md`](./plan.md)) **reference** these rules; they do not
+duplicate them. Rules that bind only at the implementation layer
+(task plans and phase plans) — Planning Depth, the
+`` `In draft` → `Proposed` `` promotion gate, the Plan-to-PR
+Completion Gate — live in [`plan.md`](./plan.md), not here,
+because epic and milestone docs do not consume those gates.
 
 If a rule below feels load-bearing only at one level, that's a
 signal to move it to the per-level file rather than restate it
 here. The discipline is: if a rule binds two or more planning
 levels, it lives here once.
 
-## Planning Depth
-
-When asked to make a plan, do not compress the workflow to an arbitrary short
-step count.
-
-- include every execution gate that materially affects quality, even if that
-  makes the plan longer than five steps
-- keep baseline validation, branch hygiene, implementation, automated
-  code-review feedback, documentation cleanup, final validation, and PR
-  preparation as separate steps when they are all relevant
-- for implementation plans, include an explicit documentation-current-state gate:
-  identify which docs with status-oriented sections (for example `Current
-  State`, `Current status`, rollout status, or phase status) are affected, and
-  include updating them as a required step before handoff
-- do not merge steps just to keep the plan visually compact
-- if a new required step is added, insert it at the correct point in the
-  sequence without weakening or collapsing the surrounding steps
-- for implementation plans, make the plan decision-complete enough that another
-  engineer or agent can execute it without inventing missing gates, validation,
-  or handoff work
-- for PR-sized work, name the intended commit boundaries before editing when
-  practical, and keep review-fix commits distinct when they clarify the history
-- name the self-review audits that apply to this PR's diff surfaces, drawn
-  from [`docs/self-review-catalog.md`](/docs/self-review-catalog.md). The
-  plan should list audit names by surface (SQL / frontend / CI / runbook)
-  so the implementer runs them at commit boundaries rather than
-  rediscovering review feedback at PR-review time
+Four of the rules below — `Plan-doc review stance`,
+`Cross-Cutting Invariants section`, `"Verified by:" annotations
+on load-bearing claims`, `Falsifiability check on each
+load-bearing claim` — bind every level but mean different things
+at each. Each carries a closing cross-walk line naming what the
+rule means at epic / milestone / plan level. The cross-walks
+describe per-level interpretation, not additional per-level
+binding; they do not re-introduce the per-level duplication trap
+the demoted-rules split was designed to avoid.
 
 ## Plans describe contracts, not implementation
 
@@ -207,6 +189,16 @@ Pre-existing plans without this header are not retroactively
 non-conforming. Plan- and scoping-doc PRs opened from this point
 forward include the section.
 
+**Per-level cross-walk.** The same Review Stance binds every
+level; what shifts is the load-bearing surface the stance
+protects. At epic level the stance keeps reviewers from
+prescribing per-milestone scope or per-phase technique that
+hasn't been planned yet. At milestone level the stance keeps
+reviewers from prescribing per-phase trajectory or per-PR
+contracts that belong to the per-phase plan. At plan level the
+stance keeps reviewers from prescribing per-file technique or
+implementation sequencing that belongs to the implementing PR.
+
 ## Cross-Cutting Invariants section
 
 List the cross-cutting invariants that thread through multiple files
@@ -224,6 +216,15 @@ each file in isolation and misses bugs that only appear when two
 sites disagree about the same rule; reviewer rounds then rediscover
 the gap one call site at a time. The plan's job is to name the rule
 once so self-review can walk every site against it.
+
+**Per-level cross-walk.** At epic level, the invariants thread
+across milestones — a capability constraint multiple milestones
+must respect, or a posture decision that binds the whole arc. At
+milestone level, the invariants thread across phases — a contract
+every phase must preserve, or a coordination rule that binds the
+phase set. At plan level, the invariants thread across files
+within the plan's implementing PR(s) — the original framing of
+this rule.
 
 ## Plan content is a mix of rules and estimates — label which is which
 
@@ -260,9 +261,9 @@ implementing agents:
   Deviating from a rule means the rule is wrong and the plan
   needs to be revised in this PR before the deviation lands;
   deviating from an estimate is normal and is handled via the
-  "Estimate Deviations" callout in the PR body (see the
-  "Plan-to-PR Completion Gate" section below). When the call
-  is unclear, ask.
+  "Estimate Deviations" callout in the PR body (see
+  [`plan.md`](./plan.md) "Plan-to-PR Completion Gate"). When the
+  call is unclear, ask.
 - Recurring trap (M3 phase 3.1.2 implementation, 2026-05-01):
   implementer initially read "Files intentionally not touched:
   section components" as a hard ban and inlined a duplicated
@@ -273,52 +274,6 @@ implementing agents:
   plans drafted before this rule are not retroactively non-
   conforming; plans drafted from this point forward must label
   their estimative sections per the bullet above
-
-## `In draft` → `Proposed` promotion gate
-
-Plan-drafting is not required to be a single pass. A multi-pass
-session can lay out the plan's structure with explicit deferrals,
-then resolve them, then flip Status. While the plan is in the
-resolution-pending phase, it carries Status `In draft`; flipping
-to `Proposed` claims the plan is ready for code review —
-contracts are decision-complete, the doc is internally coherent,
-and load-bearing claims are verified. The flip is the natural
-moment for a comprehensive self-review pass:
-
-- **Read end-to-end as a coherent whole.** Re-read the full plan
-  + scoping doc in order. Look for contradictions between sections
-  (a contract claim that conflicts with a Risk Register mitigation,
-  a decision in the scoping doc whose framing no longer matches a
-  later decision's resolution, a Files To Touch entry that
-  contradicts a contract, a multi-step contract whose ordering
-  doesn't match its own test contract).
-- **Decision-completeness on Contracts.** Walk Contracts for
-  deferral phrases ("plan-drafting picks," "final spelling at plan
-  time," "shape decided later," or any deferral that names
-  plan-drafting itself as the resolver). Each must be resolved
-  concretely, explicitly authorized by another rule (e.g., "Bans
-  on surface require rendering the consequence" authorizes UX-copy
-  deferral to render-time), or moved to the scoping doc's "Open
-  decisions to make at plan-drafting" handoff. Plan-drafting is
-  the moment that produced the plan; a contract that defers to
-  "plan-drafting" defers to a moment that does not exist.
-- **Walk the broadened `Verified by:` rule against every
-  load-bearing claim.** The rule is named below; the promotion
-  gate is when it gets applied universally rather than to whichever
-  claims happened to feel "technical" during drafting.
-- **Re-confirm the scoping doc's reality-check inputs against
-  current code.** Line numbers, file existence, configuration
-  shapes, and other inputs that drift from scoping → plan-drafting
-  are reflected in the plan; stale references are updated.
-
-Failures surface either as resolutions (apply edits before
-flipping) or as plan-blockers that the user must triage before
-the flip happens. A plan flipped to `Proposed` without this walk
-is the same shape of drift as a plan flipped to `Landed` without
-satisfying its Validation Gate — the Status claim is wrong. Plans
-drafted before this rule are not retroactively non-conforming;
-plans drafted from this point forward run the gate before the
-`Proposed` flip.
 
 ## "Verified by:" annotations on load-bearing claims
 
@@ -367,6 +322,16 @@ preference is not a prohibition: paragraph-level precision inside a
 long section, files without stable named targets (plain config,
 flat SQL), and citations the author judges clearer with line
 numbers all stay valid uses.
+
+**Per-level cross-walk.** At epic level, citations target
+capability framing and external constraints (vendor docs that
+define the capability surface, prior-art product decisions, the
+upstream policies the epic depends on). At milestone level,
+citations target cross-phase coordination decisions and the
+upstream/downstream contracts the milestone locks. At plan
+level, citations target code, generated test output, or vendor
+docs for the specific contracts the plan binds — the original
+framing of this rule.
 
 ## Quote labels whose enforcement depends on exact-match matching
 
@@ -418,6 +383,16 @@ signal from the failures it was meant to catch. The fix was an
 identity-fingerprint procedure that captures positive + negative
 response signatures and asserts against both. The load-bearing
 case is exactly when the exercise changes the procedure.
+
+**Per-level cross-walk.** At epic level, the falsifier targets
+capability and constraint claims ("would shipping M2 alone
+surface this constraint?" "would the named upstream dependency
+remove this capability?"). At milestone level, the falsifier
+targets claims about cross-phase coupling and sequencing
+rationale ("can phase X actually consume what phase Y
+produces?"). At plan level, the falsifier targets validation
+procedures and per-contract claims as the rule body's examples
+illustrate — the original framing of this rule.
 
 ## Decompose options into shapes before analyzing
 
@@ -479,106 +454,6 @@ an already-merged sibling artifact, or upstream / vendor
 documentation for external-service-behavior claims the codebase
 doesn't contain proof of.
 
-## Plan-to-PR Completion Gate
-
-The gate that an implementing PR walks before merge, and the
-Status lifecycle that gate produces. Applies to:
-
-- the implementing-PR walk (loaded by
-  [`workflows/plan-implementation.md`](../workflows/plan-implementation.md))
-- plan-drafting at phase level when the plan's Validation Gate is
-  scoped (the post-release-validation exception below informs how
-  Validation Gate is named — see [`phase.md`](./phase.md))
-- the Plan-to-Landed close-out session (the doc-only follow-up PR
-  that flips Status when post-release validation passes)
-
-A PR that implements a plan must leave the plan in a terminal state.
-"Most of the plan" is not "the plan." A plan doc that still says
-`Proposed` or `In progress` after its implementation merges is drift,
-and drift compounds into follow-up PRs that re-review the same
-decisions.
-
-- before opening the PR, walk every Goal, Test, Validation step, and
-  Self-Review audit named in the plan; for each one confirm it is
-  either satisfied in the PR or explicitly deferred **in the plan
-  itself** with written rationale. Deferrals live in the plan, not in
-  the PR body, not in an issue, not as an unwritten promise
-- flip the plan's Status line from `Proposed` / `In progress` to
-  `Landed` in the same PR that implements it. Plans in active
-  multi-pass drafting may carry an interim `In draft` Status before
-  `Proposed`; the `In draft` → `Proposed` flip is gated by the
-  promotion-gate rule above ("`In draft` → `Proposed` promotion
-  gate"). Do not record commit SHAs in the Status block — `git log`
-  and `git blame` are authoritative for navigating from plan to
-  history, and recording SHAs creates a chicken-and-egg problem (the
-  SHA isn't known until after merge, which forces a follow-up commit
-  whose only purpose is to record the previous commit's SHA).
-  Same-PR flip is the default whenever the plan's Validation Gate
-  can be fully satisfied pre-merge. Exception: plans whose
-  Validation Gate names a check that can only run post-release
-  (Tier 5 production smoke is the canonical case) land in two
-  phases per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
-  "Plan-to-Landed Gate For Plans With Post-Release Validation" — the
-  implementing PR merges with Status `In progress pending <validation-name>`,
-  where the name is a stable, exact-match label for the specific check
-  (the canonical Tier 5 case is exactly `In progress pending prod smoke`;
-  see testing-tiers.md for non-smoke precedents); a follow-up doc-only
-  commit flips Status to `Landed` and records the post-release
-  validation run URL once the post-release run passes. The run URL is
-  durable external evidence, unlike a commit SHA which is already in
-  git. This is the single authoritative status rule for that case; do
-  not invent additional states or leave the flip to an informal
-  post-merge promise
-- ban soft-commitment words in plans: "optional but recommended,"
-  "consider adding," "nice to have," "probably should." A requirement
-  is either in-scope or deferred — there is no third option. Soft
-  commitments silently relax under review pressure and reappear as
-  reviewer findings after merge
-- if a reviewer flags a gap that should have been named at plan time,
-  fix the plan first (tighten the requirement or defer with rationale),
-  then address the gap. Do not carry the gap as a post-merge follow-up
-  without updating the plan
-- if a plan requirement cannot be fully satisfied in the intended PR,
-  split the plan along a phase boundary before merging partial work so
-  each phase's Status can flip independently, rather than merging a
-  partially-satisfied plan and tracking the remainder informally
-- **Call out estimate deviations in the PR body, and update the
-  plan to match what shipped.** When implementation diverges from
-  an estimate-shaped section of the plan ("Files intentionally not
-  touched" ended up touched, "Files to touch — new" missed a file,
-  contract bullets gained a requirement, intended commit boundaries
-  reshuffled, an execution step was unnecessary or had to be
-  split), two things must happen in the same PR:
-  - The **PR body** names the deviation explicitly under a
-    `## Estimate Deviations` heading inserted immediately after
-    `## Documentation` (or `N/A` if no deviations). Each entry is
-    one or two sentences naming the estimative section, the
-    actual outcome, and why the call was the right one — enough
-    that a reviewer can audit the deviation without reading the
-    diff cold. This is the rationale and audit trail.
-  - The **plan doc** is updated so its estimate-shaped sections
-    describe what actually shipped, not the pre-implementation
-    guess. Walk every estimate-shaped section ("Files to touch —
-    new / modify / intentionally not touched," per-module
-    Contracts, Execution steps, Commit boundaries) and reconcile
-    each against the merged diff. A plan that says "Files
-    intentionally not touched: X" after we shipped an X edit is
-    the same shape of drift the Status-flip rule already forbids
-    — the plan must describe the implemented system, not the
-    pre-implementation guess. The PR body says *why we deviated*;
-    the plan says *what shipped*.
-  Distinct from the rule-deviation path above: rule deviations
-  (a Cross-Cutting Invariant turning out to be wrong, a contract
-  that can't be satisfied, a Validation Gate command that doesn't
-  exercise what it claims) require the plan rule itself to be
-  rewritten in the same PR; estimate deviations require the
-  estimate-shaped section to be updated to match reality, plus
-  the PR-body callout. Pre-existing PR templates do not need the
-  Estimate Deviations heading until they are next edited; PRs
-  opened from this point forward must include the section, and
-  plan-implementing PRs must reconcile the plan with what shipped
-  per the bullet above
-
 ## `Deferred` status for paused planning
 
 Plans, milestone docs, and scoping docs whose drafting is
@@ -614,9 +489,11 @@ State transitions out of `Deferred`:
 
 - **`Deferred` → `In draft` (resumption).** When the work
   becomes next-up, the resuming planner flips Status back to
-  `In draft` and re-runs the `In draft` → `Proposed`
-  promotion gate from scratch. The previous deliberation
-  becomes input to consider, not contract to respect.
+  `In draft` and re-runs the `` `In draft` → `Proposed` ``
+  promotion gate from scratch (see
+  [`plan.md`](./plan.md) "`` `In draft` → `Proposed` ``
+  promotion gate"). The previous deliberation becomes input to
+  consider, not contract to respect.
 - **`Deferred` → (deletion).** If the work is cancelled
   outright (epic re-scoped to drop it, or absorbed by a
   different epic), the doc is deleted in the same PR that
