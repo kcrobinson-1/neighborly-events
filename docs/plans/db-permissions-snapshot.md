@@ -93,9 +93,16 @@ reader opening a specific migration also sees the post-state
 documented in plain prose adjacent to the SQL that produced it.
 
 The pgTAP suite at `supabase/tests/database/permissions.test.sql`
-becomes the machine-verifiable source of truth for the same state,
-so divergence between the live schema and what the snapshot claims
-surfaces as a test failure, not as silent doc drift.
+becomes the machine-verifiable source of truth for the live
+schema's grant/policy/SECURITY shape: divergence between the
+live schema and pgTAP's own assertions surfaces as a test
+failure. The pgTAP suite does NOT read or compare the markdown
+snapshot — snapshot-vs-live-DB drift is caught by the Validation
+Gate's snapshot-equality check (regenerate, diff against the
+committed file) and by the (2) self-review audit at PR-review
+time, not by `npm run test:db`. The two layers cover different
+divergence classes; see the Risk Register for the full
+trade-off framing.
 
 ## Cross-Cutting Invariants
 
@@ -365,9 +372,11 @@ Pre-merge checks the implementing PR must satisfy:
 - The committed `shared/db/permissions.snapshot.md` matches a
   fresh `npm run db:gen-permissions` run (no drift between commit
   and current generation).
-- The pgTAP file's per-table and per-function sections enumerate
-  the same set of tables and functions as the snapshot's sections
-  (cross-artifact consistency check — manual self-review pass).
+- The pgTAP file's per-table, per-function, and per-view sections
+  enumerate the same set of tables, functions, and views as the
+  snapshot's sections (cross-artifact consistency check — manual
+  self-review pass). Matches the third Cross-Cutting Invariant's
+  coverage scope across all three object types.
 
 ## Self-Review Audits
 
