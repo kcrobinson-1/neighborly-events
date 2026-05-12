@@ -269,8 +269,12 @@ Pre-merge checks the implementing PR must satisfy:
 - `npm run db:gen-permissions` produces a deterministic snapshot
   (run twice; diff is empty).
 - `npm run lint` passes.
-- `npm test` passes — includes the new
-  `supabase/tests/database/permissions.test.sql`.
+- `npm run test:db` passes — this is the pgTAP runner; the new
+  `supabase/tests/database/permissions.test.sql` is exercised
+  through it. `npm test` (Vitest) does not run pgTAP and is not
+  load-bearing for this Validation Gate.
+- `npm test` passes (Vitest — covers any non-DB code touched by
+  the implementing PR).
 - `npm run test:functions` passes.
 - `npm run build:web` passes.
 - The committed `shared/db/permissions.snapshot.md` matches a
@@ -346,16 +350,28 @@ Status-oriented doc surfaces updated in the implementing PR:
   cause is almost always a missing sort key.
 - **Author forgets to regenerate the snapshot after a
   grant-touching migration.** Mitigation: the PR-template self-
-  review audit (2) is the primary check. Recovery path: a
-  follow-up PR regenerates and commits the snapshot. The harm is
-  bounded — B2's pgTAP failure surfaces state divergence the same
-  PR.
+  review audit (2) is the primary check; reviewer enforcement at
+  PR-review time is the secondary check. This follows the
+  audit-vs-automation trade-off documented at
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+  — repo doctrine treats named audits and automated CI gates as
+  alternatives, not supplements; an audit is dropped only when
+  an automated check supersedes it. **B2's pgTAP does NOT catch
+  this case**: B2 verifies pgTAP-vs-live-DB agreement, not
+  snapshot-vs-live-DB agreement, so a stale snapshot with
+  otherwise-correct pgTAP would pass B2 silently. Recovery path:
+  a follow-up PR regenerates and commits the snapshot. Upgrade
+  path: if migration volume grows to where audit-discipline
+  fatigue becomes measurable, the documented next move is C1
+  (CI snapshot-drift gate) per the catalog's drop rule.
 - **A grant-touching migration ships with sparse or absent prose
   comments naming its post-state.** Mitigation: the same (2)
-  audit covers the comment-quality expectation. Reviewer
-  enforcement at PR-review time. Recovery path: a follow-up PR
-  amends the prose. Harm is bounded; B2's pgTAP failure is still
-  the safety net for state correctness.
+  audit covers the comment-quality expectation; reviewer
+  enforcement at PR-review time is the secondary check. Recovery
+  path: a follow-up PR amends the prose. Harm is bounded — B2's
+  pgTAP failure is the safety net for state correctness (pgTAP
+  asserts the live grant shape), separately from the prose-
+  currency question.
 - **A new public table or function lands without a corresponding
   section in `permissions.test.sql`.** Mitigation: the self-review
   audit for coverage uniformity is named explicitly above. If the
