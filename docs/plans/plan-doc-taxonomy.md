@@ -2,14 +2,11 @@
 
 ## Status
 
-Proposed. Taxonomy revamp against `docs/agents/planning/` and the
-sweep targets named in scoping. Closes out when this doc's Status
-flips to `Landed` in place at
-`docs/plans/plan-doc-taxonomy.md`, the sibling scoping doc at
-[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
-deletes, and the parent backlog entry is removed from
-[`docs/backlog.md`](/docs/backlog.md), all in the same change set
-per the terminal contract state below.
+Landed. Taxonomy revamp against `docs/agents/planning/` and the
+sweep targets named in scoping completed across the implementing
+PR sequence; this close-out PR flips Status, deletes the sibling
+scoping doc, and removes the parent backlog entry in a single
+change set per the terminal contract state below.
 
 ## Purpose
 
