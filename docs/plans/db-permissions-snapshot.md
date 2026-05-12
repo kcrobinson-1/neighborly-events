@@ -2,256 +2,342 @@
 
 ## Status
 
-Scoping investigation. Goal is to decide the class-of-solution
-(generated artifact vs. CI gate vs. test-coverage tightening vs.
-combination) before opening an implementation phase. The backlog
-entry is at
-[`docs/backlog.md` — Current grants and RLS policies are knowable without reading every migration in order](/docs/backlog.md).
+Proposed.
+
+## Context
+
+Today a maintainer who wants to know "what grants, RLS policies,
+RLS-enabled state, function `SECURITY` mode, and function `EXECUTE`
+grants are in force on table or function X right now" has no single
+in-repo source to consult. The migrations under
+[`supabase/migrations/`](/supabase/migrations/) are the durable
+changelog but read as a series of deltas: the truth for any object
+is the layered result of every migration that touched it. This has
+already produced doc inaccuracies during canonical-correction passes
+where pre-revocation shapes were treated as current. The pgTAP suite
+under [`supabase/tests/database/`](/supabase/tests/database/) encodes
+the correct post-revision state for the tables it covers, but
+coverage is feature-scoped rather than uniform across `public.*`, so
+a reader can't rely on it as a navigable surface.
+
+This plan lands a uniform per-object snapshot of the live `public`
+schema's permissions posture (a human-readable markdown file sibling
+to `shared/db/types.ts`), a uniform pgTAP suite that asserts the
+same state, and a PR-template self-review audit that binds both
+artifacts to grant- or policy-touching migrations. The scoping pass
+at
+[`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md)
+settled the class-of-solution choice (B2 + A1 + (2); C1/C2 CI gates
+rejected; C3 trailing-comment format folded into the (2) audit's
+comment-quality expectation). Now is the right time because the
+canonical-corrections work
+([`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md))
+just landed several findings whose root cause was exactly this
+missing surface.
+
+This is an N = 1 task plan per
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md) "N = 1
+task plan: phase content absorbed inline."
 
 ## Goal
 
-A maintainer can answer "what grants, RLS policies, RLS-enabled
-flag, function `SECURITY DEFINER`/`INVOKER` setting, and function
-`EXECUTE` grants are in force on table or function X today" by
-reading a single in-repo source — not by walking every migration
-in [`supabase/migrations/`](/supabase/migrations/) in order and
-mentally applying the delta from later migrations.
+A maintainer answers "what's in force on table or function X today"
+by opening `shared/db/permissions.snapshot.md` and finding the answer
+in that single file. The two drift axes the system catches and where
+each catches them are stated in CCI-3 below; coverage scope,
+determinism, and the audit-vs-automation choice are stated in CCI-1,
+CCI-2, and CCI-4. Downstream sections cite the invariants by name
+rather than restating.
 
-This goal is **reader-facing**, not correctness-facing. The
-current pgTAP test layer (see "Current State" below) already
-encodes the correct post-revision state for tables it covers; the
-problem is that a reader who needs to know "what is true for X
-today" has no single navigable surface to consult.
+## Cross-Cutting Invariants
 
-## Current State
+Four invariants bind the snapshot, the pgTAP suite, the generator,
+and the PR-template audit. Downstream sections cite by name; they do
+not restate.
 
-What exists today:
+- **CCI-1 (coverage).** Both `permissions.snapshot.md` and
+  `permissions.test.sql` cover the same object inventory and the
+  same per-object content axes:
+  - *Object inventory:* every `public.*` table, every callable
+    `public.*` function (regardless of `SECURITY` mode, regardless
+    of whether access flows through named-role grants or through
+    `PUBLIC`), and every `public.*` view. Canonical source:
+    [`shared/db/types.ts`](/shared/db/types.ts) `Tables:`,
+    `Views:`, and `Functions:` blocks under `public:`.
+  - *Per-table content:* RLS-enabled state; the grant matrix
+    spanning every grantable privilege × every role; every active
+    policy by exact name and predicate shape.
+  - *Per-function content:* `SECURITY` mode; `EXECUTE` access per
+    role.
+  - *Per-view content:* the grant matrix spanning every grantable
+    privilege × every role.
+  Verified by: [`shared/db/types.ts`](/shared/db/types.ts)
+  (Supabase-CLI generated; the row-shape source this snapshot is
+  sibling to).
 
-- **Row shapes** are captured by `shared/db/types.ts`, regenerated
-  by `npm run db:gen-types` (see
-  [`package.json`](/package.json) `db:gen-types` script). 769 lines
-  at this writing, covers all `public` schema row types.
-- **Migrations** under
-  [`supabase/migrations/`](/supabase/migrations/) — 35 files at
-  this writing, with grants/revokes, policy creates/drops, and
-  function-grant changes layered across them. Counted occurrences:
-  ~78 `grant`/`revoke` touches, ~53 `create policy`/`drop policy`
-  touches, ~32 `security definer`/`security invoker` touches.
-- **pgTAP tests** under [`supabase/tests/database/`](/supabase/tests/database/)
-  use `has_table_privilege` and `pg_policies` queries to assert
-  expected grants and policies for the tables they cover —
-  [`game_authoring_phase2_auth.test.sql`](/supabase/tests/database/game_authoring_phase2_auth.test.sql),
-  [`game_authoring_phase3_publish_failure_permissions.test.sql`](/supabase/tests/database/game_authoring_phase3_publish_failure_permissions.test.sql),
-  [`newsletter_opt_in_log.test.sql`](/supabase/tests/database/newsletter_opt_in_log.test.sql),
-  [`feedback_tables.test.sql`](/supabase/tests/database/feedback_tables.test.sql),
-  [`submit_feedback_rpc.test.sql`](/supabase/tests/database/submit_feedback_rpc.test.sql).
+- **CCI-2 (determinism).** Two consecutive runs of
+  `npm run db:gen-permissions` against the same DB state produce
+  byte-identical output. Ordering, formatting, and
+  presence/absence rules are load-bearing; the specific
+  introspection sources and emission technique that satisfy this
+  are implementer's call.
 
-What does not exist today:
+- **CCI-3 (two views, one state).** The snapshot and the pgTAP
+  suite describe the same end state for every covered object;
+  neither is authoritative over the other. The pgTAP suite catches
+  drift between assertions and the live DB; the snapshot catches
+  drift between committed inventory and the live DB at PR-author
+  regeneration time. The third axis — snapshot vs. pgTAP without
+  a live-DB run — is reached only by the (2) audit binding both
+  regeneration steps to the same migration (see CCI-4).
 
-- A single per-table inventory of current grants and policies.
-- Uniform pgTAP coverage across all tables — some tables have
-  comprehensive privilege assertions, others have none.
-- Function-`EXECUTE`-grant inventory across all SECURITY DEFINER /
-  INVOKER functions.
-- An RLS-enabled-flag inventory naming every `public.*` table
-  with its current `enable row level security` state.
+- **CCI-4 (audit-vs-automation).** The PR-template (2) audit is
+  the chosen mechanism for snapshot currency AND migration-prose
+  comment quality on grant / policy / RLS-enabled / `SECURITY`-mode
+  changes. C1 snapshot-drift and C2 coverage CI gates were
+  considered at scoping time and rejected as overbearing for the
+  repo's migration volume. Per
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+  "Contributing," a named audit drops only when an automated check
+  supersedes it; the (2) audit stays in place until measured
+  audit-fatigue or migration-volume growth triggers the drop.
+  Verified by:
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+  "Contributing" (`Drop an audit when: An automated check (linter,
+  type system, CI gate) now enforces it`).
 
-## Concrete Failure Case
+## Naming
 
-The feedback feature's anon-write posture changed across two
-migrations. The original
-[`20260506000000_add_feedback_tables.sql`](/supabase/migrations/20260506000000_add_feedback_tables.sql)
-granted `INSERT` on `public.feedback_submissions` to `anon` and
-added an `anon can insert feedback for registered events` policy.
-The later
-[`20260509000000_add_submit_feedback_rpc.sql`](/supabase/migrations/20260509000000_add_submit_feedback_rpc.sql)
-revoked the `INSERT` grant from `anon`, dropped the policy, and
-routed the write through a SECURITY DEFINER RPC. A reader who
-opens the original migration in isolation sees the pre-revocation
-shape; the truth lives in both files together.
+- **Snapshot:** `shared/db/permissions.snapshot.md`
+- **pgTAP file:** `supabase/tests/database/permissions.test.sql`
+- **Generator:** under `scripts/db/` (form is implementer's call)
+- **npm script:** `db:gen-permissions` — mirrors the
+  `db:gen-types` shape. Verified by:
+  [`package.json`](/package.json) `db:gen-types` script.
 
-The post-revision state IS asserted in pgTAP at
-[`feedback_tables.test.sql:342`](/supabase/tests/database/feedback_tables.test.sql:342)
-(`not has_table_privilege('anon', 'public.feedback_submissions', 'INSERT')`)
-and at
-[`submit_feedback_rpc.test.sql:54`](/supabase/tests/database/submit_feedback_rpc.test.sql:54).
-So the tests are up to date — the gap is that a doc author asking
-"what's the current shape" naturally opens the migration named for
-the feature, not the named-per-rollout-phase test file.
+## Contracts
 
-This failure mode has already produced doc inaccuracies during
-canonical-correction passes (the feedback RLS posture and the
-event-code lock were described in pre-revision shapes for the
-same reason).
+Each contract is described at coverage altitude. Specific catalog
+views, `has_*_privilege` calls, and command sequences are
+implementer's call as long as the cited invariants hold.
 
-## What's Settled
+### `shared/db/permissions.snapshot.md`
 
-- **Migrations remain the authoritative changelog.** Whatever
-  surface this work produces, it does not replace the migration
-  series — the migrations are the durable history of how state
-  got to where it is.
-- **`shared/db/types.ts` remains row-shape-only.** Extending the
-  Supabase-CLI-generated types file with non-row-shape content is
-  out of scope; this work produces a sibling artifact or runtime
-  helper, not modifications to the generated types.
+Generated markdown organized as one subsection per object covered
+by CCI-1, surfacing the per-object content axes named in CCI-1 in
+human-readable form. The file header names the generator script and
+warns that manual edits are erased on regeneration. Output
+satisfies CCI-2.
 
-## Options To Compare
+### `supabase/tests/database/permissions.test.sql`
 
-Decompose each option into sub-shapes before scoring (per
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-"Decompose options into shapes before analyzing"). The candidate
-sub-shapes below are the starting set; the scoping pass that
-picks this up may decompose further.
+Single consolidated pgTAP file with one assertion block per object
+covered by CCI-1, asserting the per-object content axes named in
+CCI-1. The file uses flat-verbose form — assertions written out per
+`(role, target, privilege)` rather than generated through helpers —
+and the specific pgTAP wrappers used are implementer's call.
+Verified by:
+[`supabase/tests/database/feedback_tables.test.sql`](/supabase/tests/database/feedback_tables.test.sql)
+(existing per-feature pgTAP file demonstrating flat-verbose form
+in this codebase).
 
-### Class A: Generated artifact sibling to `types.ts`
+### Generator under `scripts/db/`
 
-- **A1: Markdown snapshot.** A generated `shared/db/permissions.snapshot.md`
-  with per-table sections listing `(role, privilege)` rows,
-  per-table RLS-enabled flag, per-table policy list with `USING`
-  and `WITH CHECK` predicate text, and a per-function section
-  listing `SECURITY DEFINER`/`INVOKER` plus `EXECUTE` grants.
-  Reviewable in PR diffs as plain text; the diff for a migration
-  that revokes a grant shows the revocation as a removed line.
-- **A2: TypeScript snapshot.** A generated
-  `shared/db/permissions.snapshot.ts` exporting typed values for
-  the same content. Importable by code that wants to assert
-  against expected state at runtime, but heavier review surface
-  than markdown and not naturally human-readable.
-- **A3: Filtered SQL dump.** Output of `pg_dump --schema-only`
-  filtered to grants, policies, and `SECURITY` clauses. Closest
-  to migration syntax, so reviewable by readers already fluent in
-  the migration shape, but verbose and includes ordering noise.
+Queries Postgres introspection sources sufficient to satisfy CCI-1
+and emits markdown that satisfies CCI-2. The generator's form
+(single SQL script invoked via psql, shell wrapper, TypeScript
+helper, or layered approach) and the specific introspection sources
+are implementer's call.
 
-Common shape of Class A: the artifact is regenerated by running a
-script against a fresh local DB after applying all migrations,
-committed to the repo, and reviewed in the PR that introduces the
-migration. Drift is detectable by a CI check (Class C).
+### `.github/pull_request_template.md` self-review (2) audit
 
-### Class B: Runtime helper
+A new bullet under the existing `## Validation` section. The bullet
+binds both the snapshot-regeneration expectation AND the
+migration-prose post-state-comment-quality expectation per CCI-4;
+both fire on the same trigger (a migration touching grants, revokes,
+policies, RLS-enabled, or function `SECURITY` mode). Verified by:
+[`.github/pull_request_template.md`](/.github/pull_request_template.md)
+`## Validation` section (existing surface this rule extends).
 
-- **B1: On-demand script.** An `npm run db:dump-permissions`
-  command that queries the connected database via `pg_policies`,
-  `information_schema.role_table_grants`, `pg_proc.prosecdef`, and
-  `has_function_privilege`, and prints a human-readable inventory.
-  Useful for live inspection but doesn't address the "reader on
-  GitHub" failure case — a reader still needs to spin up a local
-  DB to see the truth.
-- **B2: Comprehensive pgTAP coverage.** Add a uniform per-table
-  pgTAP test file that asserts the full grant + policy + RLS-
-  enabled shape for every `public.*` table, plus a per-function
-  test asserting `SECURITY` mode and `EXECUTE` grants. A reader
-  navigating to `permissions.test.sql` could read the current
-  expected shape from one file. Coverage gaps surface as missing
-  assertions, not migrations.
+## Files to touch
 
-### Class C: CI / migration gate
+The three lists below are **estimates** of expected scope per the
+"Plan content is a mix of rules and estimates" rule in
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md);
+the implementer adjusts if a structural call requires it, calling
+out the deviation under the PR body's `## Estimate Deviations`
+section per the Plan-to-PR Completion Gate.
 
-- **C1: Snapshot-drift gate.** A CI check that fails when a
-  migration lands without an updated Class A artifact. Assumes a
-  Class A artifact exists.
-- **C2: Coverage gate.** A CI check that fails when a migration
-  touches `grant`, `revoke`, `create policy`, `drop policy`, or
-  function `SECURITY` mode without a matching pgTAP test update.
-  Assumes a Class B coverage layer exists.
-- **C3: Per-migration self-describing summary.** A convention
-  that every migration touching grants/policies includes a
-  trailing comment naming the final state (not the delta) for
-  the affected tables and functions. No new tooling, but
-  enforcement is by reviewer discipline, not by gate.
+### New
 
-### Combinations to consider
+- `shared/db/permissions.snapshot.md`
+- `supabase/tests/database/permissions.test.sql`
+- A generator under `scripts/db/`
 
-- **A1 + C1** is the natural pair if reviewable text is the
-  primary goal. The artifact is reviewable; the gate keeps it
-  current.
-- **B2 + C2** is the natural pair if tighter test coverage is
-  the primary goal. The pgTAP tests become the readable source.
-- **A1 + B2 + C1** layers both readability and test coverage.
-  Heavier, but the markdown snapshot serves human readers and
-  pgTAP coverage serves automated assertions.
+### Modify
 
-## What To Investigate
+- `package.json` — add `db:gen-permissions`.
+- `.github/pull_request_template.md` — add the (2) audit bullet.
+- `shared/db/README.md` — pointer to the snapshot.
+- `docs/backlog.md` — Tier 5 entry removed per Backlog Impact.
+- This plan — Status flipped to `Landed`.
+- The scoping doc at
+  [`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md)
+  — deleted per "Scoping owns / plan owns" (scoping deletes at the
+  plan's terminal PR).
 
-Steps for the scoping session that picks this up:
+### Intentionally not touched
 
-1. **Confirm the dominant reader audience.** "Reader on GitHub
-   doing doc canonicalization," "agent answering a contributor
-   question without a local DB," and "implementer adding a new
-   migration who wants to see prior shape" each weight the
-   options differently. Identify which is the primary case before
-   scoring.
-2. **Audit current pgTAP grant-assertion coverage.** Walk every
-   `public.*` table and every `public.*` SECURITY DEFINER /
-   INVOKER function. For each, identify whether grants, policies,
-   RLS-enabled, and `EXECUTE`-grant assertions exist in
-   [`supabase/tests/database/`](/supabase/tests/database/). Output
-   is a coverage matrix; this determines how much of the gap is
-   "no readable surface" vs. "no test coverage at all." If
-   coverage turns out to be near-complete and the gap is purely
-   readability, Class A weighs heavier; if coverage is patchy,
-   Class B carries its own value before any artifact decision.
-3. **Evaluate Class A sub-shapes against a generator.** Pick one
-   table and one function; sketch what each of A1, A2, A3 would
-   produce. Score on: review diff readability when a grant
-   changes, drift risk when manually edited, and generator
-   complexity. The sketch is the deliverable, not deep
-   implementation.
-4. **Decide single-shape or combination.** Default to a single
-   shape unless the audit in step 2 surfaces a coverage gap that
-   a single-shape solution cannot close.
-5. **Record decision in this doc.** Append a "Decision" section
-   naming the chosen shape and rationale; the implementation
-   moves to a sibling plan doc (cross-cutting plan, not phase) or
-   directly to a PR depending on size.
+- Existing migrations under `supabase/migrations/`. The snapshot
+  derives from the live DB after all migrations apply.
+- [`shared/db/types.ts`](/shared/db/types.ts). Row shapes remain
+  owned by `db:gen-types`; this work is a sibling artifact.
+- Existing per-feature pgTAP files under
+  `supabase/tests/database/`. The consolidated file is additive;
+  de-dup is a follow-up if review surfaces measurable noise.
+
+## Execution Steps
+
+Each step names the contract-state transition the step must
+produce; trajectory between transitions (command sequences,
+catalog-view choices, file-write ordering) is implementer's call.
+
+1. **Coverage inventory ready.** The object set in scope per CCI-1
+   is enumerated from
+   [`shared/db/types.ts`](/shared/db/types.ts) and consumed by
+   later steps. No committed artifact.
+2. **Generator satisfies CCI-1 and CCI-2.** The generator under
+   `scripts/db/` exists, `db:gen-permissions` is wired in
+   `package.json`, and a fresh run produces output covering every
+   in-scope object and byte-identical to a second consecutive run.
+3. **Initial snapshot committed.**
+   `shared/db/permissions.snapshot.md` is the output of step 2 at
+   the PR's HEAD migration set.
+4. **pgTAP file satisfies CCI-1 and CCI-3.**
+   `supabase/tests/database/permissions.test.sql` covers the same
+   inventory and passes via the `test:db` runner.
+5. **Contributor surfaces wired.** At PR-merge time, all hold:
+   the (2) audit bullet is in the PR template per the audit
+   contract; `shared/db/README.md` links the snapshot; the Tier 5
+   entry in [`docs/backlog.md`](/docs/backlog.md) is removed; the
+   scoping doc is deleted; this plan's Status is `Landed`.
+
+## Commit Boundaries
+
+Estimate of the commit shape that produces a readable history; the
+implementer refines and calls out deviation under
+`## Estimate Deviations`.
+
+- **Snapshot generation** — generator + initial committed
+  snapshot.
+- **pgTAP coverage** — `permissions.test.sql`.
+- **Contributor wiring** — npm script + PR-template audit + README
+  pointer + backlog removal + scoping-doc deletion + Status flip.
+
+## Validation Gate
+
+Pre-merge checks; each cites the invariant it verifies.
+
+- `npm run db:gen-permissions` run twice; second-run diff is empty
+  (CCI-2).
+- The committed snapshot equals a fresh `db:gen-permissions` run
+  at HEAD (CCI-3's snapshot-vs-live-DB axis).
+- `npm run test:db` passes (CCI-3's pgTAP-vs-live-DB axis). The
+  pgTAP runner is the canonical entry point per
+  [`scripts/testing/run-db-tests.cjs`](/scripts/testing/run-db-tests.cjs)
+  (`logStep("Running pgTAP database tests")`); `npm test` (Vitest)
+  does not run pgTAP. Verified by:
+  [`package.json`](/package.json) `test:db` script and
+  [`scripts/testing/run-db-tests.cjs`](/scripts/testing/run-db-tests.cjs)
+  `logStep("Running pgTAP database tests")`.
+- `npm run lint`, `npm test`, `npm run test:functions`, and
+  `npm run build:web` pass (baseline gates from
+  [`.github/pull_request_template.md`](/.github/pull_request_template.md)
+  `## Validation`).
+
+## Self-Review Audits
+
+Audits the implementer runs at commit boundaries per the
+"Planning Depth" rule in
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md).
+
+- **Coverage uniformity (SQL).** Sections in the snapshot equal
+  sections in the pgTAP file equal the
+  [`shared/db/types.ts`](/shared/db/types.ts) inventory. Verifies
+  CCI-1.
+- **Determinism (SQL).** Second-run diff is empty per Validation
+  Gate. Verifies CCI-2.
+- **Snapshot accuracy spot-check (SQL).** Three tables + two
+  functions: latest migration touching each matches the
+  snapshot's claim. Verifies CCI-3.
+- **PR-template audit wording (docs).** The new bullet renders
+  inside the GitHub PR creation form; its trigger clause is
+  unambiguous. Verifies the audit contract.
+- **Backlog close-out (docs).** Tier 5 entry at
+  [`docs/backlog.md`](/docs/backlog.md) removed (not unchecked)
+  per the terminal-state rule in the Plan-to-PR Completion Gate.
+
+## Documentation Currency PR Gate
+
+Status-oriented surfaces updated in the implementing PR:
+
+- This plan — Status `Landed`.
+- [`docs/backlog.md`](/docs/backlog.md) — Tier 5 entry removed.
+- [`shared/db/README.md`](/shared/db/README.md) — snapshot pointer
+  added.
+- [`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md)
+  — deleted.
 
 ## Out Of Scope
 
-- Extending `shared/db/types.ts` itself. The Supabase CLI owns
-  that file's shape; this work produces a sibling artifact or a
-  separate tooling layer, not modifications to the generated row
-  types.
-- Replacing the migration series as the source of truth for how
-  state evolves. The migrations remain the durable history.
-- Generating runtime documentation for the admin UI. This is
-  contributor-facing infrastructure, not product surface.
-- Sweeping past doc inaccuracies caused by this failure mode.
-  Canonical-correction passes that touched documents in those
-  shapes are already merged; this scoping pass produces tooling
-  to prevent the next round, not retroactive corrections.
-
-## Cap
-
-~3 hours of scoping work for the session that picks this up. Stop
-and record the decision once the dominant reader audience (step 1)
-and the pgTAP coverage shape (step 2) are named — those two
-inputs are the load-bearing signal, and continued sketching of
-artifact shapes past that point tends to produce diminishing
-returns.
+- A standardized C3 trailing-comment format. Folded into the (2)
+  audit's comment-quality expectation per CCI-4.
+- Retroactive rewrite of historical migrations to backfill
+  post-state prose.
+- De-duplicating overlapping grant assertions in existing
+  per-feature pgTAP files.
+- Extending the snapshot to non-`public` schemas (`auth.*`,
+  `storage.*`).
+- CI snapshot-drift (C1) or coverage (C2) gates per CCI-4.
 
 ## Risk Register
 
-- **Scoping picks a shape that the implementing session has to
-  re-decompose.** Mitigation: the "Decompose options into shapes"
-  rule is named explicitly in the Options section above, and step
-  3 of the investigation requires a concrete sketch before
-  locking the candidate.
-- **Implementation produces an artifact that nobody reads.** A
-  generated markdown file that lives in `shared/db/` but isn't
-  linked from natural reading paths fails the user-observable
-  goal even if it is technically correct. Mitigation: the
-  implementing plan must name where the artifact is linked from
-  (CLAUDE.md, the `shared/db/README.md`, the migrations directory
-  README if one is added) and the linkage is part of the
-  validation gate, not a follow-up.
-- **Coverage gate (C2) produces false positives on cosmetic
-  migrations.** A migration that renames a table reissues grants
-  but doesn't change the effective grant shape; a naive gate
-  would flag this. Mitigation: if Class C2 is chosen, scope the
-  gate's trigger conditions in the implementing plan rather than
-  using a coarse grep.
-- **The runtime helper (B1) gets adopted as the primary surface
-  and the readability goal silently shifts to "you can query the
-  DB."** A maintainer who can't spin up a local DB has not
-  recovered the original goal. Mitigation: if Class B1 is chosen
-  as part of a combination, it serves the generator (A) or the
-  test coverage (B2), not the reader.
+Each risk names the invariant whose violation produces the harm and
+the mitigation surface that catches it.
+
+- **Generator output is non-deterministic.** Harm: CCI-2 fails.
+  Mitigation: the determinism audit + the second-run-diff check
+  under Validation Gate; the root cause is almost always a missing
+  sort key.
+- **Migration author forgets to regenerate the snapshot.** Harm:
+  CCI-3's snapshot-vs-live-DB axis drifts silently — the pgTAP
+  file may still pass against a live DB that no longer matches the
+  snapshot. Mitigation: the (2) audit per CCI-4 (primary) and
+  reviewer enforcement (secondary). Escalation path if measured
+  audit-fatigue surfaces: the audit-to-automation drop rule in
+  CCI-4 names C1 as the next move.
+- **Grant-touching migration ships with sparse post-state prose
+  comments.** Harm: CCI-4's comment-quality half isn't satisfied.
+  Mitigation: same (2) audit. CCI-3's pgTAP layer is the safety
+  net for state correctness, bounding harm.
+- **A new public table or function lands without a corresponding
+  section.** Harm: CCI-1 fails. Mitigation: the coverage-uniformity
+  audit under Self-Review Audits.
+- **Generator emits markdown that GitHub renders awkwardly.**
+  Harm: CCI-1 coverage is technically met but reader-facing value
+  degrades. Mitigation: visual check of the rendered output before
+  committing the initial snapshot (step 3).
+- **Flat-verbose pgTAP form becomes maintenance-heavy.** Harm:
+  per-table marginal cost on new-table migrations. Mitigation:
+  bounded cost (~12 assertion lines per new table per the current
+  per-feature pattern) borne by the migration author — same author
+  who runs the (2) audit.
+
+## Backlog Impact
+
+The Tier 5 `db` entry at
+[`docs/backlog.md`](/docs/backlog.md) — "Current grants and RLS
+policies are knowable without reading every migration in order" —
+is removed in the implementing PR per the Plan-to-PR Completion
+Gate's terminal-state rule. The durable record lives in this plan;
+the (transient) scoping doc deletes alongside.
