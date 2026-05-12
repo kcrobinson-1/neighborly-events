@@ -11,22 +11,24 @@ change set per the terminal contract state below.
 ## Purpose
 
 The Tier 5 backlog entry `Plan-doc taxonomy is ambiguous when
-authoring a new planning doc` (currently around line 367 of
-[`docs/backlog.md`](/docs/backlog.md)) captured three concrete
-handles motivating this work: the noun "plan" is overloaded
-across the planning surface; doc-type selection criteria either
-don't exist or didn't fire on a recent misclassification; and
-the operational cost has surfaced as one-finding-at-a-time
-review corrections on plans drafted at the wrong grain.
+authoring a new planning doc` (since removed from
+`docs/backlog.md` at the terminal state below) captured three
+concrete handles motivating this work: the noun "plan" is
+overloaded across the planning surface; doc-type selection
+criteria either don't exist or didn't fire on a recent
+misclassification; and the operational cost has surfaced as
+one-finding-at-a-time review corrections on plans drafted at
+the wrong grain.
 
-This plan implements the revamp scoped in
-[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md):
-four files in `docs/agents/planning/` (`shared.md`, `epic.md`,
-`milestone.md`, `plan.md`), three doc-types in practice (epic
-doc, milestone doc, task plan), compound-noun discipline for
-"task" and "plan" in rule prose, the picker discriminator
-(independent value vs. sequence steps), and the named
-repo-wide sweep.
+This plan implements the revamp scoped in the sibling
+`docs/plans/scoping/plan-doc-taxonomy.md` (since deleted at the
+terminal state below; deliberation prose survives in git
+history): four files in `docs/agents/planning/` (`shared.md`,
+`epic.md`, `milestone.md`, `plan.md`), three doc-types in
+practice (epic doc, milestone doc, task plan), compound-noun
+discipline for "task" and "plan" in rule prose, the picker
+discriminator (independent value vs. sequence steps), and the
+named repo-wide sweep.
 
 ## Why This Plan
 
@@ -175,13 +177,11 @@ plan," "phase plan") where the bare noun creates ambiguity.
 Judgment per match, not blanket replacement; the rest of the
 repo's bare-"plan" usage is unaffected.
 
-**State 7 — Terminal close-out.** This plan reaches `Landed`
-Status in the same change set that deletes the sibling scoping
-doc at
-[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
-and removes the parent backlog entry from
-[`docs/backlog.md`](/docs/backlog.md). None of the three actions
-land alone, per the Plan-to-PR Completion Gate and the
+**State 7 — Terminal close-out.** This plan reached `Landed`
+Status in the same change set that deleted the sibling scoping
+doc `docs/plans/scoping/plan-doc-taxonomy.md` and removed the
+parent backlog entry from `docs/backlog.md`. None of the three
+actions landed alone, per the Plan-to-PR Completion Gate and the
 close-tracking-surfaces-in-PR rule.
 
 **Required orderings between states:**
@@ -234,8 +234,9 @@ implementer choice.
 
 ## Resolved Decisions
 
-The nine decisions resolved in the sibling scoping doc at
-[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md):
+The nine decisions resolved in the sibling scoping doc
+`docs/plans/scoping/plan-doc-taxonomy.md` (since deleted at
+terminal close-out; deliberation prose survives in git history):
 
 1. Four-level taxonomy (epic → milestone → task → phase) with
    three doc-types in practice (epic doc, milestone doc, task
@@ -272,11 +273,12 @@ The nine decisions resolved in the sibling scoping doc at
 
 ## Related Docs
 
-- [`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
-  — sibling scoping doc; deletes at terminal state (State 7).
-- [`docs/backlog.md`](/docs/backlog.md) — parent backlog entry
-  (`Plan-doc taxonomy is ambiguous when authoring a new planning
-  doc`); removed at terminal state (State 7).
+- `docs/plans/scoping/plan-doc-taxonomy.md` (deleted at
+  terminal close-out) — sibling scoping doc; deliberation prose
+  survives in git history.
+- `docs/backlog.md` — parent backlog entry (`Plan-doc taxonomy
+  is ambiguous when authoring a new planning doc`) removed at
+  terminal close-out.
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
   — current location of the three demoted rules; edited as part
   of State 1.
