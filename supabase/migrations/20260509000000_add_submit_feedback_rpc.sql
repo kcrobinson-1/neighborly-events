@@ -74,11 +74,3 @@ revoke insert on public.feedback_submissions from anon;
 
 -- The organizer/admin SELECT policy on feedback_submissions and the
 -- registry SELECT policy on feedback_enabled_events are unchanged.
-
--- Permissions after this migration:
--- public.submit_feedback(text, jsonb, boolean, boolean, text, text):
---   SECURITY DEFINER; EXECUTE granted to anon and authenticated;
---   public has no privileges.
--- public.feedback_submissions: anon has no INSERT; "anon can insert
---   feedback for registered events" policy removed; other grants and
---   policies on this table unchanged.
