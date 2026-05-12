@@ -146,7 +146,7 @@ M1 sketch at
 
 A 1.3 split into sub-phases is authorized if the route + form +
 content opt-in chunk exceeds the
-[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 "PR-count predictions need a branch test" thresholds — recorded
 as an Estimate Deviation in the absorbing phase's plan and PR.
 The 1.2 / 1.3 collapse is **not** authorized at the milestone
@@ -180,7 +180,7 @@ apps/site only. Neither references the other's artifacts —
 the form's submission wiring is the first surface that reads
 both, and that wiring lives in 1.3. Drafting 1.1 and 1.2 in
 parallel is allowed under
-[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 "Next-phase drafting allowed during prior-phase implementation"
 because there is no implementation-coupling between them.
 
@@ -697,7 +697,7 @@ own Open Questions framing).
   — cross-level planning rules; `Verified by:` annotations,
   rules-vs-estimates labeling, Plan-to-PR Completion Gate, the
   `In draft` → `Proposed` promotion gate.
-- [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+- [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
   — phase planning rules; PR-count branch test; scoping owns /
   plan owns split that phase 1.1 / 1.2 / 1.3 sessions inherit.
 - [`apps/site/lib/eventContent.ts`](/apps/site/lib/eventContent.ts)

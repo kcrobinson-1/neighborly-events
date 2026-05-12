@@ -371,7 +371,7 @@ Estimate Deviation.
 5. Run the dev server and view a synthetic
    `feedback`-opted-in event to perform the
    render-the-consequence check per
-   [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+   [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
    "Bans on surface require rendering the consequence." If the
    rendered section reads as a default-browser link or otherwise
    looks broken, write the SCSS rule set; if `.event-feedback-cta`
@@ -647,7 +647,7 @@ milestone doc's Documentation Currency map):
   — SCSS partial this phase extends.
 - [`tests/site/event/sectionComponents.test.tsx`](/tests/site/event/sectionComponents.test.tsx)
   — test surface this phase extends.
-- [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+- [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
   — phase planning rules; "Bans on surface require rendering
   the consequence" gate this plan's Execution Step 5 binds.
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)

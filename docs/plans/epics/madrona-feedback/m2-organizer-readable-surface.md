@@ -171,7 +171,7 @@ code at phase-start.
 The 2-phase split is the estimate; the milestone doc authorizes
 both a 2.1 / 2.2 collapse and a 2.1 sub-split if either falls out
 of the
-[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 "PR-count predictions need a branch test" rule at phase-start, recorded as
 an Estimate Deviation in the absorbing phase's plan and PR. The
 seam between 2.1 and 2.2 is "raw read-through" vs.
@@ -183,7 +183,7 @@ post-event-analysis affordances.
 The collapse case is plausible because both phases touch only
 apps/web, both consume the same fetched row set, and the
 aggregation + filter logic could fall under
-[`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 PR-size thresholds without triggering a split. The sub-split case
 is plausible if 2.1's auth-gate plumbing turns out to need a new
 shared route-matcher or page-shell extraction that itself

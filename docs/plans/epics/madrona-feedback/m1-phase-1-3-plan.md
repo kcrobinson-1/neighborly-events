@@ -827,7 +827,7 @@ outstanding from the milestone Doc Currency map after 1.3.2.
 - [`supabase/migrations/20260506000000_add_feedback_tables.sql`](/supabase/migrations/20260506000000_add_feedback_tables.sql)
   — the FK + CHECK constraints + RLS policies this phase's
   submission path lands rows against.
-- [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+- [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
   — phase planning rules.
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
   — cross-level rules.

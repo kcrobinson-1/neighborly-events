@@ -552,7 +552,7 @@ that would now drift; if it does, fix in this PR per the
   this phase regenerates.
 - [`AGENTS.md`](/AGENTS.md) — public-write-needs-DB-integrity
   rule the epic's Invariant 6 binds.
-- [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+- [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
   — phase planning rules; PR-count branch test, scoping owns /
   plan owns split, reality-check gate, "prefer existing wrapper
   scripts" rule.

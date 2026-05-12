@@ -96,8 +96,9 @@ sections are append-only — if a future review disagrees, append a new
   - Plan docs (`docs/plans/**.md`): ~63,948 LOC
 - Process docs: [`AGENTS.md`](/AGENTS.md) 231 lines;
   [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-  503 lines; [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
-  365 lines. Memory index: 29 entries.
+  503 lines; `docs/agents/planning/phase.md` 365 lines (since
+  consolidated into [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)).
+  Memory index: 29 entries.
 - Latest evidence point: M1 phase 1.2 of the Madrona feedback child
   epic landed a 449-line scoping doc + 657-line plan doc to ship
   roughly 239 lines of implementation (a 49-line section component,
@@ -153,7 +154,8 @@ sections are append-only — if a future review disagrees, append a new
   the last month, no PR has *deleted* a rule from
   [`docs/agents/`](/docs/agents/).
 - **Rule-density compounding.** [`shared.md`](/docs/agents/planning/shared.md)
-  503 lines, [`phase.md`](/docs/agents/planning/phase.md) 365 lines,
+  503 lines, `phase.md` 365 lines (since consolidated into
+  [`plan.md`](/docs/agents/planning/plan.md)),
   with cross-refs that read like legal citations. New rules surface
   to patch single Codex findings rather than because they
   generalize.
@@ -232,7 +234,7 @@ rule-budget gate (Bet 3); revisit if neither moves the ratio.
 ### Bet 2: Rules get deleted, not just added
 
 **Bet:** Running explicit consolidation passes on `shared.md` and
-`phase.md` will move the monthly rule-deletion / rule-addition PR
+`plan.md` will move the monthly rule-deletion / rule-addition PR
 ratio in `docs/agents/` to ≥ 0.3.
 **Ties to:** "Rule-density compounding" / no PR has deleted a rule.
 **Measure:** per calendar month, enumerate merge commits that touch
@@ -255,7 +257,7 @@ suffices for the enumeration.
 two months.
 **Today:** ratio ≈ 0 in the last 30 days.
 **If failing:** consolidation isn't generating real merges; switch to
-hard line caps on `shared.md` / `phase.md` and force consolidation
+hard line caps on `shared.md` / `plan.md` and force consolidation
 when caps are hit.
 
 ### Bet 3: New rules name a rule they retire
@@ -271,7 +273,7 @@ convention, not an automated gate.
 next quarterly review.
 **Today:** ~0%.
 **If failing:** the convention wasn't strong enough — move toward an
-explicit cap (e.g. `shared.md` ≤ 350 lines, `phase.md` ≤ 250 lines)
+explicit cap (e.g. `shared.md` ≤ 350 lines, `plan.md` ≤ 500 lines)
 and treat additions over the cap as blocking.
 
 ### Bet 4: Phase plans fit in 400 lines
@@ -447,7 +449,7 @@ phase 1.1 anecdote; added the companion "Plan-doc review stance"
 section. Net delta on `shared.md`: 503 → 489 lines. This produced
 the first deletion-PR numerator for Bet 2. Remaining A4 surface
 (broader merge of redundant rules across the rest of `shared.md`
-and `phase.md`) still gated as before — worth running after one
+and `plan.md`) still gated as before — worth running after one
 or two consecutive months of no carve-out triggers fire on the
 remaining rules.
 

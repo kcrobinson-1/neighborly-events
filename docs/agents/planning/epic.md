@@ -47,11 +47,11 @@ Going-forward shape: an epic gets its own folder
 `docs/plans/epics/<epic-slug>/`, with the epic-level doc at
 `docs/plans/epics/<epic-slug>/epic.md` and per-milestone /
 per-phase plans nested inside (paths named in
-[`milestone.md`](./milestone.md) and [`phase.md`](./phase.md)).
+[`milestone.md`](./milestone.md) and [`plan.md`](./plan.md)).
 Per-epic milestone numbering is canonical: each epic counts from
 M1 independently, and sibling epics may reuse the same milestone
 numbers without collision because the path's epic segment
-disambiguates. The path templates in milestone.md and phase.md name
+disambiguates. The path templates in milestone.md and plan.md name
 both shapes — the going-forward epic-folder shape and the older
 flat shape that some pre-convention plans use — so authors of
 either pick the right one for the epic they're working in.
