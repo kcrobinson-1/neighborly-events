@@ -319,41 +319,6 @@ Execute in any order.
   are all worth comparing at scoping time.
   Detail: [`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md)
 
-- [ ] **`docs` Pre-push drift-prevention surfaces anchor on intended product state and right-grain contracts**
-  The docs-canonical-corrections plan
-  ([`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md))
-  corrects 13 instances of canonical-doc drift but does not address
-  why the existing pre-push surfaces — the named-audit catalog at
-  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) and
-  the discipline list at
-  [`docs/tracking/documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md)
-  — did not fire on any of them. The findings split three ways:
-  enforcement-gaps (rules exist as discipline-tracker entries but not
-  as catalog audits — e.g. routes-changed-in-same-pass,
-  future-language conversion, active→archive ban); rule-gaps (no
-  rule covers the trigger today — new SQL migration → architecture
-  inventory; new Edge Function → validation-gate command list; new
-  top-level doc → doc-index entry; terminology rename → cross-doc
-  propagation); and grain-gaps (plan-doc contracts that specify
-  *content* — specific SQL posture, specific prose — rather than
-  *shape* carry the same factual exposure as the doc text they
-  prescribe, deferring no verification work to PR-review time where
-  SQL-level fact-checking belongs). **Goal:** before push, drift
-  triggers surface framed as "does the doc describe the intended
-  product state correctly, and does any plan-doc contract specify
-  the right grain?" — not "do the canonical docs match each other?"
-  Cross-doc consistency is a useful tripwire but matching docs
-  encode wrong state just as easily as right; the authoritative
-  source (SQL migrations, route configs, code) plus named design
-  intent (policy comments, commit messages, plan docs) is the
-  actual quality bar. One option among several: a sibling scoping
-  doc audits the three gap classes against the findings, classifies
-  each, and proposes catalog refinements plus new entries
-  accordingly; CI-side grep gates and tooling are a parallel path,
-  not a substitute. Sequences after the corrections plan merges so
-  the findings inform the prevention scoping rather than racing it.
-  Detail: TBD
-
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
   plan-archive-maintenance PRs inflate the repo PR count, and plan PRs need

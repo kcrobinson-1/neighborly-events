@@ -53,10 +53,19 @@ Use it as:
 
 ## Keep Docs Coupled To Code Changes
 
+The discipline items in this section have catalog-audit counterparts in
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+"Canonical-doc drift" — the catalog audits fire at self-review on
+specific diff triggers (new migration, new Edge Function, new
+top-level doc, multi-surface product feature, duplicated coverage,
+phase-identifier scan); this list is the broader discipline frame.
+
 - [ ] When routes, trust boundaries, or runtime ownership change, update
   `README.md`, `docs/architecture.md`, and `docs/dev.md` in the same pass.
 - [ ] When validation commands, CI behavior, or local setup change, update
   `docs/dev.md`, `docs/testing.md`, and any affected workflow docs together.
+  (Catalog audit: "Edge Function validation-gate drift" for the
+  per-function case.)
 - [ ] When UX-facing flows change materially, keep `docs/experience.md`, UI
   review expectations, and PR screenshot guidance aligned.
 - [ ] When new modules or structural boundaries are introduced, add or update
@@ -70,8 +79,10 @@ Use it as:
   converted into either implemented behavior or an explicit open question.
 - [ ] Check whether contributor guidance still matches the real validation
   commands and release workflow.
-- [ ] Check whether docs duplicate the same procedure in multiple places instead
-  of linking to one canonical owner.
+- [ ] Check whether docs duplicate the same procedure in multiple places
+  instead of linking to one canonical owner. (Catalog audit:
+  "Canonical-doc duplicated coverage" fires at the moment a section is
+  being written.)
 - [ ] During code-documentation passes, explicitly review shared barrel files,
   edge-function helper modules, and large SQL migrations for missing
   file-level responsibility or invariant comments before marking Dimension 2

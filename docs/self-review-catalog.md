@@ -515,3 +515,201 @@ restructured so an error on either branch counts as a non-positive
 signal for that branch only; the caller is admitted as soon as either
 branch returns true, and forbidden only when neither branch yields a
 positive signal.
+
+## Canonical-doc drift
+
+These audits catch the canonical-doc drift classes that the
+docs-canonical-corrections plan ([PR #269](https://github.com/kcrobinson-1/neighborly-events/pull/269),
+[PR #268](https://github.com/kcrobinson-1/neighborly-events/pull/268),
+[PR #280](https://github.com/kcrobinson-1/neighborly-events/pull/280),
+[PR #281](https://github.com/kcrobinson-1/neighborly-events/pull/281))
+had to clean up after the fact. Each trigger fires on a *code* or
+*migration* change that the canonical docs need to track; the audit
+catches the doc update at self-review rather than at a future audit
+pass.
+
+**Framing for these audits.** Before push, ask: *does the doc describe
+the intended product state correctly, and does any plan-doc contract
+specify the right grain?* Cross-doc consistency is a useful tripwire —
+several of these audits use grep-style consistency checks — but
+matching docs encode wrong state just as easily as right. The
+authoritative source is SQL migrations, route configs, code, and named
+design intent in plan docs and commit messages; cross-doc consistency
+is the cheap signal, not the final answer.
+
+### Migration inventory drift
+
+**Trigger.** A commit adds, renames, or substantively rewrites a file
+under `supabase/migrations/`.
+
+**Check.** Open `docs/architecture.md`'s migration inventory list and
+confirm:
+
+1. **New migrations have an entry.** The new file is listed by full
+   filename with a description sourced from the SQL itself, not from
+   plan-doc prose.
+2. **Renamed migrations carry the new filename.** Search the inventory
+   for the old filename and update or remove as appropriate.
+3. **Migrations that relax, retract, or replace earlier behavior carry
+   a supersession pointer.** Migration files are deltas, not snapshots;
+   current state is the last migration that touched a given object.
+   Either annotate the earlier entry with a one-line pointer to the
+   relaxing migration, or rewrite the later entry as superseding and
+   keep the earlier entry minimal. Otherwise the earlier entry
+   describes a retired state in isolation and reads as current.
+
+Quick fact-check: `ls supabase/migrations/ | wc -l` should produce a
+count that roughly matches the number of migration entries in
+`docs/architecture.md`, and `grep -c '^- \`supabase/migrations/'
+docs/architecture.md` gives the exact entry count.
+
+**Example.** docs-canonical-corrections PR 1
+([#269](https://github.com/kcrobinson-1/neighborly-events/pull/269))
+— the architecture doc's migration inventory stopped 10 migrations
+short of HEAD, missing the admin-status view, RLS broadening, the
+feedback tables, the `submit_feedback` RPC, the newsletter opt-in
+split, and the feedback-mode check extension. Same PR also corrected
+the slug-lock and event-code-lock entries that described the
+pre-relaxation behavior in isolation: the lock migrations had been
+relaxed by `20260507000000` and `20260507010000`, but the earlier
+entries read as the current contract.
+
+### Edge Function validation-gate drift
+
+**Trigger.** A commit adds, renames, or removes a directory under
+`supabase/functions/` (excluding `_shared/`).
+
+**Check.** Confirm the corresponding `deno check --no-lock
+supabase/functions/<name>/index.ts` line is present in (or removed
+from) all three validation-gate command blocks:
+
+- `docs/dev.md` "Validation Commands" block
+- `docs/testing.md` validation set
+- root `README.md` "Validation commands" block
+
+Quick verification:
+`ls supabase/functions | grep -v '^_shared$' | wc -l` should match
+`grep -c 'deno check' docs/dev.md`, and equivalently for the other
+two files. A silently incomplete validation list ships untyped Edge
+Function code without anyone noticing the gate didn't run.
+
+**Example.** docs-canonical-corrections PR 1
+([#269](https://github.com/kcrobinson-1/neighborly-events/pull/269))
+— `docs/dev.md`, `docs/testing.md`, and `README.md` named only 6 of
+the 10 shipped Edge Function entrypoints. The missing four were
+`redeem-entitlement`, `reverse-entitlement-redemption`,
+`get-redemption-status`, and `read-demo-event` — the entire
+redemption-path surface area was outside the validation gate.
+
+### New canonical-doc indexing
+
+**Trigger.** A commit adds, removes, or renames a top-level
+`docs/*.md` file (files directly under `docs/`, not in `tracking/`,
+`plans/`, or other subdirectories).
+
+**Check.** Confirm the change is reflected in `docs/README.md`'s Doc
+Ownership table and Start Here section:
+
+- **Add.** New entry in the Doc Ownership table with a description
+  sourced from the new doc's Purpose section; entry in Start Here if
+  the doc is a likely reading-entrypoint.
+- **Remove.** Entry dropped from both sections; if the doc had a Start
+  Here entry, either redirect to a non-archive replacement or drop the
+  entry entirely (no orphan redirects, no new active→archive links).
+- **Rename.** Both link targets updated.
+
+Quick verification:
+`ls docs/*.md | grep -v 'docs/README.md'` should match the flat
+`docs/*.md` entries in the Doc Ownership table 1:1, with no extras and
+no omissions.
+
+**Example.** docs-canonical-corrections PR 4
+([#281](https://github.com/kcrobinson-1/neighborly-events/pull/281))
+— the doc index omitted four active top-level docs entirely
+(`redemption-design.md`, `styling.md`, `testing-tiers.md`,
+`backlog.md`). A reader walking the index walked past all four.
+
+### Phase identifiers in evergreen prose
+
+**Trigger.** Any edit to `README.md`, `docs/architecture.md`,
+`docs/dev.md`, or `docs/README.md`.
+
+**Check.** Run
+`grep -nE 'M[0-9] phase|Phase [0-9A-Z]' README.md docs/architecture.md docs/dev.md docs/README.md`.
+The grep must return zero hits across those four files. Phase
+identifiers (`M1 phase 1.5`, `Phase A.2a`, `Phase 4.5`, `Phase 5.1`,
+and equivalents) are project-tracking artifacts; they belong in
+`docs/plans/` and `docs/tracking/`, not in evergreen "what is" prose.
+
+When removing an identifier, restate the meaning it carried *before*
+stripping it. Don't strip meaning and identifier together. Example
+reframe: "M2 phase 2.3 kept `/auth/callback` as a client component" →
+"apps/site's `/auth/callback` route is implemented as a client
+component." The post-condition the audit cares about is "evergreen
+prose reads as current state, not as a project-management artifact."
+
+**Example.** docs-canonical-corrections PR 3
+([#280](https://github.com/kcrobinson-1/neighborly-events/pull/280))
+— scrubbed 27 phase identifiers across the three docs. Plan-doc and
+tracking-doc identifiers were intentionally left alone (out of scope:
+identifiers belong there).
+
+### New product feature → coordinated canonical coverage
+
+**Trigger.** A commit ships a user-reachable product feature that
+spans surfaces — typically a new public route in `apps/site` or
+`apps/web` paired with new tables, RPCs, or Edge Functions backing it.
+
+**Check.** Confirm the feature has coverage at the right grain in
+each of the three product-facing canonical docs:
+
+- `docs/product.md` — the feature's intent and place in the product
+  story
+- `docs/architecture.md` — the system shape (route ownership, table
+  schema, RPC contract, RLS/grant posture)
+- `docs/dev.md` — only the dev-workflow-specific bits that aren't
+  obvious from architecture (test fixtures, env vars, local setup
+  gotchas)
+
+A reader following the doc index should be able to find the feature
+in each surface that should describe it. Source descriptions from the
+migrations, route file, and handler — not from the plan-doc prose,
+which often describes the intended state rather than the shipped one.
+
+**Example.** docs-canonical-corrections PR 2
+([#268](https://github.com/kcrobinson-1/neighborly-events/pull/268))
+— the public attendee-feedback feature had shipped end-to-end
+(`feedback_enabled_events` and `feedback_submissions` tables, the
+`submit_feedback` SECURITY DEFINER RPC, the
+`/event/:slug/feedback` route, and the apps/site rewrite-table entry)
+but was undocumented in `product.md`, `architecture.md`, and `dev.md`.
+A reader following the doc index would not know the feature existed.
+
+### Canonical-doc duplicated coverage
+
+**Trigger.** A commit adds ≥10 consecutive lines of prose to a flat
+`docs/*.md` file that describes a system-shape topic (routing, auth,
+trust boundary, cookie storage, env wiring, deployment topology, RLS
+posture).
+
+**Check.** Grep nearby canonical docs for the same topic *before*
+landing the prose. If another canonical doc already describes it,
+pick an owner before push per the Editing Rule Of Thumb in
+[`docs/README.md`](/docs/README.md): the doc whose Doc Ownership
+entry most naturally covers the topic owns the explanation; the other
+doc carries a short link, not a duplicate. Duplicated coverage drifts
+in opposite directions in the next change (the canonical-corrections
+plan's PR 1 fixed exactly this on the Vercel topology: the two docs
+described opposite topologies).
+
+The audit catches this at the moment a section is being written, not
+after the fact. Once both copies exist they read as deliberate and
+the dedup work is invasive.
+
+**Example.** docs-canonical-corrections PR 3
+([#280](https://github.com/kcrobinson-1/neighborly-events/pull/280))
+— `docs/architecture.md` and `docs/dev.md` carried verbatim coverage
+of the Vercel routing topology, the Supabase Auth surface
+description, and the `@supabase/ssr` cookie internals. The dedup cut
+~85 lines and consolidated ownership at architecture.md, with dev.md
+linking to it.
