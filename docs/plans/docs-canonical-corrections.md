@@ -383,6 +383,7 @@ indexes the post-PR-3 state.
 - [`docs/backlog.md`](/docs/backlog.md) — sibling backlog entry
   for the prevention work landing in the same PR as this plan.
 - [`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md)
-  — sibling prevention effort already scoped, targeting the
-  in-order-migration-read problem that produced several findings
-  in this plan.
+  — sibling prevention task plan (with scoping doc at
+  [`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md))
+  targeting the in-order-migration-read problem that produced
+  several findings in this plan.
