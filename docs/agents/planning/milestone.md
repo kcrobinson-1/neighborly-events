@@ -64,14 +64,14 @@ before any per-phase planning.
 - **Output set.** Milestone doc — durable; survives all phase
   work. Single output of this session. Phase scoping docs are
   produced by their respective phase planning sessions, not here;
-  they delete in batch when the milestone's full set of plans
-  exists (not as each plan lands), as part of the milestone's
-  terminal PR or a focused cleanup PR. The reason: sibling
-  scoping docs reference each other, so deleting one early
-  creates link rot elsewhere. The milestone doc may override the
-  batch-deletion rule for an unusual lifecycle, but should record
-  the override explicitly. Cross-phase decision record lives
-  inside the milestone doc, not as a separate file
+  they delete in batch when the milestone's full set of phase
+  plans exists (not as each phase plan lands), as part of the
+  milestone's terminal PR or a focused cleanup PR. The reason:
+  sibling scoping docs reference each other, so deleting one
+  early creates link rot elsewhere. The milestone doc may
+  override the batch-deletion rule for an unusual lifecycle, but
+  should record the override explicitly. Cross-phase decision
+  record lives inside the milestone doc, not as a separate file
 - **Cap.** ~10-15% of estimated total milestone implementation
   time (lower than the previous 15-20% because first-phase
   scoping no longer lives in this session). Fallback when no
