@@ -2,7 +2,7 @@
 
 ## Status
 
-In draft.
+Proposed.
 
 ## Context
 
@@ -94,7 +94,8 @@ authoring discipline and bind them to the same end state:
 - **npm script:** `db:gen-permissions` — invokes the generator
   against the local Supabase DB and writes the snapshot. Mirrors
   the existing `db:gen-types` shape in
-  [`package.json`](/package.json).
+  [`package.json`](/package.json). Verified by:
+  [`package.json`](/package.json) `db:gen-types` script definition.
 
 ## Contracts
 
@@ -120,7 +121,9 @@ Single consolidated pgTAP file. Sections, in order:
    - `has_function_privilege(role, function_signature, 'EXECUTE')`
      for every role.
 3. **Per-view assertions** — `game_event_admin_status` view's grant
-   shape (currently the only public view).
+   shape (currently the only public view). Verified by:
+   [`shared/db/types.ts`](/shared/db/types.ts) `Views:` block under
+   `public:`.
 
 The file uses flat-verbose form: one assertion per `(role, table,
 privilege)` triple, no helper macros. Verbosity is the artifact's
@@ -162,7 +165,9 @@ sibling self-review section if one is added). The bullet binds
 both the snapshot-currency expectation and the migration-prose
 comment-quality expectation; both fire on the same trigger
 (migration touching grants/policies/RLS-enabled/`SECURITY` mode).
-Wording:
+Verified by:
+[`.github/pull_request_template.md`](/.github/pull_request_template.md)
+`## Validation` section. Wording:
 
 > If this PR includes a migration that touches grants, policies,
 > RLS-enabled, or function `SECURITY` mode: I regenerated
@@ -195,8 +200,11 @@ Estimate of files the implementation will modify.
 - `shared/db/README.md` — link to the new snapshot file with a
   one-sentence pointer.
 - `docs/backlog.md` — close out the Tier 5 entry once the plan
-  lands; the entry's removal is part of the implementing PR per
-  the "Close out tracking surfaces in the implementing PR" rule.
+  lands; the entry's removal happens in the implementing PR
+  alongside the Status flip on this plan, applying the same
+  "terminal state in the same PR" pattern named in the Plan-to-PR
+  Completion Gate at
+  [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md).
 - `docs/plans/db-permissions-snapshot.md` — append a Decision
   section naming the chosen shape (B2 + A1 + (2)) and pointing at
   this plan. The Decision should also record the C3 → comment-
@@ -215,14 +223,23 @@ Estimate of files the implementation does not need to touch.
   the existing set is in scope.
 - `shared/db/types.ts`. Row shapes remain owned by `db:gen-types`;
   this work produces a sibling permission artifact, not an
-  extension to types.
+  extension to types. Verified by:
+  [`shared/db/types.ts`](/shared/db/types.ts) (Supabase-CLI-generated
+  row types) and [`package.json`](/package.json) `db:gen-types`
+  script.
 - The existing per-feature pgTAP files
   (`game_authoring_phase{2,3,5_1}_*.test.sql`,
   `feedback_tables.test.sql`, etc.). The consolidated
   `permissions.test.sql` is additive coverage, not a replacement.
   De-duplicating overlapping grant assertions in the per-feature
   files is deferred to a follow-up cleanup PR if it surfaces
-  signal at review.
+  signal at review. Verified by:
+  [`supabase/tests/database/`](/supabase/tests/database/)
+  (`feedback_tables.test.sql`, `submit_feedback_rpc.test.sql`,
+  `game_authoring_phase2_auth.test.sql`,
+  `game_authoring_phase3_publish_failure_permissions.test.sql`,
+  `newsletter_opt_in_log.test.sql` all use `has_table_privilege`
+  for grant assertions today).
 
 ## Execution Steps
 
@@ -295,7 +312,11 @@ Pre-merge checks the implementing PR must satisfy:
 - `npm run test:db` passes — this is the pgTAP runner; the new
   `supabase/tests/database/permissions.test.sql` is exercised
   through it. `npm test` (Vitest) does not run pgTAP and is not
-  load-bearing for this Validation Gate.
+  load-bearing for this Validation Gate. Verified by:
+  [`package.json`](/package.json) (`test:db` script invokes
+  `scripts/testing/run-db-tests.cjs`) and
+  [`scripts/testing/run-db-tests.cjs`](/scripts/testing/run-db-tests.cjs)
+  (`logStep("Running pgTAP database tests")`).
 - `npm test` passes (Vitest — covers any non-DB code touched by
   the implementing PR).
 - `npm run test:functions` passes.
@@ -315,7 +336,10 @@ Audits the implementer runs before opening the PR:
   `shared/db/types.ts` has a section in both
   `permissions.test.sql` and `permissions.snapshot.md`. Every
   `public.*` function with a `SECURITY` clause or `EXECUTE` grant
-  appears in both.
+  appears in both. Verified by:
+  [`shared/db/types.ts`](/shared/db/types.ts) `Tables:`, `Views:`,
+  and `Functions:` blocks under `public:` (the canonical
+  enumeration source).
 - **Determinism (SQL).** Two consecutive `npm run db:gen-permissions`
   runs produce byte-identical output.
 - **Snapshot accuracy (SQL).** Spot-check three tables and two
@@ -325,9 +349,12 @@ Audits the implementer runs before opening the PR:
   visible at PR-open time (renders in the GitHub PR creation
   form), and its wording is unambiguous about when it fires.
 - **Backlog close-out (docs).** The Tier 5 entry at
-  `docs/backlog.md` is removed, not just unchecked. The entry's
-  removal sequence matches the "Close out tracking surfaces in
-  the implementing PR" rule.
+  `docs/backlog.md` is removed, not just unchecked. This applies
+  the same "leave the durable artifact in a terminal state in the
+  same PR that implements the work" pattern the Plan-to-PR
+  Completion Gate prescribes for plan Status flips. Verified by:
+  [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+  "Plan-to-PR Completion Gate" section.
 
 ## Documentation Currency PR Gate
 
@@ -416,8 +443,12 @@ Status-oriented doc surfaces updated in the implementing PR:
 The Tier 5 `db` entry at
 [`docs/backlog.md`](/docs/backlog.md) — "Current grants and RLS
 policies are knowable without reading every migration in order" —
-is removed in the implementing PR per the "Close out tracking
-surfaces in the implementing PR" rule. The scoping doc and this
-plan together become the durable record of the deliberation and
+is removed in the implementing PR, applying the same "terminal
+state in the same PR" pattern the Plan-to-PR Completion Gate at
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+prescribes for plan Status flips. The scoping doc and this plan
+together become the durable record of the deliberation and
 contract; the backlog entry is no longer load-bearing once the
-implementation ships.
+implementation ships. Verified by: the backlog entry quoted is
+the current text of the Tier 5 entry in
+[`docs/backlog.md`](/docs/backlog.md).
