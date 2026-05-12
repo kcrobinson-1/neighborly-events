@@ -317,7 +317,7 @@ Execute in any order.
   `information_schema.role_table_grants`, a CI gate that fails when
   migrations land without an updated snapshot, or some combination —
   are all worth comparing at scoping time.
-  Detail: N/A
+  Detail: [`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md)
 
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
