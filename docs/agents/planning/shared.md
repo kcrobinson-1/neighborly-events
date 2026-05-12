@@ -25,6 +25,15 @@ describe per-level interpretation, not additional per-level
 binding; they do not re-introduce the per-level duplication trap
 the demoted-rules split was designed to avoid.
 
+Rule prose throughout `docs/agents/planning/` (this file
+included) uses compound forms — "task plan," "phase plan,"
+"task-level," "phase-level" — where bare "plan" would create
+ambiguity between the doc-type and the broader plan-tree
+category. See [`plan.md`](./plan.md) "Compound-noun discipline"
+for the full rule. Bare "plan" remains correct when the rule
+binds every plan-tree doc (the cross-level rules below are the
+canonical case).
+
 ## Plans describe contracts, not implementation
 
 A plan describes what the implementation must achieve — the

@@ -811,3 +811,17 @@ category label and stays unchanged; the noun discipline binds
 prose, not paths. Reviewers may flag bare-"plan" usage in rule
 prose under `docs/agents/planning/` as a structural issue when
 the surrounding sentence does not clearly anchor the term.
+
+The rule applies forward-only: existing rule prose where bare
+"plan" is unambiguously generic (cross-level rules in
+`shared.md`, generic plan-implementation workflow, "plan tree"
+as a category reference) is not retroactively non-conforming.
+Where the bare term genuinely creates ambiguity — typically
+when a rule prescribes behavior at one doc-type level but
+phrases it as "the plan" — upgrade to the compound form. The
+recurring trap that motivates this discipline is the
+mis-classification path: a sequence-step effort labeled "an
+epic" carried per-PR contracts that should have been task-plan
+content, surfacing as one-finding-at-a-time review corrections.
+Compound-noun discipline plus the picker discriminator (above)
+catches both failure modes at plan-drafting time.
