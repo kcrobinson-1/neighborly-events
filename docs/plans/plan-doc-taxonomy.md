@@ -283,12 +283,12 @@ The nine decisions resolved in the sibling scoping doc at
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
   — current location of the three demoted rules; edited as part
   of State 1.
-- [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
-  — content source for `plan.md`'s phase-plan-specific sections;
-  deletes when States 4–5 complete.
+- `docs/agents/planning/phase.md` (deleted at State 4–5
+  completion) — content source for `plan.md`'s phase-plan-
+  specific sections.
 - [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md),
   [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md)
-  — reference `phase.md` today; redirected to `plan.md` as
+  — referenced `phase.md` pre-revamp; redirected to `plan.md` as
   part of State 4.
 - [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
   — operational case the picker (scoping decision 7) is walked

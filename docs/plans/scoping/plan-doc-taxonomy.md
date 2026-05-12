@@ -494,11 +494,11 @@ than epic-shape.
   (the `infra` Tier 5 item around line 367 of the current file).
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
   — current location of the three rules slated for demotion.
-- [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
-  — content source for `plan.md`'s phase-side; deletes when the
-  task plan implements.
+- `docs/agents/planning/phase.md` (deleted at implementation
+  time) — content source for `plan.md`'s phase-side.
 - [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md)
-  — references `phase.md`; updated to reference `plan.md`.
+  — referenced `phase.md` pre-revamp; updated to reference
+  `plan.md`.
 - [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md)
   — same.
 - [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
