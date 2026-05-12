@@ -296,6 +296,31 @@ Execute in any order.
   time.
   Detail: N/A
 
+- [ ] **`docs` Pre-push drift-prevention surfaces fire on the trigger classes that produced the 2026-05-11 audit**
+  The [docs-canonical-corrections epic](/docs/plans/epics/docs-canonical-corrections/epic.md)
+  corrected 13 instances of canonical-doc drift but does not address
+  why the existing pre-push surfaces (the named-audit catalog in
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md) and
+  the discipline list in
+  [`docs/tracking/documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md))
+  did not fire on any of them. Some triggers exist as
+  discipline-tracker rules but not as named audits
+  (routes-changed-in-same-pass; future-language conversion;
+  active→archive ban; duplicate-procedure check); others have no rule
+  at all (new SQL migration → architecture migration inventory; new
+  Edge Function → validation-gate command list; new top-level doc →
+  doc-index entry; terminology rename → cross-doc propagation).
+  **Goal:** an agent or contributor finds these drift triggers
+  surfaced before push, classified concretely enough that the
+  pre-push pass either fires the right audit or surfaces "doesn't
+  apply" — not silent omission. One option among several: a sibling
+  planning doc audits the 13 findings, classifies each as
+  enforcement-gap or rule-gap, and proposes catalog refinements plus
+  new entries; CI-side grep gates and tooling are a parallel path,
+  not a substitute. Sequences after the corrections epic so the
+  audit findings inform the prevention scoping rather than racing it.
+  Detail: TBD
+
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
   plan-archive-maintenance PRs inflate the repo PR count, and plan PRs need

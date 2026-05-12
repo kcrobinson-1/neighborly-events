@@ -132,6 +132,27 @@ After the epic lands, the canonical doc set:
   Ownership table, and the Start Here section contains no links into
   `docs/plans/archive/`.
 
+## Drift Prevention
+
+A reviewer of this epic is reasonably entitled to ask: "and how do
+you prevent needing to do this again?" This epic does not answer
+that question by itself — its scope is correcting current drift, not
+hardening the pre-push surfaces that should have caught the drift
+earlier. Substantively, the 13 audit findings split into two
+classes: ones where an existing rule (in
+[`documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md)
+or repo-feedback memory) covers the case but didn't fire, and ones
+where no rule covers the trigger today.
+
+Recurrence prevention is scoped in a sibling backlog entry under
+Tier 5 of [`docs/backlog.md`](/docs/backlog.md): "Pre-push
+drift-prevention surfaces fire on the trigger classes that produced
+the 2026-05-11 audit." The classification (enforcement-gap vs
+rule-gap) and the concrete catalog updates are designed at pickup
+time, not in this epic. The backlog entry sequences after this
+epic merges so the corrections inform the prevention scoping rather
+than racing it.
+
 ## Out Of Scope
 
 - Restructuring `docs/plans/` or `docs/tracking/`.
