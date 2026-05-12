@@ -3,9 +3,10 @@
 Per-level planning playbook for **milestone-planning** sessions.
 Loads [`shared.md`](./shared.md) for cross-level planning rules
 (`Verified by:` annotations, falsifiability check, rules-vs-
-estimates labeling, plan-code minimalism, plan-doc review
-stance, planning-artifacts-cite-each-other anti-pattern, exact-
-match label quoting). This file covers what is unique to the
+estimates labeling, plans-describe-contracts-not-implementation
+(structural code minimalism plus contract-altitude discipline
+across all plan content), plan-doc review stance, planning-
+artifacts-cite-each-other anti-pattern, exact-match label quoting). This file covers what is unique to the
 milestone level.
 
 A milestone planning session establishes durable cross-phase

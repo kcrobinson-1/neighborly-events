@@ -43,65 +43,134 @@ step count.
   so the implementer runs them at commit boundaries rather than
   rediscovering review feedback at PR-review time
 
-## Plan code minimalism
+## Plans describe contracts, not implementation
 
-Keep plans at the level of contracts and prose, not implementation
-detail. **No fenced code blocks of any kind in plan or scoping
-docs.** Inline backticks for identifiers, file paths with optional
-`:line` suffixes, and one-line type or function names embedded in
-prose are fine — those are citations, not code under contract.
-**Inline backticks for executable expressions or predicate spellings
-are still code, even at one line** — a literal predicate such as
-`startsWith(...) && endsWith(...)`, a regex literal, or a function-
-body fragment attracts the same code-shaped review fenced blocks do
-and belongs in the implementing PR alongside them. Anything more
-belongs in the PR that implements the plan (commit message, code,
-comment), not in the plan doc itself.
+A plan describes what the implementation must achieve — the
+conditions that must hold for the implementation to satisfy the
+plan. The implementation is the specific choices the implementer
+makes to satisfy the contract.
 
-The protective intent is structural, not formatting preference.
-Code-shaped content in plan docs attracts code-shaped review:
-reviewers (Codex, line-level humans) reach for the same toolkit
-they use on a feature PR, surface syntax-shaped findings, and the
-contributor either patches the snippet in place — making review
-hostage to the next syntax revision — or adds a new rule to
-prevent the class of finding, which compounds the rule layer.
-The agentic-practice diagnosis at
+When plan content descends to the level of implementation choice,
+one of two failure modes follows:
+
+- **The plan no longer fully covers the contract.** When a plan
+  names a subset of a category, only the named subset is
+  constrained; the rest of the category is left uncovered.
+- **The plan contradicts the implementer's reasonable choice.**
+  When a plan prescribes a specific sequence or technique, it
+  contradicts the implementation the moment the implementer's
+  reasonable choice differs.
+
+Either failure mode is a sign the plan was written below the
+right altitude: above it, the contract is invariant under the
+implementer's reasonable choices; below it, it isn't.
+
+The protective intent is structural, not formatting preference —
+implementation-shaped content in plans attracts implementation-
+shaped review, which compounds the rule layer rather than the
+product. The agentic-practice diagnosis at
 [`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md)
-named the cascade explicitly: plan-doc LOC ran roughly 64k
+named this cascade explicitly: plan-doc LOC ran roughly 64k
 against ~34k product code at the early-May 2026 snapshot, with
 no rule-deletion PRs in `docs/agents/` for the prior month, and
-this very section had accreted a falsifier check, a directional-
-pseudocode framing, a data-structure carve-out, and a self-flag
-heuristic to triage "is this snippet acceptable." Removing the
-entry point — fenced code blocks — is cheaper than auditing each
-snippet against four overlapping carve-out tests.
+the prior structural-only form of this rule had accreted a
+falsifier check, a directional-pseudocode framing, a data-
+structure carve-out, and a self-flag heuristic to triage "is
+this snippet acceptable."
 
-When a reviewer comment targets a code-shaped artifact inside a
-plan, the correction is to **remove or summarize the snippet**,
-not to fix the code in place. Code-correctness iteration belongs
-in the PR that implements the plan. Exception: if the comment
-surfaces a genuine design flaw whose phrasing happens to be code
-(an ordering race, an invariant violation), fix the *prose
-contract* in the plan and move the code to the implementation
-PR — don't fix both in the plan.
+### Structural surface
 
-Pre-existing plans drafted before this strengthened rule are not
+**No fenced code blocks of any kind in plan or scoping docs.**
+Inline backticks for identifiers, file paths with optional
+`:line` suffixes, and one-line type or function names embedded
+in prose are fine — those are citations, not code under
+contract. **Inline backticks for executable expressions or
+predicate spellings are still code, even at one line** — a
+literal predicate, a regex literal, or a function-body fragment
+attracts the same code-shaped review fenced blocks do and
+belongs in the implementing PR alongside them. Anything more
+belongs in the PR that implements the plan (commit message,
+code, comment), not in the plan doc itself.
+
+### Reviewer-fix discipline
+
+When a reviewer flags content that violates this rule, the
+response is shape-specific:
+
+- **Structural violation (code-shaped content in a plan):**
+  remove or summarize the snippet. Do not fix the code in place.
+  Code-correctness iteration belongs in the PR that implements
+  the plan.
+- **Altitude violation (plan descended to implementation
+  choice):** loosen the prescription to contract altitude. Do not
+  patch the technique in place. Patching makes the plan hostage
+  to the next implementation choice; loosening makes the plan
+  resilient.
+
+Exception in either case: if the comment surfaces a genuine
+design flaw whose phrasing happens to be code or technique (an
+ordering race, an invariant violation, a coverage gap), fix the
+prose contract in the plan and move the code or technique to
+the implementation PR — don't fix both in the plan.
+
+### Recurring traps
+
+Illustrative examples of the rule's failure mode in practice.
+Not an exhaustive list; new traps are appended as they're found.
+
+- **Subset enumerated where the contract names a category.** A
+  plan enumerates a specific subset of a category (privilege
+  types, error classes, role names) when the contract calls for
+  the full category. Only the enumerated subset is constrained;
+  the rest is left uncovered. The fix is to describe the category,
+  not name its current members.
+- **Specific source named where the contract is about coverage.**
+  A plan names a specific introspection source (catalog view,
+  library function) when the contract is about behavior the
+  source must produce. When the named source's coverage gap
+  exposes itself, the prescribed technique no longer satisfies
+  the contract. The fix is to describe what coverage the source
+  must produce, not which source is used.
+- **Trajectory prescribed where only the end state is in the
+  contract.** A plan describes a specific sequence of
+  intermediate steps — what order to do things, what commands to
+  run, how to decompose the work — when the contract is only
+  about what must hold at the end. Trajectory is the
+  implementer's choice; the contract is the post-implementation
+  state. Over-prescribing trajectory either contradicts the
+  implementer's reasonable choice (creating internal-coherence
+  bugs) or imports middle-state commitments the plan shouldn't
+  care about. The fix is to describe the end state and let the
+  implementer pick the trajectory. State transitions that ARE in
+  the contract — a validation gate that must pass before a
+  subsequent step, an output that a later step consumes, an
+  artifact that must reach a specific state before another can
+  act on it — are contract states, not trajectory; Planning
+  Depth's requirement to "insert steps at the correct point in
+  the sequence" applies to those contract states and does not
+  extend to prescribing trajectory between them.
+
+### Forward-only application
+
+Pre-existing plans drafted before this rule (in either its
+structural-only form or this consolidated form) are not
 retroactively non-conforming. Plans drafted from this point
-forward carry no fenced code blocks; reviewers may flag fenced
-blocks in new plans as a structural issue rather than reviewing
-their content. The companion rule on the reviewer side lives in
-the next section.
+forward stay at contract altitude across all sections; reviewers
+may flag descents to implementation choice as a structural issue
+rather than reviewing the specific technique. The companion
+rule on the reviewer side lives in the next section.
 
 ## Plan-doc review stance
 
 Plan- and scoping-doc PRs carry the same review hazard the
-"Plan code minimalism" rule above addresses on the supply
-side: code-trained reviewers default to line-level findings
+"Plans describe contracts, not implementation" rule above
+addresses on the supply side: code-trained reviewers default to
+line-level findings (syntax-shaped, command-ordering-shaped)
 even on prose-shaped content, and the cascade compounds when
-each finding produces either a snippet patch or a new rule.
-The supply-side fix (no code blocks) is cheaper if the demand-
-side stance is also explicit, so reviewers don't reach for the
-wrong toolkit at review-open time.
+each finding produces either a snippet patch or a new rule. The
+supply-side fix (no code blocks, no technique prescription) is
+cheaper if the demand-side stance is also explicit, so reviewers
+don't reach for the wrong toolkit at review-open time.
 
 A PR whose primary diff is in `docs/plans/**` (plan doc or
 scoping doc) carries a `## Review Stance` section in the PR
@@ -116,11 +185,12 @@ adapt to the doc's content:
 > labeled per the "Plan content is a mix of rules and
 > estimates" rule in `shared.md`; that load-bearing claims pass
 > the "Falsifiability check" rule in the same file. **Do not
-> review for line-level correctness** on identifiers or
-> signatures embedded in prose — per "Plan code minimalism" in
-> `shared.md`, fenced code blocks belong in the implementing
-> PR, and anything short enough to live inline in prose is a
-> citation, not code under contract.
+> review for line-level correctness** on identifiers, signatures,
+> commands, or implementation sequencing embedded in prose — per
+> "Plans describe contracts, not implementation" in `shared.md`,
+> fenced code blocks and technique prescriptions belong in the
+> implementing PR, and anything short enough to live inline in
+> prose is a citation, not code or technique under contract.
 
 The stance lives in the PR body (where reviewers see it at
 review-open time), not in the plan doc itself. Adding it to the

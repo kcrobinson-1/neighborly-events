@@ -10,7 +10,9 @@ Load the planning rules from [`docs/agents/planning/`](/docs/agents/planning/):
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) —
   cross-level rules every plan-drafting session needs (`Verified by:`
   annotations, falsifiability check, rules-vs-estimates labeling,
-  plan-code minimalism, planning-artifacts-cite-each-other anti-pattern,
+  plans-describe-contracts-not-implementation (structural code
+  minimalism plus contract-altitude discipline across all plan
+  content), planning-artifacts-cite-each-other anti-pattern,
   exact-match label quoting, `In draft` → `Proposed` promotion gate,
   Cross-Cutting Invariants section requirement)
 - Plus the per-level file for the plan's level:
