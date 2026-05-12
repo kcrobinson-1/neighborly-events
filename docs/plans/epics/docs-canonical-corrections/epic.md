@@ -41,14 +41,25 @@ docs can trust them, without restructuring `docs/plans/` or
   The actual trigger fires only while the event is currently live,
   per
   `supabase/migrations/20260507000000_relax_slug_lock_to_currently_live.sql`.
-  The event-code lock has the same staleness against
-  `supabase/migrations/20260507010000_relax_event_code_lock_with_entitlements_guard.sql`.
-- The architecture doc's migration inventory stops at the 2026-04-21
-  redemption series. The repo carries 11 additional migrations
-  through `20260510010000_constrain_event_slug_shape.sql`, including
-  the admin-status view, RLS broadening, the feedback tables, the
+  The event-code lock is stale on the same axis but its corrected
+  shape is different: per
+  `supabase/migrations/20260507010000_relax_event_code_lock_with_entitlements_guard.sql`,
+  the trigger fires while the event is currently live OR while any
+  `game_entitlements` row exists for the event. After unpublish,
+  event-code rotation is permitted only when no entitlements were
+  ever issued (the Madrona pre-launch case); the entitlement guard
+  preserves the redeem RPC's `<event_code>-<suffix>` reconstruction
+  guarantee.
+- The architecture doc's migration inventory stops at
+  `20260421000500_add_redemption_rls_policies.sql`. The repo carries
+  10 additional migrations through
+  `20260510010000_constrain_event_slug_shape.sql`, including the
+  admin-status view, RLS broadening, the feedback tables, the
   `submit_feedback` RPC, the newsletter opt-in split, and the
-  feedback-mode check extension.
+  feedback-mode check extension. (Verified by:
+  `ls supabase/migrations/ | awk '$0 > "20260421000500_zzz"'`
+  returns 10 filenames between `20260423010000_...` and
+  `20260510010000_...`.)
 - The feedback feature has shipped end-to-end (tables, RPC, route in
   the apps/site rewrite table) but is undocumented in product,
   architecture, and dev surfaces. A reader following the doc index
@@ -60,9 +71,15 @@ docs can trust them, without restructuring `docs/plans/` or
   more that ship in the repo (`redeem-entitlement`,
   `reverse-entitlement-redemption`, `get-redemption-status`, and
   `read-demo-event`). The validation gate is silently incomplete on
-  redemption-path code.
+  redemption-path code. (Verified by:
+  `ls supabase/functions | grep -v '^_shared$'` returns 10 entries;
+  `grep -c '^deno check' docs/dev.md` and
+  `grep -c 'deno check --no-lock' docs/testing.md` each return 6.)
 - [`docs/testing.md`](/docs/testing.md) does not list
   `npm run build:site` in its validation set; the other two docs do.
+  (Verified by: `grep -c 'build:site' docs/testing.md` returns 0;
+  `grep -c 'build:site' docs/dev.md` returns 1; the root README
+  carries it in its Validation commands block.)
 - [`docs/architecture.md`](/docs/architecture.md) and
   [`docs/dev.md`](/docs/dev.md) carry duplicated coverage of the
   Vercel routing layout, the Supabase Auth surface description, and
@@ -80,7 +97,11 @@ docs can trust them, without restructuring `docs/plans/` or
   [`styling.md`](/docs/styling.md),
   [`testing-tiers.md`](/docs/testing-tiers.md), and
   [`backlog.md`](/docs/backlog.md). A reader following the index walks
-  past all four.
+  past all four. (Verified by: `ls docs/*.md` returns 13 files
+  including `docs/README.md` itself; the Doc Ownership table in
+  `docs/README.md` carries 8 entries pointing at flat `docs/*.md`
+  files, leaving 4 unindexed once `docs/README.md` is excluded as
+  the index itself.)
 
 ## Goal
 
@@ -98,9 +119,11 @@ After the epic lands, the canonical doc set:
   (`M[0-9] phase X.Y`, `Phase A.2a`, `Phase 4.5 deferred post-MVP`,
   and equivalents) in
   [`docs/architecture.md`](/docs/architecture.md),
-  [`docs/dev.md`](/docs/dev.md), the root [`README.md`](/README.md),
-  or [`docs/README.md`](/docs/README.md), confirmed by a final-PR
-  grep over those four files.
+  [`docs/dev.md`](/docs/dev.md), or the root
+  [`README.md`](/README.md), confirmed by a final grep over those
+  three files at PR 3 close-out. ([`docs/README.md`](/docs/README.md)
+  carries no phase identifiers today and is verified at zero hits in
+  PR 4 close-out; no scrub work lands on it.)
 - Has a doc index at [`docs/README.md`](/docs/README.md) where every
   active top-level doc under `docs/` appears exactly once in the Doc
   Ownership table, and the Start Here section contains no links into
@@ -145,9 +168,18 @@ Surfaces:
   current `reward` / `entitlement` noun.
 - [`docs/architecture.md`](/docs/architecture.md) — migration
   inventory extended through the current `supabase/migrations/`
-  directory; slug-lock and event-code-lock wording softened to match
-  the actually-live trigger semantics; Backend Structure adds
-  `read-demo-event` and notes the omitted redemption functions.
+  directory; slug-lock wording corrected to name the currently-live
+  trigger condition only (per
+  `20260507000000_relax_slug_lock_to_currently_live.sql`);
+  event-code-lock wording corrected to name both trigger conditions
+  separately — currently-live OR any `game_entitlements` row exists
+  for the event — and to call out that post-unpublish rotation is
+  permitted only when no entitlements were ever issued, with the
+  redeem RPC's `<event_code>-<suffix>` reconstruction named as the
+  reason the entitlement guard exists (per
+  `20260507010000_relax_event_code_lock_with_entitlements_guard.sql`);
+  Backend Structure adds `read-demo-event` and notes the omitted
+  redemption functions.
 - [`docs/dev.md`](/docs/dev.md) — the apps/site landing
   "placeholder until M3" line dropped; `deno check` validation list
   extended to cover every shipped Edge Function entrypoint.
@@ -162,6 +194,24 @@ Contracts:
 - Every changed claim cites a source-of-truth file in the PR body
   (migration filename, package.json script name, Edge Function
   directory entry, apps/site or apps/web code path).
+- **Supersession check on every newly-added migration entry.**
+  Migration files are deltas, not snapshots; the current state of
+  any grant, RLS policy, trigger, check constraint, or column shape
+  is the *last* migration that touched it. For each migration entry
+  newly added or rewritten in this PR, the author scans the rest of
+  `supabase/migrations/` for any later migration that retracts,
+  relaxes, or replaces what the entry describes. When a supersession
+  is found, the earlier entry must not describe the retired state
+  in isolation; either annotate it with a one-line "later relaxed
+  by `<filename>`" pointer, or rewrite the later entry as
+  superseding and keep the earlier entry minimal. The two known
+  supersession pairs already corrected in this epic
+  (`20260415000000` ← `20260507000000`,
+  `20260418050000` ← `20260507010000`) are the template, not the
+  exhaustive list — the entitlement-RLS broadening
+  (`20260427010000`) and the feedback RPC hardening
+  (`20260506000000` ← `20260509000000`) are at minimum two more
+  pairs the author will encounter.
 - The PR introduces no new content beyond what the cited source
   proves is missing or wrong; this is a corrections pass, not a
   rewrite.
@@ -185,7 +235,13 @@ Surfaces:
   (`feedback_submissions`, `feedback_enabled_events`, and the
   newsletter opt-in log from the newsletter-subscription-split
   migration) added to the Backend Structure inventory;
-  `submit_feedback` RPC added to Current Backend Surface; the
+  `submit_feedback` RPC named as the only anon-reachable write path
+  to `feedback_submissions` in Current Backend Surface, with a
+  one-line note that direct anon `INSERT` and the original
+  `with-check` policy from `20260506000000_add_feedback_tables.sql`
+  were revoked by
+  `20260509000000_add_submit_feedback_rpc.sql` to gate trust at the
+  function-grant boundary rather than the table-grant boundary; the
   `/event/:slug/feedback` apps/site route named in the apps/site
   routes section.
 - [`docs/dev.md`](/docs/dev.md) — no edit unless a developer
@@ -196,23 +252,44 @@ Contracts:
 - Feature description sourced from the migration SQL and the
   apps/site route file, not from product intent or the
   madrona-feedback plan-doc text.
-- RLS posture documented matches the policy installed by the
-  relevant migration (anonymous insert into `feedback_submissions`;
-  auth-gated reads via the event-scoped role helpers; service-role
-  writes to the `feedback_enabled_events` registry).
+- RLS and grant posture documented matches the **post-hardening**
+  state in `20260509000000_add_submit_feedback_rpc.sql`, not the
+  retired direct-anon-insert state in
+  `20260506000000_add_feedback_tables.sql`. PR 2's author reads
+  both migrations in order and describes the resulting state:
+  `submit_feedback()` is `SECURITY DEFINER` with `EXECUTE` granted
+  to `anon` and `authenticated` and is the only anon-reachable
+  write path; direct `INSERT` on `feedback_submissions` is revoked
+  from `anon`; authenticated reads of `feedback_submissions` flow
+  through the event-scoped role helpers; `feedback_enabled_events`
+  has all grants revoked from `anon` and `authenticated`, so the
+  registry is reachable only via the service role and from inside
+  the RPC body itself. The doc explains why this shape exists:
+  PostgREST's default `INSERT` handler emits `RETURNING *` which
+  requires `SELECT`, so direct anon insert was unworkable without
+  granting anon read access to submissions.
 - No plan-doc citations are load-bearing; the migrations and the
   route file are the authoritative sources.
 
 ### PR 3 — Architecture / dev deduplication and phase-jargon scrub
 
-Editorial surgery on `docs/architecture.md` and `docs/dev.md`. This
-is the only judgment-heavy PR in the epic and the one where reviewer
-attention concentrates.
+Editorial surgery on `docs/architecture.md` and `docs/dev.md`, with
+the same phase-identifier scrub extended to the root `README.md`
+because it carries the identical `Phase 4.5 / Phase 4.7 deferred
+post-MVP` block (root `README.md` lines around 267–273) and the
+corresponding identifiers in architecture.md and dev.md retire in the
+same operation. This is the only judgment-heavy PR in the epic and
+the one where reviewer attention concentrates.
 
 Surfaces:
 
 - [`docs/architecture.md`](/docs/architecture.md)
 - [`docs/dev.md`](/docs/dev.md)
+- [`README.md`](/README.md) — phase-identifier scrub only; PR 3 does
+  not edit the root README for any other purpose. PR 1's Vercel
+  topology rewrite incidentally removes the `M2 phase 2.5` identifier
+  on the Vercel paragraph line; PR 3 picks up the remaining "Next
+  Phase" / `Phase 4.5` / `Phase 4.7` block.
 
 Contracts:
 
@@ -228,19 +305,22 @@ Contracts:
     prerequisites, fresh-fork deployment) → `docs/dev.md`.
   - Validation command list and PR CI inventory → `docs/dev.md`.
   - Code documentation standard → `docs/dev.md`.
-- Internal phase identifiers removed from both docs. Where an
+- Internal phase identifiers removed from all three surfaces
+  (architecture.md, dev.md, and root README.md). Where an
   identifier carried meaning, the surrounding prose carries the
   meaning instead — for example, "Phase 4.5 deferred post-MVP"
   becomes "admin draft preview, deferred post-MVP." Where an
   identifier was pure historical residue, the meaning is restated
   before the identifier is dropped; meaning and identifier never
   strip together.
-- Net line count across the two docs decreases. The PR body reports
-  before-and-after `wc -l` for both files.
+- Net line count across architecture.md and dev.md decreases. The
+  PR body reports before-and-after `wc -l` for both files. Root
+  README scrub is small enough (~5 hits across two paragraphs) that
+  a line-count delta is not load-bearing for it.
 
 Audit:
 
-- After the cut, `grep -n 'M[0-9] phase\|Phase [0-9A-Z]' docs/architecture.md docs/dev.md`
+- After the cut, `grep -nE 'M[0-9] phase|Phase [0-9A-Z]' docs/architecture.md docs/dev.md README.md`
   returns no hits. If any hits remain, the PR body names them and
   justifies the carve-out.
 
@@ -306,11 +386,12 @@ second rebuild against the PR 3 ownership state.
    during the implementing PRs but no new fenced blocks are
    introduced into this epic doc itself.
 4. **Phase-identifier scrub is scoped.** PR 3 strips phase
-   identifiers from `docs/architecture.md`,
-   `docs/dev.md`, and (PR 4) `docs/README.md` and the root
-   `README.md` only. Plan docs under `docs/plans/` and tracker docs
-   under `docs/tracking/` keep their phase identifiers — that is
-   where they belong.
+   identifiers from `docs/architecture.md`, `docs/dev.md`, and the
+   root `README.md` only. `docs/README.md` carries no phase
+   identifiers today; PR 4 verifies that with a grep at close-out
+   but performs no scrub work on it. Plan docs under `docs/plans/`
+   and tracker docs under `docs/tracking/` keep their phase
+   identifiers — that is where they belong.
 5. **Subtractive PRs report what was removed.** PR 1, PR 3, and
    PR 4 are net-subtractive on at least one surface. Each PR body
    states what was removed and why, not only what was added —
@@ -393,4 +474,6 @@ PRs.
 - [`docs/dev.md`](/docs/dev.md) — edited in PR 1 and PR 3.
 - [`docs/testing.md`](/docs/testing.md) — edited in PR 1.
 - [`docs/product.md`](/docs/product.md) — edited in PR 2.
-- [`README.md`](/README.md) — edited in PR 1.
+- [`README.md`](/README.md) — edited in PR 1 (Vercel topology,
+  `raffle-entry` wording, `deno check` list) and PR 3
+  (phase-identifier scrub of the "Next Phase" block).
