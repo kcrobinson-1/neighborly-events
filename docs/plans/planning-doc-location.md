@@ -27,13 +27,13 @@ Effective 2026-05-01, in-repo plan docs follow this layout:
   numbers without collision because the path's epic segment disambiguates.
 - `docs/plans/epics/<epic-slug>/m<N>-phase-<X>-<Y>-plan.md` — per-phase
   plan doc (durable; survives the feature; see
-  [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)).
+  [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)).
   Sub-phase plans add another segment:
   `m<N>-phase-<X>-<Y>-<Z>-plan.md`.
 - `docs/plans/epics/<epic-slug>/scoping/m<N>-phase-<X>-<Y>.md` — phase
   scoping doc (transient; deletes in batch with sibling scoping docs at
   the milestone-terminal PR; see
-  [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)).
+  [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)).
 - `docs/plans/archive/` — existing archive for superseded plans, unchanged.
   New epics adopt the in-place-as-archive pattern: once an epic is `Landed`,
   its `docs/plans/epics/<slug>/` folder remains in place as the durable
@@ -73,7 +73,7 @@ investigation does not need to re-evaluate them:
   one navigable tree without prompting.
 - **Codex review against the actual code is load-bearing.** Plan-time
   reality-check rules in
-  [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+  [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
   "Reality-check gate between scoping and plan" and
   [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
   "`Verified by:` annotations on load-bearing claims" depend on the

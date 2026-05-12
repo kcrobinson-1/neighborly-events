@@ -35,7 +35,7 @@ A change qualifies for the **lightweight path** when ALL of these hold:
 
 If ANY of these fails, use the **full structured path**. The classes that recurringly need the full path: multi-file refactors, architectural changes, anything introducing a new mechanism or cross-cutting invariant, anything touching workflow / validation / build / CI surfaces.
 
-The thresholds here are deliberately stricter than the narrow-surface criteria in [`docs/agents/planning/phase.md`](../planning/phase.md) "Narrow-surface phases may skip the scoping doc." That rule governs whether a *planned phase* writes a scoping doc; this rule governs whether *unplanned implementation work* uses lightweight or full execution discipline. A change that qualifies as narrow-surface for phase planning may still need the full structured path here — phase planning's narrow-surface threshold is about scoping artifact necessity, not about commit/validation discipline.
+The thresholds here are deliberately stricter than the narrow-surface criteria in [`docs/agents/planning/plan.md`](../planning/plan.md) "Narrow-surface plans may skip the scoping doc." That rule governs whether a *planned task or phase* writes a scoping doc; this rule governs whether *unplanned implementation work* uses lightweight or full execution discipline. A change that qualifies as narrow-surface for plan-drafting may still need the full structured path here — plan-drafting's narrow-surface threshold is about scoping artifact necessity, not about commit/validation discipline.
 
 ### Lightweight Path
 

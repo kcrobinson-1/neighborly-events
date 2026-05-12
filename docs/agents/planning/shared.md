@@ -296,7 +296,7 @@ epic" are not acceptable verification sources. Claims that cannot
 carry a verification reference are re-phrased as assumptions
 (clearly tagged as such) or removed. This is not formatting
 preference — it is the protective check that keeps the
-reality-check gate (named in [`phase.md`](./phase.md)
+reality-check gate (named in [`plan.md`](./plan.md)
 "Reality-check gate between scoping and plan") from being rolled
 back during plan-drafting. The trigger enumeration is illustrative,
 not exhaustive: the rule binds any load-bearing claim about the

@@ -89,7 +89,7 @@ never fires.
 
 The full rule body — including the recurring traps from M2 phase
 2.3 and the reverse case when a route migrates *out* of an SPA —
-lives in [`planning/phase.md`](../planning/phase.md)
+lives in [`planning/plan.md`](../planning/plan.md)
 "Cross-app destinations need hard navigation, not client-side
 navigation," because it binds at plan-drafting time when contracts
 get specified. This pointer makes the constraint discoverable from

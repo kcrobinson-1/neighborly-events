@@ -43,10 +43,10 @@ before any per-phase planning.
   scoping and plan-drafting (the per-phase deliberation,
   contracts, file inventory, risks, and execution steps — split
   between the scoping doc and the plan doc per
-  [`phase.md`](./phase.md) "Scoping owns / plan owns")
+  [`plan.md`](./plan.md) "Scoping owns / plan owns")
   belong to the phase planning session for each phase, run per
   the timing and pending-input rules in
-  [`phase.md`](./phase.md)
+  [`plan.md`](./plan.md)
   (which permit drafting in parallel with the prior phase's
   implementation or review under explicit citation requirements,
   but still bar scoping during the milestone session itself).
@@ -97,6 +97,6 @@ before any per-phase planning.
 - **PR-count predictions are not contracts.** Per-phase PR counts
   named in the milestone doc are estimates. The phase planning
   session re-derives the actual PR count using the rule in
-  [`phase.md`](./phase.md) "PR-count predictions need a branch
+  [`plan.md`](./plan.md) "PR-count predictions need a branch
   test"; splitting a phase into sub-phases at plan time is
   normal, not a process failure
