@@ -3,9 +3,11 @@
 Per-level planning playbook for **phase-planning** sessions. Loads
 [`shared.md`](./shared.md) for cross-level planning rules
 (`Verified by:` annotations, falsifiability check, rules-vs-
-estimates labeling, plan-code minimalism, plan-doc review
-stance, planning-artifacts-cite-each-other anti-pattern, exact-
-match label quoting, `In draft` → `Proposed` promotion gate,
+estimates labeling, plans-describe-contracts-not-implementation
+(structural code minimalism + prose specificity in estimate
+sections), plan-doc review stance, planning-artifacts-cite-each-
+other anti-pattern, exact-match label quoting, `In draft` →
+`Proposed` promotion gate,
 and the Plan-to-PR Completion Gate including the Status
 lifecycle the implementing PR consumes — all in
 [`shared.md`](./shared.md)). This file covers what is unique to
