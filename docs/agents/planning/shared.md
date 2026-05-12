@@ -45,21 +45,30 @@ step count.
 
 ## Plans describe contracts, not implementation
 
-Plan content stays at the level of contracts and prose. The
-contract is what the implementation must satisfy; implementation
-is the technique the implementer chooses to make the contract
-hold. Specific code, specific commands, specific file orderings,
-specific abstraction shapes — those are implementer choices. The
-plan describes what the implementation must achieve; the PR
-contains the choices that achieve it.
+A plan describes what the implementation must achieve — the
+conditions that must hold for the implementation to satisfy the
+plan. The implementation is the specific choices the implementer
+makes to satisfy the contract.
 
-This rule fires in two surfaces. Both share the same protective
-intent — code- or technique-shaped content in plans attracts
-code- or technique-shaped review (Codex flags syntax errors and
-command-ordering bugs), which compounds the rule layer rather
-than the product. Removing the entry point at both structure and
-prose is cheaper than auditing each instance against multiple
-carve-out tests. The agentic-practice diagnosis at
+When plan content descends to the level of implementation choice,
+one of two failure modes follows:
+
+- **The plan no longer fully covers the contract.** When a plan
+  names a subset of a category, only the named subset is
+  constrained; the rest of the category is left uncovered.
+- **The plan contradicts the implementer's reasonable choice.**
+  When a plan prescribes a specific sequence or technique, it
+  contradicts the implementation the moment the implementer's
+  reasonable choice differs.
+
+Either failure mode is a sign the plan was written below the
+right altitude: above it, the contract is invariant under the
+implementer's reasonable choices; below it, it isn't.
+
+The protective intent is structural, not formatting preference —
+implementation-shaped content in plans attracts implementation-
+shaped review, which compounds the rule layer rather than the
+product. The agentic-practice diagnosis at
 [`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md)
 named this cascade explicitly: plan-doc LOC ran roughly 64k
 against ~34k product code at the early-May 2026 snapshot, with
@@ -69,7 +78,7 @@ falsifier check, a directional-pseudocode framing, a data-
 structure carve-out, and a self-flag heuristic to triage "is
 this snippet acceptable."
 
-### Structural — no fenced code blocks or executable expressions
+### Structural surface
 
 **No fenced code blocks of any kind in plan or scoping docs.**
 Inline backticks for identifiers, file paths with optional
@@ -77,68 +86,68 @@ Inline backticks for identifiers, file paths with optional
 in prose are fine — those are citations, not code under
 contract. **Inline backticks for executable expressions or
 predicate spellings are still code, even at one line** — a
-literal predicate such as `startsWith(...) && endsWith(...)`, a
-regex literal, or a function-body fragment attracts the same
-code-shaped review fenced blocks do and belongs in the
-implementing PR alongside them. Anything more belongs in the PR
-that implements the plan (commit message, code, comment), not in
-the plan doc itself.
+literal predicate, a regex literal, or a function-body fragment
+attracts the same code-shaped review fenced blocks do and
+belongs in the implementing PR alongside them. Anything more
+belongs in the PR that implements the plan (commit message,
+code, comment), not in the plan doc itself.
 
-When a reviewer comment targets a code-shaped artifact inside a
-plan, the correction is to **remove or summarize the snippet**,
-not to fix the code in place. Code-correctness iteration belongs
-in the PR that implements the plan. Exception: if the comment
-surfaces a genuine design flaw whose phrasing happens to be code
-(an ordering race, an invariant violation), fix the *prose
-contract* in the plan and move the code to the implementation
-PR — don't fix both in the plan.
+### Reviewer-fix discipline
 
-### Prose — no technique prescription in estimate sections
+When a reviewer flags content that violates this rule, the
+response is shape-specific:
 
-Execution Steps, Files To Touch, and Commit Boundaries describe
-the contract-bearing shape of each step — what the step must
-accomplish for the contract to hold — not the specific commands,
-file orderings, or implementation techniques used to satisfy it.
-A step that names the contract ("generate the initial snapshot")
-survives technique changes; a step that names a specific command
-or file-write order ("run `npm run X` then commit `Y`") imports
-implementer-choice decisions into the plan and creates internal-
-coherence bugs when the implementer's actual technique differs.
+- **Structural violation (code-shaped content in a plan):**
+  remove or summarize the snippet. Do not fix the code in place.
+  Code-correctness iteration belongs in the PR that implements
+  the plan.
+- **Altitude violation (plan descended to implementation
+  choice):** loosen the prescription to contract altitude. Do not
+  patch the technique in place. Patching makes the plan hostage
+  to the next implementation choice; loosening makes the plan
+  resilient.
 
-Naming an npm script the implementer must end up wiring is fine
-(that's a contract — the script exists as part of the
-deliverable); prescribing the exact moment in the sequence to
-invoke it is technique. The discriminator: if a different
-implementer choice would make the prescription wrong without
-breaking the contract, the prescription is technique and should
-loosen.
+Exception in either case: if the comment surfaces a genuine
+design flaw whose phrasing happens to be code or technique (an
+ordering race, an invariant violation, a coverage gap), fix the
+prose contract in the plan and move the code or technique to
+the implementation PR — don't fix both in the plan.
 
-When a reviewer flags technique-level prescription in an
-estimate section, the response is to **loosen the prescription
-to contract level**, not to fix the technique in place. The
-loosening is the same shape as the structural rule's "remove or
-summarize" — patching technique in plans makes the plan hostage
-to the next implementation choice.
+### Recurring traps
 
-Recurring trap (PR #270 plan review, 2026-05-12): Execution Step
-3 said "Run `npm run db:gen-permissions` and commit
-permissions.snapshot.md" while Step 5 wired the npm script;
-Codex flagged the ordering bug. The honest fix wasn't to
-re-sequence the steps — it was to loosen Step 3 from "run X then
-commit Y" to "generate and commit the initial snapshot via the
-generator SQL" and let the implementer pick how. The original
-prescription imported a sequencing choice the plan didn't need
-to own.
+Illustrative examples of the rule's failure mode in practice.
+Not an exhaustive list; new traps are appended as they're found.
+
+- **Subset enumerated where the contract names a category.** A
+  plan enumerates a specific subset of a category (privilege
+  types, error classes, role names) when the contract calls for
+  the full category. Only the enumerated subset is constrained;
+  the rest is left uncovered. The fix is to describe the category,
+  not name its current members.
+- **Specific source named where the contract is about coverage.**
+  A plan names a specific introspection source (catalog view,
+  library function) when the contract is about behavior the
+  source must produce. When the named source's coverage gap
+  exposes itself, the prescribed technique no longer satisfies
+  the contract. The fix is to describe what coverage the source
+  must produce, not which source is used.
+- **Sequence prescribed where order is implementer's call.** A
+  plan prescribes "do X then Y" in an execution step or commit
+  boundary when the implementer's reasonable technique would
+  differ. The plan and the actual implementation diverge,
+  surfacing as an internal-coherence review finding. The fix is
+  to describe what must hold at sequence-end, not the order in
+  between.
 
 ### Forward-only application
 
-Pre-existing plans drafted before this rule (in either its prior
+Pre-existing plans drafted before this rule (in either its
 structural-only form or this consolidated form) are not
 retroactively non-conforming. Plans drafted from this point
-forward carry no fenced code blocks AND no technique prescription
-in estimate sections; reviewers may flag either as a structural
-issue rather than reviewing their content. The companion rule on
-the reviewer side lives in the next section.
+forward stay at contract altitude across all sections; reviewers
+may flag descents to implementation choice as a structural issue
+rather than reviewing the specific technique. The companion
+rule on the reviewer side lives in the next section.
 
 ## Plan-doc review stance
 
