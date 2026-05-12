@@ -78,11 +78,14 @@ authoring discipline and bind them to the same end state:
   edits.** `npm run db:gen-permissions` reproduces the committed
   file deterministically; a committed file that does not match a
   fresh regeneration is drift.
-- **Every `public.*` table and every `public.*` function with a
-  `SECURITY` clause or an `EXECUTE` grant has a section in both
-  `permissions.test.sql` and `permissions.snapshot.md`.** Coverage
-  uniformity is the artifact's defining property — a missing
-  section is a coverage gap, not a deliberate omission.
+- **Every `public.*` table, function, and view has a section in
+  both `permissions.test.sql` and `permissions.snapshot.md`.**
+  Coverage uniformity is the artifact's defining property — a
+  missing section is a coverage gap, not a deliberate omission.
+  Function coverage is exhaustive (including functions whose
+  access flows from `PUBLIC` grants and functions with default
+  `SECURITY INVOKER`), not scoped to those with explicit
+  `SECURITY DEFINER` or named grants.
 
 ## Naming
 
@@ -101,62 +104,62 @@ authoring discipline and bind them to the same end state:
 
 ### `supabase/tests/database/permissions.test.sql`
 
-Single consolidated pgTAP file. Sections, in order:
+Single consolidated pgTAP file. Per-table assertions cover every
+grantable privilege on every public table for every PostgREST
+role; the file asserts the RLS-enabled state per table; the file
+asserts every active policy by its exact name and the predicate
+shape it carries. Per-function assertions cover every callable
+function's `SECURITY DEFINER`/`INVOKER` mode and every role's
+`EXECUTE` access — including access that flows from `PUBLIC`
+grants. Per-view assertions cover every public view's grant shape.
 
-1. **Per-table assertions** — one section per `public.*` table in
-   alphabetical order. Each section asserts:
-   - `has_table_privilege(role, table, privilege)` for every
-     `(role, privilege)` combination across `anon`, `authenticated`,
-     `service_role` and `SELECT`, `INSERT`, `UPDATE`, `DELETE` —
-     either positive or negative form depending on the expected
-     state.
-   - RLS-enabled flag via `pg_class.relrowsecurity`.
-   - Per-policy presence assertion via `pg_policies`, naming each
-     policy by exact `policyname` and asserting its `roles`, `cmd`,
-     `qual`, and `with_check` shape.
-2. **Per-function assertions** — one section per `public.*` function
-   with a `SECURITY` clause or `EXECUTE` grant, in alphabetical
-   order. Each section asserts:
-   - `pg_proc.prosecdef` (TRUE for DEFINER, FALSE for INVOKER).
-   - `has_function_privilege(role, function_signature, 'EXECUTE')`
-     for every role.
-3. **Per-view assertions** — `game_event_admin_status` view's grant
-   shape (currently the only public view). Verified by:
-   [`shared/db/types.ts`](/shared/db/types.ts) `Views:` block under
-   `public:`.
+Verified by:
+[`shared/db/types.ts`](/shared/db/types.ts) `Tables:`, `Views:`,
+and `Functions:` blocks under `public:` (the canonical inventory
+source).
 
-The file uses flat-verbose form: one assertion per `(role, table,
-privilege)` triple, no helper macros. Verbosity is the artifact's
-readability mechanism.
+The file uses flat-verbose form: assertions are written out per
+(role, target, privilege) rather than generated through helpers.
+Verbosity is the artifact's readability mechanism; the implementer
+picks the specific pgTAP helpers and Postgres catalog queries that
+satisfy the coverage contract.
 
 ### `shared/db/permissions.snapshot.md`
 
-Generated markdown with deterministic ordering. Sections:
+Generated markdown organized as one subsection per public table,
+one subsection per public function with a `SECURITY` clause or
+`EXECUTE` grant, and one subsection per public view. Each table
+subsection surfaces the RLS-enabled state, the grant matrix
+(every grantable privilege × every role), and every active policy
+by name with its predicate shape. Each function subsection
+surfaces the `SECURITY` mode and the effective `EXECUTE` access
+per role, including access flowing from `PUBLIC`. Each view
+subsection surfaces the grant matrix.
 
-1. **Tables** — one subsection per `public.*` table in alphabetical
-   order. Each subsection lists:
-   - RLS-enabled flag.
-   - Grants table: rows `(role, privilege, granted)`.
-   - Policies table: rows `(policy name, applies to, command, using
-     predicate, with-check predicate)`.
-2. **Functions** — one subsection per `public.*` function with a
-   `SECURITY` clause or `EXECUTE` grant. Each subsection lists:
-   - `SECURITY DEFINER` or `SECURITY INVOKER`.
-   - EXECUTE grants: rows `(role, granted)`.
-3. **Views** — `game_event_admin_status` and any future views.
+Ordering is deterministic across runs: alphabetical by table /
+function / view name, then by role name, then by privilege name,
+then by policy name. The implementer picks the specific
+introspection sources and emission technique that satisfy the
+coverage + determinism contract.
 
-A header at the top names the source DB (local Supabase) and warns
-that the file is generated by `npm run db:gen-permissions` — manual
-edits are erased on regeneration.
+A header at the top of the file names the source DB and warns
+that the file is generated by `npm run db:gen-permissions` —
+manual edits are erased on regeneration.
 
-### `scripts/db/dump-permissions.sql`
+### Generator under `scripts/db/`
 
-A single SQL script that queries `pg_catalog.pg_class`,
-`pg_catalog.pg_policies`, `information_schema.role_table_grants`,
-`pg_catalog.pg_proc`, and `information_schema.role_routine_grants`
-and emits markdown to stdout via `\echo` or formatted `SELECT`s.
-Deterministic ordering on every query (explicit `ORDER BY` on
-table name, role name, privilege name, policy name, function name).
+The generator queries Postgres introspection sources sufficient
+to satisfy the snapshot's coverage contract — including every
+callable function (whether reachable through explicit role grants
+or through `PUBLIC`), every grantable privilege per object type,
+every RLS policy by name and shape, and every function's
+`SECURITY` mode. Output is markdown matching the snapshot's
+section structure, with deterministic ordering across runs.
+
+The script's form (single SQL file invoked via psql, shell
+wrapper, TypeScript helper, layered approach) and the specific
+catalog views or `has_*_privilege` calls used to satisfy the
+coverage contract are implementer's call.
 
 ### `.github/pull_request_template.md` self-review addition
 
@@ -332,11 +335,12 @@ Pre-merge checks the implementing PR must satisfy:
 
 Audits the implementer runs before opening the PR:
 
-- **Coverage uniformity (SQL).** Every `public.*` table named in
-  `shared/db/types.ts` has a section in both
-  `permissions.test.sql` and `permissions.snapshot.md`. Every
-  `public.*` function with a `SECURITY` clause or `EXECUTE` grant
-  appears in both. Verified by:
+- **Coverage uniformity (SQL).** Every `public.*` table,
+  function, and view appears as a section in both
+  `permissions.test.sql` and `permissions.snapshot.md`. Function
+  coverage is exhaustive — including functions whose access flows
+  from `PUBLIC` grants and functions with default
+  `SECURITY INVOKER`. Verified by:
   [`shared/db/types.ts`](/shared/db/types.ts) `Tables:`, `Views:`,
   and `Functions:` blocks under `public:` (the canonical
   enumeration source).
