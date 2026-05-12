@@ -179,7 +179,11 @@ implementer may adjust if a structural call requires it.
 
 - `supabase/tests/database/permissions.test.sql` — the B2 pgTAP file.
 - `shared/db/permissions.snapshot.md` — the A1 generated artifact.
-- `scripts/db/dump-permissions.sql` — the generator SQL.
+- A generator under `scripts/db/` that emits the snapshot
+  deterministically. Form (single SQL script invoked via psql,
+  shell wrapper, TypeScript helper) is implementer's call as long
+  as the determinism and ordering contracts in the Cross-Cutting
+  Invariants hold.
 
 ## Files to touch — modify
 
@@ -222,45 +226,64 @@ Estimate of files the implementation does not need to touch.
 
 ## Execution Steps
 
-Estimate of the order the implementing PR will follow. The
-implementer may resequence if a structural call requires.
+Estimate of the contract-bearing shape of each step. Per
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+"Plans describe contracts, not implementation," each step names
+what must be accomplished; specific commands, ordering of
+technique-level details, and file-write order are implementer's
+call.
 
 1. **Coverage audit.** Walk
    [`shared/db/types.ts`](/shared/db/types.ts) for the canonical
    table and function list; cross-reference against current pgTAP
-   coverage. Output is the enumeration that step 2 consumes; no
-   committed artifact at this step.
-2. **Write the generator SQL.** `scripts/db/dump-permissions.sql`
-   queries the introspection sources and emits markdown with
-   deterministic ordering. Run against the local DB; verify output
-   is stable across two consecutive runs.
-3. **Generate and commit the initial snapshot.** Run
-   `npm run db:gen-permissions` and commit
-   `shared/db/permissions.snapshot.md`.
+   coverage. Output is the enumeration that subsequent steps
+   consume; no committed artifact at this step.
+2. **Write the generator.** Produce a deterministic markdown
+   emitter querying `pg_catalog.pg_class`, `pg_policies`,
+   `information_schema.role_table_grants`, `pg_proc`, and
+   `information_schema.role_routine_grants`. The form (SQL script
+   invoked via psql, shell wrapper, TypeScript helper) is
+   implementer's call; the determinism contract is what's
+   load-bearing.
+3. **Generate and commit the initial snapshot.** Run the generator
+   against the local DB and commit
+   `shared/db/permissions.snapshot.md`. Verify byte-identical
+   output across two consecutive runs before committing.
 4. **Write `permissions.test.sql`.** One section per table, per
    function, per view, matching the snapshot's claims. Verify the
-   test passes via `npm test`.
-5. **Wire the npm script and self-review audit.** Add
-   `db:gen-permissions` to `package.json`; add the audit bullet to
-   `.github/pull_request_template.md`.
-6. **Documentation pass.** Update `shared/db/README.md` to link
-   the snapshot; append the Decision section to the scoping doc;
-   close out the backlog entry; flip this plan's Status to Landed
-   per the Plan-to-PR Completion Gate.
+   test passes via `npm run test:db`.
+5. **Wire the contributor-facing surfaces.** At PR-merge time, the
+   following all hold: `db:gen-permissions` exists as an npm
+   script in `package.json`; `.github/pull_request_template.md`
+   carries the (2) audit bullet; `shared/db/README.md` links the
+   snapshot; the Tier 5 entry in `docs/backlog.md` is removed;
+   `docs/plans/db-permissions-snapshot.md` carries the Decision
+   section naming B2 + A1 + (2) and the C3 reshape; this plan's
+   Status is `Landed` per the Plan-to-PR Completion Gate. The
+   order of these surface updates within the implementing PR is
+   implementer's call.
 
 ## Commit Boundaries
 
 Estimate of the commit shape that produces a readable history.
-Implementer may merge or split if a different boundary is clearer.
+Per the "Plans describe contracts, not implementation" rule, the
+contract is "each commit surfaces one cohesive review unit"; the
+specific file grouping and the exact commit count are technique
+and implementer's call.
 
-- **Commit 1:** Generator SQL + initial snapshot. The diff is
-  the snapshot file alone (plus the script that produced it),
-  reviewable as "what does our current state look like."
-- **Commit 2:** `permissions.test.sql`. The diff is the test file
-  alone, reviewable as "what we assert is true."
-- **Commit 3:** PR template + npm script + README pointer +
-  backlog entry close-out + scoping-doc Decision section + this
-  plan's Status flip. The infrastructure and documentation pass.
+Suggested cuts:
+
+- **Snapshot generation** — the generator and the initial
+  regenerated snapshot, reviewable as "what does our current
+  state look like."
+- **pgTAP coverage** — `permissions.test.sql`, reviewable as
+  "what we assert is true."
+- **Contributor surfaces** — npm script + PR template audit +
+  README pointer + backlog close-out + scoping-doc Decision +
+  plan Status flip, reviewable as "wiring + documentation."
+
+Merge or split if a different boundary surfaces a clearer review
+unit.
 
 ## Validation Gate
 
