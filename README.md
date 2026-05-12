@@ -7,7 +7,7 @@ The current product shape is:
 - attendees scan a QR code at an event
 - complete a fast 5-7 question experience
 - see local sponsors woven into the game
-- finish with a backend-verified raffle-entry confirmation state
+- finish with a backend-verified reward-entry confirmation state
 - admins can sign in at `/admin` to create, duplicate, review, and update
   event details, questions, and answer options for private draft events through
   authenticated authoring APIs
@@ -96,11 +96,16 @@ The codebase is intentionally small and split by responsibility:
 
 Runtime responsibilities are:
 
-- `Vercel` serves both apps as separate projects: `apps/web` is the primary
-  project owning the production custom domain, and its `vercel.json`
-  proxy-rewrites `/`, `/auth/callback`, `/admin*`, and event-scoped
-  non-game/admin URLs to the `apps/site` Vercel project. Routing is
-  **transitional** — the bare-path operator routes retire in M2 phase 2.5.
+- `Vercel` serves both apps as separate projects: `apps/site` is the
+  canonical user-facing project, and its [`next.config.ts`](/apps/site/next.config.ts)
+  proxy-rewrites the plugin-owned routes (`/event/:slug/game*`,
+  `/event/:slug/admin*`, `/assets/*`) into the `apps/web` Vercel
+  project. The apps/web deployment is reachable at its own
+  `*.vercel.app` host but is not advertised as a customer-facing
+  origin; its [`vercel.json`](/apps/web/vercel.json) holds only
+  SPA-internal rewrites (`/event/:slug/...` → `/index.html`) plus
+  the test-event `X-Robots-Tag` `headers` block, with no cross-app
+  proxy back to apps/site.
 - the browser runs the quiz flow locally during play
 - `Supabase` handles the trusted completion step at the end
 
@@ -213,6 +218,10 @@ deno check --no-lock supabase/functions/save-draft/index.ts
 deno check --no-lock supabase/functions/generate-event-code/index.ts
 deno check --no-lock supabase/functions/publish-draft/index.ts
 deno check --no-lock supabase/functions/unpublish-event/index.ts
+deno check --no-lock supabase/functions/redeem-entitlement/index.ts
+deno check --no-lock supabase/functions/reverse-entitlement-redemption/index.ts
+deno check --no-lock supabase/functions/get-redemption-status/index.ts
+deno check --no-lock supabase/functions/read-demo-event/index.ts
 ```
 
 For local contributor setup:

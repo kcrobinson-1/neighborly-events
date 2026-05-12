@@ -29,12 +29,17 @@ Today the repo validation surface includes:
 - `npm run test:db`
 - `npm run test:supabase`
 - `npm run build:web`
+- `npm run build:site`
 - `deno check --no-lock supabase/functions/issue-session/index.ts`
 - `deno check --no-lock supabase/functions/complete-game/index.ts`
 - `deno check --no-lock supabase/functions/save-draft/index.ts`
 - `deno check --no-lock supabase/functions/generate-event-code/index.ts`
 - `deno check --no-lock supabase/functions/publish-draft/index.ts`
 - `deno check --no-lock supabase/functions/unpublish-event/index.ts`
+- `deno check --no-lock supabase/functions/redeem-entitlement/index.ts`
+- `deno check --no-lock supabase/functions/reverse-entitlement-redemption/index.ts`
+- `deno check --no-lock supabase/functions/get-redemption-status/index.ts`
+- `deno check --no-lock supabase/functions/read-demo-event/index.ts`
 - `npm run ui:review:capture` for screenshot-based browser review
 - [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
   (`Production Deployed-Surface Smoke`) for post-release and manual

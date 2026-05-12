@@ -497,6 +497,15 @@ The Supabase side is intentionally small:
   Authoring endpoint that hides a live event without deleting draft or
   version history. Authorizes the caller as either an organizer for
   `eventId` or a root admin.
+- `supabase/functions/read-demo-event/index.ts`
+  Public-by-design read endpoint (`verify_jwt = false`) that backs the
+  apps/web demo-mode bypass on the three auth-gated event surfaces.
+  Gates on
+  [`shared/events/testEventAllowlist.ts`](/shared/events/testEventAllowlist.ts)
+  `isTestEventSlug` so only the registered test-event slugs pass
+  through, and returns a strictly narrower payload than the
+  authenticated surfaces (no operator identifiers, no free-text notes)
+  for the `admin` and `redemptions` views.
 - `supabase/functions/_shared/admin-auth.ts`
   Shared Supabase Auth JWT and root-admin allowlist verification. Reserved
   for any future root-only authoring path; the four authoring endpoints
@@ -542,10 +551,15 @@ The Supabase side is intentionally small:
   Game event audit log plus service-role publish and unpublish RPCs that update
   the public runtime projection transactionally.
 - `supabase/migrations/20260415000000_add_quiz_event_draft_slug_lock_trigger.sql`
-  Database trigger that enforces slug immutability once an event is first
-  published. The trigger fires under the row write lock so no concurrent
-  publish can bypass the check; the application layer also validates this
-  before upserting, but the trigger is the authoritative enforcement point.
+  Adds the database trigger that enforces slug immutability on
+  `game_event_drafts` after publish; the trigger is the authoritative
+  enforcement point and the application layer validates before
+  upserting as defence-in-depth. The trigger's WHEN clause was later
+  rewritten by `20260423010000` (column rename) and the function body
+  was relaxed by `20260507000000_relax_slug_lock_to_currently_live.sql`,
+  which is the current behavior: the function probes
+  `game_events.published_at` and raises only while the event is
+  currently live, so post-unpublish slug rotation is permitted.
 - `supabase/migrations/20260415010000_make_sponsor_nullable.sql`
   Drops the `NOT NULL` constraint on `game_questions.sponsor` so unsponsored
   house questions can be modeled correctly. Required before analytics views
@@ -584,11 +598,32 @@ The Supabase side is intentionally small:
   required, adds unique indexes, and creates `generate_random_event_code()` for
   service-role generation.
 - `supabase/migrations/20260418050000_lock_event_code_after_publish.sql`
-  Adds the database trigger that prevents event-code changes after first
-  publish.
+  Adds the database trigger that prevents `event_code` changes on
+  `game_event_drafts` after publish. The trigger's WHEN clause was
+  later rewritten by `20260423010000` (column rename) and its
+  function body was relaxed by
+  `20260507010000_relax_event_code_lock_with_entitlements_guard.sql`,
+  which is the current behavior: the function fires whenever
+  `event_code` is distinct, takes `FOR UPDATE` on the matching
+  `game_events` row to serialize with concurrent entitlement creation,
+  and raises while the event is currently live OR while any
+  `game_entitlements` row exists for the event. Post-unpublish
+  rotation is permitted only when no entitlements were ever issued,
+  preserving the redeem RPC's `<event_code>-<suffix>` reconstruction
+  guarantee.
 - `supabase/migrations/20260418060000_project_event_code_on_publish.sql`
   Updates `publish_game_event_draft()` so the published `game_events` projection
   receives the draft event code.
+- `supabase/migrations/20260418070000_rewrite_verification_code_generator.sql`
+  Switches entitlement verification codes from the historical
+  `MMP-XXXXXXXX` shape to `<event_code>-NNNN`, adds per-event
+  uniqueness on `game_entitlements.verification_code` enforced by a
+  bounded retry loop in
+  `complete_game_and_award_entitlement(...)`. The RPC body is later
+  recreated with a `FOR SHARE` clause on the `game_events` lookup by
+  `20260507010000` to serialize entitlement creation with concurrent
+  `event_code` rotation; the verification-code generator function is
+  unchanged after this migration.
 - `supabase/migrations/20260421000000_add_redemption_columns.sql`
   Reward redemption Phase A.1: adds the inline `redeemed_*` and
   `redemption_reversed_*` columns to `game_entitlements`, the composite
@@ -625,7 +660,118 @@ The Supabase side is intentionally small:
   (agent, organizer, or root admin), and a self-read policy on
   `event_role_assignments` so a user can read their own assignment rows.
   Writes on both tables continue to flow through the service-role RPC
-  path.
+  path. The `event_role_assignments` self-read policy is later replaced
+  by a three-branch (self / organizer / admin) policy in `20260427010000`;
+  the `game_entitlements` read policy is unchanged.
+- `supabase/migrations/20260423010000_rename_live_version_number_to_last_published_version_number.sql`
+  Renames `game_event_drafts.live_version_number` to
+  `last_published_version_number` to clarify "historical publish pointer"
+  semantics (the column is set on first publish and never cleared on
+  unpublish). Drops and recreates the slug-lock and event-code-lock
+  triggers with WHEN clauses gated on the renamed column, and recreates
+  `publish_game_event_draft(...)` and `unpublish_game_event(...)` to
+  write through the renamed field. The slug-lock and event-code-lock
+  trigger conditions installed here are later replaced by `20260507000000`
+  and `20260507010000` respectively, which gate on currently-live and
+  entitlements-exist conditions instead of the publish pointer.
+- `supabase/migrations/20260423020000_add_game_event_admin_status_view.sql`
+  Adds the `public.game_event_admin_status` security-invoker view that
+  joins `game_event_drafts`, `game_events`, and `game_event_versions`
+  to produce a server-owned per-draft `status`
+  (`draft_only` / `live` / `live_with_draft_changes`) and `is_live` flag.
+  Admin UI status reads now consume this view instead of fanning out
+  to `game_events` in the browser. `select` is granted to
+  `authenticated` and `service_role`.
+- `supabase/migrations/20260427010000_broaden_event_scoped_rls.sql`
+  Broadens authenticated SELECT on `game_event_drafts` and
+  `game_event_versions` from root-admin-only to
+  `is_organizer_for_event(<event-id-column>) OR is_root_admin()` so
+  organizers can read their own drafts and the
+  `game_event_admin_status` view returns non-empty rows for them.
+  Replaces the `event_role_assignments` SELECT policy with a
+  three-branch (self / organizer-for-event / root-admin) version and
+  grants INSERT and DELETE on that table to `authenticated` so
+  organizers can manage staffing for events they organize; UPDATE
+  stays revoked. Deliberately leaves `game_events`,
+  `game_questions`, `game_question_options`, `game_completions`,
+  `game_starts`, `game_entitlements`, and `game_event_audit_log`
+  policies unchanged — authoring writes flow through the four
+  authoring Edge Functions under service-role, and the existing
+  `game_entitlements` read policy from `20260421000500` already
+  admits agents/organizers/root.
+- `supabase/migrations/20260506000000_add_feedback_tables.sql`
+  Creates `public.feedback_enabled_events` (slug-keyed registry, FK
+  target) and `public.feedback_submissions` (one row per attendee
+  submission, FK to the registry) with RLS enabled. CHECK constraints
+  encode the consent invariants
+  (`email_declined ⇒ email is null`,
+  `newsletter_opt_in ⇒ a real non-declined email is present`).
+  Seeds the `madrona` slug in the registry so the FK is load-bearing
+  from t=apply. The anon INSERT path on `feedback_submissions` shipped
+  by this migration is later replaced in `20260509000000` by the
+  `submit_feedback(...)` SECURITY DEFINER RPC and the table's anon
+  grants are revoked; the newsletter capture column is further moved
+  to a dedicated log table by `20260510000000`.
+- `supabase/migrations/20260507000000_relax_slug_lock_to_currently_live.sql`
+  Relaxes the slug-lock trigger: the function now probes
+  `game_events.published_at` for the matching id and raises only while
+  the event is currently live. The trigger's WHEN clause becomes
+  `new.slug is distinct from old.slug` (no longer gated on the publish
+  pointer). After unpublish, organizers can rotate the slug before
+  relaunch. The event-code lock is intentionally untouched here —
+  its rotation semantics differ and are scoped to `20260507010000`.
+- `supabase/migrations/20260507010000_relax_event_code_lock_with_entitlements_guard.sql`
+  Relaxes the event-code lock with an entitlements guard: the trigger
+  fires whenever `event_code` is distinct, takes `FOR UPDATE` on the
+  matching `game_events` row, and raises (a) while the event is
+  currently live or (b) while any `game_entitlements` row exists for
+  the event. Post-unpublish rotation is permitted only when no
+  entitlements were ever issued, preserving the redeem RPC's
+  `<event_code>-<suffix>` reconstruction guarantee. Also recreates
+  `complete_game_and_award_entitlement(...)` with a `FOR SHARE` clause
+  on the `game_events` lookup so a rotation in flight blocks new
+  entitlement creation and an in-flight completion blocks the trigger's
+  count-of-zero check from running on a stale snapshot.
+- `supabase/migrations/20260509000000_add_submit_feedback_rpc.sql`
+  Adds the `public.submit_feedback(...)` SECURITY DEFINER RPC and
+  revokes the anon INSERT path on `feedback_submissions` so the
+  attendee write flows through the RPC (returns `void`; no row leaks
+  back, no anon SELECT grant required). Trust gates at the function
+  grant boundary; the table's CHECK constraints from `20260506000000`
+  remain the DB-level integrity gate. The RPC body is later extended
+  by `20260510000000` to chain a `subscribe_email(...)` call when the
+  caller opted in.
+- `supabase/migrations/20260509170000_extend_game_events_feedback_mode_check.sql`
+  Widens the `game_events.feedback_mode` CHECK constraint to accept
+  `instant_feedback_non_blocking` alongside the existing
+  `final_score_reveal` and `instant_feedback_required` values. Pure
+  widening — every row that satisfied the previous predicate continues
+  to satisfy the new one.
+- `supabase/migrations/20260510000000_split_newsletter_opt_ins.sql`
+  Splits newsletter opt-in capture off `feedback_submissions` into an
+  append-only `public.newsletter_opt_ins` log (surrogate PK, no
+  row-uniqueness constraint, `source_surface` CHECK gated to
+  `feedback_form` / `standalone`). Adds the internal
+  `public.subscribe_email(p_event_slug, p_email, p_source_surface)`
+  SECURITY DEFINER helper with EXECUTE revoked from public / anon /
+  authenticated (reachable only from inside another SECURITY DEFINER
+  function whose owner is the same role). Extends
+  `submit_feedback(...)` so its body chains a `subscribe_email(...)`
+  call with `p_source_surface = 'feedback_form'` when
+  `p_newsletter_opt_in = true`; the existing CHECK constraint
+  guarantees `p_email` is non-null in that branch. The
+  `feedback_submissions.newsletter_opt_in` column persists as a
+  denormalized snapshot of intent at submission time, separate from
+  the canonical consent log.
+- `supabase/migrations/20260510010000_constrain_event_slug_shape.sql`
+  Adds storage-layer CHECK constraints on
+  `game_event_drafts.slug`, `game_events.slug`, and
+  `feedback_enabled_events.slug` (lowercase ASCII letters, digits,
+  and hyphens; cannot start or end with a hyphen; capped at 64
+  characters). Defense-in-depth alongside the shared
+  `validateEventSlug` validator in `shared/urls/` — even if a future
+  write path bypasses the parser, the DB rejects malformed slugs
+  before they reach printed QR URLs.
 
 ## What Is Implemented Now
 

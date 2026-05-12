@@ -54,8 +54,9 @@ The main working areas are:
 - `apps/site`
   Next.js 16 (App Router) public-event and platform-admin surface.
   Owns `/`, `/auth/callback`, `/admin*`, `/event/:slug`, and any other
-  event-scoped path not carved out for `apps/web`. Event landing
-  remains a placeholder until M3.
+  event-scoped path not carved out for `apps/web`. Public event
+  landings render server-side from per-event TypeScript content
+  modules under [`apps/site/events/`](/apps/site/events).
 - `shared`
   shared game definitions, validation, and scoring
 - `supabase/functions`
@@ -520,6 +521,10 @@ deno check --no-lock supabase/functions/save-draft/index.ts
 deno check --no-lock supabase/functions/generate-event-code/index.ts
 deno check --no-lock supabase/functions/publish-draft/index.ts
 deno check --no-lock supabase/functions/unpublish-event/index.ts
+deno check --no-lock supabase/functions/redeem-entitlement/index.ts
+deno check --no-lock supabase/functions/reverse-entitlement-redemption/index.ts
+deno check --no-lock supabase/functions/get-redemption-status/index.ts
+deno check --no-lock supabase/functions/read-demo-event/index.ts
 ```
 
 `npm run lint` runs ESLint over `apps/web shared supabase scripts tests`
