@@ -296,6 +296,29 @@ Execute in any order.
   time.
   Detail: N/A
 
+- [ ] **`db` Current grants and RLS policies are knowable without reading every migration in order**
+  `shared/db/types.ts` captures row shapes via `npm run db:gen-types`,
+  but grants, RLS policies, the per-table RLS-enabled flag, function
+  `SECURITY DEFINER`/`INVOKER` setting, and function `EXECUTE` grants
+  are not surfaced anywhere in the repo — they are a delta-derived
+  projection across 30+ migration files. A reader who lands on the
+  original migration for a feature sees its initial grants and
+  policies; a reader who lands on a later migration sees them revised.
+  The truth requires reading both in order. This failure mode has
+  already caused doc inaccuracies during canonical-correction passes,
+  where feature posture was described in the pre-revocation or
+  pre-relaxation shape because the original migration was treated as
+  authoritative in isolation. **Goal:** a maintainer can answer "what
+  grants and RLS policies are in force on table X today" from a single
+  in-repo source, not by walking every migration. Several approaches
+  could reach that goal — a generated artifact alongside `types.ts`
+  (e.g., `shared/db/permissions.snapshot.md` or `.ts`), a runtime
+  helper that queries `pg_policies` /
+  `information_schema.role_table_grants`, a CI gate that fails when
+  migrations land without an updated snapshot, or some combination —
+  are all worth comparing at scoping time.
+  Detail: [`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md)
+
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
   plan-archive-maintenance PRs inflate the repo PR count, and plan PRs need
