@@ -6,19 +6,54 @@ Proposed.
 
 ## Context
 
-Sibling to the scoping investigation at
-[`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md).
-The scoping pass — extended by mid-drafting review of a worked C3
-example, which surfaced that C3 was largely redundant with good
-inline prose on grant/policy migrations — settled on a two-layer
-shape with a self-review audit binding it together:
+Today, a maintainer who wants to know what permissions and RLS
+policies are in force on a database table has to read every
+migration in `supabase/migrations/` in order and mentally apply
+each later revoke or policy-drop against earlier grants. That
+replay has already produced inaccurate doc descriptions during
+canonical-correction passes — readers consulted the original
+migration for a feature, didn't notice the later migration that
+revoked the grant, and described state that was no longer
+current.
 
-- **B2** (comprehensive pgTAP coverage) — a single `permissions.test.sql`
-  asserts the current expected state for every `public.*` table and
-  function.
+This task plan ships an in-repo source of truth for the
+database's current permission posture: a generated markdown
+snapshot regenerable from a local DB, plus pgTAP coverage that
+fails if the live schema diverges from what the snapshot claims,
+plus a PR-template self-review audit that prompts snapshot
+regeneration on migrations that touch grants or policies.
+Together these close the readability gap without adding CI
+machinery.
+
+Surfaces touched: pgTAP coverage under
+`supabase/tests/database/`, a new generated artifact under
+`shared/db/`, a generator script under `scripts/db/`, an npm
+script in `package.json`, the PR template at
+`.github/pull_request_template.md`, plus docs cleanup (this
+plan's Status flip, scoping-doc Decision section, backlog entry
+removal, README pointer).
+
+N=1 task plan: phase content (Contracts, Files to touch,
+Validation Gate, Self-Review Audits, Execution Steps) is absorbed
+inline per
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
+"N = 1 task plan: phase content absorbed inline." Sibling
+scoping investigation lives at
+[`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md).
+
+### Layer arrangement and C3 reshape
+
+The scoping pass — extended by mid-drafting review of a worked
+C3 example, which surfaced that C3 was largely redundant with
+good inline prose on grant/policy migrations — settled on a
+two-layer shape with a self-review audit binding it together:
+
+- **B2** (comprehensive pgTAP coverage) — a single
+  `permissions.test.sql` asserts the current expected state for
+  every `public.*` table and function.
 - **A1** (markdown snapshot) — a generated
-  `shared/db/permissions.snapshot.md` is the human-readable per-table
-  inventory, regenerated from a local DB.
+  `shared/db/permissions.snapshot.md` is the human-readable
+  per-table inventory, regenerated from a local DB.
 - **(2)** (self-review audit) — the PR template carries an audit
   reminding the migration author to regenerate the snapshot AND
   ensure the migration's prose comments explain the post-state of
@@ -43,9 +78,6 @@ the formal C3 block was structure over content that already
 existed. The right enforcement mechanism is comment quality, which
 folds into (2). The C3 rule is dropped; the worked example was
 reverted.
-
-This plan is the cross-cutting implementation contract that the
-implementing PR consumes. It is not part of an epic.
 
 ## Goal
 
