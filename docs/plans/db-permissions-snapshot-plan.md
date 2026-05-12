@@ -127,8 +127,11 @@ satisfy the coverage contract.
 ### `shared/db/permissions.snapshot.md`
 
 Generated markdown organized as one subsection per public table,
-one subsection per public function with a `SECURITY` clause or
-`EXECUTE` grant, and one subsection per public view. Each table
+one subsection per public function, and one subsection per public
+view. Function coverage is exhaustive (including functions whose
+access flows from `PUBLIC` grants and functions with default
+`SECURITY INVOKER`), matching the third Cross-Cutting Invariant.
+Each table
 subsection surfaces the RLS-enabled state, the grant matrix
 (every grantable privilege × every role), and every active policy
 by name with its predicate shape. Each function subsection
