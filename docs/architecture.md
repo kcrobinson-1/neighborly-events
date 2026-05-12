@@ -135,7 +135,7 @@ grouped into a dedicated `apps/web/src/game/` module:
   state. Wraps every state branch (signed-out, loading, role-gate,
   transient-error, authorized) inside `<ThemeScope
   theme={getThemeForSlug(slug)}>`, with the wrapping centralized in
-  the `App.tsx` routing dispatcher per the M1 phase 1.5 invariant.
+  the `App.tsx` routing dispatcher rather than each leaf page.
   The authorized branch composes `EventAdminWorkspace` from the
   existing deep-editor primitives (`AdminEventDetailsForm`,
   `AdminQuestionEditor`, `AdminPublishPanel`) for the single
@@ -346,8 +346,8 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   and [`apps/site/lib/supabaseBrowser.ts`](/apps/site/lib/supabaseBrowser.ts)).
   The `PublishedGame*Row` types in
   `shared/game-config/db-content.ts` remain authoritative for the
-  published-content surface during this phase; aligning them with
-  the generated `Database` type is out of scope for M1 phase 1.1.
+  published-content surface; aligning them with the generated
+  `Database` type is deferred follow-up work.
 - `shared/urls/`
   Canonical route table, route matchers, and post-auth `next=`
   validation shared across `apps/web` and `apps/site`. Owns
@@ -397,18 +397,41 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   `@supabase/ssr`'s frontend-origin chunked cookie storage paired
   with `@supabase/supabase-js`'s `createClient` in
   [`shared/db/client.ts`](/shared/db/client.ts)'s
-  `createBrowserSupabaseClient` (cookie name
-  `sb-<project-ref>-auth-token`, chunked as `.0`/`.1` siblings when
-  the JWT exceeds the per-cookie size limit; `Path=/`, `SameSite=Lax`,
-  `Secure` on https, no `Domain=` so the cookie is host-only on the
-  apps/web frontend domain). `flowType` is `"implicit"` because the
-  production admin smoke fixture uses
-  `auth.admin.generateLink({ type: "magiclink" })`, which is
-  PKCE-incompatible (no client-side code-verifier). The cookie is
-  visible to apps/site server-rendered routes through Vercel's
-  proxy-rewrite — apps/site's placeholder at `/event/:slug` reads it
-  via Next.js `cookies()` and renders a presence-only readout for
-  verification.
+  `createBrowserSupabaseClient`. Cookie name is
+  `sb-<project-ref>-auth-token`, chunked into `.0`/`.1` siblings when
+  the JWT exceeds the per-cookie size limit (encoding is `base64url`).
+  Attributes pinned in the factory: `Path=/`, `SameSite=Lax`, `Secure`
+  set explicitly to `window.location.protocol === "https:"` (set on
+  https, omitted on `http://localhost`), and no `Domain=` so the cookie
+  is host-only on whichever origin sets it (the canonical site origin
+  for apps/site sign-ins; the apps/web origin if a sign-in ever happens
+  directly there). `@supabase/ssr` 0.10.x does **not** auto-detect
+  `Secure` — its `DEFAULT_COOKIE_OPTIONS` ship `path` / `sameSite` /
+  `httpOnly` / `maxAge` only — so the factory passes `secure`
+  explicitly via `cookieOptions`. Do not remove the explicit flag
+  under the assumption the package handles it; auth cookies would
+  ship without `Secure` on production HTTPS. `HttpOnly` is impossible
+  because the SPA browser adapter writes the cookie from JS — same
+  exposure surface as the prior `localStorage` path. The factory uses
+  `@supabase/ssr`'s internal
+  [`createStorageFromOptions`](/node_modules/@supabase/ssr/dist/module/cookies.d.ts)
+  deep import rather than its public `createBrowserClient` because
+  `createBrowserClient` hardcodes `flowType: "pkce"` after spreading
+  user options (the option is unoverridable through the public API).
+  PKCE is incompatible with the production admin smoke fixture, which
+  uses `auth.admin.generateLink({ type: "magiclink" })` — admin-generated
+  links have no client-side PKCE code-verifier, so auth-js throws
+  `AuthPKCEGrantCodeExchangeError("Not a valid PKCE flow url.")` on
+  the resulting hash-fragment redirect. Pairing `createClient` with
+  `@supabase/ssr`'s chunked cookie storage and `flowType: "implicit"`
+  keeps both real magic-link sign-ins and the production smoke fixture
+  working while preserving the chunked-cookie format shared by the
+  apps/web and apps/site browser adapters. `@supabase/ssr` is
+  exact-pinned at `0.10.0` in `apps/web/package.json` so the deep
+  import path is stable. The cookie is visible to apps/site
+  server-rendered routes through Vercel's proxy-rewrite — apps/site's
+  placeholder at `/event/:slug` reads it via Next.js `cookies()` and
+  renders a presence-only readout for verification.
 - `shared/events/`
   Env-agnostic event-domain surface shared across `apps/web` and later
   `apps/site` consumers. Owns published event reads
@@ -432,8 +455,8 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
 
 - `shared/styles/`
   Platform theme model shared across `apps/web` and `apps/site`.
-  Owns the `Theme` TypeScript type (binding output of the M1 phase
-  1.5.1 token audit at [`docs/styling.md`](/docs/styling.md)), the
+  Owns the `Theme` TypeScript type (binding output of the token audit
+  captured in [`docs/styling.md`](/docs/styling.md)), the
   universal `<ThemeScope>` React component (no `'use client'`, no
   effects, no state — SSR-safe), the `getThemeForSlug(slug)` resolver
   that returns the registered `Theme` for an event slug or the
@@ -535,7 +558,7 @@ The Supabase side is intentionally small:
 - `supabase/functions/_shared/admin-auth.ts`
   Shared Supabase Auth JWT and root-admin allowlist verification. Reserved
   for any future root-only authoring path; the four authoring endpoints
-  above migrated to `event-organizer-auth.ts` in M2 phase 2.1.2.
+  above now use `event-organizer-auth.ts` instead.
 - `supabase/functions/_shared/event-organizer-auth.ts`
   Shared Supabase Auth JWT verification plus per-event organizer-or-admin
   authorization for the four authoring endpoints. Calls
@@ -614,8 +637,9 @@ The Supabase side is intentionally small:
   `entitlementLabel` and updates `publish_game_event_draft()` so it projects
   draft content into `game_events.entitlement_label`.
 - `supabase/migrations/20260418020000_update_demo_game_copy.sql`
-  Updates seeded demo event, question, and answer-option copy to the Phase 4
-  game/reward wording used by the frontend fixtures and browser tests.
+  Updates seeded demo event, question, and answer-option copy to the
+  current game/reward wording used by the frontend fixtures and
+  browser tests.
 - `supabase/migrations/20260418030000_add_event_code_columns.sql`
   Adds nullable `event_code` columns to private drafts and published events
   with uppercase 3-letter format checks.
@@ -651,40 +675,39 @@ The Supabase side is intentionally small:
   `event_code` rotation; the verification-code generator function is
   unchanged after this migration.
 - `supabase/migrations/20260421000000_add_redemption_columns.sql`
-  Reward redemption Phase A.1: adds the inline `redeemed_*` and
-  `redemption_reversed_*` columns to `game_entitlements`, the composite
+  Adds the inline `redeemed_*` and `redemption_reversed_*` columns
+  to `game_entitlements`, the composite
   `game_entitlements_redeemed_shape_check` invariant, and the
   `(event_id, redeemed_at DESC NULLS LAST)` monitoring index.
 - `supabase/migrations/20260421000100_add_event_role_assignments.sql`
-  Reward redemption Phase A.1: creates the event-scoped
-  `public.event_role_assignments` table (agent/organizer assignments keyed
-  by user_id + event_id + role), with RLS enabled and service_role limited
-  to select/insert/delete (UPDATE revoked).
+  Creates the event-scoped `public.event_role_assignments` table
+  (agent/organizer assignments keyed by user_id + event_id + role),
+  with RLS enabled and service_role limited to select/insert/delete
+  (UPDATE revoked).
 - `supabase/migrations/20260421000200_add_event_role_helpers.sql`
-  Reward redemption Phase A.1: permission helpers
-  `public.is_agent_for_event(text)`,
+  Adds permission helpers `public.is_agent_for_event(text)`,
   `public.is_organizer_for_event(text)`, and `public.is_root_admin()`
   (aliases `is_admin()`). Used by both the redeem/reverse RPCs and the
   scoped RLS read policies.
 - `supabase/migrations/20260421000300_add_redeem_entitlement_rpc.sql`
-  Reward redemption Phase A.2a: `public.redeem_entitlement_by_code(
+  Adds `public.redeem_entitlement_by_code(
   p_event_id text, p_code_suffix text)` as `SECURITY DEFINER`. Gated by
   `is_agent_for_event OR is_root_admin`, row-locks the target entitlement,
   returns the `{ outcome, result, ... }` envelope, and is idempotent on
   repeat calls against an already-redeemed row. Cross-event codes surface
   as `not_found`.
 - `supabase/migrations/20260421000400_add_reverse_entitlement_redemption_rpc.sql`
-  Reward redemption Phase A.2a: `public.reverse_entitlement_redemption(
+  Adds `public.reverse_entitlement_redemption(
   p_event_id text, p_code_suffix text, p_reason text)` as
   `SECURITY DEFINER`. Gated by `is_organizer_for_event OR is_root_admin`,
   clears the `redeemed_*` columns and records the reversing identity in
   the `redemption_reversed_*` columns. Optional reason stored verbatim in
   `redemption_note`.
 - `supabase/migrations/20260421000500_add_redemption_rls_policies.sql`
-  Reward redemption Phase A.2a: authenticated SELECT policy on
-  `game_entitlements` that scopes rows to the caller's assigned events
-  (agent, organizer, or root admin), and a self-read policy on
-  `event_role_assignments` so a user can read their own assignment rows.
+  Adds the authenticated SELECT policy on `game_entitlements` that
+  scopes rows to the caller's assigned events (agent, organizer, or
+  root admin), and a self-read policy on `event_role_assignments` so
+  a user can read their own assignment rows.
   Writes on both tables continue to flow through the service-role RPC
   path. The `event_role_assignments` self-read policy is later replaced
   by a three-branch (self / organizer / admin) policy in `20260427010000`;
@@ -1149,7 +1172,7 @@ The current implementation uses:
   authenticated user holds an `organizer` row in
   `public.event_role_assignments` for the given event id. Consumed by
   `authenticateEventOrganizerOrAdmin` and by the broadened RLS policies
-  installed in M2 phase 2.1.1.
+  installed in `20260427010000_broaden_event_scoped_rls.sql`.
 - `read-demo-event`
   Public-by-design Edge Function (`verify_jwt = false`) that backs
   the apps/web demo-mode bypass. Gates on
@@ -1254,7 +1277,7 @@ holds only SPA-internal rewrites plus the test-event noindex
 
 apps/site is the canonical Vercel project, established by
 [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
-(Phase 2: [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md)).
+(implementation contract: [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md)).
 Customer-visible URLs resolve on apps/site's primary alias; the
 apps/web plugin deployment is reached only through one-direction
 proxy rewrites from apps/site for the plugin-owned route prefixes.
@@ -1356,8 +1379,8 @@ This is an explicit product tradeoff, not an accidental omission.
 The most sensible next architectural steps are:
 
 1. Add a staging or branch-based Supabase promotion path if local verification plus direct-to-production release stops feeling sufficient.
-2. Add admin draft preview (Phase 4.5, deferred post-MVP) and AI-assisted
-   authoring entry points (Phase 4.7, deferred post-MVP) on top of the shipped
+2. Add admin draft preview (deferred post-MVP) and AI-assisted
+   authoring entry points (deferred post-MVP) on top of the shipped
    admin authoring surface.
 3. Add lightweight analytics/reporting for live events.
 4. Add richer publish behavior such as drafts, previews, or expiry windows if

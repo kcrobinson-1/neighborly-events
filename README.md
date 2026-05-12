@@ -273,13 +273,13 @@ Operational setting ownership lives in [docs/operations.md](/docs/operations.md)
 
 ## Next Phase
 
-With the current MVP scope, Phases 4 and 5 are complete. Phase 4.5 (admin draft
-preview) and Phase 4.7 (AI-assisted authoring) are explicitly deferred post-MVP.
+The current MVP scope is complete. Admin draft preview and AI-assisted
+authoring are explicitly deferred post-MVP.
 
 Planned post-MVP enhancements:
 
-- admin draft preview (Phase 4.5, deprioritized post-MVP)
-- admin AI-assisted authoring (Phase 4.7, post-MVP)
+- admin draft preview (deprioritized post-MVP)
+- admin AI-assisted authoring (post-MVP)
 - analytics and reporting for starts, completions, and completion time
 - richer publishing controls such as expiry windows for live event URLs
 - stronger anti-abuse controls if live event usage shows browser-session dedupe is insufficient
