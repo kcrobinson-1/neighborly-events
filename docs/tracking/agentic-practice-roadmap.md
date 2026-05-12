@@ -646,6 +646,65 @@ Append-only. Each entry: date + 1–3 bullets on what moved, what
 didn't, and any change to the diagnosis or bets. Do not edit
 prior entries.
 
+### 2026-05-12 — drift-prevention catalog audits drafted, then closed without merging
+
+Drafted six new audits for `docs/self-review-catalog.md` in a
+"Canonical-doc drift" section (migration inventory drift, Edge
+Function validation-gate drift, new canonical-doc indexing, phase
+identifiers in evergreen prose, multi-surface product feature,
+canonical-doc duplicated coverage) plus a Framing-for-these-audits
+paragraph, after a recommendation-and-tradeoffs exchange about
+whether to land the six audits as a lighter PR or scope a sibling
+plan-doc first. Picked the lighter PR shape, drafted it (+198 lines
+on the catalog, ~+8 lines cross-link on the discipline checklist,
+−35 lines removing the Tier 5 backlog entry), then closed [PR #284](https://github.com/kcrobinson-1/neighborly-events/pull/284)
+without merging after analysis against this roadmap.
+
+- **Why closed.** All six audits traced to a single batch finding
+  (the 2026-05-11 docs audit, fixed across docs-canonical-corrections
+  [PR 1](https://github.com/kcrobinson-1/neighborly-events/pull/269)–[PR 4](https://github.com/kcrobinson-1/neighborly-events/pull/281)),
+  not to ≥ 2 distinct PR occurrences of any class. The catalog's own
+  contribution paragraph — named in [the diagnosis](#what-is-being-done-well)
+  as one of the things the repo handles right — requires ≥ 2 distinct
+  PR occurrences **or** a single P1-severity finding that clearly
+  generalizes; none of the six findings were P1-severity in the
+  catalog's sense (reader confusion / silent gate gap, not shipped
+  broken behavior on the happy path). Compare against existing
+  catalog entries like "Replica-mode trigger suppression" (two fix
+  commits cited) or "Supabase-owned-schema FK fragility" (two fixes
+  + five distinct CI failures) — those trace to recurrences; the
+  drafted six trace to one batch.
+- **What was bypassed.** The catalog floor, which A6 (still
+  `candidate`) is designed to extend up and down the
+  fix → audit → plan rule → AGENTS.md rule ladder. Pre-codifying
+  audits on the basis of one batch is exactly the "every Codex
+  finding becomes a new rule" shape this roadmap's diagnosis flags,
+  applied here to a docs-audit finding instead of a Codex finding.
+  Net direction would have been +198 on the catalog with no audit
+  retired — same compounding shape as `docs/agents/**`, on a
+  different surface.
+- **What's preserved.** The draft audits are recoverable on the
+  `docs/drift-prevention-catalog-audits` branch (kept in git, not
+  deleted). The Tier 5 backlog entry carries a one-line breadcrumb
+  to this Log entry so a future drift wave that surfaces any of the
+  six classes on a *second* distinct PR can pull the corresponding
+  drafted audit forward, clearing the bar that wasn't cleared today.
+
+**Effect on bets.** Bet 2 (rules deleted, not just added) was not
+formally measured against this PR — the catalog isn't `docs/agents/**`,
+so the proxy doesn't fire. But the spirit applied, and the close
+preserves the discipline. Bet 3 (new rules name a retired rule) likewise
+not formally triggered — A1's trigger is `docs/agents/**` — but the
+spirit again applied: no audit could be retired by adding these, and
+the PR didn't honor that question. No bet target moves; one
+"considered move that didn't merge" added to the institutional record
+for future re-evaluation.
+
+**Action Layer follow-through.** A6 (Codex-feedback escalation ladder)
+gains a concrete near-miss data point: this exercise is the kind of
+move A6 would catch by making the catalog floor explicit one rung up.
+If A6 lands, this Log entry is the worked example.
+
 ### 2026-05-10 — A2 + A3 landed: narrow-surface phase carve-out + concrete lightweight thresholds
 
 - **A2 landed.** Added "Narrow-surface phases may skip the

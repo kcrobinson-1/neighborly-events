@@ -352,6 +352,12 @@ Execute in any order.
   accordingly; CI-side grep gates and tooling are a parallel path,
   not a substitute. Sequences after the corrections plan merges so
   the findings inform the prevention scoping rather than racing it.
+  A first attempt drafted six catalog audits and closed without
+  merging (2026-05-12) after analysis against
+  [`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md);
+  the drafted audits live on the
+  `docs/drift-prevention-catalog-audits` branch and can be pulled
+  forward when any of the six classes recurs on a second distinct PR.
   Detail: TBD
 
 - [ ] **`infra` Investigate planning-doc location**
