@@ -29,6 +29,11 @@ Use it as:
 
 ## Keep The Canonical Docs Honest
 
+**Active correction sweep:** [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
+is landing a one-week correction effort against findings from the
+2026-05-11 audit of the top-level canonical docs. Remove this line on
+its close-out.
+
 - [x] Remove branch-specific status notes from durable implementation docs once
   the work lands on `main`.
 - [x] Keep docs/testing status and todo sections aligned with the actual test
