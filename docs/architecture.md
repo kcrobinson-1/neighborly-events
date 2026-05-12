@@ -758,9 +758,22 @@ The Supabase side is intentionally small:
     unrestricted (Supabase baseline). No UPDATE or DELETE
     policy on either table — non-anon mutation is service-role
     only.
-  The anon posture on `feedback_submissions` is superseded by
-  `20260509000000_add_submit_feedback_rpc.sql`; everything else
-  on both tables is unchanged thereafter.
+  Later changes touching these tables:
+  `20260509000000_add_submit_feedback_rpc.sql` supersedes the
+  anon posture on `feedback_submissions` (drops the insert
+  policy, revokes the table grant);
+  `20260510000000_split_newsletter_opt_ins.sql` attaches a
+  column comment to `feedback_submissions.newsletter_opt_in`
+  framing it as a denormalized snapshot of opt-in intent (the
+  canonical consent record moves to `newsletter_opt_ins`);
+  `20260510010000_constrain_event_slug_shape.sql` adds the
+  `feedback_enabled_events_slug_format` CHECK constraint on
+  `feedback_enabled_events.slug` (alongside parallel constraints
+  on `game_events.slug` and `game_event_drafts.slug` — see that
+  migration's entry). Per-role grants, RLS policies, the FK from
+  `feedback_submissions.event_slug`, indexes, and the two
+  consent-invariant CHECK constraints on both tables are
+  otherwise unchanged thereafter.
 - `supabase/migrations/20260507000000_relax_slug_lock_to_currently_live.sql`
   Relaxes the slug-lock trigger: the function now probes
   `game_events.published_at` for the matching id and raises only while
