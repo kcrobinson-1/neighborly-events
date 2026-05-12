@@ -2,14 +2,14 @@
 
 ## Status
 
-Proposed. Four-PR taxonomy revamp against `docs/agents/planning/`
-and the sweep targets named in scoping. Closes out on PR 4 by
-flipping this doc's Status to `Landed` in place at
-`docs/plans/plan-doc-taxonomy.md`, deleting the sibling scoping
-doc at
-[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md),
-and removing the parent backlog entry from
-[`docs/backlog.md`](/docs/backlog.md) in the same PR.
+Proposed. Taxonomy revamp against `docs/agents/planning/` and the
+sweep targets named in scoping. Closes out when this doc's Status
+flips to `Landed` in place at
+`docs/plans/plan-doc-taxonomy.md`, the sibling scoping doc at
+[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
+deletes, and the parent backlog entry is removed from
+[`docs/backlog.md`](/docs/backlog.md), all in the same change set
+per the terminal contract state below.
 
 ## Purpose
 
@@ -110,248 +110,130 @@ authority file), and (c) what the canonical term is for each type
   conforming; scoping docs opened from `plan.md`'s land
   forward follow the rule.
 
-## PR Sequence
+## Contract states
 
-The four-PR sequence below is estimate-shaped per
-`docs/agents/planning/shared.md` "Plan content is a mix of rules
-and estimates — label which is which." The shape of each PR's
-content is contract-grain (what changes, what gets verified); the
-specific prose, exact diff hunks, and inter-PR boundaries may
-shift during implementation and reconcile via the Estimate
-Deviations callout in each PR body.
+The plan reaches its goal through a series of contract-state
+transitions. The implementer chooses how to decompose these into
+commits or PRs, when to ship each, and which technique to use for
+each verification check; the plan binds only the state transitions
+themselves and the partial ordering required between them. The PR
+decomposition pattern recommended in the sibling scoping doc's
+`Plan structure handoff` is an estimate that the implementer may
+revise.
 
-### PR 1 — Open `plan.md`, demote rules, update `shared.md`
+**State 1 — Demote without orphaning.** Each demoted rule
+(Planning Depth, Plan-to-PR Completion Gate, `` `In draft` →
+`Proposed` promotion gate ``) arrives in `plan.md` in the same
+change set that removes it from `shared.md`. No interim state
+where a demoted rule exists in neither file. `shared.md` self-
+references that targeted the removed sections (e.g., the rule's
+cross-references to "see the Plan-to-PR Completion Gate above")
+redirect to `plan.md` with section anchors in the same change
+set.
 
-**Shape:**
+**State 2 — `plan.md` exposes the three grains by section
+header.** `plan.md`'s internal structure separates shared rules
+/ task-plan-specific / phase-plan-specific / relationship
+content under named top-level headings, so a reader can locate
+per-grain content by section-header scan rather than line-by-
+line filtering. The exact section names are implementer choice;
+the contract is that the three grains are header-discoverable.
 
-- New file `docs/agents/planning/plan.md`. Absorbs current
-  `docs/agents/planning/phase.md` content as the shared-rules
-  base; adds task-plan-specific sections (cross-PR
-  coordination, N ≥ 2 trigger, status flip when the last
-  phase lands); adds phase-plan-specific sections (PR-count
-  branch test, bans-on-surface, per-PR shapes); adds a
-  Relationship section covering N = 1 collapse, the
-  N = 1 → N ≥ 2 transition guidance, and how a phase plan
-  cites its parent task plan. Absorbs the three demoted
-  rules from `shared.md` (Planning Depth, Plan-to-PR
-  Completion Gate, `` `In draft` → `Proposed` promotion gate ``)
-  into the appropriate shared / task / phase section.
-- `docs/agents/planning/shared.md` edits: remove the three
-  demoted sections; add closing cross-walk lines to the four
-  grain-shifting rules naming application at the three
-  category-grains; update any self-references that targeted
-  the removed sections (e.g., "see the Plan-to-PR Completion
-  Gate above") to point at `plan.md` with section anchors.
-- `docs/agents/planning/phase.md`, `epic.md`, `milestone.md`:
-  unchanged in this PR. `phase.md` stays as a parallel
-  reference so cross-links from other docs still resolve;
-  it deletes in PR 2.
+**State 3 — Cross-walk lines name application, not additional
+binding.** The four grain-shifting rules in `shared.md`
+(Verified-by, Falsifiability, Cross-Cutting Invariants, plan-doc
+review stance) gain closing prose naming the rule's application
+at the three category-grains (epic / milestone / plan). Framing
+is "what this rule means at this level," not "what the rule
+additionally requires at this level." The latter framing
+accidentally re-introduces the rule-duplication trap the merged
+`plan.md` was designed to avoid.
 
-**Contract:**
+**State 4 — Reference resolution at every commit boundary.**
+Every active in-repo reference to `docs/agents/planning/phase.md`
+resolves to a valid file at every commit boundary on the
+implementing branch. The implementer may achieve this by keeping
+`phase.md` as a parallel reference until the sweep completes, or
+by deleting `phase.md` in lock-step with reference updates.
+Archive docs under `docs/plans/archive/**` are excluded from the
+sweep per the existing no-retroactive-sweep discipline; archive
+references to a deleted durable doc are accepted as historical
+record, not as broken links requiring repair.
 
-- After this PR, the four files at
-  `docs/agents/planning/{shared,epic,milestone,plan}.md` plus
-  the unchanged `phase.md` together carry the full ruleset
-  with no rule lost in the demote.
-- `plan.md`'s internal structure separates shared / task-
-  plan-specific / phase-plan-specific / relationship sections
-  by top-level heading, so a reader can locate per-grain
-  content by section-header scan rather than line-by-line
-  filtering.
-- `shared.md`'s cross-walk lines on the four grain-shifting
-  rules are framed as "what this rule means at this level,"
-  not as additional binding sub-rules — the framing is the
-  protective check against re-introducing the rule-
-  duplication trap merged `plan.md` was designed to avoid.
+**State 5 — Sweep completeness before deletion.** Active in-repo
+rule-bearing references to `phase.md` — the category being any
+active rule-bearing file outside `docs/plans/archive/**` that
+cites the path, including agent docs, workflow docs, the PR
+template, the self-review catalog, root `AGENTS.md`, and active
+plan docs — point at `plan.md` before `phase.md` is deleted.
+The implementer enumerates the category at implementation time
+by whichever technique surfaces it completely (`grep`, IDE
+search, etc.); the contract is coverage of the category, not
+exhaustion of any pre-named list.
 
-**Verification:**
+**State 6 — Compound-noun discipline applied where ambiguous.**
+Bare "plan" in rule prose under `docs/agents/planning/` and
+adjacent rule-bearing files is upgraded to compound form ("task
+plan," "phase plan") where the bare noun creates ambiguity.
+Judgment per match, not blanket replacement; the rest of the
+repo's bare-"plan" usage is unaffected.
 
-- `npm run lint` passes.
-- Diff inspection confirms every rule that left `shared.md`
-  lands in `plan.md` (no rule dropped, none silently re-
-  scoped).
-- `shared.md` self-references point at `plan.md` after the
-  edit; no broken `shared.md` → `shared.md` self-link
-  targets the removed sections.
+**State 7 — Terminal close-out.** This plan reaches `Landed`
+Status in the same change set that deletes the sibling scoping
+doc at
+[`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
+and removes the parent backlog entry from
+[`docs/backlog.md`](/docs/backlog.md). None of the three actions
+land alone, per the Plan-to-PR Completion Gate and the
+close-tracking-surfaces-in-PR rule.
 
-### PR 2 — Delete `phase.md`, update agent-doc references
+**Required orderings between states:**
 
-**Shape:**
+- State 1 precedes State 4 (the demoted-rule content must exist
+  in `plan.md` before any redirect to `plan.md` resolves).
+- State 5 precedes `phase.md` deletion (the sweep must finish
+  while `phase.md` still exists as a parallel reference, or
+  deletion and redirects must land in the same change set).
+- State 7 is terminal — all prior states are satisfied when it
+  lands.
 
-- Delete `docs/agents/planning/phase.md`.
-- Update path references from `docs/agents/planning/phase.md`
-  to `docs/agents/planning/plan.md` in the agent-doc surface:
-  `docs/agents/planning/epic.md`,
-  `docs/agents/planning/milestone.md`,
-  `docs/agents/AGENTS.md`,
-  `docs/agents/workflows/implementation.md`,
-  `docs/agents/workflows/plan-implementation.md`,
-  `docs/agents/reference/pr-template.md`. Section-anchor
-  references update to the corresponding section name in
-  `plan.md`.
-
-**Contract:**
-
-- No link in the agent-docs surface (`docs/agents/**`)
-  points at `docs/agents/planning/phase.md`. All references
-  redirect to `docs/agents/planning/plan.md` with appropriate
-  section anchors.
-- Section-anchor updates preserve the cited rule's identity
-  — e.g., a reference to the Reality-check gate in `phase.md`
-  now points at the same gate in `plan.md`, not at a
-  similarly-named but different section.
-
-**Verification:**
-
-- `grep -rln 'docs/agents/planning/phase\.md' docs/agents/`
-  returns no matches.
-- `npm run lint` passes.
-- Each updated section anchor in the edited files resolves
-  to a real heading in `plan.md`.
-
-### PR 3 — Repo-wide sweep
-
-**Shape:**
-
-- Update path references and rule-prose compound-noun usage
-  across the named sweep targets (per scoping decision 9):
-  root [`AGENTS.md`](/AGENTS.md),
-  [`.github/pull_request_template.md`](/.github/pull_request_template.md),
-  [`docs/backlog.md`](/docs/backlog.md),
-  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md),
-  [`docs/testing-tiers.md`](/docs/testing-tiers.md),
-  [`docs/dev.md`](/docs/dev.md),
-  [`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md),
-  and active plan docs in `docs/plans/` (non-archive) that
-  cite `docs/agents/planning/phase.md`.
-- Bare-"plan" upgrades in rule prose under
-  `docs/agents/planning/` where ambiguous (judgment per
-  match, not blanket replacement).
-- Archive docs at `docs/plans/archive/**` are not swept; the
-  no-retroactive-sweep rule applies.
-
-**Contract:**
-
-- `grep -rln 'docs/agents/planning/phase\.md' .` returns
-  matches only inside `docs/plans/archive/` (frozen) and any
-  citation surfaces (commit messages, PR descriptions) that
-  are not durable docs.
-- The taxonomy backlog entry (parent of this plan) is
-  updated to reflect that scoping has resolved into this
-  plan; final entry removal lands in PR 4 close-out.
-- The drift-prevention backlog entry and the planning-doc-
-  location backlog entry are updated for any path/term
-  references that drifted during this revamp; their goals
-  and detail links are unchanged.
-
-**Verification:**
-
-- `grep -rln 'docs/agents/planning/phase\.md' .` returns only
-  archive matches.
-- `npm run lint` passes.
-- A pass against the sweep targets confirms each compound-
-  noun upgrade is locally unambiguous (compound form used
-  where the bare noun would create ambiguity; bare noun kept
-  where the surrounding prose anchors it).
-
-### PR 4 — Close-out
-
-**Shape:**
-
-- Flip this plan doc's `## Status` from `Proposed` (or
-  `In progress`) to `Landed`.
-- Delete
-  [`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
-  (sibling scoping doc, transient per the scoping doc's
-  leading prose).
-- Remove the parent backlog entry from
-  [`docs/backlog.md`](/docs/backlog.md) in the same PR per
-  the close-tracking-surfaces-in-PR rule.
-
-**Contract:**
-
-- The plan reaches terminal state (`Landed`) in the same PR
-  that satisfies its goals.
-- The transient scoping artifact deletes when the plan
-  closes out, leaving the durable record in the plan plus
-  the absorbed decisions in `docs/agents/planning/plan.md`.
-
-**Verification:**
-
-- `npm run lint` passes.
-- `grep -rln 'docs/agents/planning/phase\.md' .` returns
-  archive-only matches.
-- `docs/plans/scoping/plan-doc-taxonomy.md` no longer
-  exists.
-- The plan-doc-taxonomy entry is no longer present in
-  `docs/backlog.md` Tier 5.
-
-## Ordering Rationale
-
-PR 1 lands the central content edit (new `plan.md` + `shared.md`
-demotion). This is the largest content PR and is self-contained:
-`phase.md` stays in place as a parallel reference, so cross-
-links from other docs (active plans, agent workflows, root
-`AGENTS.md`) still resolve to a valid file. Reviewers see the
-demotion shape and the new `plan.md` structure together rather
-than spread across PRs.
-
-PR 2 deletes `phase.md` once `plan.md` is in place and all in-
-agent-doc references can be swept in the same PR. Deletion is
-deferred to its own PR because (a) the agent-doc updates are a
-distinct concern from the central content edit, (b) splitting
-keeps each PR reviewable in one sitting, and (c) the
-docs-canonical-corrections precedent (also a task plan with
-four PRs) uses a similar split between content edits and
-inventory deletions.
-
-PR 3 sweeps the repo. Sequenced after PR 2 because the sweep
-targets reference `phase.md` and `plan.md` paths; running the
-sweep before PR 2 would orphan some references. The bare-
-"plan" compound-noun upgrades happen here because they require
-judgment per match and benefit from being concentrated in one
-review pass rather than spread across PR 1 and PR 2.
-
-PR 4 closes out per the Plan-to-PR Completion Gate. The
-four-PR sequence mirrors the docs-canonical-corrections precedent
-([`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md))
-which the picker walk in scoping decision 7 confirmed is the
-right shape for a sequence-step task without independent value
-per PR.
+Other inter-state orderings (e.g., whether cross-walk lines from
+State 3 land before or after the sweep in State 5) are
+implementer choice.
 
 ## Risk Register
 
-- **Cross-walk line wording (decision 6) bleeds into per-level
-  interpretation as binding sub-rules.** If the per-level shapes
-  named in the cross-walks read as "at epic level it MUST be X,"
-  they accidentally re-introduce the rule-duplication trap the
-  merged `plan.md` was designed to avoid. Mitigation: PR 1's
-  self-review explicitly checks each cross-walk line for "what
-  this rule means" framing rather than "what the rule additionally
-  requires at this level."
-- **`phase.md` deletion in PR 2 orphans archive-plan
-  references.** Archive plans at `docs/plans/archive/**` cite
-  `phase.md` as a current-shape reference. Mitigation: archive
-  plans are frozen-in-time and may carry stale references per
-  the existing "no new active→archive links" discipline applied
-  in the reverse direction — archive references to deleted
-  durable docs are accepted as historical record, not as broken
-  links that need repair.
-- **Bare-"plan" sweep in PR 3 false-positives.** A `grep` on
-  `\bplan\b` returns many matches across the repo (the word is
-  common in product-feature names, commit messages quoted in
-  docs, and prose where the bare noun is unambiguous).
-  Mitigation: the sweep is judgment-per-match, scoped only to
+- **Cross-walk line wording bleeds into per-level interpretation
+  as binding sub-rules.** If the per-level shapes named in the
+  cross-walks read as "at epic level it MUST be X," they
+  accidentally re-introduce the rule-duplication trap the merged
+  `plan.md` was designed to avoid. Mitigation: framing is the
+  contract surface, not the specific wording — State 3 binds the
+  "what this rule means at this level" framing, and the same
+  self-review pass that lands State 3 checks each cross-walk
+  line against that framing.
+- **`phase.md` deletion orphans archive-plan references.**
+  Archive plans at `docs/plans/archive/**` cite `phase.md` as a
+  current-shape reference. Mitigation: archive plans are
+  frozen-in-time and may carry stale references per the existing
+  "no new active→archive links" discipline applied in the reverse
+  direction — archive references to deleted durable docs are
+  accepted as historical record, not as broken links that need
+  repair. State 4 names this exclusion explicitly.
+- **Bare-"plan" sweep false-positives.** The bare noun appears
+  across the repo in many non-rule contexts (product-feature
+  names, commit messages quoted in docs, prose where the bare
+  noun is unambiguous). Mitigation: State 6 binds the sweep to
   rule prose under `docs/agents/planning/` and adjacent rule-
-  bearing files (named in scoping decision 9); the rest of the
-  repo's bare-"plan" usage is unaffected.
-- **Section-anchor links in PR 2 drift if `plan.md` section
-  names change post-PR-1.** If PR 1 lands with section headings
-  that get renamed in PR 2 (e.g., during the agent-doc
-  reference updates), section anchors break. Mitigation: PR 1
-  freezes the `plan.md` section names; PR 2's anchor updates
-  cite the frozen names. Any post-PR-1 renaming requires a
-  follow-up sweep in the same PR.
+  bearing files; the rest of the repo's bare-"plan" usage is
+  unaffected.
+- **Section-anchor links drift if `plan.md` section names change
+  mid-implementation.** If a downstream change set renames
+  `plan.md` section headings that an earlier change set already
+  cited by anchor, the links break. Mitigation: section names
+  freeze when State 2 is satisfied; subsequent state transitions
+  cite the frozen names. Any post-freeze rename requires a
+  follow-up anchor sweep in the same change set.
 
 ## Resolved Decisions
 
@@ -384,28 +266,31 @@ The nine decisions resolved in the sibling scoping doc at
 8. Directory layout unchanged — `docs/plans/` stays; the
    compound-noun discipline handles the noun overload in prose,
    not in paths.
-9. Sweep targets named — the implementing PRs (2 and 3) walk
-   the explicit list from scoping decision 9 plus any
-   additional candidates surfaced by `grep` at plan-drafting
-   time.
+9. Sweep targets named — the category bound by States 4–6 covers
+   active rule-bearing in-repo files referencing `phase.md` or
+   carrying bare-"plan" in rule prose; the implementer enumerates
+   the category at implementation time using whichever technique
+   surfaces it completely. The scoping doc's explicit file list
+   is illustrative, not exhaustive.
 
 ## Related Docs
 
 - [`docs/plans/scoping/plan-doc-taxonomy.md`](/docs/plans/scoping/plan-doc-taxonomy.md)
-  — sibling scoping doc; deletes on PR 4 close-out.
+  — sibling scoping doc; deletes at terminal state (State 7).
 - [`docs/backlog.md`](/docs/backlog.md) — parent backlog entry
   (`Plan-doc taxonomy is ambiguous when authoring a new planning
-  doc`); removes on PR 4 close-out.
+  doc`); removed at terminal state (State 7).
 - [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
-  — current location of the three demoted rules; edited in PR 1.
+  — current location of the three demoted rules; edited as part
+  of State 1.
 - [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
   — content source for `plan.md`'s phase-plan-specific sections;
-  deletes in PR 2.
+  deletes when States 4–5 complete.
 - [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md),
   [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md)
-  — reference `phase.md` today; updated to reference `plan.md`
-  in PR 2.
+  — reference `phase.md` today; redirected to `plan.md` as
+  part of State 4.
 - [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
   — operational case the picker (scoping decision 7) is walked
-  against; structural precedent for this plan's four-PR
-  sequence.
+  against; structural precedent for the PR decomposition
+  pattern the sibling scoping doc recommends.

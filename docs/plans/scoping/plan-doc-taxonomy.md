@@ -335,7 +335,9 @@ plan-drafting, refined at implementation). Sweep targets:
 - `docs/testing-tiers.md` — Plan-to-Landed Gate references.
 - `docs/dev.md` — planning surface mentions.
 - `docs/tracking/agentic-practice-roadmap.md` — references
-  shared.md's plan-code-minimalism rationale.
+  `shared.md`'s "Plans describe contracts, not implementation"
+  rule rationale (consolidated form of the prior
+  plan-code-minimalism rule, per the rule body's own context).
 - Active (non-archive) plan docs in `docs/plans/` that cite
   `docs/agents/planning/phase.md` as a path or rule reference.
   Archive docs (`docs/plans/archive/**`) are not retroactively
