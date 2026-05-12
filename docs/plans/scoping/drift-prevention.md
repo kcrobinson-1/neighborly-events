@@ -152,8 +152,12 @@ named audit so it fires at push time):
 
 - Route or topology change → README / architecture / dev
   coupling audit (covers F1). Trigger pattern: commit touches
-  `apps/web/vercel.json`, `apps/site/next.config.ts`, or Vercel
-  root config.
+  Vercel rewrite / proxy config or Next.js routing config in
+  either app. The catalog-update PR enumerates the carrier
+  files at audit-Check altitude; scoping describes the category
+  per the
+  [Subset-enumerated-where-the-contract-names-a-category trap](/docs/agents/planning/shared.md)
+  in shared.md "Plans describe contracts, not implementation."
 - Validation-command coupling audit (covers F7-F9 and F10).
   Trigger pattern: commit adds, renames, or removes an entry in
   the documented validation-gate command list — including
