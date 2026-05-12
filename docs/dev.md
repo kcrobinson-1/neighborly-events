@@ -131,7 +131,7 @@ The shared `game-config` module still matters because:
 Browser-side Supabase code goes through the per-app adapter, not through
 `shared/db/` directly. The adapter owns env reading
 (`import.meta.env.*` for Vite in `apps/web`; `process.env.*` for Next.js
-in `apps/site` once M1 phase 1.3 lands), the singleton lifecycle, and
+in `apps/site`), the singleton lifecycle, and
 any framework-coupled gates (the prototype-fallback flag and the
 missing-config copy keyed off `import.meta.env.DEV`). `shared/db/`
 itself is env-agnostic and exposes only the SDK-level wiring
@@ -221,38 +221,28 @@ The same module owns `validateNextPath`, the open-redirect defense
 for the raw `next` query parameter received at `/auth/callback`. It
 is **browser-only**: the same-origin check reads
 `window.location.origin`, which is unavailable in Next.js server
-components and RSC contexts. M2 phase 2.3 kept `/auth/callback` as
-a client component in apps/site, so no server-side seam exists yet.
+components and RSC contexts. apps/site's `/auth/callback` route is
+implemented as a client component, so no server-side validation
+seam exists yet.
 
-The `eventLanding` and `eventAdmin` builder entries are present for
-forward-compatibility with M2 phase 2.2 and M3; their pathname
-matchers and their `validateNextPath` allow-list entries land with
-the consumers in the phases that mount those routes.
+The `eventLanding` and `eventAdmin` builder entries are consumed by
+the apps/site event-landing route and the apps/web per-event admin
+route respectively; their pathname matchers and `validateNextPath`
+allow-list entries are in place.
 
 ### Supabase Auth surface
 
-The role-neutral Supabase Auth surface — `getAuthSession`,
-`subscribeToAuthState`, `requestMagicLink`, `signOut`,
-`getAccessToken`, the `useAuthSession` hook, the `AuthCallbackPage`
-magic-link return handler, and the `SignInForm` — lives in
-[`shared/auth/`](/shared/auth). apps/web call sites continue to
-import from
-[`apps/web/src/lib/authApi`](/apps/web/src/lib/authApi.ts) (a pure
-re-export) and
-[`apps/web/src/auth`](/apps/web/src/auth/index.ts) (a pure
-re-export barrel for the components, hook, and types) so existing
-import paths do not change.
-
-`shared/auth/` is env-agnostic. Each app calls
-`configureSharedAuth({ getClient, getConfigStatus })` exactly once
-at startup with its env-derived providers. apps/web's setup lives
-in
-[`apps/web/src/lib/setupAuth.ts`](/apps/web/src/lib/setupAuth.ts),
-imported for side-effect by `apps/web/src/main.tsx`. apps/site's
-setup lives in [`apps/site/lib/setupAuth.ts`](/apps/site/lib/setupAuth.ts),
-mounted by
-[`SharedClientBootstrap`](/apps/site/components/SharedClientBootstrap.tsx)
-inside its `(authenticated)` route group.
+The role-neutral Supabase Auth surface (the `shared/auth/` module —
+its API, the `useAuthSession` hook, the `AuthCallbackPage`
+magic-link return handler, the `SignInForm`, per-app
+`configureSharedAuth` wiring, and the `@supabase/ssr` cookie
+internals including the `flowType: "implicit"` rationale, the
+`createStorageFromOptions` deep import, and the `0.10.0` exact pin)
+is described in
+[`docs/architecture.md` — Shared Domain Structure](/docs/architecture.md#shared-domain-structure).
+Use that section as the source-of-truth for what the auth surface
+is and how it's wired; this section covers only the
+dev-workflow-specific guidance that follows from it.
 
 When writing a test that exercises code transitively calling
 `shared/auth/`, choose one of two patterns:
@@ -266,51 +256,11 @@ When writing a test that exercises code transitively calling
   `afterEach` to leave a clean slate — this is the pattern
   `tests/shared/auth/api.test.ts` uses
 
-Session storage uses `@supabase/ssr`'s frontend-origin chunked
-cookie storage paired with `@supabase/supabase-js`'s `createClient`,
-both wired in
-[`shared/db/client.ts`](/shared/db/client.ts)'s
-`createBrowserSupabaseClient`. The cookie is named
-`sb-<project-ref>-auth-token` (chunked into `.0`/`.1` siblings when
-the JWT exceeds the per-cookie size limit; encoding is `base64url`).
-Attributes pinned in the factory: `Path=/`, `SameSite=Lax`, `Secure`
-set explicitly to `window.location.protocol === "https:"` (set on
-https, omitted on http://localhost). `@supabase/ssr` 0.10.x does
-**not** auto-detect `Secure` — its `DEFAULT_COOKIE_OPTIONS` ship
-`path` / `sameSite` / `httpOnly` / `maxAge` only — so the factory
-passes `secure` explicitly via `cookieOptions`. Do not remove the
-explicit flag under the assumption the package handles it; auth
-cookies would ship without `Secure` on production HTTPS. No
-`Domain=` attribute means the cookie is host-only on whichever
-origin sets it (the canonical site origin for apps/site sign-ins;
-the apps/web origin if a sign-in ever happens directly there).
-`HttpOnly` is impossible because the SPA browser adapter writes the
-cookie from JS — same exposure surface as the prior `localStorage`
-path.
-
-The factory uses `@supabase/ssr`'s internal
-[`createStorageFromOptions`](/node_modules/@supabase/ssr/dist/module/cookies.d.ts)
-deep import rather than its public `createBrowserClient` because
-`createBrowserClient` hardcodes `flowType: "pkce"` after spreading
-user options (the option is unoverridable through the public API).
-PKCE is incompatible with the production admin smoke fixture, which
-uses `auth.admin.generateLink({ type: "magiclink" })` — admin-generated
-links have no client-side PKCE code-verifier, so auth-js throws
-`AuthPKCEGrantCodeExchangeError("Not a valid PKCE flow url.")` on
-the resulting hash-fragment redirect. Pairing `createClient` with
-`@supabase/ssr`'s chunked cookie storage and `flowType: "implicit"`
-keeps both real magic-link sign-ins and the production smoke
-fixture working while preserving the chunked-cookie format shared by
-the apps/web and apps/site browser adapters.
-`@supabase/ssr` is exact-pinned at `0.10.0` in
-`apps/web/package.json` so the deep import path is stable.
-
-The localStorage → cookie migration that landed in M1 phase 1.3.2
-forced a one-time re-sign-in for every previously-signed-in admin:
-the prior session's token in `localStorage` is unreadable to
-`@supabase/ssr`'s cookie adapter and is not migrated by a shim. The
-in-place magic-link shell at `/admin` and `/event/:slug/admin`
-handles re-sign-in cleanly.
+The localStorage → cookie migration forced a one-time re-sign-in
+for every previously-signed-in admin: the prior session's token in
+`localStorage` is unreadable to `@supabase/ssr`'s cookie adapter
+and is not migrated by a shim. The in-place magic-link shell at
+`/admin` and `/event/:slug/admin` handles re-sign-in cleanly.
 
 ### Reducer-based game session
 
@@ -609,7 +559,7 @@ against a real local Supabase stack.
 Use it when changes can affect admin auth, allowlist checks, draft persistence,
 publish/unpublish behavior, Supabase Auth configuration, or the admin UI.
 
-This command is intentionally local-only in Phase 5.1:
+This command is intentionally local-only:
 
 - it is not included in `.github/workflows/ci.yml`
 - it is not included in `npm run validate:local`
@@ -821,38 +771,13 @@ aliases (see [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical
 
 ### Vercel two-project monorepo layout
 
-`apps/web` and `apps/site` are deployed as separate Vercel projects from
-the same git repository. `apps/site` is the canonical project: customer-
-visible URLs resolve on its primary alias, and `apps/site/next.config.ts`
-hosts the site → plugin rewrites that route `/event/:slug/{game,admin}*`
-and `/assets/*` into the apps/web plugin deployment. `apps/web/vercel.json`
-holds only the SPA's own internal rewrites (`/event/:slug/game*`,
-`/event/:slug/admin*`, `/event/:path*` → `/index.html`) plus the test-
-event `X-Robots-Tag` `headers` block — no cross-app proxy rewrites.
-
-The post-Phase-2 routing contract is documented in
-[`docs/architecture.md`](/docs/architecture.md#vercel-routing-topology) and
-established by [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
-(Phase 2 plan: [`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md)).
-
-In short, the routing authority lives in `apps/site/next.config.ts`:
-
-1. `/event/:slug/game` and `/event/:slug/game/:path*` → apps/web plugin
-   deployment via proxy rewrite (covers `/game/redeem` and
-   `/game/redemptions` operator routes)
-2. `/event/:slug/admin` and `/event/:slug/admin/:path*` → apps/web plugin
-   deployment via proxy rewrite (per-event admin shell)
-3. `/assets/:path*` → apps/web plugin deployment via proxy rewrite
-   (covers Vite-emitted hashed bundles referenced from the proxied SPA)
-4. Every other route — `/`, `/admin*`, `/auth/callback`, `/event/:slug`,
-   `/event/:slug/feedback`, `/event/:slug/{opengraph,twitter}-image`, and
-   any future event-scoped path not carved out for the plugin — resolves
-   natively on apps/site (Next.js App Router).
-
-apps/web's own `vercel.json` rewrites (`/event/:slug/{game,admin}*` and
-`/event/:path*` → `/index.html`) are SPA-internal and exist so the
-proxied plugin paths render against the SPA's `index.html`. They never
-proxy back to apps/site.
+`apps/web` and `apps/site` are deployed as separate Vercel projects
+from the same git repository. The full routing topology — which app
+owns which path pattern, where the rewrites live, and the
+first-match-wins ordering — is documented in
+[`docs/architecture.md` — Vercel routing topology](/docs/architecture.md#vercel-routing-topology).
+When changing the routing layer, edit `apps/site/next.config.ts`
+(the canonical routing authority) and re-check that table.
 
 ### Local-dev story for `/auth/callback` e2e fixtures
 
@@ -918,15 +843,12 @@ The auth cookie is set by `@supabase/ssr`'s frontend-origin adapter
 (cookie name `sb-<project-ref>-auth-token`, see "Supabase Auth
 surface" above) on the canonical site origin — apps/site, where
 `/admin` and `/auth/callback` natively render. apps/site routes read
-the cookie via Next.js `cookies()`. Post-Phase-2 the cookie story
-operates entirely within apps/site (no cross-app boundary to verify
-through); historically the question of whether apps/web-set cookies
-were visible to apps/site through a proxy rewrite was the open
-verification, traced through M0 phase 0.3's deferral to M1 phase
-1.3.2's resolution via the `@supabase/ssr` adapter — git history
-preserves the analysis. See
-[`docs/plans/archive/m0/site-scaffold-and-routing.md`](/docs/plans/archive/m0/site-scaffold-and-routing.md)
-"Verification Evidence" for the historical write-up.
+the cookie via Next.js `cookies()`. The cookie story now operates
+entirely within apps/site (no cross-app boundary to verify through);
+historically — before apps/site became the canonical project — the
+open question was whether apps/web-set cookies would be visible to
+apps/site through a proxy rewrite, resolved by switching to the
+`@supabase/ssr` adapter. Git history preserves the analysis.
 
 apps/site's placeholder at `/event/:slug` reads the cookie via
 Next.js `cookies()` and renders a presence-only readout (`Auth
@@ -1129,8 +1051,8 @@ One concrete gotcha already hit in this repo:
 
 The next likely development steps are:
 
-1. Add admin draft preview (Phase 4.5, deferred post-MVP) and AI-assisted
-   authoring entry points (Phase 4.7, deferred post-MVP).
+1. Add admin draft preview (deferred post-MVP) and AI-assisted
+   authoring entry points (deferred post-MVP).
 2. Add lightweight reporting for game starts, completions, and timing.
 3. Add richer event publish controls such as expiry windows if operations need them.
 4. Decide whether live usage justifies stronger abuse controls than the current
