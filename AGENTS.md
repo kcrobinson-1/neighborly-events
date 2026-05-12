@@ -69,7 +69,7 @@ the table.
 | Drafting an epic | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md) |
 | Drafting a milestone doc (sequencing, cross-phase invariants, cross-phase decisions) | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md) |
 | Drafting a phase scoping doc or phase plan doc | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) + [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md) |
-| Plan-to-Landed close-out PR (Status flip after post-release validation) | [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md) "Plan-to-PR Completion Gate" |
+| Plan-to-Landed close-out PR (Status flip after post-release validation) | [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md) "Plan-to-PR Completion Gate" |
 | Addressing PR review feedback | [`docs/agents/workflows/review-fixes.md`](/docs/agents/workflows/review-fixes.md) |
 | Capturing UI screenshots / building PR screenshot evidence | [`docs/agents/workflows/ui-review.md`](/docs/agents/workflows/ui-review.md) |
 | Debugging a failing validation, CI run, or local test | [`docs/agents/workflows/debugging.md`](/docs/agents/workflows/debugging.md) |

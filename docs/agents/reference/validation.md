@@ -162,7 +162,7 @@ The two rules that trip up plan authors most often:
   to any other plan whose Validation Gate names a check that can only
   run post-release; see [`docs/testing-tiers.md`](/docs/testing-tiers.md)
   "Plan-to-Landed Gate For Plans With Post-Release Validation" and
-  [`planning/shared.md`](../planning/shared.md) "Plan-to-PR
+  [`planning/plan.md`](../planning/plan.md) "Plan-to-PR
   Completion Gate" for the Status-flip semantics.
 - **Plans must not require contributors to configure production credentials
   on local laptops.** `PRODUCTION_SMOKE_*` env vars, production admin

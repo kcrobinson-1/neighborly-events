@@ -13,8 +13,8 @@ Load the planning rules from [`docs/agents/planning/`](/docs/agents/planning/):
   plans-describe-contracts-not-implementation (structural code
   minimalism plus contract-altitude discipline across all plan
   content), planning-artifacts-cite-each-other anti-pattern,
-  exact-match label quoting, `In draft` → `Proposed` promotion gate,
-  Cross-Cutting Invariants section requirement)
+  exact-match label quoting, Cross-Cutting Invariants section
+  requirement)
 - Plus the per-level file for the plan's level:
   - Epic-level docs (`docs/plans/epics/<slug>/epic.md`):
     [`docs/agents/planning/epic.md`](/docs/agents/planning/epic.md)
@@ -22,15 +22,21 @@ Load the planning rules from [`docs/agents/planning/`](/docs/agents/planning/):
     (`docs/plans/epics/<slug>/m<N>-<short-slug>.md` or pre-convention
     `docs/plans/m<N>-<short-slug>.md`):
     [`docs/agents/planning/milestone.md`](/docs/agents/planning/milestone.md)
-  - Phase-level docs (`docs/plans/epics/<slug>/m<N>-phase-<X>-<Y>-plan.md`
-    and the matching scoping doc under `scoping/`, or pre-convention
+  - Task plan and phase plan docs (per-task plans at
+    `docs/plans/<task-slug>.md`, per-phase plans at
+    `docs/plans/epics/<slug>/m<N>-phase-<X>-<Y>-plan.md` and
+    the matching scoping doc under `scoping/`, or pre-convention
     `docs/plans/m<N>-phase-<X>-<Y>-plan.md` and
     `docs/plans/scoping/m<N>-phase-<X>-<Y>.md`):
-    [`docs/agents/planning/phase.md`](/docs/agents/planning/phase.md)
+    [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 
-The Plan-to-PR Completion Gate (Status lifecycle, Estimate Deviations
-PR-body callout, soft-commitment ban) lives inside `shared.md` as a
-cross-level section — no separate file to load.
+The implementation-layer rules — Planning Depth, the
+`` `In draft` → `Proposed` `` promotion gate, the Plan-to-PR
+Completion Gate (Status lifecycle, Estimate Deviations PR-body
+callout, soft-commitment ban) — live inside
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md),
+not `shared.md`, because they bind task plans and phase plans
+but not epic or milestone docs.
 
 ## If you are implementing a plan
 
