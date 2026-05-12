@@ -131,13 +131,24 @@ Not an exhaustive list; new traps are appended as they're found.
   exposes itself, the prescribed technique no longer satisfies
   the contract. The fix is to describe what coverage the source
   must produce, not which source is used.
-- **Sequence prescribed where order is implementer's call.** A
-  plan prescribes "do X then Y" in an execution step or commit
-  boundary when the implementer's reasonable technique would
-  differ. The plan and the actual implementation diverge,
-  surfacing as an internal-coherence review finding. The fix is
-  to describe what must hold at sequence-end, not the order in
-  between.
+- **Trajectory prescribed where only the end state is in the
+  contract.** A plan describes a specific sequence of
+  intermediate steps — what order to do things, what commands to
+  run, how to decompose the work — when the contract is only
+  about what must hold at the end. Trajectory is the
+  implementer's choice; the contract is the post-implementation
+  state. Over-prescribing trajectory either contradicts the
+  implementer's reasonable choice (creating internal-coherence
+  bugs) or imports middle-state commitments the plan shouldn't
+  care about. The fix is to describe the end state and let the
+  implementer pick the trajectory. State transitions that ARE in
+  the contract — a validation gate that must pass before a
+  subsequent step, an output that a later step consumes, an
+  artifact that must reach a specific state before another can
+  act on it — are contract states, not trajectory; Planning
+  Depth's requirement to "insert steps at the correct point in
+  the sequence" applies to those contract states and does not
+  extend to prescribing trajectory between them.
 
 ### Forward-only application
 
