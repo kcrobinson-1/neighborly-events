@@ -296,7 +296,7 @@ Execute in any order.
   time.
   Detail: N/A
 
-- [ ] **`docs` Pre-push drift-prevention surfaces fire on the trigger classes that produced the 2026-05-11 audit**
+- [ ] **`docs` Pre-push drift-prevention surfaces anchor on intended product state, not cross-doc consistency**
   The [docs-canonical-corrections epic](/docs/plans/epics/docs-canonical-corrections/epic.md)
   corrected 13 instances of canonical-doc drift but does not address
   why the existing pre-push surfaces (the named-audit catalog in
@@ -310,15 +310,26 @@ Execute in any order.
   at all (new SQL migration → architecture migration inventory; new
   Edge Function → validation-gate command list; new top-level doc →
   doc-index entry; terminology rename → cross-doc propagation).
-  **Goal:** an agent or contributor finds these drift triggers
-  surfaced before push, classified concretely enough that the
-  pre-push pass either fires the right audit or surfaces "doesn't
-  apply" — not silent omission. One option among several: a sibling
-  planning doc audits the 13 findings, classifies each as
-  enforcement-gap or rule-gap, and proposes catalog refinements plus
-  new entries; CI-side grep gates and tooling are a parallel path,
-  not a substitute. Sequences after the corrections epic so the
-  audit findings inform the prevention scoping rather than racing it.
+  **Goal:** before push, an agent or contributor surfaces drift
+  triggers framed as "does the doc still describe the **intended
+  product state** correctly?" — not "do the canonical docs say the
+  same things as each other?" Cross-doc consistency is a cheap
+  tripwire and useful as such, but the actual quality bar is
+  intent-correctness against the authoritative source (SQL
+  migrations, route configs, code) plus whatever named design intent
+  the source carries (policy comments, commit messages, the relevant
+  plan doc). Two-doc-consistency converges on intent-correctness
+  most of the time but diverges in cases where the authoritative
+  source is itself wrong, where intent isn't yet committed, or where
+  the product has multiple legitimate states (deprecated paths still
+  present). The pre-push pass either fires the right audit or
+  surfaces "doesn't apply" — not silent omission. One option among
+  several: a sibling planning doc audits the 13 findings,
+  classifies each as enforcement-gap or rule-gap, and proposes
+  catalog refinements plus new entries; CI-side grep gates and
+  tooling are a parallel path, not a substitute. Sequences after
+  the corrections epic so the audit findings inform the prevention
+  scoping rather than racing it.
   Detail: TBD
 
 - [ ] **`infra` Investigate planning-doc location**

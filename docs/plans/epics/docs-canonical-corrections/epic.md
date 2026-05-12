@@ -144,10 +144,21 @@ classes: ones where an existing rule (in
 or repo-feedback memory) covers the case but didn't fire, and ones
 where no rule covers the trigger today.
 
+A note on framing for the prevention work: the right quality bar is
+"does the doc describe the intended product state correctly?" not
+"do the canonical docs say the same things as each other?"
+Cross-doc consistency is a useful tripwire but a weaker test —
+matching docs encode the same wrong state just as easily as the
+right one. The prevention work should anchor on the authoritative
+source for each trigger class (SQL migrations, route configs, code)
+plus whatever named design intent that source carries (policy
+comments, commit messages, the relevant plan doc), and use
+cross-doc consistency only as a cheap second check.
+
 Recurrence prevention is scoped in a sibling backlog entry under
 Tier 5 of [`docs/backlog.md`](/docs/backlog.md): "Pre-push
-drift-prevention surfaces fire on the trigger classes that produced
-the 2026-05-11 audit." The classification (enforcement-gap vs
+drift-prevention surfaces anchor on intended product state, not
+cross-doc consistency." The classification (enforcement-gap vs
 rule-gap) and the concrete catalog updates are designed at pickup
 time, not in this epic. The backlog entry sequences after this
 epic merges so the corrections inform the prevention scoping rather
@@ -280,18 +291,27 @@ Contracts:
   state in `20260509000000_add_submit_feedback_rpc.sql`, not the
   retired direct-anon-insert state in
   `20260506000000_add_feedback_tables.sql`. PR 2's author reads
-  both migrations in order and describes the resulting state:
-  `submit_feedback()` is `SECURITY DEFINER` with `EXECUTE` granted
-  to `anon` and `authenticated` and is the only anon-reachable
-  write path; direct `INSERT` on `feedback_submissions` is revoked
-  from `anon`; authenticated reads of `feedback_submissions` flow
-  through the event-scoped role helpers; `feedback_enabled_events`
-  has all grants revoked from `anon` and `authenticated`, so the
-  registry is reachable only via the service role and from inside
-  the RPC body itself. The doc explains why this shape exists:
-  PostgREST's default `INSERT` handler emits `RETURNING *` which
-  requires `SELECT`, so direct anon insert was unworkable without
-  granting anon read access to submissions.
+  both migrations in order and describes the resulting state
+  table-by-table:
+  - `submit_feedback()` is `SECURITY DEFINER`; `EXECUTE` is granted
+    to `anon` and `authenticated` and the RPC is the only
+    anon-reachable write path on `feedback_submissions`.
+  - `feedback_submissions`: direct `INSERT` is revoked from `anon`
+    (the "anon can insert feedback for registered events" policy is
+    dropped); `authenticated` retains `SELECT`, gated by the
+    organizer-or-admin RLS policy on the matching event.
+  - `feedback_enabled_events`: `anon` has all grants revoked (the FK
+    from `feedback_submissions.event_slug` enforces registered-slug
+    submissions without anon needing to read the registry);
+    `authenticated` retains `SELECT`, gated by an RLS policy that
+    scopes rows to organizers and admins of the matching event;
+    service role is unrestricted. The registry `SELECT` policy is
+    unchanged across both feedback migrations
+    (per `20260509000000_add_submit_feedback_rpc.sql` line 76).
+  The doc explains *why* the RPC indirection exists rather than just
+  *that* it does: PostgREST's default `INSERT` handler emits
+  `RETURNING *` which requires `SELECT`, so a direct anon insert path
+  was unworkable without granting anon read access to submissions.
 - No plan-doc citations are load-bearing; the migrations and the
   route file are the authoritative sources.
 
