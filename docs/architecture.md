@@ -260,6 +260,32 @@ grouped into a dedicated `apps/web/src/game/` module:
   slugs from `eventContentBySlug`; per-event metadata resolves from
   the same registry; the page wraps in `<ThemeScope>` so the
   registered Theme applies to the rendered shell.
+- `apps/site/app/event/[slug]/feedback/page.tsx` and
+  `apps/site/app/event/[slug]/feedback/FeedbackForm.tsx`
+  Public per-event attendee-feedback route at
+  `/event/:slug/feedback`. Route availability is gated by the
+  per-event content module under `apps/site/events/`, not by the
+  DB registry: `generateStaticParams` enumerates the same
+  registered slugs as the landing route; metadata mirrors the
+  landing's `noindex` posture for test events; the Server
+  Component page calls `notFound()` for unknown slugs, renders an
+  inline disabled-state when the event content omits a `feedback`
+  block, and otherwise renders `<FeedbackForm>` inside
+  `<ThemeScope>` so the per-event Theme applies. The DB-level
+  `feedback_enabled_events` registry enforces the slug invariant
+  at submit time via the `feedback_submissions.event_slug` FK,
+  not at page-render time, so adding a new event requires both a
+  content-module update (to surface the form) and a registry seed
+  (to admit submissions). The client form collects ratings,
+  optional free-text, optional email, and an optional newsletter
+  opt-in, then submits one row through the `submit_feedback`
+  SECURITY DEFINER RPC per successful completion (see Current
+  Backend Surface). The form has no resubmit affordance after a
+  successful submission, but the DB carries no attendee
+  identifier and no per-submitter uniqueness constraint, so the
+  same attendee may produce additional rows across visits or
+  reloads — deduplication is an export-time analytics concern,
+  not a DB-level invariant.
 - `apps/site/components/event/`
   Section components composed by `EventLandingPage` (header,
   schedule, lineup, sponsors, FAQ, CTA, footer, plus
@@ -700,18 +726,54 @@ The Supabase side is intentionally small:
   `game_entitlements` read policy from `20260421000500` already
   admits agents/organizers/root.
 - `supabase/migrations/20260506000000_add_feedback_tables.sql`
-  Creates `public.feedback_enabled_events` (slug-keyed registry, FK
-  target) and `public.feedback_submissions` (one row per attendee
-  submission, FK to the registry) with RLS enabled. CHECK constraints
-  encode the consent invariants
-  (`email_declined ⇒ email is null`,
-  `newsletter_opt_in ⇒ a real non-declined email is present`).
-  Seeds the `madrona` slug in the registry so the FK is load-bearing
-  from t=apply. The anon INSERT path on `feedback_submissions` shipped
-  by this migration is later replaced in `20260509000000` by the
-  `submit_feedback(...)` SECURITY DEFINER RPC and the table's anon
-  grants are revoked; the newsletter capture column is further moved
-  to a dedicated log table by `20260510000000`.
+  Public attendee-feedback DB foundation. Creates the slug-keyed
+  registry table `public.feedback_enabled_events` (PK `slug`,
+  seeded with the `madrona` slug in the same migration so the FK
+  is load-bearing from the moment it applies) and the submission
+  table `public.feedback_submissions` (uuid PK, `event_slug` FK
+  → `feedback_enabled_events(slug)` ON DELETE RESTRICT,
+  monitoring index on `(event_slug, submitted_at desc)`, and two
+  CHECK constraints encoding the consent invariants:
+  `email_declined ⇒ email IS NULL`, and
+  `newsletter_opt_in ⇒ email IS NOT NULL AND email_declined =
+  false`). The table carries no attendee identifier and no
+  uniqueness constraint on submitter, so a given attendee may
+  produce multiple submission rows across visits; deduplication
+  is an export-time analytics concern, not a DB-level invariant.
+  RLS is enabled on both tables. Per-role posture at this
+  migration's snapshot:
+  - `feedback_enabled_events`: anon `revoke all` (no grants,
+    registry not anon-readable); authenticated `revoke all`
+    then `grant select` gated by an RLS SELECT policy scoping
+    rows to organizers of the matching event or root admins via
+    `is_organizer_for_event() OR is_root_admin()`; service role
+    unrestricted (Supabase baseline — the migration does not
+    touch service_role grants and service_role bypasses RLS).
+  - `feedback_submissions`: anon `revoke all` then `grant
+    insert` only, gated by an RLS `with check (true)` insert
+    policy plus the FK to the registry; authenticated `revoke
+    all` then `grant select` gated by an RLS SELECT policy
+    using the same `is_organizer_for_event() OR
+    is_root_admin()` resolver as the registry; service role
+    unrestricted (Supabase baseline). No UPDATE or DELETE
+    policy on either table — non-anon mutation is service-role
+    only.
+  Later changes touching these tables:
+  `20260509000000_add_submit_feedback_rpc.sql` supersedes the
+  anon posture on `feedback_submissions` (drops the insert
+  policy, revokes the table grant);
+  `20260510000000_split_newsletter_opt_ins.sql` attaches a
+  column comment to `feedback_submissions.newsletter_opt_in`
+  framing it as a denormalized snapshot of opt-in intent (the
+  canonical consent record moves to `newsletter_opt_ins`);
+  `20260510010000_constrain_event_slug_shape.sql` adds the
+  `feedback_enabled_events_slug_format` CHECK constraint on
+  `feedback_enabled_events.slug` (alongside parallel constraints
+  on `game_events.slug` and `game_event_drafts.slug` — see that
+  migration's entry). Per-role grants, RLS policies, the FK from
+  `feedback_submissions.event_slug`, indexes, and the two
+  consent-invariant CHECK constraints on both tables are
+  otherwise unchanged thereafter.
 - `supabase/migrations/20260507000000_relax_slug_lock_to_currently_live.sql`
   Relaxes the slug-lock trigger: the function now probes
   `game_events.published_at` for the matching id and raises only while
@@ -733,14 +795,40 @@ The Supabase side is intentionally small:
   entitlement creation and an in-flight completion blocks the trigger's
   count-of-zero check from running on a stale snapshot.
 - `supabase/migrations/20260509000000_add_submit_feedback_rpc.sql`
-  Adds the `public.submit_feedback(...)` SECURITY DEFINER RPC and
-  revokes the anon INSERT path on `feedback_submissions` so the
-  attendee write flows through the RPC (returns `void`; no row leaks
-  back, no anon SELECT grant required). Trust gates at the function
-  grant boundary; the table's CHECK constraints from `20260506000000`
-  remain the DB-level integrity gate. The RPC body is later extended
-  by `20260510000000` to chain a `subscribe_email(...)` call when the
-  caller opted in.
+  Hardens the anon write path to `feedback_submissions` by
+  routing it through a SECURITY DEFINER RPC instead of a direct
+  table INSERT. Creates `public.submit_feedback(p_event_slug text,
+  p_ratings jsonb, p_email_declined boolean,
+  p_newsletter_opt_in boolean, p_free_text text default null,
+  p_email text default null) returns void` with
+  `set search_path = public`, then `revoke all` on it from public
+  and `grant execute` to anon and authenticated. The migration
+  also drops the anon insert policy
+  (`"anon can insert feedback for registered events"`) on
+  `feedback_submissions` and revokes the table-level INSERT
+  grant from anon. Post-hardening per-role posture on
+  `feedback_submissions`: anon has no table grants and no RLS
+  policy admits anon writes — the only anon-reachable write path
+  is `submit_feedback()`; authenticated retains the SELECT grant
+  and the organizer/admin SELECT policy installed by
+  `20260506000000_add_feedback_tables.sql` (the migration's
+  trailing comment explicitly notes this is unchanged); service
+  role unchanged from the Supabase baseline. Per-role posture on
+  `feedback_enabled_events`: unchanged by this migration (anon
+  no grants, authenticated SELECT gated by the organizer/admin
+  policy, service role unrestricted). The motivation, recorded
+  in the migration's header comment block, is that PostgREST's
+  default INSERT handler emits `RETURNING *` which requires
+  SELECT, and anon SELECT on `feedback_submissions` is
+  intentionally absent (writes-only public posture); routing the
+  anon write through a SECURITY DEFINER function bypasses RLS,
+  returns void so no row leaks back, and gates trust at the
+  function-grant boundary rather than the table-grant boundary.
+  The FK from `feedback_submissions.event_slug` →
+  `feedback_enabled_events(slug)` and both CHECK constraints
+  remain the DB-level integrity gate — they enforce
+  submissions-against-registered-slugs without anon needing
+  SELECT on the registry.
 - `supabase/migrations/20260509170000_extend_game_events_feedback_mode_check.sql`
   Widens the `game_events.feedback_mode` CHECK constraint to accept
   `instant_feedback_non_blocking` alongside the existing
@@ -748,21 +836,42 @@ The Supabase side is intentionally small:
   widening — every row that satisfied the previous predicate continues
   to satisfy the new one.
 - `supabase/migrations/20260510000000_split_newsletter_opt_ins.sql`
-  Splits newsletter opt-in capture off `feedback_submissions` into an
-  append-only `public.newsletter_opt_ins` log (surrogate PK, no
-  row-uniqueness constraint, `source_surface` CHECK gated to
-  `feedback_form` / `standalone`). Adds the internal
-  `public.subscribe_email(p_event_slug, p_email, p_source_surface)`
-  SECURITY DEFINER helper with EXECUTE revoked from public / anon /
-  authenticated (reachable only from inside another SECURITY DEFINER
-  function whose owner is the same role). Extends
-  `submit_feedback(...)` so its body chains a `subscribe_email(...)`
-  call with `p_source_surface = 'feedback_form'` when
-  `p_newsletter_opt_in = true`; the existing CHECK constraint
-  guarantees `p_email` is non-null in that branch. The
-  `feedback_submissions.newsletter_opt_in` column persists as a
-  denormalized snapshot of intent at submission time, separate from
-  the canonical consent log.
+  Splits newsletter opt-in capture off the feedback submission
+  row into a separate append-only consent log. Creates
+  `public.newsletter_opt_ins` (uuid PK, `event_slug` FK →
+  `feedback_enabled_events(slug)` ON DELETE RESTRICT, normalized
+  `email` via `lower(trim(...))` at write time, `opted_in_at`,
+  and `source_surface` constrained to `'feedback_form'` or
+  `'standalone'`; export index on `(event_slug, opted_in_at
+  desc)`; non-unique by design, one row per opt-in event). RLS
+  enabled. Per-role posture on `newsletter_opt_ins`: anon
+  `revoke all` (no grants — writes flow through the RPC chain,
+  reads are organizer-only); authenticated `revoke all` then
+  `grant select` gated by an RLS SELECT policy using the same
+  `is_organizer_for_event() OR is_root_admin()` resolver as the
+  feedback tables; service role unrestricted (Supabase baseline).
+  No anon-callable write surface: the only writer is the
+  internal helper `public.subscribe_email(p_event_slug text,
+  p_email text, p_source_surface text)`, a SECURITY DEFINER
+  function whose EXECUTE is revoked from public, anon, and
+  authenticated and which is reachable only from inside another
+  SECURITY DEFINER function whose owner role allows it (today,
+  only `submit_feedback`). Because callers cannot reach
+  `subscribe_email` directly, `p_source_surface` is supplied as
+  a hardcoded literal by each calling RPC, not by the network
+  client. The migration also replaces the `submit_feedback` body
+  so that when `p_newsletter_opt_in = true` it calls
+  `subscribe_email(p_event_slug, p_email, 'feedback_form')`
+  inside the same transaction as the feedback INSERT — helper
+  failure rolls the feedback row back. The `submit_feedback`
+  grant set (EXECUTE to anon and authenticated) is unchanged
+  from `20260509000000_add_submit_feedback_rpc.sql`; per-role
+  posture on `feedback_enabled_events` and
+  `feedback_submissions` is unchanged. The boolean column
+  `feedback_submissions.newsletter_opt_in` survives as a
+  denormalized snapshot of opt-in intent at the submission
+  moment; the capture log is canonical for the durable consent
+  record and outlives capture-log purges.
 - `supabase/migrations/20260510010000_constrain_event_slug_shape.sql`
   Adds storage-layer CHECK constraints on
   `game_event_drafts.slug`, `game_events.slug`, and
@@ -1060,6 +1169,31 @@ The current implementation uses:
   the load-bearing security mechanism that keeps the bypass read-
   only on the server side; the apps/web `X-Robots-Tag` headers
   cover the surface-discoverability layer in parallel.
+- `public.submit_feedback(p_event_slug text, p_ratings jsonb,
+  p_email_declined boolean, p_newsletter_opt_in boolean,
+  p_free_text text default null, p_email text default null)`
+  SECURITY DEFINER RPC (returns void, `search_path` locked to
+  `public`), EXECUTE granted to anon and authenticated. The only
+  anon-reachable write path to `feedback_submissions`: the direct
+  anon INSERT grant and the `with check (true)` anon insert policy
+  installed by `20260506000000_add_feedback_tables.sql` were
+  revoked by `20260509000000_add_submit_feedback_rpc.sql` so anon
+  trust is gated at the function-grant boundary rather than the
+  table-grant boundary. The FK from
+  `feedback_submissions.event_slug` →
+  `feedback_enabled_events(slug)` is what enforces submissions
+  against the registered-slug set without anon needing SELECT on
+  the registry; the two `feedback_submissions` CHECK constraints
+  continue to enforce the consent invariants from inside the
+  table. The function returns void so no row leaks back to anon,
+  sidestepping PostgREST's `RETURNING *` default that otherwise
+  requires SELECT on the target table. When the caller passes
+  `p_newsletter_opt_in = true` the function also writes a consent
+  row through the internal `subscribe_email` helper added by
+  `20260510000000_split_newsletter_opt_ins.sql` (with
+  `'feedback_form'` hardcoded as the `source_surface` literal, not
+  attacker-controllable) so the feedback row and the capture-log
+  row land in one transaction.
 
 There is still no custom general-purpose application API beyond those bounded
 surfaces, and that is intentional. The system exposes only the reads and
