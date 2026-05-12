@@ -2,13 +2,17 @@
 
 ## Status
 
-Proposed. One-time correction pass against the top-level canonical
-docs, scoped to land within ~one week across four PRs. Closes out on
-PR 4 by flipping this doc's Status to `Landed` in place at
-`docs/plans/docs-canonical-corrections.md` and removing the active-
-effort pointer from
-[`documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md)
-in the same PR.
+Landed. One-time correction pass against the top-level canonical
+docs, scoped to land within ~one week across four PRs. PR 1 corrected
+the seven mechanical inaccuracies; PR 2 documented the shipped
+attendee-feedback feature; PR 3 deduplicated the canonical coverage
+that overlapped between `docs/architecture.md` and `docs/dev.md` and
+scrubbed internal phase identifiers from those two docs and the root
+`README.md`; PR 4 rebuilt the doc index at
+[`docs/README.md`](/docs/README.md) against the post-PR-3 doc set,
+removed the active-effort pointer from
+[`documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md),
+and flipped this doc's Status to `Landed` in place.
 
 ## Purpose
 

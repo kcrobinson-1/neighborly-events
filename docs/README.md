@@ -30,19 +30,23 @@ If you want:
 - a quick project overview and setup entrypoint, start with [../README.md](/README.md)
 - the problem, users, goals, and success criteria, read [product.md](/docs/product.md)
 - the intended attendee and organizer experience, read [experience.md](/docs/experience.md)
-- the current system shape and trust boundaries, read [architecture.md](/docs/architecture.md)
-- the published-content milestone details and tradeoffs, read [plans/archive/database-backed-quiz-content.md](/docs/plans/archive/database-backed-quiz-content.md)
-- the historical quiz authoring plan, read [plans/archive/quiz-authoring-plan.md](/docs/plans/archive/quiz-authoring-plan.md)
-- the local workflow, validation commands, release flow, or troubleshooting steps, read [dev.md](/docs/dev.md)
+- the current system shape, trust boundaries, the Vercel routing topology,
+  and the Supabase Auth surface (including the `@supabase/ssr` cookie
+  internals), read [architecture.md](/docs/architecture.md)
+- the local workflow, validation commands, release flow, or troubleshooting
+  steps — including the dev-workflow-specific guidance that follows from the
+  auth surface described in architecture.md — read [dev.md](/docs/dev.md)
 - the named audits to run on a diff before push, read [self-review-catalog.md](/docs/self-review-catalog.md)
-- proposed improvements to local validation, screenshot, PR, and agent workflow,
-  read [tracking/dev-workflow-improvements.md](/docs/tracking/dev-workflow-improvements.md)
-- the live-event-readiness fix plan for the admin live-status mismatch, read
-  [plans/archive/admin-live-status-plan.md](/docs/plans/archive/admin-live-status-plan.md)
+- the redemption MVP design (operator flow, RPC envelope, reversal model), read [redemption-design.md](/docs/redemption-design.md)
+- the platform token classification, color-derivation policy, and per-event Theme model, read [styling.md](/docs/styling.md)
+- the testing-tier map (which tier gates which decision), read [testing-tiers.md](/docs/testing-tiers.md)
 - the testing strategy, current coverage snapshot, command-selection matrix, and rollout plan, read [testing.md](/docs/testing.md)
 - the platform ownership model and live monitoring runbook for GitHub, Vercel, and Supabase, read [operations.md](/docs/operations.md)
-- the analytics strategy, tool recommendations, and dashboard goals, read [tracking/analytics-strategy.md](/docs/tracking/analytics-strategy.md)
+- the prioritized post-MVP follow-up work across all concern areas, read [backlog.md](/docs/backlog.md)
 - the unresolved product, UX, and workflow decisions, read [open-questions.md](/docs/open-questions.md)
+- proposed improvements to local validation, screenshot, PR, and agent workflow,
+  read [tracking/dev-workflow-improvements.md](/docs/tracking/dev-workflow-improvements.md)
+- the analytics strategy, tool recommendations, and dashboard goals, read [tracking/analytics-strategy.md](/docs/tracking/analytics-strategy.md)
 - the documentation maintenance plan, read [tracking/documentation-quality-checklist.md](/docs/tracking/documentation-quality-checklist.md)
 - the living release readiness plan and quality-check methodology, read [tracking/release-readiness.md](/docs/tracking/release-readiness.md)
 
@@ -57,31 +61,38 @@ Use these boundaries to keep the docs tidy:
 - `docs/experience.md`
   UX goals, interaction rules, attendee flow, volunteer flow, and visual direction
 - `docs/architecture.md`
-  current implementation shape, runtime flow, data ownership, and trust boundaries
-- `docs/plans/archive/database-backed-quiz-content.md`
-  durable implementation reference for the published-content milestone, including
-  schema decisions, tradeoffs, and deferred follow-up work
-- `docs/plans/archive/quiz-authoring-plan.md`
-  product, UX, and engineering plan plus current phase status for
-  organizer/admin quiz creation, editing, preview, and publish workflows
+  current implementation shape, runtime flow, data ownership, trust boundaries,
+  the Vercel routing topology, and the Supabase Auth surface (including the
+  `@supabase/ssr` cookie internals)
 - `docs/dev.md`
-  how engineers work in the repo today: setup, validation, release flow, and troubleshooting
+  how engineers work in the repo today: setup, validation, release flow,
+  troubleshooting, and the dev-workflow-specific guidance that follows from
+  the auth surface (test patterns, e2e proxy, cookie-boundary verification recipe)
 - `docs/self-review-catalog.md`
   named, reusable audits to run on a diff before push — each audit has a
   specific trigger, concrete check steps, and a past incident example
-- `docs/tracking/dev-workflow-improvements.md`
-  concrete follow-up tasks for improving local validation, screenshot capture,
-  PR evidence, and agent workflow
-- `docs/plans/archive/admin-live-status-plan.md`
-  landed live-event-readiness fix for the admin/public publication-state mismatch
-  and the follow-up status-model cleanup; archived after Slice 3 production smoke
+- `docs/redemption-design.md`
+  reward-redemption MVP design: operator flow, RPC envelope, reversal model,
+  and authorization model
+- `docs/styling.md`
+  binding token classification, color-derivation policy, and per-event `Theme`
+  model
+- `docs/testing-tiers.md`
+  cross-cutting map of testing tiers — what each tier catches, where it runs,
+  and which decisions it can gate
 - `docs/testing.md`
   what to test, where tests should run, what to mock, and what is intentionally overkill right now
 - `docs/operations.md`
   what is repo-managed versus manually maintained across platforms, plus the
   current live monitoring and log-triage runbook
+- `docs/backlog.md`
+  single priority-ordered list of post-MVP follow-up work across all concern
+  areas, with one detail file per entry
 - `docs/open-questions.md`
   unresolved decisions that should stay explicit instead of being guessed in canonical docs
+- `docs/tracking/dev-workflow-improvements.md`
+  concrete follow-up tasks for improving local validation, screenshot capture,
+  PR evidence, and agent workflow
 - `docs/tracking/analytics-strategy.md`
   end goal of analytics, approaches, evaluation criteria, third-party tool guidance, and dashboard goals
 - `docs/tracking/documentation-quality-checklist.md`
