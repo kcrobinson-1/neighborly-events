@@ -329,6 +329,36 @@ Execute in any order.
   move to GitHub Discussions or similar without losing their protective check.
   Detail: [`docs/plans/planning-doc-location.md`](/docs/plans/planning-doc-location.md)
 
+- [ ] **`infra` Plan-doc taxonomy is ambiguous when authoring a new planning doc**
+  A contributor opening a new planning effort today can't answer (a) which
+  doc-type fits the effort, (b) what content grain applies at that doc-type,
+  or (c) what the canonical term is for each type without trial and error.
+  Two concrete handles motivate this: the noun "plan" carries two meanings
+  simultaneously in the repo — any doc in the plan tree (reinforced by
+  `docs/plans/` holding everything, including epics) and a specific doc-type
+  smaller than an epic but larger than a single phase — so rules phrased
+  against "plans" (no fenced code blocks, contracts not implementation, no
+  PR-list breakdown) silently apply to one meaning or the other without
+  telling the reader which, and a rule like "plans don't list their PR
+  breakdown" is unambiguous only after the noun is. Doc-type selection
+  criteria live in `docs/agents/planning/` (`epic.md`, `milestone.md`,
+  `phase.md`, `shared.md`); the picker should determine whether the gap is
+  "criteria are missing" or "criteria exist but didn't fire on a recent
+  misclassification" — both are in-scope. Operational cost: a recent
+  in-flight effort labeled an "epic" was structurally a narrower-sense plan
+  (a small ordered set of PRs, no milestones, no cross-cutting invariants
+  beyond what a plan would carry); the misnaming let the doc carry the
+  wrong grain of content in per-PR contracts, surfacing as one-finding-at-
+  a-time review corrections rather than being avoided up front. **Goal:**
+  a contributor can pick the right doc-type for a new effort and know the
+  content grain that applies, with the canonical term for each type
+  unambiguous. Several scoping moves could reach the goal — settling the
+  axes that decide doc-type, disambiguating the overloaded "plan" noun, or
+  rewriting `docs/agents/planning/` so the picker discriminates by
+  doc-type rather than by hierarchy level — are all worth comparing at
+  scoping time.
+  Detail: TBD
+
 - [ ] **`ux` Event details inline vs. dedicated route**
   Decide whether event details should remain in the selected workspace or move
   to a dedicated route once the page gets denser.
