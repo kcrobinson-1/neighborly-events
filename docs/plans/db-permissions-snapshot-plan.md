@@ -282,9 +282,10 @@ call.
    snapshot; the Tier 5 entry in `docs/backlog.md` is removed;
    `docs/plans/db-permissions-snapshot.md` carries the Decision
    section naming B2 + A1 + (2) and the C3 reshape; this plan's
-   Status is `Landed` per the Plan-to-PR Completion Gate. The
-   order of these surface updates within the implementing PR is
-   implementer's call.
+   Status is `Landed` per the Plan-to-PR Completion Gate at
+   [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md).
+   The order of these surface updates within the implementing PR
+   is implementer's call.
 
 ## Commit Boundaries
 
@@ -360,7 +361,7 @@ Audits the implementer runs before opening the PR:
   the same "leave the durable artifact in a terminal state in the
   same PR that implements the work" pattern the Plan-to-PR
   Completion Gate prescribes for plan Status flips. Verified by:
-  [`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+  [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
   "Plan-to-PR Completion Gate" section.
 
 ## Documentation Currency PR Gate
@@ -452,7 +453,7 @@ The Tier 5 `db` entry at
 policies are knowable without reading every migration in order" —
 is removed in the implementing PR, applying the same "terminal
 state in the same PR" pattern the Plan-to-PR Completion Gate at
-[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 prescribes for plan Status flips. The scoping doc and this plan
 together become the durable record of the deliberation and
 contract; the backlog entry is no longer load-bearing once the
