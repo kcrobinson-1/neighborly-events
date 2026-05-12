@@ -392,7 +392,7 @@ Execute in any order.
   rewriting `docs/agents/planning/` so the picker discriminates by
   doc-type rather than by hierarchy level — are all worth comparing at
   scoping time.
-  Detail: TBD
+  Detail: [`docs/plans/plan-doc-taxonomy.md`](/docs/plans/plan-doc-taxonomy.md)
 
 - [ ] **`ux` Event details inline vs. dedicated route**
   Decide whether event details should remain in the selected workspace or move
