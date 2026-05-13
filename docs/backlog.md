@@ -335,7 +335,7 @@ Execute in any order.
   the drafted audits live on the
   `docs/drift-prevention-catalog-audits` branch and can be pulled
   forward when any of the six classes recurs on a second distinct PR.
-  Detail: TBD
+  Detail: [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
 
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and
