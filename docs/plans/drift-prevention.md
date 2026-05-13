@@ -91,9 +91,10 @@ After this plan lands its full sequence:
   prose.
 - The Tier 5 backlog entry "Pre-push drift-prevention surfaces
   anchor on intended product state and right-grain contracts"
-  at [`docs/backlog.md`](/docs/backlog.md) is removed in
-  whichever of PR 1 / PR 2 merges last (which also flips this
-  plan's Status to Landed and deletes the sibling scoping doc).
+  at [`docs/backlog.md`](/docs/backlog.md) is removed in the
+  follow-up close-out PR (which also flips this plan's Status
+  to Landed and deletes the sibling scoping doc) per the
+  Parallel-implementing-PRs exception named in Contracts below.
 
 The net effect on durable rule count: four catalog audits added,
 four checklist items removed, one existing trap revised to
@@ -147,15 +148,23 @@ surfaces to land in lock-step or the partial state is the
 additive-shape trap). PR 2 touches the planning rule alone.
 PR 1 and PR 2 are independent and may land in either order.
 
-Whichever of PR 1 / PR 2 merges last carries the close-out: flip
-this plan's Status to Landed, delete the sibling scoping doc,
-and remove the parent backlog entry. Same-PR flip is binding per
-[`Plan-to-PR Completion Gate`](/docs/agents/planning/plan.md) —
-this plan's Validation Gate is fully pre-merge (lint, build,
-grep) with no post-release validation check, so the two-phase
-landing exception (Tier 5 production smoke and analogous
-post-release validation cases) does not apply. A standalone
-close-out PR is not an option.
+PR 1 and PR 2 are independent and either may merge first. This
+plan invokes the **Parallel-implementing-PRs** exception in
+[`Plan-to-PR Completion Gate`](/docs/agents/planning/plan.md):
+the close-out (flip this plan's Status to Landed, delete the
+sibling scoping doc, remove the parent backlog entry) lands in
+a single-commit follow-up PR opened immediately after the last
+implementing PR merges. Plan Status moves
+`Proposed → In progress` when the first implementing PR
+merges and `In progress → Landed` when the close-out PR
+merges.
+
+The exception is invoked rather than the same-PR default
+because neither PR 1 nor PR 2 is clearly last-to-merge — both
+can be drafted, reviewed, and revised in parallel — and a
+last-to-merge drafter cannot retroactively add close-out
+content to an already-reviewed PR at merge time without
+re-triggering review.
 
 ### PR 1 — Catalog audits promoted from the discipline checklist (consolidation)
 
@@ -325,6 +334,8 @@ Modified by PR 1:
   [`Keep Docs Coupled To Code Changes`](/docs/tracking/documentation-quality-checklist.md),
   two from
   [`Review Checklist For Future Doc Passes`](/docs/tracking/documentation-quality-checklist.md)).
+- [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
+  — Status flips `Proposed → In progress`.
 
 Modified by PR 2:
 
@@ -332,12 +343,15 @@ Modified by PR 2:
   — existing "Subset enumerated where the contract names a
   category" trap rewritten in place to cover both
   subset-enumerated and content-prescribed sub-shapes.
+- [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
+  — Status flips `Proposed → In progress`.
 
-Modified by whichever of PR 1 / PR 2 merges last (carries the
-close-out per the Contracts preamble above):
+Modified by the follow-up close-out PR (per the
+Parallel-implementing-PRs exception named in the Contracts
+preamble above):
 
 - [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
-  — this plan; Status flips from Proposed to Landed.
+  — this plan; Status flips from `In progress` to `Landed`.
 - [`docs/plans/scoping/drift-prevention.md`](/docs/plans/scoping/drift-prevention.md)
   — sibling scoping doc; deleted per the scoping-doc-
   transience convention.
@@ -387,10 +401,10 @@ two independent passes rather than one entangled diff:
 is one cohesive unit and splitting it would obscure the
 revision-not-addition pattern.
 
-The close-out content (Status flip, scoping-doc deletion,
-backlog-entry removal) folds into whichever of PR 1 / PR 2
-merges last as one additional commit in that PR per the
-Contracts preamble.
+**Close-out PR.** Single commit (the bookkeeping unit). Opens
+immediately after the last implementing PR merges per the
+Parallel-implementing-PRs exception named in the Contracts
+preamble.
 
 ## Documentation Currency
 
@@ -442,12 +456,16 @@ For PR 2 specifically:
   addition) per
   [`AGENTS.md`](/AGENTS.md) "Rule additions in `docs/agents/`".
 
-For whichever of PR 1 / PR 2 merges last (carries the close-out):
+For the follow-up close-out PR (per the
+Parallel-implementing-PRs exception):
 
-- This plan's Status flips to Landed in the same PR.
-- The sibling scoping doc is deleted in the same PR.
+- This plan's Status flips `In progress → Landed`.
+- The sibling scoping doc is deleted.
 - The parent backlog entry is removed from
-  [`docs/backlog.md`](/docs/backlog.md) in the same PR.
+  [`docs/backlog.md`](/docs/backlog.md).
+- The PR opens immediately after the last implementing PR
+  merges; the drift window between merge and close-out PR
+  opening should be on the order of minutes.
 
 This is documentation-only work; no new tests, no new CI
 checks. The Validation Gate is fully pre-merge — no
@@ -624,20 +642,19 @@ with resolutions updated against the
 The Tier 5 backlog entry "Pre-push drift-prevention surfaces
 anchor on intended product state and right-grain contracts" at
 [`docs/backlog.md`](/docs/backlog.md) is the parent of this
-plan. Its `Detail:` line is updated from `TBD` to point at
-this plan in the same PR that opens this plan doc; the entry
-itself is removed in whichever of PR 1 / PR 2 merges last per
-[`Plan-to-PR Completion Gate`](/docs/agents/planning/plan.md)
-(same-PR Status flip is binding because this plan's Validation
-Gate is fully pre-merge).
+plan. Its `Detail:` line was updated from `TBD` to point at
+this plan in the plan-drafting PR; the entry itself is removed
+in the follow-up close-out PR per the
+Parallel-implementing-PRs exception in
+[`Plan-to-PR Completion Gate`](/docs/agents/planning/plan.md).
 
 No other backlog entries are affected.
 
 ## Related Docs
 
 - [`docs/plans/scoping/drift-prevention.md`](/docs/plans/scoping/drift-prevention.md)
-  — sibling scoping doc; deleted in whichever of PR 1 / PR 2
-  merges last.
+  — sibling scoping doc; deleted in the follow-up close-out
+  PR.
 - [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
   — sibling corrections plan; its findings are the historical
   examples each new audit's Example field cites.
@@ -655,4 +672,4 @@ No other backlog entries are affected.
   `docs/agents/`" — the A1 convention PR 2's PR body cites.
 - [`docs/backlog.md`](/docs/backlog.md) — parent backlog
   entry; `Detail:` pointer updated in this plan's opening
-  PR, entry removed in whichever of PR 1 / PR 2 merges last.
+  PR, entry removed in the follow-up close-out PR.

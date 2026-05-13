@@ -520,22 +520,45 @@ re-review the same decisions.
   merge, which forces a follow-up commit whose only purpose is
   to record the previous commit's SHA). Same-PR flip is the
   default whenever the plan's Validation Gate can be fully
-  satisfied pre-merge. Exception: plans whose Validation Gate
-  names a check that can only run post-release (Tier 5
-  production smoke is the canonical case) land in two phases
-  per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
-  "Plan-to-Landed Gate For Plans With Post-Release Validation"
-  — the implementing PR merges with Status `In progress pending
-  <validation-name>`, where the name is a stable, exact-match
-  label for the specific check (the canonical Tier 5 case is
-  exactly `In progress pending prod smoke`; see testing-tiers.md
-  for non-smoke precedents); a follow-up doc-only commit flips
-  Status to `Landed` and records the post-release validation run
-  URL once the post-release run passes. The run URL is durable
-  external evidence, unlike a commit SHA which is already in
-  git. This is the single authoritative status rule for that
-  case; do not invent additional states or leave the flip to an
-  informal post-merge promise
+  satisfied pre-merge AND a single implementing PR (or a
+  clearly-last-to-merge implementing PR) exists. Two named
+  exceptions allow a follow-up close-out PR:
+  - **Post-release validation.** Plans whose Validation Gate
+    names a check that can only run post-release (Tier 5
+    production smoke is the canonical case) land in two phases
+    per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
+    "Plan-to-Landed Gate For Plans With Post-Release Validation"
+    — the implementing PR merges with Status `In progress
+    pending <validation-name>`, where the name is a stable,
+    exact-match label for the specific check (the canonical
+    Tier 5 case is exactly `In progress pending prod smoke`;
+    see testing-tiers.md for non-smoke precedents); a follow-up
+    doc-only commit flips Status to `Landed` and records the
+    post-release validation run URL once the post-release run
+    passes. The run URL is durable external evidence, unlike a
+    commit SHA which is already in git.
+  - **Parallel implementing PRs.** When a plan ships via N≥2
+    implementing PRs that can land in any order (neither PR is
+    clearly last), the close-out (Status flip plus any
+    scoping-doc deletion or backlog-cleanup the plan binds to
+    close-out) lands in a single-commit follow-up PR opened
+    immediately after the last implementing PR merges. Plan
+    Status moves `Proposed → In progress` when the first
+    implementing PR merges and `In progress → Landed` when the
+    close-out PR merges. The drift window between the last
+    implementing PR's merge and the close-out PR's opening is
+    bookkeeping-bounded — on the order of minutes, not days —
+    because the close-out PR carries no decision content. The
+    plan's Contracts section invokes this exception by name; an
+    N≥2-PR plan that does not invoke it defaults to "last-to-
+    merge carries the close-out" (workable only when the order
+    is knowable in advance).
+
+  These two exceptions are the complete list; do not invent
+  additional states or leave the flip to an informal post-merge
+  promise. A plan-specific carve-out that adds a third
+  exception belongs in this canonical rule, not in the plan's
+  own Contracts section
 - ban soft-commitment words in plans: "optional but recommended,"
   "consider adding," "nice to have," "probably should." A
   requirement is either in-scope or deferred — there is no third
