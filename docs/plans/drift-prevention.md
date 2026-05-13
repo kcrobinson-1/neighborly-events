@@ -39,13 +39,29 @@ a generalization rather than a sibling addition.
 
 The forward-looking rule-gap audits the scoping doc proposed
 (migration-semantics-changed, new-migration, new-feature-route,
-new-top-level-doc) **defer** — the catalog's Contributing gate
-asks for two distinct PR occurrences before a forward-looking
-audit-add lands, and a single audit pass producing 13 findings
-is not the same shape as two PRs each flagging once. The Risk
-Register of the prior draft already named "defer" as the
-fallback if the Contributing-gate argument did not survive
-review; this version takes that fallback directly.
+new-top-level-doc) **defer**. The catalog's Contributing gate is
+an OR (two distinct PRs, or one P1 with a generalizing root
+cause), and both arms are technically reachable for these four
+classes; the deferral does not rest on either arm being
+unreachable. It rests on the meta-argument from
+[`Agentic Practice Roadmap`](/docs/tracking/agentic-practice-roadmap.md)
+Bet 2 / Bet 3 / the A1 rule-retirement convention: invoking
+either arm to land four simultaneous forward-looking audit-adds
+is the gate-relaxation shape those bets exist to catch.
+
+A prior attempt at the catalog-audits surface ran into exactly
+this critique on 2026-05-12: six audits were drafted off the
+single 2026-05-11 batch finding and closed without merging
+after the agentic-practice analysis flagged the same
+gate-relaxation pattern. The 2026-05-12 entry in the roadmap's
+[`Log`](/docs/tracking/agentic-practice-roadmap.md) is the
+durable record; the drafted audits remain on the
+`docs/drift-prevention-catalog-audits` branch and become the
+natural pull-forward artifact when any of the six classes
+recurs on a second distinct PR. This plan's reframe lands the
+enforcement-gap consolidation that the closed attempt did not
+attempt and which the agentic-practice critique does not
+catch.
 
 ## Goal
 
@@ -345,6 +361,55 @@ Files intentionally not touched (estimate, not prohibition):
   adding the audits does not edit the table.
 - The four deferred rule-gap audit surfaces named in Out Of
   Scope.
+
+## Commit Boundaries
+
+Estimate of intended commit slicing within each PR, per
+[`Planning Depth`](/docs/agents/planning/plan.md) "for PR-sized
+work, name the intended commit boundaries before editing when
+practical." The implementer may revise — these are estimates,
+not contracts.
+
+**PR 1.** Two commits, one per surface, so the diff reviews as
+two independent passes rather than one entangled diff:
+
+- Commit 1: catalog adds. New Documentation drift section in
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+  with four audit entries.
+- Commit 2: checklist removes. Four items removed from
+  [`docs/tracking/documentation-quality-checklist.md`](/docs/tracking/documentation-quality-checklist.md);
+  no other content change in the file. PR body cites Commit 1
+  as the matching surface so a reviewer can see the
+  consolidation pair without reading both commits in series.
+
+**PR 2.** Single commit — in-place trap revision in
+[`docs/agents/planning/shared.md`](/docs/agents/planning/shared.md)
+is one cohesive unit and splitting it would obscure the
+revision-not-addition pattern.
+
+The close-out content (Status flip, scoping-doc deletion,
+backlog-entry removal) folds into whichever of PR 1 / PR 2
+merges last as one additional commit in that PR per the
+Contracts preamble.
+
+## Documentation Currency
+
+This plan touches no canonical docs with status-oriented
+sections (`Current State`, `Current status`, rollout status,
+phase status). The catalog and discipline checklist have no
+status sections; the planning rule has no status sections; the
+plan doc itself carries the only Status block, and its flip is
+already named in the Contracts preamble.
+
+The Planning Depth documentation-current-state gate is
+satisfied N/A — no canonical-doc status synchronization is
+load-bearing on this plan's implementation. The "no canonical
+docs change" claim in [Goal](/docs/plans/drift-prevention.md)
+is the load-bearing assertion for this gate; if a future
+implementing PR turns out to need a canonical-doc touch (e.g.,
+the Doc Ownership table needs a row for a new top-level doc),
+that's an estimate deviation per the PR-body callout, not a
+doc-currency miss.
 
 ## Validation Gate
 
