@@ -335,9 +335,7 @@ Modified by PR 1:
   two from
   [`Review Checklist For Future Doc Passes`](/docs/tracking/documentation-quality-checklist.md)).
 - [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
-  — Status flips `Proposed → In progress`. PR 2 carries the
-  same flip; the second-to-merge resolves a trivial conflict
-  (both sides want `In progress`).
+  — Status flips `Proposed → In progress`.
 
 Modified by PR 2:
 
@@ -346,9 +344,7 @@ Modified by PR 2:
   category" trap rewritten in place to cover both
   subset-enumerated and content-prescribed sub-shapes.
 - [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
-  — Status flips `Proposed → In progress`. PR 1 carries the
-  same flip; the second-to-merge resolves a trivial conflict
-  (both sides want `In progress`).
+  — Status flips `Proposed → In progress`.
 
 Modified by the follow-up close-out PR (per the
 Parallel-implementing-PRs exception named in the Contracts
