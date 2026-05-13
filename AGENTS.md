@@ -238,3 +238,16 @@ body why no existing rule could be retired. The convention forces
 the trade-off to be articulated at addition time rather than deferred
 to a future consolidation pass. Tracked under Bet 3 in
 [`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md).
+
+## Roadmap-fit analysis for rule-doc PRs
+
+A PR that modifies `AGENTS.md` or a rule-shaped doc under
+`docs/agents/**` carries a brief roadmap-fit analysis in the PR
+body: a verdict, the concrete delta on rule surface (entries added,
+revised, or retired, and where), and whether the change moves with
+or against the direction named in
+[`docs/tracking/agentic-practice-roadmap.md`](/docs/tracking/agentic-practice-roadmap.md).
+Written for a reader who hasn't loaded the roadmap into their head —
+verdict first, plain-language delta after. Trivial edits (typo fixes,
+link rot, pure formatting) are exempt. A PR opened with a rejection
+verdict shouldn't have been opened; re-scope first.
