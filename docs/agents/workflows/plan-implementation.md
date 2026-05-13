@@ -18,11 +18,17 @@ session adds on top of `implementation.md`.
 The plan-implementing session's first move is to read the plan
 end-to-end, even if the prompt only names a subset of work.
 
-- Read `Status`, `Goal`, `Cross-Cutting Invariants`, `Contracts`
-  (and per-module sections), `Files to touch — new / modify /
-  intentionally not touched`, `Execution Steps`, `Commit Boundaries`,
-  `Validation Gate`, `Self-Review Audits`, `Documentation Currency
-  PR Gate`, and `Risk Register`.
+- Read every section the plan carries. Sections a task plan or
+  phase plan typically includes — `Status`, `Goal`,
+  `Cross-Cutting Invariants`, `Contracts` (and per-module
+  sections), `Files to touch — new / modify / intentionally not
+  touched`, `Execution Steps`, `Commit Boundaries`,
+  `Validation Gate`, `Self-Review Audits`, `Documentation
+  Currency PR Gate`, `Risk Register` — split into required and
+  optional sets per
+  [`planning/plan.md`](../planning/plan.md) "Required and
+  optional sections." Not every plan carries every section;
+  read whichever are present.
 - The plan's `Self-Review Audits` section names which audits from
   [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
   apply to which surface — load the named audits at the matching

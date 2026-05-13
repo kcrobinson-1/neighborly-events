@@ -10,8 +10,9 @@ estimates labeling, plans-describe-contracts-not-implementation
 (structural code minimalism plus contract-altitude discipline
 across all plan content), plan-doc review stance, planning-
 artifacts-cite-each-other anti-pattern, exact-match label
-quoting, Cross-Cutting Invariants section requirement, options-
-into-shapes decomposition, `Deferred` status). This file covers
+quoting, Cross-Cutting Invariants section requirement, header
+variance reporting, options-into-shapes decomposition,
+`Deferred` status). This file covers
 what is unique to the implementation layer — task plans and
 phase plans are the doc-types under which code actually lands,
 which is why the Planning Depth gate, the
@@ -155,13 +156,10 @@ other.
   plan must verify (handoff). This content has no audience
   after the plan lands — exactly why it lives somewhere
   transient.
-- **Plan owns** Status (`Proposed → Landed` lifecycle), Context
-  preamble (per the rule below), Goal, Cross-Cutting
-  Invariants, Naming, Contracts (full final shape), Files to
-  touch (new / modify / intentionally not touched), Execution
-  Steps, Commit Boundaries, Validation Gate, Self-Review
-  Audits, Documentation Currency PR Gate, Out Of Scope (final,
-  not deliberation), Risk Register, and Backlog Impact.
+- **Plan owns** the durable record that survives after the
+  feature lands. The specific sections a task plan or phase
+  plan carries are enumerated in "Required and optional
+  sections" below.
 - **Scoping does not restate plan-owned content.** Where a
   scoping decision touches the file inventory, a contract, an
   invariant, a validation procedure, or a risk, scoping
@@ -186,6 +184,48 @@ other.
   forward, though authors of mid-flight scoping docs may opt to
   trim duplicated content into "see the plan" references if the
   scoping has not yet been promoted to a merged implementing PR.
+
+### Required and optional sections
+
+A task plan or phase plan carries the following sections.
+
+**Required:**
+
+- Status (`Proposed → Landed` lifecycle per "Plan-to-PR
+  Completion Gate" below)
+- Context preamble (per "Plan opens with a plain-language
+  context preamble" below)
+- Goal
+- Contracts (full final shape)
+- Files to touch — new / modify / intentionally not touched
+- Validation Gate
+
+**Optional, when content applies:**
+
+- Cross-Cutting Invariants — when ≥ 2 sites must agree on a
+  rule (per [`shared.md`](./shared.md) "Cross-Cutting
+  Invariants section")
+- Naming — when the plan introduces new identifiers
+- Execution Steps — when implementer ordering beyond Commit
+  Boundaries is needed
+- Commit Boundaries — when the implementing PR is
+  multi-commit
+- Self-Review Audits — when diff surfaces map to entries in
+  [`docs/self-review-catalog.md`](/docs/self-review-catalog.md)
+- Documentation Currency PR Gate — when status-bearing docs
+  are touched
+- Out Of Scope — when the plan records boundary calls as
+  final answers (deliberation prose lives in the scoping doc)
+- Risk Register — when residual risks exist
+- Backlog Impact — when backlog entries close, split, or
+  shift
+- Related Docs
+
+Variance from this list — an unlisted section is appropriate,
+or a required section genuinely doesn't apply (decision plans
+whose deliverable IS the recorded decisions may legitimately
+skip Contracts or Files to touch, for example) — follows the
+[`shared.md`](./shared.md) "Header variance reporting" rule.
 
 ### Scoping precedes plan drafting; check before starting plan draft
 

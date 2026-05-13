@@ -6,8 +6,9 @@ Loads [`shared.md`](./shared.md) for cross-level planning rules
 estimates labeling, plans-describe-contracts-not-implementation
 (structural code minimalism plus contract-altitude discipline
 across all plan content), plan-doc review stance, planning-
-artifacts-cite-each-other anti-pattern, exact-match label quoting). This file covers what is unique to the
-milestone level.
+artifacts-cite-each-other anti-pattern, exact-match label
+quoting, header variance reporting). This file covers what is
+unique to the milestone level.
 
 A milestone planning session establishes durable cross-phase
 coordination for a multi-phase milestone (M2, M3, M4 in the Event
@@ -100,3 +101,29 @@ before any per-phase planning.
   [`plan.md`](./plan.md) "PR-count predictions need a branch
   test"; splitting a phase into sub-phases at plan time is
   normal, not a process failure
+
+## Required and optional sections
+
+A milestone doc carries the following sections.
+
+**Required:**
+
+- Status
+- Goal
+- Phase Status
+- Sequencing (Mermaid `flowchart LR` per the rule above)
+- Cross-Phase Invariants
+- Cross-Phase Decisions
+- Cross-Phase Risks
+- Documentation Currency
+- Backlog Impact
+- Related Docs
+
+**Optional, when content applies:**
+
+- Pending Inputs From `<prior milestone>` — when drafting
+  depends on outputs of a prior milestone not yet merged
+
+Variance from this list — an unlisted section is appropriate,
+or a required section genuinely doesn't apply — follows the
+[`shared.md`](./shared.md) "Header variance reporting" rule.

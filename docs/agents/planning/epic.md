@@ -6,8 +6,9 @@ Per-level planning playbook for **epic-drafting** sessions. Loads
 estimates labeling, plans-describe-contracts-not-implementation
 (structural code minimalism plus contract-altitude discipline
 across all plan content), plan-doc review stance, planning-
-artifacts-cite-each-other anti-pattern, exact-match label quoting). This file covers what is unique to the
-epic level.
+artifacts-cite-each-other anti-pattern, exact-match label
+quoting, header variance reporting). This file covers what is
+unique to the epic level.
 
 ## Scope: what an epic does and does not say
 
@@ -37,6 +38,42 @@ pointing to the milestone doc as canonical. Pre-existing epics
 written before this rule are not retroactively non-conforming;
 the rule applies to epic drafting and to milestone planning
 PRs from this point forward.
+
+## Required and optional sections
+
+An epic doc carries the following sections.
+
+**Required:**
+
+- Status
+- Purpose
+- Why This Epic
+- Goal
+- Cross-Cutting Invariants
+- Out Of Scope
+- Milestone Structure
+- Backlog Impact
+- Risk Register
+- Related Docs
+
+**Optional, when content applies:**
+
+- Milestone Status — when milestones are in flight and a
+  status table aids the reader
+- Open Questions Resolved By This Epic — when the epic
+  resolves prior open questions worth recording
+- Open Questions Newly Opened — when the epic surfaces new
+  questions for downstream planning
+- Sizing Summary — when per-milestone PR or time estimates
+  exist
+- Documentation Currency PR Gate — when status-bearing docs
+  need updates across the epic's lifecycle
+- Inherited Context — when prior epics or external decisions
+  bound the scope worth restating
+
+Variance from this list — an unlisted section is appropriate,
+or a required section genuinely doesn't apply — follows the
+[`shared.md`](./shared.md) "Header variance reporting" rule.
 
 ## Path conventions
 
