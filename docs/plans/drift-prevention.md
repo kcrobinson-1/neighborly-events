@@ -334,6 +334,10 @@ Modified by PR 1:
   [`Keep Docs Coupled To Code Changes`](/docs/tracking/documentation-quality-checklist.md),
   two from
   [`Review Checklist For Future Doc Passes`](/docs/tracking/documentation-quality-checklist.md)).
+- [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
+  — Status flips `Proposed → In progress`. PR 2 carries the
+  same flip; the second-to-merge resolves a trivial conflict
+  (both sides want `In progress`).
 
 Modified by PR 2:
 
@@ -341,13 +345,17 @@ Modified by PR 2:
   — existing "Subset enumerated where the contract names a
   category" trap rewritten in place to cover both
   subset-enumerated and content-prescribed sub-shapes.
+- [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
+  — Status flips `Proposed → In progress`. PR 1 carries the
+  same flip; the second-to-merge resolves a trivial conflict
+  (both sides want `In progress`).
 
 Modified by the follow-up close-out PR (per the
 Parallel-implementing-PRs exception named in the Contracts
 preamble above):
 
 - [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
-  — this plan; Status flips from Proposed to Landed.
+  — this plan; Status flips from `In progress` to `Landed`.
 - [`docs/plans/scoping/drift-prevention.md`](/docs/plans/scoping/drift-prevention.md)
   — sibling scoping doc; deleted per the scoping-doc-
   transience convention.
@@ -455,7 +463,7 @@ For PR 2 specifically:
 For the follow-up close-out PR (per the
 Parallel-implementing-PRs exception):
 
-- This plan's Status flips to Landed.
+- This plan's Status flips `In progress → Landed`.
 - The sibling scoping doc is deleted.
 - The parent backlog entry is removed from
   [`docs/backlog.md`](/docs/backlog.md).
