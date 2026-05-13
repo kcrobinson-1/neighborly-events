@@ -235,6 +235,80 @@ phase set. At plan level, the invariants thread across files
 within the plan's implementing PR(s) — the original framing of
 this rule.
 
+## Plan-doc headers — required and optional
+
+Each plan-tree doc type has a typical header set: a required
+core every doc of that type carries, plus optional headers
+added when their content applies. The lists below name what
+headers a doc typically uses with positive matching criteria
+for the optional ones; section ordering inside a doc is the
+author's choice.
+
+**Epic doc.** Required: Status, Purpose, Why This Epic, Goal,
+Cross-Cutting Invariants, Out Of Scope, Milestone Structure,
+Backlog Impact, Risk Register, Related Docs. Optional, when
+content applies: Milestone Status (milestones are in flight
+and a status table aids the reader), Open Questions Resolved
+By This Epic (the epic resolves prior open questions worth
+recording), Open Questions Newly Opened (the epic surfaces new
+questions for downstream planning), Sizing Summary
+(per-milestone PR / time estimates exist), Documentation
+Currency PR Gate (status-bearing docs need updates across the
+epic's lifecycle), Inherited Context (prior epics or external
+decisions bound the scope worth restating).
+
+**Milestone doc.** Required: Status, Goal, Phase Status,
+Sequencing (Mermaid `flowchart LR` per
+[`milestone.md`](./milestone.md)), Cross-Phase Invariants,
+Cross-Phase Decisions, Cross-Phase Risks, Documentation
+Currency, Backlog Impact, Related Docs. Optional, when content
+applies: Pending Inputs From `<prior milestone>` (drafting
+depends on outputs of a prior milestone not yet merged).
+
+**Task plan / phase plan.** Required for every plan: Status
+(`Proposed → Landed` lifecycle per
+[`plan.md`](./plan.md) "Plan-to-PR Completion Gate"), Context
+preamble (per [`plan.md`](./plan.md) "Plan opens with a
+plain-language context preamble"), Goal. Required additionally
+for code-shipping plans: Contracts (full final shape), Files to
+touch (new / modify / intentionally not touched), Validation
+Gate. Optional, when content applies: Cross-Cutting Invariants
+(≥ 2 sites must agree on a rule), Naming (the plan introduces
+new identifiers), Execution Steps (implementer ordering beyond
+Commit Boundaries is needed), Commit Boundaries (the
+implementing PR is multi-commit), Self-Review Audits (diff
+surfaces map to entries in
+[`docs/self-review-catalog.md`](/docs/self-review-catalog.md)),
+Documentation Currency PR Gate (status-bearing docs are
+touched), Out Of Scope (the plan records boundary calls as
+final answers — deliberation prose lives in the scoping doc),
+Risk Register (residual risks exist), Backlog Impact (backlog
+entries close, split, or shift), Related Docs.
+
+**Scoping doc.** Scoping is transient deliberation, not durable
+record, so the shape is content-driven rather than
+required-vs-optional. Typical sections per
+[`plan.md`](./plan.md) "Scoping owns / plan owns": Decisions
+made at scoping time (each carrying `Verified by:` citations),
+Open decisions to make at plan-drafting (handoff), Plan
+structure handoff, Reality-check inputs the plan must verify.
+A scoping doc without at least one substantive decision plus a
+`Verified by:` citation fails the substantive-content gate in
+[`plan.md`](./plan.md) "Scoping precedes plan drafting."
+
+### Header variance
+
+A plan-tree doc may include a header not enumerated above when
+the doc's content requires one. The PR that introduces the
+variance calls it out in the PR body's `Documentation` section:
+which doc, which header, why the standard set didn't fit.
+Variances are expected to be rare and illustrative; when the
+same variance recurs across two or more docs of the same type,
+the next PR that touches it elevates the header from variance
+into the required-or-optional list above rather than letting it
+accrete as one-off prose. Pre-existing docs whose header set
+predates this rule are not retroactively non-conforming.
+
 ## Plan content is a mix of rules and estimates — label which is which
 
 A plan doc carries two kinds of content: **rules** that

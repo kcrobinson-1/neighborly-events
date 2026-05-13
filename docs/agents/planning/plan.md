@@ -10,8 +10,9 @@ estimates labeling, plans-describe-contracts-not-implementation
 (structural code minimalism plus contract-altitude discipline
 across all plan content), plan-doc review stance, planning-
 artifacts-cite-each-other anti-pattern, exact-match label
-quoting, Cross-Cutting Invariants section requirement, options-
-into-shapes decomposition, `Deferred` status). This file covers
+quoting, Cross-Cutting Invariants section requirement, plan-doc
+headers (required, optional, variance), options-into-shapes
+decomposition, `Deferred` status). This file covers
 what is unique to the implementation layer — task plans and
 phase plans are the doc-types under which code actually lands,
 which is why the Planning Depth gate, the
@@ -156,23 +157,13 @@ other.
   after the plan lands — exactly why it lives somewhere
   transient.
 - **Plan owns** the durable record that survives after the
-  feature lands. Every plan carries Status
-  (`Proposed → Landed` lifecycle), a Context preamble (per
-  the rule below), and a Goal. Code-shipping plans
-  additionally carry Contracts (full final shape), Files to
-  touch (new / modify / intentionally not touched), and a
-  Validation Gate. Add each of the remaining categories when
-  the plan has substantive content for it: Cross-Cutting
-  Invariants (when ≥ 2 sites must agree on a rule), Naming
-  (when the plan introduces new identifiers), Execution Steps
-  (when implementer ordering beyond Commit Boundaries is
-  needed), Commit Boundaries (when the implementing PR is
-  multi-commit), Self-Review Audits (when diff surfaces map
-  to catalog entries), Documentation Currency PR Gate (when
-  status-bearing docs are touched), Out Of Scope (when the
-  plan records boundary calls as final answers), Risk Register
-  (when residual risks exist), and Backlog Impact (when
-  backlog entries close, split, or shift).
+  feature lands. The specific headers a task plan or phase
+  plan carries — required core for every plan, additional
+  required headers for code-shipping plans, and optional
+  headers with matching criteria — are enumerated in
+  [`shared.md`](./shared.md) "Plan-doc headers — required and
+  optional," alongside the corresponding lists for epic and
+  milestone docs and the header-variance rule.
 - **Scoping does not restate plan-owned content.** Where a
   scoping decision touches the file inventory, a contract, an
   invariant, a validation procedure, or a risk, scoping
