@@ -147,15 +147,19 @@ surfaces to land in lock-step or the partial state is the
 additive-shape trap). PR 2 touches the planning rule alone.
 PR 1 and PR 2 are independent and may land in either order.
 
-Whichever of PR 1 / PR 2 merges last carries the close-out: flip
-this plan's Status to Landed, delete the sibling scoping doc,
-and remove the parent backlog entry. Same-PR flip is binding per
-[`Plan-to-PR Completion Gate`](/docs/agents/planning/plan.md) —
-this plan's Validation Gate is fully pre-merge (lint, build,
-grep) with no post-release validation check, so the two-phase
-landing exception (Tier 5 production smoke and analogous
-post-release validation cases) does not apply. A standalone
-close-out PR is not an option.
+The close-out — flip this plan's Status to Landed, delete the
+sibling scoping doc, and remove the parent backlog entry — lands
+in whichever of PR 1 / PR 2 merges last by default per
+[`Plan-to-PR Completion Gate`](/docs/agents/planning/plan.md)
+(this plan's Validation Gate is fully pre-merge, so the
+two-phase landing exception for post-release validation does not
+apply). A standalone close-out PR is allowed when parallel
+implementing PRs make same-PR coordination awkward — the
+last-to-merge drafter would need to check the sibling's merge
+state before opening, which adds friction the parallel-execution
+shape exists to avoid. The deviation costs one additional small
+PR; in exchange, neither implementing PR's drafter has to
+coordinate against the sibling at open time.
 
 ### PR 1 — Catalog audits promoted from the discipline checklist (consolidation)
 
@@ -333,8 +337,9 @@ Modified by PR 2:
   category" trap rewritten in place to cover both
   subset-enumerated and content-prescribed sub-shapes.
 
-Modified by whichever of PR 1 / PR 2 merges last (carries the
-close-out per the Contracts preamble above):
+Modified by the close-out — either the last-to-merge
+implementing PR or a standalone close-out PR, per the Contracts
+preamble carve-out:
 
 - [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
   — this plan; Status flips from Proposed to Landed.
@@ -388,9 +393,9 @@ is one cohesive unit and splitting it would obscure the
 revision-not-addition pattern.
 
 The close-out content (Status flip, scoping-doc deletion,
-backlog-entry removal) folds into whichever of PR 1 / PR 2
-merges last as one additional commit in that PR per the
-Contracts preamble.
+backlog-entry removal) lands either as one additional commit in
+the last-to-merge implementing PR (default) or as a single-commit
+standalone close-out PR per the Contracts preamble carve-out.
 
 ## Documentation Currency
 
@@ -442,12 +447,13 @@ For PR 2 specifically:
   addition) per
   [`AGENTS.md`](/AGENTS.md) "Rule additions in `docs/agents/`".
 
-For whichever of PR 1 / PR 2 merges last (carries the close-out):
+For the close-out (last-to-merge implementing PR by default, or
+the standalone close-out PR per the Contracts preamble carve-out):
 
-- This plan's Status flips to Landed in the same PR.
-- The sibling scoping doc is deleted in the same PR.
+- This plan's Status flips to Landed.
+- The sibling scoping doc is deleted.
 - The parent backlog entry is removed from
-  [`docs/backlog.md`](/docs/backlog.md) in the same PR.
+  [`docs/backlog.md`](/docs/backlog.md).
 
 This is documentation-only work; no new tests, no new CI
 checks. The Validation Gate is fully pre-merge — no
