@@ -50,6 +50,15 @@ changes, write `N/A`.
 - [ ] `npm test`
 - [ ] `npm run test:functions`
 - [ ] `npm run build:web`
+- [ ] If this PR's migration touches `GRANT`, `REVOKE`, `CREATE POLICY`,
+  `DROP POLICY`, RLS-enabled state, or function `SECURITY` mode: ran
+  `npm run db:gen-permissions` and committed the regenerated
+  [`shared/db/permissions.snapshot.md`](/shared/db/permissions.snapshot.md),
+  and the migration body includes a comment naming the resulting
+  grants and policies on each affected object (the post-state, not
+  just the delta). Per
+  [`docs/plans/db-permissions-snapshot.md`](/docs/plans/db-permissions-snapshot.md)
+  CCI-4.
 
 List any additional checks run, and state any relevant checks that could not be
 run.

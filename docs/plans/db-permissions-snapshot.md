@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed.
+Landed.
 
 ## Context
 
@@ -25,12 +25,11 @@ schema's permissions posture (a human-readable markdown file sibling
 to `shared/db/types.ts`), a uniform pgTAP suite that asserts the
 same state, and a PR-template self-review audit that binds both
 artifacts to grant- or policy-touching migrations. The scoping pass
-at
-[`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md)
-settled the class-of-solution choice (B2 + A1 + (2); C1/C2 CI gates
-rejected; C3 trailing-comment format folded into the (2) audit's
-comment-quality expectation). Now is the right time because the
-canonical-corrections work
+that preceded this plan settled the class-of-solution choice
+(B2 + A1 + (2); C1/C2 CI gates rejected; C3 trailing-comment format
+folded into the (2) audit's comment-quality expectation; the scoping
+doc deleted with this PR per "Scoping owns / plan owns"). Now is the
+right time because the canonical-corrections work
 ([`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md))
 just landed several findings whose root cause was exactly this
 missing surface.
@@ -181,10 +180,9 @@ section per the Plan-to-PR Completion Gate.
 - `shared/db/README.md` — pointer to the snapshot.
 - `docs/backlog.md` — Tier 5 entry removed per Backlog Impact.
 - This plan — Status flipped to `Landed`.
-- The scoping doc at
-  [`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md)
-  — deleted per "Scoping owns / plan owns" (scoping deletes at the
-  plan's terminal PR).
+- The scoping doc at `docs/plans/scoping/db-permissions-snapshot.md`
+  — deleted in this PR per "Scoping owns / plan owns" (scoping
+  deletes at the plan's terminal PR).
 
 ### Intentionally not touched
 
@@ -285,8 +283,7 @@ Status-oriented surfaces updated in the implementing PR:
 - [`docs/backlog.md`](/docs/backlog.md) — Tier 5 entry removed.
 - [`shared/db/README.md`](/shared/db/README.md) — snapshot pointer
   added.
-- [`docs/plans/scoping/db-permissions-snapshot.md`](/docs/plans/scoping/db-permissions-snapshot.md)
-  — deleted.
+- `docs/plans/scoping/db-permissions-snapshot.md` — deleted in this PR.
 
 ## Out Of Scope
 
