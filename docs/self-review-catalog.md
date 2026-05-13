@@ -515,3 +515,136 @@ restructured so an error on either branch counts as a non-positive
 signal for that branch only; the caller is admitted as soon as either
 branch returns true, and forbidden only when neither branch yields a
 positive signal.
+
+---
+
+## Documentation drift
+
+### Route or topology coupling audit
+
+**Trigger.** A commit touches Vercel rewrite or proxy configuration,
+or Next.js routing configuration, in either app.
+
+**Check.** Enumerate the routing-config carriers — currently
+[`apps/web/vercel.json`](/apps/web/vercel.json),
+[`apps/site/next.config.ts`](/apps/site/next.config.ts), and
+[`apps/site/vercel.json`](/apps/site/vercel.json) — and confirm the
+diff against the canonical prose that describes the resulting
+topology (root [`README.md`](/README.md),
+[`docs/architecture.md`](/docs/architecture.md), and
+[`docs/dev.md`](/docs/dev.md) per the Doc Ownership table in
+[`docs/README.md`](/docs/README.md)). The authoritative source is the
+config; the canonical docs must match it. The dangerous pattern is
+prose describing one Vercel topology (e.g., "apps/web is the
+canonical project that proxies to apps/site") while the configs
+encode the opposite direction.
+
+**Example.** [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
+"Why This Plan" first bullet — pre-corrections-plan PR 1, the root
+README and [`docs/architecture.md`](/docs/architecture.md) described
+opposite Vercel topologies; the architecture-doc version matched the
+config and the README's did not.
+
+### Validation-command coupling audit
+
+**Trigger.** A commit adds, renames, or removes an entry in the
+documented validation-gate command list (a new
+[`supabase/functions/<name>/`](/supabase/functions/) directory
+implicitly adding a new `deno check` target counts), **or** a commit
+changes CI workflow definitions under
+[`.github/workflows/`](/.github/workflows/) in a way that changes
+which commands run on PR, **or** a commit changes local-setup config
+([`mise.toml`](/mise.toml), root devcontainer config).
+
+**Check.** Authoritative sources for the command set are
+[`package.json`](/package.json) scripts and the
+[`supabase/functions/`](/supabase/functions/) directory listing (each
+non-`_shared` subdirectory is one `deno check` target); for CI behavior
+the authoritative source is the workflow definitions under
+[`.github/workflows/`](/.github/workflows/); for local setup the
+authoritative source is [`mise.toml`](/mise.toml) and any root
+devcontainer config. The canonical docs that must match are root
+[`README.md`](/README.md), [`docs/dev.md`](/docs/dev.md), and
+[`docs/testing.md`](/docs/testing.md). Walk each doc's command list
+against the authoritative source touched by the diff and confirm
+parity. The dangerous pattern is a new Edge Function or script
+landing without the corresponding `deno check` / `npm run` entry
+appearing in every doc that catalogs validation commands.
+
+**Example.** [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
+"Why This Plan" fifth and sixth bullets — pre-corrections-plan, the
+`deno check` validation list in [`docs/dev.md`](/docs/dev.md),
+[`docs/testing.md`](/docs/testing.md), and the root
+[`README.md`](/README.md) named six Edge Functions but omitted four
+shipped functions (`redeem-entitlement`,
+`reverse-entitlement-redemption`, `get-redemption-status`,
+`read-demo-event`); separately, [`docs/testing.md`](/docs/testing.md)
+did not list `npm run build:site` while the other two docs did. The
+CI-behavior and local-setup arms of this audit have no current
+historical example; they are bound at category altitude alongside the
+validation-command arm so the retirement of the matching discipline
+checklist item is clean rather than partial.
+
+### Canonical-owner duplication audit
+
+**Trigger.** A commit adds or expands prose in any canonical doc —
+the root [`README.md`](/README.md) and the docs under
+[`docs/`](/docs/) that the Doc Ownership table in
+[`docs/README.md`](/docs/README.md) marks as canonical "what is"
+prose — on a topic another canonical doc already covers in depth.
+
+**Check.** Consult the Doc Ownership table to identify which doc owns
+the topic the diff touches. If another canonical doc carries
+depth-equivalent prose on the same topic, choose the table-named
+owner and replace the duplicated passage in the non-owner with a
+link to the owner. The dangerous pattern is two canonical docs
+expanding in parallel on the same topic; the
+[`Editing Rule Of Thumb`](/docs/README.md) in the doc index forbids
+exactly this shape.
+
+**Example.** [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
+"Why This Plan" seventh bullet — pre-corrections-plan PR 3,
+[`docs/architecture.md`](/docs/architecture.md) and
+[`docs/dev.md`](/docs/dev.md) carried duplicated coverage of the
+Vercel routing layout, the Supabase Auth surface description, and the
+`@supabase/ssr` cookie internals. The broader canonical-doc scope —
+duplication across any pair the Doc Ownership table marks as
+canonical — has no current historical example beyond the
+architecture/dev pair; the audit is bound at the broader category to
+make the retirement of the matching discipline checklist item clean.
+
+### Phase-identifier and target-state-language audit
+
+**Trigger.** A commit edits an evergreen "what is" surface — the root
+[`README.md`](/README.md) and any doc the
+[`Doc Ownership`](/docs/README.md) table marks as canonical "what is"
+prose — **and** the edit either introduces or fails to remove
+internal phase identifiers (phase names keyed to the milestone /
+phase rollout layer) or future-tense status language.
+
+**Check.** The canonical "what is" surface today is the root
+[`README.md`](/README.md) plus the docs the Doc Ownership table
+designates as canonical descriptive prose (currently
+[`docs/product.md`](/docs/product.md),
+[`docs/experience.md`](/docs/experience.md),
+[`docs/architecture.md`](/docs/architecture.md), and
+[`docs/dev.md`](/docs/dev.md)); re-resolve the set against the table
+before walking the audit. Grep the diff and the touched file for
+phase-identifier patterns (`M[0-9] phase`, `Phase [0-9A-Z]`,
+named-milestone tokens) and future-tense status language (`future`,
+`later`, `next`, `will become`, `to be implemented`). Each hit is
+either project-tracking noise to scrub out of evergreen prose,
+behavior the doc should now describe in the present tense, or a
+deferred decision that belongs in
+[`docs/open-questions.md`](/docs/open-questions.md). The dangerous
+pattern is rollout-layer vocabulary fossilizing into evergreen "what
+is" prose, which then encodes a target state long after the actual
+state has caught up or diverged.
+
+**Example.** [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
+"Why This Plan" eighth bullet — pre-corrections-plan PR 3, internal
+phase identifiers appeared 13 times in
+[`docs/architecture.md`](/docs/architecture.md), 12 times in
+[`docs/dev.md`](/docs/dev.md), and five additional times in the root
+[`README.md`](/README.md) (one on the Vercel topology paragraph and
+four across the "Next Phase" block).
