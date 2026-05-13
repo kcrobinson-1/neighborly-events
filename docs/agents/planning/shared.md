@@ -235,6 +235,28 @@ phase set. At plan level, the invariants thread across files
 within the plan's implementing PR(s) — the original framing of
 this rule.
 
+## Header variance reporting
+
+Each plan-tree doc type carries a "Required and optional
+sections" rule in its per-level file ([`epic.md`](./epic.md),
+[`milestone.md`](./milestone.md), [`plan.md`](./plan.md))
+naming the sections that doc type typically uses. When a
+particular doc legitimately diverges from that listed shape —
+either by adding a section not on the list, or by skipping a
+required section because it genuinely doesn't apply (a
+decision plan whose deliverable is the recorded decisions
+skipping Contracts, for example) — the PR introducing the
+divergence calls it out in the PR body's `Documentation`
+section: which doc, which header, whether added or skipped,
+and why the listed shape didn't fit.
+
+Variances are expected to be rare and illustrative. When the
+same variance recurs across two or more docs of the same
+type, the next PR that touches it updates the per-level
+required-or-optional list rather than letting the variance
+accrete as one-off prose. Pre-existing docs whose section
+sets predate this rule are not retroactively non-conforming.
+
 ## Plan content is a mix of rules and estimates — label which is which
 
 A plan doc carries two kinds of content: **rules** that
