@@ -155,19 +155,24 @@ other.
   plan must verify (handoff). This content has no audience
   after the plan lands — exactly why it lives somewhere
   transient.
-- **Plan owns** Status (`Proposed → Landed` lifecycle), Context
-  preamble (per the rule below), Goal, Cross-Cutting
-  Invariants, Naming, Contracts (full final shape), Files to
-  touch (new / modify / intentionally not touched), Execution
-  Steps, Commit Boundaries, Validation Gate, Self-Review
-  Audits, Documentation Currency PR Gate, Out Of Scope (final,
-  not deliberation), Risk Register, and Backlog Impact. The
-  list enumerates categories the plan owns when they apply,
-  not headers every plan must carry — a section appears in
-  the plan only when the category has substantive content
-  for this plan; categories with no content (e.g. Naming when
-  no new naming is introduced) can be skipped or stated as
-  N/A.
+- **Plan owns** the durable record that survives after the
+  feature lands. Every plan carries Status
+  (`Proposed → Landed` lifecycle), a Context preamble (per
+  the rule below), and a Goal. Code-shipping plans
+  additionally carry Contracts (full final shape), Files to
+  touch (new / modify / intentionally not touched), and a
+  Validation Gate. Add each of the remaining categories when
+  the plan has substantive content for it: Cross-Cutting
+  Invariants (when ≥ 2 sites must agree on a rule), Naming
+  (when the plan introduces new identifiers), Execution Steps
+  (when implementer ordering beyond Commit Boundaries is
+  needed), Commit Boundaries (when the implementing PR is
+  multi-commit), Self-Review Audits (when diff surfaces map
+  to catalog entries), Documentation Currency PR Gate (when
+  status-bearing docs are touched), Out Of Scope (when the
+  plan records boundary calls as final answers), Risk Register
+  (when residual risks exist), and Backlog Impact (when
+  backlog entries close, split, or shift).
 - **Scoping does not restate plan-owned content.** Where a
   scoping decision touches the file inventory, a contract, an
   invariant, a validation procedure, or a risk, scoping
