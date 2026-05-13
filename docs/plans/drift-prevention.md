@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed. Reframed from the sibling scoping doc's audit-add framing
+In progress. Reframed from the sibling scoping doc's audit-add framing
 into a consolidation pass after walking the plan against the
 [`Agentic Practice Roadmap`](/docs/tracking/agentic-practice-roadmap.md)
 — see Resolved Decisions below for the four open decisions the

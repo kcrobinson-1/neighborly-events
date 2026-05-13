@@ -53,10 +53,6 @@ Use it as:
 
 ## Keep Docs Coupled To Code Changes
 
-- [ ] When routes, trust boundaries, or runtime ownership change, update
-  `README.md`, `docs/architecture.md`, and `docs/dev.md` in the same pass.
-- [ ] When validation commands, CI behavior, or local setup change, update
-  `docs/dev.md`, `docs/testing.md`, and any affected workflow docs together.
 - [ ] When UX-facing flows change materially, keep `docs/experience.md`, UI
   review expectations, and PR screenshot guidance aligned.
 - [ ] When new modules or structural boundaries are introduced, add or update
@@ -66,12 +62,8 @@ Use it as:
 
 - [ ] Check whether every doc still distinguishes current implementation from
   target-state product intent.
-- [ ] Check whether any "future", "later", or "next" language should now be
-  converted into either implemented behavior or an explicit open question.
 - [ ] Check whether contributor guidance still matches the real validation
   commands and release workflow.
-- [ ] Check whether docs duplicate the same procedure in multiple places instead
-  of linking to one canonical owner.
 - [ ] During code-documentation passes, explicitly review shared barrel files,
   edge-function helper modules, and large SQL migrations for missing
   file-level responsibility or invariant comments before marking Dimension 2
