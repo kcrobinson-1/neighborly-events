@@ -2,7 +2,7 @@
 
 ## Status
 
-In progress. Reframed from the sibling scoping doc's audit-add framing
+Landed. Reframed from the sibling scoping doc's audit-add framing
 into a consolidation pass after walking the plan against the
 [`Agentic Practice Roadmap`](/docs/tracking/agentic-practice-roadmap.md)
 — see Resolved Decisions below for the four open decisions the
@@ -352,9 +352,8 @@ preamble above):
 
 - [`docs/plans/drift-prevention.md`](/docs/plans/drift-prevention.md)
   — this plan; Status flips from `In progress` to `Landed`.
-- [`docs/plans/scoping/drift-prevention.md`](/docs/plans/scoping/drift-prevention.md)
-  — sibling scoping doc; deleted per the scoping-doc-
-  transience convention.
+- Sibling scoping doc at `docs/plans/scoping/drift-prevention.md`;
+  deleted per the scoping-doc-transience convention.
 - [`docs/backlog.md`](/docs/backlog.md) — Tier 5 entry
   "Pre-push drift-prevention surfaces anchor on intended
   product state and right-grain contracts" removed.
@@ -652,9 +651,6 @@ No other backlog entries are affected.
 
 ## Related Docs
 
-- [`docs/plans/scoping/drift-prevention.md`](/docs/plans/scoping/drift-prevention.md)
-  — sibling scoping doc; deleted in the follow-up close-out
-  PR.
 - [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
   — sibling corrections plan; its findings are the historical
   examples each new audit's Example field cites.
