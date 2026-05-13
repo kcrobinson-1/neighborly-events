@@ -161,7 +161,13 @@ other.
   touch (new / modify / intentionally not touched), Execution
   Steps, Commit Boundaries, Validation Gate, Self-Review
   Audits, Documentation Currency PR Gate, Out Of Scope (final,
-  not deliberation), Risk Register, and Backlog Impact.
+  not deliberation), Risk Register, and Backlog Impact. The
+  list enumerates categories the plan owns when they apply,
+  not headers every plan must carry — a section appears in
+  the plan only when the category has substantive content
+  for this plan; categories with no content (e.g. Naming when
+  no new naming is introduced) can be skipped or stated as
+  N/A.
 - **Scoping does not restate plan-owned content.** Where a
   scoping decision touches the file inventory, a contract, an
   invariant, a validation procedure, or a risk, scoping
