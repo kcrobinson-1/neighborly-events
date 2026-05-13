@@ -109,12 +109,28 @@ the implementation PR — don't fix both in the plan.
 Illustrative examples of the rule's failure mode in practice.
 Not an exhaustive list; new traps are appended as they're found.
 
-- **Subset enumerated where the contract names a category.** A
+- **Subset enumerated, or content prescribed, where the contract
+  is about category or shape.** Two shapes of the same failure
+  mode — the plan descends below contract altitude into specifics
+  that the contract didn't ask for. (a) *Subset-enumerated.* A
   plan enumerates a specific subset of a category (privilege
   types, error classes, role names) when the contract calls for
   the full category. Only the enumerated subset is constrained;
-  the rest is left uncovered. The fix is to describe the category,
-  not name its current members.
+  the rest is left uncovered. (b) *Content-prescribed.* A plan
+  prescribes specific content (specific SQL posture text, specific
+  prose, specific copy strings) when the contract is about shape.
+  The plan-doc takes on the same factual-drift surface the
+  implementing doc would carry — and gets no benefit, because the
+  implementing PR can verify the shape against the authoritative
+  carrier in the same change. The corrections-plan PR 2 contract
+  at [`docs/plans/docs-canonical-corrections.md`](/docs/plans/docs-canonical-corrections.md)
+  "PR 2 — Feedback feature documentation" is the good-shape
+  pattern: "RLS and grant posture described per-table per-role
+  from the post-hardening state" specifies shape (per-table
+  per-role from a named source), not specific posture text. The
+  fix for either shape is to describe what the implementing doc
+  must do (the category or the shape), not which specific members
+  or content satisfy it.
 - **Specific source named where the contract is about coverage.**
   A plan names a specific introspection source (catalog view,
   library function) when the contract is about behavior the
