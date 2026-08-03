@@ -9,6 +9,7 @@ import { GameIntroPanel } from "../game/components/GameIntroPanel";
 import { useGameSession } from "../game/useGameSession";
 import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
+import { getCompletionCta } from "../../../../shared/events/completionCta";
 import { routes } from "../../../../shared/urls";
 
 /** Props for the top-level game route. */
@@ -159,6 +160,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             answers={answers}
             completion={latestCompletion}
             completionError={completionError}
+            cta={getCompletionCta(game.slug)}
             game={game}
             isSubmitting={isSubmittingCompletion}
             onReset={reset}

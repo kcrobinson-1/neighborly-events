@@ -1,4 +1,5 @@
 /** Completion-state panel for verification, retries, retakes, and answer review. */
+import type { CompletionCtaContent } from "../../../../../shared/events/completionCta";
 import { answersMatch } from "../../../../../shared/game-config";
 import type { AttendeeRedemptionStatus } from "../../../../../shared/redemption";
 import type { GameConfig } from "../../data/games";
@@ -44,6 +45,7 @@ type GameCompletionPanelProps = {
   answers: Answers;
   completion: GameCompletionResult | null;
   completionError: string | null;
+  cta: CompletionCtaContent | null;
   game: GameConfig;
   isSubmitting: boolean;
   onReset: () => void;
@@ -59,6 +61,7 @@ export function GameCompletionPanel({
   answers,
   completion,
   completionError,
+  cta,
   game,
   isSubmitting,
   onReset,
@@ -76,6 +79,11 @@ export function GameCompletionPanel({
   const completionChipText = getChipText(status.kind, Boolean(isEntitlementNew));
   const completionHeadline = getHeadline(status.kind);
   const completionMessage = getBodyCopy(status.kind, Boolean(isEntitlementNew));
+  // The CTA rides on the entitlement but never blocks it: it renders only
+  // once the completion result exists, below the verification block, and
+  // only for events registered in the completion CTA registry.
+  const shouldShowCta =
+    Boolean(completion) && Boolean(cta?.newsletter ?? cta?.donate);
 
   return (
     <section className="panel completion-panel">
@@ -136,6 +144,38 @@ export function GameCompletionPanel({
               : "This usually takes just a moment, even on slower service."}
           </span>
         </div>
+      ) : null}
+
+      {shouldShowCta && cta ? (
+        <aside className="completion-cta" aria-labelledby="completion-cta-heading">
+          <h3 id="completion-cta-heading">{cta.heading}</h3>
+          {cta.newsletter ? (
+            <div className="completion-cta-item">
+              <p>{cta.newsletter.body}</p>
+              {/* Plain anchor: the feedback route is owned by apps/site, so the
+                  navigation must be a hard load for the proxy to re-evaluate. */}
+              <a
+                className="completion-cta-button"
+                href={`/event/${encodeURIComponent(game.slug)}/feedback`}
+              >
+                {cta.newsletter.buttonLabel}
+              </a>
+            </div>
+          ) : null}
+          {cta.donate ? (
+            <div className="completion-cta-item">
+              <p>{cta.donate.body}</p>
+              <a
+                className="completion-cta-button"
+                href={cta.donate.href}
+                rel="noopener"
+                target="_blank"
+              >
+                {cta.donate.buttonLabel}
+              </a>
+            </div>
+          ) : null}
+        </aside>
       ) : null}
 
       {shouldShowAnswerReview ? (
