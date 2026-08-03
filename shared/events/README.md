@@ -11,5 +11,11 @@ prototype fallback behavior, route building, or fixture lookup. Each app calls
 `configureSharedEvents` once at startup with its env-derived providers before
 using any exported event API.
 
+A few small per-event constant modules also live here and are imported
+directly (not through the configured provider surface): the demo-mode
+test-event allowlist ([`testEventAllowlist.ts`](./testEventAllowlist.ts)),
+seedable demo game content, and the completion-screen CTA registry
+([`completionCta.ts`](./completionCta.ts)).
+
 The extraction landed through
 [`docs/plans/archive/m1/shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md).
