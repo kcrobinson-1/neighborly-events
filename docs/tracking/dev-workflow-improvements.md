@@ -79,6 +79,42 @@ Minimum validation:
 - `npm run ui:review:upload -- tmp/ui-review/<run>`
 - confirm the returned image URLs render in a GitHub PR description or comment
 
+### Resolve cross-app links from apps/web outside the site-origin proxy
+
+Status: open
+
+Cross-app destinations rendered inside apps/web (today: the completion-screen
+newsletter CTA's same-origin `/event/<slug>/feedback` href) resolve correctly
+only on origins that proxy site-owned routes — the canonical apps/site origin
+and its preview deployments. On the bare Vite dev server and on the direct
+apps/web Vercel host there is no cross-app proxy, so those links fall to the
+SPA's not-found page. This is a property of the split-app topology, not of any
+one link; it currently degrades gracefully but makes local click-through review
+of cross-app affordances impossible.
+
+Value:
+
+- local dev click-through matches the canonical-origin topology instead of
+  dead-ending at the SPA not-found page
+- future web → site links (feedback, landing, donation-adjacent surfaces)
+  inherit a working local path instead of re-litigating this per link
+
+Options to evaluate:
+
+- a Vite `server.proxy` entry forwarding site-owned `/event/*` paths to a
+  locally running apps/site dev server, mirroring the production rewrites;
+  needs a defined behavior when apps/site is not running
+- an origin-aware href helper that prefixes the canonical site origin only
+  when the current origin is known not to proxy site routes; needs a source
+  of truth for the canonical origin in apps/web and care not to leak
+  production URLs into preview-deployment flows
+
+Minimum validation:
+
+- from `npm run dev:web:local`, complete the featured demo and click the
+  newsletter CTA; confirm it reaches the feedback form (or the documented
+  fallback behavior when apps/site is not running)
+
 ### Add an admin UI-review capture mode
 
 Status: landed (5df06c5 mock fix; this PR closes the item)

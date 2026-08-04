@@ -1,6 +1,7 @@
 import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { CompletionCtaContent } from "../../../../shared/events/completionCta.ts";
 import type { AttendeeRedemptionStatus } from "../../../../shared/redemption.ts";
 import { GameCompletionPanel } from "../../../../apps/web/src/game/components/GameCompletionPanel.tsx";
 import type { GameConfig } from "../../../../apps/web/src/data/games.ts";
@@ -49,6 +50,26 @@ function createCompletionResult(
     message: "You're checked in for the reward.",
     entitlementEligible: true,
     score: 1,
+    ...overrides,
+  };
+}
+
+function createCta(
+  overrides: Partial<CompletionCtaContent> = {},
+): CompletionCtaContent {
+  return {
+    heading: "Enjoying Music in the Playfield?",
+    newsletter: {
+      body: "Get the next lineup and neighborhood events in your inbox.",
+      buttonLabel: "Sign up for updates",
+      href: "/event/madrona/feedback",
+    },
+    donate: {
+      body:
+        "This concert series is free because neighbors chip in — 100% of donations go to the association.",
+      buttonLabel: "Support the Playfield",
+      href: "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+    },
     ...overrides,
   };
 }
@@ -127,6 +148,7 @@ describe("GameCompletionPanel", () => {
           answers={{ q1: ["a"] }}
           completion={completion}
           completionError={null}
+          cta={null}
           game={createGame()}
           isSubmitting={false}
           onReset={() => {}}
@@ -193,6 +215,7 @@ describe("GameCompletionPanel", () => {
         answers={{ q1: ["a"] }}
         completion={createCompletionResult()}
         completionError={null}
+        cta={null}
         game={createGame()}
         isSubmitting={false}
         onReset={() => {}}
@@ -212,6 +235,7 @@ describe("GameCompletionPanel", () => {
         answers={{ q1: ["a"] }}
         completion={createCompletionResult()}
         completionError={null}
+        cta={null}
         game={createGame()}
         isSubmitting={false}
         onReset={() => {}}
@@ -234,6 +258,7 @@ describe("GameCompletionPanel", () => {
         answers={{ q1: ["a"] }}
         completion={createCompletionResult()}
         completionError={null}
+        cta={null}
         game={createGame({ feedbackMode: "instant_feedback_non_blocking" })}
         isSubmitting={false}
         onReset={() => {}}
@@ -258,6 +283,7 @@ describe("GameCompletionPanel", () => {
         answers={{ q1: ["b"] }}
         completion={createCompletionResult()}
         completionError={null}
+        cta={null}
         game={createGame({ feedbackMode: "instant_feedback_required" })}
         isSubmitting={false}
         onReset={() => {}}
@@ -281,6 +307,7 @@ describe("GameCompletionPanel", () => {
         answers={{}}
         completion={null}
         completionError="Temporary backend problem."
+        cta={null}
         game={createGame()}
         isSubmitting={false}
         onReset={onReset}
@@ -298,5 +325,125 @@ describe("GameCompletionPanel", () => {
     expect(onRetrySubmission).toHaveBeenCalledTimes(1);
     expect(onReset).toHaveBeenCalledTimes(1);
     expect(screen.getByText("We couldn't load your check-in code")).toBeTruthy();
+  });
+
+  describe("completion CTA block", () => {
+    function renderPanel({
+      completion = createCompletionResult(),
+      completionError = null,
+      cta = createCta(),
+      isSubmitting = false,
+      statusKind = "unredeemed" as AttendeeRedemptionStatus["kind"],
+    } = {}) {
+      return render(
+        <GameCompletionPanel
+          answers={{ q1: ["a"] }}
+          completion={completion}
+          completionError={completionError}
+          cta={cta}
+          game={createGame()}
+          isSubmitting={isSubmitting}
+          onReset={() => {}}
+          onRetake={() => {}}
+          onRetrySubmission={() => {}}
+          score={1}
+          showRetake={true}
+          status={createStatus(statusKind)}
+        />,
+      );
+    }
+
+    it.each([
+      { statusKind: "unredeemed" as const },
+      { statusKind: "redeemed" as const },
+    ])(
+      "renders both CTAs below the entitlement result in the $statusKind state",
+      ({ statusKind }) => {
+        renderPanel({ statusKind });
+
+        expect(
+          screen.getByRole("heading", { name: "Enjoying Music in the Playfield?" }),
+        ).toBeTruthy();
+
+        const newsletterLink = screen.getByRole("link", {
+          name: "Sign up for updates",
+        });
+        // Config-owned destination: the game's own slug is "test-game", so
+        // this proves the href comes from the CTA config, not the slug.
+        expect(newsletterLink.getAttribute("href")).toBe(
+          "/event/madrona/feedback",
+        );
+        // New tab so a pre-redemption click can't unmount the SPA and lose
+        // the reducer-held verification code.
+        expect(newsletterLink.getAttribute("target")).toBe("_blank");
+        expect(newsletterLink.getAttribute("rel")).toBe("noopener");
+
+        const donateLink = screen.getByRole("link", {
+          name: "Support the Playfield",
+        });
+        expect(donateLink.getAttribute("href")).toBe(
+          "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+        );
+        expect(donateLink.getAttribute("target")).toBe("_blank");
+        expect(donateLink.getAttribute("rel")).toBe("noopener");
+
+        // The CTA rides below the entitlement result, never above it.
+        const panel = screen.getByRole("heading", {
+          name: "Enjoying Music in the Playfield?",
+        }).closest(".completion-panel");
+        const tokenBlock = panel?.querySelector(".token-block");
+        const ctaBlock = panel?.querySelector(".completion-cta");
+        expect(tokenBlock).not.toBeNull();
+        expect(ctaBlock).not.toBeNull();
+        expect(
+          tokenBlock!.compareDocumentPosition(ctaBlock!) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      },
+    );
+
+    it("omits the newsletter CTA when the event has no feedback surface", () => {
+      renderPanel({ cta: createCta({ newsletter: undefined }) });
+
+      expect(screen.queryByRole("link", { name: "Sign up for updates" })).toBeNull();
+      expect(screen.getByRole("link", { name: "Support the Playfield" })).toBeTruthy();
+    });
+
+    it("omits the donate CTA when the event has no donation destination", () => {
+      renderPanel({ cta: createCta({ donate: undefined }) });
+
+      expect(screen.getByRole("link", { name: "Sign up for updates" })).toBeTruthy();
+      expect(screen.queryByRole("link", { name: "Support the Playfield" })).toBeNull();
+    });
+
+    it("renders no CTA block for events without a registry entry", () => {
+      const { container } = renderPanel({ cta: null });
+
+      expect(container.querySelector(".completion-cta")).toBeNull();
+    });
+
+    it("renders no CTA block when both sections are absent", () => {
+      const { container } = renderPanel({
+        cta: createCta({ donate: undefined, newsletter: undefined }),
+      });
+
+      expect(container.querySelector(".completion-cta")).toBeNull();
+    });
+
+    it("keeps the CTA hidden while the completion is still submitting", () => {
+      const { container } = renderPanel({ completion: null, isSubmitting: true });
+
+      expect(container.querySelector(".completion-cta")).toBeNull();
+    });
+
+    it("keeps the CTA hidden when completion failed", () => {
+      const { container } = renderPanel({
+        completion: null,
+        completionError: "Temporary backend problem.",
+        statusKind: "unknown",
+      });
+
+      expect(container.querySelector(".completion-cta")).toBeNull();
+    });
   });
 });
