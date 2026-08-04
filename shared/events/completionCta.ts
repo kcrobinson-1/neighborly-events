@@ -33,10 +33,17 @@
  * experience (`shared/game-config/sample-games.ts`); it mirrors the
  * `madrona` entry so local UI review and the demo flow exercise the
  * block. The mirror shares the `madrona` object, so its newsletter
- * button lands on the real `/event/madrona/feedback` route rather
- * than a nonexistent `first-sample` one. The fixture only resolves
- * under the Vite prototype fallback, so the mirror never reaches
- * production routes.
+ * href names the real `/event/madrona/feedback` route rather than a
+ * nonexistent `first-sample` one. Same-origin resolution still
+ * requires an origin that proxies site routes (the canonical site
+ * origin and its preview deployments): on the bare Vite dev server —
+ * the only place the fixture resolves — and on the direct apps/web
+ * host there is no cross-app proxy, so the click falls to the SPA's
+ * not-found page. Accepted: the fixture exists for rendering
+ * coverage, not cross-app navigation, and closing that gap is a dev-
+ * topology task (a Vite dev proxy or origin-aware href helper)
+ * tracked in `docs/tracking/dev-workflow-improvements.md`, not a
+ * content concern.
  */
 
 /** One link-out section of the completion CTA block. */

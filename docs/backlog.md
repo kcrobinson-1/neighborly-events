@@ -276,6 +276,13 @@ Execute in any order.
   agents have a consistent, documented path for uploading UX review images.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Add a stable PR screenshot upload path](/docs/tracking/dev-workflow-improvements.md)
 
+- [ ] **`dev` Resolve cross-app links from apps/web outside the site-origin proxy**
+  Web-rendered links to site-owned routes (e.g. the completion-screen
+  newsletter CTA) resolve only behind the canonical-origin proxy; on the bare
+  Vite dev server they fall to the SPA not-found page. Evaluate a Vite dev
+  proxy or an origin-aware href helper.
+  Detail: [`docs/tracking/dev-workflow-improvements.md` — Resolve cross-app links from apps/web outside the site-origin proxy](/docs/tracking/dev-workflow-improvements.md)
+
 - [ ] **`db` Test-entitlement deletion requires manual unwinding of circular FK**
   Deleting an event's entitlements today requires a three-step
   transaction — clear `first_completion_id` on entitlements, delete
