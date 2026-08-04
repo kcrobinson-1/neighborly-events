@@ -153,10 +153,12 @@ export function GameCompletionPanel({
             <div className="completion-cta-item">
               <p>{cta.newsletter.body}</p>
               {/* Plain anchor: the feedback route is owned by apps/site, so the
-                  navigation must be a hard load for the proxy to re-evaluate. */}
+                  navigation must be a hard load for the proxy to re-evaluate.
+                  The destination is config-owned — never derived from the game
+                  slug, which may not name a feedback-enabled event. */}
               <a
                 className="completion-cta-button"
-                href={`/event/${encodeURIComponent(game.slug)}/feedback`}
+                href={cta.newsletter.href}
               >
                 {cta.newsletter.buttonLabel}
               </a>

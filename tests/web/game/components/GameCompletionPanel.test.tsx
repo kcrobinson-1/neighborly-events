@@ -62,6 +62,7 @@ function createCta(
     newsletter: {
       body: "Get the next lineup and neighborhood events in your inbox.",
       buttonLabel: "Sign up for updates",
+      href: "/event/madrona/feedback",
     },
     donate: {
       body:
@@ -367,8 +368,10 @@ describe("GameCompletionPanel", () => {
         const newsletterLink = screen.getByRole("link", {
           name: "Sign up for updates",
         });
+        // Config-owned destination: the game's own slug is "test-game", so
+        // this proves the href comes from the CTA config, not the slug.
         expect(newsletterLink.getAttribute("href")).toBe(
-          "/event/test-game/feedback",
+          "/event/madrona/feedback",
         );
         expect(newsletterLink.getAttribute("target")).toBeNull();
 
