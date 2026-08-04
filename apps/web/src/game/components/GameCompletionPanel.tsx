@@ -155,10 +155,15 @@ export function GameCompletionPanel({
               {/* Plain anchor: the feedback route is owned by apps/site, so the
                   navigation must be a hard load for the proxy to re-evaluate.
                   The destination is config-owned — never derived from the game
-                  slug, which may not name a feedback-enabled event. */}
+                  slug, which may not name a feedback-enabled event. New tab
+                  because the verification code lives only in reducer state: a
+                  same-tab navigation before redemption would unmount the SPA
+                  and force a full replay to recover the code. */}
               <a
                 className="completion-cta-button"
                 href={cta.newsletter.href}
+                rel="noopener"
+                target="_blank"
               >
                 {cta.newsletter.buttonLabel}
               </a>

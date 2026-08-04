@@ -373,7 +373,10 @@ describe("GameCompletionPanel", () => {
         expect(newsletterLink.getAttribute("href")).toBe(
           "/event/madrona/feedback",
         );
-        expect(newsletterLink.getAttribute("target")).toBeNull();
+        // New tab so a pre-redemption click can't unmount the SPA and lose
+        // the reducer-held verification code.
+        expect(newsletterLink.getAttribute("target")).toBe("_blank");
+        expect(newsletterLink.getAttribute("rel")).toBe("noopener");
 
         const donateLink = screen.getByRole("link", {
           name: "Support the Playfield",
