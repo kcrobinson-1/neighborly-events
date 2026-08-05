@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { scoreAnswers } from "../../../../shared/game-config";
 import type { GameConfig } from "../data/games";
 import { submitGameCompletion } from "../lib/gameApi";
@@ -12,21 +12,41 @@ import {
   createGameState,
   gameReducer,
 } from "./gameSessionState";
+import { shuffleGameOptions } from "./shuffleGameOptions";
 
 /** Manages the complete game session lifecycle for a single game instance. */
 export function useGameSession(game: GameConfig) {
   const [state, dispatch] = useReducer(gameReducer, undefined, () => createGameState());
   const handledSubmissionRequestId = useRef<string | null>(null);
+  // Answer options render in a per-attempt random order so the authored order
+  // cannot leak the correct answer. The shuffled copy lives in state so one
+  // permutation stays stable for the whole attempt (back-navigation included);
+  // only a game change or a retake draws a fresh one. Keyed by game.id — the
+  // same key the reset effect below uses — because the game object's identity
+  // is not stable across renders in every caller.
+  const [shuffled, setShuffled] = useState(() => ({
+    gameId: game.id,
+    game: shuffleGameOptions(game),
+  }));
+
+  if (shuffled.gameId !== game.id) {
+    setShuffled({ gameId: game.id, game: shuffleGameOptions(game) });
+  }
+
+  const shuffledGame = shuffled.gameId === game.id ? shuffled.game : game;
 
   useEffect(() => {
     dispatch({ type: "reset" });
     handledSubmissionRequestId.current = null;
   }, [game.id]);
 
-  const questions = game.questions;
-  const localScore = useMemo(() => scoreAnswers(game, state.answers), [game, state.answers]);
+  const questions = shuffledGame.questions;
+  const localScore = useMemo(
+    () => scoreAnswers(shuffledGame, state.answers),
+    [shuffledGame, state.answers],
+  );
   const score = getGameSessionScore(state.latestCompletion, localScore);
-  const viewState = getGameSessionViewState(game, state);
+  const viewState = getGameSessionViewState(shuffledGame, state);
   const {
     allowRetake,
     canGoBack,
@@ -178,6 +198,7 @@ export function useGameSession(game: GameConfig) {
 
   const resetForRetake = () => {
     handledSubmissionRequestId.current = null;
+    setShuffled({ gameId: game.id, game: shuffleGameOptions(game) });
     dispatch({
       type: "resetForRetake",
       startedAt: Date.now(),

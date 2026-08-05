@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from "vitest";
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
 import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
 
@@ -356,6 +356,119 @@ describe("useGameSession", () => {
     });
     expect(mockSubmitGameCompletion.mock.calls[1]?.[0]).toMatchObject({
       requestId: "req-123",
+    });
+  });
+
+  describe("per-attempt option shuffling", () => {
+    let randomSpy: MockInstance<() => number>;
+
+    beforeEach(() => {
+      // random() === 0 pins a known non-authored permutation; switching the
+      // spy to just-below-1 afterward pins the identity permutation, which
+      // lets tests tell "kept the attempt's order" apart from "re-shuffled".
+      randomSpy = vi.spyOn(Math, "random").mockReturnValue(0);
+    });
+
+    afterEach(() => {
+      randomSpy.mockRestore();
+    });
+
+    it("renders options in a shuffled order without touching the source config", () => {
+      const game = createFinalScoreGame();
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+      });
+
+      // With random() === 0 the two-option question renders reversed.
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "b",
+        "a",
+      ]);
+      expect(game.questions[0].options.map((o) => o.id)).toEqual(["a", "b"]);
+    });
+
+    it("keeps one permutation stable across submit and back-navigation", () => {
+      const game = createFinalScoreGame();
+      const { result } = renderHook(() => useGameSession(game));
+
+      const shuffledIds = () =>
+        result.current.currentQuestion?.options.map((o) => o.id);
+
+      act(() => {
+        result.current.start();
+      });
+
+      const firstQuestionOrder = shuffledIds();
+      expect(firstQuestionOrder).toEqual(["b", "a"]);
+
+      // Any re-shuffle from here on would produce the authored order instead.
+      randomSpy.mockReturnValue(0.9999);
+
+      act(() => {
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      expect(result.current.currentIndex).toBe(1);
+
+      act(() => {
+        result.current.goBack();
+      });
+
+      expect(shuffledIds()).toEqual(firstQuestionOrder);
+    });
+
+    it("grades a correct selection normally against the shuffled question", () => {
+      const { result } = renderHook(() => useGameSession(createInstantFeedbackGame()));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      expect(result.current.feedbackKind).toBe("correct");
+      expect(result.current.answers).toEqual({ q1: ["b"] });
+    });
+
+    it("draws a fresh permutation on retake", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+      });
+
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "b",
+        "a",
+      ]);
+
+      act(() => {
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      // The retake's draw uses the identity permutation, so a changed order
+      // proves the attempt re-rolled rather than reusing the stored shuffle.
+      randomSpy.mockReturnValue(0.9999);
+
+      act(() => {
+        result.current.resetForRetake();
+      });
+
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "a",
+        "b",
+      ]);
     });
   });
 
