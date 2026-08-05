@@ -2,29 +2,26 @@ import type { AuthoringGameDraftContent } from "../game-config";
 import type { GameSeedConfig } from "./seed-config.ts";
 
 /**
- * Madrona Music in the Playfield — demo game content authored by the
+ * Madrona Music in the Playfield — game content first authored as
+ * demo content by the
  * [Madrona demo-build epic](../../docs/plans/epics/madrona-demo-build/epic.md)
- * M2 phase 2.1 and progressively iterated toward the shape M3 will
- * land. The content references the apps/site Madrona placeholder
- * roster as canonical: the six placeholder bands
+ * M2 phase 2.1 and since iterated: the questions are real
+ * neighborhood facts (no band or business-sponsor references — the
+ * only named sponsor is the hosting association), and the reward
+ * copy names the real 2026 reward, a trinket from the Madrona
+ * Neighborhood Association booth. The apps/site landing
  * ([`apps/site/events/madrona.ts`](../../apps/site/events/madrona.ts)
- * `lineup`), the three Tuesday-evening series dates from the same
- * source's `schedule.days`, and the five placeholder sponsors from
- * `sponsors`. Bands and sponsors are still placeholder names — the
- * apps/site landing's first FAQ entry and the SSR `noindex` meta
- * carry the disclosure that the page is a stakeholder demo, not a
- * real launch announcement.
+ * `cta.sublabel`) makes the same trinket promise; the reward noun
+ * is duplicated between the two files with no shared constant, so
+ * keep them aligned when either changes.
  *
- * The intent of treating the apps/site roster as canon (rather than
- * hedging every reference as "placeholder") is to make the M3 swap
- * a name-substitution rather than a structural rewrite — when the
- * real Cedar-&-Salt-equivalent opener is confirmed, M3 changes the
- * label and the option id and the sponsor-fact prose; the question
- * count, the multi-select position, the sponsor rotation, and the
- * explanation shape all carry forward unchanged. M2 milestone-doc
- * invariant 5 ("placeholder content is content-neutral with
- * respect to M3") binds the structural carry-forward, not the
- * choice of placeholder names.
+ * Canonical-ownership note: the live event renders the published
+ * `game_events` rows, which are authored and edited through /admin —
+ * not this module. This seed is the bootstrap for fresh or reseeded
+ * environments (and a starter template for a future "Create New
+ * Event" affordance), so it can go stale relative to /admin edits;
+ * a reseed overwrites from this file, it does not restore what
+ * /admin last published.
  *
  * The seed flow is: a service-role script
  * (`scripts/release/seed-game-content.cjs`) imports this module
@@ -44,9 +41,9 @@ const madronaGameContent: AuthoringGameDraftContent = {
   name: "Madrona Music in the Playfield",
   location: "Madrona Playfield, Seattle",
   estimatedMinutes: 3,
-  entitlementLabel: "raffle ticket",
+  entitlementLabel: "trinket",
   intro:
-    "Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough for a free raffle ticket redeemable at the Madrona Neighborhood Association booth by the basketball court.",
+    "Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough for a free trinket redeemable at the Madrona Neighborhood Association booth by the basketball court.",
   summary:
     "Thanks for playing. Bring your code to the Madrona Neighborhood Association booth to redeem, then settle in — the next set is about to start.",
   feedbackMode: "final_score_reveal",
