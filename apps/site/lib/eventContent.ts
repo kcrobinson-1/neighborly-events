@@ -85,6 +85,19 @@
  * (`harvest-block-party`, `riverside-jam`) deliberately omit
  * `feedback` so the omission-guard falsifier stays structural.
  *
+ * `newsletterSignup?` is the standalone email-capture counterpart to
+ * `feedback?`, with the same presence semantics on its own route:
+ * presence makes `/event/<slug>/signup` a real single-field form
+ * route; absence renders the friendly disabled state there. The
+ * form's anon write path is the `submit_newsletter_signup` SECURITY
+ * DEFINER RPC, gated at the DB by the `newsletter_enabled_events`
+ * registry (a seam deliberately separate from
+ * `feedback_enabled_events`, so an event can offer signup without
+ * offering feedback) — as with `feedback?`, enabling a new event
+ * takes both a content-module edit (to surface the form) and a
+ * registry seed (to admit writes). The two test events omit the
+ * field so the omission-guard falsifier stays structural.
+ *
  * `donate?` is the donation counterpart to `feedback?`, following
  * the same named-outer-field discipline (not a generic `links[]`):
  * presence renders the `EventDonateCTA` section on the landing page
@@ -163,6 +176,14 @@ export type EventContent = {
       placeholder?: string;
       newsletterOptInLabel: string;
     };
+    thankYouMessage: string;
+  };
+  newsletterSignup?: {
+    heading: string;
+    body?: string;
+    emailLabel: string;
+    emailPlaceholder?: string;
+    submitLabel: string;
     thankYouMessage: string;
   };
   donate?: {

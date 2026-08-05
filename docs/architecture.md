@@ -286,6 +286,25 @@ grouped into a dedicated `apps/web/src/game/` module:
   same attendee may produce additional rows across visits or
   reloads — deduplication is an export-time analytics concern,
   not a DB-level invariant.
+- `apps/site/app/event/[slug]/signup/page.tsx` and
+  `apps/site/app/event/[slug]/signup/SignupForm.tsx`
+  Public standalone newsletter-signup route at
+  `/event/:slug/signup`, mirroring the feedback route's shape:
+  route availability gated by the per-event content module's
+  `newsletterSignup` block (`generateStaticParams` from the same
+  registered-slug list, landing-parity `noindex` metadata,
+  `notFound()` on unknown slugs, inline disabled state when the
+  block is absent, and `<ThemeScope>` wrapping on both rendered
+  branches). The client form collects one required email and
+  submits through the `submit_newsletter_signup` SECURITY DEFINER
+  RPC into the `newsletter_opt_ins` consent log; the DB-level
+  `newsletter_enabled_events` registry enforces the slug
+  invariant at submit time via the repointed
+  `newsletter_opt_ins.event_slug` FK, so enabling a new event
+  requires both a content-module update and a registry seed.
+  Repeat submissions of the same email succeed and append
+  additional consent rows — deduplication stays an export-time
+  concern.
 - `apps/site/components/event/`
   Section components composed by `EventLandingPage` (header,
   schedule, lineup, sponsors, FAQ, CTA, footer, plus
