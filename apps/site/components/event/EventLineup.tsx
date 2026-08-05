@@ -1,5 +1,27 @@
 import type { EventContent } from "../../lib/eventContent.ts";
 
+type ArtistLinks = NonNullable<
+  EventContent["lineup"][number]["artistLinks"]
+>;
+
+/**
+ * Display labels and render order for the artist-link chips. The
+ * order is fixed here, not by content-object key order, so every
+ * band card presents the same platforms in the same sequence.
+ */
+const ARTIST_LINK_SLOTS: ReadonlyArray<{
+  key: keyof ArtistLinks;
+  label: string;
+}> = [
+  { key: "website", label: "Website" },
+  { key: "spotify", label: "Spotify" },
+  { key: "appleMusic", label: "Apple Music" },
+  { key: "instagram", label: "Instagram" },
+  { key: "facebook", label: "Facebook" },
+  { key: "youtube", label: "YouTube" },
+  { key: "bandcamp", label: "Bandcamp" },
+];
+
 /**
  * Performer lineup. Each entry shows name, optional bio, and a
  * compact set-times list ("2026-09-26 — 2:00 PM, 2026-09-27 —
@@ -8,8 +30,10 @@ import type { EventContent } from "../../lib/eventContent.ts";
  * scope.
  *
  * Madrona M1 phase 1.2 added `imageSrc`/`imageAlt`, `extendedBio`,
- * `featuredQuote`, and `externalLinks` band-depth fields. Each is
- * truthiness-guarded independently — render-when-present, not
+ * and `featuredQuote` band-depth fields; the typed `artistLinks`
+ * slot set later replaced 1.2's never-populated free-form
+ * `externalLinks` (see the `EventContent` doc comment). Each field
+ * is truthiness-guarded independently — render-when-present, not
  * require-when-absent — so events that omit them render
  * byte-for-byte identical to the pre-1.2 output. `imageAlt` falls
  * back to the band's `name` when `imageSrc` is present without it.
@@ -26,6 +50,10 @@ export function EventLineup({
       </h2>
       <ul className="event-lineup-list">
         {lineup.map((performer) => {
+          const artistLinks = ARTIST_LINK_SLOTS.flatMap(({ key, label }) => {
+            const href = performer.artistLinks?.[key];
+            return href ? [{ key, label, href }] : [];
+          });
           const extendedBioParagraphs = performer.extendedBio
             ? performer.extendedBio
                 .split("\n\n")
@@ -66,10 +94,10 @@ export function EventLineup({
                   ) : null}
                 </blockquote>
               ) : null}
-              {performer.externalLinks && performer.externalLinks.length > 0 ? (
-                <ul className="event-lineup-external-links">
-                  {performer.externalLinks.map((link) => (
-                    <li key={link.href}>
+              {artistLinks.length > 0 ? (
+                <ul className="event-lineup-artist-links">
+                  {artistLinks.map((link) => (
+                    <li key={link.key}>
                       <a
                         href={link.href}
                         target="_blank"

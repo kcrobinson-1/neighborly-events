@@ -62,7 +62,7 @@ describe("madrona launch content", () => {
   // Walks every string in the content tree. Guards the whole
   // placeholder sweep at once: any example.com URL reintroduced
   // anywhere in madrona's content (sponsor hrefs, social links,
-  // band externalLinks) fails here. The feedback email placeholder
+  // band artistLinks) fails here. The feedback email placeholder
   // ("you@example.com") is not a URL and deliberately passes.
   function collectStrings(value: unknown): string[] {
     if (typeof value === "string") {

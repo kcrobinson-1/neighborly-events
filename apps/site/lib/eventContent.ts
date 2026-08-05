@@ -49,8 +49,8 @@
  * `lineup[number]` and `sponsors[number]` carry additive optional
  * depth fields the [Madrona demo-build epic](../../../docs/plans/epics/madrona-demo-build/epic.md)
  * M1 phase 1.2 added: bands gain `imageSrc` / `imageAlt`,
- * `extendedBio`, `featuredQuote`, and `externalLinks`; sponsors
- * gain `shortDescription` and `socialLinks`. Every new field is
+ * `extendedBio`, and `featuredQuote`; sponsors gain
+ * `shortDescription` and `socialLinks`. Every new field is
  * `?: T` and the `EventLineup` / `EventSponsors` renderers
  * truthiness-guard each independently — an event that omits the
  * new fields renders byte-for-byte identical to the pre-1.2
@@ -63,11 +63,21 @@
  * `featuredQuote.attribution` is meaningful only when
  * `featuredQuote.text` is present, so the pair nests; `imageAlt`
  * falls back to the band's `name` when `imageSrc` is present
- * without it. `externalLinks` and `socialLinks` are separately
- * named (not unified under a generic `links[]`) because the
- * semantic role differs across bands and sponsors, and the
- * field-name specificity preserves invariant 2 — no foreclosure
- * of the donation / feedback child epics.
+ * without it.
+ *
+ * `lineup[number].artistLinks` is the typed successor to 1.2's
+ * free-form `externalLinks` label/href list, which no event ever
+ * populated: when real artist URLs were collected for Madrona,
+ * the free list was replaced with a fixed slot set — `website`,
+ * `spotify`, `appleMusic`, `instagram`, `facebook`, `youtube`,
+ * `bandcamp`, each an optional external href — so `EventLineup`
+ * owns the display labels and renders whichever slots are present
+ * as consistently-ordered link chips (new tab, `rel="noopener"`).
+ * Sponsors' `socialLinks` keeps its free label/href shape; the
+ * two stay separately named (not unified under a generic
+ * `links[]`) because the semantic role differs across bands and
+ * sponsors, and the field-name specificity preserves invariant 2
+ * — no foreclosure of the donation / feedback child epics.
  *
  * `feedback?` is the [Madrona feedback child epic](../../../docs/plans/epics/madrona-feedback/epic.md)
  * M1 phase 1.2 opt-in field: presence renders the
@@ -163,7 +173,15 @@ export type EventContent = {
     imageAlt?: string;
     extendedBio?: string;
     featuredQuote?: { text: string; attribution?: string };
-    externalLinks?: Array<{ label: string; href: string }>;
+    artistLinks?: {
+      website?: string;
+      spotify?: string;
+      appleMusic?: string;
+      instagram?: string;
+      facebook?: string;
+      youtube?: string;
+      bandcamp?: string;
+    };
     setTimes: Array<{ day: string; time: string }>;
   }>;
   sponsors: Array<{
