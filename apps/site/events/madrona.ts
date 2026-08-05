@@ -1,3 +1,4 @@
+import { madronaFacts } from "../../../shared/events/madrona-facts.ts";
 import type { EventContent } from "../lib/eventContent.ts";
 
 /**
@@ -32,10 +33,9 @@ import type { EventContent } from "../lib/eventContent.ts";
  * `EventHeader`.
  *
  * `donate` renders the `EventDonateCTA` section linking out to the
- * association's Zeffy donation form (new tab; the same destination
- * the game completion screen's donate CTA in
- * `shared/events/completionCta.ts` uses — a URL swap should update
- * both).
+ * association's Zeffy donation form (new tab). Its destination —
+ * like the reward noun and booth phrasing this module shares with
+ * the game surfaces — comes from `shared/events/madrona-facts.ts`.
  *
  * `feedback` opts madrona in to the
  * [Madrona feedback child epic](../../../docs/plans/epics/madrona-feedback/epic.md)
@@ -56,6 +56,13 @@ import type { EventContent } from "../lib/eventContent.ts";
  * no madrona-keyed branches inside the route, the form, or the
  * insert path.
  */
+/** The 5:30 PM booth-opening session, identical on all three nights. */
+const boothOpensSession = {
+  time: "5:30 PM",
+  title: `Blankets down — ${madronaFacts.booth.name} opens`,
+  description: `Find a spot on the grass. The association booth opens with the neighborhood quiz and the ${madronaFacts.rewardNoun} table.`,
+};
+
 export const madronaContent: EventContent = {
   slug: "madrona",
   themeSlug: "madrona",
@@ -78,13 +85,7 @@ export const madronaContent: EventContent = {
         date: "2026-08-11",
         label: "Tuesday — Opening Night",
         sessions: [
-          {
-            time: "5:30 PM",
-            title:
-              "Blankets down — Madrona Neighborhood Association booth opens",
-            description:
-              "Find a spot on the grass. The association booth opens with the neighborhood quiz and the trinket table.",
-          },
+          boothOpensSession,
           {
             time: "6:00 PM",
             title: "Miller Campbell — first set",
@@ -103,13 +104,7 @@ export const madronaContent: EventContent = {
         date: "2026-08-18",
         label: "Tuesday — Mid-Series",
         sessions: [
-          {
-            time: "5:30 PM",
-            title:
-              "Blankets down — Madrona Neighborhood Association booth opens",
-            description:
-              "Find a spot on the grass. The association booth opens with the neighborhood quiz and the trinket table.",
-          },
+          boothOpensSession,
           {
             time: "6:00 PM",
             title: "Jacqueline Tabor — first set",
@@ -128,13 +123,7 @@ export const madronaContent: EventContent = {
         date: "2026-08-25",
         label: "Tuesday — Closing Night",
         sessions: [
-          {
-            time: "5:30 PM",
-            title:
-              "Blankets down — Madrona Neighborhood Association booth opens",
-            description:
-              "Find a spot on the grass. The association booth opens with the neighborhood quiz and the trinket table.",
-          },
+          boothOpensSession,
           {
             time: "6:00 PM",
             title: "Frames in Motion — first set",
@@ -241,7 +230,7 @@ export const madronaContent: EventContent = {
   cta: {
     label: "Play the Madrona quiz",
     sublabel:
-      "Answer a few neighborhood questions, then show your completion screen at the MNA booth for tonight's trinket.",
+      `Answer a few neighborhood questions, then show your completion screen at the ${madronaFacts.booth.shortName} for tonight's ${madronaFacts.rewardNoun}.`,
   },
   feedback: {
     cta: {
@@ -267,7 +256,7 @@ export const madronaContent: EventContent = {
     heading: "Keep the Playfield free",
     body: "These concerts are free because neighbors chip in — 100% of donations go to the Madrona Neighborhood Association.",
     buttonLabel: "Support the Playfield",
-    href: "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+    href: madronaFacts.donateHref,
   },
   footer: {
     attribution:
