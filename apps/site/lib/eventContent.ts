@@ -84,6 +84,17 @@
  * adopted, applied at the outer-field level. The two test events
  * (`harvest-block-party`, `riverside-jam`) deliberately omit
  * `feedback` so the omission-guard falsifier stays structural.
+ *
+ * `donate?` is the donation counterpart to `feedback?`, following
+ * the same named-outer-field discipline (not a generic `links[]`):
+ * presence renders the `EventDonateCTA` section on the landing page
+ * (below `EventFeedbackCTA`, above `EventFooter`); absence omits
+ * the section entirely, so events without a donation destination
+ * render byte-for-byte identical to the pre-field output. `href` is
+ * an external donation-platform URL and the renderer opens it in a
+ * new tab with `rel="noopener"` — unlike the feedback CTA there is
+ * no in-app donation route, so there is nothing slug-derived about
+ * the destination.
  */
 export type EventContent = {
   slug: string;
@@ -153,6 +164,12 @@ export type EventContent = {
       newsletterOptInLabel: string;
     };
     thankYouMessage: string;
+  };
+  donate?: {
+    heading: string;
+    body?: string;
+    buttonLabel: string;
+    href: string;
   };
   footer?: { attribution?: string };
 };

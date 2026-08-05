@@ -58,6 +58,46 @@ describe("registeredEventSlugs", () => {
   });
 });
 
+describe("madrona launch content", () => {
+  // Walks every string in the content tree. Guards the whole
+  // placeholder sweep at once: any example.com URL reintroduced
+  // anywhere in madrona's content (sponsor hrefs, social links,
+  // band externalLinks) fails here. The feedback email placeholder
+  // ("you@example.com") is not a URL and deliberately passes.
+  function collectStrings(value: unknown): string[] {
+    if (typeof value === "string") {
+      return [value];
+    }
+    if (Array.isArray(value)) {
+      return value.flatMap(collectStrings);
+    }
+    if (value !== null && typeof value === "object") {
+      return Object.values(value).flatMap(collectStrings);
+    }
+    return [];
+  }
+
+  it("contains no example.com placeholder URLs", () => {
+    const offenders = collectStrings(madronaContent).filter((text) =>
+      /https?:\/\/example\.com/.test(text),
+    );
+    expect(offenders).toEqual([]);
+  });
+
+  it("is indexable (no robots noindex) — launch posture", () => {
+    // The demo-phase `meta.robots: "noindex"` was removed when the
+    // real 2026 content landed; reintroducing it would silently pull
+    // the launch page out of search.
+    expect(madronaContent.meta.robots).toBeUndefined();
+  });
+
+  it("carries the donate CTA pointing at the association's donation form", () => {
+    expect(madronaContent.donate?.href).toBe(
+      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+    );
+  });
+});
+
 describe("parseEventDate", () => {
   it("parses well-formed ISO yyyy-mm-dd dates", () => {
     expect(parseEventDate("2026-09-26")).toEqual({

@@ -1,5 +1,6 @@
 import type { EventContent } from "../../lib/eventContent.ts";
 import { EventCTA } from "./EventCTA.tsx";
+import { EventDonateCTA } from "./EventDonateCTA.tsx";
 import { EventFAQ } from "./EventFAQ.tsx";
 import { EventFeedbackCTA } from "./EventFeedbackCTA.tsx";
 import { EventFooter } from "./EventFooter.tsx";
@@ -42,6 +43,7 @@ export function EventLandingPage({
       {content.feedback ? (
         <EventFeedbackCTA feedback={content.feedback} slug={slug} />
       ) : null}
+      {content.donate ? <EventDonateCTA donate={content.donate} /> : null}
       <EventFooter footer={content.footer} />
     </main>
   );
