@@ -120,71 +120,6 @@ export function GameCompletionPanel({
               "Try again to finish your reward check-in."}
       </p>
 
-      {shouldShowVerification ? (
-        <div
-          aria-busy={isSubmitting}
-          className={`token-block${isSubmitting ? " token-block-pending" : ""}`}
-          role="status"
-        >
-          <div className="token-status">
-            {isSubmitting ? <span aria-hidden="true" className="token-spinner" /> : null}
-            <span className="token-label">Check-in code</span>
-          </div>
-          <strong>{verificationCode ?? "Loading..."}</strong>
-          <p className="token-instruction">
-            {completion
-              ? "Show this code to the volunteer before you scroll down to review your answers."
-              : "Please wait here. The volunteer code will appear in this spot as soon as check-in is complete."}
-          </p>
-          <span className="token-meta">
-            {completion
-              ? isEntitlementNew
-                ? "Your reward entry is now recorded."
-                : "Your earlier reward entry still counts. This replay does not add another one."
-              : "This usually takes just a moment, even on slower service."}
-          </span>
-        </div>
-      ) : null}
-
-      {shouldShowCta && cta ? (
-        <aside className="completion-cta" aria-labelledby="completion-cta-heading">
-          <h3 id="completion-cta-heading">{cta.heading}</h3>
-          {cta.newsletter ? (
-            <div className="completion-cta-item">
-              <p>{cta.newsletter.body}</p>
-              {/* Plain anchor: the feedback route is owned by apps/site, so the
-                  navigation must be a hard load for the proxy to re-evaluate.
-                  The destination is config-owned — never derived from the game
-                  slug, which may not name a feedback-enabled event. New tab
-                  because the verification code lives only in reducer state: a
-                  same-tab navigation before redemption would unmount the SPA
-                  and force a full replay to recover the code. */}
-              <a
-                className="completion-cta-button"
-                href={cta.newsletter.href}
-                rel="noopener"
-                target="_blank"
-              >
-                {cta.newsletter.buttonLabel}
-              </a>
-            </div>
-          ) : null}
-          {cta.donate ? (
-            <div className="completion-cta-item">
-              <p>{cta.donate.body}</p>
-              <a
-                className="completion-cta-button"
-                href={cta.donate.href}
-                rel="noopener"
-                target="_blank"
-              >
-                {cta.donate.buttonLabel}
-              </a>
-            </div>
-          ) : null}
-        </aside>
-      ) : null}
-
       {shouldShowAnswerReview ? (
         <div className="results-block">
           <div className="score-card">
@@ -240,6 +175,71 @@ export function GameCompletionPanel({
             })}
           </div>
         </div>
+      ) : null}
+
+      {shouldShowVerification ? (
+        <div
+          aria-busy={isSubmitting}
+          className={`token-block${isSubmitting ? " token-block-pending" : ""}`}
+          role="status"
+        >
+          <div className="token-status">
+            {isSubmitting ? <span aria-hidden="true" className="token-spinner" /> : null}
+            <span className="token-label">Check-in code</span>
+          </div>
+          <strong>{verificationCode ?? "Loading..."}</strong>
+          <p className="token-instruction">
+            {completion
+              ? "Show this code to the volunteer to check in."
+              : "Please wait here. The volunteer code will appear in this spot as soon as check-in is complete."}
+          </p>
+          <span className="token-meta">
+            {completion
+              ? isEntitlementNew
+                ? "Your reward entry is now recorded."
+                : "Your earlier reward entry still counts. This replay does not add another one."
+              : "This usually takes just a moment, even on slower service."}
+          </span>
+        </div>
+      ) : null}
+
+      {shouldShowCta && cta ? (
+        <aside className="completion-cta" aria-labelledby="completion-cta-heading">
+          <h3 id="completion-cta-heading">{cta.heading}</h3>
+          {cta.newsletter ? (
+            <div className="completion-cta-item">
+              <p>{cta.newsletter.body}</p>
+              {/* Plain anchor: the feedback route is owned by apps/site, so the
+                  navigation must be a hard load for the proxy to re-evaluate.
+                  The destination is config-owned — never derived from the game
+                  slug, which may not name a feedback-enabled event. New tab
+                  because the verification code lives only in reducer state: a
+                  same-tab navigation before redemption would unmount the SPA
+                  and force a full replay to recover the code. */}
+              <a
+                className="completion-cta-button"
+                href={cta.newsletter.href}
+                rel="noopener"
+                target="_blank"
+              >
+                {cta.newsletter.buttonLabel}
+              </a>
+            </div>
+          ) : null}
+          {cta.donate ? (
+            <div className="completion-cta-item">
+              <p>{cta.donate.body}</p>
+              <a
+                className="completion-cta-button"
+                href={cta.donate.href}
+                rel="noopener"
+                target="_blank"
+              >
+                {cta.donate.buttonLabel}
+              </a>
+            </div>
+          ) : null}
+        </aside>
       ) : null}
 
       {!isSubmitting ? (
