@@ -14,20 +14,36 @@ import type { EventContent } from "../lib/eventContent.ts";
  * Content here is the real 2026 season: three Tuesday-evening
  * concerts on the Madrona Playfield (Aug 11 / 18 / 25), one band
  * per night playing two 45-minute sets between 6:00 and 8:00 PM.
- * Canonical sources live in the `mip-2026` repository: band bios
- * are website-length adaptations of
- * `docs/workstreams/programming/BandBios-2026.md` (the wording
- * source of truth), and lineup photos are resized copies from
- * `docs/workstreams/marketing/assets/bands/`. The page is indexable
- * (no `meta.robots`) — this content is the launch surface.
+ * Canonical sources live in the `mip-2026` repository (newsletter,
+ * band bios, event program), and lineup photos are resized copies
+ * from `docs/workstreams/marketing/assets/bands/`. Bio copy adapts
+ * those docs with every claim cross-checked against the artist's
+ * own published pages (Aug 2026): no artist-residence claims (the
+ * source docs' Bigfork line conflicts with current bios), Miller
+ * Campbell's album is "her new self-titled album" (never "debut"),
+ * and Tabor's Hall of Fame induction stays undated. The source
+ * docs also disagree on the per-hour run-of-show, so by organizer
+ * decision the page publishes only "two 45-minute sets" between
+ * 6:00 and 8:00 PM plus the Aug 4 Seattle Night Out skip — no
+ * per-hour concert timeline, no opener billing. The page is
+ * indexable (no `meta.robots`) — this content is the launch
+ * surface.
+ *
+ * Band `artistLinks` carry each artist's verified web presence:
+ * only URLs confirmed against the artist's own official site or
+ * platform page are listed, and unverified or missing profiles
+ * (Frames in Motion's Apple Music / Instagram / Facebook /
+ * YouTube) are omitted rather than guessed — a chip's presence is
+ * a claim of verification. Frames in Motion's Bandcamp is the band's own;
+ * Miller Campbell's points at her label's album page (no artist
+ * Bandcamp exists).
  *
  * `sponsors` deliberately carries only the hosting Madrona
  * Neighborhood Association entry for now: real 2026 business
  * sponsors are confirmed-list-pending, and entries land in a
- * follow-up once the list, tiers, and links are final. Band
- * `externalLinks` are likewise omitted until real URLs are
- * collected — the renderer's render-when-present guards make both
- * absences invisible rather than placeholder-filled.
+ * follow-up once the list, tiers, and links are final — the
+ * renderer's render-when-present guards make the absence invisible
+ * rather than placeholder-filled.
  *
  * `meta.logoSrc` / `meta.logoAlt` render the committed Madrona
  * Neighborhood Association brand mark above the hero text on
@@ -109,15 +125,9 @@ export const madronaContent: EventContent = {
         sessions: [
           boothOpensSession,
           {
-            time: "6:00 PM",
-            title: "Miller Campbell — first set",
-            description: "First of two 45-minute sets.",
-            performerSlug: "miller-campbell",
-          },
-          {
-            time: "7:15 PM",
-            title: "Miller Campbell — second set",
-            description: "Second 45-minute set closes out the night.",
+            time: "6:00–8:00 PM",
+            title: "Miller Campbell",
+            description: "Two 45-minute sets of heartland rock open the season.",
             performerSlug: "miller-campbell",
           },
         ],
@@ -128,15 +138,9 @@ export const madronaContent: EventContent = {
         sessions: [
           boothOpensSession,
           {
-            time: "6:00 PM",
-            title: "Jacqueline Tabor — first set",
-            description: "First of two 45-minute sets.",
-            performerSlug: "jacqueline-tabor",
-          },
-          {
-            time: "7:15 PM",
-            title: "Jacqueline Tabor — second set",
-            description: "Second 45-minute set closes out the night.",
+            time: "6:00–8:00 PM",
+            title: "Jacqueline Tabor",
+            description: "Two 45-minute sets of jazz, blues, and swing.",
             performerSlug: "jacqueline-tabor",
           },
         ],
@@ -147,16 +151,10 @@ export const madronaContent: EventContent = {
         sessions: [
           boothOpensSession,
           {
-            time: "6:00 PM",
-            title: "Frames in Motion — first set",
-            description: "First of two 45-minute sets.",
-            performerSlug: "frames-in-motion",
-          },
-          {
-            time: "7:15 PM",
-            title: "Frames in Motion — second set",
+            time: "6:00–8:00 PM",
+            title: "Frames in Motion",
             description:
-              "Second 45-minute set closes out the season.",
+              "Two 45-minute sets of indie folk-rock close out the season.",
             performerSlug: "frames-in-motion",
           },
         ],
@@ -167,49 +165,57 @@ export const madronaContent: EventContent = {
     {
       slug: "miller-campbell",
       name: "Miller Campbell",
-      bio: "A returning Madrona favorite bringing twangy, gritty, extremely honest heartland rock in the spirit of Tom Petty and John Mellencamp.",
+      bio: "Twangy, gritty heartland rock — a returning Madrona favorite, back with her new self-titled album.",
       imageSrc: "/events/madrona/lineup/miller-campbell.jpg",
       imageAlt: "Miller Campbell and her band performing on stage",
       extendedBio:
-        "The season opens with the return of Miller Campbell, who last played Music in the Playfield in 2024. A cousin of country legend Glen Campbell, Miller spent three years playing in a Seattle band before settling in Bigfork, Montana, where she now writes and records.\n\nSince her last Madrona set she has released her self-titled debut album and is touring the UK and Europe this summer before bringing the band back home for opening night.",
-      featuredQuote: {
-        text: "Twangy and gritty, and extremely honest.",
-        attribution: "Daily Inter Lake",
+        "The season opens with the return of Miller Campbell, who last played Music in the Playfield in 2024 and left the crowd buzzing with her twangy, gritty, and extremely honest brand of heartland rock in the spirit of Tom Petty and John Mellencamp. A cousin of country legend Glen Campbell, Miller spent three years playing in a Seattle band before striking out on her own.\n\nA lot has happened since her last Madrona set: Miller has released her new self-titled album and is touring the UK and Europe this summer before bringing the band back home for opening night.",
+      artistLinks: {
+        website: "https://www.millercampbell.com",
+        spotify: "https://open.spotify.com/artist/6bxc6mv1yH88XRwQjORrKz",
+        appleMusic:
+          "https://music.apple.com/us/artist/miller-campbell/1292569031",
+        instagram: "https://www.instagram.com/millercampbellmusic/",
+        facebook: "https://www.facebook.com/millercampbellmusic/",
+        youtube: "https://www.youtube.com/@millercampbellmusic",
+        bandcamp:
+          "https://legererecordings.bandcamp.com/album/miller-campbell",
       },
-      setTimes: [
-        { day: "2026-08-11", time: "6:00 PM" },
-        { day: "2026-08-11", time: "7:15 PM" },
-      ],
+      setTimes: [{ day: "2026-08-11", time: "6:00–8:00 PM" }],
     },
     {
       slug: "jacqueline-tabor",
       name: "Jacqueline Tabor",
-      bio: "Celebrated Seattle jazz, blues, and swing vocalist — four-time Earshot Jazz Vocalist of the Year and Earshot Jazz Hall of Fame inductee.",
+      bio: "Jazz, blues, and swing from the “Seattle Chanteuse” — four-time Earshot Jazz Vocalist of the Year.",
       imageSrc: "/events/madrona/lineup/jacqueline-tabor.jpg",
       imageAlt: "Jacqueline Tabor performing with her band",
       extendedBio:
-        "Anchoring the middle of the season is Jacqueline Tabor, one of Seattle's most celebrated jazz, blues, and swing vocalists — a four-time Earshot Jazz Vocalist of the Year, recently inducted into the Earshot Jazz Hall of Fame.\n\nWhat makes her performance memorable is the way her voice can quiet a crowd, even in a busy summer park. Her depth of skill, emotional range, and honesty pull every listener in, whether you came for the jazz or wandered over from the playground. Backed by her band, August 18 is the kind of evening worth bringing a blanket for.",
-      setTimes: [
-        { day: "2026-08-18", time: "6:00 PM" },
-        { day: "2026-08-18", time: "7:15 PM" },
-      ],
+        "Jacqueline Tabor is one of Seattle's most celebrated jazz, blues, and swing vocalists. She has won Earshot Jazz Vocalist of the Year four times and was recently inducted into the Earshot Jazz Hall of Fame.\n\nWhat makes a Jacqueline Tabor performance memorable is not just the resume — it's the way her voice can quiet a crowd, even in a busy summer park. Her depth of skill, emotional range, and honesty pull every listener in, whether you came for the jazz or wandered over from the playground. Backed by her band, August 18 is the kind of evening worth bringing a blanket for.",
+      artistLinks: {
+        website: "https://taborjazz.com",
+        spotify: "https://open.spotify.com/artist/0wgUrSuMyn2ScMNOdWAe7p",
+        appleMusic:
+          "https://music.apple.com/us/artist/jacqueline-tabor/894927204",
+        instagram: "https://www.instagram.com/seattlechanteuse/",
+        facebook: "https://www.facebook.com/p/Tabor-Jazz-100063639307373/",
+        youtube: "https://www.youtube.com/@JacquelineTaborjazz",
+      },
+      setTimes: [{ day: "2026-08-18", time: "6:00–8:00 PM" }],
     },
     {
       slug: "frames-in-motion",
       name: "Frames in Motion",
-      bio: "Joyous five-piece indie folk-rock from Seattle, led by singer-songwriter Jack Shriner — with Madrona and Leschi roots.",
+      bio: "Joyous Seattle indie folk-rock with Leschi roots — a homecoming to close the season.",
       imageSrc: "/events/madrona/lineup/frames-in-motion.jpg",
       imageAlt: "Frames in Motion band photo, outdoor field",
       extendedBio:
-        "The series closes with Frames in Motion, led by singer-songwriter and guitarist Jack Shriner. Jack's family lived in neighboring Leschi for a decade, and he still thinks of Madrona and Leschi as home — this booking is a bit of a homecoming.\n\nThe band fuses interlocking vocal, guitar, fiddle, and keyboard melodies with rhythms that tend to get people up and moving: reminiscent of classic pop-rock, but with a voice uniquely their own, built to close out a summer evening on the grass.",
-      featuredQuote: {
-        text: "The multi-layered warmth of this band's elemental sound … will bond and become friends with the little piece of soul within you that understands your fellow human.",
-        attribution: "Dive-In Magazine",
+        "The series closes with Frames in Motion, a joyous five-piece indie folk-rock band from Seattle led by singer-songwriter and guitarist Jack Shriner. Jack's family lived in neighboring Leschi for a decade, and he still thinks of Madrona and Leschi as home — which makes this booking a bit of a homecoming.\n\nThe band fuses interlocking vocal, guitar, fiddle, and keyboard melodies with rhythms that tend to get people up and moving. The songs are reminiscent of classic pop-rock but forge ahead with a voice uniquely their own — Dive-In Magazine praises “the multi-layered warmth of this band's elemental sound.” Their live set is built to close out a summer evening on the grass.",
+      artistLinks: {
+        website: "https://www.framesinmotionband.com",
+        spotify: "https://open.spotify.com/artist/35FepponJp4JM0EbvAfaXQ",
+        bandcamp: "https://framesinmotion.bandcamp.com",
       },
-      setTimes: [
-        { day: "2026-08-25", time: "6:00 PM" },
-        { day: "2026-08-25", time: "7:15 PM" },
-      ],
+      setTimes: [{ day: "2026-08-25", time: "6:00–8:00 PM" }],
     },
   ],
   sponsors: [
@@ -227,7 +233,12 @@ export const madronaContent: EventContent = {
     {
       question: "What is Music in the Playfield?",
       answer:
-        "A free summer concert series the Madrona Neighborhood Association hosts on the Madrona Playfield. Three Tuesday evenings of community music; bring a blanket and picnic.",
+        "A free summer concert series on the Madrona Playfield, organized and run entirely by Madrona Neighborhood Association volunteers with support from local sponsors and neighbor donations. Three Tuesday evenings of community music; bring a blanket and picnic.",
+    },
+    {
+      question: "Why is there no concert on Tuesday, August 4?",
+      answer:
+        "That night is deliberately left open — August 4 is Seattle Night Out, and the series skips it so neighbors can be at their block parties. Concerts run the three Tuesdays after: August 11, 18, and 25.",
     },
     {
       question: "How much does it cost?",
