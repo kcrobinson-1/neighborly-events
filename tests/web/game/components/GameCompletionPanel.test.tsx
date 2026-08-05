@@ -298,6 +298,70 @@ describe("GameCompletionPanel", () => {
     expect(screen.queryByText("Final score")).toBeNull();
   });
 
+  describe("block ordering", () => {
+    it("renders the results block above the check-in code when review is enabled", () => {
+      const { container } = render(
+        <GameCompletionPanel
+          answers={{ q1: ["a"] }}
+          completion={createCompletionResult()}
+          completionError={null}
+          cta={createCta()}
+          game={createGame()}
+          isSubmitting={false}
+          onReset={() => {}}
+          onRetake={() => {}}
+          onRetrySubmission={() => {}}
+          score={1}
+          showRetake={true}
+          status={createStatus("unredeemed")}
+        />,
+      );
+
+      const resultsBlock = container.querySelector(".results-block");
+      const tokenBlock = container.querySelector(".token-block");
+      expect(resultsBlock).not.toBeNull();
+      expect(tokenBlock).not.toBeNull();
+      expect(
+        resultsBlock!.compareDocumentPosition(tokenBlock!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      // The code now sits below the review, so its instruction must not
+      // reference scrolling down to the answers.
+      expect(
+        screen.getByText("Show this code to the volunteer to check in."),
+      ).toBeTruthy();
+    });
+
+    it("keeps the check-in code as the leading block when review is disabled", () => {
+      const { container } = render(
+        <GameCompletionPanel
+          answers={{ q1: ["a"] }}
+          completion={createCompletionResult()}
+          completionError={null}
+          cta={createCta()}
+          game={createGame({ feedbackMode: "instant_feedback_non_blocking" })}
+          isSubmitting={false}
+          onReset={() => {}}
+          onRetake={() => {}}
+          onRetrySubmission={() => {}}
+          score={1}
+          showRetake={true}
+          status={createStatus("unredeemed")}
+        />,
+      );
+
+      expect(container.querySelector(".results-block")).toBeNull();
+      const tokenBlock = container.querySelector(".token-block");
+      const ctaBlock = container.querySelector(".completion-cta");
+      expect(tokenBlock).not.toBeNull();
+      expect(ctaBlock).not.toBeNull();
+      expect(
+        tokenBlock!.compareDocumentPosition(ctaBlock!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+  });
+
   it("shows retry actions when completion failed", () => {
     const onReset = vi.fn();
     const onRetrySubmission = vi.fn();
