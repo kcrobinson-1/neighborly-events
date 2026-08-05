@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { EMAIL_PATTERN } from "../../../../lib/emailPattern.ts";
 import type { EventContent } from "../../../../lib/eventContent.ts";
 import { getBrowserSupabaseClient } from "../../../../lib/supabaseBrowser.ts";
 
@@ -17,14 +18,6 @@ type FormState =
   | { tag: "error" };
 
 const STAR_VALUES = [1, 2, 3, 4, 5] as const;
-
-// Decision 6: presence of `@`, at least one non-whitespace non-`@`
-// character on each side, and at least one `.` in the domain segment
-// with at least one non-whitespace non-`@` character on each side.
-// Intentionally minimal — the rule is "structurally email-shaped,"
-// not RFC 5322 conformance. Attendees with edge-case addresses can
-// leave the field blank and submit without email.
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Empty email at submit = implicit decline. The decline checkbox
 // the form originally shipped with was awkward UX (extra step to

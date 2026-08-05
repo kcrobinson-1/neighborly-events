@@ -240,6 +240,22 @@ Functions: `EXECUTE`.
   - `TRIGGER`: anon, authenticated, service_role
 - Policies: (none)
 
+### `newsletter_enabled_events`
+
+- RLS: enabled
+- Grants:
+  - `SELECT`: authenticated, service_role
+  - `INSERT`: service_role
+  - `UPDATE`: service_role
+  - `DELETE`: service_role
+  - `TRUNCATE`: service_role
+  - `REFERENCES`: service_role
+  - `TRIGGER`: service_role
+- Policies:
+  - `organizers and admins can read newsletter registry` (FOR `SELECT` TO `authenticated`)
+    - USING: `(public.is_organizer_for_event(( SELECT ge.id FROM public.game_events ge WHERE (ge.slug = newsletter_enabled_events.slug))) OR public.is_root_admin())`
+    - WITH CHECK: (none)
+
 ### `newsletter_opt_ins`
 
 - RLS: enabled
@@ -344,6 +360,12 @@ Functions: `EXECUTE`.
 - `EXECUTE`: anon, authenticated
 
 ### `submit_feedback(p_event_slug text, p_ratings jsonb, p_email_declined boolean, p_newsletter_opt_in boolean, p_free_text text, p_email text)`
+
+- Returns: `void`
+- SECURITY: DEFINER
+- `EXECUTE`: anon, authenticated, service_role
+
+### `submit_newsletter_signup(p_event_slug text, p_email text)`
 
 - Returns: `void`
 - SECURITY: DEFINER

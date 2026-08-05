@@ -218,17 +218,20 @@ prioritization before starting.
   Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
 
 - [ ] **`dev` Feedback + subscription plugin scoping**
-  Scoping pass for a single absorbed surface that owns: a standalone
-  newsletter signup page, an embeddable email-entry widget for event
-  homepages, the relocated feedback page, the in-product organizer
-  read + CSV export of `newsletter_opt_ins`, and the schema-namespace
-  move from `public.*` to a plugin-specific schema. The data shape
-  and write contract are settled — every public surface calls the
-  internal `subscribe_email` SECURITY DEFINER helper with a hardcoded
+  Scoping pass for a single absorbed surface that owns: the
+  standalone newsletter signup page (shipped in-platform at
+  `/event/<slug>/signup`; the plugin would absorb/relocate it), an
+  embeddable email-entry widget for event homepages, the relocated
+  feedback page, the in-product organizer read + CSV export of
+  `newsletter_opt_ins`, and the schema-namespace move from
+  `public.*` to a plugin-specific schema. The data shape and write
+  contract are settled — every public surface calls the internal
+  `subscribe_email` SECURITY DEFINER helper with a hardcoded
   `source_surface` literal, against the append-only
-  `newsletter_opt_ins` log. The plugin scoping decides UI shape,
-  embedding mechanism, namespace placement, and per-surface trigger
-  / copy / UX.
+  `newsletter_opt_ins` log, gated by the `newsletter_enabled_events`
+  registry. The plugin scoping decides UI shape, embedding
+  mechanism, namespace placement, and per-surface trigger / copy /
+  UX.
   Detail: TBD
 
 ---

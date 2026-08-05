@@ -55,6 +55,18 @@ import type { EventContent } from "../lib/eventContent.ts";
  * platform-genericity invariant (epic Invariant 1) means there are
  * no madrona-keyed branches inside the route, the form, or the
  * insert path.
+ *
+ * `newsletterSignup` opts madrona in to the standalone email-capture
+ * route at `/event/madrona/signup`: presence here renders the form
+ * (absence would render the route's disabled state), and anon
+ * submissions flow through the `submit_newsletter_signup` RPC into
+ * the same `newsletter_opt_ins` consent log the feedback form's
+ * checkbox writes to — gated at the DB by the
+ * `newsletter_enabled_events` registry row seeded alongside the RPC's
+ * migration. Copy here composes nothing from `madrona-facts.ts`
+ * because it restates no shared fact (no reward, booth, or donation
+ * reference); if a future revision does, compose it from the facts
+ * module rather than restating the literal.
  */
 /** The 5:30 PM booth-opening session, identical on all three nights. */
 const boothOpensSession = {
@@ -251,6 +263,15 @@ export const madronaContent: EventContent = {
       newsletterOptInLabel: "Add me to the Madrona Neighborhood Association mailing list",
     },
     thankYouMessage: "Thanks — every response goes straight to the organizers.",
+  },
+  newsletterSignup: {
+    heading: "Sign up for updates",
+    body: "Get next week's lineup and neighborhood events in your inbox — straight from the Madrona Neighborhood Association.",
+    emailLabel: "Email",
+    emailPlaceholder: "you@example.com",
+    submitLabel: "Sign me up",
+    thankYouMessage:
+      "You're on the list — see you at the Playfield.",
   },
   donate: {
     heading: "Keep the Playfield free",

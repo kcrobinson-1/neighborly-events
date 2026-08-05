@@ -14,13 +14,13 @@
  * destinations from config and never derives them from the game
  * slug, so a registry key (like the demo fixture below) can point at
  * a destination owned by a different slug. `newsletter.href` must be
- * the same-origin feedback path of an event whose feedback surface
- * is enabled — the `feedback_enabled_events` row seeded by the
- * Madrona feedback epic's migration plus the apps/site
- * `EventContent.feedback` block that makes `/event/<slug>/feedback`
- * a real form route. The completion panel links there with a plain
- * same-origin anchor because the feedback route is owned by apps/site
- * across the proxy topology. This registry is the deliberately
+ * the same-origin signup path of an event whose newsletter surface
+ * is enabled — the `newsletter_enabled_events` row seeded by the
+ * standalone-signup migration plus the apps/site
+ * `EventContent.newsletterSignup` block that makes
+ * `/event/<slug>/signup` a real form route. The completion panel
+ * links there with a plain same-origin anchor because the signup
+ * route is owned by apps/site across the proxy topology. This registry is the deliberately
  * lightweight launch-mode conditional (driver: Aug 11 Madrona launch
  * push); if per-event content later consolidates into a shared
  * registry, fold this module into it.
@@ -33,7 +33,7 @@
  * experience (`shared/game-config/sample-games.ts`); it mirrors the
  * `madrona` entry so local UI review and the demo flow exercise the
  * block. The mirror shares the `madrona` object, so its newsletter
- * href names the real `/event/madrona/feedback` route rather than a
+ * href names the real `/event/madrona/signup` route rather than a
  * nonexistent `first-sample` one. Same-origin resolution still
  * requires an origin that proxies site routes (the canonical site
  * origin and its preview deployments): on the bare Vite dev server —
@@ -59,8 +59,9 @@ export type CompletionCtaLink = {
 export type CompletionCtaContent = {
   heading: string;
   /**
-   * Present only when the event's feedback surface is enabled; `href`
-   * is the same-origin `/event/<slug>/feedback` path of that surface.
+   * Present only when the event's newsletter surface is enabled;
+   * `href` is the same-origin `/event/<slug>/signup` path of that
+   * surface.
    */
   newsletter?: CompletionCtaLink;
   /** Present only when the event has a donation destination. */
@@ -72,7 +73,7 @@ const madronaCompletionCta: CompletionCtaContent = {
   newsletter: {
     body: "Get next week's lineup and neighborhood events in your inbox.",
     buttonLabel: "Sign up for updates",
-    href: "/event/madrona/feedback",
+    href: "/event/madrona/signup",
   },
   donate: {
     body:

@@ -62,7 +62,7 @@ function createCta(
     newsletter: {
       body: "Get next week's lineup and neighborhood events in your inbox.",
       buttonLabel: "Sign up for updates",
-      href: "/event/madrona/feedback",
+      href: "/event/madrona/signup",
     },
     donate: {
       body:
@@ -435,7 +435,7 @@ describe("GameCompletionPanel", () => {
         // Config-owned destination: the game's own slug is "test-game", so
         // this proves the href comes from the CTA config, not the slug.
         expect(newsletterLink.getAttribute("href")).toBe(
-          "/event/madrona/feedback",
+          "/event/madrona/signup",
         );
         // New tab so a pre-redemption click can't unmount the SPA and lose
         // the reducer-held verification code.

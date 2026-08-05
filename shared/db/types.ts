@@ -503,6 +503,21 @@ export type Database = {
           },
         ]
       }
+      newsletter_enabled_events: {
+        Row: {
+          enabled_at: string
+          slug: string
+        }
+        Insert: {
+          enabled_at?: string
+          slug: string
+        }
+        Update: {
+          enabled_at?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       newsletter_opt_ins: {
         Row: {
           email: string
@@ -530,7 +545,7 @@ export type Database = {
             foreignKeyName: "newsletter_opt_ins_event_slug_fkey"
             columns: ["event_slug"]
             isOneToOne: false
-            referencedRelation: "feedback_enabled_events"
+            referencedRelation: "newsletter_enabled_events"
             referencedColumns: ["slug"]
           },
         ]
@@ -617,6 +632,10 @@ export type Database = {
           p_newsletter_opt_in: boolean
           p_ratings: Json
         }
+        Returns: undefined
+      }
+      submit_newsletter_signup: {
+        Args: { p_email: string; p_event_slug: string }
         Returns: undefined
       }
       subscribe_email: {
