@@ -7,29 +7,35 @@ import type { EventContent } from "../lib/eventContent.ts";
  * M1 phase 1.1. Madrona is **not** a test event (`testEvent` is
  * deliberately omitted, not set to `false`, mirroring the
  * platform-level convention that the field is set positively only
- * for test events) — the demo-phase posture instead rides on
- * `meta.robots: "noindex"`, which the page route's
- * `generateMetadata` honors alongside the existing `testEvent`-
- * driven path so non-test events can opt into `noindex` without
- * inheriting the test-event disclaimer banner / demo-mode auth-
- * bypass eligibility (see the epic's invariant 3).
+ * for test events).
  *
- * Content here is placeholder: the canonical event name and
- * canonical dates / location reflect madrona.us's published 2026
- * "Music in the Playfield" announcement (three Tuesday-evening
- * concerts across August), but every band, sponsor, and FAQ entry
- * is authored against placeholder names. M3 of the demo-build epic
- * replaces these placeholders with the real lineup, sponsors, and
- * authored copy. The first FAQ entry surfaces the demo posture in
- * page-visible copy (mitigating the milestone-doc risk
- * "Placeholder content reads as a launch announcement") alongside
- * the SSR `noindex` meta.
+ * Content here is the real 2026 season: three Tuesday-evening
+ * concerts on the Madrona Playfield (Aug 11 / 18 / 25), one band
+ * per night playing two 45-minute sets between 6:00 and 8:00 PM.
+ * Canonical sources live in the `mip-2026` repository: band bios
+ * are website-length adaptations of
+ * `docs/workstreams/programming/BandBios-2026.md` (the wording
+ * source of truth), and lineup photos are resized copies from
+ * `docs/workstreams/marketing/assets/bands/`. The page is indexable
+ * (no `meta.robots`) — this content is the launch surface.
+ *
+ * `sponsors` deliberately carries only the hosting Madrona
+ * Neighborhood Association entry for now: real 2026 business
+ * sponsors are confirmed-list-pending, and entries land in a
+ * follow-up once the list, tiers, and links are final. Band
+ * `externalLinks` are likewise omitted until real URLs are
+ * collected — the renderer's render-when-present guards make both
+ * absences invisible rather than placeholder-filled.
  *
  * `meta.logoSrc` / `meta.logoAlt` render the committed Madrona
  * Neighborhood Association brand mark above the hero text on
- * `EventHeader`; the `Verified by:` source for the canonical event
- * name and dates is the madrona.us 2026 announcement re-fetched at
- * implementation time.
+ * `EventHeader`.
+ *
+ * `donate` renders the `EventDonateCTA` section linking out to the
+ * association's Zeffy donation form (new tab; the same destination
+ * the game completion screen's donate CTA in
+ * `shared/events/completionCta.ts` uses — a URL swap should update
+ * both).
  *
  * `feedback` opts madrona in to the
  * [Madrona feedback child epic](../../../docs/plans/epics/madrona-feedback/epic.md)
@@ -56,8 +62,7 @@ export const madronaContent: EventContent = {
   meta: {
     title: "Madrona Music in the Playfield",
     description:
-      "Three summer evenings of music on the Madrona Playfield, hosted by the Madrona Neighborhood Association. Demo content for stakeholder preview.",
-    robots: "noindex",
+      "Three free Tuesday-evening concerts on the Madrona Playfield this August, hosted by the Madrona Neighborhood Association.",
     logoSrc: "/events/madrona/logo.png",
     logoAlt: "Madrona Neighborhood Association logo",
   },
@@ -65,7 +70,7 @@ export const madronaContent: EventContent = {
     name: "Madrona Music in the Playfield",
     tagline: "Three Tuesday evenings of community music in the park",
     dates: { start: "2026-08-11", end: "2026-08-25" },
-    location: "Madrona Playfield, Seattle",
+    location: "Madrona Playfield, 917 34th Ave, Seattle",
   },
   schedule: {
     days: [
@@ -75,23 +80,22 @@ export const madronaContent: EventContent = {
         sessions: [
           {
             time: "5:30 PM",
-            title: "Picnic blankets & community welcome",
+            title:
+              "Blankets down — Madrona Neighborhood Association booth opens",
             description:
-              "Spread out on the playfield. The Madrona Neighborhood Association booth opens at the south edge.",
+              "Find a spot on the grass. The association booth opens with the neighborhood quiz and the trinket table.",
           },
           {
             time: "6:00 PM",
-            title: "Cedar & Salt",
-            description:
-              "Acoustic Pacific Northwest folk to open the series.",
-            performerSlug: "cedar-and-salt",
+            title: "Miller Campbell — first set",
+            description: "First of two 45-minute sets.",
+            performerSlug: "miller-campbell",
           },
           {
-            time: "7:00 PM",
-            title: "Lake Washington Brass",
-            description:
-              "Eight-piece neighborhood brass ensemble closing opening night.",
-            performerSlug: "lake-washington-brass",
+            time: "7:15 PM",
+            title: "Miller Campbell — second set",
+            description: "Second 45-minute set closes out the night.",
+            performerSlug: "miller-campbell",
           },
         ],
       },
@@ -101,23 +105,22 @@ export const madronaContent: EventContent = {
         sessions: [
           {
             time: "5:30 PM",
-            title: "Neighborhood food vendors open",
+            title:
+              "Blankets down — Madrona Neighborhood Association booth opens",
             description:
-              "Local food carts and the Madrona Park ice-cream cart open along the playfield's east path.",
+              "Find a spot on the grass. The association booth opens with the neighborhood quiz and the trinket table.",
           },
           {
             time: "6:00 PM",
-            title: "Arboretum Strings",
-            description:
-              "Chamber-folk quartet rooted in Pacific Northwest songwriting.",
-            performerSlug: "arboretum-strings",
+            title: "Jacqueline Tabor — first set",
+            description: "First of two 45-minute sets.",
+            performerSlug: "jacqueline-tabor",
           },
           {
             time: "7:15 PM",
-            title: "Roosevelt Way Soul Revue",
-            description:
-              "Six-piece soul revue carrying mid-series into sunset.",
-            performerSlug: "roosevelt-way-soul-revue",
+            title: "Jacqueline Tabor — second set",
+            description: "Second 45-minute set closes out the night.",
+            performerSlug: "jacqueline-tabor",
           },
         ],
       },
@@ -127,23 +130,23 @@ export const madronaContent: EventContent = {
         sessions: [
           {
             time: "5:30 PM",
-            title: "Community potluck setup",
+            title:
+              "Blankets down — Madrona Neighborhood Association booth opens",
             description:
-              "Bring a side dish for the closing-night potluck table; the association supplies plates and utensils.",
+              "Find a spot on the grass. The association booth opens with the neighborhood quiz and the trinket table.",
           },
           {
             time: "6:00 PM",
-            title: "Eastlake Ensemble",
-            description:
-              "Five-piece chamber ensemble drawing on neighborhood string traditions.",
-            performerSlug: "eastlake-ensemble",
+            title: "Frames in Motion — first set",
+            description: "First of two 45-minute sets.",
+            performerSlug: "frames-in-motion",
           },
           {
-            time: "7:30 PM",
-            title: "The Madrona Park Headliners",
+            time: "7:15 PM",
+            title: "Frames in Motion — second set",
             description:
-              "Seven-piece headlining band closing the series at sunset.",
-            performerSlug: "the-madrona-park-headliners",
+              "Second 45-minute set closes out the season.",
+            performerSlug: "frames-in-motion",
           },
         ],
       },
@@ -151,64 +154,51 @@ export const madronaContent: EventContent = {
   },
   lineup: [
     {
-      slug: "cedar-and-salt",
-      name: "Cedar & Salt",
-      bio: "A three-piece acoustic group rooted in Pacific Northwest folk songwriting.",
-      imageSrc: "/events/madrona/lineup/cedar-and-salt.jpg",
-      imageAlt: "Cedar & Salt — placeholder band photo",
+      slug: "miller-campbell",
+      name: "Miller Campbell",
+      bio: "A returning Madrona favorite bringing twangy, gritty, extremely honest heartland rock in the spirit of Tom Petty and John Mellencamp.",
+      imageSrc: "/events/madrona/lineup/miller-campbell.jpg",
+      imageAlt: "Miller Campbell and her band performing on stage",
       extendedBio:
-        "Cedar & Salt formed during a long winter of porch sessions on the east side of the lake.\n\nTheir songs trace the small geographies of Pacific Northwest neighborhoods — ferry landings, garden plots, the slow turn from rain to sun.\n\nThis is placeholder copy authored for the Madrona demo build; M3 replaces it with the band's real bio.",
+        "The season opens with the return of Miller Campbell, who last played Music in the Playfield in 2024. A cousin of country legend Glen Campbell, Miller spent three years playing in a Seattle band before settling in Bigfork, Montana, where she now writes and records.\n\nSince her last Madrona set she has released her self-titled debut album and is touring the UK and Europe this summer before bringing the band back home for opening night.",
       featuredQuote: {
-        text: "Demo placeholder: a featured-quote string used to exercise the new EventLineup quote affordance.",
-        attribution: "Placeholder Reviewer, Demo Outlet",
+        text: "Twangy and gritty, and extremely honest.",
+        attribution: "Daily Inter Lake",
       },
-      externalLinks: [
-        { label: "Spotify", href: "https://example.com/cedar-and-salt-spotify" },
-        { label: "Bandcamp", href: "https://example.com/cedar-and-salt-bandcamp" },
-        { label: "Website", href: "https://example.com/cedar-and-salt" },
+      setTimes: [
+        { day: "2026-08-11", time: "6:00 PM" },
+        { day: "2026-08-11", time: "7:15 PM" },
       ],
-      setTimes: [{ day: "2026-08-11", time: "6:00 PM" }],
     },
     {
-      slug: "lake-washington-brass",
-      name: "Lake Washington Brass",
-      bio: "Eight-piece neighborhood brass ensemble drawing on parade and second-line traditions.",
-      imageSrc: "/events/madrona/lineup/lake-washington-brass.jpg",
-      imageAlt: "Lake Washington Brass — placeholder band photo",
-      setTimes: [{ day: "2026-08-11", time: "7:00 PM" }],
-    },
-    {
-      slug: "arboretum-strings",
-      name: "Arboretum Strings",
-      bio: "Chamber-folk quartet writing songs about lakes, ferries, and the long Seattle dusk.",
+      slug: "jacqueline-tabor",
+      name: "Jacqueline Tabor",
+      bio: "Celebrated Seattle jazz, blues, and swing vocalist — four-time Earshot Jazz Vocalist of the Year and Earshot Jazz Hall of Fame inductee.",
+      imageSrc: "/events/madrona/lineup/jacqueline-tabor.jpg",
+      imageAlt: "Jacqueline Tabor performing with her band",
       extendedBio:
-        "Arboretum Strings has played the Madrona neighborhood since the early '20s.\n\nTheir set leans on slow-build folk arrangements with cello, acoustic guitar, and a single voice. Demo content; M3 replaces with the real bio.",
-      featuredQuote: {
-        text: "Demo placeholder quote — used here to show that a band can carry a quote without an image.",
-      },
-      setTimes: [{ day: "2026-08-18", time: "6:00 PM" }],
-    },
-    {
-      slug: "roosevelt-way-soul-revue",
-      name: "Roosevelt Way Soul Revue",
-      bio: "Six-piece soul revue with horns, organ, and a rotating cast of neighborhood vocalists.",
-      externalLinks: [
-        { label: "Bandcamp", href: "https://example.com/roosevelt-way-bandcamp" },
-        { label: "Instagram", href: "https://example.com/roosevelt-way-instagram" },
+        "Anchoring the middle of the season is Jacqueline Tabor, one of Seattle's most celebrated jazz, blues, and swing vocalists — a four-time Earshot Jazz Vocalist of the Year, recently inducted into the Earshot Jazz Hall of Fame.\n\nWhat makes her performance memorable is the way her voice can quiet a crowd, even in a busy summer park. Her depth of skill, emotional range, and honesty pull every listener in, whether you came for the jazz or wandered over from the playground. Backed by her band, August 18 is the kind of evening worth bringing a blanket for.",
+      setTimes: [
+        { day: "2026-08-18", time: "6:00 PM" },
+        { day: "2026-08-18", time: "7:15 PM" },
       ],
-      setTimes: [{ day: "2026-08-18", time: "7:15 PM" }],
     },
     {
-      slug: "eastlake-ensemble",
-      name: "Eastlake Ensemble",
-      bio: "Five-piece chamber ensemble drawing on neighborhood string traditions across two generations.",
-      setTimes: [{ day: "2026-08-25", time: "6:00 PM" }],
-    },
-    {
-      slug: "the-madrona-park-headliners",
-      name: "The Madrona Park Headliners",
-      bio: "Seven-piece band built around neighborhood songwriters; closing-night headliners.",
-      setTimes: [{ day: "2026-08-25", time: "7:30 PM" }],
+      slug: "frames-in-motion",
+      name: "Frames in Motion",
+      bio: "Joyous five-piece indie folk-rock from Seattle, led by singer-songwriter Jack Shriner — with Madrona and Leschi roots.",
+      imageSrc: "/events/madrona/lineup/frames-in-motion.jpg",
+      imageAlt: "Frames in Motion band photo, outdoor field",
+      extendedBio:
+        "The series closes with Frames in Motion, led by singer-songwriter and guitarist Jack Shriner. Jack's family lived in neighboring Leschi for a decade, and he still thinks of Madrona and Leschi as home — this booking is a bit of a homecoming.\n\nThe band fuses interlocking vocal, guitar, fiddle, and keyboard melodies with rhythms that tend to get people up and moving: reminiscent of classic pop-rock, but with a voice uniquely their own, built to close out a summer evening on the grass.",
+      featuredQuote: {
+        text: "The multi-layered warmth of this band's elemental sound … will bond and become friends with the little piece of soul within you that understands your fellow human.",
+        attribution: "Dive-In Magazine",
+      },
+      setTimes: [
+        { day: "2026-08-25", time: "6:00 PM" },
+        { day: "2026-08-25", time: "7:15 PM" },
+      ],
     },
   ],
   sponsors: [
@@ -216,79 +206,42 @@ export const madronaContent: EventContent = {
       name: "Madrona Neighborhood Association",
       logoSrc: "/events/madrona/sponsors/madrona-neighborhood-association.svg",
       logoAlt: "Madrona Neighborhood Association logo",
-      href: "https://example.com/madrona-neighborhood-association",
+      href: "https://madrona.us",
       tier: "Hosting",
       shortDescription:
-        "Demo placeholder: the neighborhood association that organizes the series, with a short blurb to exercise the new sponsor-description affordance.",
-      socialLinks: [
-        { label: "Instagram", href: "https://example.com/madrona-na-instagram" },
-        { label: "Newsletter", href: "https://example.com/madrona-na-newsletter" },
-      ],
-    },
-    {
-      name: "Lake Washington Boulevard Bakery",
-      logoSrc: "/events/madrona/sponsors/lake-washington-boulevard-bakery.svg",
-      logoAlt: "Lake Washington Boulevard Bakery logo",
-      href: "https://example.com/lake-washington-boulevard-bakery",
-      tier: "Headline",
-      shortDescription:
-        "Demo placeholder: a neighborhood bakery sponsor blurb.",
-    },
-    {
-      name: "Arboretum Coffee Roasters",
-      logoSrc: "/events/madrona/sponsors/arboretum-coffee-roasters.svg",
-      logoAlt: "Arboretum Coffee Roasters logo",
-      href: "https://example.com/arboretum-coffee-roasters",
-      tier: "Headline",
-      socialLinks: [
-        { label: "Instagram", href: "https://example.com/arboretum-coffee-instagram" },
-      ],
-    },
-    {
-      name: "Eastlake Print Shop",
-      logoSrc: "/events/madrona/sponsors/eastlake-print-shop.svg",
-      logoAlt: "Eastlake Print Shop logo",
-      href: "https://example.com/eastlake-print-shop",
-      tier: "Supporting",
-    },
-    {
-      name: "Cedar Cycle Co-op",
-      logoSrc: "/events/madrona/sponsors/cedar-cycle-co-op.svg",
-      logoAlt: "Cedar Cycle Co-op logo",
-      href: "https://example.com/cedar-cycle-co-op",
-      tier: "Supporting",
+        "The neighborhood association that hosts Music in the Playfield — three free Tuesday concerts every August.",
     },
   ],
   faq: [
     {
-      question: "Is this the real Madrona Music in the Playfield page?",
-      answer:
-        "Not yet. This page is a stakeholder demo of the Madrona Music in the Playfield experience on the Neighborly Events platform. The event name, dates, and location reflect the Madrona Neighborhood Association's published 2026 announcement, but the lineup, sponsors, and FAQ shown here are placeholder content for preview purposes. The page is set to `noindex` so it stays out of search until the real launch.",
-    },
-    {
       question: "What is Music in the Playfield?",
       answer:
-        "A free summer concert series the Madrona Neighborhood Association hosts on the Madrona Playfield. Three Tuesday evenings of community music; bring a blanket and picnic. The 2026 announcement on madrona.us is the canonical source.",
+        "A free summer concert series the Madrona Neighborhood Association hosts on the Madrona Playfield. Three Tuesday evenings of community music; bring a blanket and picnic.",
     },
     {
       question: "How much does it cost?",
+      answer: "All three evenings are free to attend.",
+    },
+    {
+      question: "What if it rains?",
       answer:
-        "All three evenings are free to attend. Local food vendors set their own prices.",
+        "Concerts are free, family-friendly, and held rain or shine.",
     },
     {
       question: "Where do I park?",
       answer:
-        "On-street parking is available throughout the Madrona neighborhood. Accessible parking is reserved at the playfield's south entrance during event hours.",
+        "There is no dedicated event parking — on-street parking is available in the surrounding neighborhood, and walking or biking is encouraged.",
     },
     {
       question: "Is the playfield accessible?",
       answer:
-        "Yes. The playfield, the listening area, and the food vendor row are step-free; accessible seating is reserved near the main stage.",
+        "The listening area is the playfield's open lawn, reachable from the sidewalk. For specific accessibility questions, check with the Madrona Neighborhood Association at madrona.us.",
     },
   ],
   cta: {
-    label: "Play the Madrona scavenger game",
-    sublabel: "Visit booths around the playfield to earn stamps and unlock prizes.",
+    label: "Play the Madrona quiz",
+    sublabel:
+      "Answer a few neighborhood questions, then show your completion screen at the MNA booth for tonight's trinket.",
   },
   feedback: {
     cta: {
@@ -309,6 +262,12 @@ export const madronaContent: EventContent = {
       newsletterOptInLabel: "Add me to the Madrona Neighborhood Association mailing list",
     },
     thankYouMessage: "Thanks — every response goes straight to the organizers.",
+  },
+  donate: {
+    heading: "Keep the Playfield free",
+    body: "These concerts are free because neighbors chip in — 100% of donations go to the Madrona Neighborhood Association.",
+    buttonLabel: "Support the Playfield",
+    href: "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
   },
   footer: {
     attribution:

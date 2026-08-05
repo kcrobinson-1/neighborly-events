@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { EventCTA } from "../../../apps/site/components/event/EventCTA.tsx";
+import { EventDonateCTA } from "../../../apps/site/components/event/EventDonateCTA.tsx";
 import { EventFAQ } from "../../../apps/site/components/event/EventFAQ.tsx";
 import { EventFeedbackCTA } from "../../../apps/site/components/event/EventFeedbackCTA.tsx";
 import { EventFooter } from "../../../apps/site/components/event/EventFooter.tsx";
@@ -30,6 +31,13 @@ const feedbackFixture: NonNullable<EventContent["feedback"]> = {
     newsletterOptInLabel: "Add me to the newsletter",
   },
   thankYouMessage: "Thanks — we read every response.",
+};
+
+const donateFixture: NonNullable<EventContent["donate"]> = {
+  heading: "Keep the show free",
+  body: "Neighbors chip in to cover the costs.",
+  buttonLabel: "Donate now",
+  href: "https://donations.example.org/synthetic-form",
 };
 
 afterEach(cleanup);
@@ -446,6 +454,38 @@ describe("EventFeedbackCTA", () => {
   });
 });
 
+describe("EventDonateCTA", () => {
+  it("renders the heading, optional body, and an external donate link opening in a new tab", () => {
+    render(<EventDonateCTA donate={donateFixture} />);
+    expect(
+      screen.getByRole("heading", { name: "Keep the show free" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText("Neighbors chip in to cover the costs."),
+    ).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Donate now" });
+    expect(link.getAttribute("href")).toBe(
+      "https://donations.example.org/synthetic-form",
+    );
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toContain("noopener");
+  });
+
+  it("omits the body paragraph when donate.body is absent", () => {
+    const noBody: NonNullable<EventContent["donate"]> = {
+      heading: "Keep the show free",
+      buttonLabel: "Donate now",
+      href: "https://donations.example.org/synthetic-form",
+    };
+    const { container } = render(<EventDonateCTA donate={noBody} />);
+    expect(
+      screen.getByRole("heading", { name: "Keep the show free" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Donate now" })).toBeTruthy();
+    expect(container.querySelector(".event-donate-cta-body")).toBeNull();
+  });
+});
+
 describe("EventLandingPage", () => {
   it("composes all sections and shows the disclaimer for test events", () => {
     const testContent: EventContent = { ...baseContent, testEvent: true };
@@ -535,18 +575,46 @@ describe("EventLandingPage", () => {
     expect(screen.queryByText("Share feedback")).toBeNull();
   });
 
-  it("renders no feedback CTA on the test events (same-section-set invariant)", () => {
+  it("renders the EventDonateCTA section when content.donate is set", () => {
+    const optedIn: EventContent = {
+      ...baseContent,
+      donate: donateFixture,
+    };
+    const { container } = render(
+      <EventLandingPage content={optedIn} slug={optedIn.slug} />,
+    );
+    expect(container.querySelector(".event-donate-cta")).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Keep the show free" }),
+    ).toBeTruthy();
+    const link = screen.getByRole("link", { name: "Donate now" });
+    expect(link.getAttribute("href")).toBe(
+      "https://donations.example.org/synthetic-form",
+    );
+  });
+
+  it("omits the EventDonateCTA section when content.donate is absent (baseContent)", () => {
+    const { container } = render(
+      <EventLandingPage content={baseContent} slug={baseContent.slug} />,
+    );
+    expect(container.querySelector(".event-donate-cta")).toBeNull();
+    expect(screen.queryByText("Donate now")).toBeNull();
+  });
+
+  it("renders no feedback or donate CTA on the test events (same-section-set invariant)", () => {
     // Falsifies the milestone-level rule that test events render the
     // same set of sections — no new section sprouts after this phase.
     // Markup-level drift inside an existing section's body is not
     // bound by this assertion; only the *presence* of the new
-    // feedback section on test events would falsify the invariant.
+    // feedback / donate sections on test events would falsify the
+    // invariant.
     for (const content of [harvestBlockPartyContent, riversideJamContent]) {
       const { container, unmount } = render(
         <EventLandingPage content={content} slug={content.slug} />,
       );
       expect(container.querySelector(".event-feedback-cta")).toBeNull();
       expect(screen.queryByText("Share feedback")).toBeNull();
+      expect(container.querySelector(".event-donate-cta")).toBeNull();
       unmount();
     }
   });
