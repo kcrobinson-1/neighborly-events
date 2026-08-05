@@ -46,6 +46,8 @@
  * content concern.
  */
 
+import { madronaFacts } from "./madrona-facts.ts";
+
 /** One link-out section of the completion CTA block. */
 export type CompletionCtaLink = {
   body: string;
@@ -76,7 +78,7 @@ const madronaCompletionCta: CompletionCtaContent = {
     body:
       "These concerts are free because neighbors chip in — 100% of donations go to the association.",
     buttonLabel: "Support the Playfield",
-    href: "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+    href: madronaFacts.donateHref,
   },
 };
 

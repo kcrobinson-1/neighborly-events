@@ -1,4 +1,5 @@
 import type { AuthoringGameDraftContent } from "../game-config";
+import { madronaFacts } from "./madrona-facts.ts";
 import type { GameSeedConfig } from "./seed-config.ts";
 
 /**
@@ -8,12 +9,9 @@ import type { GameSeedConfig } from "./seed-config.ts";
  * M2 phase 2.1 and since iterated: the questions are real
  * neighborhood facts (no band or business-sponsor references — the
  * only named sponsor is the hosting association), and the reward
- * copy names the real 2026 reward, a trinket from the Madrona
- * Neighborhood Association booth. The apps/site landing
- * ([`apps/site/events/madrona.ts`](../../apps/site/events/madrona.ts)
- * `cta.sublabel`) makes the same trinket promise; the reward noun
- * is duplicated between the two files with no shared constant, so
- * keep them aligned when either changes.
+ * copy names the real 2026 reward. The reward noun and booth facts
+ * are composed from `madrona-facts.ts`, the shared constants module
+ * the apps/site landing's `cta.sublabel` also composes from.
  *
  * Canonical-ownership note: the live event renders the published
  * `game_events` rows, which are authored and edited through /admin —
@@ -41,11 +39,11 @@ const madronaGameContent: AuthoringGameDraftContent = {
   name: "Madrona Music in the Playfield",
   location: "Madrona Playfield, Seattle",
   estimatedMinutes: 3,
-  entitlementLabel: "trinket",
+  entitlementLabel: madronaFacts.rewardNoun,
   intro:
-    "Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough for a free trinket redeemable at the Madrona Neighborhood Association booth by the basketball court.",
+    `Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough for a free ${madronaFacts.rewardNoun} redeemable at the ${madronaFacts.booth.name} ${madronaFacts.booth.locationSuffix}.`,
   summary:
-    "Thanks for playing. Bring your code to the Madrona Neighborhood Association booth to redeem, then settle in — the next set is about to start.",
+    `Thanks for playing. Bring your code to the ${madronaFacts.booth.name} to redeem, then settle in — the next set is about to start.`,
   feedbackMode: "final_score_reveal",
   allowBackNavigation: true,
   allowRetake: true,
