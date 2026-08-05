@@ -39,7 +39,7 @@ create extension if not exists pgtap with schema extensions;
 -- prefixes; extensions stays on so pgTAP's plan/ok/is/has_* resolve.
 set local search_path = extensions, pg_catalog;
 
-select plan(577);
+select plan(615);
 
 -- ────────────────────────────────────────────────────────────────────
 -- Tables
@@ -802,6 +802,62 @@ select is(
   'public.game_starts has no policies'
 );
 
+-- ─── public.newsletter_enabled_events ───────────────────────────────
+
+select has_table('public', 'newsletter_enabled_events', 'public.newsletter_enabled_events exists');
+select ok(
+  (select relrowsecurity from pg_class c
+     join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relname = 'newsletter_enabled_events'),
+  'public.newsletter_enabled_events has RLS enabled'
+);
+
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'SELECT'),     'anon SELECT on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'INSERT'),     'anon INSERT on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'UPDATE'),     'anon UPDATE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'DELETE'),     'anon DELETE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'TRUNCATE'),   'anon TRUNCATE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'REFERENCES'), 'anon REFERENCES on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('anon',          'public.newsletter_enabled_events', 'TRIGGER'),    'anon TRIGGER on public.newsletter_enabled_events is denied');
+select ok(    has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'SELECT'),     'authenticated SELECT on public.newsletter_enabled_events is granted');
+select ok(not has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'INSERT'),     'authenticated INSERT on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'UPDATE'),     'authenticated UPDATE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'DELETE'),     'authenticated DELETE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'TRUNCATE'),   'authenticated TRUNCATE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'REFERENCES'), 'authenticated REFERENCES on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('authenticated', 'public.newsletter_enabled_events', 'TRIGGER'),    'authenticated TRIGGER on public.newsletter_enabled_events is denied');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'SELECT'),     'service_role SELECT on public.newsletter_enabled_events is granted');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'INSERT'),     'service_role INSERT on public.newsletter_enabled_events is granted');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'UPDATE'),     'service_role UPDATE on public.newsletter_enabled_events is granted');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'DELETE'),     'service_role DELETE on public.newsletter_enabled_events is granted');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'TRUNCATE'),   'service_role TRUNCATE on public.newsletter_enabled_events is granted');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'REFERENCES'), 'service_role REFERENCES on public.newsletter_enabled_events is granted');
+select ok(    has_table_privilege('service_role',  'public.newsletter_enabled_events', 'TRIGGER'),    'service_role TRIGGER on public.newsletter_enabled_events is granted');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'SELECT'),     'public SELECT on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'INSERT'),     'public INSERT on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'UPDATE'),     'public UPDATE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'DELETE'),     'public DELETE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'TRUNCATE'),   'public TRUNCATE on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'REFERENCES'), 'public REFERENCES on public.newsletter_enabled_events is denied');
+select ok(not has_table_privilege('public',        'public.newsletter_enabled_events', 'TRIGGER'),    'public TRIGGER on public.newsletter_enabled_events is denied');
+
+select ok(
+  exists (select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'newsletter_enabled_events'
+      and policyname = 'organizers and admins can read newsletter registry'
+      and cmd = 'SELECT' and roles = '{authenticated}'),
+  'newsletter_enabled_events policy "organizers and admins can read newsletter registry" exists FOR SELECT TO authenticated'
+);
+select is(
+  regexp_replace(
+    (select qual from pg_policies
+      where schemaname = 'public' and tablename = 'newsletter_enabled_events'
+        and policyname = 'organizers and admins can read newsletter registry'),
+    '\s+', ' ', 'g'),
+  '(public.is_organizer_for_event(( SELECT ge.id FROM public.game_events ge WHERE (ge.slug = newsletter_enabled_events.slug))) OR public.is_root_admin())',
+  'newsletter_enabled_events read policy USING shape matches snapshot'
+);
+
 -- ─── public.newsletter_opt_ins ──────────────────────────────────────
 
 select has_table('public', 'newsletter_opt_ins', 'public.newsletter_opt_ins exists');
@@ -1107,6 +1163,22 @@ select ok(    has_function_privilege('authenticated', 'public.submit_feedback(te
 select ok(    has_function_privilege('service_role',  'public.submit_feedback(text, jsonb, boolean, boolean, text, text)', 'EXECUTE'), 'service_role EXECUTE on submit_feedback is granted');
 select ok(not has_function_privilege('public',        'public.submit_feedback(text, jsonb, boolean, boolean, text, text)', 'EXECUTE'), 'public EXECUTE on submit_feedback is denied');
 
+-- ─── public.submit_newsletter_signup ────────────────────────────────
+
+select has_function('public', 'submit_newsletter_signup', array['text', 'text'], 'public.submit_newsletter_signup(text, text) exists');
+select is(
+  (select case when p.prosecdef then 'DEFINER' else 'INVOKER' end
+     from pg_proc p
+     join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname = 'submit_newsletter_signup'),
+  'DEFINER',
+  'submit_newsletter_signup is SECURITY DEFINER'
+);
+select ok(    has_function_privilege('anon',          'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'anon EXECUTE on submit_newsletter_signup is granted');
+select ok(    has_function_privilege('authenticated', 'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'authenticated EXECUTE on submit_newsletter_signup is granted');
+select ok(    has_function_privilege('service_role',  'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'service_role EXECUTE on submit_newsletter_signup is granted');
+select ok(not has_function_privilege('public',        'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'public EXECUTE on submit_newsletter_signup is denied');
+
 -- ─── public.subscribe_email ─────────────────────────────────────────
 
 select has_function('public', 'subscribe_email', array['text', 'text', 'text'], 'public.subscribe_email(text, text, text) exists');
@@ -1150,8 +1222,8 @@ select is(
   (select count(*)::int from pg_class c
      join pg_namespace n on n.oid = c.relnamespace
     where n.nspname = 'public' and c.relkind = 'r'),
-  14,
-  'public has exactly 14 tables (every table covered above)'
+  15,
+  'public has exactly 15 tables (every table covered above)'
 );
 select is(
   (select count(*)::int from pg_class c
@@ -1166,8 +1238,8 @@ select is(
     where n.nspname = 'public'
       and p.prokind = 'f'
       and p.prorettype <> 'pg_catalog.trigger'::regtype),
-  15,
-  'public has exactly 15 callable (non-trigger) functions (every function covered above)'
+  16,
+  'public has exactly 16 callable (non-trigger) functions (every function covered above)'
 );
 
 select * from finish();

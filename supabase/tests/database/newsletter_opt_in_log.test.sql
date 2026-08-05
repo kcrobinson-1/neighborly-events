@@ -76,9 +76,9 @@ select ok(
       and t.relname = 'newsletter_opt_ins'
       and c.contype = 'f'
       and pg_get_constraintdef(c.oid)
-        ilike '%references feedback_enabled_events(slug)%'
+        ilike '%references newsletter_enabled_events(slug)%'
   ),
-  'newsletter_opt_ins has FK on event_slug → feedback_enabled_events.slug'
+  'newsletter_opt_ins has FK on event_slug → newsletter_enabled_events.slug'
 );
 
 select has_index(

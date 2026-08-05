@@ -904,6 +904,37 @@ The Supabase side is intentionally small:
   `validateEventSlug` validator in `shared/urls/` — even if a future
   write path bypasses the parser, the DB rejects malformed slugs
   before they reach printed QR URLs.
+- `supabase/migrations/20260805000000_add_standalone_newsletter_signup.sql`
+  Standalone newsletter-signup DB foundation. Creates the
+  slug-keyed registry `public.newsletter_enabled_events` (PK
+  `slug` with the same slug-format CHECK as the other slug
+  columns; `enabled_at`) as the enablement seam for newsletter
+  capture, separate from `feedback_enabled_events` so an event
+  can offer signup without offering feedback. Seeded from every
+  `feedback_enabled_events` row plus an explicit `madrona` row.
+  Repoints the `newsletter_opt_ins.event_slug` FK from
+  `feedback_enabled_events(slug)` to
+  `newsletter_enabled_events(slug)` (ON DELETE RESTRICT
+  unchanged) — the registry question the newsletter-split
+  migration deferred to the standalone surface's pass — so every
+  opt-in writer, including the feedback form's checkbox, now
+  requires the event in the newsletter registry. Adds an
+  email-shape CHECK on `newsletter_opt_ins.email` (structurally
+  email-shaped, ≤ 320 chars) as the DB-level gate under the
+  anon-reachable write paths. Creates
+  `public.submit_newsletter_signup(p_event_slug text, p_email
+  text) returns void`, SECURITY DEFINER with
+  `set search_path = public`, EXECUTE revoked from public and
+  granted to anon and authenticated; the body is a single call to
+  the internal `subscribe_email` helper with the hardcoded
+  `'standalone'` source literal, so the repointed FK and the new
+  CHECK are the integrity gates and `newsletter_opt_ins` stays
+  the one canonical consent log (append-only shape unchanged —
+  repeat signups append rows; deduplication stays an export-time
+  concern). Per-role posture on `newsletter_enabled_events`
+  mirrors `feedback_enabled_events`: anon no grants,
+  authenticated SELECT gated by the organizer/admin policy,
+  service role unrestricted (Supabase baseline).
 
 ## What Is Implemented Now
 
