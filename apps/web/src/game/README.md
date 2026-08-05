@@ -27,6 +27,11 @@ These are the stable imports that other frontend files should prefer.
 - `gameSessionSelectors.ts`
   Pure derived-state selectors that turn reducer state plus game config into the
   React-facing view state used by the page and game components.
+- `shuffleGameOptions.ts`
+  Pure per-attempt answer-order shuffle over an injectable random source.
+  `useGameSession.ts` draws one permutation per attempt (fresh on retake) so
+  the authored option order cannot leak the correct answer; grading stays
+  id-based and untouched.
 - `components/`
   Game-specific presentation components used by `GamePage.tsx`.
   These components should stay presentational and receive state/actions through
@@ -58,6 +63,9 @@ These are the stable imports that other frontend files should prefer.
   Pure derived-state selector coverage.
 - `tests/web/game/gameUtils.test.ts`
   Pure helper coverage.
+- `tests/web/game/shuffleGameOptions.test.ts`
+  Pure shuffle-helper coverage (bijection, determinism under a seed,
+  no source mutation).
 - `tests/web/game/components/`
   Focused component rendering and interaction coverage for extracted game
   panels.
