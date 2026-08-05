@@ -108,6 +108,22 @@
  * new tab with `rel="noopener"` — unlike the feedback CTA there is
  * no in-app donation route, so there is nothing slug-derived about
  * the destination.
+ *
+ * `masthead?` is the landing-page quick-links nav: presence renders
+ * the `EventMasthead` strip above the hero on `EventLandingPage`;
+ * absence renders the page byte-for-byte identical to the
+ * pre-masthead output (the same render-when-present falsifier as
+ * `meta.logoSrc/Alt`). Each named slot (`quiz`, `feedback`,
+ * `signup`, `donate`) is independently optional and carries its own
+ * config-owned `label` and `href` — the renderer takes destinations
+ * from config and never derives them from the slug, the same
+ * principle as `shared/events/completionCta.ts`. The slot *name*
+ * fixes the navigation semantics the renderer applies: `quiz` is a
+ * hard `<a>` across the apps/web rewrite, `feedback` and `signup`
+ * are same-app soft `<Link>`s, and `donate` opens the external
+ * destination in a new tab with `rel="noopener"`. The two test
+ * events omit the field so the omission-guard falsifier stays
+ * structural.
  */
 export type EventContent = {
   slug: string;
@@ -191,6 +207,12 @@ export type EventContent = {
     body?: string;
     buttonLabel: string;
     href: string;
+  };
+  masthead?: {
+    quiz?: { label: string; href: string };
+    feedback?: { label: string; href: string };
+    signup?: { label: string; href: string };
+    donate?: { label: string; href: string };
   };
   footer?: { attribution?: string };
 };

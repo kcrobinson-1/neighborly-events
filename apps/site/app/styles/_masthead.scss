@@ -1,0 +1,61 @@
+/*
+ * Quick-links masthead rendered by `EventMasthead` above the event
+ * hero. Sticky so the links stay one tap away mid-page — attendees
+ * are on phones in a park, so the bar wraps compactly at small
+ * viewports instead of collapsing into a hamburger. Colors and radii
+ * are themable `var(--…)` tokens flowing in from the per-event
+ * `<ThemeScope>`, same as the rest of the event partials; the
+ * translucent `color-mix` backdrop keeps the bar subtle against the
+ * hero while staying legible over content scrolling underneath it.
+ */
+.event-masthead {
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+}
+
+.event-masthead-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.event-masthead-link:hover {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.event-masthead-link:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .event-masthead {
+    top: 6px;
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .event-masthead-link {
+    padding: 8px 10px;
+    font-size: 0.9rem;
+  }
+}

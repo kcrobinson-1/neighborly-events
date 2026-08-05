@@ -9,6 +9,7 @@ import { EventFooter } from "../../../apps/site/components/event/EventFooter.tsx
 import { EventHeader } from "../../../apps/site/components/event/EventHeader.tsx";
 import { EventLandingPage } from "../../../apps/site/components/event/EventLandingPage.tsx";
 import { EventLineup } from "../../../apps/site/components/event/EventLineup.tsx";
+import { EventMasthead } from "../../../apps/site/components/event/EventMasthead.tsx";
 import { EventSchedule } from "../../../apps/site/components/event/EventSchedule.tsx";
 import { EventSponsors } from "../../../apps/site/components/event/EventSponsors.tsx";
 import { TestEventDisclaimer } from "../../../apps/site/components/event/TestEventDisclaimer.tsx";
@@ -31,6 +32,16 @@ const feedbackFixture: NonNullable<EventContent["feedback"]> = {
     newsletterOptInLabel: "Add me to the newsletter",
   },
   thankYouMessage: "Thanks — we read every response.",
+};
+
+const mastheadFixture: NonNullable<EventContent["masthead"]> = {
+  quiz: { label: "Quiz", href: "/event/synthetic-event/game" },
+  feedback: { label: "Feedback", href: "/event/synthetic-event/feedback" },
+  signup: { label: "Sign up", href: "/event/synthetic-event/signup" },
+  donate: {
+    label: "Donate",
+    href: "https://donations.example.org/synthetic-form",
+  },
 };
 
 const donateFixture: NonNullable<EventContent["donate"]> = {
@@ -486,6 +497,51 @@ describe("EventDonateCTA", () => {
   });
 });
 
+describe("EventMasthead", () => {
+  it("renders a labelled nav with each configured link's config-owned href", () => {
+    render(<EventMasthead masthead={mastheadFixture} />);
+    expect(
+      screen.getByRole("navigation", { name: "Event quick links" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Quiz" }).getAttribute("href"),
+    ).toBe("/event/synthetic-event/game");
+    expect(
+      screen.getByRole("link", { name: "Feedback" }).getAttribute("href"),
+    ).toBe("/event/synthetic-event/feedback");
+    expect(
+      screen.getByRole("link", { name: "Sign up" }).getAttribute("href"),
+    ).toBe("/event/synthetic-event/signup");
+    expect(
+      screen.getByRole("link", { name: "Donate" }).getAttribute("href"),
+    ).toBe("https://donations.example.org/synthetic-form");
+  });
+
+  it("opens the donate link in a new tab with rel=noopener; the in-app links stay same-tab", () => {
+    render(<EventMasthead masthead={mastheadFixture} />);
+    const donate = screen.getByRole("link", { name: "Donate" });
+    expect(donate.getAttribute("target")).toBe("_blank");
+    expect(donate.getAttribute("rel")).toContain("noopener");
+    for (const name of ["Quiz", "Feedback", "Sign up"]) {
+      expect(
+        screen.getByRole("link", { name }).getAttribute("target"),
+      ).toBeNull();
+    }
+  });
+
+  it("omits absent slots without rendering placeholders", () => {
+    render(
+      <EventMasthead
+        masthead={{ quiz: { label: "Quiz", href: "/event/x/game" } }}
+      />,
+    );
+    expect(screen.getAllByRole("link")).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "Feedback" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Donate" })).toBeNull();
+  });
+});
+
 describe("EventLandingPage", () => {
   it("composes all sections and shows the disclaimer for test events", () => {
     const testContent: EventContent = { ...baseContent, testEvent: true };
@@ -601,13 +657,44 @@ describe("EventLandingPage", () => {
     expect(screen.queryByText("Donate now")).toBeNull();
   });
 
-  it("renders no feedback or donate CTA on the test events (same-section-set invariant)", () => {
+  it("renders the EventMasthead nav above the hero when content.masthead is set", () => {
+    const optedIn: EventContent = {
+      ...baseContent,
+      masthead: mastheadFixture,
+    };
+    const { container } = render(
+      <EventLandingPage content={optedIn} slug={optedIn.slug} />,
+    );
+    const nav = screen.getByRole("navigation", { name: "Event quick links" });
+    const hero = container.querySelector(".event-hero");
+    expect(hero).not.toBeNull();
+    // Document order: the masthead precedes the hero header.
+    expect(
+      nav.compareDocumentPosition(hero as Element) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: "Sign up" }).getAttribute("href"),
+    ).toBe("/event/synthetic-event/signup");
+  });
+
+  it("omits the EventMasthead nav when content.masthead is absent (baseContent)", () => {
+    const { container } = render(
+      <EventLandingPage content={baseContent} slug={baseContent.slug} />,
+    );
+    expect(container.querySelector(".event-masthead")).toBeNull();
+    expect(
+      screen.queryByRole("navigation", { name: "Event quick links" }),
+    ).toBeNull();
+  });
+
+  it("renders no feedback CTA, donate CTA, or masthead on the test events (same-section-set invariant)", () => {
     // Falsifies the milestone-level rule that test events render the
     // same set of sections — no new section sprouts after this phase.
     // Markup-level drift inside an existing section's body is not
     // bound by this assertion; only the *presence* of the new
-    // feedback / donate sections on test events would falsify the
-    // invariant.
+    // feedback / donate / masthead sections on test events would
+    // falsify the invariant.
     for (const content of [harvestBlockPartyContent, riversideJamContent]) {
       const { container, unmount } = render(
         <EventLandingPage content={content} slug={content.slug} />,
@@ -615,6 +702,7 @@ describe("EventLandingPage", () => {
       expect(container.querySelector(".event-feedback-cta")).toBeNull();
       expect(screen.queryByText("Share feedback")).toBeNull();
       expect(container.querySelector(".event-donate-cta")).toBeNull();
+      expect(container.querySelector(".event-masthead")).toBeNull();
       unmount();
     }
   });

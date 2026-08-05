@@ -6,6 +6,7 @@ import { EventFeedbackCTA } from "./EventFeedbackCTA.tsx";
 import { EventFooter } from "./EventFooter.tsx";
 import { EventHeader } from "./EventHeader.tsx";
 import { EventLineup } from "./EventLineup.tsx";
+import { EventMasthead } from "./EventMasthead.tsx";
 import { EventSchedule } from "./EventSchedule.tsx";
 import { EventSponsors } from "./EventSponsors.tsx";
 import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
@@ -28,6 +29,7 @@ export function EventLandingPage({
   return (
     <main className="event-shell">
       {content.testEvent ? <TestEventDisclaimer /> : null}
+      {content.masthead ? <EventMasthead masthead={content.masthead} /> : null}
       <EventHeader content={content} slug={slug} />
       {content.schedule.days.length > 0 ? (
         <EventSchedule schedule={content.schedule} />

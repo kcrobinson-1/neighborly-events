@@ -1,4 +1,5 @@
 import { madronaFacts } from "../../../shared/events/madrona-facts.ts";
+import { routes } from "../../../shared/urls/index.ts";
 import type { EventContent } from "../lib/eventContent.ts";
 
 /**
@@ -55,6 +56,15 @@ import type { EventContent } from "../lib/eventContent.ts";
  * platform-genericity invariant (epic Invariant 1) means there are
  * no madrona-keyed branches inside the route, the form, or the
  * insert path.
+ *
+ * `masthead` renders the `EventMasthead` quick-links strip above the
+ * hero: Quiz (hard navigation into the apps/web game shell, href
+ * composed from `routes.game`), Feedback and Sign up (same-app
+ * routes), and Donate (the association's Zeffy form, composed from
+ * `madrona-facts.ts` like the `donate` section below). The strip
+ * exists because the page otherwise buries its key actions — quiz in
+ * the hero, feedback and donate near the bottom, signup only behind
+ * the completion screen.
  *
  * `newsletterSignup` opts madrona in to the standalone email-capture
  * route at `/event/madrona/signup`: presence here renders the form
@@ -278,6 +288,12 @@ export const madronaContent: EventContent = {
     body: "These concerts are free because neighbors chip in — 100% of donations go to the Madrona Neighborhood Association.",
     buttonLabel: "Support the Playfield",
     href: madronaFacts.donateHref,
+  },
+  masthead: {
+    quiz: { label: "Quiz", href: routes.game("madrona") },
+    feedback: { label: "Feedback", href: "/event/madrona/feedback" },
+    signup: { label: "Sign up", href: "/event/madrona/signup" },
+    donate: { label: "Donate", href: madronaFacts.donateHref },
   },
   footer: {
     attribution:

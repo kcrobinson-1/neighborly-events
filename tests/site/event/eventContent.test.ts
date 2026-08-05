@@ -96,6 +96,21 @@ describe("madrona launch content", () => {
       "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
     );
   });
+
+  it("carries all four masthead quick links with config-owned destinations", () => {
+    expect(madronaContent.masthead?.quiz?.href).toBe("/event/madrona/game");
+    expect(madronaContent.masthead?.feedback?.href).toBe(
+      "/event/madrona/feedback",
+    );
+    expect(madronaContent.masthead?.signup?.href).toBe(
+      "/event/madrona/signup",
+    );
+    // Same Zeffy destination as the donate section — both compose
+    // from madrona-facts.ts, so a URL change moves them together.
+    expect(madronaContent.masthead?.donate?.href).toBe(
+      madronaContent.donate?.href,
+    );
+  });
 });
 
 describe("parseEventDate", () => {
