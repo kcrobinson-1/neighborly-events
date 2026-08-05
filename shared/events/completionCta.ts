@@ -68,13 +68,13 @@ export type CompletionCtaContent = {
 const madronaCompletionCta: CompletionCtaContent = {
   heading: "Enjoying Music in the Playfield?",
   newsletter: {
-    body: "Get the next lineup and neighborhood events in your inbox.",
+    body: "Get next week's lineup and neighborhood events in your inbox.",
     buttonLabel: "Sign up for updates",
     href: "/event/madrona/feedback",
   },
   donate: {
     body:
-      "This concert series is free because neighbors chip in — 100% of donations go to the association.",
+      "These concerts are free because neighbors chip in — 100% of donations go to the association.",
     buttonLabel: "Support the Playfield",
     href: "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
   },
