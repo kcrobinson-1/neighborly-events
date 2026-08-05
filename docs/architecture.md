@@ -913,7 +913,12 @@ The Supabase side is intentionally small:
   `feedback_submissions.newsletter_opt_in` survives as a
   denormalized snapshot of opt-in intent at the submission
   moment; the capture log is canonical for the durable consent
-  record and outlives capture-log purges.
+  record and outlives capture-log purges. Later changes touching
+  this table:
+  `20260805000000_add_standalone_newsletter_signup.sql` repoints
+  the `event_slug` FK to `newsletter_enabled_events(slug)` and
+  adds the email-shape CHECK (see that migration's entry); grants,
+  RLS state, and policies are unchanged thereafter.
 - `supabase/migrations/20260510010000_constrain_event_slug_shape.sql`
   Adds storage-layer CHECK constraints on
   `game_event_drafts.slug`, `game_events.slug`, and

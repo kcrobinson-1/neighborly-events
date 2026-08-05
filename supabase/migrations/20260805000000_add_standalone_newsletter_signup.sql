@@ -142,3 +142,22 @@ revoke all on function public.submit_newsletter_signup(text, text)
   from public;
 grant execute on function public.submit_newsletter_signup(text, text)
   to anon, authenticated;
+
+-- ─── Post-state per affected object (CCI-4) ──────────────────────────
+-- newsletter_enabled_events: RLS enabled. Grants: SELECT to
+--   authenticated (+ service_role baseline); nothing to anon or
+--   PUBLIC. Policies: exactly one — "organizers and admins can read
+--   newsletter registry" FOR SELECT TO authenticated, USING
+--   is_organizer_for_event(slug's event) OR is_root_admin(). No
+--   INSERT/UPDATE/DELETE policies; non-service-role writes impossible.
+-- newsletter_opt_ins: grants, RLS state, and policies unchanged from
+--   20260510000000 (no anon/PUBLIC grants; authenticated SELECT gated
+--   by "organizers and admins can read newsletter opt-ins"). This
+--   migration changes only its constraints: event_slug FK now targets
+--   newsletter_enabled_events(slug), and the
+--   newsletter_opt_ins_email_shape CHECK is added.
+-- submit_newsletter_signup(text, text): SECURITY DEFINER, EXECUTE
+--   granted to anon and authenticated (+ service_role baseline),
+--   revoked from PUBLIC.
+-- subscribe_email / submit_feedback / feedback_enabled_events /
+--   feedback_submissions: untouched by this migration.
