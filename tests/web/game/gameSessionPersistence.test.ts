@@ -267,6 +267,35 @@ describe("gameSessionPersistence", () => {
     expect(readPersistedGameSnapshot(game)).toEqual(createInProgressSnapshot());
   });
 
+  it("never rolls a stored completion back to an older attempt", () => {
+    const game = createGame();
+    const newerCompletion: PersistedGameSnapshot = {
+      answers: { q1: ["a"], q2: ["b"] },
+      completion: { ...createCompletionResult(), attemptNumber: 2, score: 1 },
+      kind: "complete",
+    };
+    const olderCompletion: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completion: { ...createCompletionResult(), attemptNumber: 1 },
+      kind: "complete",
+    };
+
+    writePersistedGameSnapshot(game.id, newerCompletion);
+
+    // Two tabs finished attempts and the older response landed last: its
+    // write must not replace the newer attempt's score and review.
+    expect(writePersistedGameSnapshot(game.id, olderCompletion)).toBe(false);
+    expect(readPersistedGameSnapshot(game)).toEqual(newerCompletion);
+
+    // Equal attempts may rewrite (idempotent replays), newer ones advance.
+    expect(
+      writePersistedGameSnapshot(game.id, {
+        ...newerCompletion,
+        completion: { ...createCompletionResult(), attemptNumber: 3 },
+      }),
+    ).toBe(true);
+  });
+
   it("lets a new session's writes replace another session's completed envelope", () => {
     const game = createGame();
 

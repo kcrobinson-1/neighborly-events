@@ -346,32 +346,33 @@ export function readPersistedGameSnapshot(
 }
 
 /**
- * True when storage holds a completed snapshot written by the active
- * client session. Used as the monotonic-write check below; never throws.
+ * Reads the attempt number of a completed snapshot stored by the active
+ * client session, or null when none is stored. Backbone of the monotonic
+ * write checks below; never throws.
  */
-function hasStoredCompletedSnapshot(
+function readStoredCompletedAttemptNumber(
   storage: Storage,
   eventId: string,
   clientSessionId: string,
-): boolean {
+): number | null {
   try {
     const rawValue = storage.getItem(getStorageKey(eventId));
 
     if (!rawValue) {
-      return false;
+      return null;
     }
 
     const envelope = JSON.parse(rawValue) as Partial<PersistedEnvelope>;
 
-    return (
-      typeof envelope === "object" &&
+    return typeof envelope === "object" &&
       envelope !== null &&
       envelope.clientSessionId === clientSessionId &&
       envelope.snapshot?.kind === "complete" &&
       isCompletionResult(envelope.snapshot.completion)
-    );
+      ? envelope.snapshot.completion.attemptNumber
+      : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -407,10 +408,28 @@ export function writePersistedGameSnapshot(
     return false;
   }
 
+  const storedCompletedAttemptNumber = readStoredCompletedAttemptNumber(
+    storage,
+    eventId,
+    clientSessionId,
+  );
+
   if (
     snapshot.kind !== "complete" &&
     !allowReplaceComplete &&
-    hasStoredCompletedSnapshot(storage, eventId, clientSessionId)
+    storedCompletedAttemptNumber !== null
+  ) {
+    return false;
+  }
+
+  // Completed snapshots are monotonic by attempt number: if two tabs finish
+  // attempts for the same session and the older response lands last, its
+  // write must not roll the stored score and answer review back to the
+  // earlier attempt. Equal attempts may rewrite (idempotent replays).
+  if (
+    snapshot.kind === "complete" &&
+    storedCompletedAttemptNumber !== null &&
+    snapshot.completion.attemptNumber < storedCompletedAttemptNumber
   ) {
     return false;
   }
