@@ -47,6 +47,12 @@ type GameCompletionPanelProps = {
   completionError: string | null;
   cta: CompletionCtaContent | null;
   game: GameConfig;
+  /**
+   * True when the completed state is confirmed written to device storage.
+   * While false, the in-memory state is the only copy of the verification
+   * code, so CTA links keep the pre-persistence new-tab fallback.
+   */
+  isCompletionPersisted: boolean;
   isSubmitting: boolean;
   onReset: () => void;
   onRetake: () => void;
@@ -63,6 +69,7 @@ export function GameCompletionPanel({
   completionError,
   cta,
   game,
+  isCompletionPersisted,
   isSubmitting,
   onReset,
   onRetake,
@@ -84,6 +91,14 @@ export function GameCompletionPanel({
   // only for events registered in the completion CTA registry.
   const shouldShowCta =
     Boolean(completion) && Boolean(cta?.newsletter ?? cta?.donate);
+  // Same-tab navigation is only safe once the completed state is confirmed
+  // durable on the device; when storage is unavailable (privacy mode, quota)
+  // the links fall back to a new tab so navigating cannot destroy the only
+  // copy of the verification code.
+  const ctaLinkTarget = isCompletionPersisted
+    ? undefined
+    : ("_blank" as const);
+  const ctaLinkRel = isCompletionPersisted ? undefined : "noopener";
 
   return (
     <section className="panel completion-panel">
@@ -212,12 +227,17 @@ export function GameCompletionPanel({
               {/* Plain anchor: the signup route is owned by apps/site, so the
                   navigation must be a hard load for the proxy to re-evaluate.
                   The destination is config-owned — never derived from the game
-                  slug, which may not name a feedback-enabled event. Same tab:
-                  the completed state (including the verification code) is
-                  persisted on the device (`gameSessionPersistence`), so
-                  navigating away and returning restores this screen without
-                  a replay. */}
-              <a className="completion-cta-button" href={cta.newsletter.href}>
+                  slug, which may not name a feedback-enabled event. Same tab
+                  when the completed state (including the verification code)
+                  is confirmed persisted on the device (`gameSessionPersistence`)
+                  — returning then restores this screen without a replay; new
+                  tab otherwise, per `ctaLinkTarget` above. */}
+              <a
+                className="completion-cta-button"
+                href={cta.newsletter.href}
+                rel={ctaLinkRel}
+                target={ctaLinkTarget}
+              >
                 {cta.newsletter.buttonLabel}
               </a>
             </div>
@@ -225,7 +245,12 @@ export function GameCompletionPanel({
           {cta.donate ? (
             <div className="completion-cta-item">
               <p>{cta.donate.body}</p>
-              <a className="completion-cta-button" href={cta.donate.href}>
+              <a
+                className="completion-cta-button"
+                href={cta.donate.href}
+                rel={ctaLinkRel}
+                target={ctaLinkTarget}
+              >
                 {cta.donate.buttonLabel}
               </a>
             </div>

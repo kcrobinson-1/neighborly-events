@@ -232,16 +232,23 @@ export function readPersistedGameSnapshot(
   return parseSnapshot(game, envelope.snapshot);
 }
 
-/** Persists the snapshot for a game. No-ops without storage or a session. */
+/**
+ * Persists the snapshot for a game. Returns true only when the write went
+ * through; false means the state lives only in memory (no storage, no
+ * session identity, quota or privacy-mode rejection) and callers must not
+ * treat the session as durable — e.g. the completion screen keeps its
+ * new-tab link fallback so navigation cannot destroy the only copy of the
+ * verification code.
+ */
 export function writePersistedGameSnapshot(
   eventId: string,
   snapshot: PersistedGameSnapshot,
-) {
+): boolean {
   const storage = getLocalStorage();
   const clientSessionId = readActiveClientSessionId();
 
   if (!storage || !clientSessionId) {
-    return;
+    return false;
   }
 
   const envelope: PersistedEnvelope = {
@@ -252,9 +259,11 @@ export function writePersistedGameSnapshot(
 
   try {
     storage.setItem(getStorageKey(eventId), JSON.stringify(envelope));
+    return true;
   } catch {
     // Quota or privacy-mode write failures degrade to the pre-persistence
     // behavior (state lives only in memory); gameplay must not break.
+    return false;
   }
 }
 

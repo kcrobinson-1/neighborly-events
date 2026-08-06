@@ -150,6 +150,7 @@ describe("GameCompletionPanel", () => {
           completionError={null}
           cta={null}
           game={createGame()}
+          isCompletionPersisted={true}
           isSubmitting={false}
           onReset={() => {}}
           onRetake={() => {}}
@@ -223,6 +224,7 @@ describe("GameCompletionPanel", () => {
         completionError={null}
         cta={null}
         game={createGame()}
+        isCompletionPersisted={true}
         isSubmitting={false}
         onReset={() => {}}
         onRetake={() => {}}
@@ -243,6 +245,7 @@ describe("GameCompletionPanel", () => {
         completionError={null}
         cta={null}
         game={createGame()}
+        isCompletionPersisted={true}
         isSubmitting={false}
         onReset={() => {}}
         onRetake={() => {}}
@@ -266,6 +269,7 @@ describe("GameCompletionPanel", () => {
         completionError={null}
         cta={null}
         game={createGame({ feedbackMode: "instant_feedback_non_blocking" })}
+        isCompletionPersisted={true}
         isSubmitting={false}
         onReset={() => {}}
         onRetake={() => {}}
@@ -291,6 +295,7 @@ describe("GameCompletionPanel", () => {
         completionError={null}
         cta={null}
         game={createGame({ feedbackMode: "instant_feedback_required" })}
+        isCompletionPersisted={true}
         isSubmitting={false}
         onReset={() => {}}
         onRetake={() => {}}
@@ -313,6 +318,7 @@ describe("GameCompletionPanel", () => {
           completionError={null}
           cta={createCta()}
           game={createGame()}
+          isCompletionPersisted={true}
           isSubmitting={false}
           onReset={() => {}}
           onRetake={() => {}}
@@ -346,6 +352,7 @@ describe("GameCompletionPanel", () => {
           completionError={null}
           cta={createCta()}
           game={createGame({ feedbackMode: "instant_feedback_non_blocking" })}
+          isCompletionPersisted={true}
           isSubmitting={false}
           onReset={() => {}}
           onRetake={() => {}}
@@ -379,6 +386,7 @@ describe("GameCompletionPanel", () => {
         completionError="Temporary backend problem."
         cta={null}
         game={createGame()}
+        isCompletionPersisted={true}
         isSubmitting={false}
         onReset={onReset}
         onRetake={() => {}}
@@ -402,6 +410,7 @@ describe("GameCompletionPanel", () => {
       completion = createCompletionResult(),
       completionError = null,
       cta = createCta(),
+      isCompletionPersisted = true,
       isSubmitting = false,
       statusKind = "unredeemed" as AttendeeRedemptionStatus["kind"],
     } = {}) {
@@ -412,6 +421,7 @@ describe("GameCompletionPanel", () => {
           completionError={completionError}
           cta={cta}
           game={createGame()}
+          isCompletionPersisted={isCompletionPersisted}
           isSubmitting={isSubmitting}
           onReset={() => {}}
           onRetake={() => {}}
@@ -469,6 +479,26 @@ describe("GameCompletionPanel", () => {
         ).toBeTruthy();
       },
     );
+
+    it("falls back to new-tab links when the completion is not durably persisted", () => {
+      // When device storage rejected the snapshot (privacy mode, quota), the
+      // in-memory state is the only copy of the verification code, so a
+      // same-tab navigation would destroy it — the links keep the old
+      // new-tab posture instead.
+      renderPanel({ isCompletionPersisted: false });
+
+      const newsletterLink = screen.getByRole("link", {
+        name: "Sign up for updates",
+      });
+      expect(newsletterLink.getAttribute("target")).toBe("_blank");
+      expect(newsletterLink.getAttribute("rel")).toBe("noopener");
+
+      const donateLink = screen.getByRole("link", {
+        name: "Support the Playfield",
+      });
+      expect(donateLink.getAttribute("target")).toBe("_blank");
+      expect(donateLink.getAttribute("rel")).toBe("noopener");
+    });
 
     it("omits the newsletter CTA when the event has no feedback surface", () => {
       renderPanel({ cta: createCta({ newsletter: undefined }) });

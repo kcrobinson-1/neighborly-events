@@ -659,6 +659,43 @@ describe("useGameSession", () => {
         completion,
         kind: "complete",
       });
+      expect(result.current.isCompletionPersisted).toBe(true);
+    });
+
+    it("reports the completion as not persisted when the snapshot write fails", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+      // No client session identity → persistence is disabled, so the CTA
+      // links must keep their new-tab fallback.
+      mockReadActiveClientSessionId.mockReturnValue(null);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      expect(window.localStorage.getItem(storageKey(game.id))).toBeNull();
+      expect(result.current.isCompletionPersisted).toBe(false);
+    });
+
+    it("marks a restored completed snapshot as durable", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completion: createCompletionResult(),
+        kind: "complete",
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isCompletionPersisted).toBe(true);
     });
 
     it("clears the snapshot when the session resets to the intro", async () => {

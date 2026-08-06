@@ -455,9 +455,11 @@ keyed to the client session. There is no separate results page:
 - *Completed*: the route IS the results — score, answer review, and the
   verification code render again on every return, without replaying.
 
-Because the completed state is durable, every link out of the game (newsletter,
-donate) navigates normally in the same tab; nothing on the completion screen
-needs a new tab to protect the code. The only way to leave the completed state
+Because the completed state is durable, links out of the game (newsletter,
+donate) navigate normally in the same tab; nothing on the completion screen
+needs a new tab to protect the code. When device storage is unavailable
+(private browsing, full quota), the links fall back to opening in a new tab so
+navigation cannot discard the only copy of the code. The only way to leave the completed state
 is the explicit retake action, which carries the reassurance line "Retaking
 never changes your code or your reward entry" — the backend keeps one reward
 entry per session and returns the same verification code on every completion.

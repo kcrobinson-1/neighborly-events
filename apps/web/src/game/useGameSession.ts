@@ -50,6 +50,15 @@ export function useGameSession(game: GameConfig) {
     return createGameState();
   });
   const handledSubmissionRequestId = useRef<string | null>(null);
+  // True only while the completed state is confirmed written to device
+  // storage. A completed snapshot restored from storage is durable by
+  // construction; otherwise the submission callback records the write's
+  // outcome, and reset/retake clear it. Consumers use this to keep the
+  // new-tab link fallback when the in-memory state is the only copy of the
+  // verification code.
+  const [isCompletionPersisted, setIsCompletionPersisted] = useState(
+    () => restoredSnapshot?.kind === "complete",
+  );
   // Answer options render in a per-attempt random order so the authored order
   // cannot leak the correct answer. The shuffled copy lives in state so one
   // permutation stays stable for the whole attempt (back-navigation included);
@@ -131,6 +140,17 @@ export function useGameSession(game: GameConfig) {
     })
       .then((completion) => {
         if (!isCancelled) {
+          // The completed snapshot is written here, in the async completion
+          // callback, rather than in the write-through effect below: the
+          // write's success feeds `isCompletionPersisted`, and updating that
+          // state synchronously inside an effect would cascade renders.
+          setIsCompletionPersisted(
+            writePersistedGameSnapshot(game.id, {
+              answers: state.answers,
+              completion,
+              kind: "complete",
+            }),
+          );
           dispatch({ type: "completeCompletionSubmit", completion });
         }
       })
@@ -158,11 +178,14 @@ export function useGameSession(game: GameConfig) {
   ]);
 
   useEffect(() => {
-    // Write-through persistence per phase. `submitting_completion` (and a
-    // failed submission, which is `complete` without a result) intentionally
-    // keeps the last in-progress snapshot: a restore lands on the final
-    // question and can resubmit, while the entitlement stays idempotent
-    // per session on the backend.
+    // Write-through persistence per phase. The completed snapshot is written
+    // by the submission callback above (its success feeds
+    // `isCompletionPersisted`); a completed snapshot restored from storage
+    // needs no rewrite. `submitting_completion` (and a failed submission,
+    // which is `complete` without a result) intentionally keeps the last
+    // in-progress snapshot: a restore lands on the final question and can
+    // resubmit, while the entitlement stays idempotent per session on the
+    // backend.
     if (state.phase === "intro") {
       clearPersistedGameSnapshot(game.id);
       return;
@@ -176,15 +199,6 @@ export function useGameSession(game: GameConfig) {
         optionOrder: extractOptionOrder(shuffledGame),
         startedAt: state.startedAt,
       });
-      return;
-    }
-
-    if (state.phase === "complete" && state.latestCompletion) {
-      writePersistedGameSnapshot(game.id, {
-        answers: state.answers,
-        completion: state.latestCompletion,
-        kind: "complete",
-      });
     }
   }, [game.id, shuffledGame, state]);
 
@@ -193,6 +207,7 @@ export function useGameSession(game: GameConfig) {
   };
 
   const reset = () => {
+    setIsCompletionPersisted(false);
     dispatch({ type: "reset" });
   };
 
@@ -273,6 +288,7 @@ export function useGameSession(game: GameConfig) {
   };
 
   const resetForRetake = () => {
+    setIsCompletionPersisted(false);
     handledSubmissionRequestId.current = null;
     setShuffled({ gameId: game.id, game: shuffleGameOptions(game) });
     dispatch({
@@ -305,6 +321,7 @@ export function useGameSession(game: GameConfig) {
     feedbackMessage: state.feedbackMessage,
     goBack,
     isComplete,
+    isCompletionPersisted,
     isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,

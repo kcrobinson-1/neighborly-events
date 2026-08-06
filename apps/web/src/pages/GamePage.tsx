@@ -35,6 +35,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
     feedbackMessage,
     goBack,
     isComplete,
+    isCompletionPersisted,
     isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,
@@ -162,6 +163,7 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             completionError={completionError}
             cta={getCompletionCta(game.slug)}
             game={game}
+            isCompletionPersisted={isCompletionPersisted}
             isSubmitting={isSubmittingCompletion}
             onReset={reset}
             onRetake={resetForRetake}

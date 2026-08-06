@@ -89,6 +89,7 @@ function createSessionState(game: GameConfig, overrides = {}) {
     feedbackMessage: null,
     goBack: vi.fn(),
     isComplete: false,
+    isCompletionPersisted: false,
     isShowingAnswerReveal: false,
     isShowingQuestion: false,
     isStarted: false,
