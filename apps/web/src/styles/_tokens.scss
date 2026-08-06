@@ -132,6 +132,16 @@ $focus-ring: 3px solid var(--secondary-focus);
   // --- Typography ---
   --font-body: #{$font-stack};
   --font-heading: #{$font-stack};
+  --font-accent: var(--font-body);
+
+  // --- Optional brand fields — `var()`-form fallbacks for surfaces
+  // outside `<ThemeScope>`. Inside `<ThemeScope>`,
+  // `shared/styles/themeToStyle.ts` emits resolved values (theme
+  // override or its derived default) on the wrapper element. Must
+  // stay in sync with the fallback derivations in `themeToStyle.ts`. ---
+  --header-bg: var(--primary);
+  --header-fg: var(--white-warm);
+  --surface-band: var(--surface-card-muted);
 
   // --- Themable radii ---
   --radius-panel: 28px;

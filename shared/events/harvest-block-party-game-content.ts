@@ -33,11 +33,11 @@ const harvestBlockPartyGameContent: AuthoringGameDraftContent = {
   name: "Harvest Block Party",
   location: "Maple Street Commons, Anytown",
   estimatedMinutes: 4,
-  entitlementLabel: "harvest raffle entry",
+  entitlementLabel: "harvest reward",
   intro:
-    "Welcome to the Harvest Block Party. Five quick questions about the weekend's programming and the neighborhood businesses making it possible. Score high enough and you'll earn a harvest raffle entry redeemable at the welcome booth on Maple Street.",
+    "Welcome to the Harvest Block Party. Five quick questions about the weekend's programming and the neighborhood businesses making it possible. Score high enough, then show your code at the welcome booth on Maple Street to claim a harvest reward.",
   summary:
-    "Thanks for playing. Bring your code to the welcome booth to claim your raffle entry, then head down Maple Street — the next set is starting soon.",
+    "Thanks for playing. Show your code at the welcome booth to claim your reward, then head down Maple Street — the next set is starting soon.",
   feedbackMode: "instant_feedback_non_blocking",
   allowBackNavigation: true,
   allowRetake: true,
@@ -58,7 +58,7 @@ const harvestBlockPartyGameContent: AuthoringGameDraftContent = {
       explanation:
         "The pumpkin patch and kids' parade run Saturday at noon on the Maple Street lawn — the welcome booth has the route map and a free craft table set up alongside.",
       sponsorFact:
-        "The Maple Street Co-op donates the pumpkins from neighborhood farms every year and runs the welcome booth where you'll redeem your raffle entry.",
+        "The Maple Street Co-op donates the pumpkins from neighborhood farms every year and runs the welcome booth where you'll claim your reward.",
     },
     {
       id: "q2",

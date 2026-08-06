@@ -10,8 +10,10 @@ per-event Theme registry.
 - `Theme` — the TypeScript type whose field set defines the brand
   surface a per-event theme can override (brand bases, brand-tied
   gradient stops and admin surfaces, body and heading typography,
-  panel/card/control radii). Field set is the binding output of the
-  token audit documented in [`docs/styling.md`](/docs/styling.md).
+  panel/card/control radii, plus the optional brand fields below).
+  Field set is the binding output of the token audit documented in
+  [`docs/styling.md`](/docs/styling.md), extended by the Madrona
+  redesign token vocabulary.
 - `ThemeScope` — universal React component (no `'use client'`, no
   effects, no state) that emits the Theme as inline-style CSS custom
   properties on a `<div className="theme-scope">` wrapper. SSR-safe;
@@ -45,6 +47,30 @@ derivation, the resolution is to revise
 [`docs/styling.md`](/docs/styling.md) and the `:root` policy in
 a follow-up PR before the theme lands, not to add a typed escape
 hatch in `Theme`.
+
+## Optional brand fields
+
+Four `Theme` fields are optional: `headerBg` / `headerFg` (sticky
+event header bar, `--header-bg` / `--header-fg`), `surfaceBand`
+(tinted full-width band surface, `--surface-band`), and
+`accentFontFamily` (short warm accent face, `--font-accent`). A theme
+that omits them renders byte-identically to the pre-extension
+emission: `themeToStyle.ts` derives defaults from required fields
+(`primary`, `whiteWarm`, `surfaceCardMuted`, `bodyFontFamily`
+respectively), and apps/web's `:root` carries matching `var()`-form
+fallbacks. Existing themes are not edited when an optional field
+lands. The classification and default-derivation contract lives in
+[`docs/styling.md`](/docs/styling.md) "Optional brand fields".
+
+## Self-hosted event fonts
+
+Font-family values in a Theme may name self-hosted faces. Event brand
+fonts (Madrona: Bebas Neue, Poppins, Lora Italic) ship as woff2
+duplicated per app — `apps/site/public/fonts/` and
+`apps/web/public/fonts/`, with `FONT-LICENSES.txt` alongside — and
+are declared in each app's `_fonts.scss` partial. `@font-face`
+declarations are inert for themes whose stacks do not name them, so
+non-Madrona events download no font bytes.
 
 ## No env or framework-specific imports
 

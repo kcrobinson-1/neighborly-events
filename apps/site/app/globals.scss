@@ -17,6 +17,7 @@
  * semantic changes vs. the prior single-file globals.css.
  */
 
+@use "./styles/fonts";
 @use "./styles/base";
 @use "./styles/signin";
 @use "./styles/admin";
