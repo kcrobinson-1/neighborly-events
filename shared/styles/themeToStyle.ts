@@ -49,8 +49,18 @@ export function themeToStyle(theme: Theme): Record<string, string> {
     "--hero-end": theme.heroEnd,
     "--admin-input-surface": theme.adminInputSurface,
     "--draft-row-surface": theme.draftRowSurface,
+
+    // Optional brand fields — defaults derived from required fields
+    // so themes that omit them render byte-identically to the
+    // pre-vocabulary-extension emission. Percent-free derivations:
+    // plain fallbacks, not `color-mix()`. Must stay in sync with the
+    // `var()`-form fallbacks in `apps/web/src/styles/_tokens.scss`.
+    "--header-bg": theme.headerBg ?? theme.primary,
+    "--header-fg": theme.headerFg ?? theme.whiteWarm,
+    "--surface-band": theme.surfaceBand ?? theme.surfaceCardMuted,
     "--font-body": theme.bodyFontFamily,
     "--font-heading": theme.headingFontFamily,
+    "--font-accent": theme.accentFontFamily ?? theme.bodyFontFamily,
     "--radius-panel": theme.panelRadius,
     "--radius-panel-mobile": theme.panelRadiusMobile,
     "--radius-card": theme.cardRadius,

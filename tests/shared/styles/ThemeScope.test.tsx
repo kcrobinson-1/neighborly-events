@@ -109,6 +109,51 @@ describe("ThemeScope", () => {
     );
   });
 
+  it("derives optional brand fields from required fields when omitted", () => {
+    // `baseSyntheticTheme` omits every optional field, so the
+    // emission must carry the documented defaults (`docs/styling.md`
+    // "Optional brand fields"): headerBg→primary, headerFg→whiteWarm,
+    // surfaceBand→surfaceCardMuted, accentFontFamily→bodyFontFamily.
+    render(
+      <ThemeScope theme={baseSyntheticTheme}>
+        <span data-testid="child">Hello</span>
+      </ThemeScope>,
+    );
+
+    const wrapper = screen.getByTestId("child").parentElement;
+    if (!wrapper) throw new Error("wrapper missing");
+    const style = wrapper.getAttribute("style") ?? "";
+
+    expect(style).toContain("--header-bg: #666");
+    expect(style).toContain("--header-fg: #999");
+    expect(style).toContain("--surface-band: #eee");
+    expect(style).toContain("--font-accent: TestBody, sans-serif");
+  });
+
+  it("emits optional brand fields verbatim when the theme provides them", () => {
+    const themed: Theme = {
+      ...baseSyntheticTheme,
+      headerBg: "#141",
+      headerFg: "#f0f0e0",
+      surfaceBand: "#e5d5a5",
+      accentFontFamily: "TestAccent, cursive",
+    };
+    render(
+      <ThemeScope theme={themed}>
+        <span data-testid="child">Hello</span>
+      </ThemeScope>,
+    );
+
+    const wrapper = screen.getByTestId("child").parentElement;
+    if (!wrapper) throw new Error("wrapper missing");
+    const style = wrapper.getAttribute("style") ?? "";
+
+    expect(style).toContain("--header-bg: #141");
+    expect(style).toContain("--header-fg: #f0f0e0");
+    expect(style).toContain("--surface-band: #e5d5a5");
+    expect(style).toContain("--font-accent: TestAccent, cursive");
+  });
+
   it("nested ThemeScope wrappers override outer values for descendants", () => {
     const outerTheme: Theme = { ...baseSyntheticTheme, primary: "#aaa111" };
     const innerTheme: Theme = { ...baseSyntheticTheme, primary: "#bbb222" };

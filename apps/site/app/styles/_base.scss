@@ -19,6 +19,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+// `body` computes `font-family: var(--font-body)` once with the
+// platform value from `<html>`, and descendants inherit that
+// *computed* family — a per-event Theme's `--font-body` override on
+// the `<ThemeScope>` wrapper is otherwise never re-read for plain
+// text (headings work because the rule below re-reads
+// `--font-heading` per element). Re-declaring on the wrapper
+// re-resolves the var inside the scope; themes whose `--font-body`
+// resolves to the inherited family are unaffected.
+.theme-scope {
+  font-family: var(--font-body);
+}
+
 h1,
 h2,
 h3,

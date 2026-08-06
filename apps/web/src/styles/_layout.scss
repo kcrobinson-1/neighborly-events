@@ -15,6 +15,14 @@
 // properties it sets.
 .theme-scope {
   display: contents;
+  // `:root` computes `font-family: var(--font-body)` once with the
+  // `:root` default, and descendants inherit that *computed* family —
+  // a Theme's `--font-body` override on this wrapper is otherwise
+  // never re-read for plain text. Re-declaring here re-resolves the
+  // var inside the scope (inherited properties cascade through
+  // `display: contents`). Themes whose `--font-body` resolves to the
+  // inherited family are unaffected.
+  font-family: var(--font-body);
 }
 
 .backdrop {

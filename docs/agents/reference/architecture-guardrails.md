@@ -43,6 +43,11 @@ classification — use it before adding or moving a token.
   `--secondary-focus`, etc.) are computed in `:root` via
   `color-mix()` from the brand bases — they are not Theme fields and
   per-event themes do not override them directly; see `docs/styling.md`.
+  A themable field may be **optional** with a centrally derived
+  default (today: `--header-bg`, `--header-fg`, `--surface-band`,
+  `--font-accent`) so existing themes render byte-identically without
+  edits when vocabulary grows; the default-derivation contract lives
+  in `docs/styling.md` "Optional brand fields".
 - **Structural.** Status palette (`$color-success`, `$color-status-*`),
   neutral drop-shadow color, modal scrim, spacing scale, font
   weights, control sizes, motion timing, focus-ring metrics, pill
