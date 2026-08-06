@@ -41,6 +41,12 @@ export type PersistedGameSnapshot =
   | {
       kind: "in_progress";
       answers: Answers;
+      /**
+       * Fingerprint of the grading-relevant content the run was played
+       * against; a mismatch on restore starts a fresh attempt instead of
+       * resuming answers chosen under different questions.
+       */
+      contentFingerprint: string;
       currentIndex: number;
       optionOrder: PersistedOptionOrder;
       startedAt: number | null;
@@ -49,7 +55,12 @@ export type PersistedGameSnapshot =
       kind: "submitting";
       answers: Answers;
       completionRequestId: string;
-      startedAt: number | null;
+      /**
+       * Duration computed when the submission began, so a much-later
+       * restore replays the original elapsed time instead of inflating
+       * completion-time analytics with the offline gap.
+       */
+      durationMs: number;
     }
   | {
       kind: "complete";
@@ -67,6 +78,29 @@ type PersistedEnvelope = {
 /** Builds the per-event storage key for the persisted session snapshot. */
 function getStorageKey(eventId: string) {
   return `neighborly.game-session.v1.${eventId}`;
+}
+
+/**
+ * Canonical fingerprint of the grading-relevant question content: prompts,
+ * selection modes, correct answers, option ids and labels, and feedback
+ * mode. Options and correct-answer ids are sorted so the per-attempt
+ * shuffle does not affect the value; question order stays significant.
+ * Cosmetic-only fields outside grading (intro, summary, sponsor facts) are
+ * deliberately excluded so copy tweaks do not discard attendee progress.
+ */
+export function computeContentFingerprint(game: GameConfig): string {
+  return JSON.stringify([
+    game.feedbackMode,
+    game.questions.map((question) => [
+      question.id,
+      question.prompt,
+      question.selectionMode,
+      [...question.correctAnswerIds].sort(),
+      [...question.options]
+        .sort((left, right) => left.id.localeCompare(right.id))
+        .map((option) => [option.id, option.label]),
+    ]),
+  ]);
 }
 
 /** Narrow structural check for a submitted-answers record. */
@@ -119,13 +153,20 @@ function isPermutationOf(candidate: unknown, expectedIds: string[]) {
 
 /**
  * Validates an in-progress snapshot against the current game content.
- * Any drift (question set, option ids, out-of-range index) invalidates the
- * snapshot: resuming a run against edited content would misgrade answers.
+ * Any grading-relevant drift — question set, prompts, correct answers,
+ * option ids or labels, selection or feedback mode (via the content
+ * fingerprint), plus an out-of-range index — invalidates the snapshot:
+ * resuming a run against edited content would grade answers the attendee
+ * chose under different questions.
  */
 function isValidInProgressSnapshot(
   game: GameConfig,
   snapshot: Extract<PersistedGameSnapshot, { kind: "in_progress" }>,
 ) {
+  if (snapshot.contentFingerprint !== computeContentFingerprint(game)) {
+    return false;
+  }
+
   if (
     !Number.isInteger(snapshot.currentIndex) ||
     snapshot.currentIndex < 0 ||
@@ -165,8 +206,11 @@ function isValidInProgressSnapshot(
 
 /**
  * Validates a submitting snapshot. Answers must still name current question
- * ids: replaying stale answers against republished content would grade
- * against the wrong questions when the original POST never landed.
+ * ids, but unlike in-progress runs there is no content-fingerprint check:
+ * the run is already finished, and discarding it would force a full replay.
+ * If the original POST landed, request-id dedup returns that attempt
+ * unchanged; if it did not, grading stale answers against republished
+ * content matches what the pre-persistence on-screen retry always did.
  */
 function isValidSubmittingSnapshot(
   game: GameConfig,
@@ -179,7 +223,11 @@ function isValidSubmittingSnapshot(
     return false;
   }
 
-  if (snapshot.startedAt !== null && typeof snapshot.startedAt !== "number") {
+  if (
+    typeof snapshot.durationMs !== "number" ||
+    !Number.isFinite(snapshot.durationMs) ||
+    snapshot.durationMs < 0
+  ) {
     return false;
   }
 
@@ -213,8 +261,8 @@ function parseSnapshot(
       ? {
           answers: candidate.answers,
           completionRequestId: candidate.completionRequestId,
+          durationMs: candidate.durationMs,
           kind: "submitting",
-          startedAt: candidate.startedAt,
         }
       : null;
   }
@@ -238,6 +286,7 @@ function parseSnapshot(
     return isValidInProgressSnapshot(game, candidate)
       ? {
           answers: candidate.answers,
+          contentFingerprint: candidate.contentFingerprint,
           currentIndex: candidate.currentIndex,
           kind: "in_progress",
           optionOrder: candidate.optionOrder,

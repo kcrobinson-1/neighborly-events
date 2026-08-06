@@ -27,6 +27,7 @@ vi.mock("../../../apps/web/src/lib/clientSessionId.ts", () => ({
   readActiveClientSessionId: mockReadActiveClientSessionId,
 }));
 
+import { computeContentFingerprint } from "../../../apps/web/src/game/gameSessionPersistence.ts";
 import { useGameSession } from "../../../apps/web/src/game/useGameSession.ts";
 
 // Node's experimental webstorage global shadows jsdom's localStorage in the
@@ -557,6 +558,7 @@ describe("useGameSession", () => {
       const game = createFinalScoreGame();
       seedSnapshot(game.id, {
         answers: { q1: ["b"] },
+        contentFingerprint: computeContentFingerprint(game),
         currentIndex: 1,
         kind: "in_progress",
         optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
@@ -591,6 +593,7 @@ describe("useGameSession", () => {
       const game = createFinalScoreGame();
       seedSnapshot(game.id, {
         answers: { q1: ["b"] },
+        contentFingerprint: computeContentFingerprint(game),
         currentIndex: 0,
         kind: "in_progress",
         optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
@@ -691,6 +694,8 @@ describe("useGameSession", () => {
         completionRequestId: "req-123",
         kind: "submitting",
       });
+      expect(storedSubmitting?.snapshot?.durationMs).toEqual(expect.any(Number));
+      expect(storedSubmitting?.snapshot?.durationMs).toBeGreaterThanOrEqual(0);
 
       await act(async () => {
         resolveSubmission(createCompletionResult({ score: 1 }));
@@ -699,14 +704,14 @@ describe("useGameSession", () => {
       expect(result.current.isComplete).toBe(true);
     });
 
-    it("restores an in-flight submission and replays the same request id", async () => {
+    it("restores an in-flight submission and replays the same request id and duration", async () => {
       const game = createFinalScoreGame();
       const completion = createCompletionResult();
       seedSnapshot(game.id, {
         answers: { q1: ["b"], q2: ["a", "c"] },
         completionRequestId: "req-restored",
+        durationMs: 61500,
         kind: "submitting",
-        startedAt: 1754500000000,
       });
       mockSubmitGameCompletion.mockResolvedValue(completion);
 
@@ -725,12 +730,50 @@ describe("useGameSession", () => {
         eventId: game.id,
         requestId: "req-restored",
       });
+      // The replay reports the originally computed elapsed time (plus only
+      // the milliseconds spent restoring), not one inflated by the gap
+      // between unload and reload.
+      const replayedDuration = mockSubmitGameCompletion.mock.calls[0]?.[0]?.durationMs;
+      expect(replayedDuration).toBeGreaterThanOrEqual(61500);
+      expect(replayedDuration).toBeLessThan(61500 + 10000);
 
       const storedComplete = JSON.parse(
         window.localStorage.getItem(storageKey(game.id)) ?? "null",
       );
       expect(storedComplete?.snapshot).toMatchObject({ kind: "complete" });
       expect(result.current.isCompletionPersisted).toBe(true);
+    });
+
+    // NOTE: the StrictMode double-mount hazard on restored submitting
+    // snapshots is covered by the e2e suite, not here — Vitest resolves the
+    // production React build, where StrictMode never double-invokes
+    // effects, so a jsdom test passes with or without the guard release.
+
+    it("starts fresh when grading-relevant content changed under stable ids", () => {
+      const game = createFinalScoreGame();
+      const editedGame = {
+        ...game,
+        questions: game.questions.map((question) =>
+          question.id === "q1"
+            ? { ...question, correctAnswerIds: ["a"] }
+            : question,
+        ),
+      };
+      // Snapshot written against the original content; the hook mounts with
+      // the edited config.
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        contentFingerprint: computeContentFingerprint(game),
+        currentIndex: 1,
+        kind: "in_progress",
+        optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
+        startedAt: null,
+      });
+
+      const { result } = renderHook(() => useGameSession(editedGame));
+
+      expect(result.current.isStarted).toBe(false);
+      expect(result.current.answers).toEqual({});
     });
 
     it("reports the completion as not persisted when the snapshot write fails", async () => {

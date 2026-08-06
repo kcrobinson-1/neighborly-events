@@ -15,6 +15,7 @@ vi.mock("../../../apps/web/src/lib/clientSessionId.ts", () => ({
 import {
   applyOptionOrder,
   clearPersistedGameSnapshot,
+  computeContentFingerprint,
   extractOptionOrder,
   readPersistedGameSnapshot,
   writePersistedGameSnapshot,
@@ -106,6 +107,7 @@ function createCompletionResult(): GameCompletionResult {
 function createInProgressSnapshot(): PersistedGameSnapshot {
   return {
     answers: { q1: ["b"] },
+    contentFingerprint: computeContentFingerprint(createGame()),
     currentIndex: 1,
     kind: "in_progress",
     optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
@@ -139,8 +141,8 @@ describe("gameSessionPersistence", () => {
     const snapshot: PersistedGameSnapshot = {
       answers: { q1: ["b"], q2: ["a", "c"] },
       completionRequestId: "req-inflight",
+      durationMs: 61500,
       kind: "submitting",
-      startedAt: 1754500000000,
     };
 
     writePersistedGameSnapshot(game.id, snapshot);
@@ -148,24 +150,78 @@ describe("gameSessionPersistence", () => {
     expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
   });
 
-  it("discards a submitting snapshot without a request id or with drifted answers", () => {
+  it("discards a submitting snapshot without a request id, a valid duration, or current answers", () => {
     const game = createGame();
 
     writePersistedGameSnapshot(game.id, {
       answers: { q1: ["b"] },
       completionRequestId: "",
+      durationMs: 1000,
       kind: "submitting",
-      startedAt: null,
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+
+    writePersistedGameSnapshot(game.id, {
+      answers: { q1: ["b"] },
+      completionRequestId: "req-inflight",
+      durationMs: -5,
+      kind: "submitting",
     });
     expect(readPersistedGameSnapshot(game)).toBeNull();
 
     writePersistedGameSnapshot(game.id, {
       answers: { "q-removed": ["b"] },
       completionRequestId: "req-inflight",
+      durationMs: 1000,
       kind: "submitting",
-      startedAt: null,
     });
     expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("discards an in-progress snapshot when grading-relevant content changed under stable ids", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, createInProgressSnapshot());
+
+    // Same question and option ids, different correct answer: the
+    // fingerprint must invalidate what the permutation check alone accepts.
+    const editedGame = {
+      ...game,
+      questions: game.questions.map((question) =>
+        question.id === "q1"
+          ? { ...question, correctAnswerIds: ["a"] }
+          : question,
+      ),
+    };
+
+    expect(readPersistedGameSnapshot(editedGame)).toBeNull();
+    // The unchanged config still accepts it.
+    expect(readPersistedGameSnapshot(game)).not.toBeNull();
+  });
+
+  it("keeps a submitting snapshot across cosmetic content edits", () => {
+    const game = createGame();
+    const snapshot: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completionRequestId: "req-inflight",
+      durationMs: 1000,
+      kind: "submitting",
+    };
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    // A finished run is deliberately content-tolerant: discarding it would
+    // force a full replay, and the request id already pins the attempt.
+    const editedGame = {
+      ...game,
+      questions: game.questions.map((question) =>
+        question.id === "q1"
+          ? { ...question, correctAnswerIds: ["a"] }
+          : question,
+      ),
+    };
+
+    expect(readPersistedGameSnapshot(editedGame)).toEqual(snapshot);
   });
 
   it("degrades to null when storage methods throw", () => {

@@ -10,6 +10,7 @@ import {
 import {
   applyOptionOrder,
   clearPersistedGameSnapshot,
+  computeContentFingerprint,
   extractOptionOrder,
   readPersistedGameSnapshot,
   writePersistedGameSnapshot,
@@ -43,7 +44,10 @@ export function useGameSession(game: GameConfig) {
       return createRestoredSubmittingState(
         restoredSnapshot.answers,
         restoredSnapshot.completionRequestId,
-        restoredSnapshot.startedAt,
+        // Back-date startedAt by the persisted duration so the replayed
+        // request reports the original elapsed time, not one inflated by
+        // however long the page was gone.
+        Date.now() - restoredSnapshot.durationMs,
       );
     }
 
@@ -135,7 +139,8 @@ export function useGameSession(game: GameConfig) {
       return;
     }
 
-    handledSubmissionRequestId.current = state.completionRequestId;
+    const requestId = state.completionRequestId;
+    handledSubmissionRequestId.current = requestId;
 
     const durationMs =
       state.startedAt === null ? 0 : Math.max(0, Date.now() - state.startedAt);
@@ -145,7 +150,7 @@ export function useGameSession(game: GameConfig) {
       answers: state.answers,
       durationMs,
       eventId: game.id,
-      requestId: state.completionRequestId,
+      requestId,
     })
       .then((completion) => {
         if (!isCancelled) {
@@ -177,6 +182,17 @@ export function useGameSession(game: GameConfig) {
 
     return () => {
       isCancelled = true;
+      // Release the request-id guard for the handler this cleanup cancels.
+      // Without this, StrictMode's dev-only mount→cleanup→mount cycle on a
+      // restored submitting snapshot would strand the screen: the first
+      // setup's response is cancelled and the second setup sees the id as
+      // already handled. Re-submitting the same request id is safe — the
+      // backend dedupes it into one completion. Covered by the e2e
+      // StrictMode test, not jsdom: Vitest resolves the production React
+      // build, which never double-invokes effects.
+      if (handledSubmissionRequestId.current === requestId) {
+        handledSubmissionRequestId.current = null;
+      }
     };
   }, [
     game.id,
@@ -201,6 +217,9 @@ export function useGameSession(game: GameConfig) {
     if (state.phase === "question" || state.phase === "answer_revealed") {
       writePersistedGameSnapshot(game.id, {
         answers: state.answers,
+        // The fingerprint is shuffle-invariant, so the shuffled copy and the
+        // source config produce the same value.
+        contentFingerprint: computeContentFingerprint(shuffledGame),
         currentIndex: state.currentIndex,
         kind: "in_progress",
         optionOrder: extractOptionOrder(shuffledGame),
@@ -212,12 +231,17 @@ export function useGameSession(game: GameConfig) {
     if (state.phase === "submitting_completion" && state.completionRequestId) {
       // Written before the POST's outcome is known: a reload mid-submission
       // restores straight into this phase and resubmits the same request id,
-      // which the completion RPC dedupes into the original attempt.
+      // which the completion RPC dedupes into the original attempt. The
+      // duration is frozen here so a later restore replays the original
+      // elapsed time.
       writePersistedGameSnapshot(game.id, {
         answers: state.answers,
         completionRequestId: state.completionRequestId,
+        durationMs:
+          state.startedAt === null
+            ? 0
+            : Math.max(0, Date.now() - state.startedAt),
         kind: "submitting",
-        startedAt: state.startedAt,
       });
     }
   }, [game.id, shuffledGame, state]);

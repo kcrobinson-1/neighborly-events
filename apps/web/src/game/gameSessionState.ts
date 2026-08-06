@@ -115,7 +115,9 @@ export function createRestoredInProgressState(
  * the page unloaded. Re-entering `submitting_completion` with the original
  * request id makes the submission effect replay the identical payload, so
  * the backend's request-id dedup returns the original attempt whether or
- * not the first POST landed.
+ * not the first POST landed. `startedAt` should be back-dated by the
+ * persisted duration (now − durationMs) so the replayed request reports the
+ * original elapsed time, not one inflated by the offline gap.
  */
 export function createRestoredSubmittingState(
   answers: Answers,

@@ -114,6 +114,43 @@ test("completes the featured attendee flow on mobile", async ({ page }) => {
   ).toBeVisible();
 });
 
+test("completes a restored in-flight submission under the dev build's StrictMode", async ({ page }) => {
+  // The dev server runs the development React build, where StrictMode
+  // double-invokes effects (mount → cleanup → mount). A restored
+  // `submitting` snapshot submits from the mount effect, so this is the
+  // one flow where the double-mount can strand the pending screen if the
+  // submission guard is not released during cleanup. jsdom unit tests
+  // cannot cover this: Vitest resolves the production React build, which
+  // never double-invokes.
+  await page.goto("/event/first-sample/game", { waitUntil: "networkidle" });
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      "neighborly.local-session.v1",
+      "prototype-session-e2e",
+    );
+    window.localStorage.setItem(
+      "neighborly.game-session.v1.madrona-music-2026",
+      JSON.stringify({
+        clientSessionId: "prototype-session-e2e",
+        savedAt: new Date().toISOString(),
+        snapshot: {
+          answers: {},
+          completionRequestId: "req-e2e-restored",
+          durationMs: 1234,
+          kind: "submitting",
+        },
+      }),
+    );
+  });
+
+  await page.reload({ waitUntil: "networkidle" });
+
+  await expect(
+    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+  ).toBeVisible();
+  await expect(page.locator(".token-block strong")).not.toHaveText("Loading...");
+});
+
 test("resumes an in-progress run after a reload", async ({ page }) => {
   await page.goto("/event/first-sample/game", { waitUntil: "networkidle" });
   await activate(page.getByRole("button", { exact: true, name: "Start game" }));
