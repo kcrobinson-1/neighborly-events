@@ -1,0 +1,11 @@
+The typefaces bundled here are open-source fonts distributed by Google
+Fonts under the SIL Open Font License 1.1, which permits bundling,
+redistribution, and commercial use. The woff2 files are format
+conversions (no glyph or metric changes) of the TTFs in the MIP 2026
+newsletter-centerfold handoff fonts directory.
+
+- Bebas Neue: https://fonts.google.com/specimen/Bebas+Neue
+- Poppins: https://fonts.google.com/specimen/Poppins
+- Lora: https://fonts.google.com/specimen/Lora
+
+Full OFL 1.1 text: https://openfontlicense.org
