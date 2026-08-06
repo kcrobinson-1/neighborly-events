@@ -48,9 +48,33 @@ export type Theme = {
   // Typography. `bodyFontFamily` and `headingFontFamily` are
   // font-family values consumers can feed into `font-family:` directly
   // (typically a CSS variable injected by `next/font` for apps/site,
-  // or a system stack for legacy apps/web defaults).
+  // a self-hosted `@font-face` family, or a system stack for legacy
+  // apps/web defaults). `headingFontFamily` doubles as the display
+  // family (headings, nav, times, buttons) for themes that carry a
+  // dedicated display face.
   bodyFontFamily: string;
   headingFontFamily: string;
+
+  // Optional brand fields (Madrona redesign vocabulary). Optional so
+  // existing themes render byte-identically without edits: when a
+  // theme omits a field, `themeToStyle.ts` derives the default from
+  // the required fields noted below, and apps/web's `:root` carries
+  // the equivalent `var()`-form fallback. See `docs/styling.md`
+  // "Optional brand fields".
+  //
+  // `headerBg` / `headerFg` — sticky event header bar background and
+  // foreground (`--header-bg` / `--header-fg`; default `primary` /
+  // `whiteWarm`).
+  headerBg?: string;
+  headerFg?: string;
+  // `surfaceBand` — tinted full-width band surface (inner page-head
+  // bands, sponsor bands, code block; the Madrona spec's "putty").
+  // `--surface-band`; default `surfaceCardMuted`.
+  surfaceBand?: string;
+  // `accentFontFamily` — short warm accent face (welcome line, artist
+  // taglines; Madrona uses Lora Italic). `--font-accent`; default
+  // `bodyFontFamily`.
+  accentFontFamily?: string;
 
   // Themable radii. Pill radius (999px) is structural and stays in
   // platform SCSS — it does not theme.
