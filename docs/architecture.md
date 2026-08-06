@@ -644,7 +644,7 @@ The Supabase side is intentionally small:
   start rows for nonexistent event IDs (which would pollute analytics), and
   ensures start rows are cleaned up if an event is hard-deleted.
 - `supabase/migrations/20260418000000_rename_database_terminology_to_game.sql`
-  Renames the persistent SQL contract from the historical quiz/raffle names to
+  Renames the persistent SQL contract from the historical terminology to
   the current game/entitlement names. The active schema uses `game_events`,
   `game_questions`, `game_question_options`, `game_completions`,
   `game_entitlements`, `game_event_drafts`, `game_event_versions`,
@@ -652,7 +652,8 @@ The Supabase side is intentionally small:
   `complete_game_and_award_entitlement()`, `publish_game_event_draft()`, and
   `unpublish_game_event()`.
 - `supabase/migrations/20260418010000_rename_authoring_entitlement_label_json.sql`
-  Renames authoring draft/version JSON from the historical `raffleLabel` key to
+  Renames authoring draft/version JSON from its historical key name (recorded
+  in the migration itself) to
   `entitlementLabel` and updates `publish_game_event_draft()` so it projects
   draft content into `game_events.entitlement_label`.
 - `supabase/migrations/20260418020000_update_demo_game_copy.sql`
