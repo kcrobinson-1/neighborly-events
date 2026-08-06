@@ -94,6 +94,57 @@ test("completes the featured attendee flow on mobile", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("You're checked in for the reward.")).toBeVisible();
   await expect(page.locator(".token-block strong")).not.toHaveText("Loading...");
+
+  // The completed state persists on the device: a reload restores the results
+  // screen — same verification code — without replaying, and offers the
+  // retake affordance with its reassurance line.
+  const verificationCode = await page.locator(".token-block strong").innerText();
+
+  await page.reload({ waitUntil: "networkidle" });
+
+  await expect(
+    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+  ).toBeVisible();
+  await expect(page.locator(".token-block strong")).toHaveText(verificationCode);
+  await expect(
+    page.getByRole("button", { name: "Retake the quiz" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Retaking never changes your code or your reward entry."),
+  ).toBeVisible();
+});
+
+test("resumes an in-progress run after a reload", async ({ page }) => {
+  await page.goto("/event/first-sample/game", { waitUntil: "networkidle" });
+  await activate(page.getByRole("button", { exact: true, name: "Start game" }));
+  await clickOptionAndSubmit(page, "Hi Spot Cafe");
+  await expect(
+    page.getByRole("heading", {
+      name: "What kind of experience should this game feel like?",
+    }),
+  ).toBeVisible();
+
+  await page.reload({ waitUntil: "networkidle" });
+
+  // The run resumes at the question the attendee left, not the intro screen.
+  await expect(
+    page.getByRole("heading", {
+      name: "What kind of experience should this game feel like?",
+    }),
+  ).toBeVisible();
+
+  // Back navigation still has the earlier answer selected and submittable.
+  await activate(
+    page.getByRole("button", { exact: true, name: "Back to the previous question" }),
+  );
+  await expect(
+    page.getByRole("heading", {
+      name: "Which local spot is sponsoring this neighborhood music series question?",
+    }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { exact: true, name: "Submit answer" }),
+  ).toBeEnabled();
 });
 
 test("shows the not-found fallback for invalid routes and missing game slugs", async ({ page }) => {

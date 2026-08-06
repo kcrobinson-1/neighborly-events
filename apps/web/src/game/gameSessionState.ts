@@ -95,6 +95,33 @@ export function createGameState(
   } satisfies GameState;
 }
 
+/** Rebuilds reducer state for an in-progress attempt restored from device storage. */
+export function createRestoredInProgressState(
+  answers: Answers,
+  currentIndex: number,
+  startedAt: number | null,
+  currentQuestionId: string | null,
+): GameState {
+  return {
+    ...createGameState("question", startedAt),
+    answers,
+    currentIndex,
+    pendingSelection: getStoredSelection(answers, currentQuestionId),
+  };
+}
+
+/** Rebuilds reducer state for a completed attempt restored from device storage. */
+export function createRestoredCompleteState(
+  answers: Answers,
+  completion: GameCompletionResult,
+): GameState {
+  return {
+    ...createGameState("complete"),
+    answers,
+    latestCompletion: completion,
+  };
+}
+
 /** Moves the reducer into the backend submission phase after local game play ends. */
 function createCompletionSubmissionState(
   state: GameState,

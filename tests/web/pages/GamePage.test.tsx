@@ -257,14 +257,14 @@ describe("GamePage", () => {
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Play again" }));
-    fireEvent.click(screen.getByRole("button", { name: "Start over" }));
+    fireEvent.click(screen.getByRole("button", { name: "Retake the quiz" }));
 
     expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(game.id);
     expect(screen.getByText("Volunteer check-in complete")).toBeTruthy();
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
     expect(sessionState.resetForRetake).toHaveBeenCalledTimes(1);
-    expect(sessionState.reset).toHaveBeenCalledTimes(1);
+    // The durable completed state exposes no "Start over" escape hatch.
+    expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
   });
 
   it("updates the polling hook input when the active game changes after completion", () => {

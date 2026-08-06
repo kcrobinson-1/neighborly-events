@@ -165,7 +165,13 @@ describe("GameCompletionPanel", () => {
       expect(screen.getByText("Your answer:", { exact: false })).toBeTruthy();
       expect(screen.getByText("Correct answer:", { exact: false })).toBeTruthy();
       expect(screen.getByText(expectedMeta)).toBeTruthy();
-      expect(screen.getByRole("button", { name: "Play again" })).toBeTruthy();
+      expect(screen.getByRole("button", { name: "Retake the quiz" })).toBeTruthy();
+      expect(
+        screen.getByText("Retaking never changes your code or your reward entry."),
+      ).toBeTruthy();
+      // The completed state is durable (persisted on-device), so the retake
+      // action is its only exit; "Start over" belongs to the failure state.
+      expect(screen.queryByRole("button", { name: "Start over" })).toBeNull();
 
       if (expectedStatusKind === "redeemed") {
         expect(screen.getByText("Volunteer check-in complete")).toBeTruthy();
@@ -437,10 +443,9 @@ describe("GameCompletionPanel", () => {
         expect(newsletterLink.getAttribute("href")).toBe(
           "/event/madrona/signup",
         );
-        // New tab so a pre-redemption click can't unmount the SPA and lose
-        // the reducer-held verification code.
-        expect(newsletterLink.getAttribute("target")).toBe("_blank");
-        expect(newsletterLink.getAttribute("rel")).toBe("noopener");
+        // Same tab: the persisted completion state makes navigating away
+        // loss-free, so no link needs a new tab to protect the code.
+        expect(newsletterLink.getAttribute("target")).toBeNull();
 
         const donateLink = screen.getByRole("link", {
           name: "Support the Playfield",
@@ -448,8 +453,7 @@ describe("GameCompletionPanel", () => {
         expect(donateLink.getAttribute("href")).toBe(
           "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
         );
-        expect(donateLink.getAttribute("target")).toBe("_blank");
-        expect(donateLink.getAttribute("rel")).toBe("noopener");
+        expect(donateLink.getAttribute("target")).toBeNull();
 
         // The CTA rides below the entitlement result, never above it.
         const panel = screen.getByRole("heading", {

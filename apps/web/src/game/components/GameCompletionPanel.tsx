@@ -209,19 +209,15 @@ export function GameCompletionPanel({
           {cta.newsletter ? (
             <div className="completion-cta-item">
               <p>{cta.newsletter.body}</p>
-              {/* Plain anchor: the feedback route is owned by apps/site, so the
+              {/* Plain anchor: the signup route is owned by apps/site, so the
                   navigation must be a hard load for the proxy to re-evaluate.
                   The destination is config-owned — never derived from the game
-                  slug, which may not name a feedback-enabled event. New tab
-                  because the verification code lives only in reducer state: a
-                  same-tab navigation before redemption would unmount the SPA
-                  and force a full replay to recover the code. */}
-              <a
-                className="completion-cta-button"
-                href={cta.newsletter.href}
-                rel="noopener"
-                target="_blank"
-              >
+                  slug, which may not name a feedback-enabled event. Same tab:
+                  the completed state (including the verification code) is
+                  persisted on the device (`gameSessionPersistence`), so
+                  navigating away and returning restores this screen without
+                  a replay. */}
+              <a className="completion-cta-button" href={cta.newsletter.href}>
                 {cta.newsletter.buttonLabel}
               </a>
             </div>
@@ -229,12 +225,7 @@ export function GameCompletionPanel({
           {cta.donate ? (
             <div className="completion-cta-item">
               <p>{cta.donate.body}</p>
-              <a
-                className="completion-cta-button"
-                href={cta.donate.href}
-                rel="noopener"
-                target="_blank"
-              >
+              <a className="completion-cta-button" href={cta.donate.href}>
                 {cta.donate.buttonLabel}
               </a>
             </div>
@@ -254,14 +245,24 @@ export function GameCompletionPanel({
             </button>
           ) : null}
           {completion && showRetake ? (
-            <button className="primary-button" onClick={onRetake} type="button">
-              Play again
+            <button className="secondary-button" onClick={onRetake} type="button">
+              Retake the quiz
             </button>
           ) : null}
-          <button className="secondary-button" onClick={onReset} type="button">
-            Start over
-          </button>
+          {/* The completed state is durable (persisted on the device), so its
+              only exit is an explicit retake. "Start over" remains solely for
+              the failed-submission state, where local answers are all we have. */}
+          {!completion ? (
+            <button className="secondary-button" onClick={onReset} type="button">
+              Start over
+            </button>
+          ) : null}
         </div>
+      ) : null}
+      {!isSubmitting && completion && showRetake ? (
+        <p className="completion-retake-note">
+          Retaking never changes your code or your reward entry.
+        </p>
       ) : null}
     </section>
   );

@@ -8,25 +8,61 @@ import {
   getGameSessionViewState,
 } from "./gameSessionSelectors";
 import {
+  applyOptionOrder,
+  clearPersistedGameSnapshot,
+  extractOptionOrder,
+  readPersistedGameSnapshot,
+  writePersistedGameSnapshot,
+} from "./gameSessionPersistence";
+import {
   createCompletionRequestId,
   createGameState,
+  createRestoredCompleteState,
+  createRestoredInProgressState,
   gameReducer,
 } from "./gameSessionState";
 import { shuffleGameOptions } from "./shuffleGameOptions";
 
 /** Manages the complete game session lifecycle for a single game instance. */
 export function useGameSession(game: GameConfig) {
-  const [state, dispatch] = useReducer(gameReducer, undefined, () => createGameState());
+  // A persisted snapshot (same device, same client session) restores the quiz
+  // to the state the attendee left — mid-run or completed — so navigating away
+  // or reloading never costs progress or the check-in code. Restore is
+  // mount-only by design: later snapshot writes originate from this hook.
+  const [restoredSnapshot] = useState(() => readPersistedGameSnapshot(game));
+  const [state, dispatch] = useReducer(gameReducer, undefined, () => {
+    if (restoredSnapshot?.kind === "complete") {
+      return createRestoredCompleteState(
+        restoredSnapshot.answers,
+        restoredSnapshot.completion,
+      );
+    }
+
+    if (restoredSnapshot?.kind === "in_progress") {
+      return createRestoredInProgressState(
+        restoredSnapshot.answers,
+        restoredSnapshot.currentIndex,
+        restoredSnapshot.startedAt,
+        game.questions[restoredSnapshot.currentIndex]?.id ?? null,
+      );
+    }
+
+    return createGameState();
+  });
   const handledSubmissionRequestId = useRef<string | null>(null);
   // Answer options render in a per-attempt random order so the authored order
   // cannot leak the correct answer. The shuffled copy lives in state so one
   // permutation stays stable for the whole attempt (back-navigation included);
   // only a game change or a retake draws a fresh one. Keyed by game.id — the
   // same key the reset effect below uses — because the game object's identity
-  // is not stable across renders in every caller.
+  // is not stable across renders in every caller. A restored in-progress
+  // attempt re-applies its persisted permutation instead of re-rolling.
   const [shuffled, setShuffled] = useState(() => ({
     gameId: game.id,
-    game: shuffleGameOptions(game),
+    game:
+      restoredSnapshot?.kind === "in_progress"
+        ? applyOptionOrder(game, restoredSnapshot.optionOrder)
+        : shuffleGameOptions(game),
   }));
 
   if (shuffled.gameId !== game.id) {
@@ -35,7 +71,16 @@ export function useGameSession(game: GameConfig) {
 
   const shuffledGame = shuffled.gameId === game.id ? shuffled.game : game;
 
+  // Reset only when the mounted hook is handed a different game; running on
+  // mount as well would discard the snapshot restored above.
+  const activeGameIdRef = useRef(game.id);
+
   useEffect(() => {
+    if (activeGameIdRef.current === game.id) {
+      return;
+    }
+
+    activeGameIdRef.current = game.id;
     dispatch({ type: "reset" });
     handledSubmissionRequestId.current = null;
   }, [game.id]);
@@ -111,6 +156,37 @@ export function useGameSession(game: GameConfig) {
     state.phase,
     state.startedAt,
   ]);
+
+  useEffect(() => {
+    // Write-through persistence per phase. `submitting_completion` (and a
+    // failed submission, which is `complete` without a result) intentionally
+    // keeps the last in-progress snapshot: a restore lands on the final
+    // question and can resubmit, while the entitlement stays idempotent
+    // per session on the backend.
+    if (state.phase === "intro") {
+      clearPersistedGameSnapshot(game.id);
+      return;
+    }
+
+    if (state.phase === "question" || state.phase === "answer_revealed") {
+      writePersistedGameSnapshot(game.id, {
+        answers: state.answers,
+        currentIndex: state.currentIndex,
+        kind: "in_progress",
+        optionOrder: extractOptionOrder(shuffledGame),
+        startedAt: state.startedAt,
+      });
+      return;
+    }
+
+    if (state.phase === "complete" && state.latestCompletion) {
+      writePersistedGameSnapshot(game.id, {
+        answers: state.answers,
+        completion: state.latestCompletion,
+        kind: "complete",
+      });
+    }
+  }, [game.id, shuffledGame, state]);
 
   const start = () => {
     dispatch({ type: "start", startedAt: Date.now() });

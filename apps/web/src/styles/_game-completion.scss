@@ -105,3 +105,12 @@
 .completion-actions {
   margin-top: 4px;
 }
+
+// Reassurance line under the retake action: retaking is safe, the code and
+// reward entry never change.
+.completion-retake-note {
+  margin: $space-3 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}

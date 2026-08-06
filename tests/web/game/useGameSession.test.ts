@@ -3,15 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
 import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
 
-const { mockCreateRequestId, mockSubmitGameCompletion } = vi.hoisted(() => {
-  return {
-    mockCreateRequestId: vi.fn(),
-    mockSubmitGameCompletion: vi.fn(),
-  };
-});
+const { mockCreateRequestId, mockReadActiveClientSessionId, mockSubmitGameCompletion } =
+  vi.hoisted(() => {
+    return {
+      mockCreateRequestId: vi.fn(),
+      mockReadActiveClientSessionId: vi.fn(),
+      mockSubmitGameCompletion: vi.fn(),
+    };
+  });
 
 // The reducer and side-effect orchestration are the behavior under test here,
-// so we mock only the API boundary and request-id generator.
+// so we mock only the API boundary, the request-id generator, and the
+// env-coupled session-identity resolver that gates device persistence.
 vi.mock("../../../apps/web/src/lib/gameApi.ts", () => ({
   submitGameCompletion: mockSubmitGameCompletion,
 }));
@@ -20,7 +23,39 @@ vi.mock("../../../apps/web/src/lib/session.ts", () => ({
   createRequestId: mockCreateRequestId,
 }));
 
+vi.mock("../../../apps/web/src/lib/clientSessionId.ts", () => ({
+  readActiveClientSessionId: mockReadActiveClientSessionId,
+}));
+
 import { useGameSession } from "../../../apps/web/src/game/useGameSession.ts";
+
+// Node's experimental webstorage global shadows jsdom's localStorage in the
+// test runtime, so the suite installs the same in-memory Storage stand-in the
+// gameApi tests use.
+function createMemoryStorage() {
+  const values = new Map<string, string>();
+
+  return {
+    clear() {
+      values.clear();
+    },
+    getItem(key: string) {
+      return values.has(key) ? values.get(key) ?? null : null;
+    },
+    key(index: number) {
+      return Array.from(values.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      values.delete(key);
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+    get length() {
+      return values.size;
+    },
+  };
+}
 
 function createCompletionResult(overrides: Partial<GameCompletionResult> = {}): GameCompletionResult {
   return {
@@ -164,10 +199,20 @@ function createInstantFeedbackGame(): GameConfig {
 describe("useGameSession", () => {
   beforeEach(() => {
     mockCreateRequestId.mockReset();
+    mockReadActiveClientSessionId.mockReset();
     mockSubmitGameCompletion.mockReset();
     // A stable id makes the retry/idempotency assertions readable and matches
     // the product requirement that the same completion attempt reuses its key.
     mockCreateRequestId.mockReturnValue("req-123");
+    // No session identity by default: persistence stays inert so the
+    // state-machine tests exercise exactly the pre-persistence behavior.
+    mockReadActiveClientSessionId.mockReturnValue(null);
+    // Node's experimental webstorage global shadows jsdom's localStorage in
+    // the test runtime, so install a fresh in-memory Storage stand-in.
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: createMemoryStorage(),
+    });
   });
 
   afterEach(() => {
@@ -469,6 +514,219 @@ describe("useGameSession", () => {
         "a",
         "b",
       ]);
+    });
+  });
+
+  describe("device persistence", () => {
+    const storageKey = (gameId: string) => `neighborly.game-session.v1.${gameId}`;
+
+    function seedSnapshot(gameId: string, snapshot: unknown) {
+      window.localStorage.setItem(
+        storageKey(gameId),
+        JSON.stringify({
+          clientSessionId: "session-test",
+          savedAt: "2026-08-06T12:00:00.000Z",
+          snapshot,
+        }),
+      );
+    }
+
+    beforeEach(() => {
+      mockReadActiveClientSessionId.mockReturnValue("session-test");
+    });
+
+    it("restores a completed snapshot on mount without resubmitting", () => {
+      const game = createFinalScoreGame();
+      const completion = createCompletionResult();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completion,
+        kind: "complete",
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isComplete).toBe(true);
+      expect(result.current.latestCompletion).toEqual(completion);
+      expect(result.current.answers).toEqual({ q1: ["b"], q2: ["a", "c"] });
+      expect(result.current.score).toBe(completion.score);
+      expect(mockSubmitGameCompletion).not.toHaveBeenCalled();
+    });
+
+    it("restores an in-progress snapshot at the saved question with its option order", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        currentIndex: 1,
+        kind: "in_progress",
+        optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
+        startedAt: 1754500000000,
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isStarted).toBe(true);
+      expect(result.current.isShowingQuestion).toBe(true);
+      expect(result.current.currentIndex).toBe(1);
+      expect(result.current.answers).toEqual({ q1: ["b"] });
+      // The attempt's persisted permutation is re-applied, not re-rolled.
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "c",
+        "a",
+        "b",
+      ]);
+
+      act(() => {
+        result.current.goBack();
+      });
+
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "b",
+        "a",
+      ]);
+      expect(result.current.pendingSelection).toEqual(["b"]);
+    });
+
+    it("restores the saved answer as the pending selection for the current question", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        currentIndex: 0,
+        kind: "in_progress",
+        optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
+        startedAt: null,
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.currentIndex).toBe(0);
+      expect(result.current.pendingSelection).toEqual(["b"]);
+      expect(result.current.canSubmit).toBe(true);
+    });
+
+    it("ignores a snapshot for a different client session", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completion: createCompletionResult(),
+        kind: "complete",
+      });
+      mockReadActiveClientSessionId.mockReturnValue("session-other");
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isStarted).toBe(false);
+      expect(result.current.latestCompletion).toBeNull();
+    });
+
+    it("persists progress during play and the completion at the end", async () => {
+      const game = createFinalScoreGame();
+      const completion = createCompletionResult();
+      mockSubmitGameCompletion.mockResolvedValue(completion);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      const storedMidRun = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedMidRun?.clientSessionId).toBe("session-test");
+      expect(storedMidRun?.snapshot).toMatchObject({
+        answers: { q1: ["b"] },
+        currentIndex: 1,
+        kind: "in_progress",
+      });
+
+      act(() => {
+        result.current.selectOption("c");
+        result.current.selectOption("a");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      const storedComplete = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedComplete?.snapshot).toMatchObject({
+        completion,
+        kind: "complete",
+      });
+    });
+
+    it("clears the snapshot when the session resets to the intro", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      expect(window.localStorage.getItem(storageKey(game.id))).not.toBeNull();
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(window.localStorage.getItem(storageKey(game.id))).toBeNull();
+    });
+
+    it("lets a restored completion retake and resubmit through the normal flow", async () => {
+      const game = createFinalScoreGame(1);
+      const replayCompletion = createCompletionResult({
+        attemptNumber: 2,
+        entitlement: {
+          createdAt: "2026-08-06T12:00:00.000Z",
+          status: "existing",
+          verificationCode: "MMP-1234ABCD",
+        },
+        score: 1,
+      });
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        completion: createCompletionResult({ score: 1 }),
+        kind: "complete",
+      });
+      mockSubmitGameCompletion.mockResolvedValue(replayCompletion);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.resetForRetake();
+      });
+
+      expect(result.current.isComplete).toBe(false);
+      expect(result.current.isShowingQuestion).toBe(true);
+
+      act(() => {
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.latestCompletion).toEqual(replayCompletion);
+      });
+
+      // The retake resubmits and the backend returns the existing entitlement:
+      // same code, no new reward entry.
+      expect(
+        result.current.latestCompletion?.entitlement.verificationCode,
+      ).toBe("MMP-1234ABCD");
     });
   });
 

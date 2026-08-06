@@ -176,7 +176,7 @@ That means:
 - clear progress indicator
 - transition forward after an explicit submit action
 - allow a back action so attendees can revisit and change previously submitted answers before finishing
-- local state persistence so refreshes do not reset progress unnecessarily
+- device-local state persistence so refreshes and navigating away restore the run instead of resetting it
 
 So the right model is: one application shell, one card at a time, one step per view.
 
@@ -192,6 +192,7 @@ So the right model is: one application shell, one card at a time, one step per v
 7. Shows the completion screen to a volunteer
 8. Receives reward ticket
 9. May optionally retake the game for fun or score improvement without earning another reward entry
+10. Can leave the game and return later on the same device: the completed screen, answer review, and verification code come back without replaying
 
 ### B) Volunteer Flow
 1. Sees attendee completion screen
@@ -442,6 +443,24 @@ If retakes are allowed, the completion state should also make the reward rule ex
 - retaking the game does not create an additional reward ticket
 
 This screen should look materially different from the game cards so nobody mistakes it for another step.
+
+### One Destination, Three Durable States
+
+The game route is a single destination whose state persists on the device,
+keyed to the client session. There is no separate results page:
+
+- *Not started*: the route shows the intro screen.
+- *In progress*: returning or reloading resumes at the question the attendee
+  left, with earlier answers and the attempt's option order intact.
+- *Completed*: the route IS the results — score, answer review, and the
+  verification code render again on every return, without replaying.
+
+Because the completed state is durable, every link out of the game (newsletter,
+donate) navigates normally in the same tab; nothing on the completion screen
+needs a new tab to protect the code. The only way to leave the completed state
+is the explicit retake action, which carries the reassurance line "Retaking
+never changes your code or your reward entry" — the backend keeps one reward
+entry per session and returns the same verification code on every completion.
 
 ## Content Guidelines
 
