@@ -134,6 +134,72 @@ describe("gameSessionPersistence", () => {
     expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
   });
 
+  it("round-trips a submitting snapshot", () => {
+    const game = createGame();
+    const snapshot: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completionRequestId: "req-inflight",
+      kind: "submitting",
+      startedAt: 1754500000000,
+    };
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
+  });
+
+  it("discards a submitting snapshot without a request id or with drifted answers", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, {
+      answers: { q1: ["b"] },
+      completionRequestId: "",
+      kind: "submitting",
+      startedAt: null,
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+
+    writePersistedGameSnapshot(game.id, {
+      answers: { "q-removed": ["b"] },
+      completionRequestId: "req-inflight",
+      kind: "submitting",
+      startedAt: null,
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("degrades to null when storage methods throw", () => {
+    const game = createGame();
+    const throwingStorage = {
+      clear() {},
+      getItem() {
+        throw new Error("blocked");
+      },
+      key() {
+        return null;
+      },
+      removeItem() {
+        throw new Error("blocked");
+      },
+      setItem() {
+        throw new Error("blocked");
+      },
+      length: 0,
+    };
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: throwingStorage,
+    });
+
+    // Mount-time paths must degrade, not crash: read → null, write reports
+    // failure, clear is a no-op.
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+    expect(writePersistedGameSnapshot(game.id, createInProgressSnapshot())).toBe(
+      false,
+    );
+    expect(() => clearPersistedGameSnapshot(game.id)).not.toThrow();
+  });
+
   it("round-trips a completed snapshot", () => {
     const game = createGame();
     const snapshot: PersistedGameSnapshot = {

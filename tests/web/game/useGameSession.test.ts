@@ -662,6 +662,77 @@ describe("useGameSession", () => {
       expect(result.current.isCompletionPersisted).toBe(true);
     });
 
+    it("writes a submitting snapshot carrying the request id before the POST resolves", async () => {
+      const game = createFinalScoreGame(1);
+      let resolveSubmission!: (completion: GameCompletionResult) => void;
+      mockSubmitGameCompletion.mockReturnValue(
+        new Promise<GameCompletionResult>((resolve) => {
+          resolveSubmission = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      expect(result.current.isSubmittingCompletion).toBe(true);
+
+      // The in-flight snapshot must hold the final answer AND the request id
+      // so a reload replays the identical payload into the RPC's dedup.
+      const storedSubmitting = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedSubmitting?.snapshot).toMatchObject({
+        answers: { q1: ["b"] },
+        completionRequestId: "req-123",
+        kind: "submitting",
+      });
+
+      await act(async () => {
+        resolveSubmission(createCompletionResult({ score: 1 }));
+      });
+
+      expect(result.current.isComplete).toBe(true);
+    });
+
+    it("restores an in-flight submission and replays the same request id", async () => {
+      const game = createFinalScoreGame();
+      const completion = createCompletionResult();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completionRequestId: "req-restored",
+        kind: "submitting",
+        startedAt: 1754500000000,
+      });
+      mockSubmitGameCompletion.mockResolvedValue(completion);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      expect(result.current.latestCompletion).toEqual(completion);
+      expect(mockSubmitGameCompletion).toHaveBeenCalledTimes(1);
+      // Same request id + same answers → the backend returns the original
+      // attempt instead of recording a duplicate completion row.
+      expect(mockSubmitGameCompletion.mock.calls[0]?.[0]).toMatchObject({
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        eventId: game.id,
+        requestId: "req-restored",
+      });
+
+      const storedComplete = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedComplete?.snapshot).toMatchObject({ kind: "complete" });
+      expect(result.current.isCompletionPersisted).toBe(true);
+    });
+
     it("reports the completion as not persisted when the snapshot write fails", async () => {
       const game = createFinalScoreGame(1);
       mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));

@@ -30,13 +30,25 @@ import type { Answers, GameCompletionResult } from "../types/game";
 /** Per-question shuffled option order, keyed by question id. */
 export type PersistedOptionOrder = Record<string, string[]>;
 
-/** Resumable session snapshot: an unfinished run or a completed result. */
+/**
+ * Resumable session snapshot: an unfinished run, an in-flight completion
+ * submission, or a completed result. The `submitting` kind carries the
+ * submission's request id so a reload mid-POST resubmits the identical
+ * payload and the backend's request-id dedup returns the original attempt
+ * instead of recording a duplicate completion row.
+ */
 export type PersistedGameSnapshot =
   | {
       kind: "in_progress";
       answers: Answers;
       currentIndex: number;
       optionOrder: PersistedOptionOrder;
+      startedAt: number | null;
+    }
+  | {
+      kind: "submitting";
+      answers: Answers;
+      completionRequestId: string;
       startedAt: number | null;
     }
   | {
@@ -151,6 +163,35 @@ function isValidInProgressSnapshot(
   );
 }
 
+/**
+ * Validates a submitting snapshot. Answers must still name current question
+ * ids: replaying stale answers against republished content would grade
+ * against the wrong questions when the original POST never landed.
+ */
+function isValidSubmittingSnapshot(
+  game: GameConfig,
+  snapshot: Extract<PersistedGameSnapshot, { kind: "submitting" }>,
+) {
+  if (
+    typeof snapshot.completionRequestId !== "string" ||
+    snapshot.completionRequestId.length === 0
+  ) {
+    return false;
+  }
+
+  if (snapshot.startedAt !== null && typeof snapshot.startedAt !== "number") {
+    return false;
+  }
+
+  if (!isAnswers(snapshot.answers)) {
+    return false;
+  }
+
+  const questionIds = new Set(game.questions.map((question) => question.id));
+
+  return Object.keys(snapshot.answers).every((id) => questionIds.has(id));
+}
+
 /** Validates and narrows a parsed envelope into a usable snapshot. */
 function parseSnapshot(
   game: GameConfig,
@@ -161,6 +202,22 @@ function parseSnapshot(
   }
 
   const snapshot = value as Partial<PersistedGameSnapshot>;
+
+  if (snapshot.kind === "submitting") {
+    const candidate = snapshot as Extract<
+      PersistedGameSnapshot,
+      { kind: "submitting" }
+    >;
+
+    return isValidSubmittingSnapshot(game, candidate)
+      ? {
+          answers: candidate.answers,
+          completionRequestId: candidate.completionRequestId,
+          kind: "submitting",
+          startedAt: candidate.startedAt,
+        }
+      : null;
+  }
 
   if (snapshot.kind === "complete") {
     return isAnswers(snapshot.answers) && isCompletionResult(snapshot.completion)
@@ -207,15 +264,18 @@ export function readPersistedGameSnapshot(
     return null;
   }
 
-  const rawValue = storage.getItem(getStorageKey(game.id));
-
-  if (!rawValue) {
-    return null;
-  }
-
   let envelope: Partial<PersistedEnvelope>;
 
   try {
+    // getItem sits inside the guard too: some privacy modes expose a storage
+    // object whose methods throw, and this runs during mount, where an
+    // uncaught throw would blank the page instead of degrading.
+    const rawValue = storage.getItem(getStorageKey(game.id));
+
+    if (!rawValue) {
+      return null;
+    }
+
     envelope = JSON.parse(rawValue) as Partial<PersistedEnvelope>;
   } catch {
     return null;
@@ -267,9 +327,15 @@ export function writePersistedGameSnapshot(
   }
 }
 
-/** Removes the persisted snapshot for a game, if any. */
+/** Removes the persisted snapshot for a game, if any. Never throws. */
 export function clearPersistedGameSnapshot(eventId: string) {
-  getLocalStorage()?.removeItem(getStorageKey(eventId));
+  try {
+    getLocalStorage()?.removeItem(getStorageKey(eventId));
+  } catch {
+    // Method-level storage rejection degrades the same way as a failed
+    // write: the snapshot simply outlives its usefulness until validation
+    // discards it.
+  }
 }
 
 /** Captures the per-question option order of a shuffled game config. */

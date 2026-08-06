@@ -19,6 +19,7 @@ import {
   createGameState,
   createRestoredCompleteState,
   createRestoredInProgressState,
+  createRestoredSubmittingState,
   gameReducer,
 } from "./gameSessionState";
 import { shuffleGameOptions } from "./shuffleGameOptions";
@@ -35,6 +36,14 @@ export function useGameSession(game: GameConfig) {
       return createRestoredCompleteState(
         restoredSnapshot.answers,
         restoredSnapshot.completion,
+      );
+    }
+
+    if (restoredSnapshot?.kind === "submitting") {
+      return createRestoredSubmittingState(
+        restoredSnapshot.answers,
+        restoredSnapshot.completionRequestId,
+        restoredSnapshot.startedAt,
       );
     }
 
@@ -181,11 +190,9 @@ export function useGameSession(game: GameConfig) {
     // Write-through persistence per phase. The completed snapshot is written
     // by the submission callback above (its success feeds
     // `isCompletionPersisted`); a completed snapshot restored from storage
-    // needs no rewrite. `submitting_completion` (and a failed submission,
-    // which is `complete` without a result) intentionally keeps the last
-    // in-progress snapshot: a restore lands on the final question and can
-    // resubmit, while the entitlement stays idempotent per session on the
-    // backend.
+    // needs no rewrite. A failed submission (`complete` without a result)
+    // intentionally keeps the `submitting` snapshot, so a reload — like the
+    // on-screen retry — replays the identical request id.
     if (state.phase === "intro") {
       clearPersistedGameSnapshot(game.id);
       return;
@@ -197,6 +204,19 @@ export function useGameSession(game: GameConfig) {
         currentIndex: state.currentIndex,
         kind: "in_progress",
         optionOrder: extractOptionOrder(shuffledGame),
+        startedAt: state.startedAt,
+      });
+      return;
+    }
+
+    if (state.phase === "submitting_completion" && state.completionRequestId) {
+      // Written before the POST's outcome is known: a reload mid-submission
+      // restores straight into this phase and resubmits the same request id,
+      // which the completion RPC dedupes into the original attempt.
+      writePersistedGameSnapshot(game.id, {
+        answers: state.answers,
+        completionRequestId: state.completionRequestId,
+        kind: "submitting",
         startedAt: state.startedAt,
       });
     }

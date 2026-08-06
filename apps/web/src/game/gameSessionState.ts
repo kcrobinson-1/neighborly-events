@@ -110,6 +110,25 @@ export function createRestoredInProgressState(
   };
 }
 
+/**
+ * Rebuilds reducer state for a completion submission that was in flight when
+ * the page unloaded. Re-entering `submitting_completion` with the original
+ * request id makes the submission effect replay the identical payload, so
+ * the backend's request-id dedup returns the original attempt whether or
+ * not the first POST landed.
+ */
+export function createRestoredSubmittingState(
+  answers: Answers,
+  completionRequestId: string,
+  startedAt: number | null,
+): GameState {
+  return {
+    ...createGameState("submitting_completion", startedAt),
+    answers,
+    completionRequestId,
+  };
+}
+
 /** Rebuilds reducer state for a completed attempt restored from device storage. */
 export function createRestoredCompleteState(
   answers: Answers,
