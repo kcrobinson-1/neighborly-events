@@ -35,11 +35,14 @@ import type { EventContent } from "../lib/eventContent.ts";
  * `schedule.days` still reflects that summary shape. Meter Music
  * School's email of 2026-08-06 resolved the conflict and
  * supersedes that decision for the per-night model: **Aug 11** has
- * no student opener (Miller Campbell's first set starts at 6:00),
- * **Aug 18** opens at 6:00 with Tessa Chen on flute, and **Aug 25**
- * opens at 6:00 with Lennon Jennings on cello (with teacher Liz
- * Mathiesen) and Logan Wilcox on trumpet (with teacher Evan);
- * main sets start at 6:15 on the two opener nights. Run-of-show
+ * no student opener — Miller Campbell plays true 45-minute sets
+ * (6:00 first set / 6:45 intermission / 7:00 resume, organizer
+ * decision 2026-08-06, keeping the "two 45-minute sets" description
+ * accurate on every night) — **Aug 18** opens at 6:00 with Tessa
+ * Chen on flute, and **Aug 25** opens at 6:00 with Lennon Jennings
+ * on cello (with teacher Liz Mathiesen) and Logan Wilcox on
+ * trumpet (with teacher Evan); main sets start at 6:15 on the two
+ * opener nights. Run-of-show
  * `time` strings are bare clock readings ("5:30") because the
  * Tonight section's date line already fixes the evening context.
  * Each night also carries its headliner sponsor credit (Poppie /
@@ -200,8 +203,8 @@ export const madronaContent: EventContent = {
             title: "Miller Campbell — first set",
             mainSet: true,
           },
-          { time: "7:00", title: "Intermission" },
-          { time: "7:15", title: "Music resumes", mainSet: true },
+          { time: "6:45", title: "Intermission" },
+          { time: "7:00", title: "Music resumes", mainSet: true },
           { time: "8:00", title: "Closing thanks" },
         ],
         headlinerSponsor: {

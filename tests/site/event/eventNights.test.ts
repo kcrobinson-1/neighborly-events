@@ -214,12 +214,22 @@ describe("madrona nights content", () => {
   it("has no student opener on Aug 11 and Meter openers on Aug 18/25", () => {
     // Meter Music School's 2026-08-06 email: no students opening
     // night, Tessa Chen on the 18th, Lennon Jennings + Logan Wilcox
-    // on the 25th — main sets start at 6:00 / 6:15 / 6:15.
+    // on the 25th — main sets start at 6:00 / 6:15 / 6:15. Opening
+    // night runs true 45-minute sets (organizer decision
+    // 2026-08-06): intermission at 6:45, resume at 7:00 — pinned so
+    // the "two 45-minute sets" copy stays accurate every night.
     const [opening, mid, closing] = nights?.nights ?? [];
     expect(
       opening.runOfShow.some((row) => row.title.includes("Meter")),
     ).toBe(false);
     expect(opening.runOfShow.find((row) => row.mainSet)?.time).toBe("6:00");
+    expect(opening.runOfShow.map((row) => row.time)).toEqual([
+      "5:30",
+      "6:00",
+      "6:45",
+      "7:00",
+      "8:00",
+    ]);
 
     const midOpener = mid.runOfShow.find((row) => row.title.includes("Meter"));
     expect(midOpener?.time).toBe("6:00");
