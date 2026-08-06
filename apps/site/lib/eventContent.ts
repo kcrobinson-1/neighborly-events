@@ -119,6 +119,27 @@
  * no in-app donation route, so there is nothing slug-derived about
  * the destination.
  *
+ * `nights?` is the per-night content model behind the Tonight /
+ * Next-concert section of the redesigned landing page: one
+ * `EventNight` per concert night carrying the night's date, display
+ * label ("Opening Night"), per-hour `runOfShow` rows, the night's
+ * performer (`performerSlug`, cross-referencing `lineup[].slug` the
+ * same unenforced way `sessions[].performerSlug` does), and an
+ * optional per-night `headlinerSponsor` credit. The container also
+ * names the event's IANA `timezone`: which night is "tonight" is a
+ * fact about the event's own clock, not the viewer's, and
+ * `resolveTonight` ([`eventNights.ts`](./eventNights.ts)) is the one
+ * consumer of that field. Run-of-show rows are display data —
+ * `time` is a display string, not a timestamp, and `mainSet` marks
+ * the headline performer's rows so the renderer (not the data)
+ * owns the emphasis treatment. `nights` deliberately does not
+ * replace `schedule` — `schedule.days` remains the generic
+ * multi-day agenda shape every event renders today; `nights` is the
+ * additive opt-in for events whose landing page leads with a single
+ * resolved night. Absence renders byte-identically to the
+ * pre-field output; the two test events omit it so the
+ * omission-guard falsifier stays structural.
+ *
  * `masthead?` is the landing-page quick-links nav: presence renders
  * the `EventMasthead` strip above the hero on `EventLandingPage`;
  * absence renders the page byte-for-byte identical to the
@@ -135,6 +156,62 @@
  * events omit the field so the omission-guard falsifier stays
  * structural.
  */
+/**
+ * One row of a night's run-of-show ("5:30 · Gathering opens").
+ * `time` and `title` are display strings owned by the content
+ * author; `description` carries detail lines (e.g. a student
+ * opener's names and instruments) the renderer shows under the
+ * title when present. `mainSet` marks rows that belong to the
+ * night's headline performer — the data claims the semantic, the
+ * renderer decides the visual emphasis.
+ */
+export type EventNightRow = {
+  time: string;
+  title: string;
+  description?: string;
+  mainSet?: boolean;
+};
+
+/**
+ * The per-night headliner sponsor credit ("<Artist>'s performance
+ * is brought to you by <logo>"). Distinct from the event-level
+ * `sponsors` list: this is a per-night pairing, not a roster entry,
+ * so it carries its own logo ref rather than cross-referencing
+ * `sponsors[].name`. `href` is optional — a credit can be
+ * logo-only.
+ */
+export type EventNightHeadlinerSponsor = {
+  name: string;
+  logoSrc: string;
+  logoAlt: string;
+  href?: string;
+};
+
+/**
+ * One concert night of an `EventContent.nights` model. `date` is an
+ * ISO `yyyy-mm-dd` calendar string in the event's timezone (same
+ * authoring convention as `schedule.days[].date`);
+ * `performerSlug` cross-references `lineup[].slug`, unenforced like
+ * every other content cross-reference here.
+ */
+export type EventNight = {
+  date: string;
+  label: string;
+  performerSlug: string;
+  runOfShow: EventNightRow[];
+  headlinerSponsor?: EventNightHeadlinerSponsor;
+};
+
+/**
+ * The `EventContent.nights` container: the event's IANA `timezone`
+ * (the zone `resolveTonight` computes "today" in) plus the night
+ * list, in any order — resolution sorts a copy.
+ */
+export type EventNights = {
+  timezone: string;
+  nights: EventNight[];
+};
+
 export type EventContent = {
   slug: string;
   themeSlug: string;
@@ -226,6 +303,7 @@ export type EventContent = {
     buttonLabel: string;
     href: string;
   };
+  nights?: EventNights;
   masthead?: {
     quiz?: { label: string; href: string };
     feedback?: { label: string; href: string };
