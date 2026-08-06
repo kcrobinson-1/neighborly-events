@@ -231,19 +231,44 @@
   font-style: normal;
 }
 
-.event-lineup-external-links {
+/*
+ * Artist-link chips: one recognizable, consistently-ordered chip
+ * per verified platform (`EventLineup` owns the labels and order).
+ * The 44px min-height keeps the tap target phone-friendly, same as
+ * `.event-masthead-link`.
+ */
+.event-lineup-artist-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 14px;
-  margin: 0;
+  gap: 8px;
+  margin: 4px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 0.9rem;
-  font-weight: 600;
 }
 
-.event-lineup-external-links a {
+.event-lineup-artist-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  background: var(--secondary-surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-control);
   color: var(--secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.event-lineup-artist-links a:hover {
+  background: var(--secondary-surface-strong);
+}
+
+.event-lineup-artist-links a:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
 }
 
 .event-lineup-set-times {

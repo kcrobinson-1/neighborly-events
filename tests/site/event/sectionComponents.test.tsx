@@ -182,7 +182,7 @@ describe("EventLineup", () => {
     expect(container.querySelector(".event-lineup-image")).toBeNull();
     expect(container.querySelector(".event-lineup-extended-bio")).toBeNull();
     expect(container.querySelector(".event-lineup-quote")).toBeNull();
-    expect(container.querySelector(".event-lineup-external-links")).toBeNull();
+    expect(container.querySelector(".event-lineup-artist-links")).toBeNull();
   });
 
   it("renders the band image with explicit alt text when imageSrc and imageAlt are present", () => {
@@ -274,14 +274,14 @@ describe("EventLineup", () => {
     expect(container.querySelector(".event-lineup-quote cite")).toBeNull();
   });
 
-  it("renders externalLinks as labeled anchors with target=_blank rel=noopener noreferrer", () => {
+  it("renders artistLinks as labeled anchors with target=_blank rel=noopener noreferrer", () => {
     const lineup: EventContent["lineup"] = [
       {
         ...baseContent.lineup[0],
-        externalLinks: [
-          { label: "Spotify", href: "https://example.com/spotify" },
-          { label: "Bandcamp", href: "https://example.com/bandcamp" },
-        ],
+        artistLinks: {
+          spotify: "https://example.com/spotify",
+          bandcamp: "https://example.com/bandcamp",
+        },
       },
     ];
     render(<EventLineup lineup={lineup} />);
@@ -292,6 +292,27 @@ describe("EventLineup", () => {
     expect(
       screen.getByRole("link", { name: "Bandcamp" }).getAttribute("href"),
     ).toBe("https://example.com/bandcamp");
+  });
+
+  it("renders artistLinks chips in the fixed slot order regardless of object key order", () => {
+    const lineup: EventContent["lineup"] = [
+      {
+        ...baseContent.lineup[0],
+        // Keys deliberately listed out of display order: the
+        // renderer's slot table, not the content object, owns the
+        // ordering (and the display labels, e.g. "Apple Music").
+        artistLinks: {
+          bandcamp: "https://example.com/bandcamp",
+          appleMusic: "https://example.com/apple-music",
+          website: "https://example.com/website",
+        },
+      },
+    ];
+    const { container } = render(<EventLineup lineup={lineup} />);
+    const labels = Array.from(
+      container.querySelectorAll(".event-lineup-artist-links a"),
+    ).map((anchor) => anchor.textContent);
+    expect(labels).toEqual(["Website", "Apple Music", "Bandcamp"]);
   });
 });
 
