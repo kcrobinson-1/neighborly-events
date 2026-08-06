@@ -8,8 +8,10 @@ import { createCorsHeaders, getAllowedOrigin } from "../_shared/cors.ts";
 import { loadPublishedGameById } from "../_shared/published-game-loader.ts";
 import { readVerifiedSession } from "../_shared/session-cookie.ts";
 import {
+  type CompletionLookupInput,
   type CompletionPersistenceInput,
   type CompletionPersistenceResult,
+  findCompletionByRequestId,
   persistCompletion,
 } from "./persistence.ts";
 
@@ -20,6 +22,11 @@ import {
  */
 export type CompleteGameHandlerDependencies = {
   createCorsHeaders: typeof createCorsHeaders;
+  findCompletionByRequestId: (
+    input: CompletionLookupInput,
+    supabaseUrl: string,
+    serviceRoleKey: string,
+  ) => Promise<CompletionPersistenceResult>;
   getAllowedOrigin: typeof getAllowedOrigin;
   getServiceRoleKey: () => string | undefined;
   getSigningSecret: () => string | undefined;
@@ -44,6 +51,7 @@ export type CompleteGameHandlerDependencies = {
 export const defaultCompleteGameHandlerDependencies:
   CompleteGameHandlerDependencies = {
     createCorsHeaders,
+    findCompletionByRequestId,
     getAllowedOrigin,
     getServiceRoleKey: () => Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),
     getSigningSecret: () => Deno.env.get("SESSION_SIGNING_SECRET"),
