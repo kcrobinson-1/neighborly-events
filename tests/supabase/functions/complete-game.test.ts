@@ -204,7 +204,7 @@ Deno.test("complete-game persists the trusted normalized payload and clamped dur
           completion_id: "cmp-123",
           entitlement_created_at: "2026-04-05T12:00:00.000Z",
           entitlement_status: "new",
-          message: "You're checked in for the raffle.",
+          message: "Show your code at the booth to claim your reward.",
           entitlement_eligible: true,
           score: input.trustedScore,
           verification_code: "TST-1234",
@@ -246,7 +246,7 @@ Deno.test("complete-game persists the trusted normalized payload and clamped dur
       status: "new",
       verificationCode: "TST-1234",
     },
-    message: "You're checked in for the raffle.",
+    message: "Show your code at the booth to claim your reward.",
     entitlementEligible: true,
     score: 6,
   });

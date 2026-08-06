@@ -263,7 +263,7 @@ export const madronaContent: EventContent = {
   cta: {
     label: "Play the Madrona quiz",
     sublabel:
-      `Answer a few neighborhood questions, then show your completion screen at the ${madronaFacts.booth.shortName} for tonight's ${madronaFacts.rewardNoun}.`,
+      `Answer a few neighborhood questions, then show your code at the ${madronaFacts.booth.shortName} to claim a ${madronaFacts.rewardNoun}.`,
   },
   feedback: {
     cta: {

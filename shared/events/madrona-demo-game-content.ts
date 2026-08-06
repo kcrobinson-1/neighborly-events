@@ -9,7 +9,9 @@ import type { GameSeedConfig } from "./seed-config.ts";
  * M2 phase 2.1 and since iterated: the questions are real
  * neighborhood facts (no band or business-sponsor references — the
  * only named sponsor is the hosting association), and the reward
- * copy names the real 2026 reward. The reward noun and booth facts
+ * copy stays generic per the spec reward-language rule: attendees
+ * show their code at the booth to claim a reward, and what the
+ * reward actually is stays offline. The reward noun and booth facts
  * are composed from `madrona-facts.ts`, the shared constants module
  * the apps/site landing's `cta.sublabel` also composes from.
  *
@@ -41,9 +43,9 @@ const madronaGameContent: AuthoringGameDraftContent = {
   estimatedMinutes: 3,
   entitlementLabel: madronaFacts.rewardNoun,
   intro:
-    `Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough for a free ${madronaFacts.rewardNoun} redeemable at the ${madronaFacts.booth.name} ${madronaFacts.booth.locationSuffix}.`,
+    `Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough, then show your code at the ${madronaFacts.booth.name} ${madronaFacts.booth.locationSuffix} to claim a ${madronaFacts.rewardNoun}.`,
   summary:
-    `Thanks for playing. Bring your code to the ${madronaFacts.booth.name} to redeem, then settle in — the next set is about to start.`,
+    `Thanks for playing. Show your code at the ${madronaFacts.booth.name} to claim your ${madronaFacts.rewardNoun}, then settle in — the next set is about to start.`,
   feedbackMode: "final_score_reveal",
   allowBackNavigation: true,
   allowRetake: true,

@@ -15,8 +15,12 @@
  * doc comment anticipates one), fold this module into it.
  */
 export const madronaFacts = {
-  /** The reward a high-scoring quiz player redeems at the booth. */
-  rewardNoun: "trinket",
+  /**
+   * Generic noun for what a high-scoring quiz player claims at the
+   * booth. Deliberately unspecific (spec reward-language rule): what
+   * the reward actually is stays offline, at the booth.
+   */
+  rewardNoun: "reward",
   /** The Madrona Neighborhood Association's Zeffy donation form. */
   donateHref:
     "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
