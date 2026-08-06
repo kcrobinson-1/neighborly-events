@@ -146,6 +146,26 @@ Rules for this checklist:
   Score: 4/10.
   Validation: `npm run test:e2e:admin`.
 
+- [ ] Reconcile apps/site SCSS partials with the no-`color-mix()`-in-partials policy.
+  `docs/styling.md`'s color-derivation policy says SCSS consumers read flat
+  `var(--…)` references with no `color-mix()` call sites in partials, but
+  apps/site partials accumulated ~15 local mixes (`_admin.scss`,
+  `_event.scss`, `_masthead.scss`, `_signin.scss`). Some have exact emitted
+  token equivalents (e.g. `_masthead.scss`'s hover
+  `color-mix(in srgb, var(--primary) 12%, transparent)` is `--primary-surface`);
+  others are bespoke with no token (the `88% primary + 12% black`
+  hover-darken repeated in three files, the masthead's translucent `--bg`
+  backdrop, text/muted fades). Swap the exact-equivalent sites to their
+  tokens and either add named derived tokens for the recurring bespoke
+  recipes (per the "add named tokens if these distinct strengths are
+  intentional" rule) or record why they stay local. A 2026-08 review pass
+  already fixed the one instance in `.event-lineup-artist-links`; this item
+  is the remaining sweep. Score: 4/10.
+  Validation: `npm run build:site` plus a compiled-CSS before/after diff for
+  the behavior-preserving swaps, and a repo grep showing remaining
+  `color-mix` call sites in `apps/site/app/styles/` are all
+  documented-intentional.
+
 - [ ] Rename phase-named pgTAP test files to describe their surface.
   `supabase/tests/database/game_authoring_phase2_auth.test.sql`,
   `game_authoring_phase3_publish_failure_permissions.test.sql`,
