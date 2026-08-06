@@ -2,6 +2,7 @@ import type { GameConfig } from "../data/games";
 import { getLocalStorage } from "../lib/browserStorage";
 import { readActiveClientSessionId } from "../lib/clientSessionId";
 import type { Answers, GameCompletionResult } from "../types/game";
+import { computeContentFingerprint } from "./contentFingerprint";
 
 /**
  * Device-local persistence for the attendee quiz session, keyed by event id
@@ -48,13 +49,26 @@ export type PersistedGameSnapshot =
        */
       contentFingerprint: string;
       currentIndex: number;
+      /**
+       * Active elapsed time when the snapshot was written (null before the
+       * run's clock starts). Restore rebases `startedAt` from this so time
+       * spent away from the page never counts toward the run's duration.
+       */
+      elapsedMs: number | null;
       optionOrder: PersistedOptionOrder;
-      startedAt: number | null;
     }
   | {
       kind: "submitting";
       answers: Answers;
       completionRequestId: string;
+      /**
+       * Same fingerprint as in-progress runs: the backend validates answers
+       * against current published content before its request-id dedup runs,
+       * so replaying a drifted payload can only 400 — never recover the
+       * completion. A mismatch discards the snapshot and restarts; the
+       * per-session entitlement returns the same code on the new completion.
+       */
+      contentFingerprint: string;
       /**
        * Duration computed when the submission began, so a much-later
        * restore replays the original elapsed time instead of inflating
@@ -80,28 +94,7 @@ function getStorageKey(eventId: string) {
   return `neighborly.game-session.v1.${eventId}`;
 }
 
-/**
- * Canonical fingerprint of the grading-relevant question content: prompts,
- * selection modes, correct answers, option ids and labels, and feedback
- * mode. Options and correct-answer ids are sorted so the per-attempt
- * shuffle does not affect the value; question order stays significant.
- * Cosmetic-only fields outside grading (intro, summary, sponsor facts) are
- * deliberately excluded so copy tweaks do not discard attendee progress.
- */
-export function computeContentFingerprint(game: GameConfig): string {
-  return JSON.stringify([
-    game.feedbackMode,
-    game.questions.map((question) => [
-      question.id,
-      question.prompt,
-      question.selectionMode,
-      [...question.correctAnswerIds].sort(),
-      [...question.options]
-        .sort((left, right) => left.id.localeCompare(right.id))
-        .map((option) => [option.id, option.label]),
-    ]),
-  ]);
-}
+export { computeContentFingerprint };
 
 /** Narrow structural check for a submitted-answers record. */
 function isAnswers(value: unknown): value is Answers {
@@ -175,7 +168,12 @@ function isValidInProgressSnapshot(
     return false;
   }
 
-  if (snapshot.startedAt !== null && typeof snapshot.startedAt !== "number") {
+  if (
+    snapshot.elapsedMs !== null &&
+    (typeof snapshot.elapsedMs !== "number" ||
+      !Number.isFinite(snapshot.elapsedMs) ||
+      snapshot.elapsedMs < 0)
+  ) {
     return false;
   }
 
@@ -205,17 +203,22 @@ function isValidInProgressSnapshot(
 }
 
 /**
- * Validates a submitting snapshot. Answers must still name current question
- * ids, but unlike in-progress runs there is no content-fingerprint check:
- * the run is already finished, and discarding it would force a full replay.
- * If the original POST landed, request-id dedup returns that attempt
- * unchanged; if it did not, grading stale answers against republished
- * content matches what the pre-persistence on-screen retry always did.
+ * Validates a submitting snapshot, including the content fingerprint.
+ * Content-tolerance is not viable here: the completion endpoint validates
+ * answers against current published content before its request-id dedup
+ * runs, so a drifted replay returns 400 every time — even when the
+ * original POST landed — which would strand the attendee in a retry loop.
+ * Discarding instead restarts the run, and the per-session entitlement
+ * returns the same verification code on the new completion.
  */
 function isValidSubmittingSnapshot(
   game: GameConfig,
   snapshot: Extract<PersistedGameSnapshot, { kind: "submitting" }>,
 ) {
+  if (snapshot.contentFingerprint !== computeContentFingerprint(game)) {
+    return false;
+  }
+
   if (
     typeof snapshot.completionRequestId !== "string" ||
     snapshot.completionRequestId.length === 0
@@ -261,6 +264,7 @@ function parseSnapshot(
       ? {
           answers: candidate.answers,
           completionRequestId: candidate.completionRequestId,
+          contentFingerprint: candidate.contentFingerprint,
           durationMs: candidate.durationMs,
           kind: "submitting",
         }
@@ -288,9 +292,9 @@ function parseSnapshot(
           answers: candidate.answers,
           contentFingerprint: candidate.contentFingerprint,
           currentIndex: candidate.currentIndex,
+          elapsedMs: candidate.elapsedMs,
           kind: "in_progress",
           optionOrder: candidate.optionOrder,
-          startedAt: candidate.startedAt,
         }
       : null;
   }
@@ -342,21 +346,72 @@ export function readPersistedGameSnapshot(
 }
 
 /**
+ * True when storage holds a completed snapshot written by the active
+ * client session. Used as the monotonic-write check below; never throws.
+ */
+function hasStoredCompletedSnapshot(
+  storage: Storage,
+  eventId: string,
+  clientSessionId: string,
+): boolean {
+  try {
+    const rawValue = storage.getItem(getStorageKey(eventId));
+
+    if (!rawValue) {
+      return false;
+    }
+
+    const envelope = JSON.parse(rawValue) as Partial<PersistedEnvelope>;
+
+    return (
+      typeof envelope === "object" &&
+      envelope !== null &&
+      envelope.clientSessionId === clientSessionId &&
+      envelope.snapshot?.kind === "complete" &&
+      isCompletionResult(envelope.snapshot.completion)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/** Options for `writePersistedGameSnapshot`. */
+export type WriteSnapshotOptions = {
+  /**
+   * Snapshot writes are monotonic across tabs by default: a non-complete
+   * snapshot never silently replaces a stored completed one, so a stale
+   * second tab still mid-run cannot destroy the results and code another
+   * tab already earned. Pass true only on an explicit restart (reset or
+   * retake) in the writing tab.
+   */
+  allowReplaceComplete?: boolean;
+};
+
+/**
  * Persists the snapshot for a game. Returns true only when the write went
  * through; false means the state lives only in memory (no storage, no
- * session identity, quota or privacy-mode rejection) and callers must not
- * treat the session as durable — e.g. the completion screen keeps its
- * new-tab link fallback so navigation cannot destroy the only copy of the
- * verification code.
+ * session identity, quota or privacy-mode rejection, or a monotonicity
+ * skip) and callers must not treat the session as durable — e.g. the
+ * completion screen keeps its new-tab link fallback so navigation cannot
+ * destroy the only copy of the verification code.
  */
 export function writePersistedGameSnapshot(
   eventId: string,
   snapshot: PersistedGameSnapshot,
+  { allowReplaceComplete = false }: WriteSnapshotOptions = {},
 ): boolean {
   const storage = getLocalStorage();
   const clientSessionId = readActiveClientSessionId();
 
   if (!storage || !clientSessionId) {
+    return false;
+  }
+
+  if (
+    snapshot.kind !== "complete" &&
+    !allowReplaceComplete &&
+    hasStoredCompletedSnapshot(storage, eventId, clientSessionId)
+  ) {
     return false;
   }
 

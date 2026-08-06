@@ -109,9 +109,19 @@ function createInProgressSnapshot(): PersistedGameSnapshot {
     answers: { q1: ["b"] },
     contentFingerprint: computeContentFingerprint(createGame()),
     currentIndex: 1,
+    elapsedMs: 65000,
     kind: "in_progress",
     optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
-    startedAt: 1754500000000,
+  };
+}
+
+function createSubmittingSnapshot(): PersistedGameSnapshot {
+  return {
+    answers: { q1: ["b"], q2: ["a", "c"] },
+    completionRequestId: "req-inflight",
+    contentFingerprint: computeContentFingerprint(createGame()),
+    durationMs: 61500,
+    kind: "submitting",
   };
 }
 
@@ -138,12 +148,7 @@ describe("gameSessionPersistence", () => {
 
   it("round-trips a submitting snapshot", () => {
     const game = createGame();
-    const snapshot: PersistedGameSnapshot = {
-      answers: { q1: ["b"], q2: ["a", "c"] },
-      completionRequestId: "req-inflight",
-      durationMs: 61500,
-      kind: "submitting",
-    };
+    const snapshot = createSubmittingSnapshot();
 
     writePersistedGameSnapshot(game.id, snapshot);
 
@@ -154,26 +159,20 @@ describe("gameSessionPersistence", () => {
     const game = createGame();
 
     writePersistedGameSnapshot(game.id, {
-      answers: { q1: ["b"] },
+      ...createSubmittingSnapshot(),
       completionRequestId: "",
-      durationMs: 1000,
-      kind: "submitting",
     });
     expect(readPersistedGameSnapshot(game)).toBeNull();
 
     writePersistedGameSnapshot(game.id, {
-      answers: { q1: ["b"] },
-      completionRequestId: "req-inflight",
+      ...createSubmittingSnapshot(),
       durationMs: -5,
-      kind: "submitting",
     });
     expect(readPersistedGameSnapshot(game)).toBeNull();
 
     writePersistedGameSnapshot(game.id, {
+      ...createSubmittingSnapshot(),
       answers: { "q-removed": ["b"] },
-      completionRequestId: "req-inflight",
-      durationMs: 1000,
-      kind: "submitting",
     });
     expect(readPersistedGameSnapshot(game)).toBeNull();
   });
@@ -199,19 +198,16 @@ describe("gameSessionPersistence", () => {
     expect(readPersistedGameSnapshot(game)).not.toBeNull();
   });
 
-  it("keeps a submitting snapshot across cosmetic content edits", () => {
+  it("discards a submitting snapshot when grading-relevant content changed", () => {
     const game = createGame();
-    const snapshot: PersistedGameSnapshot = {
-      answers: { q1: ["b"], q2: ["a", "c"] },
-      completionRequestId: "req-inflight",
-      durationMs: 1000,
-      kind: "submitting",
-    };
+    const snapshot = createSubmittingSnapshot();
 
     writePersistedGameSnapshot(game.id, snapshot);
 
-    // A finished run is deliberately content-tolerant: discarding it would
-    // force a full replay, and the request id already pins the attempt.
+    // The completion endpoint validates answers against current content
+    // BEFORE its request-id dedup, so a drifted replay 400s forever;
+    // discarding restarts the run and the per-session entitlement returns
+    // the same code on the new completion.
     const editedGame = {
       ...game,
       questions: game.questions.map((question) =>
@@ -221,7 +217,70 @@ describe("gameSessionPersistence", () => {
       ),
     };
 
+    expect(readPersistedGameSnapshot(editedGame)).toBeNull();
+  });
+
+  it("keeps a submitting snapshot across cosmetic (non-grading) edits", () => {
+    const game = createGame();
+    const snapshot = createSubmittingSnapshot();
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    // Sponsor labels are not grading-relevant, so the fingerprint tolerates
+    // them and the finished run survives.
+    const editedGame = {
+      ...game,
+      questions: game.questions.map((question) =>
+        question.id === "q1" ? { ...question, sponsor: "New Sponsor" } : question,
+      ),
+    };
+
     expect(readPersistedGameSnapshot(editedGame)).toEqual(snapshot);
+  });
+
+  it("blocks non-complete writes from replacing a completed snapshot by default", () => {
+    const game = createGame();
+    const completedSnapshot: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completion: createCompletionResult(),
+      kind: "complete",
+    };
+
+    writePersistedGameSnapshot(game.id, completedSnapshot);
+
+    // A stale second tab still mid-run writes through unconditionally; the
+    // monotonic default must protect the completed results and code.
+    expect(writePersistedGameSnapshot(game.id, createInProgressSnapshot())).toBe(
+      false,
+    );
+    expect(writePersistedGameSnapshot(game.id, createSubmittingSnapshot())).toBe(
+      false,
+    );
+    expect(readPersistedGameSnapshot(game)).toEqual(completedSnapshot);
+
+    // An explicit restart (reset/retake) is allowed to replace it.
+    expect(
+      writePersistedGameSnapshot(game.id, createInProgressSnapshot(), {
+        allowReplaceComplete: true,
+      }),
+    ).toBe(true);
+    expect(readPersistedGameSnapshot(game)).toEqual(createInProgressSnapshot());
+  });
+
+  it("lets a new session's writes replace another session's completed envelope", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, {
+      answers: {},
+      completion: createCompletionResult(),
+      kind: "complete",
+    });
+    // A different session's stale envelope never blocks the active session.
+    mockReadActiveClientSessionId.mockReturnValue("session-other");
+
+    expect(writePersistedGameSnapshot(game.id, createInProgressSnapshot())).toBe(
+      true,
+    );
   });
 
   it("degrades to null when storage methods throw", () => {

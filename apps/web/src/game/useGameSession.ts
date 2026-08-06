@@ -55,7 +55,11 @@ export function useGameSession(game: GameConfig) {
       return createRestoredInProgressState(
         restoredSnapshot.answers,
         restoredSnapshot.currentIndex,
-        restoredSnapshot.startedAt,
+        // Rebase the run clock from the persisted active elapsed time so
+        // hours away from the page never count toward the duration.
+        restoredSnapshot.elapsedMs === null
+          ? null
+          : Date.now() - restoredSnapshot.elapsedMs,
         game.questions[restoredSnapshot.currentIndex]?.id ?? null,
       );
     }
@@ -63,6 +67,12 @@ export function useGameSession(game: GameConfig) {
     return createGameState();
   });
   const handledSubmissionRequestId = useRef<string | null>(null);
+  // Snapshot writes are monotonic across tabs: only a tab in which the
+  // attendee explicitly restarted (reset or retake) may replace a stored
+  // completed snapshot with a non-complete one. A stale second tab that is
+  // still mid-run keeps ticking, but its write-throughs cannot destroy the
+  // completed results another tab already persisted.
+  const hasExplicitRestartRef = useRef(false);
   // True only while the completed state is confirmed written to device
   // storage. A completed snapshot restored from storage is durable by
   // construction; otherwise the submission callback records the write's
@@ -214,17 +224,30 @@ export function useGameSession(game: GameConfig) {
       return;
     }
 
+    const writeOptions = {
+      allowReplaceComplete: hasExplicitRestartRef.current,
+    };
+
     if (state.phase === "question" || state.phase === "answer_revealed") {
-      writePersistedGameSnapshot(game.id, {
-        answers: state.answers,
-        // The fingerprint is shuffle-invariant, so the shuffled copy and the
-        // source config produce the same value.
-        contentFingerprint: computeContentFingerprint(shuffledGame),
-        currentIndex: state.currentIndex,
-        kind: "in_progress",
-        optionOrder: extractOptionOrder(shuffledGame),
-        startedAt: state.startedAt,
-      });
+      writePersistedGameSnapshot(
+        game.id,
+        {
+          answers: state.answers,
+          // The fingerprint is shuffle-invariant, so the shuffled copy and
+          // the source config produce the same value.
+          contentFingerprint: computeContentFingerprint(shuffledGame),
+          currentIndex: state.currentIndex,
+          // Persist active elapsed time, not the absolute start: restore
+          // rebases the clock so time away never inflates the duration.
+          elapsedMs:
+            state.startedAt === null
+              ? null
+              : Math.max(0, Date.now() - state.startedAt),
+          kind: "in_progress",
+          optionOrder: extractOptionOrder(shuffledGame),
+        },
+        writeOptions,
+      );
       return;
     }
 
@@ -234,15 +257,20 @@ export function useGameSession(game: GameConfig) {
       // which the completion RPC dedupes into the original attempt. The
       // duration is frozen here so a later restore replays the original
       // elapsed time.
-      writePersistedGameSnapshot(game.id, {
-        answers: state.answers,
-        completionRequestId: state.completionRequestId,
-        durationMs:
-          state.startedAt === null
-            ? 0
-            : Math.max(0, Date.now() - state.startedAt),
-        kind: "submitting",
-      });
+      writePersistedGameSnapshot(
+        game.id,
+        {
+          answers: state.answers,
+          completionRequestId: state.completionRequestId,
+          contentFingerprint: computeContentFingerprint(shuffledGame),
+          durationMs:
+            state.startedAt === null
+              ? 0
+              : Math.max(0, Date.now() - state.startedAt),
+          kind: "submitting",
+        },
+        writeOptions,
+      );
     }
   }, [game.id, shuffledGame, state]);
 
@@ -251,6 +279,7 @@ export function useGameSession(game: GameConfig) {
   };
 
   const reset = () => {
+    hasExplicitRestartRef.current = true;
     setIsCompletionPersisted(false);
     dispatch({ type: "reset" });
   };
@@ -332,6 +361,7 @@ export function useGameSession(game: GameConfig) {
   };
 
   const resetForRetake = () => {
+    hasExplicitRestartRef.current = true;
     setIsCompletionPersisted(false);
     handledSubmissionRequestId.current = null;
     setShuffled({ gameId: game.id, game: shuffleGameOptions(game) });

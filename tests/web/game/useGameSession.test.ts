@@ -560,9 +560,9 @@ describe("useGameSession", () => {
         answers: { q1: ["b"] },
         contentFingerprint: computeContentFingerprint(game),
         currentIndex: 1,
+        elapsedMs: 65000,
         kind: "in_progress",
         optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
-        startedAt: 1754500000000,
       });
 
       const { result } = renderHook(() => useGameSession(game));
@@ -595,9 +595,9 @@ describe("useGameSession", () => {
         answers: { q1: ["b"] },
         contentFingerprint: computeContentFingerprint(game),
         currentIndex: 0,
+        elapsedMs: null,
         kind: "in_progress",
         optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
-        startedAt: null,
       });
 
       const { result } = renderHook(() => useGameSession(game));
@@ -710,6 +710,7 @@ describe("useGameSession", () => {
       seedSnapshot(game.id, {
         answers: { q1: ["b"], q2: ["a", "c"] },
         completionRequestId: "req-restored",
+        contentFingerprint: computeContentFingerprint(game),
         durationMs: 61500,
         kind: "submitting",
       });
@@ -765,15 +766,92 @@ describe("useGameSession", () => {
         answers: { q1: ["b"] },
         contentFingerprint: computeContentFingerprint(game),
         currentIndex: 1,
+        elapsedMs: null,
         kind: "in_progress",
         optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
-        startedAt: null,
       });
 
       const { result } = renderHook(() => useGameSession(editedGame));
 
       expect(result.current.isStarted).toBe(false);
       expect(result.current.answers).toEqual({});
+    });
+
+    it("excludes time away from a resumed run's eventual duration", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+      // Attendee left mid-run with 60s of active play; the snapshot's
+      // savedAt could be days old — only elapsed active time is persisted.
+      seedSnapshot(game.id, {
+        answers: {},
+        contentFingerprint: computeContentFingerprint(game),
+        currentIndex: 0,
+        elapsedMs: 60000,
+        kind: "in_progress",
+        optionOrder: { q1: ["a", "b"] },
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      // Rebased clock: duration ≈ persisted active time + the seconds spent
+      // finishing now, never the days away.
+      const submittedDuration = mockSubmitGameCompletion.mock.calls[0]?.[0]?.durationMs;
+      expect(submittedDuration).toBeGreaterThanOrEqual(60000);
+      expect(submittedDuration).toBeLessThan(60000 + 10000);
+    });
+
+    it("keeps a completed snapshot safe from a stale tab still mid-run", async () => {
+      const game = createFinalScoreGame(1);
+      const completion = createCompletionResult({ score: 1 });
+      mockSubmitGameCompletion.mockResolvedValue(completion);
+
+      // Tab B starts a run first (writes in_progress snapshots).
+      const staleTab = renderHook(() => useGameSession(game));
+      act(() => {
+        staleTab.result.current.start();
+      });
+
+      // Tab A completes the quiz, persisting the completed snapshot.
+      const completingTab = renderHook(() => useGameSession(game));
+      act(() => {
+        completingTab.result.current.start();
+        completingTab.result.current.selectOption("b");
+        completingTab.result.current.submit();
+      });
+      await waitFor(() => {
+        expect(completingTab.result.current.isComplete).toBe(true);
+      });
+
+      // Tab B keeps playing: its write-throughs must not clobber the
+      // completed snapshot.
+      act(() => {
+        staleTab.result.current.selectOption("a");
+      });
+
+      const stored = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(stored?.snapshot?.kind).toBe("complete");
+      expect(stored?.snapshot?.completion).toEqual(completion);
+
+      // An explicit retake in the completed tab IS allowed to replace it.
+      act(() => {
+        completingTab.result.current.resetForRetake();
+      });
+
+      const afterRetake = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(afterRetake?.snapshot?.kind).toBe("in_progress");
     });
 
     it("reports the completion as not persisted when the snapshot write fails", async () => {

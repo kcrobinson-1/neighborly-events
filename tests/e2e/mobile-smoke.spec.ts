@@ -1,4 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
+import { computeContentFingerprint } from "../../apps/web/src/game/contentFingerprint.ts";
+import { games } from "../../shared/game-config/sample-fixtures.ts";
 
 /** Scrolls the target into view so Playwright can use its normal actionability checks. */
 async function activate(locator: Locator) {
@@ -122,8 +124,14 @@ test("completes a restored in-flight submission under the dev build's StrictMode
   // submission guard is not released during cleanup. jsdom unit tests
   // cannot cover this: Vitest resolves the production React build, which
   // never double-invokes.
+  // The snapshot must carry the current content fingerprint or restore
+  // discards it; compute it Node-side from the same sample config the
+  // prototype flow serves.
+  const sampleGame = games.find((game) => game.id === "madrona-music-2026");
+  const contentFingerprint = computeContentFingerprint(sampleGame!);
+
   await page.goto("/event/first-sample/game", { waitUntil: "networkidle" });
-  await page.evaluate(() => {
+  await page.evaluate((fingerprint) => {
     window.localStorage.setItem(
       "neighborly.local-session.v1",
       "prototype-session-e2e",
@@ -136,12 +144,13 @@ test("completes a restored in-flight submission under the dev build's StrictMode
         snapshot: {
           answers: {},
           completionRequestId: "req-e2e-restored",
+          contentFingerprint: fingerprint,
           durationMs: 1234,
           kind: "submitting",
         },
       }),
     );
-  });
+  }, contentFingerprint);
 
   await page.reload({ waitUntil: "networkidle" });
 
