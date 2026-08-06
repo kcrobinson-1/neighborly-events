@@ -90,6 +90,31 @@ M1 phase 1.1).
 | `$color-admin-input-surface` | `rgba(255,252,245,0.98)` | `adminInputSurface` | `--admin-input-surface` | Admin input field surface. Brand-tied warm white at near-opaque alpha. |
 | `$color-draft-row-surface` | `rgba(255,250,243,0.82)` | `draftRowSurface` | `--draft-row-surface` | Admin draft list row surface. Brand-tied warm white. |
 
+### Optional brand fields — themable, default-derived
+
+Added by the Madrona redesign token-vocabulary extension. These
+`Theme` fields are **optional**: a theme that omits one renders
+byte-identically to the pre-extension emission because the default is
+derived from required fields. The derivation is centralized in
+`shared/styles/themeToStyle.ts` (plain fallbacks, not `color-mix()`),
+and apps/web's `:root` carries the equivalent `var()`-form fallback
+for surfaces outside `<ThemeScope>`. Existing themes
+(`harvest-block-party`, `riverside-jam`, platform Sage Civic) are
+deliberately not edited when a new optional field lands.
+
+| Theme field | CSS custom property | Default when omitted | Notes |
+| --- | --- | --- | --- |
+| `headerBg` | `--header-bg` | `primary` | Sticky event header bar background. |
+| `headerFg` | `--header-fg` | `whiteWarm` | Header bar foreground / link color. |
+| `surfaceBand` | `--surface-band` | `surfaceCardMuted` | Tinted full-width band surface (inner page-head band, sponsor band, code block — the Madrona spec's "putty"). |
+| `accentFontFamily` | `--font-accent` | `bodyFontFamily` | Short warm accent face (welcome line, artist taglines). |
+
+Optional fields stay themable-bucket tokens; the optionality is an
+authoring ergonomic, not a third bucket. A new optional field must
+name its default derivation in `types.ts`, implement it in
+`themeToStyle.ts`, and mirror it in apps/web's `:root` block in the
+same change.
+
 ### Brand-tied derived shades — themable, derived from brand bases
 
 These are pure alpha tints of `$color-primary`, `$color-secondary`, or
@@ -138,8 +163,18 @@ brand text color when a per-event Theme overrides it.
 | --- | --- | --- | --- | --- |
 | `$font-stack` | `"Avenir Next", "Segoe UI", sans-serif` | Themable | `bodyFontFamily` | `--font-body` |
 | (no heading split today) | (defaults to body) | Themable | `headingFontFamily` | `--font-heading` |
+| (no accent face today) | (defaults to body) | Themable | `accentFontFamily` (optional) | `--font-accent` |
 | `$font-weight-semibold` | `600` | Structural | — | (stays SCSS) |
 | `$font-weight-bold` | `700` | Structural | — | (stays SCSS) |
+
+`headingFontFamily` doubles as the **display** family — a theme with
+a dedicated display face (Madrona's Bebas Neue for headings, nav,
+times, buttons) carries it there; there is no separate display field.
+Event brand faces are self-hosted woff2 files duplicated per app
+(`apps/site/public/fonts/`, `apps/web/public/fonts/`, licenses
+alongside) and declared via each app's `_fonts.scss` partial —
+`@font-face` declarations are inert for themes whose font stacks do
+not name them.
 
 apps/web today does not split body and heading typography — every
 heading uses `$font-stack`. The Theme type still exposes
@@ -290,6 +325,10 @@ Theme {
 
   // Radii
   panelRadius, panelRadiusMobile, cardRadius, controlRadius,
+
+  // Optional brand fields (default-derived; see the
+  // "Optional brand fields" table)
+  headerBg?, headerFg?, surfaceBand?, accentFontFamily?,
 }
 ```
 

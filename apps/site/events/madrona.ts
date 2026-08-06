@@ -21,13 +21,43 @@ import type { EventContent } from "../lib/eventContent.ts";
  * own published pages (Aug 2026): no artist-residence claims (the
  * source docs' Bigfork line conflicts with current bios), Miller
  * Campbell's album is "her new self-titled album" (never "debut"),
- * and Tabor's Hall of Fame induction stays undated. The source
- * docs also disagree on the per-hour run-of-show, so by organizer
- * decision the page publishes only "two 45-minute sets" between
- * 6:00 and 8:00 PM plus the Aug 4 Seattle Night Out skip — no
- * per-hour concert timeline, no opener billing. The page is
+ * and Tabor's Hall of Fame induction stays undated. The page is
  * indexable (no `meta.robots`) — this content is the launch
  * surface.
+ *
+ * `nights` is the per-night content model (`EventContent.nights`)
+ * behind the redesigned landing page's Tonight / Next-concert
+ * section. The source docs disagreed on the per-hour run-of-show
+ * (6:00 vs 6:15 main-band start; the Meter Music School opener
+ * appeared only in the centerfold), so the organizer decision of
+ * 2026-08-05 published times-only — "two 45-minute sets" between
+ * 6:00 and 8:00 PM, no per-hour timeline, no opener billing — and
+ * `schedule.days` still reflects that summary shape. Meter Music
+ * School's email of 2026-08-06 resolved the conflict and
+ * supersedes that decision for the per-night model: **Aug 11** has
+ * no student opener — Miller Campbell plays true 45-minute sets
+ * (6:00 first set / 6:45 intermission / 7:00 resume / 7:45 closing
+ * thanks, music ending 7:45 with thanks running to the 8:00 close;
+ * organizer decision 2026-08-06, keeping the "two 45-minute sets"
+ * description accurate on every night) — **Aug 18** opens at 6:00
+ * with Tessa
+ * Chen on flute, and **Aug 25** opens at 6:00 with Lennon Jennings
+ * on cello (with teacher Liz Mathiesen) and Logan Wilcox on
+ * trumpet (with teacher Evan); main sets start at 6:15 on the two
+ * opener nights. Run-of-show
+ * `time` strings are bare clock readings ("5:30") because the
+ * Tonight section's date line already fixes the evening context.
+ * Each night also carries its headliner sponsor credit (Poppie /
+ * Cambium / Zac Lee, per the 2026-08-06 sponsor placement
+ * decision); the logo files land under
+ * `/events/madrona/sponsors/` via the design-tokens asset slice,
+ * and the Zac Lee mark is a DRAFT lockup until the final arrives
+ * (a content-only swap, safe any time before Aug 25). Until the
+ * landing rebuild ships, `nights` is dormant data — no current
+ * section renders it — validated by the content tests and the
+ * `resolveTonight` resolver in `apps/site/lib/eventNights.ts`,
+ * which computes tonight / next-concert / season-wrap states in
+ * America/Los_Angeles.
  *
  * Band `artistLinks` carry each artist's verified web presence:
  * only URLs confirmed against the artist's own official site or
@@ -158,6 +188,85 @@ export const madronaContent: EventContent = {
             performerSlug: "frames-in-motion",
           },
         ],
+      },
+    ],
+  },
+  nights: {
+    timezone: "America/Los_Angeles",
+    nights: [
+      {
+        date: "2026-08-11",
+        label: "Opening Night",
+        performerSlug: "miller-campbell",
+        runOfShow: [
+          { time: "5:30", title: "Gathering opens" },
+          {
+            time: "6:00",
+            title: "Miller Campbell — first set",
+            mainSet: true,
+          },
+          { time: "6:45", title: "Intermission" },
+          { time: "7:00", title: "Music resumes", mainSet: true },
+          { time: "7:45", title: "Closing thanks" },
+        ],
+        headlinerSponsor: {
+          name: "Poppie",
+          logoSrc: "/events/madrona/sponsors/poppie.png",
+          logoAlt: "Poppie logo",
+        },
+      },
+      {
+        date: "2026-08-18",
+        label: "Mid-Series",
+        performerSlug: "jacqueline-tabor",
+        runOfShow: [
+          { time: "5:30", title: "Gathering opens" },
+          {
+            time: "6:00",
+            title: "Meter Music School",
+            description: "Tessa Chen, flute",
+          },
+          {
+            time: "6:15",
+            title: "Jacqueline Tabor — first set",
+            mainSet: true,
+          },
+          { time: "7:00", title: "Intermission" },
+          { time: "7:15", title: "Music resumes", mainSet: true },
+          { time: "8:00", title: "Closing thanks" },
+        ],
+        headlinerSponsor: {
+          name: "Cambium",
+          logoSrc: "/events/madrona/sponsors/cambium.png",
+          logoAlt: "Cambium logo",
+        },
+      },
+      {
+        date: "2026-08-25",
+        label: "Closing Night",
+        performerSlug: "frames-in-motion",
+        runOfShow: [
+          { time: "5:30", title: "Gathering opens" },
+          {
+            time: "6:00",
+            title: "Meter Music School",
+            description:
+              "Lennon Jennings, cello (with teacher Liz Mathiesen) and Logan Wilcox, trumpet (with teacher Evan)",
+          },
+          {
+            time: "6:15",
+            title: "Frames in Motion — first set",
+            mainSet: true,
+          },
+          { time: "7:00", title: "Intermission" },
+          { time: "7:15", title: "Music resumes", mainSet: true },
+          { time: "8:00", title: "Closing thanks" },
+        ],
+        headlinerSponsor: {
+          name: "Zac Lee",
+          logoSrc: "/events/madrona/sponsors/zac-lee.png",
+          logoAlt: "Zac Lee — Coldwell Banker Bain logo",
+        },
       },
     ],
   },

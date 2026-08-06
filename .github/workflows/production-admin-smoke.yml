@@ -16,6 +16,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   smoke-admin-production:
@@ -52,24 +53,74 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.PRODUCTION_SMOKE_SUPABASE_URL }}
 
     steps:
+      # A Release run whose "Sync Supabase Production" job was skipped still
+      # concludes 'success' (the job's `if:` requires the triggering CI run's
+      # event to be `push`, so e.g. a workflow_dispatch CI run on main yields
+      # a skipped release inside a "successful" Release run). The job-level
+      # `workflow_run.conclusion == 'success'` check above therefore cannot
+      # distinguish an executed release from a skipped one, and smoking an
+      # unreleased head SHA against production produces false alarms and
+      # unnecessary smoke-event writes. Query the triggering Release run's
+      # jobs and only proceed when the release job actually succeeded.
+      - name: Check triggering Release run executed the release
+        id: release_gate
+        if: github.event_name == 'workflow_run'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const jobs = await github.paginate(
+              github.rest.actions.listJobsForWorkflowRun,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: context.payload.workflow_run.id,
+                per_page: 100,
+              }
+            );
+            const releaseJob = jobs.find(
+              (job) => job.name === 'Sync Supabase Production'
+            );
+            const releaseExecuted = releaseJob?.conclusion === 'success';
+            core.setOutput('release_executed', releaseExecuted ? 'true' : 'false');
+            core.info(
+              releaseExecuted
+                ? 'Release job succeeded; running production smoke.'
+                : 'Release job was skipped or absent; skipping production smoke.'
+            );
+
       - name: Checkout
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         uses: actions/checkout@v6
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
       - name: Setup Node
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: 24.14.1
           cache: npm
 
       - name: Install dependencies
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         run: npm ci
 
       - name: Install Playwright Chromium
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Validate smoke settings
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         run: |
           set -eu
           test -n "$PRODUCTION_SMOKE_BASE_URL"
@@ -79,10 +130,18 @@ jobs:
           test -n "$VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY"
 
       - name: Run production admin smoke
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         run: npm run test:e2e:admin:production-smoke
 
       - name: Upload admin smoke artifacts on failure
-        if: failure()
+        if: >
+          failure() &&
+          (
+            github.event_name == 'workflow_dispatch' ||
+            steps.release_gate.outputs.release_executed == 'true'
+          )
         uses: actions/upload-artifact@v7
         with:
           name: production-admin-smoke-playwright-results
@@ -90,10 +149,18 @@ jobs:
           if-no-files-found: ignore
 
       - name: Run production redemption smoke
+        if: >
+          github.event_name == 'workflow_dispatch' ||
+          steps.release_gate.outputs.release_executed == 'true'
         run: npm run test:e2e:redemption:production-smoke
 
       - name: Upload redemption smoke artifacts on failure
-        if: failure()
+        if: >
+          failure() &&
+          (
+            github.event_name == 'workflow_dispatch' ||
+            steps.release_gate.outputs.release_executed == 'true'
+          )
         uses: actions/upload-artifact@v7
         with:
           name: production-redemption-smoke-playwright-results

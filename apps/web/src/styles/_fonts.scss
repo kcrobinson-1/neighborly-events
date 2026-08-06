@@ -1,0 +1,40 @@
+// Self-hosted event brand faces (OFL 1.1 — see
+// `public/fonts/FONT-LICENSES.txt`). Served from this app's own
+// `public/fonts/` so the quiz app has no cross-origin font
+// dependency (duplicate-per-app delivery; apps/site carries the same
+// files). Declaring `@font-face` is inert until a Theme's
+// font-family value names one of these families — the browser only
+// downloads a face when rendered text uses it, so events on the
+// platform/system font stacks ship no font bytes.
+
+@font-face {
+  font-family: "Bebas Neue";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/BebasNeue-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Poppins-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Poppins";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/Poppins-Bold.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lora";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/Lora-Italic-Variable.woff2") format("woff2");
+}
