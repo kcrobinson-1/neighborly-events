@@ -36,9 +36,11 @@ import type { EventContent } from "../lib/eventContent.ts";
  * School's email of 2026-08-06 resolved the conflict and
  * supersedes that decision for the per-night model: **Aug 11** has
  * no student opener — Miller Campbell plays true 45-minute sets
- * (6:00 first set / 6:45 intermission / 7:00 resume, organizer
- * decision 2026-08-06, keeping the "two 45-minute sets" description
- * accurate on every night) — **Aug 18** opens at 6:00 with Tessa
+ * (6:00 first set / 6:45 intermission / 7:00 resume / 7:45 closing
+ * thanks, music ending 7:45 with thanks running to the 8:00 close;
+ * organizer decision 2026-08-06, keeping the "two 45-minute sets"
+ * description accurate on every night) — **Aug 18** opens at 6:00
+ * with Tessa
  * Chen on flute, and **Aug 25** opens at 6:00 with Lennon Jennings
  * on cello (with teacher Liz Mathiesen) and Logan Wilcox on
  * trumpet (with teacher Evan); main sets start at 6:15 on the two
@@ -205,7 +207,7 @@ export const madronaContent: EventContent = {
           },
           { time: "6:45", title: "Intermission" },
           { time: "7:00", title: "Music resumes", mainSet: true },
-          { time: "8:00", title: "Closing thanks" },
+          { time: "7:45", title: "Closing thanks" },
         ],
         headlinerSponsor: {
           name: "Poppie",

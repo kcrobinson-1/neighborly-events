@@ -216,8 +216,10 @@ describe("madrona nights content", () => {
     // night, Tessa Chen on the 18th, Lennon Jennings + Logan Wilcox
     // on the 25th — main sets start at 6:00 / 6:15 / 6:15. Opening
     // night runs true 45-minute sets (organizer decision
-    // 2026-08-06): intermission at 6:45, resume at 7:00 — pinned so
-    // the "two 45-minute sets" copy stays accurate every night.
+    // 2026-08-06): intermission at 6:45, resume at 7:00, closing
+    // thanks at 7:45 (music ends 7:45; the event closes by 8:00) —
+    // pinned so the "two 45-minute sets" copy stays accurate every
+    // night.
     const [opening, mid, closing] = nights?.nights ?? [];
     expect(
       opening.runOfShow.some((row) => row.title.includes("Meter")),
@@ -228,7 +230,7 @@ describe("madrona nights content", () => {
       "6:00",
       "6:45",
       "7:00",
-      "8:00",
+      "7:45",
     ]);
 
     const midOpener = mid.runOfShow.find((row) => row.title.includes("Meter"));
