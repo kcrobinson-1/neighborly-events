@@ -50,16 +50,32 @@ hatch in `Theme`.
 
 ## Optional brand fields
 
-Four `Theme` fields are optional: `headerBg` / `headerFg` (sticky
-event header bar, `--header-bg` / `--header-fg`), `surfaceBand`
-(tinted full-width band surface, `--surface-band`), and
-`accentFontFamily` (short warm accent face, `--font-accent`). A theme
-that omits them renders byte-identically to the pre-extension
-emission: `themeToStyle.ts` derives defaults from required fields
-(`primary`, `whiteWarm`, `surfaceCardMuted`, `bodyFontFamily`
-respectively), and apps/web's `:root` carries matching `var()`-form
-fallbacks. Existing themes are not edited when an optional field
-lands. The classification and default-derivation contract lives in
+A `Theme` may set optional fields beyond the required surface:
+
+- `headerBg` / `headerFg` (sticky event header bar, `--header-bg` /
+  `--header-fg`), `surfaceBand` (tinted full-width band surface,
+  `--surface-band`), `accentFontFamily` (short warm accent face,
+  `--font-accent`).
+- The quiz-surface vocabulary (Madrona redesign R4): `pageSurface`,
+  `gridLine`, `panelSurface` / `panelBorder` / `panelShadow`,
+  `pageHeadSurface` / `pageHeadRule` / `pageHeadMargin` /
+  `pageHeadPadding`, `optionBorder` /
+  `optionSelectedBorderColor` / `optionSelectedSurface`,
+  `codeSurface` / `codeBorder`, `ctaSurface` / `ctaFg` /
+  `ctaWarmSurface` / `ctaWarmFg`, and `sponsorLabel`. These let a
+  theme trade the platform's floating-panel look for a flat
+  full-bleed one (Madrona's cream page / putty page-head band /
+  olive option rows) with no event-keyed branches in components.
+
+A theme that omits an optional field renders byte-identically to the
+pre-extension emission: `themeToStyle.ts` derives the default from
+required fields (or the documented structural literal), and
+apps/web's `:root` carries a matching `var()`-form fallback.
+`pageHeadTitleSize` and `headingLetterSpacing` are the exception —
+they are emitted only when set, because call sites carry per-site
+structural fallbacks in `var(--…, fallback)` form. Existing themes
+are not edited when an optional field lands. The classification and
+default-derivation contract lives in
 [`docs/styling.md`](/docs/styling.md) "Optional brand fields".
 
 ## Self-hosted event fonts

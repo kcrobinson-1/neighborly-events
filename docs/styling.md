@@ -108,12 +108,44 @@ deliberately not edited when a new optional field lands.
 | `headerFg` | `--header-fg` | `whiteWarm` | Header bar foreground / link color. |
 | `surfaceBand` | `--surface-band` | `surfaceCardMuted` | Tinted full-width band surface (inner page-head band, sponsor band, code block — the Madrona spec's "putty"). |
 | `accentFontFamily` | `--font-accent` | `bodyFontFamily` | Short warm accent face (welcome line, artist taglines). |
+| `pageSurface` | `--page-surface` | layered recipe from `accent` / `secondary` glows + `pageGradientStart` / `bg` / `pageGradientEnd` | Full CSS `background` value for the page field. Painted by apps/web's `.site-shell` inside `<ThemeScope>`. A flat theme sets a single color. |
+| `gridLine` | `--grid-line` | `text` at 4% (the existing derived shade) | Backdrop grid line color; `transparent` hides the grid. |
+| `panelSurface` | `--panel-surface` | `surface` | Floating-panel background. |
+| `panelBorder` | `--panel-border` | `1px solid` `border` | Floating-panel border (full border shorthand). |
+| `panelShadow` | `--panel-shadow` | `0 24px 60px rgba(42,42,42,0.12)` (the structural `$shadow-panel` recipe) | Floating-panel drop shadow. `none` de-bubbles. |
+| `pageHeadSurface` | `--page-head-surface` | `transparent` | Quiz page-head band background. |
+| `pageHeadRule` | `--page-head-rule` | `none` | Page-head bottom rule (border shorthand). |
+| `pageHeadMargin` | `--page-head-margin` | `0` | Page-head margin; `0 calc(50% - 50vw)` bleeds the band to the viewport edges. |
+| `pageHeadPadding` | `--page-head-padding` | `0` | Page-head padding. |
+| `pageHeadTitleSize` | `--page-head-title-size` | *(not emitted)* | Emitted only when set; call sites carry structural `var(--…, fallback)` fallbacks. |
+| `headingLetterSpacing` | `--heading-letter-spacing` | *(not emitted)* | Emitted only when set; display-face tracking. Call sites carry structural fallbacks (e.g. the topbar h1's `-0.04em`). |
+| `optionBorder` | `--option-border` | `1px solid` `border` | Answer option row border (full border shorthand). |
+| `optionSelectedBorderColor` | `--option-selected-border-color` | `secondary` at 56% | Selected option border color. |
+| `optionSelectedSurface` | `--option-selected-surface` | `secondary` at 18% | Selected option fill. |
+| `codeSurface` | `--code-surface` | success/secondary layered recipe over `whiteTint` | Check-in code block background. |
+| `codeBorder` | `--code-border` | `1px solid rgba(63,143,90,0.18)` (structural `$color-success-border`) | Check-in code block border (full border shorthand). |
+| `ctaSurface` | `--cta-surface` | `secondary` at 14% | Completion CTA button background. |
+| `ctaFg` | `--cta-fg` | `secondary` | Completion CTA button foreground. |
+| `ctaWarmSurface` | `--cta-warm-surface` | resolved `ctaSurface` | Warm CTA variant (donate) background. |
+| `ctaWarmFg` | `--cta-warm-fg` | resolved `ctaFg` | Warm CTA variant (donate) foreground. |
+| `sponsorLabel` | `--sponsor-label` | `text` | Sponsor attribution line color. |
+
+The `pageSurface` / `panelShadow` / `codeSurface` / `codeBorder`
+defaults embed structural literals (`$shadow-panel`,
+`$color-success-surface`, `$color-success-border`) — the derivation
+in `themeToStyle.ts` and the `var()`-form fallbacks in apps/web's
+`:root` must stay in sync with those SCSS constants.
 
 Optional fields stay themable-bucket tokens; the optionality is an
 authoring ergonomic, not a third bucket. A new optional field must
 name its default derivation in `types.ts`, implement it in
 `themeToStyle.ts`, and mirror it in apps/web's `:root` block in the
-same change.
+same change. Two fields (`pageHeadTitleSize`,
+`headingLetterSpacing`) instead use **conditional emission**: they
+are omitted from the emission entirely when unset, because their
+call sites carry per-site structural fallbacks in
+`var(--…, fallback)` form that an unconditional default would
+override; they correspondingly have no `:root` declaration.
 
 ### Brand-tied derived shades — themable, derived from brand bases
 
@@ -176,12 +208,17 @@ alongside) and declared via each app's `_fonts.scss` partial —
 `@font-face` declarations are inert for themes whose font stacks do
 not name them.
 
-apps/web today does not split body and heading typography — every
-heading uses `$font-stack`. The Theme type still exposes
-`headingFontFamily` so apps/site (Sage Civic uses Fraunces) and
-future per-event themes can split. apps/web's `:root` defaults
-`--font-heading` to the same value as `--font-body` so byte-identical
-rendering holds.
+apps/web consumes `--font-heading` on its display surfaces (the
+topbar / not-found `h1`, the quiz intro and completion headings, the
+check-in code, and the final score) — the Madrona redesign R4 quiz
+restyle bound these call sites. apps/web's `:root` defaults
+`--font-heading` to the same value as `--font-body`, so unthemed
+surfaces render exactly as before; inside `<ThemeScope>` a theme's
+declared heading face renders (Madrona's Bebas; Sage Civic / test
+events fall back to their declared serif stacks because the
+`next/font` variables they reference exist only in apps/site). The
+question prompt deliberately stays on the body face — it is reading
+copy, not display type.
 
 Font weights are platform-shared because semibold/bold weight
 conventions are typographic structure, not brand: a per-event theme
@@ -329,6 +366,17 @@ Theme {
   // Optional brand fields (default-derived; see the
   // "Optional brand fields" table)
   headerBg?, headerFg?, surfaceBand?, accentFontFamily?,
+
+  // Optional quiz-surface vocabulary (Madrona redesign R4;
+  // default-derived, same table)
+  pageSurface?, gridLine?,
+  panelSurface?, panelBorder?, panelShadow?,
+  pageHeadSurface?, pageHeadRule?, pageHeadMargin?, pageHeadPadding?,
+  pageHeadTitleSize?, headingLetterSpacing?,   // conditional emission
+  optionBorder?, optionSelectedBorderColor?, optionSelectedSurface?,
+  codeSurface?, codeBorder?,
+  ctaSurface?, ctaFg?, ctaWarmSurface?, ctaWarmFg?,
+  sponsorLabel?,
 }
 ```
 

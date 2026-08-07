@@ -143,6 +143,35 @@ $focus-ring: 3px solid var(--secondary-focus);
   --header-fg: var(--white-warm);
   --surface-band: var(--surface-card-muted);
 
+  // Quiz-surface vocabulary (Madrona redesign R4). Defaults keep
+  // today's rendering; `--page-head-title-size` and
+  // `--heading-letter-spacing` are deliberately absent — they are
+  // emitted only when a theme sets them, and call sites carry
+  // structural fallbacks in `var(--…, fallback)` form.
+  --page-surface:
+    radial-gradient(circle at top left, var(--accent-glow), transparent 30%),
+    radial-gradient(circle at top right, var(--secondary-glow), transparent 32%),
+    linear-gradient(180deg, var(--page-gradient-start) 0%, var(--bg) 48%, var(--page-gradient-end) 100%);
+  --panel-surface: var(--surface);
+  --panel-border: 1px solid var(--border);
+  --panel-shadow: #{$shadow-panel};
+  --page-head-surface: transparent;
+  --page-head-rule: none;
+  --page-head-margin: 0;
+  --page-head-padding: 0;
+  --option-border: 1px solid var(--border);
+  --option-selected-border-color: var(--secondary-border-selected);
+  --option-selected-surface: var(--secondary-surface-selected);
+  --code-surface:
+    linear-gradient(135deg, #{$color-success-surface}, var(--secondary-surface)),
+    var(--white-tint);
+  --code-border: 1px solid #{$color-success-border};
+  --cta-surface: var(--secondary-surface-strong);
+  --cta-fg: var(--secondary);
+  --cta-warm-surface: var(--cta-surface);
+  --cta-warm-fg: var(--cta-fg);
+  --sponsor-label: var(--text);
+
   // --- Themable radii ---
   --radius-panel: 28px;
   --radius-panel-mobile: 24px;

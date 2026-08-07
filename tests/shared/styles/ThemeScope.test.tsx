@@ -154,6 +154,122 @@ describe("ThemeScope", () => {
     expect(style).toContain("--font-accent: TestAccent, cursive");
   });
 
+  it("derives quiz-surface vocabulary defaults from required fields when omitted", () => {
+    // `baseSyntheticTheme` omits every quiz-surface field (Madrona
+    // redesign R4), so the emission must reproduce the pre-extension
+    // rendering: the layered page recipe, panel chrome from
+    // surface/border plus the structural shadow, no page-head band,
+    // option chrome from border and the secondary derived shades,
+    // the success/secondary code-block recipe, secondary CTA pair
+    // (warm pair matching the base pair), and text-colored sponsor
+    // label.
+    render(
+      <ThemeScope theme={baseSyntheticTheme}>
+        <span data-testid="child">Hello</span>
+      </ThemeScope>,
+    );
+
+    const wrapper = screen.getByTestId("child").parentElement;
+    if (!wrapper) throw new Error("wrapper missing");
+    const style = wrapper.getAttribute("style") ?? "";
+
+    expect(style).toContain(
+      "--page-surface: radial-gradient(circle at top left, color-mix(in srgb, #888 28%, transparent), transparent 30%), " +
+        "radial-gradient(circle at top right, color-mix(in srgb, #777 22%, transparent), transparent 32%), " +
+        "linear-gradient(180deg, #abc 0%, #aaa 48%, #bcd 100%)",
+    );
+    expect(style).toContain("--panel-surface: #bbb");
+    expect(style).toContain("--panel-border: 1px solid #333");
+    expect(style).toContain("--panel-shadow: 0 24px 60px rgba(42, 42, 42, 0.12)");
+    expect(style).toContain("--page-head-surface: transparent");
+    expect(style).toContain("--page-head-rule: none");
+    expect(style).toContain("--page-head-margin: 0");
+    expect(style).toContain("--page-head-padding: 0");
+    expect(style).toContain("--option-border: 1px solid #333");
+    expect(style).toContain(
+      "--option-selected-border-color: color-mix(in srgb, #777 56%, transparent)",
+    );
+    expect(style).toContain(
+      "--option-selected-surface: color-mix(in srgb, #777 18%, transparent)",
+    );
+    expect(style).toContain(
+      "--code-surface: linear-gradient(135deg, rgba(63, 143, 90, 0.16), color-mix(in srgb, #777 10%, transparent)), #bbc",
+    );
+    expect(style).toContain("--code-border: 1px solid rgba(63, 143, 90, 0.18)");
+    expect(style).toContain(
+      "--cta-surface: color-mix(in srgb, #777 14%, transparent)",
+    );
+    expect(style).toContain("--cta-fg: #777");
+    expect(style).toContain(
+      "--cta-warm-surface: color-mix(in srgb, #777 14%, transparent)",
+    );
+    expect(style).toContain("--cta-warm-fg: #777");
+    expect(style).toContain("--sponsor-label: #111");
+
+    // Emitted only when set — an unconditional default would defeat
+    // the per-call-site `var(--…, fallback)` fallbacks.
+    expect(style).not.toContain("--page-head-title-size");
+    expect(style).not.toContain("--heading-letter-spacing");
+  });
+
+  it("emits quiz-surface vocabulary verbatim when the theme provides it", () => {
+    const themed: Theme = {
+      ...baseSyntheticTheme,
+      pageSurface: "#f8e9c8",
+      gridLine: "transparent",
+      panelSurface: "transparent",
+      panelBorder: "none",
+      panelShadow: "none",
+      pageHeadSurface: "#f1dfb8",
+      pageHeadRule: "3px solid #d9a62b",
+      pageHeadMargin: "0 calc(50% - 50vw)",
+      pageHeadPadding: "18px",
+      pageHeadTitleSize: "2rem",
+      headingLetterSpacing: "0.06em",
+      optionBorder: "2.5px solid #8b8b2e",
+      optionSelectedBorderColor: "#2e4a34",
+      optionSelectedSurface: "#ede3c2",
+      codeSurface: "#f1dfb8",
+      codeBorder: "2.5px solid #d9a62b",
+      ctaSurface: "#d9a62b",
+      ctaFg: "#2e4a34",
+      ctaWarmSurface: "#d9822b",
+      ctaWarmFg: "#fffdf2",
+      sponsorLabel: "#6b4e8e",
+    };
+    render(
+      <ThemeScope theme={themed}>
+        <span data-testid="child">Hello</span>
+      </ThemeScope>,
+    );
+
+    const wrapper = screen.getByTestId("child").parentElement;
+    if (!wrapper) throw new Error("wrapper missing");
+    const style = wrapper.getAttribute("style") ?? "";
+
+    expect(style).toContain("--page-surface: #f8e9c8");
+    expect(style).toContain("--grid-line: transparent");
+    expect(style).toContain("--panel-surface: transparent");
+    expect(style).toContain("--panel-border: none");
+    expect(style).toContain("--panel-shadow: none");
+    expect(style).toContain("--page-head-surface: #f1dfb8");
+    expect(style).toContain("--page-head-rule: 3px solid #d9a62b");
+    expect(style).toContain("--page-head-margin: 0 calc(50% - 50vw)");
+    expect(style).toContain("--page-head-padding: 18px");
+    expect(style).toContain("--page-head-title-size: 2rem");
+    expect(style).toContain("--heading-letter-spacing: 0.06em");
+    expect(style).toContain("--option-border: 2.5px solid #8b8b2e");
+    expect(style).toContain("--option-selected-border-color: #2e4a34");
+    expect(style).toContain("--option-selected-surface: #ede3c2");
+    expect(style).toContain("--code-surface: #f1dfb8");
+    expect(style).toContain("--code-border: 2.5px solid #d9a62b");
+    expect(style).toContain("--cta-surface: #d9a62b");
+    expect(style).toContain("--cta-fg: #2e4a34");
+    expect(style).toContain("--cta-warm-surface: #d9822b");
+    expect(style).toContain("--cta-warm-fg: #fffdf2");
+    expect(style).toContain("--sponsor-label: #6b4e8e");
+  });
+
   it("nested ThemeScope wrappers override outer values for descendants", () => {
     const outerTheme: Theme = { ...baseSyntheticTheme, primary: "#aaa111" };
     const innerTheme: Theme = { ...baseSyntheticTheme, primary: "#bbb222" };
