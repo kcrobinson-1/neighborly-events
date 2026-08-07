@@ -16,6 +16,27 @@ import type { Theme } from "../types.ts";
  * alongside the font files): Bebas Neue for display/headings,
  * Poppins for body, Lora Italic for short warm accents via the
  * optional `accentFontFamily` field.
+ *
+ * **Contrast-adjusted values.** Three values are deliberately shifted
+ * from the poster/centerfold SPECS palette because the literal poster
+ * colors cannot carry text at WCAG AA on screen — print has no such
+ * requirement, so the spec never had to resolve it. Each shift stays
+ * inside its own hue; the page reads as the same palette:
+ *
+ * - `secondary` olive `#8b8b2e` → `#68681f`. The poster olive sits in
+ *   a luminance dead zone: 3.53:1 under near-white text and 3.00:1 as
+ *   text on the cream page — *neither* a light nor a dark foreground
+ *   reaches 4.5:1 against it, so no pairing could fix it. Now 5.74:1
+ *   and 4.87:1 respectively.
+ * - `muted` `#6f6350` → `#655a48`, so muted body text clears 4.5:1 on
+ *   the putty band (was 4.47:1) as well as on cream.
+ * - `accent` gold `#d9a62b` → `#e0b040`, so gold text on the dark
+ *   green header and footer clears 4.5:1 (was 4.40:1). This also
+ *   lifts the shared masthead's brand name and donate pill, which
+ *   read gold-on-dark-green from these same tokens.
+ *
+ * Reverting any of these is a one-line edit here, but doing so
+ * reintroduces the AA failures on every madrona surface.
  */
 export const madronaTheme: Theme = {
   // Brand bases — cream page, near-white flat surfaces, putty muted
@@ -29,14 +50,15 @@ export const madronaTheme: Theme = {
   // Secondary text. Deepened from the poster's `#6f6350` so it
   // clears WCAG AA for normal text on every madrona surface — the
   // putty band is the tightest (5.1:1; `#6f6350` measured 4.47:1
-  // there), cream 5.6:1, near-white 6.6:1.
+  // there), cream 5.6:1, near-white 6.6:1. The quiz restyle and the
+  // landing rebuild arrived at this same value independently.
   muted: "#655a48",
   border: "rgba(58, 50, 38, 0.14)",
   borderSoft: "rgba(58, 50, 38, 0.09)",
   borderMuted: "rgba(58, 50, 38, 0.12)",
   primary: "#2e4a34",
-  secondary: "#8b8b2e",
-  accent: "#d9a62b",
+  secondary: "#68681f",
+  accent: "#e0b040",
   whiteWarm: "#fffdf2",
   whitePanel: "#fffdf2",
   whiteTint: "#fdf8e8",

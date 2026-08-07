@@ -15,14 +15,23 @@
  * main-set stars) and the warm orange (donate tile). They are part
  * of this layout's design, not an event's brand surface.
  *
- * The donate orange is a darkened shade of the spec's `#d9822b` at
- * the same hue: the poster value carries only 2.87:1 against the
- * near-white tile foreground, failing even the 3:1 large-text bar,
- * so it is not usable as a text background. `#a5611d` reaches
- * 4.76:1 and clears normal-text AA for the subtitle too. Action-tile
- * subtitles deliberately carry no opacity reduction for the same
- * reason — dimming a 11.5px label is what pushed several tiles under
- * the 4.5:1 threshold.
+ * Both literals are AA-darkened from their poster values, the same
+ * print-vs-screen adjustment the madrona Theme documents for its
+ * olive / gold / muted:
+ *
+ * - orange `#d9822b` → `#a5611d`. The poster value carries 2.87:1
+ *   under the near-white tile foreground — failing even the 3:1
+ *   large-text bar — so it is not usable as a text background at
+ *   all. Now 4.76:1.
+ * - red `#c43b2f` → `#a52f24`. The welcome line sits on the hero
+ *   gradient and was 3.49:1 against its darkest stop (`--hero-end`);
+ *   the run-of-show stars were 4.36:1 on cream. Now 4.62:1 and
+ *   5.77:1. Contrast on a gradient must be checked against the
+ *   *darkest* stop the text can overlap, not the average.
+ *
+ * Opacity reductions are deliberately absent throughout (action-tile
+ * subtitles, season-card dates, footer lines): dimming already-small
+ * text is what pushed several of these under 4.5:1.
  *
  * The page surface (`--bg`) is painted on `.event-landing` itself:
  * `body`'s background lives outside `<ThemeScope>` and can only show
@@ -76,7 +85,7 @@
 
 .event-landing-welcome {
   margin: 6px 0 20px;
-  color: #c43b2f; /* poster red — garnish, see header comment */
+  color: #a52f24; /* poster red, AA-darkened — see header comment */
   font-family: var(--font-accent);
   font-style: italic;
   font-size: 20px;
@@ -127,7 +136,7 @@
 
 .event-landing-action-newsletter {
   background: var(--accent);
-  color: var(--primary);
+  color: var(--text);
 }
 
 .event-landing-action-feedback {
@@ -223,7 +232,7 @@
 
 .event-landing-sched-star {
   margin-left: auto;
-  color: #c43b2f; /* poster red — garnish, see header comment */
+  color: #a52f24; /* poster red, AA-darkened — see header comment */
   font-size: 13px;
 }
 
@@ -375,7 +384,6 @@
   font-size: 14px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  opacity: 0.9;
 }
 
 .event-landing-season-name {
@@ -463,7 +471,6 @@
 .event-landing-footer-line {
   margin: 6px 0;
   font-size: 12.5px;
-  opacity: 0.9;
 }
 
 .event-landing-footer a {

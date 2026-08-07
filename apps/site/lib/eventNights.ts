@@ -48,8 +48,13 @@ export type TonightResolution =
  * Built from `formatToParts` output, not `format`, so no locale's
  * ordering or separators can leak into the string we compare against
  * content-authored ISO dates.
+ *
+ * Exported so a mounted renderer can cheaply detect that the event's
+ * local day has rolled over (the resolved state is only ever stale
+ * across a local midnight) without duplicating the `Intl` wiring or
+ * re-running full resolution on a timer.
  */
-function calendarDateInZone(now: Date, timezone: string): string {
+export function calendarDateInZone(now: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     year: "numeric",

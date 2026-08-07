@@ -9,6 +9,7 @@ import type {
   EventNights,
 } from "../../lib/eventContent.ts";
 import {
+  calendarDateInZone,
   formatNightDate,
   formatNightDateShort,
   resolvableNights,
@@ -67,6 +68,18 @@ function SponsorLogo({
  * visit (it almost always does). No-JS readers see the build-time
  * state; the honest fallback for a page rebuilt on every deploy.
  *
+ * Resolution then stays live for as long as the page is open. A
+ * mount-only read would leave a page opened at 11 PM showing the
+ * previous night forever — including past the final night, where it
+ * owes the reader the season wrap — and a phone left open on a
+ * blanket through the end of a concert evening is the ordinary case
+ * here, not a corner one. A one-minute tick compares only the
+ * event-local *calendar date* and updates state when it rolls over,
+ * so the common tick costs one `Intl` format and re-renders nothing;
+ * polling rather than a single timer aimed at midnight also
+ * self-corrects after a device sleeps through the boundary, which is
+ * exactly when a fired-once timer would be least reliable.
+ *
  * Degraded states follow the section-renderer stance (broken
  * cross-reference → omit, never fake): a `performerSlug` that
  * matches no lineup entry drops the On-stage section and falls back
@@ -91,6 +104,7 @@ export function LandingTonightSections({
   initialNowMs: number;
 }) {
   const [now, setNow] = useState(() => new Date(initialNowMs));
+  const timezone = nights?.timezone ?? "UTC";
 
   useEffect(() => {
     /* eslint-disable-next-line react-hooks/set-state-in-effect --
@@ -103,7 +117,24 @@ export function LandingTonightSections({
     setNow(new Date());
   }, []);
 
-  const resolvedNights: EventNights = nights ?? { timezone: "UTC", nights: [] };
+  useEffect(() => {
+    // Keep resolution live across the event's local midnight. State
+    // only changes when the event-local calendar date rolls over, so
+    // the once-a-minute tick is otherwise a no-op.
+    const tick = window.setInterval(() => {
+      setNow((current) => {
+        const next = new Date();
+        return calendarDateInZone(next, timezone) ===
+          calendarDateInZone(current, timezone)
+          ? current
+          : next;
+      });
+    }, 60_000);
+
+    return () => window.clearInterval(tick);
+  }, [timezone]);
+
+  const resolvedNights: EventNights = nights ?? { timezone, nights: [] };
   const resolution = resolveTonight(now, resolvedNights);
   const seasonNights = resolvableNights(resolvedNights);
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 
 import { EventLandingPage } from "../../../apps/site/components/event/EventLandingPage.tsx";
 import { LandingTonightSections } from "../../../apps/site/components/event/LandingTonightSections.tsx";
@@ -410,6 +410,59 @@ describe("LandingTonightSections — sponsor links and duplicate dates", () => {
     expect(cards[1].classList.contains("event-landing-season-card-now")).toBe(
       false,
     );
+  });
+});
+
+describe("LandingTonightSections — stays live across event-local midnight", () => {
+  it("flips from Tonight to the next night when the event-local day rolls over", async () => {
+    // Tue Aug 11, 23:58 PT — a page open on a blanket after the show.
+    setClock("2026-08-12T06:58:00Z");
+    renderMadrona();
+    expect(screen.getByRole("heading", { name: "Tonight" })).toBeTruthy();
+
+    // Cross local midnight into Wed Aug 12 and let one tick land.
+    await act(async () => {
+      vi.setSystemTime(new Date("2026-08-12T07:01:00Z"));
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+
+    expect(screen.getByRole("heading", { name: "Next concert" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Tonight" })).toBeNull();
+    expect(
+      document.querySelector(".event-landing-tonight-date")?.textContent,
+    ).toBe("Tuesday, August 18 · Mid-Series");
+  });
+
+  it("flips to the season wrap after the final night's local midnight", async () => {
+    // Tue Aug 25, 23:58 PT — the closing night, still Tonight.
+    setClock("2026-08-26T06:58:00Z");
+    renderMadrona();
+    expect(screen.getByRole("heading", { name: "Tonight" })).toBeTruthy();
+
+    await act(async () => {
+      vi.setSystemTime(new Date("2026-08-26T07:01:00Z"));
+      await vi.advanceTimersByTimeAsync(60_000);
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "That’s a wrap on 2026" }),
+    ).toBeTruthy();
+  });
+
+  it("does not re-render while the event-local date is unchanged", async () => {
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = renderMadrona();
+    const before = container.querySelector(".event-landing-sched");
+
+    await act(async () => {
+      vi.setSystemTime(new Date("2026-08-11T19:30:00Z"));
+      await vi.advanceTimersByTimeAsync(5 * 60_000);
+    });
+
+    // Same node identity: the tick resolved to the same calendar date
+    // and returned the previous state, so React never re-rendered.
+    expect(container.querySelector(".event-landing-sched")).toBe(before);
+    expect(screen.getByRole("heading", { name: "Tonight" })).toBeTruthy();
   });
 });
 
