@@ -1,0 +1,474 @@
+/*
+ * Day-of landing layout (`EventDayOfLanding` +
+ * `LandingTonightSections`), the Madrona redesign spec §4 page:
+ * full-bleed hero gradient, four-tile action grid, dotted-rule
+ * sections on one continuous page surface (no floating cards), the
+ * putty presenting-sponsor band, and the dark footer band. Every
+ * surface, face, and brand color is a themable `var(--…)` token from
+ * the per-event `<ThemeScope>`; the layout itself is
+ * platform-generic and renders for any event that authors
+ * `EventContent.landing`.
+ *
+ * Two literal colors are deliberate non-tokens, per the Theme
+ * contract's garnish rule ("red and purple are garnish — components
+ * that need them own those accents"): the poster red (welcome line,
+ * main-set stars) and the warm orange (donate tile). They are part
+ * of this layout's design, not an event's brand surface.
+ *
+ * The page surface (`--bg`) is painted on `.event-landing` itself:
+ * `body`'s background lives outside `<ThemeScope>` and can only show
+ * the platform Theme (`_base.scss` paints it from the `:root`-level
+ * tokens), so the themed page field must be owned by an element
+ * inside the scope. Scoping the paint here keeps every
+ * generic-template event pixel-identical.
+ */
+.event-landing {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/*
+ * The day-of hero is full-bleed and sits flush under the sticky bar,
+ * absorbing the interim `.event-masthead + main` no-dead-gap padding
+ * from `_masthead.scss` (that rule keeps serving the inner routes,
+ * whose page-head bands still want the breathing room).
+ */
+.event-masthead + main.event-landing {
+  padding-top: 0;
+}
+
+/* Visually-hidden heading for the document outline (visible hero is
+ * artwork). Standard clip-pattern utility, scoped to this layout. */
+.event-landing-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.event-landing-hero {
+  padding: 26px 18px 10px;
+  text-align: center;
+  background: linear-gradient(180deg, var(--hero-start) 0%, var(--hero-end) 130%);
+}
+
+.event-landing-hero-art svg {
+  display: block;
+  width: min(520px, 88vw);
+  height: auto;
+  margin: 0 auto;
+}
+
+.event-landing-welcome {
+  margin: 6px 0 20px;
+  color: #c43b2f; /* poster red — garnish, see header comment */
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-size: 20px;
+}
+
+.event-landing-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 760px;
+  margin: -4px auto 0;
+  padding: 18px 18px 6px;
+}
+
+.event-landing-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 20px 10px 16px;
+  border-radius: var(--radius-panel);
+  color: var(--white-warm);
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 27px;
+  letter-spacing: 2px;
+  line-height: 1;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--text) 28%, transparent);
+}
+
+.event-landing-action:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 28%, transparent);
+}
+
+.event-landing-action small {
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  letter-spacing: 0;
+  line-height: 1.3;
+  opacity: 0.85;
+}
+
+.event-landing-action-quiz {
+  background: var(--primary);
+}
+
+.event-landing-action-newsletter {
+  background: var(--accent);
+  color: var(--primary);
+}
+
+.event-landing-action-feedback {
+  background: var(--secondary);
+}
+
+.event-landing-action-donate {
+  background: #d9822b; /* warm orange — garnish, see header comment */
+}
+
+.event-landing-section {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 26px 18px;
+}
+
+/* Dotted-rule section heading — gold rules flank the display-face
+ * title (spec §2: sections separate with rules, not boxes). */
+.event-landing-rule {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 4px;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 2.5px;
+}
+
+.event-landing-rule::before,
+.event-landing-rule::after {
+  content: "";
+  flex: 1;
+  border-top: 2px dotted color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.event-landing-tonight-date {
+  margin: 0 0 18px;
+  text-align: center;
+  color: var(--muted);
+  font-family: var(--font-heading);
+  font-size: 17px;
+  letter-spacing: 2px;
+}
+
+.event-landing-sched {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.event-landing-sched-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 9px 2px;
+  border-bottom: 2px dotted color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.event-landing-sched-row:last-child {
+  border-bottom: none;
+}
+
+.event-landing-sched-time {
+  min-width: 64px;
+  color: var(--secondary);
+  font-family: var(--font-heading);
+  font-size: 24px;
+  letter-spacing: 1px;
+  text-align: right;
+}
+
+.event-landing-sched-row-main .event-landing-sched-time {
+  color: var(--primary);
+}
+
+.event-landing-sched-row-main .event-landing-sched-title {
+  font-weight: 700;
+}
+
+.event-landing-sched-what {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.event-landing-sched-detail {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.event-landing-sched-star {
+  margin-left: auto;
+  color: #c43b2f; /* poster red — garnish, see header comment */
+  font-size: 13px;
+}
+
+.event-landing-presenting {
+  margin-top: 26px;
+  padding: 18px 16px 20px;
+  text-align: center;
+  background: var(--surface-band);
+  border-top: 3px solid var(--accent);
+  border-bottom: 3px solid var(--accent);
+}
+
+.event-landing-presenting-eyebrow {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-family: var(--font-heading);
+  font-size: 15px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+}
+
+.event-landing-presenting-logo {
+  display: inline-block;
+  height: 52px;
+  width: auto;
+  vertical-align: middle;
+}
+
+.event-landing-band {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 18px;
+  align-items: start;
+  margin-top: 14px;
+}
+
+.event-landing-band-photo {
+  display: block;
+  width: 100%;
+  border: 3px solid var(--primary);
+  border-radius: var(--radius-card);
+}
+
+.event-landing-band-name {
+  margin: 0 0 2px;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 30px;
+  font-weight: 400;
+  letter-spacing: 1.5px;
+}
+
+.event-landing-band-tagline {
+  margin: 0 0 8px;
+  color: var(--secondary);
+  font-family: var(--font-accent);
+  font-style: italic;
+  font-size: 15px;
+}
+
+.event-landing-band-bio {
+  margin: 0 0 10px;
+  font-size: 14.5px;
+}
+
+.event-landing-band-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-landing-band-links a {
+  padding: 4px 12px 2px;
+  border: 2px solid var(--secondary);
+  border-radius: 999px;
+  background: var(--white-warm);
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 1.2px;
+  text-decoration: none;
+}
+
+.event-landing-headliner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 560px;
+  margin: 26px auto 0;
+  padding-top: 16px;
+  border-top: 2px dotted color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.event-landing-headliner p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13.5px;
+}
+
+.event-landing-headliner-logo {
+  height: 40px;
+  width: auto;
+}
+
+.event-landing-season {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+}
+
+.event-landing-season-card {
+  padding: 12px 10px 10px;
+  border-radius: var(--radius-card);
+  color: var(--white-warm);
+  text-align: center;
+}
+
+/* Card fills rotate through the brand bases so a season of any
+ * length gets distinct, on-palette cards without per-card content. */
+.event-landing-season-card:nth-child(3n + 1) {
+  background: var(--primary);
+}
+
+.event-landing-season-card:nth-child(3n + 2) {
+  background: var(--secondary);
+}
+
+.event-landing-season-card:nth-child(3n) {
+  background: var(--muted);
+}
+
+.event-landing-season-card-now {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.event-landing-season-date {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.event-landing-season-name {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  line-height: 1.1;
+}
+
+.event-landing-wrap-body {
+  max-width: 560px;
+  margin: 0 auto 18px;
+  text-align: center;
+}
+
+.event-landing-wrap-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.event-landing-wrap-action {
+  padding: 13px 8px 10px;
+  border-radius: var(--radius-control);
+  color: var(--white-warm);
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 18px;
+  letter-spacing: 1.5px;
+}
+
+.event-landing-wrap-action-newsletter {
+  background: var(--accent);
+  color: var(--primary);
+}
+
+.event-landing-wrap-action-donate {
+  background: #d9822b; /* warm orange — garnish, see header comment */
+}
+
+.event-landing-faq-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.event-landing-faq-details {
+  padding: 10px 2px;
+  border-bottom: 2px dotted color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+.event-landing-faq-summary {
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.event-landing-faq-answer {
+  margin: 8px 0 2px;
+  font-size: 14px;
+}
+
+.event-landing-footer {
+  margin-top: 34px;
+  padding: 26px 18px;
+  text-align: center;
+  background: var(--primary);
+  color: var(--white-warm);
+}
+
+.event-landing-footer-banner {
+  margin: 0;
+  color: var(--accent);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.event-landing-footer-line {
+  margin: 6px 0;
+  font-size: 12.5px;
+  opacity: 0.9;
+}
+
+.event-landing-footer a {
+  color: var(--accent);
+}
+
+@media (max-width: 560px) {
+  .event-landing-band {
+    grid-template-columns: 110px 1fr;
+  }
+
+  .event-landing-action {
+    padding: 18px 8px 14px;
+    font-size: 22px;
+  }
+}
