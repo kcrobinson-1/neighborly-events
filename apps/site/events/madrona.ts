@@ -65,8 +65,10 @@ import type { EventContent } from "../lib/eventContent.ts";
  * is the spec's), the Meter Music School presenting-sponsor band
  * (logo-only — no verified Meter URL, and a link's presence is a
  * claim of verification), the season-wrap copy shown from Aug 26,
- * and the dark footer band's three lines (the masthead art's banner
- * line, the volunteer sentence, and the contact address). With
+ * the two-ask volunteer section, and the dark footer band's two
+ * lines (the masthead art's banner line and the contact address).
+ * The band's volunteer credit moved into the volunteer section,
+ * which makes the same point with an action attached. With
  * `landing` present the generic sections (`hero` text block,
  * `schedule`, full `lineup` bios, `sponsors`, `cta`) no longer
  * render on the landing page — `hero` still feeds route metadata
@@ -245,11 +247,29 @@ export const madronaContent: EventContent = {
       heading: "That’s a wrap on 2026",
       body: "Thank you to every neighbor, sponsor, and volunteer who filled the Playfield with music this summer. See you next year.",
     },
+    volunteer: {
+      heading: "Lend a hand",
+      lede: "Music in the Playfield is put on by neighbors. Two hours of your Tuesday goes a long way.",
+      nightOf: {
+        heading: "Help at a concert",
+        body: "Setup starts at 4:30 and takedown wraps by 8:30 — chairs, canopy, signs, the booth. No experience, no commitment beyond the night you pick.",
+        actionLabel: "Email the organizers",
+      },
+      yearRound: {
+        heading: "Help year-round",
+        body: "The association is all volunteers — parks, safety, events, communications. If tonight made you want in, there’s a spot for you.",
+        actionLabel: "Volunteer with the association",
+        href: madronaFacts.volunteerHref,
+      },
+    },
     footer: {
       bannerLine: "★ Your neighborhood · Your music · Your park ★",
-      volunteerLine:
-        "Run entirely by Madrona Neighborhood Association volunteers, with help from local sponsors and neighbors like you.",
-      contactLabel: "Volunteer or contribute",
+      // `volunteerLine` omitted: the volunteer section directly above
+      // says who puts the event on and attaches an action to it, so
+      // the band restating it two inches lower is the duplication the
+      // page is meant to avoid. `contactLabel` is a plain contact for
+      // the same reason — the volunteer routing lives in the section.
+      contactLabel: "Get in touch",
       contactEmail: "musicintheplayfield@madrona.us",
     },
   },

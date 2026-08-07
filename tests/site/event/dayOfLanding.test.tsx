@@ -321,14 +321,47 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     expect(footer?.textContent).toContain(
       "★ Your neighborhood · Your music · Your park ★",
     );
-    expect(footer?.textContent).toContain(
-      "Run entirely by Madrona Neighborhood Association volunteers",
-    );
     expect(
       within(footer as HTMLElement)
         .getByRole("link", { name: "musicintheplayfield@madrona.us" })
         .getAttribute("href"),
     ).toBe("mailto:musicintheplayfield@madrona.us");
+    // The band carries two lines now. Its volunteer credit moved into
+    // the volunteer section, which makes the same point with an
+    // action attached — see the "asks once" case below.
+    expect(
+      container.querySelectorAll(".event-landing-footer-line"),
+    ).toHaveLength(1);
+  });
+
+  it("renders the footer's volunteer credit for an event that authors one", () => {
+    // `volunteerLine` went optional rather than away; madrona omits
+    // it. Without this case the field could be dropped from the
+    // renderer and only madrona's own omission would hide it.
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          landing: {
+            ...madronaContent.landing!,
+            footer: {
+              ...madronaContent.landing!.footer,
+              volunteerLine: "Put on by the neighbors of Anytown.",
+            },
+          },
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    const footer = container.querySelector(".event-landing-footer");
+    expect(footer?.textContent).toContain("Put on by the neighbors of Anytown.");
+    expect(
+      container.querySelectorAll(".event-landing-footer-line"),
+    ).toHaveLength(2);
   });
 });
 
@@ -440,6 +473,146 @@ describe("EventDayOfLanding — season wrap", () => {
     // Donate survives the omission — the two actions gate independently.
     expect(
       within(wrapActions as HTMLElement).getByRole("link", { name: "Donate" }),
+    ).toBeTruthy();
+  });
+});
+
+describe("EventDayOfLanding — volunteer section", () => {
+  const CONCERT_DAY = "2026-08-11T19:00:00Z";
+  const POST_SEASON = "2026-08-26T19:00:00Z";
+
+  function withoutVolunteer() {
+    const landing = { ...madronaContent.landing! };
+    delete landing.volunteer;
+    return { ...madronaContent, landing };
+  }
+
+  it("renders both asks on a concert day, each to its own destination", () => {
+    setClock(CONCERT_DAY);
+    const { container } = renderMadrona();
+
+    const section = container.querySelector(".event-landing-volunteer");
+    expect(section).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Lend a hand" })).toBeTruthy();
+    expect(section?.textContent).toContain(
+      "Music in the Playfield is put on by neighbors.",
+    );
+
+    const asks = within(section as HTMLElement);
+    // Night-of: routed to the organizer address the event already
+    // authors on the footer, not to a second copy of it.
+    expect(
+      asks.getByRole("heading", { name: "Help at a concert" }),
+    ).toBeTruthy();
+    const nightOf = asks.getByRole("link", { name: "Email the organizers" });
+    expect(nightOf.getAttribute("href")).toBe(
+      "mailto:musicintheplayfield@madrona.us",
+    );
+    // A mailto stays in place; new-context attributes would be wrong.
+    expect(nightOf.getAttribute("target")).toBeNull();
+
+    // Year-round: external, so destination and new-context attributes
+    // are asserted together — the right address opened in the same tab
+    // would still drop a reader out of the page mid-concert.
+    expect(asks.getByRole("heading", { name: "Help year-round" })).toBeTruthy();
+    const yearRound = asks.getByRole("link", {
+      name: "Volunteer with the association",
+    });
+    expect(yearRound.getAttribute("href")).toBe("https://madrona.us/volunteers/");
+    expect(yearRound.getAttribute("target")).toBe("_blank");
+    expect(yearRound.getAttribute("rel")).toBe("noopener");
+  });
+
+  it("drops the night-of ask once the season has ended, keeping the year-round one", () => {
+    // The load-bearing case. A concert-day-only test cannot surface a
+    // time-specific ask that outlives the concerts: on Aug 26 the page
+    // has already swapped the run-of-show for the season wrap, and an
+    // ask to help at 4:30 would be the one thing left on it still
+    // talking about a show that is not coming.
+    setClock(POST_SEASON);
+    const { container } = renderMadrona();
+
+    // The wrap state really is the one being asserted against.
+    expect(
+      screen.getByRole("heading", { name: "That’s a wrap on 2026" }),
+    ).toBeTruthy();
+
+    const section = container.querySelector(".event-landing-volunteer");
+    expect(section).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Lend a hand" })).toBeTruthy();
+
+    const asks = within(section as HTMLElement);
+    expect(
+      asks.queryByRole("heading", { name: "Help at a concert" }),
+    ).toBeNull();
+    expect(
+      asks.queryByRole("link", { name: "Email the organizers" }),
+    ).toBeNull();
+    // By its copy too: a heading-only assertion would still pass if
+    // the ask rendered headless.
+    expect(section?.textContent).not.toContain("Setup starts at 4:30");
+
+    expect(asks.getByRole("heading", { name: "Help year-round" })).toBeTruthy();
+    expect(
+      asks.getByRole("link", { name: "Volunteer with the association" }),
+    ).toBeTruthy();
+  });
+
+  it("renders no section for an event that authors no volunteer block", () => {
+    // Render-when-present, asserted at both clocks because the section
+    // is built in the resolver's component and returned from two
+    // separate branches.
+    for (const clock of [CONCERT_DAY, POST_SEASON]) {
+      setClock(clock);
+      const { container } = render(
+        <EventLandingPage
+          content={withoutVolunteer()}
+          slug="madrona"
+          masthead={getEventMasthead("madrona")}
+          mastheadSvgMarkup={SVG_FIXTURE}
+        />,
+      );
+
+      expect(container.querySelector(".event-landing-volunteer")).toBeNull();
+      expect(screen.queryByRole("heading", { name: "Lend a hand" })).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("makes the volunteer ask once — the footer band does not restate it", () => {
+    setClock(CONCERT_DAY);
+    const { container } = renderMadrona();
+
+    const footer = container.querySelector(".event-landing-footer");
+    expect(footer?.textContent).not.toMatch(/volunteer/i);
+    expect(
+      container.querySelector(".event-landing-volunteer")?.textContent,
+    ).toMatch(/volunteer/i);
+  });
+
+  it("leaves the presenting band's position relative to On stage alone", () => {
+    // The volunteer section lands after This season, below both. The
+    // plan asked for this to be confirmed rather than assumed.
+    setClock(CONCERT_DAY);
+    const { container } = renderMadrona();
+
+    const band = container.querySelector(".event-landing-presenting");
+    const onStage = screen.getByRole("heading", { name: "On stage" });
+    expect(
+      band!.compareDocumentPosition(onStage) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // And the section itself sits between This season and the footer.
+    const volunteer = container.querySelector(".event-landing-volunteer")!;
+    const season = screen.getByRole("heading", { name: "This season" });
+    const footer = container.querySelector(".event-landing-footer")!;
+    expect(
+      season.compareDocumentPosition(volunteer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      volunteer.compareDocumentPosition(footer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 });

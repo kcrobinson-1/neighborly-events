@@ -289,9 +289,49 @@ export type EventDayOfLandingContent = {
     heading: string;
     body: string;
   };
+  /**
+   * The volunteer section, between the This-season strip and the
+   * footer band. Optional: an event that omits it renders
+   * byte-identically to the pre-field output.
+   *
+   * Two asks, because they are two different commitments and a
+   * reader deciding between them needs to see that. `nightOf` is
+   * time-specific — it asks someone to show up at a concert — and it
+   * is the only part of this section that resolves against the
+   * clock: it stops rendering once the season has ended, so the page
+   * never asks a reader to help at a concert that is not coming.
+   * `yearRound` is unconditional and survives that transition, as
+   * does the section itself.
+   *
+   * `nightOf` carries no destination of its own; it routes to
+   * `footer.contactEmail`, the organizer address the event already
+   * authors. One address, authored once.
+   */
+  volunteer?: {
+    heading: string;
+    lede: string;
+    nightOf: {
+      heading: string;
+      body: string;
+      actionLabel: string;
+    };
+    yearRound: {
+      heading: string;
+      body: string;
+      actionLabel: string;
+      href: string;
+    };
+  };
   footer: {
     bannerLine: string;
-    volunteerLine: string;
+    /**
+     * Optional: the credit line naming who puts the event on. Events
+     * that author `volunteer` generally omit it — that section makes
+     * the same point immediately above, with an action attached, and
+     * restating it in the band below is the duplication the layout
+     * exists to avoid.
+     */
+    volunteerLine?: string;
     contactLabel: string;
     contactEmail: string;
   };

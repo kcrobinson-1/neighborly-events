@@ -36,6 +36,19 @@ export const madronaFacts = {
    */
   emailListHref:
     "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+  /**
+   * The association's year-round volunteer page. Stated by two
+   * surfaces — the day-of landing's volunteer section and the quiz
+   * completion panel — which is what puts it here rather than in
+   * either one.
+   *
+   * This is the *year-round* ask and not the night-of one: the page
+   * lists the Music in the Playfield team as a 20-hour
+   * January–May commitment, so it is the wrong destination for
+   * someone offering to carry chairs tonight. That ask routes to the
+   * organizer contact instead.
+   */
+  volunteerHref: "https://madrona.us/volunteers/",
   /** The booth where quiz completion is redeemed for the reward. */
   booth: {
     name: "Madrona Neighborhood Association booth",

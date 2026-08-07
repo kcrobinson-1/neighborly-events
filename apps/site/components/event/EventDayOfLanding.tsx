@@ -164,9 +164,11 @@ export function EventDayOfLanding({
         <p className="event-landing-footer-banner">
           {landing.footer.bannerLine}
         </p>
-        <p className="event-landing-footer-line">
-          {landing.footer.volunteerLine}
-        </p>
+        {landing.footer.volunteerLine ? (
+          <p className="event-landing-footer-line">
+            {landing.footer.volunteerLine}
+          </p>
+        ) : null}
         <p className="event-landing-footer-line">
           {landing.footer.contactLabel}:{" "}
           <a href={`mailto:${landing.footer.contactEmail}`}>
