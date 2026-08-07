@@ -15,6 +15,15 @@
  * main-set stars) and the warm orange (donate tile). They are part
  * of this layout's design, not an event's brand surface.
  *
+ * The donate orange is a darkened shade of the spec's `#d9822b` at
+ * the same hue: the poster value carries only 2.87:1 against the
+ * near-white tile foreground, failing even the 3:1 large-text bar,
+ * so it is not usable as a text background. `#a5611d` reaches
+ * 4.76:1 and clears normal-text AA for the subtitle too. Action-tile
+ * subtitles deliberately carry no opacity reduction for the same
+ * reason — dimming a 11.5px label is what pushed several tiles under
+ * the 4.5:1 threshold.
+ *
  * The page surface (`--bg`) is painted on `.event-landing` itself:
  * `body`'s background lives outside `<ThemeScope>` and can only show
  * the platform Theme (`_base.scss` paints it from the `:root`-level
@@ -110,7 +119,6 @@
   font-size: 11.5px;
   letter-spacing: 0;
   line-height: 1.3;
-  opacity: 0.85;
 }
 
 .event-landing-action-quiz {
@@ -127,7 +135,7 @@
 }
 
 .event-landing-action-donate {
-  background: #d9822b; /* warm orange — garnish, see header comment */
+  background: #a5611d; /* warm orange, AA-darkened — see header comment */
 }
 
 .event-landing-section {
@@ -410,7 +418,7 @@
 }
 
 .event-landing-wrap-action-donate {
-  background: #d9822b; /* warm orange — garnish, see header comment */
+  background: #a5611d; /* warm orange, AA-darkened — see header comment */
 }
 
 .event-landing-faq-list {
