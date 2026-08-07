@@ -494,8 +494,8 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   apps/web's `:root` block in
   [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
   carries today's warm-cream values as the source-of-truth for
-  apps/web defaults outside `<ThemeScope>` (the outer `.site-shell`
-  and any future non-event apps/web route). Brand-tied derived
+  apps/web defaults outside `<ThemeScope>` (unmatched routes such as
+  the not-found shell). Brand-tied derived
   shades (`--primary-surface`, etc.) are not Theme fields; the
   derivation lives in `themeToStyle.ts`, which emits resolved-hex
   `color-mix()` literals on the `<ThemeScope>` wrapper for themed
@@ -503,6 +503,21 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   apps/web surfaces outside `<ThemeScope>`.
   `shared/styles/` reads no env, holds no module-level singleton,
   and imports nothing app-specific.
+
+  **Token-driven surface convention (Madrona redesign R4).** Surface
+  *structure* in apps/web — the page field, floating-panel chrome,
+  the quiz page-head band, option-row chrome, the check-in code
+  block, completion CTA colors — is expressed through optional
+  `Theme` fields with default-derived emissions (`--page-surface`,
+  `--panel-*`, `--page-head-*`, `--option-*`, `--code-*`, `--cta-*`;
+  table in [`docs/styling.md`](/docs/styling.md) "Optional brand
+  fields"). A theme that wants a different surface posture (Madrona's
+  flat cream, de-bubbled look) sets tokens; components carry **no
+  event-keyed branches**, and themes that omit the fields render
+  byte-identically. To let a Theme reach the page field, apps/web's
+  `App.tsx` wraps `<ThemeScope>` around the `.site-shell` element for
+  matched event routes (the shell paints `--page-surface`); the
+  wrapper stays `display: contents`, so layout is unchanged.
 
 Together they contain:
 

@@ -14,8 +14,8 @@
 }
 
 .option-choice-selected .option-button {
-  background: var(--secondary-surface-selected);
-  border-color: var(--secondary-border-selected);
+  background: var(--option-selected-surface);
+  border-color: var(--option-selected-border-color);
   box-shadow: $shadow-selected;
 }
 
@@ -46,7 +46,7 @@
   text-align: left;
   background: var(--white-panel);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: var(--option-border);
 }
 
 .selection-hint {

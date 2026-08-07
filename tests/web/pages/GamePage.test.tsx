@@ -130,6 +130,14 @@ describe("GamePage", () => {
 
     expect(screen.getByText(`Finish to earn your ${game.entitlementLabel}`)).toBeTruthy();
 
+    // Page-head subtext: the question count comes from the game
+    // config (one question in this fixture), never a hardcoded count.
+    expect(
+      screen.getByText(
+        "One question. Show your code at the booth when you're done to claim a reward.",
+      ),
+    ).toBeTruthy();
+
     fireEvent.click(screen.getByRole("button", { name: "Start game" }));
 
     await waitFor(() => {

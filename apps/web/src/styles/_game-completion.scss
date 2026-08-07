@@ -6,13 +6,12 @@
   justify-content: center;
   min-height: $token-block-min-height;
   margin: 8px 0 18px;
-  @include surface-card(
-    $background: var(--white-tint),
-    $border: $color-success-border
-  );
-  background:
-    linear-gradient(135deg, $color-success-surface, var(--secondary-surface)),
-    var(--white-tint);
+  padding: 18px;
+  border-radius: var(--radius-card);
+  // Themable check-in code block chrome; defaults reproduce the
+  // historical success/secondary layered recipe and success border.
+  border: var(--code-border);
+  background: var(--code-surface);
 }
 
 .token-block-pending {
@@ -51,6 +50,7 @@
 }
 
 .token-block strong {
+  font-family: var(--font-heading);
   font-size: clamp(1.5rem, 8vw, 2.3rem);
   letter-spacing: 0.08em;
 }
@@ -90,12 +90,19 @@
   align-items: center;
   padding: $space-5 $space-8;
   border-radius: var(--radius-control);
-  background: var(--secondary-surface-strong);
-  color: var(--secondary);
+  background: var(--cta-surface);
+  color: var(--cta-fg);
   font-weight: $font-weight-bold;
   text-align: center;
   text-decoration: none;
   @include interactive-control;
+}
+
+// Warm variant (donate). Falls back to the base CTA pair on the
+// token defaults.
+.completion-cta-button-warm {
+  background: var(--cta-warm-surface);
+  color: var(--cta-warm-fg);
 }
 
 .completion-cta-button:hover {

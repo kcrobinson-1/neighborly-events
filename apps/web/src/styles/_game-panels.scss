@@ -1,4 +1,30 @@
 @use "./mixins" as *;
+@use "./tokens" as *;
+
+// Quiz page-head. Renders as plain flow (no band) on the token
+// defaults; a Theme with a banded page-head sets the surface, the
+// bottom rule, a full-bleed margin, and padding — see the
+// quiz-surface vocabulary in `docs/styling.md`.
+.game-page-head {
+  margin: var(--page-head-margin);
+  padding: var(--page-head-padding);
+  background: var(--page-head-surface);
+  border-bottom: var(--page-head-rule);
+}
+
+// Re-centers band content on the game column when the band itself
+// is full-bleed; inert (100% wide) when the band is not bled.
+.game-page-head-inner {
+  width: min(100%, 440px);
+  margin-inline: auto;
+}
+
+.game-page-subtext {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
 
 .intro-panel p,
 .completion-panel p {
@@ -12,6 +38,24 @@
   margin: 0;
   font-size: clamp(1.45rem, 4vw, 2rem);
   line-height: 1.06;
+}
+
+// Display face for the quiz section headings. The question prompt
+// (`.question-panel h2`) deliberately stays on the body face — it
+// is reading copy, not display type.
+.intro-panel h2,
+.completion-panel h2 {
+  font-family: var(--font-heading);
+  letter-spacing: var(--heading-letter-spacing, normal);
+}
+
+// Sponsor attribution line (question card and answer review).
+.sponsor-label {
+  margin: 0 0 4px;
+  color: var(--sponsor-label);
+  font-weight: $font-weight-semibold;
+  font-size: 0.88rem;
+  letter-spacing: 0.02em;
 }
 
 .intro-list {

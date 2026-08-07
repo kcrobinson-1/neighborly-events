@@ -14,7 +14,9 @@
 }
 
 .score-card strong {
+  font-family: var(--font-heading);
   font-size: clamp(1.5rem, 7vw, 2.2rem);
+  letter-spacing: var(--heading-letter-spacing, normal);
 }
 
 .answer-review-card {

@@ -21,6 +21,36 @@ export function getNextSelection(
     : [...currentSelection, optionId];
 }
 
+const SMALL_COUNT_WORDS = [
+  "Zero",
+  "One",
+  "Two",
+  "Three",
+  "Four",
+  "Five",
+  "Six",
+  "Seven",
+  "Eight",
+  "Nine",
+  "Ten",
+  "Eleven",
+  "Twelve",
+];
+
+/**
+ * Builds the quiz page-head subtext (Madrona experience spec §4 quiz
+ * wording). The question count comes from the published game config —
+ * never hardcoded — and is spelled out for small counts ("Eight
+ * questions.") with a numeral fallback for larger ones.
+ */
+export function getPageHeadSubtext(questionCount: number) {
+  const countWord = SMALL_COUNT_WORDS[questionCount] ?? String(questionCount);
+  const lead =
+    questionCount === 1 ? "One question." : `${countWord} questions.`;
+
+  return `${lead} Show your code at the booth when you're done to claim a reward.`;
+}
+
 /** Returns the helper copy shown above a question's answer choices. */
 export function getSelectionLabel(question: Question) {
   return question.selectionMode === "multiple"

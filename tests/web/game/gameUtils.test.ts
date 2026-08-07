@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getNextSelection,
   getOptionLabels,
+  getPageHeadSubtext,
   getQuestionFeedbackMessage,
   getRevealedAnswerMessage,
   getSelectionLabel,
@@ -108,6 +109,24 @@ describe("gameUtils", () => {
   it("renders the full correct option set for multi-select questions in the fallback copy", () => {
     expect(getRevealedAnswerMessage(multiSelectQuestion)).toBe(
       "The correct answers are Option A and Option C.",
+    );
+  });
+
+  it("spells out the question count in the page-head subtext", () => {
+    expect(getPageHeadSubtext(8)).toBe(
+      "Eight questions. Show your code at the booth when you're done to claim a reward.",
+    );
+  });
+
+  it("uses singular page-head copy for a one-question game", () => {
+    expect(getPageHeadSubtext(1)).toBe(
+      "One question. Show your code at the booth when you're done to claim a reward.",
+    );
+  });
+
+  it("falls back to a numeral for counts beyond the spelled-out range", () => {
+    expect(getPageHeadSubtext(13)).toBe(
+      "13 questions. Show your code at the booth when you're done to claim a reward.",
     );
   });
 });
