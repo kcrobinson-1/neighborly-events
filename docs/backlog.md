@@ -54,6 +54,32 @@ Reduce deployment risk and contributor friction before the live event.
   Detail: [`docs/plans/archive/admin-live-status-plan.md`](/docs/plans/archive/admin-live-status-plan.md)
 
 
+- [ ] **`ux` Swap the Zac Lee sponsor lockup from DRAFT to final**
+  The Madrona headliner-sponsor logo at
+  `apps/site/public/events/madrona/sponsors/zac-lee.png` is a **DRAFT
+  lockup**, landed as a placeholder so the per-night sponsor credit
+  could ship on schedule. The reference in
+  [`apps/site/events/madrona.ts`](/apps/site/events/madrona.ts) already
+  documents this. Goal: the final mark replaces the draft before that
+  sponsor's night. This is a content edit only — drop the final file
+  at the same path, no code change — so it is safe to do after launch,
+  but it must happen before the Zac Lee night rather than drifting to
+  end of season.
+  Detail: N/A
+
+- [ ] **`decision` Post-season teardown for a finished event**
+  After an event's final night, its landing page resolves to a
+  season-wrap state (newsletter and donate emphasized, quiz still
+  available) and stays there indefinitely — nothing expires it. That
+  is the right immediate behavior, but no one has decided what a
+  finished event should look like a month or a year later: whether the
+  landing stays up as an archive, the quiz unpublishes, the masthead
+  registration is removed, or the event is retired wholesale. Goal: a
+  decided, repeatable end-of-season state so each event's teardown is
+  not improvised. This is the first event to reach the question, so it
+  is worth deciding once rather than per event.
+  Detail: N/A
+
 - [ ] **`dev` Wire demo-mode bypass Playwright suite into PR CI**
   `playwright.demo-mode-bypass.config.ts` exists and exercises the G9
   bypass-containment contract (read-only admin / redeem / redemptions
@@ -305,6 +331,32 @@ Execute in any order.
   unwind in a service-role helper are all worth comparing at scoping
   time.
   Detail: N/A
+
+- [ ] **`dev` Share structural style tokens across apps**
+  The structural token bucket has one named home and two unnamed
+  ones: `$radius-pill: 999px` is declared in
+  [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss),
+  while apps/site declares no SCSS variables at all and shared
+  partials can consume neither app's token file — so the bare
+  literal `999px` is repeated at
+  [`apps/site/app/styles/_admin.scss:146`](/apps/site/app/styles/_admin.scss),
+  [`apps/site/app/styles/_landing.scss:317`](/apps/site/app/styles/_landing.scss),
+  and
+  [`shared/styles/_event-masthead.scss:109`](/shared/styles/_event-masthead.scss).
+  Three copies of one platform contract, with nothing that fails when
+  they drift. **Goal:** a structural value has one authoring home that
+  every app and shared partial reads, so drift is impossible rather
+  than merely unlikely. Two shapes are worth comparing — a shared
+  `_structural.scss` both apps `@use`, or a bridge to a
+  `--radius-pill` custom property in each app's `:root` (mirroring the
+  existing `--shadow: #{$shadow-panel}` bridge) — and they differ in
+  whether shared partials can participate, which is the deciding
+  question. Scope the sweep past the pill radius: the spacing scale
+  and font weights are the same shape of duplication. Raised as a
+  Codex P1 during the Madrona redesign and declined there as out of
+  scope for a masthead PR; deliberately deferred past launch because
+  it touches both apps' styling entrypoints.
+  Detail: [`docs/styling.md` — Where the structural bucket actually lives](/docs/styling.md)
 
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and

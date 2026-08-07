@@ -409,13 +409,53 @@ fields. They live as SCSS variables (and, for the composites whose
 color slots reference themable shades via `var(--…)`, are recipes
 that read both buckets).
 
-For apps/site, the platform Sage Civic Theme defines the same
-themable fields; structural values (status, spacing, motion, etc.)
-are emitted by apps/site's root layout from a structural source —
-exact storage shape (separate `shared/styles/structural.ts` module,
-constants in `shared/styles/themes/platform.ts`, or apps/site SCSS)
-is a 1.5.2 implementation decision and does not affect the
-classification this doc binds.
+### Where the structural bucket actually lives
+
+The **themable** half is symmetric across the apps: apps/site's root
+layout emits the platform Sage Civic Theme's custom properties, both
+apps read flat `var(--…)`, and nothing brand-tied is duplicated.
+
+The **structural** half is not symmetric, and this doc previously
+described an intent rather than the code. Stated plainly:
+
+- **apps/web** has the one named home — every structural value is a
+  SCSS variable declared in
+  [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
+  and consumed as `$…`, exactly as the table above describes.
+- **apps/site has no structural token file.** Its SCSS declares and
+  consumes no SCSS variables at all — every structural value (spacing,
+  radii, weights, motion) is written as a literal at its call site.
+  There is no `shared/styles/structural.ts` module and no apps/site
+  equivalent of `_tokens.scss`.
+- **Shared partials under `shared/styles/`** are in the same position
+  for a structural reason: they are `@use`d by both apps and the two
+  apps' token files are independent, so a shared partial can consume
+  neither. They also write structural literals.
+
+So the structural bucket has one named home and two unnamed ones. The
+concrete instance is the pill radius: `$radius-pill: 999px` is declared
+once in apps/web's `_tokens.scss`, and the bare literal `999px` is
+repeated at
+[`apps/site/app/styles/_admin.scss:146`](/apps/site/app/styles/_admin.scss),
+[`apps/site/app/styles/_landing.scss:317`](/apps/site/app/styles/_landing.scss),
+and
+[`shared/styles/_event-masthead.scss:109`](/shared/styles/_event-masthead.scss).
+Three copies of one platform contract, with nothing that fails when
+they drift.
+
+This does **not** change the classification this doc binds — a value's
+bucket is a statement about who may override it, not about whether a
+consumer happens to inline it, and `999px` is structural in all three
+places. What it changes is the mental model: do not read "structural"
+as "there is a parallel apps/site structural module to edit." There
+isn't one. Adding a structural value today means writing a literal in
+apps/site and in any shared partial that needs it.
+
+Closing the duplication is tracked as a post-launch item in
+[`docs/backlog.md`](/docs/backlog.md) (Tier 5, "Share structural style
+tokens across apps"); it is deliberately not resolved here, because
+picking between a shared `_structural.scss` and a per-app
+custom-property bridge is a design call, not a doc fix.
 
 ## Procedure For Adding A New Theme
 
@@ -500,6 +540,129 @@ apps/web's warm-cream `:root` defaults remain in place for
 non-test-event slugs until a future per-event Theme registers (the
 [Madrona demo-build epic](/docs/plans/epics/madrona-demo-build/epic.md)
 owns Madrona's `Theme` registration).
+
+## Madrona Event Theme — Measured Contrast
+
+Source of truth for Madrona's WCAG AA verification. The palette itself
+is [`shared/styles/themes/madrona.ts`](/shared/styles/themes/madrona.ts);
+this section records **what was measured and what it came out to**, so
+that a later session reads a number instead of running another contrast
+pass. Four independent passes have already been run across the redesign
+slices and all four reached the same values — that is the cost this
+table exists to stop.
+
+If you change a Madrona color, re-measure the rows it appears in and
+update this table in the same change. Do not add a color to the theme
+whose rows you have not measured.
+
+**Method.** WCAG 2.x relative-luminance ratios over opaque sRGB hex
+pairs. Bars applied: **4.5:1** for normal text (AA 1.4.3), **3:1** for
+UI components and graphical objects that carry meaning (AA 1.4.11).
+Purely decorative graphics that carry no information are exempt from
+1.4.11 and are marked as such. Alpha-composited tokens (the `border*`
+fields, which are `rgba` over varying surfaces) are not in this table —
+they are borders on already-passing surfaces, not information carriers.
+
+### Text pairings — 4.5:1 bar
+
+| Foreground | Background | Ratio | Where |
+| --- | --- | --- | --- |
+| ink `#3a3226` (`text`) | cream `#f8e9c8` (`bg`) | **10.50** | Body copy on the page field. |
+| ink `#3a3226` | putty `#f1dfb8` (`surfaceBand`) | **9.61** | Body copy inside the tinted band. |
+| muted `#655a48` (`muted`) | putty `#f1dfb8` | **5.14** | **Tightest muted pairing on any Madrona surface** — this is the row that sets the `muted` value. |
+| muted `#655a48` | cream `#f8e9c8` | **5.62** | Secondary copy on the page field. |
+| muted `#655a48` | near-white `#fffdf2` (`surface`) | **6.62** | Secondary copy on flat panels. |
+| near-white `#fffdf2` (`headerFg`) | dark green `#2e4a34` (`headerBg`) | **9.60** | Masthead + footer nav links. |
+| gold `#e0b040` (`accent`) | dark green `#2e4a34` | **4.87** | Masthead brand name and active-item underline. |
+| dark green `#2e4a34` | gold `#e0b040` | **4.87** | Masthead **Donate pill** (gold fill, green label). |
+| deep green `#1c2e20` (`ctaFg`) | gold `#e0b040` (`ctaSurface`) | **7.15** | Completion-screen Newsletter CTA. |
+| deep ink `#2a2016` (`ctaWarmFg`) | poster orange `#d9822b` (`ctaWarmSurface`) | **5.45** | Completion-screen **Donate CTA** — see the donate note below. |
+| olive `#68681f` (`secondary`) | cream `#f8e9c8` | **4.87** | Olive as text on the page field. |
+| near-white `#fffdf2` | olive `#68681f` | **5.74** | Near-white text on an olive fill. |
+| garnish red `#a52f24` (`accentGarnish`) | cream `#f8e9c8` | **5.77** | Main-set stars (13px marks). |
+| garnish red `#a52f24` | hero gradient darkest stop `#fdca8e` (`heroEnd`) | **4.62** | Script welcome line where it overlaps the gradient's darkest point. |
+| purple `#6b4e8e` (`sponsorLabel`) | putty `#f1dfb8` | **5.15** | Sponsor attribution line in the presenting-sponsor band. |
+| purple `#6b4e8e` | cream `#f8e9c8` | **5.63** | Sponsor credit line on the page field. |
+
+Every text row clears 4.5:1. The binding constraints are the two rows
+at 4.87 and the muted-on-putty row at 5.14 — those have the least
+headroom and are the first to break if a surface is re-tinted.
+
+### Non-text pairings — 3:1 bar, and the decorative exemption
+
+| Element | Pairing | Ratio | Verdict |
+| --- | --- | --- | --- |
+| Answer option-row border (`optionBorder`, 2.5px olive) | `#68681f` on cream `#f8e9c8` | **4.87** | Passes 1.4.11 — it delineates a control boundary, so the bar applies and is met. |
+| Gold section rules and row separators | `#e0b040` on putty `#f1dfb8` | **1.53** | **Exempt.** Decorative separator only. |
+| Gold section rules | `#e0b040` on cream `#f8e9c8` | **1.67** | **Exempt.** Same. |
+
+The gold rules are the one place Madrona sits far below 3:1, and it is
+deliberate. They are poster garnish — the page-head band's bottom rule,
+the dotted section separators, the code block's border. None of them
+conveys information that is not already conveyed by heading text,
+spacing, and the band's own tint change, which is the condition WCAG
+1.4.11 exempts. **A gold rule may never become the sole indicator of
+state** (focus, selection, error, active nav). Focus and selection use
+the olive and dark-green treatments above precisely because those clear
+the bar.
+
+### The donate decision
+
+Two different surfaces are both called "donate" and they have
+different palettes — this has caused confusion more than once:
+
+- The **masthead Donate pill** is gold (`--accent` fill, `--header-bg`
+  green label), 4.87:1.
+- The **completion-screen Donate CTA** is poster orange
+  (`ctaWarmSurface` `#d9822b`) with a deepened ink foreground
+  (`ctaWarmFg` `#2a2016`), 5.45:1.
+
+The orange fill is an organizer decision — poster orange is the
+brand's warm accent and the organizer wanted donate to read warm
+rather than gold, distinct from the newsletter CTA next to it. The
+fill is therefore fixed; the foreground is what moved.
+
+**White (or near-white) on poster orange is banned.** The design
+mock paired `#fffdf2` on `#d9822b`, which measures **2.87:1** — it
+fails the normal-text bar outright and cannot be rescued by weight or
+size at this button's type scale. Deepening the foreground to
+`#2a2016` was the fix. If a future surface wants orange, it takes a
+dark foreground.
+
+### Values that were replaced, and why
+
+Recording the rejects matters as much as the accepted values: without
+them, the poster palette looks like the obvious choice and gets
+re-proposed. Each shift stays inside its own hue, so the page still
+reads as the poster palette.
+
+| Poster value | Measured | Shipped as | Now | Why it could not stand |
+| --- | --- | --- | --- | --- |
+| olive `#8b8b2e` | **3.00** on cream / **3.53** under near-white | `#68681f` | 4.87 / 5.74 | A genuine **luminance dead zone**: neither a light nor a dark foreground reaches 4.5:1 against it, so no pairing could have fixed it — the color itself had to move. |
+| gold `#d9a62b` | **4.40** on dark green | `#e0b040` | 4.87 | Gold text on the header and footer missed the bar. |
+| muted `#6f6350` | **4.47** on putty | `#655a48` | 5.14 | Missed the bar on the putty band specifically; passed everywhere else. |
+| garnish red `#c43b2f` | **3.49** on `heroEnd` / **4.36** on cream | `#a52f24` | 4.62 / 5.77 | Welcome line over the gradient's darkest stop, and the 13px stars. |
+| near-white `#fffdf2` on orange | **2.87** | foreground → `#2a2016` | 5.45 | See the donate note above. |
+
+Print has no contrast requirement, which is why the poster palette
+never had to resolve any of this and why the design spec does not
+mention it. Reverting any of these is a one-line edit in `madrona.ts`
+that silently reintroduces the failure on every Madrona surface.
+
+**Two figures in circulation are stale.** Earlier notes report
+`5.67:1` for "ink on gold" and `1.69:1` for gold rules on putty. Both
+were measured against the **pre-shift poster gold `#d9a62b`**, so
+neither describes a shipped surface:
+
+- Gold rules on putty are **1.53:1** with today's `accent`, not 1.69
+  (the row above).
+- "Ink on gold" is not a pairing that ships at all. Body ink
+  `#3a3226` on today's gold would be 6.28:1, but neither gold button
+  uses it — the masthead pill uses the header green (4.87) and the
+  completion CTA uses `ctaFg` (7.15).
+
+If you find those older numbers, they are not a contradiction of this
+table; they predate the gold shift.
 
 ## Related Docs
 

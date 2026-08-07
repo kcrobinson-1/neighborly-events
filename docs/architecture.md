@@ -157,6 +157,37 @@ grouped into a dedicated `apps/web/src/game/` module:
   Internal pure derived-state selectors for React-facing game view state.
 - `apps/web/src/game/gameUtils.ts`
   Public game-specific selection, label, and feedback helpers.
+- `apps/web/src/game/gameSessionPersistence.ts`
+  Device-local snapshot store that makes the quiz route a single
+  destination with three durable states (not started / in progress /
+  completed). Snapshots are keyed by event id and bound to the active
+  client session id, so the completed screen — including the check-in
+  code — is recoverable on return without retaking.
+
+  The recovery mechanism is the **cached completion, not a re-fetch**
+  through the completion RPC's replay path. Replaying requires
+  resending the identical request id, answers, score, and duration —
+  the exact payload the module would have to persist anyway — so a
+  re-fetch would add a network dependency at an outdoor event without
+  shrinking the persisted surface. The backend still owns the
+  entitlement: a retake resubmits through the normal flow and the RPC
+  returns the existing entitlement, which is why retaking never
+  changes the code or the reward entry.
+
+  Snapshots are validated on read and discarded on mismatch (wrong
+  client session, malformed JSON, or an in-progress snapshot whose
+  content fingerprint no longer matches the published questions),
+  falling back to a fresh run. Completed snapshots deliberately
+  survive content drift, because the check-in code stays valid
+  regardless of later question edits. The `submitting` snapshot kind
+  carries the in-flight request id so a reload mid-POST resubmits the
+  identical payload and the backend's request-id dedup returns the
+  original attempt rather than recording a duplicate completion.
+
+  Durable completion is what makes same-tab navigation off the
+  completion screen safe; `shared/events/completionCta.ts` links
+  accordingly, falling back to a new tab only when device storage is
+  unusable.
 - `apps/web/src/game/components/`
   Game-specific intro, question, feedback, and completion panels extracted from
   the route shell.
@@ -328,6 +359,32 @@ grouped into a dedicated `apps/web/src/game/` module:
   The `EventContent` TypeScript type, the `eventContentBySlug`
   registry, and the `registeredEventSlugs` derivation consumed by
   the rendering route and metadata routes.
+- `apps/site/lib/eventNights.ts`
+  Per-night content model and the "tonight" resolver for events that
+  author `EventContent.nights` — a date, label, run-of-show rows,
+  opener, artist reference, and headliner sponsor per night. This is
+  **per-event content plus a generic resolver**, not event-keyed
+  logic: no component branches on a slug, and events without `nights`
+  render the generic multi-section template unchanged.
+
+  `resolveTonight` returns one of three states — `tonight`,
+  `upcoming`, or `seasonWrap` — as a **pure function of
+  `(now, nights)`**. It holds no module clock and reads no ambient
+  timezone, which is what makes the midnight boundaries unit-testable
+  and lets a statically prerendered page re-resolve against the
+  device clock on mount. The concert-day window runs to local
+  midnight in the *event's* IANA zone, so post-show visitors still
+  see tonight rather than being flipped to the next night.
+
+  Timezone reads go through `Intl.DateTimeFormat` with the content's
+  declared zone — the one bounded exception to the site's "renderer
+  never interprets dates in a local timezone" rule, and it interprets
+  the event's zone, never the viewer's. An invalid IANA name throws
+  from `Intl` at first resolve rather than silently resolving in the
+  wrong zone, and per-event content tests pin each literal so a typo
+  fails in CI. Nights whose date fails to parse are skipped (degraded
+  over fake, matching the section renderers' stance), and the input
+  array is sorted on a copy so authors may list nights in any order.
 - `apps/site/lib/eventOgImage.tsx`
   Shared OG / twitter image renderer consumed by both
   file-convention metadata routes.

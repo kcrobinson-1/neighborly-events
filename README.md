@@ -57,7 +57,18 @@ This repository currently includes:
   `get-redemption-status` endpoint, so the volunteer redeem action is
   reflected back on the attendee screen within a few seconds while the
   completion result remains open
-- one-question-at-a-time quiz flow with back navigation
+- a day-of-companion landing layout for events that author it — hero,
+  action grid, a "tonight" section resolved against the event's own
+  timezone, presenting-sponsor band, on-stage artist detail, and a
+  season strip — alongside the generic multi-section template that
+  events without it keep
+- a shared event masthead rendered from `shared/masthead/` in both
+  apps, gated by a per-event registry so unregistered events render no
+  bar
+- one-question-at-a-time quiz flow with back navigation, whose route is
+  a single destination with three durable device-local states (not
+  started / in progress / completed), so returning to a finished quiz
+  shows the results and check-in code again without retaking
 - multiple quiz feedback modes
 - shared quiz mapping, validation, and scoring logic
 - Supabase-backed browser-session bootstrap
@@ -124,6 +135,9 @@ The main docs are:
   how the attendee, volunteer, and organizer flows should feel
 - [Architecture Notes](/docs/architecture.md)
   current system shape, trust boundaries, and runtime flow
+- [Styling Tokens And Themes](/docs/styling.md)
+  binding themable/structural token classification, the color-derivation
+  policy, the per-event `Theme` model, and per-event contrast verification
 - [Database-backed Quiz Content](/docs/plans/archive/database-backed-quiz-content.md)
   durable implementation reference for the published-content milestone
 - [Quiz Authoring Plan](/docs/plans/archive/quiz-authoring-plan.md)

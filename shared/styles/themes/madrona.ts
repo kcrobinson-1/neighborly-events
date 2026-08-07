@@ -11,8 +11,8 @@ import type { Theme } from "../types.ts";
  * own those accents.
  *
  * Typography is the poster set, self-hosted as woff2 in each app's
- * `public/fonts/` (`@font-face` in apps/site's `globals.scss` and
- * apps/web's `_fonts.scss`; OFL 1.1, see `FONT-LICENSES.txt`
+ * `public/fonts/` (`@font-face` in each app's own `_fonts.scss`;
+ * OFL 1.1, see `FONT-LICENSES.txt`
  * alongside the font files): Bebas Neue for display/headings,
  * Poppins for body, Lora Italic for short warm accents via the
  * optional `accentFontFamily` field.
@@ -128,8 +128,9 @@ export const madronaTheme: Theme = {
   // poster's warm accent — garnish-tier, so it lives here rather
   // than as a brand base). Foregrounds are deepened past the mock's
   // pairings to clear WCAG AA for normal text: deep green on gold
-  // (6.5:1), deep warm ink on orange (5.5:1) — the mock's
-  // near-white-on-orange measured 2.9:1.
+  // (7.15:1), deep warm ink on orange (5.45:1) — the mock's
+  // near-white-on-orange measured 2.87:1. Full measured table:
+  // `docs/styling.md` — "Madrona Event Theme — Measured Contrast."
   ctaSurface: "var(--accent)",
   ctaFg: "#1c2e20",
   ctaWarmSurface: "#d9822b",

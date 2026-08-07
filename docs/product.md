@@ -49,6 +49,40 @@ Today the repo implements:
 - an authenticated agent-facing redeem route at `/event/:slug/game/redeem` for fast booth-side code entry, and an authenticated organizer-facing monitoring + reversal route at `/event/:slug/game/redemptions` for dispute handling (list, filter, search, reverse with optional reason), both direct-URL only until role seeding
 - a read-only demo-mode bypass on the auth-gated event surfaces (admin, redeem, redemptions) for the two test-event slugs (`harvest-block-party`, `riverside-jam`), reaching internal-partner demos without sign-in; mutations stay rejected server-side, and every apps/web URL under a test-event slug — bypass surfaces and the gameplay route alike — emits `noindex` uniformly at parity with the apps/site test-event landings, keeping test events invisible to public search end-to-end
 - a public per-event attendee-feedback route at `/event/:slug/feedback` for end-of-event feedback (star + N/A ratings across content-authored dimensions, optional free-text, optional email, and an optional newsletter opt-in tied to that email), available for events whose per-event content module carries a feedback block (unknown slugs render 404; known slugs without feedback content render a friendly disabled-state), with submissions durably persisted to a feedback-submissions table — gated server-side at submit time by a slug-keyed registry FK — and, when the attendee opts in, a separate append-only consent log written in the same transaction for organizer review
+- a **day-of companion** event landing page for events that author it, plus a shared event masthead that renders the same nav bar across both apps — see "The Day-Of Companion Model" below
+
+### The Day-Of Companion Model
+
+The Madrona redesign settled what an event's own surfaces are *for*,
+and the answer binds the product, not just one event's design:
+
+- **The landing page is a day-of companion, not a second marketing
+  site.** Visitors arrive already knowing what the event is — from a
+  poster, a newsletter, the organizer's own site. The page therefore
+  never reintroduces the event: no address block, no what-is-this
+  paragraph, no series-length subheader. It welcomes you, shows
+  tonight, and puts the actions one tap away. The organizer's
+  marketing presence keeps the job of explaining the event; competing
+  with it would be both redundant and worse.
+- **Tonight is resolved, not authored.** Events author their nights
+  once; the page resolves which one is "tonight" against the event's
+  own timezone, holds it until local midnight so post-show visitors
+  still see the right night, and falls back to a season wrap-up after
+  the final night. No organizer edits the page day-to-day.
+- **The quiz is one destination with three durable states**, not a
+  flow that can be lost. Leaving the quiz and coming back returns you
+  where you were — including to a completed result with its check-in
+  code intact. This is what lets every surface link freely to every
+  other one.
+- **Sponsors get two placements, and they mean different things.** An
+  event-wide *presenting* sponsor appears on every night; a *headliner*
+  sponsor is credited per night alongside that night's artist. Both are
+  content, not code.
+- **Reward language is fixed.** The words "trinket" and "raffle" appear
+  nowhere in the product. The only reward phrasing is the generic "show
+  your code to the booth to claim a reward." This binds copy in both
+  apps, seed content, and admin-authored question rows alike — it is a
+  product rule, not a per-event style preference.
 
 What remains as future product work:
 
