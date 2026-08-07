@@ -581,13 +581,19 @@ is not evidence about them:
 - **Surface-against-surface pairings** (an input fill against the page
   behind it) are likewise not enumerated here.
 
-### Known gap — form-control boundaries on the flat cream palette
+### Known 1.4.11 gaps — measured, failing, not fixed here
 
-Madrona's flat palette removes the panel chrome that used to make
-inputs legible, and the alpha borders left behind do not replace it.
-Measured on the signup route's email input
-([`_signup.scss:46`](/apps/site/app/styles/_signup.scss), `1px solid
-var(--border-soft)` on `var(--surface-card)`):
+Madrona's flat palette removed the panel chrome and heavy borders that
+used to carry non-text contrast, and the treatments left behind do not
+replace it. Three gaps are measured and failing. All three are on
+surfaces shipping to attendees; all three are filed Tier 1 in
+[`backlog.md`](/docs/backlog.md), because raising any of them is a
+visual design change across the themes that share the token, not a doc
+edit.
+
+**1. Form-control boundaries.** Measured on the signup route's email
+input ([`_signup.scss:46`](/apps/site/app/styles/_signup.scss), `1px
+solid var(--border-soft)` on `var(--surface-card)`):
 
 | Pairing | Ratio |
 | --- | --- |
@@ -595,18 +601,37 @@ var(--border-soft)` on `var(--surface-card)`):
 | the same border vs the cream page behind it | **1.00** |
 | input fill `#fffdf2` vs cream page `#f8e9c8` | **1.18** |
 
-Nothing there reaches 3:1 — the border is effectively invisible
-against the page. The same treatment is on the feedback route's
-textarea and email input
-([`_event.scss:669`](/apps/site/app/styles/_event.scss)), so three
-controls across two routes are affected, both of them masthead
-destinations.
+The border is effectively invisible against the page. Same treatment on
+the feedback route's textarea and email input
+([`_event.scss:669`](/apps/site/app/styles/_event.scss)) — three
+controls across two routes, both masthead destinations.
 
-This is recorded rather than fixed here: raising it is a visual design
-change across every theme that uses `--border-soft`, not a doc edit.
-It is filed in [`backlog.md`](/docs/backlog.md) as Tier 1. **Do not
-cite this section as evidence that Madrona's form controls pass
-1.4.11.** They have been measured and they do not.
+**2. The focus ring.** `$focus-ring` is `3px solid
+var(--secondary-focus)`, and `--secondary-focus` is the derived
+**42% alpha mix** of `--secondary`, not the solid olive. On Madrona
+that composites to **1.77:1** on the cream page (1.72 on putty, 1.86
+on near-white). [`_game-focus.scss`](/apps/web/src/styles/_game-focus.scss)
+applies the outline as the *only* focus treatment — no accompanying
+border or fill change — so keyboard focus on quiz options, primary and
+secondary buttons, completion CTAs, and text links is below the bar
+with nothing else carrying it. This one is a derived-shade consequence:
+the solid `--secondary` clears 3:1 comfortably (4.87 on cream); the
+42% mix does not.
+
+**3. The featured-night outline.**
+`.event-landing-season-card-now` uses `3px solid var(--accent)` with
+`outline-offset: 2px`, so it sits on the cream page at the same
+**1.67:1** as any gold rule — and
+[`LandingTonightSections.tsx`](/apps/site/components/event/LandingTonightSections.tsx)
+adds no visible label, no `aria-current`, and no visually-hidden text.
+The gold outline is therefore the *sole* indicator of which night is
+featured, which is exactly the case the decorative exemption below does
+**not** cover.
+
+**Do not cite this section as evidence that Madrona's controls, focus
+states, or state indicators pass 1.4.11.** They have been measured and
+they do not. What this section verifies is the color-on-color pairings
+listed in the two tables below — nothing wider.
 
 ### Text pairings — 4.5:1 bar
 
@@ -637,19 +662,34 @@ headroom and are the first to break if a surface is re-tinted.
 
 | Element | Pairing | Ratio | Verdict |
 | --- | --- | --- | --- |
-| Answer option-row border (`optionBorder`, 2.5px olive) | `#68681f` on cream `#f8e9c8` | **4.87** | Passes 1.4.11 — it delineates a control boundary, so the bar applies and is met. |
-| Gold section rules and row separators | `#e0b040` on putty `#f1dfb8` | **1.53** | **Exempt.** Decorative separator only. |
-| Gold section rules | `#e0b040` on cream `#f8e9c8` | **1.67** | **Exempt.** Same. |
+| Answer option-row border (`optionBorder`, 2.5px olive) | `#68681f` on cream `#f8e9c8` | **4.87** | Passes — delineates a control boundary, bar applies and is met. |
+| Selected option border (`optionSelectedBorderColor`) | `#2e4a34` on cream `#f8e9c8` | **8.15** | Passes — solid dark green, well clear (7.63 against the selected fill `#ede3c2`). |
+| Gold section rules and row separators | `#e0b040` on putty `#f1dfb8` | **1.53** | **Exempt** — decorative separator only, see below. |
+| Gold section rules | `#e0b040` on cream `#f8e9c8` | **1.67** | **Exempt** — same. |
+| Focus ring (`--secondary-focus`, olive @ 42%) | composited, vs cream | **1.77** | **FAILS** — gap 2 above. |
+| Featured-night outline (`--accent`) | `#e0b040` on cream `#f8e9c8` | **1.67** | **FAILS** — gap 3 above; sole state indicator. |
 
-The gold rules are the one place Madrona sits far below 3:1, and it is
-deliberate. They are poster garnish — the page-head band's bottom rule,
-the dotted section separators, the code block's border. None of them
-conveys information that is not already conveyed by heading text,
-spacing, and the band's own tint change, which is the condition WCAG
-1.4.11 exempts. **A gold rule may never become the sole indicator of
-state** (focus, selection, error, active nav). Focus and selection use
-the olive and dark-green treatments above precisely because those clear
-the bar.
+**The decorative exemption, stated precisely.** Gold *rules* — the
+page-head band's bottom rule, the dotted section separators, the code
+block's border — convey nothing that heading text, spacing, and the
+band's own tint change do not already convey, which is the condition
+WCAG 1.4.11 exempts. That exemption is about those separators and
+nothing else.
+
+It does **not** extend to gold used as a state indicator, and the
+distinction is load-bearing rather than theoretical: the featured-night
+outline is gold at the same 1.67:1 and *is* the sole indicator of
+state, so it fails (gap 3). The earlier draft of this section asserted
+that gold never carries state and that focus and selection clear the
+bar by using the solid olive and dark green. Both were wrong —
+selection does use solid dark green and passes, but focus resolves
+through the 42% derived mix, not the solid olive. They are recorded
+here as failures rather than removed, so the correction is visible to
+anyone who read the earlier claim.
+
+The rule worth keeping is the design intent, stated as intent: **gold
+should not be the sole carrier of state, and where it currently is,
+that is a bug on the list above** — not a documented exemption.
 
 ### The donate decision
 

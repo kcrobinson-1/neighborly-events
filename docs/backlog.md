@@ -38,6 +38,44 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
+- [ ] **`ux` Madrona focus ring is 1.77:1 — below the 3:1 non-text bar**
+  `$focus-ring` is `3px solid var(--secondary-focus)`, and
+  `--secondary-focus` is the derived **42% alpha mix** of
+  `--secondary`, not the solid olive. On Madrona that composites to
+  **1.77:1** against the cream page (1.72 on putty, 1.86 on
+  near-white). [`_game-focus.scss`](/apps/web/src/styles/_game-focus.scss)
+  applies the outline as the *only* focus treatment, so keyboard focus
+  on quiz options, primary/secondary buttons, completion CTAs, and text
+  links has nothing else carrying it. **Goal:** a keyboard user can see
+  where focus is on every Madrona interactive surface. Note the shape
+  of the cause before picking a fix: the solid `--secondary` clears the
+  bar comfortably (4.87 on cream) and only the 42% derivation fails, so
+  options include raising the mix percentage, pointing `$focus-ring` at
+  a solid token, or adding a second non-color focus affordance — but
+  the derived-shade percentage is shared with every theme, so changing
+  it there is not Madrona-local. Tier 1: this is keyboard accessibility
+  on the primary attendee flow. Measurements recorded in
+  [`docs/styling.md`](/docs/styling.md).
+  Detail: N/A
+
+- [ ] **`ux` Featured-night outline is the sole state indicator at 1.67:1**
+  `.event-landing-season-card-now`
+  ([`_landing.scss:380`](/apps/site/app/styles/_landing.scss)) marks
+  the featured night with `3px solid var(--accent)` and
+  `outline-offset: 2px`, putting gold on the cream page at **1.67:1**,
+  and
+  [`LandingTonightSections.tsx`](/apps/site/components/event/LandingTonightSections.tsx)
+  adds no visible label, no `aria-current`, and no visually-hidden
+  text. So the only signal for "this is tonight" in the season strip is
+  a below-threshold color outline — invisible to a low-vision user and
+  absent for a screen-reader user. **Goal:** which night is featured is
+  perceivable without relying on that outline. A text or icon marker
+  would fix the semantic half and the contrast half at once, which is
+  likely cheaper than re-coloring the outline; `aria-current` alone
+  would fix only the screen-reader half. Tier 1: the season strip is on
+  the landing page every attendee sees.
+  Detail: N/A
+
 - [ ] **`ux` Madrona form controls have no boundary treatment reaching 3:1**
   The flat cream palette removed the panel chrome that used to make
   inputs legible, and the alpha border left behind does not replace
