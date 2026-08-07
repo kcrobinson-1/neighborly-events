@@ -78,11 +78,17 @@ and the answer binds the product, not just one event's design:
   event-wide *presenting* sponsor appears on every night; a *headliner*
   sponsor is credited per night alongside that night's artist. Both are
   content, not code.
-- **Reward language is fixed.** The words "trinket" and "raffle" appear
-  nowhere in the product. The only reward phrasing is the generic "show
-  your code to the booth to claim a reward." This binds copy in both
-  apps, seed content, and admin-authored question rows alike — it is a
-  product rule, not a per-event style preference.
+- **Reward language bans two nouns.** The words "trinket" and "raffle"
+  appear nowhere in the product — not in either app's copy, not in seed
+  content, not in admin-authored question rows. That prohibition is the
+  rule, and it is a product rule rather than a per-event style
+  preference. The canonical replacement phrasing is the generic "show
+  your code to the booth to claim a reward," but **natural variants are
+  expected and allowed**: shipped copy says "your reward entry is now
+  recorded," "you're checked in for the reward," and seeds
+  `entitlementLabel` as "reward ticket." What the rule forbids is the
+  two banned nouns and the promise structure they carry (a draw, a
+  chance to win), not any particular sentence.
 
 What remains as future product work:
 

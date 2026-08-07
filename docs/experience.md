@@ -200,8 +200,11 @@ layout, top to bottom:
 
 Reward-language rule, restated from the design spec because it binds
 all surfaces including this one: the words "trinket" and "raffle"
-appear nowhere; the only reward phrasing is the generic "show your
-code to the booth to claim a reward."
+appear nowhere. The canonical replacement phrasing is the generic
+"show your code to the booth to claim a reward," and natural variants
+of it are allowed — the rule bans the two nouns and the draw/chance
+framing they imply, not every sentence but one. See
+[`product.md`](/docs/product.md) "The Day-Of Companion Model."
 
 ## Should Each Question Be Its Own Page?
 
