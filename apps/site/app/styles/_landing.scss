@@ -307,8 +307,17 @@
   list-style: none;
 }
 
+/* `min-height: 44px` matches `.event-lineup-artist-links a` in
+ * `_event.scss` — these are the same artist chips on the phone-first
+ * day-of surface, so they keep the same tap target. The padding is
+ * top-heavy because Bebas sits high in its em box; flex centering
+ * alone leaves the caps looking low. */
 .event-landing-band-links a {
-  padding: 4px 12px 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 3px 14px 0;
   border: 2px solid var(--secondary);
   border-radius: 999px;
   background: var(--white-warm);
@@ -440,7 +449,13 @@
   border-bottom: 2px dotted var(--accent-rule);
 }
 
+/* 44px minimum on the disclosure row and the footer contact link, the
+ * same phone tap target the artist chips keep — this is a surface
+ * people use one-handed, standing on grass. */
 .event-landing-faq-summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   cursor: pointer;
   font-size: 15px;
   font-weight: 700;
@@ -474,6 +489,9 @@
 }
 
 .event-landing-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--accent);
 }
 
