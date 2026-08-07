@@ -94,8 +94,13 @@ export function GameCompletionPanel({
   // The CTA rides on the entitlement but never blocks it: it renders only
   // once the completion result exists, below the verification block, and
   // only for events registered in the completion CTA registry.
+  // Every optional section is named here. The gate listed only two
+  // while the content shape carried a third, an event authoring just
+  // that one would render nothing at all — so a section added above
+  // has to be added here in the same change.
   const shouldShowCta =
-    Boolean(completion) && Boolean(cta?.emailList ?? cta?.donate);
+    Boolean(completion) &&
+    Boolean(cta?.emailList ?? cta?.donate ?? cta?.volunteer);
   // Two independent reasons a CTA link opens in a new browsing context, and
   // they do not substitute for one another:
   //
@@ -268,6 +273,18 @@ export function GameCompletionPanel({
                 {...ctaLinkAttrs(cta.donate)}
               >
                 {cta.donate.buttonLabel}
+              </a>
+            </div>
+          ) : null}
+          {cta.volunteer ? (
+            <div className="completion-cta-item">
+              <p>{cta.volunteer.body}</p>
+              <a
+                className="completion-cta-button"
+                href={cta.volunteer.href}
+                {...ctaLinkAttrs(cta.volunteer)}
+              >
+                {cta.volunteer.buttonLabel}
               </a>
             </div>
           ) : null}

@@ -36,9 +36,20 @@
  * `first-sample` is the local-prototype demo fixture of the Madrona
  * experience (`shared/game-config/sample-games.ts`); it mirrors the
  * `madrona` entry so local UI review and the demo flow exercise the
- * block. The mirror shares the `madrona` object, so both of its
+ * block. The mirror shares the `madrona` object, so all three of its
  * destinations are the association's real ones rather than
- * nonexistent `first-sample` equivalents. Both are absolute external
+ * nonexistent `first-sample` equivalents.
+ *
+ * The sharing is kept deliberately as the volunteer section joins
+ * them. The fixture exists so a reviewer sees what ships, and it is
+ * the only entry that renders on a bare Vite dev server — pointing
+ * it at placeholder destinations would make the block reviewable
+ * only in the one shape nobody deploys. The cost is the usual one
+ * for identity sharing: an edit to `madronaCompletionCta` changes
+ * the demo too, which is intended here and is why the object is
+ * named rather than spread.
+ *
+ * All three are absolute external
  * URLs, so they resolve identically from every origin — including the
  * bare Vite dev server, where the fixture is the only entry that
  * renders. (Before the email-list destination moved off the platform
@@ -81,6 +92,13 @@ export type CompletionCtaContent = {
   emailList?: CompletionCtaLink;
   /** Present only when the event has a donation destination. */
   donate?: CompletionCtaLink;
+  /**
+   * Present only when the event has somewhere to send a volunteer.
+   * Same shape as the other two, so the panel renders it the same
+   * way and the render gate below has to account for it — an event
+   * authoring only this section still gets the block.
+   */
+  volunteer?: CompletionCtaLink;
 };
 
 const madronaCompletionCta: CompletionCtaContent = {
@@ -97,6 +115,13 @@ const madronaCompletionCta: CompletionCtaContent = {
       "These concerts are free because neighbors chip in — 100% of donations go to the association.",
     buttonLabel: "Support the Playfield",
     href: madronaFacts.donateHref,
+    external: true,
+  },
+  volunteer: {
+    body:
+      "Setup's at 4:30, takedown's at 8:30 — we can always use another set of hands.",
+    buttonLabel: "Volunteer",
+    href: madronaFacts.volunteerHref,
     external: true,
   },
 };
