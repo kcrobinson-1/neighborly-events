@@ -78,6 +78,13 @@ export const madronaTheme: Theme = {
   headingFontFamily: '"Bebas Neue", "Avenir Next Condensed", "Arial Narrow", sans-serif',
   accentFontFamily: '"Lora", Georgia, serif',
 
+  // Small-decoration accent — the poster red, used only for the
+  // welcome line and the main-set stars. Darkened from the poster's
+  // `#c43b2f`: the welcome line sits on the hero gradient and
+  // measured 3.49:1 against its darkest stop (`heroEnd`), and the
+  // 13px stars measured 4.36:1 on cream. Now 4.62:1 and 5.77:1.
+  accentGarnish: "#a52f24",
+
   // Optional brand fields — sticky dark-green header bar with
   // near-white links; putty band surface.
   headerBg: "#2e4a34",

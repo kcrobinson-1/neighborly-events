@@ -67,6 +67,7 @@ export function themeToStyle(theme: Theme): Record<string, string> {
     "--font-body": theme.bodyFontFamily,
     "--font-heading": theme.headingFontFamily,
     "--font-accent": theme.accentFontFamily ?? theme.bodyFontFamily,
+    "--accent-garnish": theme.accentGarnish ?? theme.secondary,
 
     // Quiz-surface vocabulary (Madrona redesign R4). Defaults
     // reproduce the pre-extension rendering. The page-surface and

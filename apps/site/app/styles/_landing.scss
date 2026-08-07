@@ -9,29 +9,23 @@
  * platform-generic and renders for any event that authors
  * `EventContent.landing`.
  *
- * Two literal colors are deliberate non-tokens, per the Theme
- * contract's garnish rule ("red and purple are garnish — components
- * that need them own those accents"): the poster red (welcome line,
- * main-set stars) and the warm orange (donate tile). They are part
- * of this layout's design, not an event's brand surface.
- *
- * Both literals are AA-darkened from their poster values, the same
- * print-vs-screen adjustment the madrona Theme documents for its
- * olive / gold / muted:
- *
- * - orange `#d9822b` → `#a5611d`. The poster value carries 2.87:1
- *   under the near-white tile foreground — failing even the 3:1
- *   large-text bar — so it is not usable as a text background at
- *   all. Now 4.76:1.
- * - red `#c43b2f` → `#a52f24`. The welcome line sits on the hero
- *   gradient and was 3.49:1 against its darkest stop (`--hero-end`);
- *   the run-of-show stars were 4.36:1 on cream. Now 4.62:1 and
- *   5.77:1. Contrast on a gradient must be checked against the
- *   *darkest* stop the text can overlap, not the average.
+ * This file carries **no color literals**. `EventContent.landing` is
+ * a platform-generic opt-in, so any event can adopt this layout — a
+ * hard-coded "poster red" here would paint a future event's welcome
+ * line in Madrona's branding. Every color resolves from the per-event
+ * Theme, including the two that read as garnish rather than brand
+ * surface: the welcome line and main-set stars take
+ * `--accent-garnish`, and the donate tile takes the
+ * `--cta-warm-surface` / `--cta-warm-fg` pair the quiz's donate CTA
+ * already uses, so the two surfaces cannot drift onto different
+ * oranges. The newsletter tile likewise shares `--cta-surface` /
+ * `--cta-fg` with its quiz counterpart.
  *
  * Opacity reductions are deliberately absent throughout (action-tile
  * subtitles, season-card dates, footer lines): dimming already-small
- * text is what pushed several of these under 4.5:1.
+ * text is what pushed several of these under 4.5:1. Tap targets hold
+ * a 44px minimum for the same reason the generic template's artist
+ * chips do — this is a phone-first, standing-on-grass surface.
  *
  * The page surface (`--bg`) is painted on `.event-landing` itself:
  * `body`'s background lives outside `<ThemeScope>` and can only show
@@ -85,7 +79,7 @@
 
 .event-landing-welcome {
   margin: 6px 0 20px;
-  color: #a52f24; /* poster red, AA-darkened — see header comment */
+  color: var(--accent-garnish);
   font-family: var(--font-accent);
   font-style: italic;
   font-size: 20px;
@@ -135,8 +129,8 @@
 }
 
 .event-landing-action-newsletter {
-  background: var(--accent);
-  color: var(--text);
+  background: var(--cta-surface);
+  color: var(--cta-fg);
 }
 
 .event-landing-action-feedback {
@@ -144,7 +138,8 @@
 }
 
 .event-landing-action-donate {
-  background: #a5611d; /* warm orange, AA-darkened — see header comment */
+  background: var(--cta-warm-surface);
+  color: var(--cta-warm-fg);
 }
 
 .event-landing-section {
@@ -232,7 +227,7 @@
 
 .event-landing-sched-star {
   margin-left: auto;
-  color: #a52f24; /* poster red, AA-darkened — see header comment */
+  color: var(--accent-garnish);
   font-size: 13px;
 }
 
@@ -430,12 +425,13 @@
 }
 
 .event-landing-wrap-action-newsletter {
-  background: var(--accent);
-  color: var(--primary);
+  background: var(--cta-surface);
+  color: var(--cta-fg);
 }
 
 .event-landing-wrap-action-donate {
-  background: #a5611d; /* warm orange, AA-darkened — see header comment */
+  background: var(--cta-warm-surface);
+  color: var(--cta-warm-fg);
 }
 
 .event-landing-faq-list {
