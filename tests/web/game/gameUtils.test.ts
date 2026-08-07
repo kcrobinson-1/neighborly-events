@@ -112,20 +112,23 @@ describe("gameUtils", () => {
     );
   });
 
+  const rewardLine =
+    "Show your code at the booth when you're done to claim a reward.";
+
   it("spells out the question count in the page-head subtext", () => {
-    expect(getPageHeadSubtext(8)).toBe(
+    expect(getPageHeadSubtext(8, rewardLine)).toBe(
       "Eight questions. Show your code at the booth when you're done to claim a reward.",
     );
   });
 
   it("uses singular page-head copy for a one-question game", () => {
-    expect(getPageHeadSubtext(1)).toBe(
+    expect(getPageHeadSubtext(1, rewardLine)).toBe(
       "One question. Show your code at the booth when you're done to claim a reward.",
     );
   });
 
   it("falls back to a numeral for counts beyond the spelled-out range", () => {
-    expect(getPageHeadSubtext(13)).toBe(
+    expect(getPageHeadSubtext(13, rewardLine)).toBe(
       "13 questions. Show your code at the booth when you're done to claim a reward.",
     );
   });

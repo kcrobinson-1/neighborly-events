@@ -11,6 +11,7 @@ import { useGameSession } from "../game/useGameSession";
 import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
 import { getCompletionCta } from "../../../../shared/events/completionCta";
+import { getQuizPageHead } from "../../../../shared/events/quizPageHead";
 import { routes } from "../../../../shared/urls";
 
 /** Props for the top-level game route. */
@@ -57,6 +58,9 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
   );
 
   const questionCount = game.questions.length;
+  // Event-owned page-head copy: the reward line names the event's
+  // redemption location, so it renders only for registered slugs.
+  const pageHeadCopy = getQuizPageHead(game.slug);
   const isGameActive = isStarted && !isComplete && !isSubmittingCompletion;
   const handleStart = async () => {
     setIsStartingSession(true);
@@ -113,9 +117,11 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
                 </div>
               ) : null}
             </header>
-            <p className="game-page-subtext">
-              {getPageHeadSubtext(questionCount)}
-            </p>
+            {pageHeadCopy ? (
+              <p className="game-page-subtext">
+                {getPageHeadSubtext(questionCount, pageHeadCopy.rewardLine)}
+              </p>
+            ) : null}
           </div>
         </div>
 
