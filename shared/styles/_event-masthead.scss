@@ -111,6 +111,43 @@
 }
 
 /*
+ * Phone tap targets. Every interactive element on the event surfaces
+ * clears 44px — `.event-lineup-artist-links a` has enforced it since
+ * the generic template, and the day-of landing's chips, disclosures
+ * and footer links were brought back to it in the R3 a11y pass. The
+ * bar is the one chrome that had not had that pass, and it is the
+ * only way home from the quiz app.
+ *
+ * Expanded with an overlay rather than `min-height`, because the type
+ * here is load-bearing: the nav items draw the active underline on
+ * their own bottom edge, so growing the box would detach the gold
+ * rule from the word it underlines, and the brand lockup baselines
+ * its two spans against each other. The overlay leaves every box
+ * where it was and spends the bar's existing vertical padding, so the
+ * bar's height and rhythm are unchanged.
+ *
+ * Vertical only: the four items have to fit one row at 390px, so
+ * widening them would close the gaps between neighboring targets.
+ * Each is comfortably past the 24px minimum on that axis.
+ */
+.event-masthead-brand,
+.event-masthead-link {
+  position: relative;
+}
+
+.event-masthead-brand::after,
+.event-masthead-link::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 100%;
+  min-height: 44px;
+  transform: translateY(-50%);
+}
+
+/*
  * Compression ladder for phone widths (the mock's breakpoints): the
  * brand tagline drops first so the lockup collapses to the name and
  * the four links fit on one row at 390px; below 430px the type and
