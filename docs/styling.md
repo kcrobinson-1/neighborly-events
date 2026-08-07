@@ -418,10 +418,17 @@ apps read flat `var(--…)`, and nothing brand-tied is duplicated.
 The **structural** half is not symmetric, and this doc previously
 described an intent rather than the code. Stated plainly:
 
-- **apps/web** has the one named home — every structural value is a
-  SCSS variable declared in
+- **apps/web** has the one named home — every *tokenized* structural
+  value is a SCSS variable declared in
   [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss)
-  and consumed as `$…`, exactly as the table above describes.
+  and consumed as `$…`, exactly as the table above describes. This is
+  a claim about the tokens in that table, not about every number in
+  apps/web's SCSS: one-off layout literals stay local on purpose (for
+  example the `15px 16px` input padding in `_signin.scss`), per
+  [`architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
+  "keep one-off layout values local when a token would add indirection
+  without improving readability or future change cost." Do not read
+  this section as an instruction to tokenize those.
 - **apps/site has no structural token file.** Its SCSS declares and
   consumes no SCSS variables at all — every structural value (spacing,
   radii, weights, motion) is written as a literal at its call site.
@@ -559,9 +566,47 @@ whose rows you have not measured.
 pairs. Bars applied: **4.5:1** for normal text (AA 1.4.3), **3:1** for
 UI components and graphical objects that carry meaning (AA 1.4.11).
 Purely decorative graphics that carry no information are exempt from
-1.4.11 and are marked as such. Alpha-composited tokens (the `border*`
-fields, which are `rgba` over varying surfaces) are not in this table —
-they are borders on already-passing surfaces, not information carriers.
+1.4.11 and are marked as such.
+
+**Scope — read this before citing the table as coverage.** What is
+verified below is the **color-on-color pairings of the Madrona
+`Theme`'s opaque tokens**. Two things are *not* covered, and the table
+is not evidence about them:
+
+- **The alpha `border*` fields** (`border`, `borderSoft`,
+  `borderMuted`) are `rgba` ink over whatever surface they land on, so
+  they have no single ratio. Most of their uses are decorative panel
+  and card edges, but **some are the sole visual boundary of a form
+  control**, where 1.4.11 does apply — see the known gap below.
+- **Surface-against-surface pairings** (an input fill against the page
+  behind it) are likewise not enumerated here.
+
+### Known gap — form-control boundaries on the flat cream palette
+
+Madrona's flat palette removes the panel chrome that used to make
+inputs legible, and the alpha borders left behind do not replace it.
+Measured on the signup route's email input
+([`_signup.scss:46`](/apps/site/app/styles/_signup.scss), `1px solid
+var(--border-soft)` on `var(--surface-card)`):
+
+| Pairing | Ratio |
+| --- | --- |
+| `--border-soft` composited on the input fill, vs that fill | **1.17** |
+| the same border vs the cream page behind it | **1.00** |
+| input fill `#fffdf2` vs cream page `#f8e9c8` | **1.18** |
+
+Nothing there reaches 3:1 — the border is effectively invisible
+against the page. The same treatment is on the feedback route's
+textarea and email input
+([`_event.scss:669`](/apps/site/app/styles/_event.scss)), so three
+controls across two routes are affected, both of them masthead
+destinations.
+
+This is recorded rather than fixed here: raising it is a visual design
+change across every theme that uses `--border-soft`, not a doc edit.
+It is filed in [`backlog.md`](/docs/backlog.md) as Tier 1. **Do not
+cite this section as evidence that Madrona's form controls pass
+1.4.11.** They have been measured and they do not.
 
 ### Text pairings — 4.5:1 bar
 

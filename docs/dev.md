@@ -993,10 +993,11 @@ preview-deploy mechanics above have two properties that make the
 obvious behavior — deploy early, deploy often — actively wrong.
 
 **Trigger exactly one preview deploy, as the final step of the
-session.** Push all commits first, then comment `/deploy-preview` once,
-after the last commit is on the branch. Do not trigger a preview per
-push, and do not trigger one "to check early." Three reasons, each
-sufficient on its own:
+session.** Push all commits first, wait for CI and for any automated
+review to post, address anything that needs a fix-up commit, and only
+then trigger — once, against the final head SHA. Do not trigger a
+preview per push, and do not trigger one "to check early." Three
+reasons, each sufficient on its own:
 
 - The `preview-deploy` check is **SHA-pinned**. A preview triggered
   before the last commit describes a commit that is no longer head, so
@@ -1009,8 +1010,21 @@ sufficient on its own:
   the first place — a session that deploys per push reintroduces the
   cost the gate was built to avoid.
 
-Docs-only PRs need no comment at all: scope detection classifies the
-diff and marks the check successful without a Vercel build.
+**"Once" means once across all three trigger mechanisms, not once per
+mechanism.** The `trigger` job in
+[`preview-deploys.yml`](/.github/workflows/preview-deploys.yml) fires
+on a `/deploy-preview` comment, on `preview` label add, **and** on the
+`ready_for_review` transition. Marking a draft PR ready is therefore
+already a trigger — commenting `/deploy-preview` afterward starts a
+second deployment, burns a second quota slot, and drops the check back
+to pending. Before commenting, check whether an automatic signal has
+already fired for the current head SHA; comment only if none has.
+
+Docs-only PRs need no trigger at all: scope detection classifies the
+diff and marks the check successful without a Vercel build. Note that
+"docs-only" is a path classification, not an intent one — a
+comment-only edit to a `.ts` file is enough to put an otherwise
+documentation-shaped PR outside it and require a real preview.
 
 **Sessions do not merge their own PRs.** Open the PR, run validation,
 trigger the single preview, report, and stop. Kyle merges. The one
@@ -1117,27 +1131,46 @@ detour on a "why is Docker broken" question that is not a bug and is
 not worth fixing mid-slice.
 
 Anything that needs the local Supabase stack therefore **cannot run
-locally on that machine and defers to CI**:
-
-- `npm run test:supabase`, `npm run test:db`
-- `npm run test:e2e:attendee:trusted-backend`, `npm run test:e2e:admin`
-- `npm run validate:local` (it wraps the above)
-- `supabase start` / `supabase db reset`, and therefore
-  `npm run db:gen-types`
+locally on that machine**: `npm run test:supabase`, `npm run test:db`,
+`npm run test:e2e:attendee:trusted-backend`, `npm run test:e2e:admin`,
+`npm run validate:local`, and `supabase start` / `supabase db reset`
+(and therefore `npm run db:gen-types`).
 
 What still runs locally and should be run before every push:
 `npm run lint`, `npm test`, `npm run test:functions`,
 `npm run build:web`, `npm run build:site`, and the `deno check`
 commands — none of them touch Docker.
 
-The local-stack suites are covered by
-[`.github/workflows/ci.yml`](/.github/workflows/ci.yml) on the PR, so
-deferring is a real gate, not a skipped one. Say so explicitly in the
-PR body's validation section rather than reporting the commands as
-passing. A contributor whose machine *does* have a working runtime
-(Docker Desktop, OrbStack, Rancher Desktop, Podman — see
-"Prerequisites") runs them normally; nothing in the repo is
-conditioned on this machine's state.
+**Deferring to CI is only honest for the suites CI actually runs.**
+[`ci.yml`](/.github/workflows/ci.yml) runs `test:supabase` (which
+covers the pgTAP suite, so `test:db` is subsumed) and
+`test:e2e:attendee:trusted-backend`. Those two are genuinely gated on
+the PR — defer them and say so in the PR body's validation section
+rather than reporting them as passing.
+
+**`npm run test:e2e:admin` is the exception, and it is a real gap.**
+It is deliberately excluded from both CI and `validate:local` (see
+"Admin functionality validation" above), so on a Docker-less machine
+it runs *nowhere*. A change touching admin auth, allowlist checks,
+draft persistence, publish/unpublish, or the admin UI therefore has
+**no** admin end-to-end coverage from this machine — that is an
+uncovered change, not a deferred one, and the PR body should say so in
+those words. Options, in order of preference: run it on a machine with
+a working runtime, get a reviewer to run it, or — for a change whose
+risk warrants it — treat the missing coverage as a merge blocker.
+Wiring the suite into CI so this stops depending on machine state is
+tracked in [`backlog.md`](/docs/backlog.md).
+
+Note also that `validate:local` does not wrap the full list above: it
+runs lint, unit tests, `test:functions`, `test:e2e` (the browser smoke
+suite), `test:supabase`, `build:web`, and the `deno check` commands —
+not `test:db`, not `test:e2e:admin`, not
+`test:e2e:attendee:trusted-backend`, and not `build:site`.
+
+A contributor whose machine *does* have a working runtime (Docker
+Desktop, OrbStack, Rancher Desktop, Podman — see "Prerequisites")
+runs everything normally; nothing in the repo is conditioned on this
+machine's state.
 
 ### Session bootstrap succeeds but completion returns 401
 

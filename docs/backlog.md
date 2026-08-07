@@ -38,7 +38,28 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-_No open items._
+- [ ] **`ux` Madrona form controls have no boundary treatment reaching 3:1**
+  The flat cream palette removed the panel chrome that used to make
+  inputs legible, and the alpha border left behind does not replace
+  it. Measured: `--border-soft` composited on the input fill is
+  **1.17:1** against that fill and **1.00:1** against the cream page
+  behind it — effectively invisible — and the input fill itself is
+  **1.18:1** against the page. Nothing visually identifies the control
+  at the WCAG 1.4.11 3:1 bar. Affects three controls on two masthead
+  destinations: the signup email input
+  ([`_signup.scss:46`](/apps/site/app/styles/_signup.scss)) and the
+  feedback textarea + email input
+  ([`_event.scss:669`](/apps/site/app/styles/_event.scss)). **Goal:**
+  a sighted attendee can tell where the input is. One option among
+  several is a per-theme control-boundary token that Madrona sets to
+  an opaque olive or ink at 3:1+, leaving other themes on today's
+  derived alpha border — but a heavier border, an inset fill contrast,
+  or a filled control treatment all reach the same goal and differ in
+  how much they disturb the poster look. Tier 1 because attendees hit
+  the signup and feedback forms during the event; the measurement is
+  recorded in [`docs/styling.md`](/docs/styling.md) so it does not
+  need re-deriving.
+  Detail: N/A
 
 ---
 
@@ -78,6 +99,20 @@ Reduce deployment risk and contributor friction before the live event.
   decided, repeatable end-of-season state so each event's teardown is
   not improvised. This is the first event to reach the question, so it
   is worth deciding once rather than per event.
+  Detail: N/A
+
+- [ ] **`dev` Wire the admin e2e suite into PR CI**
+  `npm run test:e2e:admin` is excluded from both
+  [`ci.yml`](/.github/workflows/ci.yml) and `validate:local`, so it
+  runs only when a contributor remembers to run it — and it cannot run
+  at all on a machine without a Docker runtime, which is the primary
+  maintainer's situation (see [`dev.md`](/docs/dev.md) troubleshooting).
+  The result is that a change to admin auth, allowlist checks, draft
+  persistence, or publish/unpublish can reach `main` with no admin
+  end-to-end coverage anywhere, and nothing surfaces that. **Goal:**
+  admin e2e coverage is a property of the PR rather than of whose
+  machine ran it. Sibling of the demo-mode bypass entry below; both
+  are the same shape of gap and may be worth doing together.
   Detail: N/A
 
 - [ ] **`dev` Wire demo-mode bypass Playwright suite into PR CI**
