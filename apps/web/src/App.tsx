@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense } from "react";
+import { lazy, type ReactNode, Suspense, useEffect } from "react";
 import { EventAdminPage } from "./pages/EventAdminPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
 import { LazyRouteErrorBoundary } from "./pages/LazyRouteErrorBoundary";
@@ -159,6 +159,25 @@ function getPageContent(
 function App() {
   const { pathname, navigate } = usePathnameNavigation();
   const { node, themeSlug } = getPageContent(pathname, navigate);
+  const theme = themeSlug !== null ? getThemeForSlug(themeSlug) : null;
+  const canvasBackground = theme?.bg ?? null;
+
+  // The document canvas (elastic-overscroll area) is painted by
+  // `body`, an ancestor of `<ThemeScope>`, so a Theme's tokens cannot
+  // reach it through the cascade. Sync it imperatively with the
+  // event's flat `bg` so overscroll matches the themed page tone;
+  // clearing on unmatched routes falls back to the `:root` default.
+  useEffect(() => {
+    if (canvasBackground === null) {
+      return;
+    }
+
+    document.body.style.background = canvasBackground;
+
+    return () => {
+      document.body.style.background = "";
+    };
+  }, [canvasBackground]);
 
   // `<ThemeScope>` wraps the `.site-shell` element (not just the page
   // content) so the shell's page-surface paint (`--page-surface` in
@@ -173,11 +192,7 @@ function App() {
     </main>
   );
 
-  return themeSlug !== null ? (
-    <ThemeScope theme={getThemeForSlug(themeSlug)}>{shell}</ThemeScope>
-  ) : (
-    shell
-  );
+  return theme !== null ? <ThemeScope theme={theme}>{shell}</ThemeScope> : shell;
 }
 
 export default App;

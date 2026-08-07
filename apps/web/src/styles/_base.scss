@@ -11,7 +11,10 @@ html {
 // The page field itself is painted by `.site-shell` (see
 // `_layout.scss`) via the themable `--page-surface`, so a per-event
 // Theme reaches the page background from inside `<ThemeScope>`. The
-// body keeps a flat `--bg` so overscroll matches the page tone.
+// body paints the document canvas (elastic-overscroll area): the
+// `:root` `--bg` here is the unthemed default, and `App.tsx` syncs
+// an inline body background to the event Theme's `bg` on themed
+// routes (the scope is a descendant and cannot cascade up to it).
 body {
   margin: 0;
   min-width: 320px;

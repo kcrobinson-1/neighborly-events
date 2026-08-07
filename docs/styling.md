@@ -110,9 +110,9 @@ deliberately not edited when a new optional field lands.
 | `accentFontFamily` | `--font-accent` | `bodyFontFamily` | Short warm accent face (welcome line, artist taglines). |
 | `pageSurface` | `--page-surface` | layered recipe from `accent` / `secondary` glows + `pageGradientStart` / `bg` / `pageGradientEnd` | Full CSS `background` value for the page field. Painted by apps/web's `.site-shell` inside `<ThemeScope>`. A flat theme sets a single color. |
 | `gridLine` | `--grid-line` | `text` at 4% (the existing derived shade) | Backdrop grid line color; `transparent` hides the grid. |
-| `panelSurface` | `--panel-surface` | `surface` | Floating-panel background. |
-| `panelBorder` | `--panel-border` | `1px solid` `border` | Floating-panel border (full border shorthand). |
-| `panelShadow` | `--panel-shadow` | `0 24px 60px rgba(42,42,42,0.12)` (the structural `$shadow-panel` recipe) | Floating-panel drop shadow. `none` de-bubbles. |
+| `panelSurface` | `--panel-surface` | `surface` | Quiz panel background. Consumed only by the attendee quiz panels (`.intro-panel` / `.question-panel` / `.completion-panel`); operator surfaces keep the structural `.panel` chrome on every theme. |
+| `panelBorder` | `--panel-border` | `1px solid` `border` | Quiz panel border (full border shorthand); same scope as `panelSurface`. |
+| `panelShadow` | `--panel-shadow` | `0 24px 60px rgba(42,42,42,0.12)` (the structural `$shadow-panel` recipe) | Quiz panel drop shadow; `none` de-bubbles. Same scope as `panelSurface`. |
 | `pageHeadSurface` | `--page-head-surface` | `transparent` | Quiz page-head band background. |
 | `pageHeadRule` | `--page-head-rule` | `none` | Page-head bottom rule (border shorthand). |
 | `pageHeadMargin` | `--page-head-margin` | `0` | Page-head margin; `0 calc(50% - 50vw)` bleeds the band to the viewport edges. |

@@ -505,18 +505,23 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   and imports nothing app-specific.
 
   **Token-driven surface convention (Madrona redesign R4).** Surface
-  *structure* in apps/web — the page field, floating-panel chrome,
-  the quiz page-head band, option-row chrome, the check-in code
-  block, completion CTA colors — is expressed through optional
+  *structure* in apps/web — the page field, attendee quiz panel
+  chrome, the quiz page-head band, option-row chrome, the check-in
+  code block, completion CTA colors — is expressed through optional
   `Theme` fields with default-derived emissions (`--page-surface`,
   `--panel-*`, `--page-head-*`, `--option-*`, `--code-*`, `--cta-*`;
   table in [`docs/styling.md`](/docs/styling.md) "Optional brand
   fields"). A theme that wants a different surface posture (Madrona's
   flat cream, de-bubbled look) sets tokens; components carry **no
   event-keyed branches**, and themes that omit the fields render
-  byte-identically. To let a Theme reach the page field, apps/web's
+  byte-identically. The de-bubbling tokens are consumed only by the
+  attendee quiz panels — operator surfaces (admin, redeem,
+  redemptions) keep the structural `.panel` chrome on every theme.
+  To let a Theme reach the page field, apps/web's
   `App.tsx` wraps `<ThemeScope>` around the `.site-shell` element for
   matched event routes (the shell paints `--page-surface`); the
+  document canvas (overscroll) is synced imperatively in `App.tsx`
+  to the Theme's flat `bg`, since `body` sits above the scope; the
   wrapper stays `display: contents`, so layout is unchanged.
 
 Together they contain:

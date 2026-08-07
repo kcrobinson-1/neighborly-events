@@ -26,6 +26,34 @@
   line-height: 1.5;
 }
 
+// Quiz page-head title: display face plus themed sizing/tracking.
+// Scoped under `.game-page-head` so operator topbars (admin, redeem,
+// redemptions) keep the structural title type in `_layout.scss`.
+// `--page-head-title-size` / `--heading-letter-spacing` are emitted
+// only when a Theme sets them; the fallbacks are the structural
+// defaults.
+.game-page-head .topbar h1 {
+  font-family: var(--font-heading);
+  font-size: var(--page-head-title-size, clamp(2rem, 7vw, 4.4rem));
+  letter-spacing: var(--heading-letter-spacing, -0.04em);
+}
+
+.game-page-head .topbar-title-compact {
+  font-size: var(--page-head-title-size, clamp(1.55rem, 7vw, 2.2rem));
+}
+
+// Attendee quiz panels consume the themable `--panel-*` chrome (flat
+// on de-bubbled themes); the base `.panel` rule in `_layout.scss`
+// keeps the structural chrome for operator surfaces. Defaults render
+// byte-identically to the base rule.
+.intro-panel,
+.question-panel,
+.completion-panel {
+  border: var(--panel-border);
+  background: var(--panel-surface);
+  box-shadow: var(--panel-shadow);
+}
+
 .intro-panel p,
 .completion-panel p {
   color: var(--muted);

@@ -9,6 +9,11 @@
   // inside `<ThemeScope>` and per-event Themes reach the page
   // surface; the default reproduces the historical body recipe.
   background: var(--page-surface);
+  // A themed `--page-head-margin` full-bleed (`calc(50% - 50vw)`)
+  // overhangs by half the scrollbar width on browsers with classic
+  // scrollbars; `clip` swallows the overhang without creating a
+  // scroll container (so future sticky descendants keep working).
+  overflow-x: clip;
 }
 
 // `<ThemeScope>` (shared/styles/ThemeScope.tsx) emits a wrapper `<div>`
@@ -62,13 +67,18 @@
   margin-top: 56px;
 }
 
+// Structural chrome. The attendee quiz panels re-declare border /
+// background / shadow from the themable `--panel-*` tokens in
+// `_game-panels.scss`; operator surfaces (admin, redeem,
+// redemptions) and route-state shells keep this chrome on every
+// theme.
 .panel {
   padding: $space-10;
-  border: var(--panel-border);
+  border: 1px solid var(--border);
   border-radius: var(--radius-panel);
-  background: var(--panel-surface);
+  background: var(--surface);
   backdrop-filter: blur(12px);
-  box-shadow: var(--panel-shadow);
+  box-shadow: var(--shadow);
 }
 
 .panel-hero {
@@ -98,20 +108,19 @@
   gap: $space-5;
 }
 
-// `--page-head-title-size` and `--heading-letter-spacing` are
-// emitted by `<ThemeScope>` only when a Theme sets them; the
-// fallbacks here are the structural defaults.
+// Structural title type. The quiz page-head re-declares the display
+// face and themed sizing in `_game-panels.scss`; operator topbars
+// keep this type on every theme.
 .topbar h1,
 .not-found-layout h1 {
   margin: 4px 0 0;
-  font-family: var(--font-heading);
-  font-size: var(--page-head-title-size, clamp(2rem, 7vw, 4.4rem));
+  font-size: clamp(2rem, 7vw, 4.4rem);
   line-height: 0.94;
-  letter-spacing: var(--heading-letter-spacing, -0.04em);
+  letter-spacing: -0.04em;
 }
 
 .topbar-title-compact {
-  font-size: var(--page-head-title-size, clamp(1.55rem, 7vw, 2.2rem));
+  font-size: clamp(1.55rem, 7vw, 2.2rem);
   line-height: 0.98;
 }
 

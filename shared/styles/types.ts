@@ -90,8 +90,10 @@ export type Theme = {
   // the existing `text` 4% derived shade. `transparent` hides the
   // grid.
   gridLine?: string;
-  // `panelSurface` / `panelBorder` / `panelShadow` — floating-panel
-  // chrome (`--panel-surface`, `--panel-border`, `--panel-shadow`).
+  // `panelSurface` / `panelBorder` / `panelShadow` — attendee quiz
+  // panel chrome (`--panel-surface`, `--panel-border`,
+  // `--panel-shadow`), consumed only by the quiz panels; operator
+  // surfaces keep the structural `.panel` chrome on every theme.
   // Defaults: `surface`, `1px solid <border>`, and the structural
   // panel drop-shadow. A flat theme sets
   // `transparent` / `none` / `none` to de-bubble.
