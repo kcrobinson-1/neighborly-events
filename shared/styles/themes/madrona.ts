@@ -26,7 +26,11 @@ export const madronaTheme: Theme = {
   surfaceCard: "#fffdf2",
   surfaceCardMuted: "#f1dfb8",
   text: "#3a3226",
-  muted: "#6f6350",
+  // Secondary text. Deepened from the poster's `#6f6350` so it
+  // clears WCAG AA for normal text on every madrona surface — the
+  // putty band is the tightest (5.1:1; `#6f6350` measured 4.47:1
+  // there), cream 5.6:1, near-white 6.6:1.
+  muted: "#655a48",
   border: "rgba(58, 50, 38, 0.14)",
   borderSoft: "rgba(58, 50, 38, 0.09)",
   borderMuted: "rgba(58, 50, 38, 0.12)",
