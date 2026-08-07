@@ -523,7 +523,17 @@ describe("EventRedemptionsPage", () => {
         />,
       );
 
-      await screen.findByRole("button", { name: "You are offline" });
+      // The window online/offline listeners attach in a passive effect after
+      // AuthorizedRedemptionsView mounts. `findByRole` can resolve on the DOM
+      // commit before that effect flushes (waitFor polls with the act
+      // environment disabled, so the mount renders through the real
+      // scheduler), and then the "online" dispatch below races the listener
+      // attach — under CI load the event fires into the void and the
+      // reconnect refresh never runs. Flushing the authorize resolution, the
+      // mount, and its effects inside act removes the race entirely.
+      await act(async () => {});
+
+      screen.getByRole("button", { name: "You are offline" });
       expect(mockRefreshRedemptions).toHaveBeenCalledTimes(0);
       expect(mockRefreshNowMs).toHaveBeenCalledTimes(0);
 
@@ -533,9 +543,10 @@ describe("EventRedemptionsPage", () => {
       });
       fireEvent(window, new Event("online"));
 
-      await waitFor(() => {
-        expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
-      });
+      // fireEvent wraps the dispatch in act, so the listener's state update
+      // and the reconnect effect flush synchronously — assert directly
+      // rather than waitFor, so a regression fails loudly instead of flaking.
+      expect(mockRefreshRedemptions).toHaveBeenCalledTimes(1);
       expect(mockRefreshNowMs).toHaveBeenCalledTimes(1);
     } finally {
       if (onLineDescriptor) {
