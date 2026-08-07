@@ -113,7 +113,8 @@ describe("ThemeScope", () => {
     // `baseSyntheticTheme` omits every optional field, so the
     // emission must carry the documented defaults (`docs/styling.md`
     // "Optional brand fields"): headerBg→primary, headerFg→whiteWarm,
-    // surfaceBand→surfaceCardMuted, accentFontFamily→bodyFontFamily.
+    // surfaceBand→surfaceCardMuted, accentFontFamily→bodyFontFamily,
+    // accentGarnish→secondary.
     render(
       <ThemeScope theme={baseSyntheticTheme}>
         <span data-testid="child">Hello</span>
@@ -128,6 +129,7 @@ describe("ThemeScope", () => {
     expect(style).toContain("--header-fg: #999");
     expect(style).toContain("--surface-band: #eee");
     expect(style).toContain("--font-accent: TestBody, sans-serif");
+    expect(style).toContain("--accent-garnish: #777");
   });
 
   it("emits optional brand fields verbatim when the theme provides them", () => {
@@ -137,6 +139,7 @@ describe("ThemeScope", () => {
       headerFg: "#f0f0e0",
       surfaceBand: "#e5d5a5",
       accentFontFamily: "TestAccent, cursive",
+      accentGarnish: "#a52f24",
     };
     render(
       <ThemeScope theme={themed}>
@@ -152,6 +155,7 @@ describe("ThemeScope", () => {
     expect(style).toContain("--header-fg: #f0f0e0");
     expect(style).toContain("--surface-band: #e5d5a5");
     expect(style).toContain("--font-accent: TestAccent, cursive");
+    expect(style).toContain("--accent-garnish: #a52f24");
   });
 
   it("derives quiz-surface vocabulary defaults from required fields when omitted", () => {

@@ -1,6 +1,7 @@
 import type { EventMastheadContent } from "../../../../shared/masthead/index.ts";
 import type { EventContent } from "../../lib/eventContent.ts";
 import { EventCTA } from "./EventCTA.tsx";
+import { EventDayOfLanding } from "./EventDayOfLanding.tsx";
 import { EventDonateCTA } from "./EventDonateCTA.tsx";
 import { EventFAQ } from "./EventFAQ.tsx";
 import { EventFeedbackCTA } from "./EventFeedbackCTA.tsx";
@@ -20,6 +21,16 @@ import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
  * (no empty section heading); this is honest degraded state for
  * content authors, not a rendering bug.
  *
+ * Two layouts share this entry point: when `content.landing` is
+ * present the day-of layout (`EventDayOfLanding`, Madrona redesign
+ * spec §4) renders instead of the generic section stack below —
+ * content presence, not a slug check, is the switch, so the choice
+ * stays platform-generic and events without the field render the
+ * generic template byte-identically. `mastheadSvgMarkup` is the
+ * day-of hero's inlined art, read from `public/` by the page route
+ * (`readPublicSvg`) so this template and its tests stay synchronous
+ * and filesystem-free; it is ignored by the generic layout.
+ *
  * `masthead` is the shared sticky header bar, resolved by the route
  * from the per-event registry (`getEventMasthead(slug)`) and passed
  * down so this template stays a pure function of its props. It
@@ -27,17 +38,35 @@ import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
  * the viewport, outside the shell's inline padding — and the
  * `.event-masthead + main` rule in `_masthead.scss` collapses the
  * shell's dead top gap only when the bar is present, keeping
- * masthead-less events byte-identical.
+ * masthead-less events byte-identical. The day-of layout zeroes
+ * that interim padding instead (its hero is full-bleed and sits
+ * flush under the bar).
  */
 export function EventLandingPage({
   content,
   slug,
   masthead,
+  mastheadSvgMarkup,
 }: {
   content: EventContent;
   slug: string;
   masthead?: EventMastheadContent | null;
+  mastheadSvgMarkup?: string | null;
 }) {
+  if (content.landing) {
+    return (
+      <>
+        {masthead ? <SiteEventMasthead masthead={masthead} /> : null}
+        <EventDayOfLanding
+          content={content}
+          slug={slug}
+          landing={content.landing}
+          mastheadSvgMarkup={mastheadSvgMarkup ?? null}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       {masthead ? <SiteEventMasthead masthead={masthead} /> : null}

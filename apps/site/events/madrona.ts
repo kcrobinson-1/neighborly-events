@@ -51,12 +51,30 @@ import type { EventContent } from "../lib/eventContent.ts";
  * decision); the logo files land under
  * `/events/madrona/sponsors/` via the design-tokens asset slice,
  * and the Zac Lee mark is a DRAFT lockup until the final arrives
- * (a content-only swap, safe any time before Aug 25). Until the
- * landing rebuild ships, `nights` is dormant data — no current
- * section renders it — validated by the content tests and the
- * `resolveTonight` resolver in `apps/site/lib/eventNights.ts`,
- * which computes tonight / next-concert / season-wrap states in
+ * (a content-only swap, safe any time before Aug 25). `nights`
+ * drives the landing page's Tonight / Next-concert / season-wrap
+ * section through the `resolveTonight` resolver in
+ * `apps/site/lib/eventNights.ts`, which computes the state in
  * America/Los_Angeles.
+ *
+ * `landing` opts madrona into the day-of landing layout
+ * (`EventDayOfLanding`, redesign spec §4): masthead-art hero with
+ * the Lora welcome line, the four-tile action grid (subtitle copy
+ * is the spec's), the Meter Music School presenting-sponsor band
+ * (logo-only — no verified Meter URL, and a link's presence is a
+ * claim of verification), the season-wrap copy shown from Aug 26,
+ * and the dark footer band's three lines (the masthead art's banner
+ * line, the volunteer sentence, and the contact address). With
+ * `landing` present the generic sections (`hero` text block,
+ * `schedule`, full `lineup` bios, `sponsors`, `cta`) no longer
+ * render on the landing page — `hero` still feeds route metadata
+ * and the OG card, `schedule` remains the generic-agenda source of
+ * truth for any surface that wants it, and `lineup` feeds the
+ * On-stage section (tagline = `bio`, blurb = `extendedBio`, chips =
+ * `artistLinks`) and the This-season strip. The FAQ renders below
+ * This season, trimmed of the what-is-this entry per the spec's
+ * no-reintroduction rule (§1) — remaining entries are day-of
+ * practical answers.
  *
  * Band `artistLinks` carry each artist's verified web presence:
  * only URLs confirmed against the artist's own official site or
@@ -185,6 +203,46 @@ export const madronaContent: EventContent = {
         ],
       },
     ],
+  },
+  landing: {
+    hero: {
+      mastheadSvgPath: "/events/madrona/masthead.svg",
+      welcomeLine: "Welcome to the playfield — here’s tonight.",
+    },
+    actions: {
+      quiz: {
+        label: "Take the quiz",
+        subtitle: "how well do you know Madrona?",
+      },
+      newsletter: {
+        label: "Newsletter",
+        subtitle: "next week’s lineup, in your inbox",
+      },
+      feedback: {
+        label: "Feedback",
+        subtitle: "tell us how tonight went",
+      },
+      donate: {
+        label: "Donate",
+        subtitle: "keep the concerts free",
+      },
+    },
+    presentingSponsor: {
+      name: "Meter Music School",
+      logoSrc: "/events/madrona/sponsors/meter-music-school-navy.png",
+      logoAlt: "Meter Music School logo",
+    },
+    seasonWrap: {
+      heading: "That’s a wrap on 2026",
+      body: "Thank you to every neighbor, sponsor, and volunteer who filled the Playfield with music this summer. See you next year.",
+    },
+    footer: {
+      bannerLine: "★ Your neighborhood · Your music · Your park ★",
+      volunteerLine:
+        "Run entirely by Madrona Neighborhood Association volunteers, with help from local sponsors and neighbors like you.",
+      contactLabel: "Volunteer or contribute",
+      contactEmail: "musicintheplayfield@madrona.us",
+    },
   },
   nights: {
     timezone: "America/Los_Angeles",
@@ -334,11 +392,6 @@ export const madronaContent: EventContent = {
     },
   ],
   faq: [
-    {
-      question: "What is Music in the Playfield?",
-      answer:
-        "A free summer concert series on the Madrona Playfield, organized and run entirely by Madrona Neighborhood Association volunteers with support from local sponsors and neighbor donations. Three Tuesday evenings of community music; bring a blanket and picnic.",
-    },
     {
       question: "Why is there no concert on Tuesday, August 4?",
       answer:

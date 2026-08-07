@@ -6,6 +6,7 @@ import {
   getEventContentBySlug,
   registeredEventSlugs,
 } from "../../../lib/eventContent.ts";
+import { readPublicSvg } from "../../../lib/readPublicSvg.ts";
 import { getEventMasthead } from "../../../../../shared/masthead/index.ts";
 import { ThemeScope, getThemeForSlug } from "../../../../../shared/styles";
 import { normalizeEventSlug } from "../../../../../shared/urls";
@@ -113,12 +114,22 @@ export default async function Page({
     notFound();
   }
 
+  // Day-of landing hero art: the file read stays in the route layer
+  // so `EventLandingPage` and its tests remain synchronous and
+  // filesystem-free. Happens at prerender time on this statically
+  // generated route; `null` (no landing block, or a missing file)
+  // degrades to the no-art hero.
+  const mastheadSvgMarkup = content.landing
+    ? readPublicSvg(content.landing.hero.mastheadSvgPath)
+    : null;
+
   return (
     <ThemeScope theme={getThemeForSlug(content.themeSlug)}>
       <EventLandingPage
         content={content}
         slug={slug}
         masthead={getEventMasthead(slug)}
+        mastheadSvgMarkup={mastheadSvgMarkup}
       />
     </ThemeScope>
   );

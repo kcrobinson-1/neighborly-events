@@ -48,8 +48,13 @@ export type TonightResolution =
  * Built from `formatToParts` output, not `format`, so no locale's
  * ordering or separators can leak into the string we compare against
  * content-authored ISO dates.
+ *
+ * Exported so a mounted renderer can cheaply detect that the event's
+ * local day has rolled over (the resolved state is only ever stale
+ * across a local midnight) without duplicating the `Intl` wiring or
+ * re-running full resolution on a timer.
  */
-function calendarDateInZone(now: Date, timezone: string): string {
+export function calendarDateInZone(now: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: timezone,
     year: "numeric",
@@ -64,6 +69,23 @@ function calendarDateInZone(now: Date, timezone: string): string {
 }
 
 /**
+ * The nights that participate in resolution — entries whose `date`
+ * passes `parseEventDate`, sorted ascending, input untouched.
+ * Exported for renderers that walk the season alongside the resolved
+ * night (the This-season strip), so their walk and `resolveTonight`
+ * cannot disagree on which nights exist or in what order.
+ *
+ * Sort comparison is lexical on ISO `yyyy-mm-dd` strings, which
+ * orders correctly because `parseEventDate` has already guaranteed
+ * the zero-padded shape for every survivor.
+ */
+export function resolvableNights(nights: EventNights): EventNight[] {
+  return nights.nights
+    .filter((night) => parseEventDate(night.date) !== null)
+    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+/**
  * Resolves which night an event page should treat as "tonight" at
  * the instant `now`, per the rule documented on `TonightResolution`.
  * Returns `seasonWrap` when `nights.nights` is empty or every entry
@@ -71,10 +93,7 @@ function calendarDateInZone(now: Date, timezone: string): string {
  * nothing upcoming to show, and the renderer's wrap state is the
  * honest fallback.
  *
- * Comparison is lexical on ISO `yyyy-mm-dd` strings, which orders
- * correctly because `parseEventDate` has already guaranteed the
- * zero-padded shape for every night that survives the validity
- * filter. With duplicate dates the earliest-listed entry wins.
+ * With duplicate dates the earliest-listed entry wins.
  */
 export function resolveTonight(
   now: Date,
@@ -82,9 +101,7 @@ export function resolveTonight(
 ): TonightResolution {
   const today = calendarDateInZone(now, nights.timezone);
 
-  const resolvable = nights.nights
-    .filter((night) => parseEventDate(night.date) !== null)
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  const resolvable = resolvableNights(nights);
 
   const tonight = resolvable.find((night) => night.date === today);
   if (tonight) {
@@ -149,4 +166,20 @@ export function formatNightDate(date: string): string {
     ];
 
   return `${weekday}, ${monthNames[parsed.month - 1]} ${parsed.day}`;
+}
+
+/**
+ * Compact form of a night's date for the This-season strip's cards —
+ * "Aug 11". Same parse-or-raw-fallback posture as `formatNightDate`;
+ * any uppercasing is the stylesheet's job (the display face is
+ * caps-only anyway), so the string here stays readable in test
+ * output and accessible names.
+ */
+export function formatNightDateShort(date: string): string {
+  const parsed = parseEventDate(date);
+  if (!parsed) {
+    return date;
+  }
+
+  return `${monthNames[parsed.month - 1].slice(0, 3)} ${parsed.day}`;
 }

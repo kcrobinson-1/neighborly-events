@@ -140,6 +140,13 @@
  * pre-field output; the two test events omit it so the
  * omission-guard falsifier stays structural.
  *
+ * `landing?` selects the day-of landing layout: presence renders
+ * `EventDayOfLanding` (tonight-focused hero / action grid / resolver-
+ * driven Tonight section) instead of the generic section template;
+ * absence renders the generic template byte-identically to the
+ * pre-field output. See `EventDayOfLandingContent` below for the
+ * field-level contract.
+ *
  * The sticky header bar is NOT an `EventContent` field: masthead
  * content lives in the cross-app registry at
  * `shared/masthead/mastheadContent.ts` (the
@@ -203,6 +210,75 @@ export type EventNight = {
 export type EventNights = {
   timezone: string;
   nights: EventNight[];
+};
+
+/**
+ * One tile of the day-of landing page's action grid. `label` is the
+ * big display line ("Take the quiz"), `subtitle` the small one-liner
+ * under it. Destinations are renderer-owned, not content fields:
+ * quiz resolves through `routes.game(slug)`, newsletter and feedback
+ * through the slug-derived in-app routes, donate through
+ * `EventContent.donate.href` — so the grid can never disagree with
+ * the routes the rest of the page uses.
+ */
+export type EventLandingAction = {
+  label: string;
+  subtitle: string;
+};
+
+/**
+ * The event-wide presenting sponsor credit (the Madrona spec's putty
+ * "PRESENTING SPONSOR" band above On stage). Distinct from the
+ * per-night `EventNightHeadlinerSponsor`: this one renders every
+ * night. `href` is optional — the credit can be logo-only, and for
+ * launch it is (no verified sponsor URL, so no link; a chip's
+ * presence is a claim of verification, and the same holds here).
+ */
+export type EventPresentingSponsor = {
+  name: string;
+  logoSrc: string;
+  logoAlt: string;
+  href?: string;
+};
+
+/**
+ * Content for the day-of landing layout (`EventDayOfLanding`
+ * renderer). Presence of `EventContent.landing` switches the event's
+ * landing page from the generic multi-section template to the
+ * tonight-focused layout; absence renders the generic template
+ * byte-identically to the pre-field output (the test events omit it,
+ * keeping that falsifier structural).
+ *
+ * `hero.mastheadSvgPath` is a `public/`-relative URL path to the
+ * masthead art the hero inlines as SVG (the page route reads the
+ * file at prerender time — see `readPublicSvg`). `seasonWrap` is the
+ * post-final-night state's copy (the resolver's `seasonWrap` kind);
+ * the footer fields are the dark band's three lines. An event that
+ * adopts this layout is expected to also author `nights` — without
+ * it the Tonight section resolves straight to the wrap state.
+ */
+export type EventDayOfLandingContent = {
+  hero: {
+    mastheadSvgPath: string;
+    welcomeLine: string;
+  };
+  actions: {
+    quiz: EventLandingAction;
+    newsletter: EventLandingAction;
+    feedback: EventLandingAction;
+    donate: EventLandingAction;
+  };
+  presentingSponsor?: EventPresentingSponsor;
+  seasonWrap: {
+    heading: string;
+    body: string;
+  };
+  footer: {
+    bannerLine: string;
+    volunteerLine: string;
+    contactLabel: string;
+    contactEmail: string;
+  };
 };
 
 export type EventContent = {
@@ -297,6 +373,7 @@ export type EventContent = {
     href: string;
   };
   nights?: EventNights;
+  landing?: EventDayOfLandingContent;
   footer?: { attribution?: string };
 };
 
