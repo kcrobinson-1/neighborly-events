@@ -52,10 +52,16 @@ function SponsorLogo({
 /**
  * The resolver-driven middle of the day-of landing page: Tonight (or
  * Next concert) run-of-show, the presenting-sponsor band, On stage,
- * and the This-season strip — or the season-wrap section once the
+ * the This-season strip, and the optional volunteer section — or the
+ * season-wrap section, the strip, and the volunteer section once the
  * final night has passed. Everything below the action grid depends
  * on which night resolves, so the whole group lives in one client
  * component.
+ *
+ * The volunteer section renders in both branches but is not itself
+ * resolver-driven as a whole: only its night-of ask is, which is why
+ * it is here rather than a sibling in `EventDayOfLanding`. See the
+ * comment at its construction below.
  *
  * Client component because "tonight" is a fact about the reader's
  * *visit* time and the page is statically prerendered: the server
@@ -181,6 +187,68 @@ export function LandingTonightSections({
       </section>
     ) : null;
 
+  /**
+   * The volunteer section renders in both resolver branches, below
+   * the season strip and above the footer band. It lives in this
+   * component rather than in `EventDayOfLanding` because its
+   * night-of ask is time-specific: asking a reader to carry chairs
+   * at 4:30 has to stop when the concerts do, or it becomes the one
+   * thing on the page still talking about a show that is not coming.
+   * `EventDayOfLanding` is a Server Component whose clock read is
+   * baked at prerender, so resolving there would freeze the ask at
+   * build time — the section has to consume the same live resolution
+   * the run-of-show does, which only exists here.
+   *
+   * The year-round ask carries no such condition and survives the
+   * transition, which is why the two are gated separately rather
+   * than the section as a whole.
+   */
+  const volunteerSection = landing.volunteer ? (
+    <section
+      className="event-landing-section event-landing-volunteer"
+      aria-labelledby="event-landing-volunteer-heading"
+    >
+      <h2 id="event-landing-volunteer-heading" className="event-landing-rule">
+        {landing.volunteer.heading}
+      </h2>
+      <p className="event-landing-volunteer-lede">{landing.volunteer.lede}</p>
+      <div className="event-landing-volunteer-asks">
+        {resolution.kind === "seasonWrap" ? null : (
+          <div className="event-landing-volunteer-ask">
+            <h3 className="event-landing-volunteer-ask-heading">
+              {landing.volunteer.nightOf.heading}
+            </h3>
+            <p className="event-landing-volunteer-ask-body">
+              {landing.volunteer.nightOf.body}
+            </p>
+            <a
+              className="event-landing-volunteer-action"
+              href={`mailto:${landing.footer.contactEmail}`}
+            >
+              {landing.volunteer.nightOf.actionLabel}
+            </a>
+          </div>
+        )}
+        <div className="event-landing-volunteer-ask">
+          <h3 className="event-landing-volunteer-ask-heading">
+            {landing.volunteer.yearRound.heading}
+          </h3>
+          <p className="event-landing-volunteer-ask-body">
+            {landing.volunteer.yearRound.body}
+          </p>
+          <a
+            className="event-landing-volunteer-action"
+            href={landing.volunteer.yearRound.href}
+            target={landing.volunteer.yearRound.external ? "_blank" : undefined}
+            rel={landing.volunteer.yearRound.external ? "noopener" : undefined}
+          >
+            {landing.volunteer.yearRound.actionLabel}
+          </a>
+        </div>
+      </div>
+    </section>
+  ) : null;
+
   if (resolution.kind === "seasonWrap") {
     return (
       <>
@@ -218,6 +286,7 @@ export function LandingTonightSections({
           </div>
         </section>
         {seasonStrip}
+        {volunteerSection}
       </>
     );
   }
@@ -347,6 +416,7 @@ export function LandingTonightSections({
       ) : null}
 
       {seasonStrip}
+      {volunteerSection}
     </>
   );
 }

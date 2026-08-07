@@ -263,7 +263,7 @@ export type EventPresentingSponsor = {
  * masthead art the hero inlines as SVG (the page route reads the
  * file at prerender time — see `readPublicSvg`). `seasonWrap` is the
  * post-final-night state's copy (the resolver's `seasonWrap` kind);
- * the footer fields are the dark band's three lines. An event that
+ * the footer fields are the dark band's lines. An event that
  * adopts this layout is expected to also author `nights` — without
  * it the Tonight section resolves straight to the wrap state.
  */
@@ -289,9 +289,64 @@ export type EventDayOfLandingContent = {
     heading: string;
     body: string;
   };
+  /**
+   * The volunteer section, between the This-season strip and the
+   * footer band. Optional: an event that omits it renders
+   * byte-identically to the pre-field output.
+   *
+   * Two asks, because they are two different commitments and a
+   * reader deciding between them needs to see that. `nightOf` is
+   * time-specific — it asks someone to show up at a concert — and it
+   * is the only part of this section that resolves against the
+   * clock: it stops rendering once the season has ended, so the page
+   * never asks a reader to help at a concert that is not coming.
+   * `yearRound` is unconditional and survives that transition, as
+   * does the section itself.
+   *
+   * `nightOf` carries no destination of its own; it routes to
+   * `footer.contactEmail`, the organizer address the event already
+   * authors. One address, authored once.
+   */
+  volunteer?: {
+    heading: string;
+    lede: string;
+    nightOf: {
+      heading: string;
+      body: string;
+      actionLabel: string;
+    };
+    yearRound: {
+      heading: string;
+      body: string;
+      actionLabel: string;
+      href: string;
+      /**
+       * Declares that this destination leaves the platform; the
+       * renderer opens exactly the links carrying it in a new
+       * browsing context with `rel="noopener"`. Same name, same
+       * meaning as the field on `EventLandingAction` above,
+       * `MastheadLink` (`shared/masthead/mastheadContent.ts`), and
+       * `CompletionCtaLink` (`shared/events/completionCta.ts`).
+       *
+       * Not hardcoded in the renderer even though every event
+       * authoring this today sets it: this block is
+       * platform-generic, and an organization whose volunteer page
+       * is a page on its own site would otherwise be forced into a
+       * new tab it never asked for.
+       */
+      external?: boolean;
+    };
+  };
   footer: {
     bannerLine: string;
-    volunteerLine: string;
+    /**
+     * Optional: the credit line naming who puts the event on. Events
+     * that author `volunteer` generally omit it — that section makes
+     * the same point immediately above, with an action attached, and
+     * restating it in the band below is the duplication the layout
+     * exists to avoid.
+     */
+    volunteerLine?: string;
     contactLabel: string;
     contactEmail: string;
   };
@@ -355,7 +410,16 @@ export type EventContent = {
     shortDescription?: string;
     socialLinks?: Array<{ label: string; href: string }>;
   }>;
-  faq: Array<{ question: string; answer: string }>;
+  /**
+   * Optional because an event can legitimately have nothing to
+   * answer. The day-of landing is the case that made it so: it is
+   * read by someone already standing at the event, and an FAQ
+   * answering what-is-this / how-much / where-do-I-park is written
+   * for someone still deciding whether to come. Both renderers
+   * truthiness-guard it, so an event that omits it renders no
+   * section and no heading.
+   */
+  faq?: Array<{ question: string; answer: string }>;
   cta: { label: string; sublabel?: string };
   feedback?: {
     cta: {

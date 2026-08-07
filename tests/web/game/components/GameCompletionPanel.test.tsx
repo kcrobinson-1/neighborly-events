@@ -88,6 +88,13 @@ function createCta(
       buttonLabel: "Support the Playfield",
       href: "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
     },
+    volunteer: {
+      body:
+        "These concerts run on volunteers — and so does everything else the association does. We can always use another set of hands.",
+      buttonLabel: "Volunteer",
+      href: "https://madrona.us/volunteers/",
+      external: true,
+    },
     ...overrides,
   };
 }
@@ -455,7 +462,7 @@ describe("GameCompletionPanel", () => {
       { statusKind: "unredeemed" as const },
       { statusKind: "redeemed" as const },
     ])(
-      "renders both CTAs below the entitlement result in the $statusKind state",
+      "renders all three CTAs below the entitlement result in the $statusKind state",
       ({ statusKind }) => {
         renderPanel({ statusKind });
 
@@ -477,6 +484,11 @@ describe("GameCompletionPanel", () => {
         });
         expect(donateLink.getAttribute("href")).toBe(
           "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+        );
+
+        const volunteerLink = screen.getByRole("link", { name: "Volunteer" });
+        expect(volunteerLink.getAttribute("href")).toBe(
+          "https://madrona.us/volunteers/",
         );
 
         // The CTA rides below the entitlement result, never above it.
@@ -564,9 +576,44 @@ describe("GameCompletionPanel", () => {
       expect(container.querySelector(".completion-cta")).toBeNull();
     });
 
-    it("renders no CTA block when both sections are absent", () => {
+    it("omits the volunteer CTA when the event has nowhere to send a volunteer", () => {
+      renderPanel({ cta: createCta({ volunteer: undefined }) });
+
+      expect(screen.queryByRole("link", { name: "Volunteer" })).toBeNull();
+      expect(
+        screen.getByRole("link", { name: "Join the email list" }),
+      ).toBeTruthy();
+    });
+
+    it.each([
+      { only: "emailList", label: "Join the email list" },
+      { only: "donate", label: "Support the Playfield" },
+      { only: "volunteer", label: "Volunteer" },
+    ])(
+      "renders the block for an event authoring only its $only section",
+      ({ only, label }) => {
+        // The render gate names every optional section. It listed two
+        // while the shape carried three, so an event offering only the
+        // third rendered nothing at all — no heading, no link, no
+        // failure anywhere. Each section is checked on its own so the
+        // gate cannot regress to covering just the popular two.
+        const absent = { emailList: undefined, donate: undefined, volunteer: undefined };
+        const { container } = renderPanel({
+          cta: createCta({ ...absent, [only]: createCta()[only as "donate"] }),
+        });
+
+        expect(container.querySelector(".completion-cta")).not.toBeNull();
+        expect(screen.getByRole("link", { name: label })).toBeTruthy();
+      },
+    );
+
+    it("renders no CTA block when all three sections are absent", () => {
       const { container } = renderPanel({
-        cta: createCta({ donate: undefined, emailList: undefined }),
+        cta: createCta({
+          donate: undefined,
+          emailList: undefined,
+          volunteer: undefined,
+        }),
       });
 
       expect(container.querySelector(".completion-cta")).toBeNull();

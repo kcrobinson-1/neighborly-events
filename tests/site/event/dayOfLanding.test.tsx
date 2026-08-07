@@ -70,7 +70,7 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     );
   });
 
-  it("inlines the hero art as an SVG under a labeled img role, with the welcome line", () => {
+  it("inlines the hero art as an SVG under a labeled img role, with the orientation line", () => {
     setClock("2026-08-11T19:00:00Z");
     const { container } = renderMadrona();
     const art = screen.getByRole("img", {
@@ -79,7 +79,9 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     expect(art.querySelector("svg")).not.toBeNull();
     expect(
       container.querySelector(".event-landing-welcome")?.textContent,
-    ).toBe("Welcome to the playfield — here’s tonight.");
+    ).toBe(
+      "Everything for tonight — the schedule, the quiz, and who’s playing.",
+    );
   });
 
   it("degrades to the no-art hero when the SVG markup is unavailable", () => {
@@ -273,30 +275,93 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     expect(cards[2].textContent).toContain("Frames in Motion");
   });
 
-  it("renders the trimmed FAQ (no what-is-this entry) and the footer band", () => {
+  it("renders no FAQ section", () => {
     setClock("2026-08-11T19:00:00Z");
     const { container } = renderMadrona();
 
-    expect(screen.getByRole("heading", { name: "Questions" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Questions" })).toBeNull();
+    expect(container.querySelector(".event-landing-faq")).toBeNull();
+    // The entries the page used to carry, by their own text: a
+    // heading-only assertion would still pass if the section rendered
+    // headless.
     expect(
-      screen.queryByText("What is Music in the Playfield?"),
+      screen.queryByText("Why is there no concert on Tuesday, August 4?"),
     ).toBeNull();
-    expect(
-      screen.getByText("Why is there no concert on Tuesday, August 4?"),
-    ).toBeTruthy();
+    expect(screen.queryByText("Where do I park?")).toBeNull();
+  });
+
+  it("still renders a day-of FAQ for an event that authors one", () => {
+    // The capability outlives madrona's content: the renderer and the
+    // four `.event-landing-faq-*` rules are kept for the next event on
+    // this layout that has something to answer. Without this case the
+    // section could be deleted outright and nothing would fail.
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          faq: [{ question: "Is there parking?", answer: "Street only." }],
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Questions" })).toBeTruthy();
+    expect(container.querySelector(".event-landing-faq-list")).not.toBeNull();
+    expect(screen.getByText("Is there parking?")).toBeTruthy();
+  });
+
+  it("renders the footer band", () => {
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = renderMadrona();
 
     const footer = container.querySelector(".event-landing-footer");
     expect(footer?.textContent).toContain(
       "★ Your neighborhood · Your music · Your park ★",
-    );
-    expect(footer?.textContent).toContain(
-      "Run entirely by Madrona Neighborhood Association volunteers",
     );
     expect(
       within(footer as HTMLElement)
         .getByRole("link", { name: "musicintheplayfield@madrona.us" })
         .getAttribute("href"),
     ).toBe("mailto:musicintheplayfield@madrona.us");
+    // The band carries two lines now. Its volunteer credit moved into
+    // the volunteer section, which makes the same point with an
+    // action attached — see the "asks once" case below.
+    expect(
+      container.querySelectorAll(".event-landing-footer-line"),
+    ).toHaveLength(1);
+  });
+
+  it("renders the footer's volunteer credit for an event that authors one", () => {
+    // `volunteerLine` went optional rather than away; madrona omits
+    // it. Without this case the field could be dropped from the
+    // renderer and only madrona's own omission would hide it.
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          landing: {
+            ...madronaContent.landing!,
+            footer: {
+              ...madronaContent.landing!.footer,
+              volunteerLine: "Put on by the neighbors of Anytown.",
+            },
+          },
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    const footer = container.querySelector(".event-landing-footer");
+    expect(footer?.textContent).toContain("Put on by the neighbors of Anytown.");
+    expect(
+      container.querySelectorAll(".event-landing-footer-line"),
+    ).toHaveLength(2);
   });
 });
 
@@ -408,6 +473,186 @@ describe("EventDayOfLanding — season wrap", () => {
     // Donate survives the omission — the two actions gate independently.
     expect(
       within(wrapActions as HTMLElement).getByRole("link", { name: "Donate" }),
+    ).toBeTruthy();
+  });
+});
+
+describe("EventDayOfLanding — volunteer section", () => {
+  const CONCERT_DAY = "2026-08-11T19:00:00Z";
+  const POST_SEASON = "2026-08-26T19:00:00Z";
+
+  function withoutVolunteer() {
+    const landing = { ...madronaContent.landing! };
+    delete landing.volunteer;
+    return { ...madronaContent, landing };
+  }
+
+  it("renders both asks on a concert day, each to its own destination", () => {
+    setClock(CONCERT_DAY);
+    const { container } = renderMadrona();
+
+    const section = container.querySelector(".event-landing-volunteer");
+    expect(section).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Lend a hand" })).toBeTruthy();
+    expect(section?.textContent).toContain(
+      "Music in the Playfield is put on by neighbors.",
+    );
+
+    const asks = within(section as HTMLElement);
+    // Night-of: routed to the organizer address the event already
+    // authors on the footer, not to a second copy of it.
+    expect(
+      asks.getByRole("heading", { name: "Help at a concert" }),
+    ).toBeTruthy();
+    const nightOf = asks.getByRole("link", { name: "Email the organizers" });
+    expect(nightOf.getAttribute("href")).toBe(
+      "mailto:musicintheplayfield@madrona.us",
+    );
+    // A mailto stays in place; new-context attributes would be wrong.
+    expect(nightOf.getAttribute("target")).toBeNull();
+
+    // Year-round: external, so destination and new-context attributes
+    // are asserted together — the right address opened in the same tab
+    // would still drop a reader out of the page mid-concert.
+    expect(asks.getByRole("heading", { name: "Help year-round" })).toBeTruthy();
+    const yearRound = asks.getByRole("link", {
+      name: "Volunteer with the association",
+    });
+    expect(yearRound.getAttribute("href")).toBe("https://madrona.us/volunteers/");
+    expect(yearRound.getAttribute("target")).toBe("_blank");
+    expect(yearRound.getAttribute("rel")).toBe("noopener");
+  });
+
+  it("drops the night-of ask once the season has ended, keeping the year-round one", () => {
+    // The load-bearing case. A concert-day-only test cannot surface a
+    // time-specific ask that outlives the concerts: on Aug 26 the page
+    // has already swapped the run-of-show for the season wrap, and an
+    // ask to help at 4:30 would be the one thing left on it still
+    // talking about a show that is not coming.
+    setClock(POST_SEASON);
+    const { container } = renderMadrona();
+
+    // The wrap state really is the one being asserted against.
+    expect(
+      screen.getByRole("heading", { name: "That’s a wrap on 2026" }),
+    ).toBeTruthy();
+
+    const section = container.querySelector(".event-landing-volunteer");
+    expect(section).not.toBeNull();
+    expect(screen.getByRole("heading", { name: "Lend a hand" })).toBeTruthy();
+
+    const asks = within(section as HTMLElement);
+    expect(
+      asks.queryByRole("heading", { name: "Help at a concert" }),
+    ).toBeNull();
+    expect(
+      asks.queryByRole("link", { name: "Email the organizers" }),
+    ).toBeNull();
+    // By its copy too: a heading-only assertion would still pass if
+    // the ask rendered headless.
+    expect(section?.textContent).not.toContain("Setup starts at 4:30");
+
+    expect(asks.getByRole("heading", { name: "Help year-round" })).toBeTruthy();
+    expect(
+      asks.getByRole("link", { name: "Volunteer with the association" }),
+    ).toBeTruthy();
+  });
+
+  it("keeps the year-round link in the same tab when its content declares no externality", () => {
+    // Externality is content-owned, not decided by the renderer naming
+    // this slot. The block is platform-generic: an organization whose
+    // volunteer page lives on its own site would otherwise be forced
+    // into a new tab it never asked for. Asserting the negative case is
+    // the only way to tell a content-driven attribute from a hardcoded
+    // one — madrona sets `external`, so the positive case passes either
+    // way.
+    setClock(CONCERT_DAY);
+    const landing = madronaContent.landing!;
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          landing: {
+            ...landing,
+            volunteer: {
+              ...landing.volunteer!,
+              yearRound: {
+                ...landing.volunteer!.yearRound,
+                href: "/volunteer",
+                external: undefined,
+              },
+            },
+          },
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    const link = within(
+      container.querySelector(".event-landing-volunteer") as HTMLElement,
+    ).getByRole("link", { name: "Volunteer with the association" });
+    expect(link.getAttribute("href")).toBe("/volunteer");
+    expect(link.getAttribute("target")).toBeNull();
+    expect(link.getAttribute("rel")).toBeNull();
+  });
+
+  it("renders no section for an event that authors no volunteer block", () => {
+    // Render-when-present, asserted at both clocks because the section
+    // is built in the resolver's component and returned from two
+    // separate branches.
+    for (const clock of [CONCERT_DAY, POST_SEASON]) {
+      setClock(clock);
+      const { container } = render(
+        <EventLandingPage
+          content={withoutVolunteer()}
+          slug="madrona"
+          masthead={getEventMasthead("madrona")}
+          mastheadSvgMarkup={SVG_FIXTURE}
+        />,
+      );
+
+      expect(container.querySelector(".event-landing-volunteer")).toBeNull();
+      expect(screen.queryByRole("heading", { name: "Lend a hand" })).toBeNull();
+      cleanup();
+    }
+  });
+
+  it("makes the volunteer ask once — the footer band does not restate it", () => {
+    setClock(CONCERT_DAY);
+    const { container } = renderMadrona();
+
+    const footer = container.querySelector(".event-landing-footer");
+    expect(footer?.textContent).not.toMatch(/volunteer/i);
+    expect(
+      container.querySelector(".event-landing-volunteer")?.textContent,
+    ).toMatch(/volunteer/i);
+  });
+
+  it("leaves the presenting band's position relative to On stage alone", () => {
+    // The volunteer section lands after This season, below both. The
+    // plan asked for this to be confirmed rather than assumed.
+    setClock(CONCERT_DAY);
+    const { container } = renderMadrona();
+
+    const band = container.querySelector(".event-landing-presenting");
+    const onStage = screen.getByRole("heading", { name: "On stage" });
+    expect(
+      band!.compareDocumentPosition(onStage) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+
+    // And the section itself sits between This season and the footer.
+    const volunteer = container.querySelector(".event-landing-volunteer")!;
+    const season = screen.getByRole("heading", { name: "This season" });
+    const footer = container.querySelector(".event-landing-footer")!;
+    expect(
+      season.compareDocumentPosition(volunteer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      volunteer.compareDocumentPosition(footer) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
 });

@@ -60,8 +60,11 @@ and the answer binds the product, not just one event's design:
   site.** Visitors arrive already knowing what the event is — from a
   poster, a newsletter, the organizer's own site. The page therefore
   never reintroduces the event: no address block, no what-is-this
-  paragraph, no series-length subheader. It welcomes you, shows
-  tonight, and puts the actions one tap away. The organizer's
+  paragraph, no series-length subheader. It orients you, shows
+  tonight, puts the actions one tap away, and asks for a hand on the
+  way out. It does not greet you — the masthead art has already said
+  where you are, and a second display face at the top read as a
+  different design system than the sections beneath it. The organizer's
   marketing presence keeps the job of explaining the event; competing
   with it would be both redundant and worse.
 - **Tonight is resolved, not authored.** Events author their nights
@@ -83,6 +86,17 @@ and the answer binds the product, not just one event's design:
   does own is the opt-in checkbox on the feedback form, because that
   address arrives as part of feedback the organizer already asked for;
   those reach the list by export.
+- **The bottom of the page is where the ask goes, and it is made
+  once.** An attendee who just had a good evening is the most willing
+  reader the platform ever gets, and the page used to end in a footer
+  band. It now carries a volunteer section instead — two separately
+  headed asks, because a night at a concert and a year on a committee
+  are different commitments and a reader choosing between them needs
+  to see that. The night-of ask resolves against the same clock the
+  run-of-show does and leaves with the season, so the page never asks
+  for help at a concert that is not coming. "Once" is the binding
+  half: a page that asks twice reads as a fundraiser, so an event
+  authoring the section drops the footer's volunteer line.
 - **Sponsors get two placements, and they mean different things.** An
   event-wide *presenting* sponsor appears on every night; a *headliner*
   sponsor is credited per night alongside that night's artist. Both are

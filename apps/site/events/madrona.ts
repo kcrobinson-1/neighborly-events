@@ -59,22 +59,30 @@ import type { EventContent } from "../lib/eventContent.ts";
  *
  * `landing` opts madrona into the day-of landing layout
  * (`EventDayOfLanding`, redesign spec §4): masthead-art hero with
- * the Lora welcome line, the four-tile action grid (subtitle copy
+ * the quiet body-face orientation line beneath it (it names what the
+ * page carries; the art above it already says where the reader is),
+ * the four-tile action grid (subtitle copy
  * is the spec's), the Meter Music School presenting-sponsor band
  * (logo-only — no verified Meter URL, and a link's presence is a
  * claim of verification), the season-wrap copy shown from Aug 26,
- * and the dark footer band's three lines (the masthead art's banner
- * line, the volunteer sentence, and the contact address). With
+ * the two-ask volunteer section, and the dark footer band's two
+ * lines (the masthead art's banner line and the contact address).
+ * The band's volunteer credit moved into the volunteer section,
+ * which makes the same point with an action attached. With
  * `landing` present the generic sections (`hero` text block,
  * `schedule`, full `lineup` bios, `sponsors`, `cta`) no longer
  * render on the landing page — `hero` still feeds route metadata
  * and the OG card, `schedule` remains the generic-agenda source of
  * truth for any surface that wants it, and `lineup` feeds the
  * On-stage section (tagline = `bio`, blurb = `extendedBio`, chips =
- * `artistLinks`) and the This-season strip. The FAQ renders below
- * This season, trimmed of the what-is-this entry per the spec's
- * no-reintroduction rule (§1) — remaining entries are day-of
- * practical answers.
+ * `artistLinks`) and the This-season strip.
+ *
+ * `faq` is deliberately absent. The day-of page is read by someone
+ * already standing at the Playfield, and the entries it carried
+ * answered what-is-this, how-much, and where-do-I-park — questions a
+ * person asks while deciding whether to come, on a page they only
+ * reach once they have. The FAQ capability is untouched at the
+ * platform level; the two test events still render it.
  *
  * Band `artistLinks` carry each artist's verified web presence:
  * only URLs confirmed against the artist's own official site or
@@ -207,7 +215,8 @@ export const madronaContent: EventContent = {
   landing: {
     hero: {
       mastheadSvgPath: "/events/madrona/masthead.svg",
-      welcomeLine: "Welcome to the playfield — here’s tonight.",
+      welcomeLine:
+        "Everything for tonight — the schedule, the quiz, and who’s playing.",
     },
     actions: {
       quiz: {
@@ -238,11 +247,30 @@ export const madronaContent: EventContent = {
       heading: "That’s a wrap on 2026",
       body: "Thank you to every neighbor, sponsor, and volunteer who filled the Playfield with music this summer. See you next year.",
     },
+    volunteer: {
+      heading: "Lend a hand",
+      lede: "Music in the Playfield is put on by neighbors. Two hours of your Tuesday goes a long way.",
+      nightOf: {
+        heading: "Help at a concert",
+        body: "Setup starts at 4:30 and takedown wraps by 8:30 — chairs, canopy, signs, the booth. No experience, no commitment beyond the night you pick.",
+        actionLabel: "Email the organizers",
+      },
+      yearRound: {
+        heading: "Help year-round",
+        body: "The association is all volunteers — parks, safety, events, communications. If tonight made you want in, there’s a spot for you.",
+        actionLabel: "Volunteer with the association",
+        href: madronaFacts.volunteerHref,
+        external: true,
+      },
+    },
     footer: {
       bannerLine: "★ Your neighborhood · Your music · Your park ★",
-      volunteerLine:
-        "Run entirely by Madrona Neighborhood Association volunteers, with help from local sponsors and neighbors like you.",
-      contactLabel: "Volunteer or contribute",
+      // `volunteerLine` omitted: the volunteer section directly above
+      // says who puts the event on and attaches an action to it, so
+      // the band restating it two inches lower is the duplication the
+      // page is meant to avoid. `contactLabel` is a plain contact for
+      // the same reason — the volunteer routing lives in the section.
+      contactLabel: "Get in touch",
       contactEmail: "musicintheplayfield@madrona.us",
     },
   },
@@ -391,32 +419,6 @@ export const madronaContent: EventContent = {
       tier: "Hosting",
       shortDescription:
         "The neighborhood association that hosts Music in the Playfield — three free Tuesday concerts every August.",
-    },
-  ],
-  faq: [
-    {
-      question: "Why is there no concert on Tuesday, August 4?",
-      answer:
-        "That night is deliberately left open — August 4 is Seattle Night Out, and the series skips it so neighbors can be at their block parties. Concerts run the three Tuesdays after: August 11, 18, and 25.",
-    },
-    {
-      question: "How much does it cost?",
-      answer: "All three evenings are free to attend.",
-    },
-    {
-      question: "What if it rains?",
-      answer:
-        "Concerts are free, family-friendly, and held rain or shine.",
-    },
-    {
-      question: "Where do I park?",
-      answer:
-        "There is no dedicated event parking — on-street parking is available in the surrounding neighborhood, and walking or biking is encouraged.",
-    },
-    {
-      question: "Is the playfield accessible?",
-      answer:
-        "The listening area is the playfield's open lawn, reachable from the sidewalk. For specific accessibility questions, check with the Madrona Neighborhood Association at madrona.us.",
     },
   ],
   cta: {

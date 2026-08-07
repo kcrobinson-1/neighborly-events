@@ -11,10 +11,10 @@
  *
  * This file carries **no color literals**. `EventContent.landing` is
  * a platform-generic opt-in, so any event can adopt this layout — a
- * hard-coded "poster red" here would paint a future event's welcome
- * line in Madrona's branding. Every color resolves from the per-event
- * Theme, including the two that read as garnish rather than brand
- * surface: the welcome line and main-set stars take
+ * hard-coded "poster red" here would paint a future event's marks in
+ * Madrona's branding. Every color resolves from the per-event
+ * Theme, including the one that reads as garnish rather than brand
+ * surface: the main-set stars take
  * `--accent-garnish`, and the donate tile takes the
  * `--cta-warm-surface` / `--cta-warm-fg` pair the quiz's donate CTA
  * already uses, so the two surfaces cannot drift onto different
@@ -77,12 +77,21 @@
   margin: 0 auto;
 }
 
+/* The orientation line under the hero art. Body face, small, muted:
+ * it tells a reader who just arrived what the page is, and then gets
+ * out of the way of the sections that answer it. `--font-body` is
+ * restated rather than inherited for the reason `_base.scss` gives —
+ * `body` computes the family once, outside `<ThemeScope>`, so a
+ * per-event override only re-resolves where the var is named again.
+ *
+ * `--muted` measures 4.51:1 against `--hero-end`, the gradient's
+ * darkest stop and this line's worst case; it sits nearer the top of
+ * the gradient in practice (6.36:1 at `--hero-start`). */
 .event-landing-welcome {
   margin: 6px 0 20px;
-  color: var(--accent-garnish);
-  font-family: var(--font-accent);
-  font-style: italic;
-  font-size: 20px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 14px;
 }
 
 .event-landing-actions {
@@ -434,6 +443,78 @@
   color: var(--cta-warm-fg);
 }
 
+/* The volunteer section. Two asks side by side where there is room,
+ * stacked on a phone — `auto-fit` rather than a breakpoint, because
+ * the wrap point is a function of how long the ask copy runs, not of
+ * the device. The action is pushed to the bottom of its ask (`margin-
+ * top: auto` inside a flex column) so the two buttons line up when
+ * the bodies differ in length.
+ *
+ * Both actions hold the 44px minimum the rest of this file does, and
+ * neither the lede nor the ask body takes an opacity reduction —
+ * standing rules of this stylesheet, carried for contrast rather than
+ * for looks. Every color resolves from a Theme token; the asks share
+ * `--cta-surface` / `--cta-fg` with the action grid's email-list tile
+ * and the quiz's CTA, so the page's call-to-action surfaces cannot
+ * drift apart. */
+.event-landing-volunteer-lede {
+  max-width: 560px;
+  margin: 0 auto 18px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.event-landing-volunteer-asks {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.event-landing-volunteer-ask {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 16px;
+  border: 2px dotted var(--accent-rule);
+  border-radius: var(--radius-control);
+}
+
+.event-landing-volunteer-ask-heading {
+  margin: 0 0 6px;
+  color: var(--primary);
+  font-family: var(--font-heading);
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+
+.event-landing-volunteer-ask-body {
+  margin: 0 0 14px;
+  font-size: 14px;
+}
+
+.event-landing-volunteer-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0 16px;
+  border-radius: var(--radius-control);
+  background: var(--cta-surface);
+  color: var(--cta-fg);
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-size: 16px;
+  letter-spacing: 1.5px;
+}
+
+/* No currently registered event renders these four rules: madrona is
+ * the only event on the day-of layout and it authors no `faq`. They
+ * stay because the capability did not go away with the content —
+ * `EventDayOfLanding` still renders the section for any event that
+ * authors entries, so deleting the rules would leave the next one to
+ * do it rendering an unstyled disclosure list. Delete them together
+ * with that block, or not at all. */
 .event-landing-faq-list {
   margin: 0;
   padding: 0;

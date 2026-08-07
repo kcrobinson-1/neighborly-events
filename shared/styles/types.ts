@@ -75,19 +75,19 @@ export type Theme = {
   // bands, sponsor bands, code block; the Madrona spec's "putty").
   // `--surface-band`; default `surfaceCardMuted`.
   surfaceBand?: string;
-  // `accentFontFamily` — short warm accent face (welcome line, artist
-  // taglines; Madrona uses Lora Italic). `--font-accent`; default
+  // `accentFontFamily` — short warm accent face (artist taglines;
+  // Madrona uses Lora Italic). `--font-accent`; default
   // `bodyFontFamily`.
   accentFontFamily?: string;
-  // `accentGarnish` — the small-decoration accent: short script/accent
-  // lines and emphasis marks (the day-of landing's welcome line and
-  // its main-set stars). Deliberately scoped to *marks and short
-  // lines*, never a fill or a large surface, because garnish colors
-  // in a poster palette are usually the ones with the least contrast
-  // headroom. `--accent-garnish`; default `secondary`. A theme that
-  // sets it owns checking it against the surfaces it lands on —
-  // including, when the text sits on a gradient, that gradient's
-  // darkest stop.
+  // `accentGarnish` — the small-decoration accent: emphasis marks and
+  // short accent lines (in the day-of landing, the main-set stars).
+  // Deliberately scoped to *marks and short lines*, never a fill or a
+  // large surface, because garnish colors in a poster palette are
+  // usually the ones with the least contrast headroom.
+  // `--accent-garnish`; default `secondary`. A theme that sets it owns
+  // checking it against every surface it lands on; a layout is free to
+  // put a mark on a gradient, so that check means the gradient's
+  // darkest stop rather than its average.
   accentGarnish?: string;
 
   // Quiz-surface vocabulary (Madrona redesign R4). Same optionality

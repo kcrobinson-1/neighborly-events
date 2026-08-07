@@ -8,7 +8,7 @@ import type { EventContent } from "../../lib/eventContent.ts";
  * `app/styles/_event.scss` so browser defaults don't surprise the
  * reader.
  */
-export function EventFAQ({ faq }: { faq: EventContent["faq"] }) {
+export function EventFAQ({ faq }: { faq: NonNullable<EventContent["faq"]> }) {
   return (
     <section className="event-faq" aria-labelledby="event-faq-heading">
       <h2 id="event-faq-heading" className="event-section-heading">

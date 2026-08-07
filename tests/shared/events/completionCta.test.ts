@@ -3,9 +3,11 @@ import {
   completionCtaBySlug,
   getCompletionCta,
 } from "../../../shared/events/completionCta.ts";
+import { madronaFacts } from "../../../shared/events/madrona-facts.ts";
+import { madronaContent } from "../../../apps/site/events/madrona.ts";
 
 describe("getCompletionCta", () => {
-  it("returns the Madrona launch entry with both CTA sections", () => {
+  it("returns the Madrona launch entry with all three CTA sections", () => {
     const cta = getCompletionCta("madrona");
 
     expect(cta).not.toBeNull();
@@ -20,6 +22,21 @@ describe("getCompletionCta", () => {
     expect(cta?.donate?.buttonLabel).toBe("Support the Playfield");
     expect(cta?.donate?.href).toBe(
       "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+    );
+    expect(cta?.volunteer?.buttonLabel).toBe("Volunteer");
+    expect(cta?.volunteer?.href).toBe("https://madrona.us/volunteers/");
+  });
+
+  it("sends the completion panel and the landing page to one volunteer address", () => {
+    // Both surfaces compose from `madronaFacts.volunteerHref`. Asserted
+    // because they are edited in different files by different changes,
+    // and a second copy of this URL is exactly the drift the facts
+    // module exists to prevent.
+    expect(getCompletionCta("madrona")?.volunteer?.href).toBe(
+      madronaFacts.volunteerHref,
+    );
+    expect(madronaContent.landing?.volunteer?.yearRound.href).toBe(
+      madronaFacts.volunteerHref,
     );
   });
 
@@ -78,9 +95,28 @@ describe("getCompletionCta", () => {
     }
   });
 
+  it("keeps every CTA body free of clock times — this block has no date gate", () => {
+    // `GameCompletionPanel` reads no clock and `getCompletionCta` takes
+    // no date: the block renders on every completion for as long as the
+    // quiz route is up, including long after a season ends. Copy naming
+    // a time of day therefore cannot expire, so it must not be written.
+    //
+    // The day-of landing's volunteer section is the deliberate contrast
+    // — it may be time-specific precisely because it resolves against
+    // the event clock and drops its night-of ask with the season.
+    for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
+      for (const [section, link] of Object.entries(cta)) {
+        if (typeof link !== "object" || link === null) continue;
+        expect(link.body, `${slug} ${section} body names a clock time`).not.toMatch(
+          /\b\d{1,2}:\d{2}\b/,
+        );
+      }
+    }
+  });
+
   it("names no CTA section a newsletter — the association's newsletter is a printed mailer", () => {
     for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
-      for (const link of [cta.emailList, cta.donate]) {
+      for (const link of [cta.emailList, cta.donate, cta.volunteer]) {
         if (!link) continue;
         expect(link.buttonLabel.toLowerCase(), `${slug} button`).not.toContain(
           "newsletter",

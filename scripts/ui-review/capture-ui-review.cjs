@@ -14,8 +14,46 @@ const defaultBaseUrl = "http://127.0.0.1:4173";
 // apps/site's `next dev` origin — a different app on a different port
 // from the attendee captures above, so `--mode site` defaults here
 // rather than to the apps/web origin.
-const defaultSiteBaseUrl = "http://127.0.0.1:3000";
+// `localhost`, not `127.0.0.1`: `next dev` blocks cross-origin requests
+// for its own dev resources, and it treats the two spellings as
+// different origins. Pointed at `127.0.0.1` it still serves the page
+// HTML — so the capture looks fine — but `/_next/webpack-hmr` and the
+// dev client bundle are refused, React never hydrates, and the shot
+// silently records the server-resolved state forever. That matters
+// here specifically: the day-of landing decides Tonight / Next concert
+// / season-wrap in a mount effect, so an unhydrated capture shows
+// whichever state the build happened to bake in.
+const defaultSiteBaseUrl = "http://localhost:3000";
 const defaultSiteSlug = "madrona";
+// The day-of landing resolves against the reader's visit time twice
+// over (prerendered `initialNowMs`, then a mount effect re-resolving
+// against the device clock), so a single capture only ever shows
+// whichever state the machine's real date happens to fall in. These
+// two instants pin the states a reviewer needs to compare: a concert
+// evening, and the season-wrap state the page swaps into after the
+// final night. Both are noon PT on their date, far from any local
+// midnight boundary the resolver ticks across.
+// `settled` is what the resolver renders once it has re-resolved
+// against the faked clock, and it has to be something the *server*
+// pass does not already produce, or waiting on it proves nothing.
+// Both are renderer-owned (not content fields), so they hold for any
+// event on this layout rather than just the default slug.
+const siteClockStates = [
+  {
+    fileName: "01-site-day-of-landing-mobile.png",
+    label: "concert day",
+    time: "2026-08-11T19:00:00Z",
+    // "Tonight" rather than the section itself: a build on any other
+    // day bakes the same run-of-show under "Next concert".
+    settled: { selector: "#event-landing-tonight-heading", text: "Tonight" },
+  },
+  {
+    fileName: "02-site-day-of-landing-season-wrap-mobile.png",
+    label: "post-season",
+    time: "2026-08-26T19:00:00Z",
+    settled: { selector: ".event-landing-wrap" },
+  },
+];
 const defaultOutputRoot = path.join("tmp", "ui-review");
 const adminEnvPath = path.join("apps", "web", ".env");
 
@@ -211,31 +249,82 @@ async function captureFeaturedFlow(page, baseUrl, runDirectory) {
  *
  * `--slug` selects the event; the default is the launch event whose
  * landing page the day-of layout was built for.
+ *
+ * One capture per entry in `siteClockStates`, each on its own page so
+ * the fixed time is in place before the mount effect runs. The clock
+ * is faked in the browser only — the server pass still bakes the real
+ * `Date.now()` into the HTML — which is enough, because the client
+ * re-resolution is what decides the rendered state. `setFixedTime`
+ * rather than `install`: the resolver runs a one-minute interval that
+ * compares event-local calendar dates, and freezing timers outright
+ * would stop a tick the page depends on for nothing in return.
  */
 async function captureSiteMode(baseUrl, runDirectory, slug) {
   console.log(`Capturing apps/site day-of landing for "${slug}"...`);
 
   const browser = await chromium.launch({ headless: true });
   const context = await browser.newContext({ ...devices["iPhone 13"] });
-  const page = await context.newPage();
-  const consoleErrors = [];
 
-  page.on("console", (msg) => {
-    if (msg.type() === "error") consoleErrors.push(msg.text());
-  });
+  for (const state of siteClockStates) {
+    const page = await context.newPage();
+    const consoleErrors = [];
 
-  await page.goto(`${baseUrl}/event/${encodeURIComponent(slug)}`, {
-    waitUntil: "networkidle",
-  });
-  // The action grid is the last thing the layout paints above the fold
-  // and the surface this capture exists to compare, so wait on it
-  // rather than on a generic load event.
-  await page.locator(".event-landing-actions").waitFor({ timeout: 15000 });
-  await capture(page, runDirectory, "01-site-day-of-landing-mobile.png");
-  console.log("  01-site-day-of-landing-mobile.png");
+    page.on("console", (msg) => {
+      if (msg.type() === "error") consoleErrors.push(msg.text());
+    });
 
-  if (consoleErrors.length > 0) {
-    console.warn("  [site landing console errors]", consoleErrors);
+    await page.clock.setFixedTime(new Date(state.time));
+    await page.goto(`${baseUrl}/event/${encodeURIComponent(slug)}`, {
+      waitUntil: "networkidle",
+    });
+    // The action grid is the last thing the layout paints above the fold
+    // and the surface this capture exists to compare, so wait on it
+    // rather than on a generic load event.
+    await page.locator(".event-landing-actions").waitFor({ timeout: 15000 });
+    // Two waits, because they prove different things and neither
+    // implies the other.
+    //
+    // The fiber key proves React adopted the DOM. It does NOT prove
+    // `LandingTonightSections` has run its mount effect and committed
+    // the re-resolved render — hydration claiming the tree and the
+    // passive effect flushing are separate commits, and a shot taken
+    // between them records the build-time section.
+    //
+    // `state.settled` closes that gap by waiting for what the faked
+    // clock actually produces. On its own it would be the weaker
+    // check: if the machine's real date happened to bake the same
+    // state, it would pass without the effect ever running. Together
+    // they cover each other.
+    await page.waitForFunction(
+      () => {
+        /* eslint-disable-next-line no-undef --
+           This callback is serialized and evaluated in the page, not
+           in Node. The scripts glob carries only Node globals, which
+           is right for the rest of this file — widening it to browser
+           globals to satisfy one line would stop catching real Node
+           mistakes everywhere else in it. */
+        const el = document.querySelector("main.event-landing");
+        return Boolean(
+          el && Object.keys(el).some((key) => key.startsWith("__reactFiber$")),
+        );
+      },
+      undefined,
+      { timeout: 15000 },
+    );
+    const settled = page.locator(state.settled.selector);
+    await settled.waitFor({ timeout: 15000 });
+    if (state.settled.text) {
+      await settled.filter({ hasText: state.settled.text }).first()
+        .waitFor({ timeout: 15000 });
+    }
+    await capture(page, runDirectory, state.fileName);
+    console.log(`  ${state.fileName} (${state.label})`);
+
+    if (consoleErrors.length > 0) {
+      console.warn(`  [site landing console errors: ${state.label}]`, consoleErrors);
+    }
+
+    await page.close();
   }
 
   await browser.close();

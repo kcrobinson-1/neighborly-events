@@ -7,8 +7,8 @@ import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
 
 /**
  * The day-of landing layout (Madrona redesign spec §4): full-bleed
- * hero (theme gradient + inlined masthead SVG + one accent-face
- * welcome line, nothing else), the four-tile action grid, the
+ * hero (theme gradient + inlined masthead SVG + one quiet body-face
+ * orientation line, nothing else), the four-tile action grid, the
  * resolver-driven Tonight / On-stage / This-season group
  * (`LandingTonightSections`), an optional flat FAQ, and the dark
  * footer band. Selected by `EventLandingPage` when
@@ -137,7 +137,7 @@ export function EventDayOfLanding({
         initialNowMs={initialNowMs}
       />
 
-      {content.faq.length > 0 ? (
+      {content.faq && content.faq.length > 0 ? (
         <section
           className="event-landing-section event-landing-faq"
           aria-labelledby="event-landing-faq-heading"
@@ -164,9 +164,11 @@ export function EventDayOfLanding({
         <p className="event-landing-footer-banner">
           {landing.footer.bannerLine}
         </p>
-        <p className="event-landing-footer-line">
-          {landing.footer.volunteerLine}
-        </p>
+        {landing.footer.volunteerLine ? (
+          <p className="event-landing-footer-line">
+            {landing.footer.volunteerLine}
+          </p>
+        ) : null}
         <p className="event-landing-footer-line">
           {landing.footer.contactLabel}:{" "}
           <a href={`mailto:${landing.footer.contactEmail}`}>
