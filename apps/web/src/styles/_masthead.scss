@@ -1,3 +1,5 @@
+@use "./tokens" as *;
+
 /*
  * apps/web's half of the shared sticky event header bar. The bar
  * itself is styled in `shared/styles/_event-masthead.scss` (`@use`d just
@@ -26,10 +28,15 @@
  * to the Theme. Scoped to the page-head rather than zeroing the
  * shell's padding outright, so the quiz route's loading /
  * unavailable / error states, which open with a route-state shell
- * instead, keep their normal top gap under the bar. `--shell-padding-
- * top` is published by `.site-shell` itself (`_layout.scss`) so the
- * cancellation tracks the padding across breakpoints.
+ * instead, keep their normal top gap under the bar.
+ *
+ * The pull is the shell's own top padding negated, off the structural
+ * spacing scale: `$space-11` here and `$space-8` in the `max-width:
+ * 640px` block, each stated next to the padding it cancels
+ * (`_layout.scss` and `_responsive.scss`). Spacing is a platform
+ * contract, so it stays in SCSS rather than being republished as a
+ * custom property.
  */
 .event-masthead + .site-shell .game-page-head {
-  margin-top: calc(-1 * var(--shell-padding-top));
+  margin-top: -$space-11;
 }

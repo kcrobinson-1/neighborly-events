@@ -34,7 +34,10 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 16px;
+  // Vertical padding is deliberately thin: the bar's height comes from
+  // the tap-target row below, not from padding around a text-sized
+  // row. Together they hold the bar at the height it has always had.
+  padding: 3px 16px;
   background: var(--header-bg);
   color: var(--header-fg);
   box-shadow: 0 2px 0 var(--primary-shadow);
@@ -64,6 +67,14 @@
   margin-left: auto;
   overflow-x: auto;
   scrollbar-width: none;
+  // `overflow-x: auto` makes this a scroll container on *both* axes —
+  // `overflow-y: visible` computes to `auto` alongside it — so this box
+  // is also the clip for its children's tap-target overlays below. It
+  // therefore has to be a full target tall itself; at its natural text
+  // height the overlays were clipped back to ~30px. The extra 2px is
+  // slack: sized to exactly 44 the scrollport boundary shaves a
+  // half-pixel off the overlay it coincides with.
+  min-height: 46px;
 }
 
 .event-masthead-nav::-webkit-scrollbar {
@@ -118,13 +129,16 @@
  * bar is the one chrome that had not had that pass, and it is the
  * only way home from the quiz app.
  *
- * Expanded with an overlay rather than `min-height`, because the type
- * here is load-bearing: the nav items draw the active underline on
- * their own bottom edge, so growing the box would detach the gold
- * rule from the word it underlines, and the brand lockup baselines
- * its two spans against each other. The overlay leaves every box
- * where it was and spends the bar's existing vertical padding, so the
- * bar's height and rhythm are unchanged.
+ * The height is carried by the row rather than by the links: the nav
+ * is a full target tall (it is also the scroll clip, see above) and
+ * the bar's thin padding centers the brand against it. Each link then
+ * takes the full row as its hit area through the overlay below.
+ *
+ * The links keep their text-sized boxes because the type is
+ * load-bearing: the nav items draw the active underline on their own
+ * bottom edge, so a taller box would detach the gold rule from the
+ * word it underlines, and the brand lockup baselines its two spans
+ * against each other.
  *
  * Vertical only: the four items have to fit one row at 390px, so
  * widening them would close the gaps between neighboring targets.
@@ -162,7 +176,7 @@
 @media (max-width: 430px) {
   .event-masthead {
     gap: 10px;
-    padding: 10px 10px;
+    padding: 3px 10px;
   }
 
   .event-masthead-nav {
