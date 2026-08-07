@@ -163,8 +163,9 @@ marketing presence, not a second marketing site. Visitors arrive
 already knowing what the event is — from a poster, a newsletter, or
 the organizer's website — so the page never reintroduces it: no
 address block, no what-is-this paragraph, no series-length subheader.
-Its jobs, in order: welcome you, show tonight, and put the actions —
-quiz, email list, feedback, donate — one tap away.
+Its jobs, in order: orient you, show tonight, put the actions —
+quiz, email list, feedback, donate — one tap away, and ask for a hand
+on the way out.
 
 Events opt into this layout by authoring `EventContent.landing`
 (events without it keep the generic multi-section template). The
@@ -204,9 +205,23 @@ layout, top to bottom:
    featured night highlighted; the only nod to the series. Deep
    artist content lives one tap away or on the organizer's site.
 7. **FAQ** (optional) — day-of practical answers only, per the
-   no-reintroduction rule above.
-8. **Footer** — dark brand band: banner line, the volunteer-run
-   sentence, and the contact address.
+   no-reintroduction rule above. Madrona authors none: an FAQ
+   answering what-is-this, how-much, and where-do-I-park is written
+   for someone still deciding whether to come, on a page they only
+   reach once they have. The section and its styles are kept for
+   events that do have something to answer.
+8. **Volunteer** (optional) — two separately-headed asks, because
+   they are two different commitments: a night-of ask routed to the
+   organizer contact the event already authors, and a year-round ask
+   routed to the organization's own volunteer page as an external
+   link. The night-of ask resolves against the same clock the
+   run-of-show does and stops rendering once the season has ended,
+   so the page never asks a reader to help at a concert that is not
+   coming; the year-round ask and the section itself survive that
+   transition. The page makes the volunteer ask once — an event
+   authoring this section omits the footer's volunteer line.
+9. **Footer** — dark brand band: banner line, the contact address,
+   and optionally a line naming who puts the event on.
 
 Reward-language rule, restated from the design spec because it binds
 all surfaces including this one: the words "trinket" and "raffle"
@@ -521,8 +536,9 @@ screen needs a new tab to protect the code. When device storage is unavailable
 (private browsing, full quota), those links fall back to opening in a new tab
 so navigation cannot discard the only copy of the code.
 
-A link whose destination leaves the platform — the email list and donate both
-do today — opens in a new browsing context regardless, because the reason is
+A link whose destination leaves the platform — the email list, donate, and
+volunteer sections all do today — opens in a new browsing context regardless,
+because the reason is
 different: the attendee is standing at the event holding a check-in code, and
 sending them off-platform in the same tab takes the screen a volunteer is about
 to ask for. The two reasons are independent, so making the completed state
