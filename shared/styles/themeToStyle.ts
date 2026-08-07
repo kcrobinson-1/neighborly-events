@@ -84,8 +84,13 @@ export function themeToStyle(theme: Theme): Record<string, string> {
     "--panel-shadow": theme.panelShadow ?? "0 24px 60px rgba(42, 42, 42, 0.12)",
     "--page-head-surface": theme.pageHeadSurface ?? "transparent",
     "--page-head-rule": theme.pageHeadRule ?? "none",
-    "--page-head-margin": theme.pageHeadMargin ?? "0",
-    "--page-head-padding": theme.pageHeadPadding ?? "0",
+    // The band posture expands to structural layout constants owned
+    // here (not per-theme data): full-bleed margin + band padding.
+    // `overflow-x: clip` on `.site-shell` contains the half-scrollbar
+    // overhang of the vw-based bleed.
+    "--page-head-margin":
+      theme.pageHeadPosture === "band" ? "0 calc(50% - 50vw)" : "0",
+    "--page-head-padding": theme.pageHeadPosture === "band" ? "18px" : "0",
     "--option-border": theme.optionBorder ?? `1px solid ${theme.border}`,
     "--option-selected-border-color": theme.optionSelectedBorderColor ??
       mix(theme.secondary, 56),

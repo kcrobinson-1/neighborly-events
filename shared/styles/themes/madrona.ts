@@ -69,11 +69,11 @@ export const madronaTheme: Theme = {
   panelShadow: "none",
 
   // Putty page-head band with a gold bottom rule, bled to the
-  // viewport edges; Bebas display sizing with the poster tracking.
+  // viewport edges via the bounded band posture; Bebas display
+  // sizing with the poster tracking.
   pageHeadSurface: "#f1dfb8",
   pageHeadRule: "3px solid #d9a62b",
-  pageHeadMargin: "0 calc(50% - 50vw)",
-  pageHeadPadding: "18px",
+  pageHeadPosture: "band",
   pageHeadTitleSize: "2rem",
   headingLetterSpacing: "0.06em",
 
@@ -87,13 +87,16 @@ export const madronaTheme: Theme = {
   codeSurface: "#f1dfb8",
   codeBorder: "2.5px solid #d9a62b",
 
-  // Completion CTAs: gold Newsletter on dark green; warm orange
-  // Donate (the poster's warm accent — garnish-tier, so it lives
-  // here rather than as a brand base) on near-white.
+  // Completion CTAs: gold Newsletter and warm-orange Donate (the
+  // poster's warm accent — garnish-tier, so it lives here rather
+  // than as a brand base). Foregrounds are deepened past the mock's
+  // pairings to clear WCAG AA for normal text: deep green on gold
+  // (6.5:1), deep warm ink on orange (5.5:1) — the mock's
+  // near-white-on-orange measured 2.9:1.
   ctaSurface: "#d9a62b",
-  ctaFg: "#2e4a34",
+  ctaFg: "#1c2e20",
   ctaWarmSurface: "#d9822b",
-  ctaWarmFg: "#fffdf2",
+  ctaWarmFg: "#2a2016",
 
   // Sponsor attribution line — the poster's purple, label-only.
   sponsorLabel: "#6b4e8e",

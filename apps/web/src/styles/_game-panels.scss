@@ -3,7 +3,9 @@
 
 // Quiz page-head. Renders as plain flow (no band) on the token
 // defaults; a Theme with a banded page-head sets the surface, the
-// bottom rule, a full-bleed margin, and padding — see the
+// bottom rule, and the bounded `pageHeadPosture: "band"` (the
+// full-bleed margin and band padding are structural constants
+// expanded by `themeToStyle.ts`, not per-theme data) — see the
 // quiz-surface vocabulary in `docs/styling.md`.
 .game-page-head {
   margin: var(--page-head-margin);

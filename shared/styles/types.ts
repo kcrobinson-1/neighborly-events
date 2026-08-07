@@ -94,22 +94,27 @@ export type Theme = {
   // panel chrome (`--panel-surface`, `--panel-border`,
   // `--panel-shadow`), consumed only by the quiz panels; operator
   // surfaces keep the structural `.panel` chrome on every theme.
-  // Defaults: `surface`, `1px solid <border>`, and the structural
-  // panel drop-shadow. A flat theme sets
+  // Surface/border defaults: `surface` and `1px solid <border>`.
+  // `panelShadow` is deliberately bound to the literal `"none"`
+  // (shadow *posture*, not a recipe): composite shadow recipes stay
+  // platform-shared structural, so a theme may only remove the
+  // panel shadow, never redefine it. A flat theme sets
   // `transparent` / `none` / `none` to de-bubble.
   panelSurface?: string;
   panelBorder?: string;
-  panelShadow?: string;
+  panelShadow?: "none";
   // Page-head band (`--page-head-surface`, `--page-head-rule`,
-  // `--page-head-margin`, `--page-head-padding`). Defaults render no
-  // band: `transparent`, `none`, `0`, `0`. A banded theme sets a
-  // band surface (typically `surfaceBand`), a bottom-rule border
-  // shorthand, a full-bleed margin (`0 calc(50% - 50vw)`), and
-  // padding.
+  // `--page-head-posture`→margin/padding). Defaults render no band:
+  // `transparent`, `none`, plain flow. A banded theme sets a band
+  // surface (typically `surfaceBand`), a bottom-rule border
+  // shorthand, and `pageHeadPosture: "band"`. The posture is a
+  // bounded literal: the full-bleed margin and band padding are
+  // structural constants owned by `themeToStyle.ts` /
+  // `_game-panels.scss`, so themes cannot inject arbitrary layout
+  // metrics.
   pageHeadSurface?: string;
   pageHeadRule?: string;
-  pageHeadMargin?: string;
-  pageHeadPadding?: string;
+  pageHeadPosture?: "band";
   // `pageHeadTitleSize` (`--page-head-title-size`) and
   // `headingLetterSpacing` (`--heading-letter-spacing`) are emitted
   // ONLY when set — call sites carry their structural fallbacks in

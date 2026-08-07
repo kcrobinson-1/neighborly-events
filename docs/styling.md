@@ -112,11 +112,10 @@ deliberately not edited when a new optional field lands.
 | `gridLine` | `--grid-line` | `text` at 4% (the existing derived shade) | Backdrop grid line color; `transparent` hides the grid. |
 | `panelSurface` | `--panel-surface` | `surface` | Quiz panel background. Consumed only by the attendee quiz panels (`.intro-panel` / `.question-panel` / `.completion-panel`); operator surfaces keep the structural `.panel` chrome on every theme. |
 | `panelBorder` | `--panel-border` | `1px solid` `border` | Quiz panel border (full border shorthand); same scope as `panelSurface`. |
-| `panelShadow` | `--panel-shadow` | `0 24px 60px rgba(42,42,42,0.12)` (the structural `$shadow-panel` recipe) | Quiz panel drop shadow; `none` de-bubbles. Same scope as `panelSurface`. |
+| `panelShadow` | `--panel-shadow` | `0 24px 60px rgba(42,42,42,0.12)` (the structural `$shadow-panel` recipe) | Quiz panel shadow **posture** — the field is type-bound to the literal `"none"`, so a theme can only remove the shadow; the composite recipe itself stays structural. Same scope as `panelSurface`. |
 | `pageHeadSurface` | `--page-head-surface` | `transparent` | Quiz page-head band background. |
 | `pageHeadRule` | `--page-head-rule` | `none` | Page-head bottom rule (border shorthand). |
-| `pageHeadMargin` | `--page-head-margin` | `0` | Page-head margin; `0 calc(50% - 50vw)` bleeds the band to the viewport edges. |
-| `pageHeadPadding` | `--page-head-padding` | `0` | Page-head padding. |
+| `pageHeadPosture` | `--page-head-margin` + `--page-head-padding` | plain flow (`0` / `0`) | Bounded literal `"band"`: expands to the structural full-bleed margin (`0 calc(50% - 50vw)`) and band padding (`18px`) owned by `themeToStyle.ts` — themes cannot inject arbitrary layout metrics. `.site-shell`'s `overflow-x: clip` contains the vw-bleed's scrollbar overhang. |
 | `pageHeadTitleSize` | `--page-head-title-size` | *(not emitted)* | Emitted only when set; call sites carry structural `var(--…, fallback)` fallbacks. |
 | `headingLetterSpacing` | `--heading-letter-spacing` | *(not emitted)* | Emitted only when set; display-face tracking. Call sites carry structural fallbacks (e.g. the topbar h1's `-0.04em`). |
 | `optionBorder` | `--option-border` | `1px solid` `border` | Answer option row border (full border shorthand). |
@@ -368,10 +367,11 @@ Theme {
   headerBg?, headerFg?, surfaceBand?, accentFontFamily?,
 
   // Optional quiz-surface vocabulary (Madrona redesign R4;
-  // default-derived, same table)
+  // default-derived, same table). panelShadow and pageHeadPosture
+  // are bounded literals ("none" / "band"), not free-form values.
   pageSurface?, gridLine?,
   panelSurface?, panelBorder?, panelShadow?,
-  pageHeadSurface?, pageHeadRule?, pageHeadMargin?, pageHeadPadding?,
+  pageHeadSurface?, pageHeadRule?, pageHeadPosture?,
   pageHeadTitleSize?, headingLetterSpacing?,   // conditional emission
   optionBorder?, optionSelectedBorderColor?, optionSelectedSurface?,
   codeSurface?, codeBorder?,

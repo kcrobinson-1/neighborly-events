@@ -222,8 +222,7 @@ describe("ThemeScope", () => {
       panelShadow: "none",
       pageHeadSurface: "#f1dfb8",
       pageHeadRule: "3px solid #d9a62b",
-      pageHeadMargin: "0 calc(50% - 50vw)",
-      pageHeadPadding: "18px",
+      pageHeadPosture: "band",
       pageHeadTitleSize: "2rem",
       headingLetterSpacing: "0.06em",
       optionBorder: "2.5px solid #8b8b2e",
@@ -254,6 +253,8 @@ describe("ThemeScope", () => {
     expect(style).toContain("--panel-shadow: none");
     expect(style).toContain("--page-head-surface: #f1dfb8");
     expect(style).toContain("--page-head-rule: 3px solid #d9a62b");
+    // The bounded band posture expands to the structural full-bleed
+    // margin and band padding owned by `themeToStyle.ts`.
     expect(style).toContain("--page-head-margin: 0 calc(50% - 50vw)");
     expect(style).toContain("--page-head-padding: 18px");
     expect(style).toContain("--page-head-title-size: 2rem");

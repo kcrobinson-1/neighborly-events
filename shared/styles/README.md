@@ -58,14 +58,17 @@ A `Theme` may set optional fields beyond the required surface:
   `--font-accent`).
 - The quiz-surface vocabulary (Madrona redesign R4): `pageSurface`,
   `gridLine`, `panelSurface` / `panelBorder` / `panelShadow`,
-  `pageHeadSurface` / `pageHeadRule` / `pageHeadMargin` /
-  `pageHeadPadding`, `optionBorder` /
+  `pageHeadSurface` / `pageHeadRule` / `pageHeadPosture`,
+  `optionBorder` /
   `optionSelectedBorderColor` / `optionSelectedSurface`,
   `codeSurface` / `codeBorder`, `ctaSurface` / `ctaFg` /
   `ctaWarmSurface` / `ctaWarmFg`, and `sponsorLabel`. These let a
   theme trade the platform's floating-panel look for a flat
   full-bleed one (Madrona's cream page / putty page-head band /
   olive option rows) with no event-keyed branches in components.
+  `panelShadow` and `pageHeadPosture` are bounded literals
+  (`"none"` / `"band"`): shadow recipes and layout metrics stay
+  structural; themes pick a posture, not a value.
 
 A theme that omits an optional field renders byte-identically to the
 pre-extension emission: `themeToStyle.ts` derives the default from
