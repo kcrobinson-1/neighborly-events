@@ -443,6 +443,24 @@ Execute in any order.
   is unchanged but the example needs replacing.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Resolve cross-app links from apps/web outside the site-origin proxy](/docs/tracking/dev-workflow-improvements.md)
 
+- [ ] **`db` Regenerate the DB artifacts after the signup-RPC drop, and gate them in CI**
+  `shared/db/types.ts` and `shared/db/permissions.snapshot.md` both
+  still declare `public.submit_newsletter_signup(text, text)`, which
+  migration `20260807000000` dropped. Neither could be regenerated in
+  the PR that dropped it: `npm run db:gen-types` and
+  `npm run db:gen-permissions` both need a running local Supabase
+  stack, and the primary maintainer's machine has no Docker runtime
+  (see [`dev.md`](/docs/dev.md) "supabase start fails"). Nothing breaks
+  — no code calls the removed RPC, so the stale type declaration is
+  inert — but both artifacts currently misdescribe the database.
+  **Goal:** run both generators on a machine with a working runtime and
+  commit the result; expect a pure deletion in each. Worth pairing with
+  the second half: CI runs `test:supabase` but has no drift check on
+  either artifact, which is why this shipped silently rather than
+  failing the PR. A check that regenerates and diffs would have caught
+  it, and would catch the next one.
+  Detail: N/A
+
 - [ ] **`db` Test-entitlement deletion requires manual unwinding of circular FK**
   Deleting an event's entitlements today requires a three-step
   transaction — clear `first_completion_id` on entitlements, delete
