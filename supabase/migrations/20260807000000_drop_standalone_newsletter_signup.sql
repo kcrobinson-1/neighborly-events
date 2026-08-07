@@ -1,0 +1,39 @@
+-- Drop submit_newsletter_signup — the standalone signup surface's RPC.
+--
+-- The on-site email-signup route this function existed to serve was
+-- removed from the platform in the same change. The association runs
+-- its own list on a mail provider and every attendee-facing email-list
+-- affordance now points there, so nothing calls this function: not the
+-- site, not the quiz app, not an edge function. It was granted EXECUTE
+-- to anon, and an anon-callable write path with no caller is a surface
+-- kept open for no one.
+--
+-- What this migration does NOT touch, and why each one has to stay:
+--
+--   * public.newsletter_opt_ins — the canonical consent log. The
+--     feedback form's opt-in checkbox still writes rows to it. Every
+--     row already recorded, including rows whose source_surface is
+--     'standalone' from before this change, is a real consent event and
+--     stays.
+--   * public.newsletter_enabled_events — the enablement registry the
+--     log's event_slug foreign key targets under ON DELETE RESTRICT.
+--     Dropping it would break that write path.
+--   * public.subscribe_email — the internal SECURITY DEFINER helper
+--     this function wrapped. submit_feedback calls it too, so it is the
+--     shared write path, not this function's private one. It carries no
+--     anon or authenticated EXECUTE grant and never did.
+--
+-- The source_surface CHECK still admits 'standalone' deliberately: the
+-- literal is no longer produced by any writer, but it is the recorded
+-- provenance of rows already in the log, and narrowing the constraint
+-- would reject those rows on the next validation.
+
+drop function if exists public.submit_newsletter_signup(text, text);
+
+-- ─── Post-state per affected object (CCI-4) ──────────────────────────
+-- submit_newsletter_signup(text, text): does not exist. DROP FUNCTION
+--   removes the function's own EXECUTE grants with it, so no grant to
+--   anon, authenticated, service_role, or PUBLIC survives the body.
+-- newsletter_opt_ins, newsletter_enabled_events, subscribe_email,
+--   submit_feedback, feedback_enabled_events, feedback_submissions:
+--   grants, RLS state, policies, constraints, and rows all unchanged.

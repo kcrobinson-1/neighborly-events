@@ -39,7 +39,7 @@ create extension if not exists pgtap with schema extensions;
 -- prefixes; extensions stays on so pgTAP's plan/ok/is/has_* resolve.
 set local search_path = extensions, pg_catalog;
 
-select plan(615);
+select plan(609);
 
 -- ────────────────────────────────────────────────────────────────────
 -- Tables
@@ -1163,21 +1163,10 @@ select ok(    has_function_privilege('authenticated', 'public.submit_feedback(te
 select ok(    has_function_privilege('service_role',  'public.submit_feedback(text, jsonb, boolean, boolean, text, text)', 'EXECUTE'), 'service_role EXECUTE on submit_feedback is granted');
 select ok(not has_function_privilege('public',        'public.submit_feedback(text, jsonb, boolean, boolean, text, text)', 'EXECUTE'), 'public EXECUTE on submit_feedback is denied');
 
--- ─── public.submit_newsletter_signup ────────────────────────────────
-
-select has_function('public', 'submit_newsletter_signup', array['text', 'text'], 'public.submit_newsletter_signup(text, text) exists');
-select is(
-  (select case when p.prosecdef then 'DEFINER' else 'INVOKER' end
-     from pg_proc p
-     join pg_namespace n on n.oid = p.pronamespace
-    where n.nspname = 'public' and p.proname = 'submit_newsletter_signup'),
-  'DEFINER',
-  'submit_newsletter_signup is SECURITY DEFINER'
-);
-select ok(    has_function_privilege('anon',          'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'anon EXECUTE on submit_newsletter_signup is granted');
-select ok(    has_function_privilege('authenticated', 'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'authenticated EXECUTE on submit_newsletter_signup is granted');
-select ok(    has_function_privilege('service_role',  'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'service_role EXECUTE on submit_newsletter_signup is granted');
-select ok(not has_function_privilege('public',        'public.submit_newsletter_signup(text, text)', 'EXECUTE'), 'public EXECUTE on submit_newsletter_signup is denied');
+-- public.submit_newsletter_signup was dropped by migration
+-- 20260807000000 along with the on-site signup route that was its only
+-- caller, so it has no grants to snapshot here. Its absence is asserted
+-- in newsletter_enablement_registry.test.sql, which owned its coverage.
 
 -- ─── public.subscribe_email ─────────────────────────────────────────
 
