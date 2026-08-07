@@ -319,6 +319,49 @@ Constraint:
 
 - the browser-only fallback is development-only and should not be treated as production backend behavior
 
+### Event brand fonts and image assets
+
+Per-event brand faces are **self-hosted woff2, duplicated per app**.
+The same files live in both
+[`apps/site/public/fonts/`](/apps/site/public/fonts) and
+[`apps/web/public/fonts/`](/apps/web/public/fonts), each with a
+`FONT-LICENSES.txt` alongside naming the license (OFL 1.1 for the
+current set). Duplication is deliberate: it keeps each app free of a
+cross-origin font dependency, which matters because the two apps deploy
+as separate Vercel projects and an attendee crosses between them
+mid-session.
+
+To add a face:
+
+1. Convert to woff2 and drop the file into **both** `public/fonts/`
+   directories, updating both `FONT-LICENSES.txt` files.
+2. Add the `@font-face` block to **both**
+   [`apps/site/app/styles/_fonts.scss`](/apps/site/app/styles/_fonts.scss)
+   and [`apps/web/src/styles/_fonts.scss`](/apps/web/src/styles/_fonts.scss)
+   (each is `@use`d from its app's style entrypoint). Use
+   `font-display: swap`.
+3. Name the family in the event's Theme (`bodyFontFamily`,
+   `headingFontFamily`, or the optional `accentFontFamily`) in
+   `shared/styles/themes/<slug>.ts`.
+
+A declared `@font-face` is **inert** until a rendered element's
+font stack names that family, so adding one costs no bytes for events
+still on the platform/system stacks. That is what keeps the shared
+declarations safe to land ahead of the theme that uses them.
+
+Per-event image assets (masthead art, sponsor logos, lineup photos)
+live under `apps/site/public/events/<slug>/` — apps/site only, since
+it is the canonical origin that serves them. Masthead art that a page
+inlines as SVG is read at build time through
+[`apps/site/lib/readPublicSvg.ts`](/apps/site/lib/readPublicSvg.ts)
+rather than fetched.
+
+Validation for an asset or font change is `npm run build:site` plus
+`npm run build:web` (both, when the change touches both apps) and a
+screenshot pass — see "UI Review Workflow" below. There is no
+automated check that the two `public/fonts/` copies agree; the
+per-app `@font-face` blocks are the place that drift shows up first.
+
 ## Local Workflow
 
 ### First command in a fresh environment
@@ -942,6 +985,53 @@ a fresh preview against the latest head SHA. The trigger also fires on
 `preview` label add and on `ready_for_review` transition; see the
 workflow file's header for the full trigger matrix and job decomposition.
 
+### Session PR protocol
+
+This section is the protocol for an **agent session** (a Claude Code or
+Codex session working a branch end to end). It exists because the
+preview-deploy mechanics above have two properties that make the
+obvious behavior — deploy early, deploy often — actively wrong.
+
+**Trigger exactly one preview deploy, as the final step of the
+session.** Push all commits first, wait for CI and for any automated
+review to post, address anything that needs a fix-up commit, and only
+then trigger — once, against the final head SHA. Do not trigger a
+preview per push, and do not trigger one "to check early." Three
+reasons, each sufficient on its own:
+
+- The `preview-deploy` check is **SHA-pinned**. A preview triggered
+  before the last commit describes a commit that is no longer head, so
+  it proves nothing about what a reviewer will merge.
+- Re-triggering **re-posts the check as pending**, which drops the PR
+  back into `mergeStateStatus: BLOCKED`. Every extra trigger is another
+  window in which the PR cannot be merged.
+- Each trigger burns **Vercel deployment quota**. Quota is the whole
+  reason branch auto-deploys are off and the trigger is human-gated in
+  the first place — a session that deploys per push reintroduces the
+  cost the gate was built to avoid.
+
+**"Once" means once across all three trigger mechanisms, not once per
+mechanism.** The `trigger` job in
+[`preview-deploys.yml`](/.github/workflows/preview-deploys.yml) fires
+on a `/deploy-preview` comment, on `preview` label add, **and** on the
+`ready_for_review` transition. Marking a draft PR ready is therefore
+already a trigger — commenting `/deploy-preview` afterward starts a
+second deployment, burns a second quota slot, and drops the check back
+to pending. Before commenting, check whether an automatic signal has
+already fired for the current head SHA; comment only if none has.
+
+Docs-only PRs need no trigger at all: scope detection classifies the
+diff and marks the check successful without a Vercel build. Note that
+"docs-only" is a path classification, not an intent one — a
+comment-only edit to a `.ts` file is enough to put an otherwise
+documentation-shaped PR outside it and require a real preview.
+
+**Sessions do not merge their own PRs.** Open the PR, run validation,
+trigger the single preview, report, and stop. Kyle merges. The one
+sanctioned exception is a Plan-to-Landed close-out PR (a Status flip
+with no code), and even that is per-PR authorization that does not
+generalize to the next PR in the same session.
+
 ### Pull Request Notes
 
 Pull requests use [`.github/pull_request_template.md`](/.github/pull_request_template.md)
@@ -1026,6 +1116,61 @@ Actions tab while the reporter is being patched.
 For live site, admin, Supabase Edge Function, or database triage during an
 event, start with the operator runbook in
 [`operations.md` — Live Monitoring And Log Triage](/docs/operations.md#live-monitoring-and-log-triage).
+
+### `supabase start` fails — no Docker runtime on the maintainer's machine
+
+**There is no working Docker API-compatible runtime on the primary
+maintainer's machine.** `/usr/local/bin/docker` is a symlink into
+`/Applications/OrbStack.app`, and that app has been removed, so the
+symlink dangles and `docker` does not resolve on `PATH` at all. There
+is no `/var/run/docker.sock` and no `~/.orbstack`.
+
+This is recorded here because at least three sessions have rediscovered
+it independently, each burning a failed `supabase start` and a triage
+detour on a "why is Docker broken" question that is not a bug and is
+not worth fixing mid-slice.
+
+Anything that needs the local Supabase stack therefore **cannot run
+locally on that machine**: `npm run test:supabase`, `npm run test:db`,
+`npm run test:e2e:attendee:trusted-backend`, `npm run test:e2e:admin`,
+`npm run validate:local`, and `supabase start` / `supabase db reset`
+(and therefore `npm run db:gen-types`).
+
+What still runs locally and should be run before every push:
+`npm run lint`, `npm test`, `npm run test:functions`,
+`npm run build:web`, `npm run build:site`, and the `deno check`
+commands — none of them touch Docker.
+
+**Deferring to CI is only honest for the suites CI actually runs.**
+[`ci.yml`](/.github/workflows/ci.yml) runs `test:supabase` (which
+covers the pgTAP suite, so `test:db` is subsumed) and
+`test:e2e:attendee:trusted-backend`. Those two are genuinely gated on
+the PR — defer them and say so in the PR body's validation section
+rather than reporting them as passing.
+
+**`npm run test:e2e:admin` is the exception, and it is a real gap.**
+It is deliberately excluded from both CI and `validate:local` (see
+"Admin functionality validation" above), so on a Docker-less machine
+it runs *nowhere*. A change touching admin auth, allowlist checks,
+draft persistence, publish/unpublish, or the admin UI therefore has
+**no** admin end-to-end coverage from this machine — that is an
+uncovered change, not a deferred one, and the PR body should say so in
+those words. Options, in order of preference: run it on a machine with
+a working runtime, get a reviewer to run it, or — for a change whose
+risk warrants it — treat the missing coverage as a merge blocker.
+Wiring the suite into CI so this stops depending on machine state is
+tracked in [`backlog.md`](/docs/backlog.md).
+
+Note also that `validate:local` does not wrap the full list above: it
+runs lint, unit tests, `test:functions`, `test:e2e` (the browser smoke
+suite), `test:supabase`, `build:web`, and the `deno check` commands —
+not `test:db`, not `test:e2e:admin`, not
+`test:e2e:attendee:trusted-backend`, and not `build:site`.
+
+A contributor whose machine *does* have a working runtime (Docker
+Desktop, OrbStack, Rancher Desktop, Podman — see "Prerequisites")
+runs everything normally; nothing in the repo is conditioned on this
+machine's state.
 
 ### Session bootstrap succeeds but completion returns 401
 

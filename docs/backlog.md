@@ -38,7 +38,66 @@ steps, and validation commands.
 
 Must be resolved before QR codes are printed or the first real event runs.
 
-_No open items._
+- [ ] **`ux` Madrona focus ring is 1.77:1 — below the 3:1 non-text bar**
+  `$focus-ring` is `3px solid var(--secondary-focus)`, and
+  `--secondary-focus` is the derived **42% alpha mix** of
+  `--secondary`, not the solid olive. On Madrona that composites to
+  **1.77:1** against the cream page (1.72 on putty, 1.86 on
+  near-white). [`_game-focus.scss`](/apps/web/src/styles/_game-focus.scss)
+  applies the outline as the *only* focus treatment, so keyboard focus
+  on quiz options, primary/secondary buttons, completion CTAs, and text
+  links has nothing else carrying it. **Goal:** a keyboard user can see
+  where focus is on every Madrona interactive surface. Note the shape
+  of the cause before picking a fix: the solid `--secondary` clears the
+  bar comfortably (4.87 on cream) and only the 42% derivation fails, so
+  options include raising the mix percentage, pointing `$focus-ring` at
+  a solid token, or adding a second non-color focus affordance — but
+  the derived-shade percentage is shared with every theme, so changing
+  it there is not Madrona-local. Tier 1: this is keyboard accessibility
+  on the primary attendee flow. Measurements recorded in
+  [`docs/styling.md`](/docs/styling.md).
+  Detail: N/A
+
+- [ ] **`ux` Featured-night outline is the sole state indicator at 1.67:1**
+  `.event-landing-season-card-now`
+  ([`_landing.scss:380`](/apps/site/app/styles/_landing.scss)) marks
+  the featured night with `3px solid var(--accent)` and
+  `outline-offset: 2px`, putting gold on the cream page at **1.67:1**,
+  and
+  [`LandingTonightSections.tsx`](/apps/site/components/event/LandingTonightSections.tsx)
+  adds no visible label, no `aria-current`, and no visually-hidden
+  text. So the only signal for "this is tonight" in the season strip is
+  a below-threshold color outline — invisible to a low-vision user and
+  absent for a screen-reader user. **Goal:** which night is featured is
+  perceivable without relying on that outline. A text or icon marker
+  would fix the semantic half and the contrast half at once, which is
+  likely cheaper than re-coloring the outline; `aria-current` alone
+  would fix only the screen-reader half. Tier 1: the season strip is on
+  the landing page every attendee sees.
+  Detail: N/A
+
+- [ ] **`ux` Madrona form controls have no boundary treatment reaching 3:1**
+  The flat cream palette removed the panel chrome that used to make
+  inputs legible, and the alpha border left behind does not replace
+  it. Measured: `--border-soft` composited on the input fill is
+  **1.17:1** against that fill and **1.00:1** against the cream page
+  behind it — effectively invisible — and the input fill itself is
+  **1.18:1** against the page. Nothing visually identifies the control
+  at the WCAG 1.4.11 3:1 bar. Affects three controls on two masthead
+  destinations: the signup email input
+  ([`_signup.scss:46`](/apps/site/app/styles/_signup.scss)) and the
+  feedback textarea + email input
+  ([`_event.scss:669`](/apps/site/app/styles/_event.scss)). **Goal:**
+  a sighted attendee can tell where the input is. One option among
+  several is a per-theme control-boundary token that Madrona sets to
+  an opaque olive or ink at 3:1+, leaving other themes on today's
+  derived alpha border — but a heavier border, an inset fill contrast,
+  or a filled control treatment all reach the same goal and differ in
+  how much they disturb the poster look. Tier 1 because attendees hit
+  the signup and feedback forms during the event; the measurement is
+  recorded in [`docs/styling.md`](/docs/styling.md) so it does not
+  need re-deriving.
+  Detail: N/A
 
 ---
 
@@ -53,6 +112,85 @@ Reduce deployment risk and contributor friction before the live event.
   policy changes cannot widen access silently.
   Detail: [`docs/plans/archive/admin-live-status-plan.md`](/docs/plans/archive/admin-live-status-plan.md)
 
+
+- [ ] **`ux` Swap the Zac Lee sponsor lockup from DRAFT to final**
+  The Madrona headliner-sponsor logo at
+  `apps/site/public/events/madrona/sponsors/zac-lee.png` is a **DRAFT
+  lockup**, landed as a placeholder so the per-night sponsor credit
+  could ship on schedule. The reference in
+  [`apps/site/events/madrona.ts`](/apps/site/events/madrona.ts) already
+  documents this. Goal: the final mark replaces the draft before that
+  sponsor's night. This is a content edit only — drop the final file
+  at the same path, no code change — so it is safe to do after launch,
+  but it must happen before the Zac Lee night rather than drifting to
+  end of season.
+  Detail: N/A
+
+- [ ] **`decision` Post-season teardown for a finished event**
+  After an event's final night, its landing page resolves to a
+  season-wrap state (newsletter and donate emphasized, quiz still
+  available) and stays there indefinitely — nothing expires it. That
+  is the right immediate behavior, but no one has decided what a
+  finished event should look like a month or a year later: whether the
+  landing stays up as an archive, the quiz unpublishes, the masthead
+  registration is removed, or the event is retired wholesale. Goal: a
+  decided, repeatable end-of-season state so each event's teardown is
+  not improvised. This is the first event to reach the question, so it
+  is worth deciding once rather than per event.
+  Detail: N/A
+
+- [ ] **`dev` In-flight completion snapshot is discarded on content drift, defeating the server's replay path**
+  `isValidSubmittingSnapshot` in
+  [`gameSessionPersistence.ts`](/apps/web/src/game/gameSessionPersistence.ts)
+  rejects a `submitting` snapshot whose content fingerprint no longer
+  matches the published questions. But `complete-game` resolves a
+  landed attempt from `(eventId, requestId, sessionId)` and returns
+  **before** loading or validating current content — a short-circuit
+  added specifically so drifted replays can still recover. So the
+  client throws away a replayable request id for exactly the reason
+  the server was built to tolerate. Concretely: an attendee submits,
+  content is republished mid-flight, they reload, and instead of
+  replaying the request id that may already have landed they get a
+  fresh run. Republishing during an event is not hypothetical — the
+  reward-language sweep republished madrona and harvest to v3 while
+  live. **Goal:** a reload after a submission does not discard a
+  request id the server would still honor. The fingerprint check is
+  right for the `in progress` kind (stale answers against changed
+  questions are genuinely unrecoverable) and wrong for `submitting`;
+  splitting the two is one option. Note this is narrow — the
+  entitlement is one-per-session so the code stays stable — but it
+  costs the attendee a retake.
+  Detail: N/A
+
+- [ ] **`dev` Banned reward nouns are unenforced in admin-authored content**
+  The product rule forbids "trinket" and "raffle"
+  ([`product.md`](/docs/product.md)), and checked-in copy and seed
+  content are swept. Admin-authored content is not: `validateGameConfig`
+  checks question/answer structure only, and neither the save nor the
+  publish path inspects wording, so an organizer can publish either
+  noun in a prompt, explanation, option, or event field. The live rows
+  were swept once by hand and nothing keeps them clean. **Goal:** the
+  rule is enforced where content is authored rather than depending on
+  a periodic manual sweep. Options differ in strictness and in who
+  they interrupt — a publish-time validation error, a soft authoring
+  warning, or a checklist item in the existing publish checklist —
+  and the choice is a product call about how hard to block an
+  organizer mid-publish.
+  Detail: N/A
+
+- [ ] **`dev` Wire the admin e2e suite into PR CI**
+  `npm run test:e2e:admin` is excluded from both
+  [`ci.yml`](/.github/workflows/ci.yml) and `validate:local`, so it
+  runs only when a contributor remembers to run it — and it cannot run
+  at all on a machine without a Docker runtime, which is the primary
+  maintainer's situation (see [`dev.md`](/docs/dev.md) troubleshooting).
+  The result is that a change to admin auth, allowlist checks, draft
+  persistence, or publish/unpublish can reach `main` with no admin
+  end-to-end coverage anywhere, and nothing surfaces that. **Goal:**
+  admin e2e coverage is a property of the PR rather than of whose
+  machine ran it. Sibling of the demo-mode bypass entry below; both
+  are the same shape of gap and may be worth doing together.
+  Detail: N/A
 
 - [ ] **`dev` Wire demo-mode bypass Playwright suite into PR CI**
   `playwright.demo-mode-bypass.config.ts` exists and exercises the G9
@@ -305,6 +443,32 @@ Execute in any order.
   unwind in a service-role helper are all worth comparing at scoping
   time.
   Detail: N/A
+
+- [ ] **`dev` Share structural style tokens across apps**
+  The structural token bucket has one named home and two unnamed
+  ones: `$radius-pill: 999px` is declared in
+  [`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss),
+  while apps/site declares no SCSS variables at all and shared
+  partials can consume neither app's token file — so the bare
+  literal `999px` is repeated at
+  [`apps/site/app/styles/_admin.scss:146`](/apps/site/app/styles/_admin.scss),
+  [`apps/site/app/styles/_landing.scss:317`](/apps/site/app/styles/_landing.scss),
+  and
+  [`shared/styles/_event-masthead.scss:109`](/shared/styles/_event-masthead.scss).
+  Three copies of one platform contract, with nothing that fails when
+  they drift. **Goal:** a structural value has one authoring home that
+  every app and shared partial reads, so drift is impossible rather
+  than merely unlikely. Two shapes are worth comparing — a shared
+  `_structural.scss` both apps `@use`, or a bridge to a
+  `--radius-pill` custom property in each app's `:root` (mirroring the
+  existing `--shadow: #{$shadow-panel}` bridge) — and they differ in
+  whether shared partials can participate, which is the deciding
+  question. Scope the sweep past the pill radius: the spacing scale
+  and font weights are the same shape of duplication. Raised as a
+  Codex P1 during the Madrona redesign and declined there as out of
+  scope for a masthead PR; deliberately deferred past launch because
+  it touches both apps' styling entrypoints.
+  Detail: [`docs/styling.md` — Where the structural bucket actually lives](/docs/styling.md)
 
 - [ ] **`infra` Investigate planning-doc location**
   The `/docs/plans/archive/` set keeps growing, plan-only and

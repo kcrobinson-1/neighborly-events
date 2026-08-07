@@ -10,8 +10,12 @@
  * Status colors, neutral drop-shadow, modal scrim, spacing scale,
  * motion, font weights, control sizes, focus-ring metrics, pill
  * radius, and composite shadow/focus recipes are **not** Theme
- * fields. They live as platform-shared SCSS variables (apps/web) or
- * a parallel structural module (apps/site).
+ * fields. In apps/web they live as platform-shared SCSS variables in
+ * `_tokens.scss`. apps/site has no counterpart module — it declares
+ * no SCSS variables and writes these values as literals, as do the
+ * shared partials under `shared/styles/`, which can consume neither
+ * app's token file. See `docs/styling.md` — "Where the structural
+ * bucket actually lives."
  */
 export type Theme = {
   // Brand bases — `--bg`, `--surface`, `--surface-strong`,

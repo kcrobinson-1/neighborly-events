@@ -13,13 +13,25 @@ import { computeContentFingerprint } from "./contentFingerprint";
  * code — is recoverable without retaking.
  *
  * The cached completion is the recovery mechanism, not a re-fetch through the
- * completion RPC's replay path. Replaying the RPC requires resending the same
- * request id, answers, score, and duration — the exact payload this module
- * would have to persist anyway — so a re-fetch adds a network dependency at
- * an outdoor event without shrinking the persisted surface. The backend still
- * owns the entitlement: retakes resubmit through the normal flow and the RPC
- * returns the existing entitlement, which is why retaking never changes the
- * code or the reward entry.
+ * completion function's replay path. What it actually saves is one network
+ * round trip at restore: the completed screen renders from local state rather
+ * than re-POSTing to `complete-game`.
+ *
+ * Two stronger rationales appeared in earlier versions of this comment. Both
+ * were wrong; they are recorded so they do not get reintroduced.
+ *   - "A re-fetch would have to persist the same payload anyway." False.
+ *     `complete-game` resolves a landed attempt from (eventId, requestId,
+ *     sessionId) alone, and the request carries no score at all (the server
+ *     recomputes it from trusted content), so a replay-based recovery would
+ *     need only two ids persisted.
+ *   - "The completed screen re-renders with no network." False. `GameRoutePage`
+ *     awaits `loadPublishedGameBySlug` and renders the quiz only after that
+ *     remote read resolves, so a return visit needs the network either way.
+ *     This is a saved request, not offline capability.
+ *
+ * The backend still owns the entitlement: retakes resubmit through the normal
+ * flow and the RPC returns the existing entitlement, which is why retaking
+ * never changes the code or the reward entry.
  *
  * Snapshots are validated on read: an envelope written by a different client
  * session, malformed JSON, or an in-progress snapshot that no longer matches
@@ -62,11 +74,15 @@ export type PersistedGameSnapshot =
       answers: Answers;
       completionRequestId: string;
       /**
-       * Same fingerprint as in-progress runs: the backend validates answers
-       * against current published content before its request-id dedup runs,
-       * so replaying a drifted payload can only 400 — never recover the
-       * completion. A mismatch discards the snapshot and restarts; the
-       * per-session entitlement returns the same code on the new completion.
+       * Same fingerprint as in-progress runs. The reason this comment used
+       * to give for enforcing it here was false: `complete-game` resolves a
+       * landed attempt from (eventId, requestId, sessionId) and returns
+       * *before* loading or validating content, so a drifted replay can
+       * recover rather than only 400. A mismatch still discards the snapshot
+       * today — a known gap tracked in `docs/backlog.md`, not something the
+       * server contract requires. The per-session entitlement returns the
+       * same code on the new completion, which is what keeps the current
+       * behavior costly (a retake) rather than harmful (a lost code).
        */
       contentFingerprint: string;
       /**
@@ -204,12 +220,20 @@ function isValidInProgressSnapshot(
 
 /**
  * Validates a submitting snapshot, including the content fingerprint.
- * Content-tolerance is not viable here: the completion endpoint validates
- * answers against current published content before its request-id dedup
- * runs, so a drifted replay returns 400 every time — even when the
- * original POST landed — which would strand the attendee in a retry loop.
- * Discarding instead restarts the run, and the per-session entitlement
- * returns the same verification code on the new completion.
+ *
+ * This comment previously justified the fingerprint check by claiming the
+ * completion endpoint validates answers against current content before its
+ * request-id dedup, so a drifted replay could only 400. That is backwards:
+ * `complete-game` looks up (eventId, requestId, sessionId) and returns
+ * before loading content, specifically so drifted replays recover.
+ * Discarding a drifted `submitting` snapshot therefore throws away a request
+ * id the server would still honor — a known gap tracked in
+ * `docs/backlog.md`, not a requirement.
+ *
+ * Behavior is deliberately unchanged here: the per-session entitlement
+ * returns the same verification code on the new completion, so today's cost
+ * is a retake rather than a lost code, and changing the discard rule wants
+ * its own change with a test rather than riding along in a docs pass.
  */
 function isValidSubmittingSnapshot(
   game: GameConfig,

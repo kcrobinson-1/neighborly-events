@@ -43,9 +43,16 @@ Per-event Themes specify only the brand surface — bases, typography,
 radii, gradient stops. They do not redefine status colors (success
 green stays green across themes), neutral drop-shadow, modal scrim,
 spacing scale, motion timing, font weights, control sizes,
-focus-ring width, or pill radius. Those live as platform-shared SCSS
-variables in `apps/web/src/styles/_tokens.scss` and as parallel
-structural values in apps/site.
+focus-ring width, or pill radius. In apps/web those live as
+platform-shared SCSS variables in
+[`apps/web/src/styles/_tokens.scss`](/apps/web/src/styles/_tokens.scss).
+There is **no apps/site counterpart**: apps/site declares no SCSS
+variables at all and writes these values as literals, as does
+`_event-masthead.scss` in this module — a shared partial is `@use`d by
+both apps and can consume neither app's token file. See
+[`docs/styling.md`](/docs/styling.md) "Where the structural bucket
+actually lives"; closing the resulting duplication is a tracked
+backlog item.
 
 Brand-tied derived shades (`--primary-surface`, `--secondary-focus`,
 the alpha tints of brand bases) are **not** Theme fields. They are
