@@ -121,6 +121,42 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     );
   });
 
+  it("omits the email-list tile and wrap action for an event that authors no destination", () => {
+    // Render-when-present: the platform serves no email-signup route to
+    // derive a destination from, so an event that authors none offers no
+    // email-list affordance at all rather than a tile pointing nowhere.
+    // Asserted at both consumers, because the season-wrap action gates
+    // on the same field from a different component.
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          landing: {
+            ...madronaContent.landing!,
+            actions: {
+              ...madronaContent.landing!.actions,
+              emailList: { label: "Email list", subtitle: "unreachable" },
+            },
+          },
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    expect(
+      within(
+        container.querySelector(".event-landing-actions") as HTMLElement,
+      ).queryByRole("link", { name: /Email list/ }),
+    ).toBeNull();
+    // The three renderer-owned tiles are untouched by the omission.
+    expect(
+      container.querySelectorAll(".event-landing-action"),
+    ).toHaveLength(3);
+  });
+
   it("names no attendee-facing affordance a newsletter", () => {
     // The association's newsletter is a printed mailer delivered in the
     // mail. Asserting over the rendered page rather than over the
@@ -341,6 +377,38 @@ describe("EventDayOfLanding — season wrap", () => {
     expect(
       container.querySelectorAll(".event-landing-season-card-now"),
     ).toHaveLength(0);
+  });
+
+  it("omits the wrap's email-list action for an event that authors no destination", () => {
+    setClock("2026-08-26T19:00:00Z");
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          landing: {
+            ...madronaContent.landing!,
+            actions: {
+              ...madronaContent.landing!.actions,
+              emailList: { label: "Email list", subtitle: "unreachable" },
+            },
+          },
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    const wrapActions = container.querySelector(".event-landing-wrap-actions");
+    expect(
+      within(wrapActions as HTMLElement).queryByRole("link", {
+        name: "Email list",
+      }),
+    ).toBeNull();
+    // Donate survives the omission — the two actions gate independently.
+    expect(
+      within(wrapActions as HTMLElement).getByRole("link", { name: "Donate" }),
+    ).toBeTruthy();
   });
 });
 
