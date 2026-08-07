@@ -52,6 +52,7 @@ Deno.test("complete-game rejects invalid sessions before touching persistence", 
   let persistCalls = 0;
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -84,6 +85,7 @@ Deno.test("complete-game rejects invalid sessions before touching persistence", 
 Deno.test("complete-game rejects answers that fail shared validation", async () => {
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -111,9 +113,174 @@ Deno.test("complete-game rejects answers that fail shared validation", async () 
   assertExists((await response.json()).error);
 });
 
+Deno.test("complete-game returns the stored completion for a replayed request id after content drift", async () => {
+  let loadCalls = 0;
+  let persistCalls = 0;
+  let capturedLookup:
+    | { eventId: string; requestId: string; sessionId: string }
+    | null = null;
+
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async (input) => {
+      capturedLookup = input;
+
+      return {
+        data: {
+          attempt_number: 2,
+          completion_id: "cmp-stored",
+          entitlement_created_at: "2026-04-05T12:00:00.000Z",
+          entitlement_status: "existing",
+          message:
+            "You already earned your reward entitlement. This retake does not create another one.",
+          entitlement_eligible: false,
+          score: 5,
+          verification_code: "TST-1234",
+        },
+        error: null,
+      };
+    },
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSigningSecret: () => "session-secret",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadPublishedGameById: async () => {
+      loadCalls += 1;
+      return sampleGame;
+    },
+    persistCompletion: async () => {
+      persistCalls += 1;
+      return { data: null, error: null };
+    },
+    readVerifiedSession: async () => ({
+      sessionId: "session-id",
+      sessionToken: "session-token",
+    }),
+  });
+
+  // "drifted-option" would fail validateSubmittedAnswers against the current
+  // published content; the stored completion must win before validation runs.
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({
+        answers: { q1: ["drifted-option"] },
+        durationMs: 1200,
+        eventId: sampleGame.id,
+        requestId: "req-replayed",
+      }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 200);
+  assertEquals(await response.json(), {
+    attemptNumber: 2,
+    completionId: "cmp-stored",
+    entitlement: {
+      createdAt: "2026-04-05T12:00:00.000Z",
+      status: "existing",
+      verificationCode: "TST-1234",
+    },
+    message:
+      "You already earned your reward entitlement. This retake does not create another one.",
+    entitlementEligible: false,
+    score: 5,
+  });
+  assertEquals(capturedLookup, {
+    eventId: sampleGame.id,
+    requestId: "req-replayed",
+    sessionId: "session-id",
+  });
+  assertEquals(loadCalls, 0);
+  assertEquals(persistCalls, 0);
+});
+
+Deno.test("complete-game still rejects drifted answers for a new request id", async () => {
+  let persistCalls = 0;
+
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSigningSecret: () => "session-secret",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadPublishedGameById: async () => sampleGame,
+    persistCompletion: async () => {
+      persistCalls += 1;
+      return { data: null, error: null };
+    },
+    readVerifiedSession: async () => ({
+      sessionId: "session-id",
+      sessionToken: "session-token",
+    }),
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({
+        answers: { q1: ["drifted-option"] },
+        durationMs: 1200,
+        eventId: sampleGame.id,
+        requestId: "req-brand-new",
+      }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 400);
+  assertExists((await response.json()).error);
+  assertEquals(persistCalls, 0);
+});
+
+Deno.test("complete-game returns a retryable 500 when the replay lookup fails", async () => {
+  let persistCalls = 0;
+
+  const handler = createCompleteGameHandler({
+    ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({
+      data: null,
+      error: { message: "completion lookup query failed" },
+    }),
+    getAllowedOrigin: () => "http://127.0.0.1:4173",
+    getServiceRoleKey: () => "service-role-key",
+    getSigningSecret: () => "session-secret",
+    getSupabaseUrl: () => "http://127.0.0.1:54321",
+    loadPublishedGameById: async () => sampleGame,
+    persistCompletion: async () => {
+      persistCalls += 1;
+      return { data: null, error: null };
+    },
+    readVerifiedSession: async () => ({
+      sessionId: "session-id",
+      sessionToken: "session-token",
+    }),
+  });
+
+  const response = await handler(
+    createOriginRequest("https://example.com", {
+      body: JSON.stringify({
+        answers: { q1: ["a"] },
+        durationMs: 1200,
+        eventId: sampleGame.id,
+        requestId: "req-lookup-error",
+      }),
+      method: "POST",
+    }),
+  );
+
+  assertEquals(response.status, 500);
+  assertEquals(await response.json(), {
+    details: "completion lookup query failed",
+    error: "We couldn't finalize your entitlement right now.",
+  });
+  assertEquals(persistCalls, 0);
+});
+
 Deno.test("complete-game returns 400 when published content is missing or unpublished", async () => {
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -144,6 +311,7 @@ Deno.test("complete-game returns 400 when published content is missing or unpubl
 Deno.test("complete-game returns a 500 when the published content loader fails", async () => {
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -190,6 +358,7 @@ Deno.test("complete-game persists the trusted normalized payload and clamped dur
 
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -280,6 +449,7 @@ Deno.test("complete-game persists the trusted normalized payload and clamped dur
 Deno.test("complete-game returns a 500 when trusted persistence fails", async () => {
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -324,6 +494,7 @@ Deno.test("complete-game returns a 500 when trusted persistence fails", async ()
 Deno.test("complete-game returns 503 when entitlement_code_exhausted", async () => {
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",
@@ -361,6 +532,7 @@ Deno.test("complete-game returns 503 when entitlement_code_exhausted", async () 
 Deno.test("complete-game returns 500 when event_code_missing", async () => {
   const handler = createCompleteGameHandler({
     ...defaultCompleteGameHandlerDependencies,
+    findCompletionByRequestId: async () => ({ data: null, error: null }),
     getAllowedOrigin: () => "http://127.0.0.1:4173",
     getServiceRoleKey: () => "service-role-key",
     getSigningSecret: () => "session-secret",

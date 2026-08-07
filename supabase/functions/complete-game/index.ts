@@ -3,6 +3,7 @@ import {
   type CompleteGameHandlerDependencies,
   defaultCompleteGameHandlerDependencies,
 } from "./dependencies.ts";
+import { type CompletionRpcRow } from "./persistence.ts";
 import { validateCompletionPayload } from "./payload.ts";
 import { jsonResponse } from "./response.ts";
 
@@ -11,6 +12,7 @@ export {
   defaultCompleteGameHandlerDependencies,
 } from "./dependencies.ts";
 export type {
+  CompletionLookupInput,
   CompletionPersistenceInput,
   CompletionPersistenceResult,
   CompletionRpcRow,
@@ -19,6 +21,22 @@ export {
   type CompletionRequestBody,
   validateCompletionPayload,
 } from "./payload.ts";
+
+/** Maps a stored or freshly persisted completion row to the API response body. */
+function completionResponseBody(data: CompletionRpcRow) {
+  return {
+    attemptNumber: data.attempt_number,
+    completionId: data.completion_id,
+    entitlement: {
+      createdAt: data.entitlement_created_at,
+      status: data.entitlement_status,
+      verificationCode: data.verification_code,
+    },
+    message: data.message,
+    entitlementEligible: data.entitlement_eligible,
+    score: data.score,
+  };
+}
 
 /** Builds the request handler used by the trusted completion function. */
 export function createCompleteGameHandler(
@@ -90,6 +108,45 @@ export function createCompleteGameHandler(
       return jsonResponse(
         401,
         { error: "Session is missing or invalid." },
+        origin,
+        dependencies.createCorsHeaders,
+      );
+    }
+
+    // Resolve a completion this request id already produced BEFORE validating
+    // against current published content. Published content can drift between
+    // the original attempt and a client replay (question added, option
+    // removed); the stored completion is authoritative for a landed request
+    // id, so validation against today's content must not block its recovery.
+    const existing = await dependencies.findCompletionByRequestId(
+      {
+        eventId: payload.eventId,
+        requestId: payload.requestId,
+        sessionId: session.sessionId,
+      },
+      supabaseUrl,
+      serviceRoleKey,
+    );
+
+    // A lookup failure returns a retryable 500 rather than falling through:
+    // falling through would let a drifted replay hit validation's terminal
+    // 400, which tells the client to give up on a completion that landed.
+    if (existing.error) {
+      return jsonResponse(
+        500,
+        {
+          error: "We couldn't finalize your entitlement right now.",
+          details: existing.error.message,
+        },
+        origin,
+        dependencies.createCorsHeaders,
+      );
+    }
+
+    if (existing.data) {
+      return jsonResponse(
+        200,
+        completionResponseBody(existing.data),
         origin,
         dependencies.createCorsHeaders,
       );
@@ -175,18 +232,7 @@ export function createCompleteGameHandler(
 
     return jsonResponse(
       200,
-      {
-        attemptNumber: data.attempt_number,
-        completionId: data.completion_id,
-        entitlement: {
-          createdAt: data.entitlement_created_at,
-          status: data.entitlement_status,
-          verificationCode: data.verification_code,
-        },
-        message: data.message,
-        entitlementEligible: data.entitlement_eligible,
-        score: data.score,
-      },
+      completionResponseBody(data),
       origin,
       dependencies.createCorsHeaders,
     );
