@@ -354,6 +354,30 @@ prioritization before starting.
   feedback shapes the requirements.
   Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
 
+- [ ] **`docs` Resolve the Madrona spec section citations, which point outside the repo**
+  Twelve-plus committed source files cite the redesign by section
+  number — "Madrona redesign spec §4" in
+  `apps/site/app/styles/_landing.scss`, `EventDayOfLanding.tsx`,
+  `EventLandingPage.tsx`, `apps/site/events/madrona.ts`; "spec §2" and
+  "spec §3" across the two `_masthead.scss` partials and
+  `shared/styles/_event-masthead.scss`; "experience spec §4" in
+  `apps/web/src/game/gameUtils.ts`; "centerfold/poster SPECS palette"
+  in `shared/styles/themes/madrona.ts`. No spec document exists in the
+  repo — `find . -iname "*spec*" -name "*.md"` returns nothing — so a
+  reader hitting any of these cannot open what it names. The
+  consolidation that landed the redesign into the durable doc set
+  (`docs/experience.md`, `docs/styling.md`, `docs/product.md`) is what
+  made these stale: the sections they point at were superseded by prose
+  that now lives in-repo, and several have since been edited away from
+  what the spec said. Two of them are already wrong rather than merely
+  unresolvable — the landing stylesheet and `EventDayOfLanding` cite
+  §4 for a hero whose treatment this plan deliberately changed.
+  Bounded: repoint each citation at the durable doc section that now
+  owns the claim, or drop the reference where the surrounding comment
+  already states it. Surfaced while sweeping for docs that conflict
+  with the launch-corrections decisions.
+  Detail: TBD
+
 - [ ] **`dev` Finish making day-of donate externality content-owned**
   The cross-cutting invariant is that whether a link opens in a new
   browsing context is expressed in that link's own content shape and
