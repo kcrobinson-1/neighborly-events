@@ -17,8 +17,9 @@
  * consuming app's decision, injected per link via
  * `EventMasthead`'s `linkComponents` prop: a destination that is
  * same-app for apps/site (the signup route) is cross-app for apps/web
- * behind the proxy, so the mechanism cannot live in content. The one
- * exception is `donate`, always an external new-tab anchor.
+ * behind the proxy, so the mechanism cannot live in content. Whether
+ * a link leaves the platform entirely *is* content, declared per link
+ * by `external` below.
  *
  * From apps/web the site-owned destinations (home, newsletter,
  * feedback) resolve only on an origin that proxies site routes — the
@@ -27,16 +28,28 @@
  * not-found page, exactly as `completionCta.ts`'s links do. Accepted:
  * closing it is a dev-topology task tracked in
  * `docs/tracking/dev-workflow-improvements.md`, not a content or
- * component concern.
+ * component concern. External links are unaffected — an absolute URL
+ * resolves the same from either app.
  */
 
 import { madronaFacts } from "../events/madrona-facts.ts";
 import { routes } from "../urls/index.ts";
 
-/** One navigation link of the masthead bar. */
+/**
+ * One navigation link of the masthead bar.
+ *
+ * `external` is the content-owned declaration that the destination
+ * leaves the platform: the renderer opens exactly the links that
+ * carry it in a new browsing context with `rel="noopener"`, and no
+ * component branch decides that by naming a link slot. Same name,
+ * same meaning as the field on `EventLandingAction`
+ * (`apps/site/lib/eventContent.ts`) and `CompletionCtaLink`
+ * (`shared/events/completionCta.ts`).
+ */
 export type MastheadLink = {
   label: string;
   href: string;
+  external?: boolean;
 };
 
 /**
@@ -54,7 +67,7 @@ export type EventMastheadContent = {
   quiz: MastheadLink;
   newsletter: MastheadLink;
   feedback: MastheadLink;
-  /** Rendered as the visually distinct pill; external, new tab. */
+  /** Rendered as the visually distinct pill. */
   donate: MastheadLink;
 };
 
@@ -67,7 +80,7 @@ const madronaMasthead: EventMastheadContent = {
   quiz: { label: "Quiz", href: routes.game("madrona") },
   newsletter: { label: "Newsletter", href: "/event/madrona/signup" },
   feedback: { label: "Feedback", href: "/event/madrona/feedback" },
-  donate: { label: "Donate", href: madronaFacts.donateHref },
+  donate: { label: "Donate", href: madronaFacts.donateHref, external: true },
 };
 
 /** Slug → masthead content. Absent slugs render no header bar. */

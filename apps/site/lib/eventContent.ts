@@ -215,15 +215,26 @@ export type EventNights = {
 /**
  * One tile of the day-of landing page's action grid. `label` is the
  * big display line ("Take the quiz"), `subtitle` the small one-liner
- * under it. Destinations are renderer-owned, not content fields:
- * quiz resolves through `routes.game(slug)`, newsletter and feedback
- * through the slug-derived in-app routes, donate through
- * `EventContent.donate.href` — so the grid can never disagree with
- * the routes the rest of the page uses.
+ * under it.
+ *
+ * Most destinations stay renderer-owned so the grid can never
+ * disagree with the routes the rest of the page uses: quiz resolves
+ * through `routes.game(slug)`, feedback through the slug-derived
+ * in-app route, donate through `EventContent.donate.href`. `href` is
+ * the content-owned alternative for a destination the platform does
+ * not serve and cannot derive — an association's own signup page, for
+ * instance, which lives at an address only the content author knows.
+ * `external` declares that such a destination leaves the platform;
+ * the renderer opens exactly the actions that carry it in a new
+ * browsing context with `rel="noopener"`. Same name, same meaning as
+ * the field on `MastheadLink` (`shared/masthead/mastheadContent.ts`)
+ * and `CompletionCtaLink` (`shared/events/completionCta.ts`).
  */
 export type EventLandingAction = {
   label: string;
   subtitle: string;
+  href?: string;
+  external?: boolean;
 };
 
 /**

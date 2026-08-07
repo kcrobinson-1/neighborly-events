@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 
-import type { EventMastheadContent } from "./mastheadContent.ts";
+import type { EventMastheadContent, MastheadLink } from "./mastheadContent.ts";
 
 /**
  * Items that can carry the active-page underline. `donate` is
@@ -9,15 +9,34 @@ import type { EventMastheadContent } from "./mastheadContent.ts";
  */
 export type EventMastheadActiveItem = "quiz" | "newsletter" | "feedback";
 
-/** Props the injected link components must accept. */
+/**
+ * Props the injected link components must accept. `target` / `rel`
+ * are part of the contract so an injected component can render an
+ * externally-declared link correctly; a link whose content does not
+ * declare `external` receives them as `undefined`.
+ */
 export type EventMastheadLinkProps = {
   href: string;
   className: string;
   children: ReactNode;
   "aria-current"?: "page";
+  target?: "_blank";
+  rel?: string;
 };
 
 export type EventMastheadLinkComponent = ComponentType<EventMastheadLinkProps>;
+
+/**
+ * The new-context attributes for a link, derived from the link's own
+ * content rather than from which slot it occupies. Applied uniformly
+ * to every link the bar renders, so adding an external destination is
+ * a content edit and never a component edit.
+ */
+function externalLinkAttrs(link: MastheadLink) {
+  return link.external
+    ? { target: "_blank" as const, rel: "noopener" }
+    : { target: undefined, rel: undefined };
+}
 
 /** Default renderer: a plain anchor (hard navigation). */
 function PlainAnchor({
@@ -25,9 +44,17 @@ function PlainAnchor({
   className,
   children,
   "aria-current": ariaCurrent,
+  target,
+  rel,
 }: EventMastheadLinkProps) {
   return (
-    <a className={className} href={href} aria-current={ariaCurrent}>
+    <a
+      className={className}
+      href={href}
+      aria-current={ariaCurrent}
+      target={target}
+      rel={rel}
+    >
       {children}
     </a>
   );
@@ -56,9 +83,11 @@ function PlainAnchor({
  * leaves quiz on the default plain anchor so the hard load re-enters
  * the apps/web Vercel rewrite (the `EventHeader` hero-CTA rationale);
  * apps/web passes nothing and every link hard-navigates through the
- * proxy (the `completionCta` precedent). `donate` is not injectable:
- * always an external anchor with `target="_blank" rel="noopener"`,
- * matching `EventDonateCTA`.
+ * proxy (the `completionCta` precedent). `donate` renders as the pill
+ * and is not injectable, but its new-tab behavior is no longer
+ * special-cased: `externalLinkAttrs` reads each link's own `external`
+ * declaration and applies the same attributes to every link the bar
+ * renders, donate included.
  */
 export function EventMasthead({
   masthead,
@@ -101,6 +130,7 @@ export function EventMasthead({
               className={navLinkClass(item)}
               href={masthead[item].href}
               aria-current={item === active ? "page" : undefined}
+              {...externalLinkAttrs(masthead[item])}
             >
               {masthead[item].label}
             </NavLink>
@@ -109,8 +139,7 @@ export function EventMasthead({
         <a
           className="event-masthead-link event-masthead-donate"
           href={masthead.donate.href}
-          target="_blank"
-          rel="noopener"
+          {...externalLinkAttrs(masthead.donate)}
         >
           {masthead.donate.label}
         </a>

@@ -54,11 +54,23 @@
 
 import { madronaFacts } from "./madrona-facts.ts";
 
-/** One link-out section of the completion CTA block. */
+/**
+ * One link-out section of the completion CTA block.
+ *
+ * `external` is the content-owned declaration that the destination
+ * leaves the platform. It is one of the two independent reasons the
+ * panel opens a link in a new browsing context — see the panel's own
+ * note in `GameCompletionPanel.tsx`; the other is the pre-persistence
+ * fallback described above, which applies only to same-origin links.
+ * Same name, same meaning as the field on `MastheadLink`
+ * (`shared/masthead/mastheadContent.ts`) and `EventLandingAction`
+ * (`apps/site/lib/eventContent.ts`).
+ */
 export type CompletionCtaLink = {
   body: string;
   buttonLabel: string;
   href: string;
+  external?: boolean;
 };
 
 /** Completion-screen CTA content for a single event. */
