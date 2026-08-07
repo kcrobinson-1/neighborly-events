@@ -33,16 +33,25 @@ const defaultSiteSlug = "madrona";
 // evening, and the season-wrap state the page swaps into after the
 // final night. Both are noon PT on their date, far from any local
 // midnight boundary the resolver ticks across.
+// `settled` is what the resolver renders once it has re-resolved
+// against the faked clock, and it has to be something the *server*
+// pass does not already produce, or waiting on it proves nothing.
+// Both are renderer-owned (not content fields), so they hold for any
+// event on this layout rather than just the default slug.
 const siteClockStates = [
   {
     fileName: "01-site-day-of-landing-mobile.png",
     label: "concert day",
     time: "2026-08-11T19:00:00Z",
+    // "Tonight" rather than the section itself: a build on any other
+    // day bakes the same run-of-show under "Next concert".
+    settled: { selector: "#event-landing-tonight-heading", text: "Tonight" },
   },
   {
     fileName: "02-site-day-of-landing-season-wrap-mobile.png",
     label: "post-season",
     time: "2026-08-26T19:00:00Z",
+    settled: { selector: ".event-landing-wrap" },
   },
 ];
 const defaultOutputRoot = path.join("tmp", "ui-review");
@@ -272,12 +281,20 @@ async function captureSiteMode(baseUrl, runDirectory, slug) {
     // and the surface this capture exists to compare, so wait on it
     // rather than on a generic load event.
     await page.locator(".event-landing-actions").waitFor({ timeout: 15000 });
-    // Wait for hydration before shooting: the section this capture
-    // exists to compare is chosen by a mount effect, so a shot taken
-    // against the server HTML records a state the reader never sees.
-    // React attaches a fiber key to the DOM nodes it adopts, which is
-    // the observable event — polling the rendered text instead would
-    // pass vacuously whenever the two states happen to agree.
+    // Two waits, because they prove different things and neither
+    // implies the other.
+    //
+    // The fiber key proves React adopted the DOM. It does NOT prove
+    // `LandingTonightSections` has run its mount effect and committed
+    // the re-resolved render — hydration claiming the tree and the
+    // passive effect flushing are separate commits, and a shot taken
+    // between them records the build-time section.
+    //
+    // `state.settled` closes that gap by waiting for what the faked
+    // clock actually produces. On its own it would be the weaker
+    // check: if the machine's real date happened to bake the same
+    // state, it would pass without the effect ever running. Together
+    // they cover each other.
     await page.waitForFunction(
       () => {
         /* eslint-disable-next-line no-undef --
@@ -294,6 +311,12 @@ async function captureSiteMode(baseUrl, runDirectory, slug) {
       undefined,
       { timeout: 15000 },
     );
+    const settled = page.locator(state.settled.selector);
+    await settled.waitFor({ timeout: 15000 });
+    if (state.settled.text) {
+      await settled.filter({ hasText: state.settled.text }).first()
+        .waitFor({ timeout: 15000 });
+    }
     await capture(page, runDirectory, state.fileName);
     console.log(`  ${state.fileName} (${state.label})`);
 

@@ -691,13 +691,28 @@ npm run ui:review:capture:site
 ```
 
 Pass `--slug <event-slug>` for an event other than `madrona`, and
-`--base-url` when `next dev` is not on `http://127.0.0.1:3000`.
+`--base-url` when `next dev` is not on `http://localhost:3000`.
+
+Use `localhost`, not `127.0.0.1`, when overriding `--base-url`.
+`next dev` blocks cross-origin requests for its own dev resources and
+treats the two spellings as different origins: pointed at
+`127.0.0.1` it still serves the page HTML, so the capture looks
+fine, but the dev client bundle is refused and React never hydrates.
+The day-of landing picks its section in a mount effect, so an
+unhydrated capture silently records the build-time state instead of
+the one a reader sees.
 
 Screenshots captured (written to `tmp/ui-review/<timestamp>/`):
 
 | File | State |
 |------|-------|
-| `01-site-day-of-landing-mobile.png` | Day-of landing page, iPhone 13 viewport |
+| `01-site-day-of-landing-mobile.png` | Day-of landing on a concert day, iPhone 13 viewport |
+| `02-site-day-of-landing-season-wrap-mobile.png` | Same page after the final night, iPhone 13 viewport |
+
+The two shots come from one run. The layout is a function of "now",
+so the browser clock is faked per shot — otherwise a capture only
+ever shows whichever state the machine's real date falls in, and the
+season-wrap branch is unreachable outside a few weeks a year.
 
 ### Admin UI review
 
