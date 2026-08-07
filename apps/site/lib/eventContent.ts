@@ -263,7 +263,7 @@ export type EventPresentingSponsor = {
  * masthead art the hero inlines as SVG (the page route reads the
  * file at prerender time — see `readPublicSvg`). `seasonWrap` is the
  * post-final-night state's copy (the resolver's `seasonWrap` kind);
- * the footer fields are the dark band's three lines. An event that
+ * the footer fields are the dark band's lines. An event that
  * adopts this layout is expected to also author `nights` — without
  * it the Tonight section resolves straight to the wrap state.
  */
