@@ -22,6 +22,9 @@
 @use "./styles/signin";
 @use "./styles/admin";
 @use "./styles/event";
+// The bar itself is shared with apps/web (same component); the
+// partial below adds only apps/site's shell-adjacency rule.
+@use "../../../shared/styles/event-masthead";
 @use "./styles/masthead";
 @use "./styles/signup";
 @use "./styles/home";

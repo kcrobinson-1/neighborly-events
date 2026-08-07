@@ -1,0 +1,142 @@
+/*
+ * Shared sticky event header bar (`shared/masthead/EventMasthead.tsx`),
+ * rendered above the page shell on every route of an event that
+ * registers masthead content — full-bleed at the viewport top, spec §3
+ * of the Madrona redesign. Colors and faces are themable `var(--…)`
+ * tokens flowing from the per-event `<ThemeScope>`: `--header-bg` /
+ * `--header-fg` (bar surface and links), `--accent` (brand name,
+ * active underline, donate pill), `--font-heading` (the display
+ * face; Bebas for Madrona).
+ *
+ * The component renders in both apps, so its rules live here rather
+ * than in either app's style tree: apps/site `@use`s this partial
+ * from `app/globals.scss` and apps/web from `src/styles.scss`, each
+ * followed by its own `_masthead.scss` carrying the one rule that is
+ * genuinely app-specific — how the shell beneath the bar closes the
+ * gap ("no dead gap", spec §2), which differs because the two shells
+ * open with different content (apps/site with page sections, apps/web
+ * with the quiz page-head band). The file name differs from those
+ * partials' so the two `@use` namespaces in one entrypoint don't
+ * collide.
+ *
+ * Nothing here consumes app-local SCSS variables; the file is
+ * `@use`d for its rules alone and must stay that way, since the two
+ * apps' `_tokens.scss` files are independent.
+ *
+ * At phone width the nav row scrolls horizontally rather than
+ * collapsing to a hamburger (spec: the bar compresses and fits at
+ * 390px; overflow scrolls).
+ */
+.event-masthead {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--header-bg);
+  color: var(--header-fg);
+  box-shadow: 0 2px 0 var(--primary-shadow);
+}
+
+.event-masthead-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--header-fg);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  letter-spacing: 1.2px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.event-masthead-brand-name {
+  color: var(--accent);
+}
+
+.event-masthead-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.event-masthead-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.event-masthead-link {
+  padding: 8px 1px 6px;
+  border-bottom: 2.5px solid transparent;
+  color: var(--header-fg);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  letter-spacing: 1.1px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.event-masthead-link:hover,
+.event-masthead-link-active {
+  color: var(--accent);
+}
+
+.event-masthead-link-active {
+  border-bottom-color: var(--accent);
+}
+
+/* Pill radius is structural (matches the platform's 999px pill). */
+.event-masthead-donate {
+  padding: 7px 12px 5px;
+  border-bottom: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--header-bg);
+}
+
+.event-masthead-donate:hover {
+  color: var(--header-bg);
+  filter: brightness(1.06);
+}
+
+.event-masthead a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Compression ladder for phone widths (the mock's breakpoints): the
+ * brand tagline drops first so the lockup collapses to the name and
+ * the four links fit on one row at 390px; below 430px the type and
+ * gaps tighten too. Overflow beyond that scrolls horizontally.
+ */
+@media (max-width: 560px) {
+  .event-masthead-brand-tagline {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .event-masthead {
+    gap: 10px;
+    padding: 10px 10px;
+  }
+
+  .event-masthead-nav {
+    gap: 10px;
+  }
+
+  .event-masthead-brand {
+    font-size: 16px;
+  }
+
+  .event-masthead-link {
+    font-size: 14.5px;
+  }
+}
