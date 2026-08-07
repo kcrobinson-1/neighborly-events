@@ -1,61 +1,139 @@
 /*
- * Quick-links masthead rendered by `EventMasthead` above the event
- * hero. Sticky so the links stay one tap away mid-page — attendees
- * are on phones in a park, so the bar wraps compactly at small
- * viewports instead of collapsing into a hamburger. Colors and radii
- * are themable `var(--…)` tokens flowing in from the per-event
- * `<ThemeScope>`, same as the rest of the event partials; the
- * translucent `color-mix` backdrop keeps the bar subtle against the
- * hero while staying legible over content scrolling underneath it.
+ * Shared sticky event header bar (`shared/masthead/EventMasthead.tsx`),
+ * rendered above `<main>` on every route of an event that registers
+ * masthead content — full-bleed at the viewport top, spec §3 of the
+ * Madrona redesign. Colors and faces are themable `var(--…)` tokens
+ * flowing from the per-event `<ThemeScope>`: `--header-bg` /
+ * `--header-fg` (bar surface and links), `--accent` (brand name,
+ * active underline, donate pill), `--font-heading` (the display
+ * face; Bebas for Madrona). The class vocabulary is app-neutral so
+ * the quiz app can restate these rules when it adopts the bar.
+ *
+ * At phone width the nav row scrolls horizontally rather than
+ * collapsing to a hamburger (spec: the bar compresses and fits at
+ * 390px; overflow scrolls).
  */
 .event-masthead {
   position: sticky;
-  top: 8px;
-  z-index: 10;
+  top: 0;
+  z-index: 50;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
   align-items: center;
-  gap: 4px;
-  padding: 6px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-panel);
+  gap: 14px;
+  padding: 10px 16px;
+  background: var(--header-bg);
+  color: var(--header-fg);
+  box-shadow: 0 2px 0 var(--primary-shadow);
 }
 
-.event-masthead-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 8px 14px;
-  border-radius: var(--radius-control);
-  color: var(--text);
-  font-size: 0.95rem;
-  font-weight: 600;
+.event-masthead-brand {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  color: var(--header-fg);
+  font-family: var(--font-heading);
+  font-size: 18px;
+  letter-spacing: 1.2px;
+  line-height: 1;
   text-decoration: none;
   white-space: nowrap;
 }
 
-.event-masthead-link:hover {
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
+.event-masthead-brand-name {
+  color: var(--accent);
 }
 
-.event-masthead-link:focus-visible {
-  outline: 2px solid var(--secondary);
+.event-masthead-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.event-masthead-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.event-masthead-link {
+  padding: 8px 1px 6px;
+  border-bottom: 2.5px solid transparent;
+  color: var(--header-fg);
+  font-family: var(--font-heading);
+  font-size: 16px;
+  letter-spacing: 1.1px;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.event-masthead-link:hover,
+.event-masthead-link-active {
+  color: var(--accent);
+}
+
+.event-masthead-link-active {
+  border-bottom-color: var(--accent);
+}
+
+/* Pill radius is structural (matches the platform's 999px pill). */
+.event-masthead-donate {
+  padding: 7px 12px 5px;
+  border-bottom: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--header-bg);
+}
+
+.event-masthead-donate:hover {
+  color: var(--header-bg);
+  filter: brightness(1.06);
+}
+
+.event-masthead a:focus-visible {
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-@media (max-width: 640px) {
+/*
+ * "No dead gap" (spec §2): pages that render the bar open their
+ * content directly beneath it instead of the EventHeader-era 56px
+ * top padding. Sibling-scoped so masthead-less events keep today's
+ * shell padding byte-identically — presence of the bar is the
+ * condition, with no per-shell modifier classes to thread.
+ */
+.event-masthead + main {
+  padding-top: 24px;
+}
+
+/*
+ * Compression ladder for phone widths (the mock's breakpoints): the
+ * brand tagline drops first so the lockup collapses to the name and
+ * the four links fit on one row at 390px; below 430px the type and
+ * gaps tighten too. Overflow beyond that scrolls horizontally.
+ */
+@media (max-width: 560px) {
+  .event-masthead-brand-tagline {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
   .event-masthead {
-    top: 6px;
-    gap: 2px;
-    padding: 4px;
+    gap: 10px;
+    padding: 10px 10px;
+  }
+
+  .event-masthead-nav {
+    gap: 10px;
+  }
+
+  .event-masthead-brand {
+    font-size: 16px;
   }
 
   .event-masthead-link {
-    padding: 8px 10px;
-    font-size: 0.9rem;
+    font-size: 14.5px;
   }
 }

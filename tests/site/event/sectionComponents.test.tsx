@@ -9,13 +9,16 @@ import { EventFooter } from "../../../apps/site/components/event/EventFooter.tsx
 import { EventHeader } from "../../../apps/site/components/event/EventHeader.tsx";
 import { EventLandingPage } from "../../../apps/site/components/event/EventLandingPage.tsx";
 import { EventLineup } from "../../../apps/site/components/event/EventLineup.tsx";
-import { EventMasthead } from "../../../apps/site/components/event/EventMasthead.tsx";
 import { EventSchedule } from "../../../apps/site/components/event/EventSchedule.tsx";
 import { EventSponsors } from "../../../apps/site/components/event/EventSponsors.tsx";
 import { TestEventDisclaimer } from "../../../apps/site/components/event/TestEventDisclaimer.tsx";
 import { harvestBlockPartyContent } from "../../../apps/site/events/harvest-block-party.ts";
 import { riversideJamContent } from "../../../apps/site/events/riverside-jam.ts";
 import type { EventContent } from "../../../apps/site/lib/eventContent.ts";
+import {
+  getEventMasthead,
+  type EventMastheadContent,
+} from "../../../shared/masthead/index.ts";
 
 const feedbackFixture: NonNullable<EventContent["feedback"]> = {
   cta: {
@@ -34,10 +37,15 @@ const feedbackFixture: NonNullable<EventContent["feedback"]> = {
   thankYouMessage: "Thanks — we read every response.",
 };
 
-const mastheadFixture: NonNullable<EventContent["masthead"]> = {
+const mastheadFixture: EventMastheadContent = {
+  brand: {
+    name: "SYNTHETIC",
+    tagline: "EVENT HEADER FIXTURE",
+    homeHref: "/event/synthetic-event",
+  },
   quiz: { label: "Quiz", href: "/event/synthetic-event/game" },
+  newsletter: { label: "Newsletter", href: "/event/synthetic-event/signup" },
   feedback: { label: "Feedback", href: "/event/synthetic-event/feedback" },
-  signup: { label: "Sign up", href: "/event/synthetic-event/signup" },
   donate: {
     label: "Donate",
     href: "https://donations.example.org/synthetic-form",
@@ -518,51 +526,6 @@ describe("EventDonateCTA", () => {
   });
 });
 
-describe("EventMasthead", () => {
-  it("renders a labelled nav with each configured link's config-owned href", () => {
-    render(<EventMasthead masthead={mastheadFixture} />);
-    expect(
-      screen.getByRole("navigation", { name: "Event quick links" }),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Quiz" }).getAttribute("href"),
-    ).toBe("/event/synthetic-event/game");
-    expect(
-      screen.getByRole("link", { name: "Feedback" }).getAttribute("href"),
-    ).toBe("/event/synthetic-event/feedback");
-    expect(
-      screen.getByRole("link", { name: "Sign up" }).getAttribute("href"),
-    ).toBe("/event/synthetic-event/signup");
-    expect(
-      screen.getByRole("link", { name: "Donate" }).getAttribute("href"),
-    ).toBe("https://donations.example.org/synthetic-form");
-  });
-
-  it("opens the donate link in a new tab with rel=noopener; the in-app links stay same-tab", () => {
-    render(<EventMasthead masthead={mastheadFixture} />);
-    const donate = screen.getByRole("link", { name: "Donate" });
-    expect(donate.getAttribute("target")).toBe("_blank");
-    expect(donate.getAttribute("rel")).toContain("noopener");
-    for (const name of ["Quiz", "Feedback", "Sign up"]) {
-      expect(
-        screen.getByRole("link", { name }).getAttribute("target"),
-      ).toBeNull();
-    }
-  });
-
-  it("omits absent slots without rendering placeholders", () => {
-    render(
-      <EventMasthead
-        masthead={{ quiz: { label: "Quiz", href: "/event/x/game" } }}
-      />,
-    );
-    expect(screen.getAllByRole("link")).toHaveLength(1);
-    expect(screen.queryByRole("link", { name: "Feedback" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Sign up" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Donate" })).toBeNull();
-  });
-});
-
 describe("EventLandingPage", () => {
   it("composes all sections and shows the disclaimer for test events", () => {
     const testContent: EventContent = { ...baseContent, testEvent: true };
@@ -678,34 +641,38 @@ describe("EventLandingPage", () => {
     expect(screen.queryByText("Donate now")).toBeNull();
   });
 
-  it("renders the EventMasthead nav above the hero when content.masthead is set", () => {
-    const optedIn: EventContent = {
-      ...baseContent,
-      masthead: mastheadFixture,
-    };
+  it("renders the shared masthead bar above <main> when a masthead is passed", () => {
     const { container } = render(
-      <EventLandingPage content={optedIn} slug={optedIn.slug} />,
+      <EventLandingPage
+        content={baseContent}
+        slug={baseContent.slug}
+        masthead={mastheadFixture}
+      />,
     );
-    const nav = screen.getByRole("navigation", { name: "Event quick links" });
-    const hero = container.querySelector(".event-hero");
-    expect(hero).not.toBeNull();
-    // Document order: the masthead precedes the hero header.
+    const bar = container.querySelector(".event-masthead");
+    const main = container.querySelector("main.event-shell");
+    expect(bar).not.toBeNull();
+    expect(main).not.toBeNull();
+    // Document order: the bar is a sibling *before* <main>, so the
+    // `.event-masthead + main` no-dead-gap rule applies.
+    expect((bar as Element).nextElementSibling).toBe(main);
     expect(
-      nav.compareDocumentPosition(hero as Element) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Sign up" }).getAttribute("href"),
+      screen.getByRole("link", { name: "Newsletter" }).getAttribute("href"),
     ).toBe("/event/synthetic-event/signup");
+    // Quiz stays a plain hard-navigation anchor on apps/site (the
+    // destination lives behind the apps/web rewrite).
+    expect(
+      screen.getByRole("link", { name: "Quiz" }).getAttribute("href"),
+    ).toBe("/event/synthetic-event/game");
   });
 
-  it("omits the EventMasthead nav when content.masthead is absent (baseContent)", () => {
+  it("omits the masthead bar when the masthead prop is absent", () => {
     const { container } = render(
       <EventLandingPage content={baseContent} slug={baseContent.slug} />,
     );
     expect(container.querySelector(".event-masthead")).toBeNull();
     expect(
-      screen.queryByRole("navigation", { name: "Event quick links" }),
+      screen.queryByRole("navigation", { name: "Event pages" }),
     ).toBeNull();
   });
 
@@ -718,7 +685,13 @@ describe("EventLandingPage", () => {
     // falsify the invariant.
     for (const content of [harvestBlockPartyContent, riversideJamContent]) {
       const { container, unmount } = render(
-        <EventLandingPage content={content} slug={content.slug} />,
+        <EventLandingPage
+          content={content}
+          slug={content.slug}
+          // Mirror the route wiring: the shared registry resolves
+          // null for both test events, so no bar renders.
+          masthead={getEventMasthead(content.slug)}
+        />,
       );
       expect(container.querySelector(".event-feedback-cta")).toBeNull();
       expect(screen.queryByText("Share feedback")).toBeNull();

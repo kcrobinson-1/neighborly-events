@@ -140,21 +140,14 @@
  * pre-field output; the two test events omit it so the
  * omission-guard falsifier stays structural.
  *
- * `masthead?` is the landing-page quick-links nav: presence renders
- * the `EventMasthead` strip above the hero on `EventLandingPage`;
- * absence renders the page byte-for-byte identical to the
- * pre-masthead output (the same render-when-present falsifier as
- * `meta.logoSrc/Alt`). Each named slot (`quiz`, `feedback`,
- * `signup`, `donate`) is independently optional and carries its own
- * config-owned `label` and `href` — the renderer takes destinations
- * from config and never derives them from the slug, the same
- * principle as `shared/events/completionCta.ts`. The slot *name*
- * fixes the navigation semantics the renderer applies: `quiz` is a
- * hard `<a>` across the apps/web rewrite, `feedback` and `signup`
- * are same-app soft `<Link>`s, and `donate` opens the external
- * destination in a new tab with `rel="noopener"`. The two test
- * events omit the field so the omission-guard falsifier stays
- * structural.
+ * The sticky header bar is NOT an `EventContent` field: masthead
+ * content lives in the cross-app registry at
+ * `shared/masthead/mastheadContent.ts` (the
+ * `shared/events/completionCta.ts` pattern) because the quiz app
+ * renders the same bar and apps/site content modules are not
+ * importable there. Routes resolve it per slug via
+ * `getEventMasthead(slug)`; absence renders byte-identically to the
+ * pre-masthead output.
  */
 /**
  * One row of a night's run-of-show ("5:30 · Gathering opens").
@@ -304,12 +297,6 @@ export type EventContent = {
     href: string;
   };
   nights?: EventNights;
-  masthead?: {
-    quiz?: { label: string; href: string };
-    feedback?: { label: string; href: string };
-    signup?: { label: string; href: string };
-    donate?: { label: string; href: string };
-  };
   footer?: { attribution?: string };
 };
 

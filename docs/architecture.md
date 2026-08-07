@@ -524,6 +524,29 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   to the Theme's flat `bg`, since `body` sits above the scope; the
   wrapper stays `display: contents`, so layout is unchanged.
 
+- `shared/masthead/`
+  Cross-app shared UI component plus per-event content registry —
+  the pattern for event "global chrome" that must render identically
+  in both apps. Owns the `EventMasthead` sticky header bar (brand
+  lockup as the Home link; Quiz, Newsletter, Feedback links; Donate
+  pill) and the slug → `EventMastheadContent` registry at
+  [`shared/masthead/mastheadContent.ts`](/shared/masthead/mastheadContent.ts).
+  Presence in the registry is the render gate: routes resolve
+  `getEventMasthead(slug)` and events without an entry render no bar,
+  byte-identically to the pre-masthead output (the
+  `shared/events/completionCta.ts` registry pattern). Link `href`s
+  are config-owned; the navigation *mechanism* is injected per link
+  by the consuming app through the component's `linkComponents` prop,
+  because same-app vs cross-app differs by consumer across the proxy
+  topology — apps/site injects `next/link` for its own routes via
+  [`apps/site/components/event/SiteEventMasthead.tsx`](/apps/site/components/event/SiteEventMasthead.tsx)
+  and leaves the quiz link on the default hard anchor; apps/web
+  renders plain anchors throughout. The component is SSR-safe (no
+  `'use client'`, no effects, no framework imports) and styles only
+  through Theme tokens (`--header-bg`, `--header-fg`, `--accent`,
+  `--font-heading`) under app-neutral `event-masthead*` class names;
+  each app owns its SCSS partial for the bar.
+
 Together they contain:
 
 - shared game domain types

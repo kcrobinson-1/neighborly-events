@@ -150,12 +150,11 @@ Rules for this checklist:
   `docs/styling.md`'s color-derivation policy says SCSS consumers read flat
   `var(--…)` references with no `color-mix()` call sites in partials, but
   apps/site partials accumulated ~15 local mixes (`_admin.scss`,
-  `_event.scss`, `_masthead.scss`, `_signin.scss`). Some have exact emitted
-  token equivalents (e.g. `_masthead.scss`'s hover
-  `color-mix(in srgb, var(--primary) 12%, transparent)` is `--primary-surface`);
-  others are bespoke with no token (the `88% primary + 12% black`
-  hover-darken repeated in three files, the masthead's translucent `--bg`
-  backdrop, text/muted fades). Swap the exact-equivalent sites to their
+  `_event.scss`, `_signin.scss`; `_masthead.scss`'s two instances were
+  retired when the shared header bar replaced the quick-links strip).
+  Some have exact emitted token equivalents; others are bespoke with no
+  token (the `88% primary + 12% black` hover-darken repeated across
+  files, text/muted fades). Swap the exact-equivalent sites to their
   tokens and either add named derived tokens for the recurring bespoke
   recipes (per the "add named tokens if these distinct strengths are
   intentional" rule) or record why they stay local. A 2026-08 review pass
