@@ -11,10 +11,10 @@
  *
  * This file carries **no color literals**. `EventContent.landing` is
  * a platform-generic opt-in, so any event can adopt this layout — a
- * hard-coded "poster red" here would paint a future event's welcome
- * line in Madrona's branding. Every color resolves from the per-event
- * Theme, including the two that read as garnish rather than brand
- * surface: the welcome line and main-set stars take
+ * hard-coded "poster red" here would paint a future event's marks in
+ * Madrona's branding. Every color resolves from the per-event
+ * Theme, including the one that reads as garnish rather than brand
+ * surface: the main-set stars take
  * `--accent-garnish`, and the donate tile takes the
  * `--cta-warm-surface` / `--cta-warm-fg` pair the quiz's donate CTA
  * already uses, so the two surfaces cannot drift onto different
@@ -77,12 +77,21 @@
   margin: 0 auto;
 }
 
+/* The orientation line under the hero art. Body face, small, muted:
+ * it tells a reader who just arrived what the page is, and then gets
+ * out of the way of the sections that answer it. `--font-body` is
+ * restated rather than inherited for the reason `_base.scss` gives —
+ * `body` computes the family once, outside `<ThemeScope>`, so a
+ * per-event override only re-resolves where the var is named again.
+ *
+ * `--muted` measures 4.51:1 against `--hero-end`, the gradient's
+ * darkest stop and this line's worst case; it sits nearer the top of
+ * the gradient in practice (6.36:1 at `--hero-start`). */
 .event-landing-welcome {
   margin: 6px 0 20px;
-  color: var(--accent-garnish);
-  font-family: var(--font-accent);
-  font-style: italic;
-  font-size: 20px;
+  color: var(--muted);
+  font-family: var(--font-body);
+  font-size: 14px;
 }
 
 .event-landing-actions {

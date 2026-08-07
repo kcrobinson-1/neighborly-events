@@ -7,8 +7,8 @@ import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
 
 /**
  * The day-of landing layout (Madrona redesign spec §4): full-bleed
- * hero (theme gradient + inlined masthead SVG + one accent-face
- * welcome line, nothing else), the four-tile action grid, the
+ * hero (theme gradient + inlined masthead SVG + one quiet body-face
+ * orientation line, nothing else), the four-tile action grid, the
  * resolver-driven Tonight / On-stage / This-season group
  * (`LandingTonightSections`), an optional flat FAQ, and the dark
  * footer band. Selected by `EventLandingPage` when

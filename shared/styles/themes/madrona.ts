@@ -6,7 +6,7 @@ import type { Theme } from "../types.ts";
  * greens and yellows lead — cream page, dark-green primary, olive
  * secondary accent, gold highlight — replacing the earlier
  * logo-sampled blue/red/teal Theme. Red and purple from the poster
- * palette are garnish-only (stars, script welcome line, sponsor
+ * palette are garnish-only (stars, sponsor
  * label) and deliberately not brand bases; components that need them
  * own those accents.
  *
@@ -78,11 +78,16 @@ export const madronaTheme: Theme = {
   headingFontFamily: '"Bebas Neue", "Avenir Next Condensed", "Arial Narrow", sans-serif',
   accentFontFamily: '"Lora", Georgia, serif',
 
-  // Small-decoration accent — the poster red, used only for the
-  // welcome line and the main-set stars. Darkened from the poster's
-  // `#c43b2f`: the welcome line sits on the hero gradient and
-  // measured 3.49:1 against its darkest stop (`heroEnd`), and the
-  // 13px stars measured 4.36:1 on cream. Now 4.62:1 and 5.77:1.
+  // Small-decoration accent — the poster red. Its one consumer in the
+  // day-of layout is the main-set star on the run-of-show rows, 13px
+  // on the cream page (`bg`): 4.36:1 at the poster's own `#c43b2f`,
+  // 5.77:1 darkened to this value.
+  //
+  // The darkening was driven by a second consumer as well — the hero's
+  // welcome line, which sat on the hero gradient and measured 3.49:1
+  // against its darkest stop (`heroEnd`), 4.62:1 after. That line is
+  // now body-face `muted`, so the gradient is no longer a surface this
+  // token lands on and the star is what holds the value here.
   accentGarnish: "#a52f24",
 
   // Optional brand fields — sticky dark-green header bar with

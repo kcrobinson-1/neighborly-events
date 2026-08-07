@@ -59,7 +59,9 @@ import type { EventContent } from "../lib/eventContent.ts";
  *
  * `landing` opts madrona into the day-of landing layout
  * (`EventDayOfLanding`, redesign spec §4): masthead-art hero with
- * the Lora welcome line, the four-tile action grid (subtitle copy
+ * the quiet body-face orientation line beneath it (it names what the
+ * page carries; the art above it already says where the reader is),
+ * the four-tile action grid (subtitle copy
  * is the spec's), the Meter Music School presenting-sponsor band
  * (logo-only — no verified Meter URL, and a link's presence is a
  * claim of verification), the season-wrap copy shown from Aug 26,
@@ -207,7 +209,8 @@ export const madronaContent: EventContent = {
   landing: {
     hero: {
       mastheadSvgPath: "/events/madrona/masthead.svg",
-      welcomeLine: "Welcome to the playfield — here’s tonight.",
+      welcomeLine:
+        "Everything for tonight — the schedule, the quiz, and who’s playing.",
     },
     actions: {
       quiz: {

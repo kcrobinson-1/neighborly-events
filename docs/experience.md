@@ -171,7 +171,11 @@ Events opt into this layout by authoring `EventContent.landing`
 layout, top to bottom:
 
 1. **Hero** — brand gradient, the event's masthead art inlined as
-   SVG, and one short accent-face welcome line. Nothing else.
+   SVG, and one short orientation line in the body face at a muted
+   scale. Nothing else. The line names what the page carries rather
+   than greeting the reader; the art above it already says where they
+   are, and a second display face here read as a different design
+   system than the sections beneath it.
 2. **Action grid** — four big tiles (quiz / email list / feedback /
    donate), each with a one-line subtitle. Three destinations are
    renderer-owned so the grid can never disagree with the routes.

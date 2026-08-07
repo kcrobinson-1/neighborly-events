@@ -70,7 +70,7 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     );
   });
 
-  it("inlines the hero art as an SVG under a labeled img role, with the welcome line", () => {
+  it("inlines the hero art as an SVG under a labeled img role, with the orientation line", () => {
     setClock("2026-08-11T19:00:00Z");
     const { container } = renderMadrona();
     const art = screen.getByRole("img", {
@@ -79,7 +79,9 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     expect(art.querySelector("svg")).not.toBeNull();
     expect(
       container.querySelector(".event-landing-welcome")?.textContent,
-    ).toBe("Welcome to the playfield — here’s tonight.");
+    ).toBe(
+      "Everything for tonight — the schedule, the quiz, and who’s playing.",
+    );
   });
 
   it("degrades to the no-art hero when the SVG markup is unavailable", () => {

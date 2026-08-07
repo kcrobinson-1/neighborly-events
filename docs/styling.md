@@ -107,8 +107,8 @@ deliberately not edited when a new optional field lands.
 | `headerBg` | `--header-bg` | `primary` | Sticky event header bar background. |
 | `headerFg` | `--header-fg` | `whiteWarm` | Header bar foreground / link color. |
 | `surfaceBand` | `--surface-band` | `surfaceCardMuted` | Tinted full-width band surface (inner page-head band, sponsor band, code block — the Madrona spec's "putty"). |
-| `accentFontFamily` | `--font-accent` | `bodyFontFamily` | Short warm accent face (welcome line, artist taglines). |
-| `accentGarnish` | `--accent-garnish` | `secondary` | Small-decoration accent: short script/accent lines and emphasis marks (the day-of landing's welcome line and main-set stars). Scoped to marks and short lines, never a fill or large surface — garnish colors in a poster palette usually have the least contrast headroom. A theme that sets it owns checking it against the surfaces it lands on, including the darkest stop of any gradient the text overlaps. |
+| `accentFontFamily` | `--font-accent` | `bodyFontFamily` | Short warm accent face (artist taglines). |
+| `accentGarnish` | `--accent-garnish` | `secondary` | Small-decoration accent: emphasis marks and short accent lines (in the day-of landing, the main-set stars). Scoped to marks and short lines, never a fill or large surface — garnish colors in a poster palette usually have the least contrast headroom. A theme that sets it owns checking it against every surface it lands on; a layout is free to put a mark on a gradient, so that check means the darkest stop rather than the average. |
 | `pageSurface` | `--page-surface` | layered recipe from `accent` / `secondary` glows + `pageGradientStart` / `bg` / `pageGradientEnd` | Full CSS `background` value for the page field. Painted by apps/web's `.site-shell` inside `<ThemeScope>`. A flat theme sets a single color. |
 | `gridLine` | `--grid-line` | `text` at 4% (the existing derived shade) | Backdrop grid line color; `transparent` hides the grid. |
 | `panelSurface` | `--panel-surface` | `surface` | Quiz panel background. Consumed only by the attendee quiz panels (`.intro-panel` / `.question-panel` / `.completion-panel`); operator surfaces keep the structural `.panel` chrome on every theme. |
@@ -652,13 +652,16 @@ listed in the two tables below — nothing wider.
 | olive `#68681f` (`secondary`) | cream `#f8e9c8` | **4.87** | Olive as text on the page field. |
 | near-white `#fffdf2` | olive `#68681f` | **5.74** | Near-white text on an olive fill. |
 | garnish red `#a52f24` (`accentGarnish`) | cream `#f8e9c8` | **5.77** | Main-set stars (13px marks). |
-| garnish red `#a52f24` | hero gradient darkest stop `#fdca8e` (`heroEnd`) | **4.62** | Script welcome line where it overlaps the gradient's darkest point. |
+| muted `#655a48` | hero gradient darkest stop `#fdca8e` (`heroEnd`) | **4.51** | Day-of hero orientation line at its worst case; 6.36 at `heroStart`. |
 | purple `#6b4e8e` (`sponsorLabel`) | putty `#f1dfb8` | **5.15** | Sponsor attribution line in the presenting-sponsor band. |
 | purple `#6b4e8e` | cream `#f8e9c8` | **5.63** | Sponsor credit line on the page field. |
 
-Every text row clears 4.5:1. The binding constraints are the two rows
-at 4.87 and the muted-on-putty row at 5.14 — those have the least
-headroom and are the first to break if a surface is re-tinted.
+Every text row clears 4.5:1. The binding constraint is the day-of hero
+orientation line at 4.51, followed by the two rows at 4.87 and the
+muted-on-putty row at 5.14 — those have the least headroom and are the
+first to break if a surface is re-tinted. The hero row in particular
+has almost none: darkening `heroEnd`, or moving that line further down
+the gradient, drops it below the bar.
 
 ### Non-text pairings — 3:1 bar, and the decorative exemption
 
