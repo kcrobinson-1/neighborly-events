@@ -132,7 +132,7 @@ Deno.test("complete-game returns the stored completion for a replayed request id
           entitlement_created_at: "2026-04-05T12:00:00.000Z",
           entitlement_status: "existing",
           message:
-            "You already earned your raffle entry. This retake does not create another ticket.",
+            "You already earned your reward entitlement. This retake does not create another one.",
           entitlement_eligible: false,
           score: 5,
           verification_code: "TST-1234",
@@ -182,7 +182,7 @@ Deno.test("complete-game returns the stored completion for a replayed request id
       verificationCode: "TST-1234",
     },
     message:
-      "You already earned your raffle entry. This retake does not create another ticket.",
+      "You already earned your reward entitlement. This retake does not create another one.",
     entitlementEligible: false,
     score: 5,
   });

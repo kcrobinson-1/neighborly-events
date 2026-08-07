@@ -83,7 +83,10 @@ export async function findCompletionByRequestId(
   }
 
   // Mirrors the RPC's idempotency short-circuit so a replayed request id gets
-  // the same response whether it is resolved here or inside the RPC.
+  // the same response whether it is resolved here or inside the RPC. The
+  // message strings are paired with the `message` case expressions in
+  // complete_game_and_award_entitlement; a wording change there must land
+  // here too.
   return {
     data: {
       attempt_number: data.attempt_number,
@@ -91,8 +94,8 @@ export async function findCompletionByRequestId(
       entitlement_created_at: data.entitlement.created_at,
       entitlement_status: data.entitlement_awarded ? "new" : "existing",
       message: data.entitlement_awarded
-        ? "You earned your raffle entry."
-        : "You already earned your raffle entry. This retake does not create another ticket.",
+        ? "You earned your reward entitlement."
+        : "You already earned your reward entitlement. This retake does not create another one.",
       entitlement_eligible: data.entitlement_awarded,
       score: data.score,
       verification_code: data.verification_code,
