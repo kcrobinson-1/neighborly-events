@@ -98,20 +98,24 @@ export const madronaTheme: Theme = {
   // viewport edges via the bounded band posture; Bebas display
   // sizing with the poster tracking.
   pageHeadSurface: "#f1dfb8",
-  pageHeadRule: "3px solid #d9a62b",
+  pageHeadRule: "3px solid var(--accent)",
   pageHeadPosture: "band",
   pageHeadTitleSize: "2rem",
   headingLetterSpacing: "0.06em",
 
   // Olive-bordered option rows; selected = dark-green border over a
-  // darker-cream fill.
-  optionBorder: "2.5px solid #8b8b2e",
+  // darker-cream fill. The olive and gold rules above and below
+  // reference the brand bases rather than restating their hexes, so
+  // the quiz and the apps/site landing can never drift onto two
+  // different olives or two different golds — they are the same
+  // brand mark on surfaces the attendee moves between.
+  optionBorder: "2.5px solid var(--secondary)",
   optionSelectedBorderColor: "#2e4a34",
   optionSelectedSurface: "#ede3c2",
 
   // Booth check-in code block: putty surface, gold border.
   codeSurface: "#f1dfb8",
-  codeBorder: "2.5px solid #d9a62b",
+  codeBorder: "2.5px solid var(--accent)",
 
   // Completion CTAs: gold Newsletter and warm-orange Donate (the
   // poster's warm accent — garnish-tier, so it lives here rather
@@ -119,7 +123,7 @@ export const madronaTheme: Theme = {
   // pairings to clear WCAG AA for normal text: deep green on gold
   // (6.5:1), deep warm ink on orange (5.5:1) — the mock's
   // near-white-on-orange measured 2.9:1.
-  ctaSurface: "#d9a62b",
+  ctaSurface: "var(--accent)",
   ctaFg: "#1c2e20",
   ctaWarmSurface: "#d9822b",
   ctaWarmFg: "#2a2016",
