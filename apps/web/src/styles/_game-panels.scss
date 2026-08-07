@@ -49,8 +49,11 @@
   letter-spacing: var(--heading-letter-spacing, normal);
 }
 
-// Sponsor attribution line (question card and answer review).
-.sponsor-label {
+// Sponsor attribution line (question card and answer review). The
+// element selector keeps this at the same specificity as the
+// `.completion-panel p` muted-color rule above so source order wins
+// inside the answer review.
+p.sponsor-label {
   margin: 0 0 4px;
   color: var(--sponsor-label);
   font-weight: $font-weight-semibold;
