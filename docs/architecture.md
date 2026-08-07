@@ -541,11 +541,32 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   topology — apps/site injects `next/link` for its own routes via
   [`apps/site/components/event/SiteEventMasthead.tsx`](/apps/site/components/event/SiteEventMasthead.tsx)
   and leaves the quiz link on the default hard anchor; apps/web
-  renders plain anchors throughout. The component is SSR-safe (no
-  `'use client'`, no effects, no framework imports) and styles only
-  through Theme tokens (`--header-bg`, `--header-fg`, `--accent`,
-  `--font-heading`) under app-neutral `event-masthead*` class names;
-  each app owns its SCSS partial for the bar.
+  injects nothing, because every destination the bar names is
+  site-owned and must hard-navigate through the proxy origin. The
+  component is SSR-safe (no `'use client'`, no effects, no framework
+  imports) and styles only through Theme tokens (`--header-bg`,
+  `--header-fg`, `--accent`, `--font-heading`) under app-neutral
+  `event-masthead*` class names.
+
+  Both apps render the same bar, so its rules live in one place too:
+  [`shared/styles/_event-masthead.scss`](/shared/styles/_event-masthead.scss),
+  `@use`d from each app's style entrypoint. What stays per-app is the
+  single rule that depends on that app's shell — the "no dead gap"
+  adjacency (`.event-masthead + main` in apps/site, a flush
+  `.event-masthead + .site-shell` in apps/web, where the page-head
+  band must touch the bar). The partial consumes no app-local SCSS
+  variables, since the two apps' `_tokens.scss` files are independent.
+
+  Placement mirrors across the apps: the bar is a sibling *above* the
+  page shell and inside `<ThemeScope>` — outside the shell it stays
+  full-bleed and clear of the shell's padding and `overflow-x: clip`,
+  and inside the scope it resolves the event's tokens. In apps/web
+  the route dispatcher in `App.tsx` resolves it, and only for the
+  quiz route: the bar is attendee chrome, so the operator surfaces
+  (admin, redeem, redemptions) render none. The quiz page in turn
+  drops its prototype demo nav ("Back to demo overview" + demo chip)
+  for events that register a bar — the lockup is already the way
+  home, and the chip misdescribes a real event.
 
 Together they contain:
 

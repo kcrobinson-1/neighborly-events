@@ -11,6 +11,12 @@ import {
   matchGameRedemptionsPath,
   routes,
 } from "../../../shared/urls";
+import {
+  EventMasthead,
+  type EventMastheadActiveItem,
+  type EventMastheadContent,
+  getEventMasthead,
+} from "../../../shared/masthead";
 import { ThemeScope, getThemeForSlug } from "../../../shared/styles";
 import { usePathnameNavigation } from "./usePathnameNavigation";
 
@@ -49,8 +55,37 @@ function LazyRouteFallback(
   );
 }
 
-/** A matched page plus the event slug whose Theme should scope it. */
+/**
+ * The shared sticky header bar to render above the shell, resolved
+ * for the matched route: the event's registered content plus which
+ * nav item this route is. Routes that carry no bar resolve `null`.
+ */
+type MastheadPlacement = {
+  active: EventMastheadActiveItem;
+  content: EventMastheadContent;
+};
+
+/**
+ * Resolves the header bar for a route: present only when the event
+ * registers masthead content (`shared/masthead/mastheadContent.ts`),
+ * so unregistered events — every test event and demo fixture today —
+ * render byte-identically to the pre-masthead output.
+ */
+function resolveMasthead(
+  slug: string,
+  active: EventMastheadActiveItem,
+): MastheadPlacement | null {
+  const content = getEventMasthead(slug);
+
+  return content === null ? null : { active, content };
+}
+
+/**
+ * A matched page, the event slug whose Theme should scope it, and the
+ * header bar (if any) that belongs above it.
+ */
 type PageContent = {
+  masthead: MastheadPlacement | null;
   node: ReactNode;
   themeSlug: string | null;
 };
@@ -64,6 +99,11 @@ function getPageContent(
 
   if (matchedEventAdmin) {
     return {
+      // Operator surface: the header bar is attendee chrome (Quiz,
+      // Newsletter, Feedback, Donate) and does not belong on the
+      // volunteer-facing routes, so admin / redeem / redemptions
+      // resolve no masthead.
+      masthead: null,
       node: (
         <EventAdminPage
           key={matchedEventAdmin.slug}
@@ -79,6 +119,11 @@ function getPageContent(
 
   if (matchedGame) {
     return {
+      // The quiz is apps/web's one attendee route, so it is the bar's
+      // "Quiz" destination. Resolved from the path (not the loaded
+      // game config) so the bar is already in place across the
+      // route's loading / unavailable / error states.
+      masthead: resolveMasthead(matchedGame.slug, "quiz"),
       node: (
         <GameRoutePage key={matchedGame.slug} onNavigate={navigate} slug={matchedGame.slug} />
       ),
@@ -90,6 +135,7 @@ function getPageContent(
 
   if (matchedRedeem) {
     return {
+      masthead: null,
       node: (
         <LazyRouteErrorBoundary
           body="We couldn't load the redeem surface. Reload to try again."
@@ -123,6 +169,7 @@ function getPageContent(
 
   if (matchedRedemptions) {
     return {
+      masthead: null,
       node: (
         <LazyRouteErrorBoundary
           body="We couldn't load the redemption monitoring surface. Reload to try again."
@@ -152,13 +199,17 @@ function getPageContent(
     };
   }
 
-  return { node: <NotFoundPage onNavigate={navigate} />, themeSlug: null };
+  return {
+    masthead: null,
+    node: <NotFoundPage onNavigate={navigate} />,
+    themeSlug: null,
+  };
 }
 
 /** Root application shell for the web prototype. */
 function App() {
   const { pathname, navigate } = usePathnameNavigation();
-  const { node, themeSlug } = getPageContent(pathname, navigate);
+  const { masthead, node, themeSlug } = getPageContent(pathname, navigate);
   const theme = themeSlug !== null ? getThemeForSlug(themeSlug) : null;
   const canvasBackground = theme?.bg ?? null;
 
@@ -185,14 +236,29 @@ function App() {
   // stays `display: contents` (`_layout.scss`), so shell layout is
   // unchanged. Unmatched routes render unscoped against the `:root`
   // defaults.
-  const shell = (
-    <main className="site-shell">
-      <section className="backdrop" aria-hidden="true" />
-      {node}
-    </main>
+  //
+  // The header bar is a sibling *above* the shell, inside the same
+  // scope: it reads `--header-bg` / `--header-fg` / `--accent` /
+  // `--font-heading` from the event's Theme, and sitting outside the
+  // shell keeps it full-bleed and clear of the shell's padding and
+  // `overflow-x: clip`. No `linkComponents` are injected — every
+  // destination is site-owned and must hard-navigate through the
+  // proxy origin rather than resolve inside this SPA (the
+  // `completionCta` precedent), which the component's default plain
+  // anchors already do.
+  const page = (
+    <>
+      {masthead !== null ? (
+        <EventMasthead active={masthead.active} masthead={masthead.content} />
+      ) : null}
+      <main className="site-shell">
+        <section className="backdrop" aria-hidden="true" />
+        {node}
+      </main>
+    </>
   );
 
-  return theme !== null ? <ThemeScope theme={theme}>{shell}</ThemeScope> : shell;
+  return theme !== null ? <ThemeScope theme={theme}>{page}</ThemeScope> : page;
 }
 
 export default App;

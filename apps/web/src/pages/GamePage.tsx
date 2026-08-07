@@ -12,6 +12,7 @@ import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
 import { getCompletionCta } from "../../../../shared/events/completionCta";
 import { getQuizPageHead } from "../../../../shared/events/quizPageHead";
+import { getEventMasthead } from "../../../../shared/masthead";
 import { routes } from "../../../../shared/urls";
 
 /** Props for the top-level game route. */
@@ -61,6 +62,15 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
   // Event-owned page-head copy: the reward line names the event's
   // redemption location, so it renders only for registered slugs.
   const pageHeadCopy = getQuizPageHead(game.slug);
+  // The demo-overview nav is prototype scaffolding: a way back to the
+  // sample-game index plus a chip labelling the flow as a demo. An
+  // event that registers the shared masthead is a real event whose
+  // quiz is reached from its own site, and the bar already carries
+  // the way out (the brand lockup is the Home link) — so registration
+  // is the switch, and the nav keeps rendering for the demo fixtures
+  // and test events that have no bar. `App.tsx` resolves the same
+  // registry to decide whether to render the bar itself.
+  const hasMasthead = getEventMasthead(game.slug) !== null;
   const isGameActive = isStarted && !isComplete && !isSubmittingCompletion;
   const handleStart = async () => {
     setIsStartingSession(true);
@@ -82,18 +92,20 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
 
   return (
     <section className="game-layout">
-      <nav className="sample-nav">
-        <button
-          className="text-link"
-          onClick={() => onNavigate(routes.home)}
-          type="button"
-        >
-          Back to demo overview
-        </button>
-        <span className="chip">
-          {game.slug === featuredGameSlug ? "Featured demo" : "Demo flow"}
-        </span>
-      </nav>
+      {hasMasthead ? null : (
+        <nav className="sample-nav">
+          <button
+            className="text-link"
+            onClick={() => onNavigate(routes.home)}
+            type="button"
+          >
+            Back to demo overview
+          </button>
+          <span className="chip">
+            {game.slug === featuredGameSlug ? "Featured demo" : "Demo flow"}
+          </span>
+        </nav>
+      )}
 
       <section className="app-card">
         {/* Page-head: title block plus the reward subtext. Renders as

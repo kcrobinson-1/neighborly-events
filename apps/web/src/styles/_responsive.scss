@@ -2,7 +2,14 @@
 
 @media (max-width: 640px) {
   .site-shell {
-    padding: 18px 14px 32px;
+    padding: $space-8 14px 32px;
+  }
+
+  // Paired with the shell's top padding above: the page-head band's
+  // flush pull under the masthead (`_masthead.scss`) cancels whichever
+  // top padding is in force, so the two move together.
+  .event-masthead + .site-shell .game-page-head {
+    margin-top: -$space-8;
   }
 
   .topbar,

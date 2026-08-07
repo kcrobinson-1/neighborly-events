@@ -26,6 +26,16 @@ per-event Theme registry.
 - `platformTheme` — the platform Sage Civic Theme, consumed as
   apps/site's root-layout default and as the resolver fallback.
 - `themes` — the per-event registry. Slug → Theme.
+- [`_event-masthead.scss`](/shared/styles/_event-masthead.scss) — the
+  rules for the sticky event header bar
+  ([`shared/masthead/`](/shared/masthead)), which both apps render
+  from the same component. `@use`d from `apps/site/app/globals.scss`
+  and `apps/web/src/styles.scss`; each app's own `_masthead.scss`
+  adds only the shell-adjacency rule beneath the bar. This is the one
+  SCSS file in the module: it exists because the *component* is
+  shared, and it consumes no app-local SCSS variables (the two apps'
+  `_tokens.scss` files are independent) — only the Theme's
+  `var(--…)` tokens.
 
 ## Brand-only skin model
 

@@ -1,0 +1,42 @@
+@use "./tokens" as *;
+
+/*
+ * apps/web's half of the shared sticky event header bar. The bar
+ * itself is styled in `shared/styles/_event-masthead.scss` (`@use`d just
+ * ahead of this partial in `src/styles.scss`) because apps/site
+ * renders the same component; what stays here is the one rule that
+ * depends on this app's shell.
+ *
+ * The bar renders as a sibling *above* `.site-shell`, not inside it:
+ * it must be full-bleed at the viewport top, outside the shell's
+ * inline padding, and staying outside also keeps it clear of the
+ * shell's `overflow-x: clip` (which contains the page-head band's
+ * full-bleed overhang).
+ */
+
+/*
+ * "No dead gap" (spec §2), quiz-app form: beneath the bar the quiz
+ * page-head rises back through the shell's top padding and sits flush
+ * against it, as in the mock — closing the cream gap R4 deferred to
+ * this slice. Its own band padding is then the only breathing room
+ * between bar and title, which is why an event that registers a bar
+ * is expected to band its page-head too (`pageHeadPosture: "band"`);
+ * the bar and the band are the same design's two stacked strips.
+ *
+ * Overriding the top term only leaves the rest of
+ * `--page-head-margin` — the band's full-bleed horizontal margin —
+ * to the Theme. Scoped to the page-head rather than zeroing the
+ * shell's padding outright, so the quiz route's loading /
+ * unavailable / error states, which open with a route-state shell
+ * instead, keep their normal top gap under the bar.
+ *
+ * The pull is the shell's own top padding negated, off the structural
+ * spacing scale: `$space-11` here and `$space-8` in the `max-width:
+ * 640px` block, each stated next to the padding it cancels
+ * (`_layout.scss` and `_responsive.scss`). Spacing is a platform
+ * contract, so it stays in SCSS rather than being republished as a
+ * custom property.
+ */
+.event-masthead + .site-shell .game-page-head {
+  margin-top: -$space-11;
+}

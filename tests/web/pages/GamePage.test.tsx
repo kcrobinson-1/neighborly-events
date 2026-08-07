@@ -159,6 +159,33 @@ describe("GamePage", () => {
     ).toBeTruthy();
   });
 
+  it("keeps the demo-overview nav for events without a masthead", () => {
+    const game = createGame();
+    mockUseGameSession.mockReturnValue(createSessionState(game));
+
+    const { container } = render(<GamePage game={game} onNavigate={() => {}} />);
+
+    expect(
+      screen.getByRole("button", { name: "Back to demo overview" }),
+    ).toBeTruthy();
+    expect(container.querySelector(".sample-nav")).not.toBeNull();
+  });
+
+  it("drops the demo-overview nav on events that render the shared masthead", () => {
+    const game = createGame({ slug: "madrona" });
+    mockUseGameSession.mockReturnValue(createSessionState(game));
+
+    const { container } = render(<GamePage game={game} onNavigate={() => {}} />);
+
+    // The bar (rendered above the shell by `App.tsx`) carries the way
+    // out, and the "Featured demo" / "Demo flow" chip misdescribes a
+    // real event — so the whole prototype nav goes.
+    expect(
+      screen.queryByRole("button", { name: "Back to demo overview" }),
+    ).toBeNull();
+    expect(container.querySelector(".sample-nav")).toBeNull();
+  });
+
   it("shows the start-screen error when the backend session bootstrap fails", async () => {
     const game = createGame();
     const sessionState = createSessionState(game);
