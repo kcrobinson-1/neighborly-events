@@ -54,16 +54,34 @@ function createCompletionResult(
   };
 }
 
+/**
+ * The two link kinds the panel treats differently. A link that is
+ * external by its own content always opens in a new browsing context;
+ * a same-origin link opens in one only while the completed state is
+ * not yet durable on the device. Both kinds are fixtures here rather
+ * than reads of the live registry: the panel's contract is about link
+ * *kind*, and every entry in the registry happens to be external
+ * today, which would leave the same-origin branch untested.
+ */
+const EXTERNAL_CTA_LINK = {
+  body: "Next week's lineup and neighborhood news, straight from the association.",
+  buttonLabel: "Join the email list",
+  href: "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+  external: true,
+};
+
+const SAME_ORIGIN_CTA_LINK = {
+  body: "Tell the organizer how tonight went.",
+  buttonLabel: "Share feedback",
+  href: "/event/madrona/feedback",
+};
+
 function createCta(
   overrides: Partial<CompletionCtaContent> = {},
 ): CompletionCtaContent {
   return {
     heading: "Enjoying Music in the Playfield?",
-    newsletter: {
-      body: "Get next week's lineup and neighborhood events in your inbox.",
-      buttonLabel: "Sign up for updates",
-      href: "/event/madrona/signup",
-    },
+    emailList: EXTERNAL_CTA_LINK,
     donate: {
       body:
         "These concerts are free because neighbors chip in — 100% of donations go to the association.",
@@ -445,17 +463,14 @@ describe("GameCompletionPanel", () => {
           screen.getByRole("heading", { name: "Enjoying Music in the Playfield?" }),
         ).toBeTruthy();
 
-        const newsletterLink = screen.getByRole("link", {
-          name: "Sign up for updates",
+        const emailListLink = screen.getByRole("link", {
+          name: "Join the email list",
         });
         // Config-owned destination: the game's own slug is "test-game", so
         // this proves the href comes from the CTA config, not the slug.
-        expect(newsletterLink.getAttribute("href")).toBe(
-          "/event/madrona/signup",
+        expect(emailListLink.getAttribute("href")).toBe(
+          "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
         );
-        // Same tab: the persisted completion state makes navigating away
-        // loss-free, so no link needs a new tab to protect the code.
-        expect(newsletterLink.getAttribute("target")).toBeNull();
 
         const donateLink = screen.getByRole("link", {
           name: "Support the Playfield",
@@ -463,7 +478,6 @@ describe("GameCompletionPanel", () => {
         expect(donateLink.getAttribute("href")).toBe(
           "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
         );
-        expect(donateLink.getAttribute("target")).toBeNull();
 
         // The CTA rides below the entitlement result, never above it.
         const panel = screen.getByRole("heading", {
@@ -480,37 +494,67 @@ describe("GameCompletionPanel", () => {
       },
     );
 
-    it("falls back to new-tab links when the completion is not durably persisted", () => {
-      // When device storage rejected the snapshot (privacy mode, quota), the
-      // in-memory state is the only copy of the verification code, so a
-      // same-tab navigation would destroy it — the links keep the old
-      // new-tab posture instead.
-      renderPanel({ isCompletionPersisted: false });
+    // Both persistence states crossed with both link kinds. The two
+    // reasons a CTA link opens in a new context are independent, and a
+    // single-state case cannot surface the failure that matters most
+    // here: an external link quietly reverting to the same tab once the
+    // completed state becomes durable.
+    it.each([
+      {
+        kind: "external",
+        link: EXTERNAL_CTA_LINK,
+        isCompletionPersisted: true,
+        newContext: true,
+      },
+      {
+        kind: "external",
+        link: EXTERNAL_CTA_LINK,
+        isCompletionPersisted: false,
+        newContext: true,
+      },
+      {
+        kind: "same-origin",
+        link: SAME_ORIGIN_CTA_LINK,
+        isCompletionPersisted: true,
+        newContext: false,
+      },
+      {
+        kind: "same-origin",
+        link: SAME_ORIGIN_CTA_LINK,
+        isCompletionPersisted: false,
+        newContext: true,
+      },
+    ])(
+      "opens a $kind CTA link in a new context: $newContext (persisted: $isCompletionPersisted)",
+      ({ link, isCompletionPersisted, newContext }) => {
+        renderPanel({
+          cta: createCta({ emailList: link, donate: undefined }),
+          isCompletionPersisted,
+        });
 
-      const newsletterLink = screen.getByRole("link", {
-        name: "Sign up for updates",
-      });
-      expect(newsletterLink.getAttribute("target")).toBe("_blank");
-      expect(newsletterLink.getAttribute("rel")).toBe("noopener");
+        const rendered = screen.getByRole("link", { name: link.buttonLabel });
 
-      const donateLink = screen.getByRole("link", {
-        name: "Support the Playfield",
-      });
-      expect(donateLink.getAttribute("target")).toBe("_blank");
-      expect(donateLink.getAttribute("rel")).toBe("noopener");
-    });
+        if (newContext) {
+          expect(rendered.getAttribute("target")).toBe("_blank");
+          expect(rendered.getAttribute("rel")).toBe("noopener");
+        } else {
+          expect(rendered.getAttribute("target")).toBeNull();
+          expect(rendered.getAttribute("rel")).toBeNull();
+        }
+      },
+    );
 
-    it("omits the newsletter CTA when the event has no feedback surface", () => {
-      renderPanel({ cta: createCta({ newsletter: undefined }) });
+    it("omits the email-list CTA when the event has no email-list destination", () => {
+      renderPanel({ cta: createCta({ emailList: undefined }) });
 
-      expect(screen.queryByRole("link", { name: "Sign up for updates" })).toBeNull();
+      expect(screen.queryByRole("link", { name: "Join the email list" })).toBeNull();
       expect(screen.getByRole("link", { name: "Support the Playfield" })).toBeTruthy();
     });
 
     it("omits the donate CTA when the event has no donation destination", () => {
       renderPanel({ cta: createCta({ donate: undefined }) });
 
-      expect(screen.getByRole("link", { name: "Sign up for updates" })).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Join the email list" })).toBeTruthy();
       expect(screen.queryByRole("link", { name: "Support the Playfield" })).toBeNull();
     });
 
@@ -522,7 +566,7 @@ describe("GameCompletionPanel", () => {
 
     it("renders no CTA block when both sections are absent", () => {
       const { container } = renderPanel({
-        cta: createCta({ donate: undefined, newsletter: undefined }),
+        cta: createCta({ donate: undefined, emailList: undefined }),
       });
 
       expect(container.querySelector(".completion-cta")).toBeNull();

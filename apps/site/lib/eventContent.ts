@@ -95,18 +95,17 @@
  * (`harvest-block-party`, `riverside-jam`) deliberately omit
  * `feedback` so the omission-guard falsifier stays structural.
  *
- * `newsletterSignup?` is the standalone email-capture counterpart to
- * `feedback?`, with the same presence semantics on its own route:
- * presence makes `/event/<slug>/signup` a real single-field form
- * route; absence renders the friendly disabled state there. The
- * form's anon write path is the `submit_newsletter_signup` SECURITY
- * DEFINER RPC, gated at the DB by the `newsletter_enabled_events`
- * registry (a seam deliberately separate from
- * `feedback_enabled_events`, so an event can offer signup without
- * offering feedback) — as with `feedback?`, enabling a new event
- * takes both a content-module edit (to surface the form) and a
- * registry seed (to admit writes). The two test events omit the
- * field so the omission-guard falsifier stays structural.
+ * There is no on-site email-signup counterpart to `feedback?`. The
+ * platform had one — a `newsletterSignup` block gating a
+ * `/event/<slug>/signup` form route — and it was removed: an
+ * association that already runs its own list on a mail provider is
+ * better served by the platform pointing at that list than by
+ * competing with it, and no event asked for the on-site surface. An
+ * event's email-list affordance is now a content-owned external
+ * destination on `landing.actions.emailList` (and on the completion
+ * CTA registry, and the masthead registry) rather than a route the
+ * platform serves. The opt-in checkbox on the feedback form is
+ * unaffected and keeps writing to the same consent log.
  *
  * `donate?` is the donation counterpart to `feedback?`, following
  * the same named-outer-field discipline (not a generic `links[]`):
@@ -215,15 +214,26 @@ export type EventNights = {
 /**
  * One tile of the day-of landing page's action grid. `label` is the
  * big display line ("Take the quiz"), `subtitle` the small one-liner
- * under it. Destinations are renderer-owned, not content fields:
- * quiz resolves through `routes.game(slug)`, newsletter and feedback
- * through the slug-derived in-app routes, donate through
- * `EventContent.donate.href` — so the grid can never disagree with
- * the routes the rest of the page uses.
+ * under it.
+ *
+ * Most destinations stay renderer-owned so the grid can never
+ * disagree with the routes the rest of the page uses: quiz resolves
+ * through `routes.game(slug)`, feedback through the slug-derived
+ * in-app route, donate through `EventContent.donate.href`. `href` is
+ * the content-owned alternative for a destination the platform does
+ * not serve and cannot derive — an association's own signup page, for
+ * instance, which lives at an address only the content author knows.
+ * `external` declares that such a destination leaves the platform;
+ * the renderer opens exactly the actions that carry it in a new
+ * browsing context with `rel="noopener"`. Same name, same meaning as
+ * the field on `MastheadLink` (`shared/masthead/mastheadContent.ts`)
+ * and `CompletionCtaLink` (`shared/events/completionCta.ts`).
  */
 export type EventLandingAction = {
   label: string;
   subtitle: string;
+  href?: string;
+  external?: boolean;
 };
 
 /**
@@ -264,7 +274,13 @@ export type EventDayOfLandingContent = {
   };
   actions: {
     quiz: EventLandingAction;
-    newsletter: EventLandingAction;
+    /**
+     * The email-list tile and the season-wrap action. Both render
+     * only when this action carries an `href` — the platform serves
+     * no email-signup route to derive one from, so an event that
+     * omits it offers no email-list affordance at all.
+     */
+    emailList: EventLandingAction;
     feedback: EventLandingAction;
     donate: EventLandingAction;
   };
@@ -356,14 +372,6 @@ export type EventContent = {
       placeholder?: string;
       newsletterOptInLabel: string;
     };
-    thankYouMessage: string;
-  };
-  newsletterSignup?: {
-    heading: string;
-    body?: string;
-    emailLabel: string;
-    emailPlaceholder?: string;
-    submitLabel: string;
     thankYouMessage: string;
   };
   donate?: {

@@ -122,12 +122,20 @@ describe("App", () => {
     expect(quiz.className).toContain("event-masthead-link-active");
     expect(quiz.getAttribute("aria-current")).toBe("page");
 
-    // No link components are injected in apps/web: every destination
-    // is site-owned and has to hard-navigate through the proxy
-    // origin, which the shared component's plain anchors do.
-    for (const name of ["Quiz", "Newsletter", "Feedback"]) {
+    // No link components are injected in apps/web: the site-owned
+    // destinations have to hard-navigate through the proxy origin and
+    // the external ones leave the platform entirely, both of which the
+    // shared component's plain anchors do.
+    for (const name of ["Quiz", "Email list", "Feedback"]) {
       expect(screen.getByRole("link", { name }).tagName).toBe("A");
     }
+
+    // The email-list destination leaves the platform, so it opens in a
+    // new context from the quiz app too — the reader is mid-quiz and a
+    // same-tab navigation would drop them out of it.
+    const emailList = screen.getByRole("link", { name: "Email list" });
+    expect(emailList.getAttribute("target")).toBe("_blank");
+    expect(emailList.getAttribute("rel")).toContain("noopener");
   });
 
   it("renders no masthead for an event that registers none", () => {

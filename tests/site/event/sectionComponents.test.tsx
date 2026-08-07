@@ -44,7 +44,11 @@ const mastheadFixture: EventMastheadContent = {
     homeHref: "/event/synthetic-event",
   },
   quiz: { label: "Quiz", href: "/event/synthetic-event/game" },
-  newsletter: { label: "Newsletter", href: "/event/synthetic-event/signup" },
+  emailList: {
+    label: "Email list",
+    href: "https://lists.example.org/synthetic-event",
+    external: true,
+  },
   feedback: { label: "Feedback", href: "/event/synthetic-event/feedback" },
   donate: {
     label: "Donate",
@@ -657,8 +661,8 @@ describe("EventLandingPage", () => {
     // `.event-masthead + main` no-dead-gap rule applies.
     expect((bar as Element).nextElementSibling).toBe(main);
     expect(
-      screen.getByRole("link", { name: "Newsletter" }).getAttribute("href"),
-    ).toBe("/event/synthetic-event/signup");
+      screen.getByRole("link", { name: "Email list" }).getAttribute("href"),
+    ).toBe("https://lists.example.org/synthetic-event");
     // Quiz stays a plain hard-navigation anchor on apps/site (the
     // destination lives behind the apps/web rewrite).
     expect(

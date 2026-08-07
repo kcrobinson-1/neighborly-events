@@ -8,7 +8,7 @@
  * Presence is the render gate: events without an entry render no
  * header bar at all, byte-identically to the pre-masthead output.
  * Both apps resolve through `getEventMasthead(slug)` — apps/site on
- * the madrona landing/signup/feedback routes, apps/web when the quiz
+ * the madrona landing and feedback routes, apps/web when the quiz
  * app adopts the bar.
  *
  * Every link carries its own `href` — the component renders
@@ -16,27 +16,40 @@
  * `completionCta.ts` principle). *How* each link navigates is the
  * consuming app's decision, injected per link via
  * `EventMasthead`'s `linkComponents` prop: a destination that is
- * same-app for apps/site (the signup route) is cross-app for apps/web
- * behind the proxy, so the mechanism cannot live in content. The one
- * exception is `donate`, always an external new-tab anchor.
+ * same-app for apps/site (the feedback route) is cross-app for
+ * apps/web behind the proxy, so the mechanism cannot live in content.
+ * Whether a link leaves the platform entirely *is* content, declared
+ * per link by `external` below.
  *
- * From apps/web the site-owned destinations (home, newsletter,
- * feedback) resolve only on an origin that proxies site routes — the
- * canonical site origin and its preview deployments. On the bare Vite
- * dev server and the direct apps/web host they fall to the SPA's
- * not-found page, exactly as `completionCta.ts`'s links do. Accepted:
- * closing it is a dev-topology task tracked in
+ * From apps/web the site-owned destinations (home, feedback) resolve
+ * only on an origin that proxies site routes — the canonical site
+ * origin and its preview deployments. On the bare Vite dev server and
+ * the direct apps/web host they fall to the SPA's not-found page,
+ * exactly as `completionCta.ts`'s links do. Accepted: closing it is a
+ * dev-topology task tracked in
  * `docs/tracking/dev-workflow-improvements.md`, not a content or
- * component concern.
+ * component concern. The external links (`emailList`, `donate`) are
+ * unaffected — an absolute URL resolves the same from either app.
  */
 
 import { madronaFacts } from "../events/madrona-facts.ts";
 import { routes } from "../urls/index.ts";
 
-/** One navigation link of the masthead bar. */
+/**
+ * One navigation link of the masthead bar.
+ *
+ * `external` is the content-owned declaration that the destination
+ * leaves the platform: the renderer opens exactly the links that
+ * carry it in a new browsing context with `rel="noopener"`, and no
+ * component branch decides that by naming a link slot. Same name,
+ * same meaning as the field on `EventLandingAction`
+ * (`apps/site/lib/eventContent.ts`) and `CompletionCtaLink`
+ * (`shared/events/completionCta.ts`).
+ */
 export type MastheadLink = {
   label: string;
   href: string;
+  external?: boolean;
 };
 
 /**
@@ -52,9 +65,9 @@ export type EventMastheadContent = {
     homeHref: string;
   };
   quiz: MastheadLink;
-  newsletter: MastheadLink;
+  emailList: MastheadLink;
   feedback: MastheadLink;
-  /** Rendered as the visually distinct pill; external, new tab. */
+  /** Rendered as the visually distinct pill. */
   donate: MastheadLink;
 };
 
@@ -65,9 +78,13 @@ const madronaMasthead: EventMastheadContent = {
     homeHref: "/event/madrona",
   },
   quiz: { label: "Quiz", href: routes.game("madrona") },
-  newsletter: { label: "Newsletter", href: "/event/madrona/signup" },
+  emailList: {
+    label: "Email list",
+    href: madronaFacts.emailListHref,
+    external: true,
+  },
   feedback: { label: "Feedback", href: "/event/madrona/feedback" },
-  donate: { label: "Donate", href: madronaFacts.donateHref },
+  donate: { label: "Donate", href: madronaFacts.donateHref, external: true },
 };
 
 /** Slug → masthead content. Absent slugs render no header bar. */

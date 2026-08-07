@@ -8,15 +8,16 @@ import {
 
 /**
  * apps/site binding of the shared `EventMasthead`: injects Next.js
- * `<Link>` for the destinations apps/site itself serves — home
- * (the event landing page), newsletter (`/event/<slug>/signup`), and
- * feedback (`/event/<slug>/feedback`) — so those navigations stay
- * soft. `quiz` stays on the shared default plain `<a>` because its
- * destination lives behind the apps/web Vercel rewrite; soft
- * client-side navigation would keep the user inside apps/site and
- * never re-enter the proxy (same rationale as `EventHeader`'s hero
- * CTA). `donate` is owned by the shared component (external anchor,
- * new tab, `rel="noopener"`).
+ * `<Link>` for the destinations apps/site itself serves — home (the
+ * event landing page) and feedback (`/event/<slug>/feedback`) — so
+ * those navigations stay soft. `quiz` stays on the shared default
+ * plain `<a>` because its destination lives behind the apps/web
+ * Vercel rewrite; soft client-side navigation would keep the user
+ * inside apps/site and never re-enter the proxy (same rationale as
+ * `EventHeader`'s hero CTA). `emailList` and `donate` are external
+ * destinations — nothing apps/site routes — so they stay on the
+ * shared default anchor, which reads their `external` declaration
+ * and opens them in a new context.
  *
  * Callers resolve content from the shared registry
  * (`getEventMasthead(slug)`) and render this only when an entry
@@ -34,7 +35,7 @@ export function SiteEventMasthead({
     <EventMasthead
       masthead={masthead}
       active={active}
-      linkComponents={{ home: Link, newsletter: Link, feedback: Link }}
+      linkComponents={{ home: Link, feedback: Link }}
     />
   );
 }

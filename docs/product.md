@@ -48,7 +48,7 @@ Today the repo implements:
 - `game_starts` table and session-issuance write so analytics has the funnel denominator (starts → completions → entitlements) before the first live event
 - an authenticated agent-facing redeem route at `/event/:slug/game/redeem` for fast booth-side code entry, and an authenticated organizer-facing monitoring + reversal route at `/event/:slug/game/redemptions` for dispute handling (list, filter, search, reverse with optional reason), both direct-URL only until role seeding
 - a read-only demo-mode bypass on the auth-gated event surfaces (admin, redeem, redemptions) for the two test-event slugs (`harvest-block-party`, `riverside-jam`), reaching internal-partner demos without sign-in; mutations stay rejected server-side, and every apps/web URL under a test-event slug — bypass surfaces and the gameplay route alike — emits `noindex` uniformly at parity with the apps/site test-event landings, keeping test events invisible to public search end-to-end
-- a public per-event attendee-feedback route at `/event/:slug/feedback` for end-of-event feedback (star + N/A ratings across content-authored dimensions, optional free-text, optional email, and an optional newsletter opt-in tied to that email), available for events whose per-event content module carries a feedback block (unknown slugs render 404; known slugs without feedback content render a friendly disabled-state), with submissions durably persisted to a feedback-submissions table — gated server-side at submit time by a slug-keyed registry FK — and, when the attendee opts in, a separate append-only consent log written in the same transaction for organizer review
+- a public per-event attendee-feedback route at `/event/:slug/feedback` for end-of-event feedback (star + N/A ratings across content-authored dimensions, optional free-text, optional email, and an optional mailing-list opt-in tied to that email), available for events whose per-event content module carries a feedback block (unknown slugs render 404; known slugs without feedback content render a friendly disabled-state), with submissions durably persisted to a feedback-submissions table — gated server-side at submit time by a slug-keyed registry FK — and, when the attendee opts in, a separate append-only consent log written in the same transaction for organizer review
 - a **day-of companion** event landing page for events that author it, plus a shared event masthead that renders the same nav bar across both apps — see "The Day-Of Companion Model" below
 
 ### The Day-Of Companion Model
@@ -74,6 +74,15 @@ and the answer binds the product, not just one event's design:
   where you were — including to a completed result with its check-in
   code intact. This is what lets every surface link freely to every
   other one.
+- **The platform points at an organization's email list; it does not
+  run one.** An organization at this scale already has a list on a
+  mail provider, and a second in-platform signup form competes with
+  the one it puts on every poster. So the email-list affordance is a
+  content-owned external destination on every surface that offers it,
+  and the platform serves no signup route. The one thing the platform
+  does own is the opt-in checkbox on the feedback form, because that
+  address arrives as part of feedback the organizer already asked for;
+  those reach the list by export.
 - **Sponsors get two placements, and they mean different things.** An
   event-wide *presenting* sponsor appears on every night; a *headliner*
   sponsor is credited per night alongside that night's artist. Both are

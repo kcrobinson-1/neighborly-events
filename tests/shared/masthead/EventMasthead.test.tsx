@@ -16,13 +16,26 @@ const mastheadFixture: EventMastheadContent = {
     homeHref: "/event/synthetic-event",
   },
   quiz: { label: "Quiz", href: "/event/synthetic-event/game" },
-  newsletter: { label: "Newsletter", href: "/event/synthetic-event/signup" },
+  emailList: {
+    label: "Email list",
+    href: "https://lists.example.org/synthetic-event",
+    external: true,
+  },
   feedback: { label: "Feedback", href: "/event/synthetic-event/feedback" },
   donate: {
     label: "Donate",
     href: "https://donations.example.org/synthetic-form",
+    external: true,
   },
 };
+
+/**
+ * Every link slot the bar renders. Used to walk the fixture's own
+ * content rather than to assert which slots are external — the
+ * expectation for each slot is read off that slot's `external`
+ * declaration, so moving the declaration moves the expectation.
+ */
+const LINK_SLOTS = ["quiz", "emailList", "feedback", "donate"] as const;
 
 describe("EventMasthead", () => {
   it("renders the brand lockup as the Home link plus the four nav links with config-owned hrefs", () => {
@@ -40,8 +53,8 @@ describe("EventMasthead", () => {
       "/event/synthetic-event/game",
     );
     expect(
-      screen.getByRole("link", { name: "Newsletter" }).getAttribute("href"),
-    ).toBe("/event/synthetic-event/signup");
+      screen.getByRole("link", { name: "Email list" }).getAttribute("href"),
+    ).toBe("https://lists.example.org/synthetic-event");
     expect(
       screen.getByRole("link", { name: "Feedback" }).getAttribute("href"),
     ).toBe("/event/synthetic-event/feedback");
@@ -50,29 +63,64 @@ describe("EventMasthead", () => {
     ).toBe("https://donations.example.org/synthetic-form");
   });
 
-  it("opens only the donate pill in a new tab with rel=noopener", () => {
+  it("opens exactly the links whose content declares externality in a new context", () => {
     render(<EventMasthead masthead={mastheadFixture} />);
 
-    const donate = screen.getByRole("link", { name: "Donate" });
-    expect(donate.getAttribute("target")).toBe("_blank");
-    expect(donate.getAttribute("rel")).toContain("noopener");
-    expect(donate.className).toContain("event-masthead-donate");
+    for (const slot of LINK_SLOTS) {
+      const link = mastheadFixture[slot];
+      const rendered = screen.getByRole("link", { name: link.label });
 
-    for (const name of ["Quiz", "Newsletter", "Feedback"]) {
-      expect(
-        screen.getByRole("link", { name }).getAttribute("target"),
-      ).toBeNull();
+      if (link.external) {
+        expect(rendered.getAttribute("target"), link.label).toBe("_blank");
+        expect(rendered.getAttribute("rel"), link.label).toContain("noopener");
+      } else {
+        expect(rendered.getAttribute("target"), link.label).toBeNull();
+        expect(rendered.getAttribute("rel"), link.label).toBeNull();
+      }
     }
+
+    // The pill is still the pill; only its new-tab behavior stopped
+    // being a component-side special case.
+    expect(
+      screen.getByRole("link", { name: "Donate" }).className,
+    ).toContain("event-masthead-donate");
+  });
+
+  it("reads externality from the link's own content, not from which slot it is", () => {
+    // The discriminator between a content-driven implementation and the
+    // hardcoded donate branch this replaced: the declaration moves onto
+    // a nav-loop item and off the pill, so a slot-shaped implementation
+    // fails both halves of this case rather than neither.
+    render(
+      <EventMasthead
+        masthead={{
+          ...mastheadFixture,
+          emailList: { ...mastheadFixture.emailList, external: true },
+          donate: { ...mastheadFixture.donate, external: false },
+        }}
+      />,
+    );
+
+    const navItem = screen.getByRole("link", { name: "Email list" });
+    expect(navItem.getAttribute("target")).toBe("_blank");
+    expect(navItem.getAttribute("rel")).toContain("noopener");
+
+    const donate = screen.getByRole("link", { name: "Donate" });
+    expect(donate.getAttribute("target")).toBeNull();
+    expect(donate.getAttribute("rel")).toBeNull();
   });
 
   it("marks the active item with the active class and aria-current=page", () => {
-    render(<EventMasthead masthead={mastheadFixture} active="newsletter" />);
+    render(<EventMasthead masthead={mastheadFixture} active="feedback" />);
 
-    const newsletter = screen.getByRole("link", { name: "Newsletter" });
-    expect(newsletter.className).toContain("event-masthead-link-active");
-    expect(newsletter.getAttribute("aria-current")).toBe("page");
+    const feedback = screen.getByRole("link", { name: "Feedback" });
+    expect(feedback.className).toContain("event-masthead-link-active");
+    expect(feedback.getAttribute("aria-current")).toBe("page");
 
-    for (const name of ["Quiz", "Feedback", "Donate"]) {
+    // "Email list" is absent from this list because the active-item type
+    // no longer admits it: its destination is external, so the platform
+    // serves no page it could be the active one for.
+    for (const name of ["Quiz", "Email list", "Donate"]) {
       const link = screen.getByRole("link", { name });
       expect(link.className).not.toContain("event-masthead-link-active");
       expect(link.getAttribute("aria-current")).toBeNull();
@@ -84,6 +132,36 @@ describe("EventMasthead", () => {
 
     expect(container.querySelector(".event-masthead-link-active")).toBeNull();
     expect(container.querySelector("[aria-current]")).toBeNull();
+  });
+
+  it("passes the new-context attributes through to an injected link component", () => {
+    // The injected-link contract has to be able to express externality,
+    // or an app that injects its own link component silently loses it.
+    function StubLink({ href, className, children, target, rel }: EventMastheadLinkProps) {
+      return (
+        <a className={className} href={href} target={target} rel={rel}>
+          {children}
+        </a>
+      );
+    }
+
+    render(
+      <EventMasthead
+        masthead={{
+          ...mastheadFixture,
+          emailList: { ...mastheadFixture.emailList, external: true },
+        }}
+        linkComponents={{ emailList: StubLink, feedback: StubLink }}
+      />,
+    );
+
+    const external = screen.getByRole("link", { name: "Email list" });
+    expect(external.getAttribute("target")).toBe("_blank");
+    expect(external.getAttribute("rel")).toContain("noopener");
+
+    const sameOrigin = screen.getByRole("link", { name: "Feedback" });
+    expect(sameOrigin.getAttribute("target")).toBeNull();
+    expect(sameOrigin.getAttribute("rel")).toBeNull();
   });
 
   it("renders injected link components for home and nav items but never for donate", () => {
@@ -109,7 +187,7 @@ describe("EventMasthead", () => {
       <EventMasthead
         masthead={mastheadFixture}
         active="feedback"
-        linkComponents={{ home: StubLink, newsletter: StubLink, feedback: StubLink }}
+        linkComponents={{ home: StubLink, emailList: StubLink, feedback: StubLink }}
       />,
     );
 
@@ -119,7 +197,7 @@ describe("EventMasthead", () => {
     expect(brand.getAttribute("data-injected")).toBe("true");
     expect(
       screen
-        .getByRole("link", { name: "Newsletter" })
+        .getByRole("link", { name: "Email list" })
         .getAttribute("data-injected"),
     ).toBe("true");
 

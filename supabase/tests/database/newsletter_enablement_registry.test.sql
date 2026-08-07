@@ -1,31 +1,37 @@
--- Standalone newsletter signup data model + submit_newsletter_signup
--- RPC tests (migration 20260805000000).
+-- Newsletter enablement registry + the opt-in log's constraints
+-- against it (migrations 20260805000000, 20260807000000).
+--
+-- "Newsletter" here names the database objects, which keep their
+-- names: this registry and the log it gates are the consent store the
+-- feedback form's opt-in checkbox writes to. It is not the
+-- attendee-facing vocabulary — no surface in either app calls the
+-- association's email list a newsletter, because the association's
+-- newsletter is a printed mailer.
 --
 -- Covers:
 --   Structural — newsletter_enabled_events shape, RLS, slug-format
 --                CHECK, madrona seed; newsletter_opt_ins FK repoint to
---                the new registry; email-shape CHECK on the log.
---   Privilege  — anon/authenticated lack table grants on the registry;
---                anon and authenticated hold EXECUTE on
---                submit_newsletter_signup.
---   Behavioral — anon RPC call lands a normalized 'standalone' log row
---                (via the internal subscribe_email helper, no anon
---                grant on it — same posture reality-check as the
---                feedback write-through).
---              — repeat signup for the same (event_slug, email)
---                produces a second row (append-only shape preserved).
---              — unregistered slug surfaces the repointed FK violation
---                through the RPC.
---              — non-email-shaped input surfaces the CHECK violation
---                through the RPC.
---              — feedback write-through still works across the FK
---                repoint (madrona is seeded in the new registry).
+--                the registry; email-shape CHECK on the log.
+--   Privilege  — anon/authenticated lack table grants on the registry.
+--   Behavioral — email-shape CHECK rejects a malformed address at the
+--                table layer.
+--              — feedback write-through works across the FK repoint
+--                (madrona is seeded in the registry).
+--
+-- This file previously also covered submit_newsletter_signup — the
+-- standalone signup surface's public RPC — through its grants and a
+-- live anon call. Migration 20260807000000 dropped that function with
+-- the route that was its only caller, so those cases went with it and
+-- one absence case replaced them. The retained structures did not lose
+-- coverage: normalization at write time, the append-only shape, and
+-- the FK violation for an unregistered slug are all asserted through
+-- the surviving writer in newsletter_opt_in_log.test.sql.
 
 begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(15);
 
 -- ─── Structural: registry ────────────────────────────────────────────
 
@@ -129,117 +135,15 @@ select ok(
   'authenticated does NOT have INSERT on newsletter_enabled_events'
 );
 
-select ok(
-  has_function_privilege(
-    'anon',
-    'public.submit_newsletter_signup(text, text)',
-    'EXECUTE'
-  ),
-  'anon has EXECUTE on submit_newsletter_signup'
+-- ─── The dropped standalone RPC is gone, grants and all ─────────────
+-- A dropped function takes its EXECUTE grants with it, so absence is
+-- the whole assertion: there is no anon-callable signup function left
+-- behind after its only caller was removed.
+
+select hasnt_function(
+  'public', 'submit_newsletter_signup', array['text', 'text'],
+  'submit_newsletter_signup no longer exists (dropped with its only caller)'
 );
-select ok(
-  has_function_privilege(
-    'authenticated',
-    'public.submit_newsletter_signup(text, text)',
-    'EXECUTE'
-  ),
-  'authenticated has EXECUTE on submit_newsletter_signup'
-);
-
--- ─── Behavioral: anon signup lands a normalized standalone row ───────
-
-select set_config(
-  'request.jwt.claims',
-  '{"role":"anon"}',
-  true
-);
-set local role anon;
-
-select submit_newsletter_signup(
-  p_event_slug => 'madrona',
-  p_email => '  Neighbor@Example.COM '
-);
-
-reset role;
-select set_config('request.jwt.claims', '', true);
-
-select is(
-  (select count(*)::int from public.newsletter_opt_ins
-    where event_slug = 'madrona'
-      and email = 'neighbor@example.com'
-      and source_surface = 'standalone'),
-  1,
-  'anon submit_newsletter_signup wrote a normalized standalone log row'
-);
-
--- ─── Behavioral: repeat signup appends (no dedupe at the DB layer) ──
-
-select set_config(
-  'request.jwt.claims',
-  '{"role":"anon"}',
-  true
-);
-set local role anon;
-
-select submit_newsletter_signup(
-  p_event_slug => 'madrona',
-  p_email => 'neighbor@example.com'
-);
-
-reset role;
-select set_config('request.jwt.claims', '', true);
-
-select is(
-  (select count(*)::int from public.newsletter_opt_ins
-    where event_slug = 'madrona'
-      and email = 'neighbor@example.com'),
-  2,
-  'repeat signup for the same (event_slug, email) produced a second row'
-);
-
--- ─── Behavioral: unregistered slug rejected via the repointed FK ────
-
-select set_config(
-  'request.jwt.claims',
-  '{"role":"anon"}',
-  true
-);
-set local role anon;
-
-select throws_ok(
-  $$ select submit_newsletter_signup(
-       p_event_slug => 'unregistered-slug',
-       p_email => 'neighbor@example.com'
-     ) $$,
-  '23503',
-  null,
-  'submit_newsletter_signup surfaces FK violation for an unregistered slug'
-);
-
--- ─── Behavioral: malformed email rejected via the CHECK ─────────────
-
-select throws_ok(
-  $$ select submit_newsletter_signup(
-       p_event_slug => 'madrona',
-       p_email => 'no-at-sign'
-     ) $$,
-  '23514',
-  null,
-  'submit_newsletter_signup surfaces CHECK violation for a non-email value'
-);
-
-select throws_ok(
-  $$ select submit_newsletter_signup(
-       p_event_slug => 'madrona',
-       p_email => '   '
-     ) $$,
-  '23514',
-  null,
-  'submit_newsletter_signup surfaces CHECK violation for whitespace-only input'
-);
-
-reset role;
-select set_config('request.jwt.claims', '', true);
 
 -- ─── Behavioral: feedback write-through survives the FK repoint ─────
 

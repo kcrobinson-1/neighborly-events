@@ -30,15 +30,17 @@ import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
  * regardless of its internal structure; a missing file degrades to
  * no art (welcome line still renders) rather than a broken image.
  *
- * Action-grid destinations are renderer-owned (see
+ * Action-grid destinations are mostly renderer-owned (see
  * `EventLandingAction`): quiz is a plain `<a>` through
  * `routes.game(slug)` because the destination lives behind the
- * apps/web rewrite (the `EventCTA` precedent); newsletter and
- * feedback are same-app `<Link>`s; donate reuses
- * `content.donate.href` as an external new-tab anchor. Newsletter /
- * feedback / donate tiles render only when the matching content
- * opt-in is present, same presence semantics as the routes
- * themselves.
+ * apps/web rewrite (the `EventCTA` precedent); feedback is a
+ * same-app `<Link>`; donate reuses `content.donate.href` as an
+ * external new-tab anchor. The email-list tile is the exception —
+ * its destination is content-owned, because the platform serves no
+ * email-signup route to derive one from. Feedback and donate tiles
+ * render when the matching content opt-in is present, same presence
+ * semantics as the routes themselves; the email-list tile renders
+ * when its action carries an `href`.
  *
  * The visually-hidden `<h1>` keeps a text heading for the document
  * outline (the visible hero is the artwork); "Presenting sponsor" /
@@ -94,14 +96,16 @@ export function EventDayOfLanding({
           {landing.actions.quiz.label}
           <small>{landing.actions.quiz.subtitle}</small>
         </a>
-        {content.newsletterSignup ? (
-          <Link
-            className="event-landing-action event-landing-action-newsletter"
-            href={`/event/${encodeURIComponent(slug)}/signup`}
+        {landing.actions.emailList.href ? (
+          <a
+            className="event-landing-action event-landing-action-email-list"
+            href={landing.actions.emailList.href}
+            target={landing.actions.emailList.external ? "_blank" : undefined}
+            rel={landing.actions.emailList.external ? "noopener" : undefined}
           >
-            {landing.actions.newsletter.label}
-            <small>{landing.actions.newsletter.subtitle}</small>
-          </Link>
+            {landing.actions.emailList.label}
+            <small>{landing.actions.emailList.subtitle}</small>
+          </a>
         ) : null}
         {content.feedback ? (
           <Link
@@ -129,9 +133,7 @@ export function EventDayOfLanding({
         nights={content.nights ?? null}
         lineup={content.lineup}
         landing={landing}
-        slug={slug}
         donateHref={content.donate?.href ?? null}
-        hasNewsletter={Boolean(content.newsletterSignup)}
         initialNowMs={initialNowMs}
       />
 

@@ -93,16 +93,20 @@ cross-app affordances impossible.
 
 Affected today:
 
-- the completion-screen CTA's same-origin `/event/<slug>/signup` href
-  (`shared/events/completionCta.ts`)
-- every link in the shared event masthead now that the quiz app renders it —
-  the brand lockup (event landing), Newsletter, and Feedback. All three are
-  site-owned routes, so on the dev server the header bar's nav dead-ends
-  where the CTA already did. Accepted, not worked around in the quiz app:
-  the bar's `href`s are the same config-owned destinations apps/site links to,
-  and rewriting them per origin is this item's job, not the masthead's.
-  (Quiz and Donate are unaffected — Quiz is the apps/web route itself, Donate
-  is an external absolute URL.)
+- every site-owned link in the shared event masthead now that the quiz app
+  renders it — the brand lockup (event landing) and Feedback. Both are
+  site-owned routes, so on the dev server the header bar's nav dead-ends.
+  Accepted, not worked around in the quiz app: the bar's `href`s are the
+  same config-owned destinations apps/site links to, and rewriting them per
+  origin is this item's job, not the masthead's. (Quiz, Email list, and
+  Donate are unaffected — Quiz is the apps/web route itself, and the other
+  two are external absolute URLs.)
+- the completion-screen CTA block used to be the worked example here, when
+  its email-list href was a same-origin `/event/<slug>/signup` path. Both of
+  its destinations are external absolute URLs now, so the block no longer
+  exercises this gap. The gap itself is unchanged; the example needs
+  replacing with a surviving same-origin cross-app link — the feedback route
+  is the obvious candidate — before this item is worked.
 
 Value:
 
@@ -125,11 +129,11 @@ Options to evaluate:
 
 Minimum validation:
 
-- from `npm run dev:web:local`, complete the featured demo and click the
-  newsletter CTA; confirm it reaches the signup form (or the documented
-  fallback behavior when apps/site is not running)
 - on a quiz route whose event registers a masthead, click the header bar's
-  brand lockup, Newsletter, and Feedback links; confirm the same
+  brand lockup and Feedback links; confirm they reach the apps/site routes
+  (or the documented fallback behavior when apps/site is not running)
+- exercise whichever same-origin cross-app link replaces the completion
+  CTA as this item's worked example; confirm the same
 
 ### Add an admin UI-review capture mode
 

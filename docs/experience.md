@@ -164,7 +164,7 @@ already knowing what the event is — from a poster, a newsletter, or
 the organizer's website — so the page never reintroduces it: no
 address block, no what-is-this paragraph, no series-length subheader.
 Its jobs, in order: welcome you, show tonight, and put the actions —
-quiz, newsletter, feedback, donate — one tap away.
+quiz, email list, feedback, donate — one tap away.
 
 Events opt into this layout by authoring `EventContent.landing`
 (events without it keep the generic multi-section template). The
@@ -172,15 +172,21 @@ layout, top to bottom:
 
 1. **Hero** — brand gradient, the event's masthead art inlined as
    SVG, and one short accent-face welcome line. Nothing else.
-2. **Action grid** — four big tiles (quiz / newsletter / feedback /
-   donate), each with a one-line subtitle. Destinations are
+2. **Action grid** — four big tiles (quiz / email list / feedback /
+   donate), each with a one-line subtitle. Three destinations are
    renderer-owned so the grid can never disagree with the routes.
+   The email-list tile is the exception: the platform serves no
+   email-signup route to derive a destination from, so that tile's
+   href is a content field and the tile renders only when the event
+   authors one. Content that declares its destination external opens
+   it in a new browsing context, which is how an attendee standing on
+   the grass keeps the day-of page behind them.
 3. **Tonight** — the featured night's date line and per-night
    run-of-show, resolved by `resolveTonight` in the event's own
    timezone: on a concert day the page shows that night until local
    midnight (post-show visitors still see tonight); other days show
    the next night retitled "Next concert"; after the final night the
-   section becomes a season wrap-up emphasizing newsletter and
+   section becomes a season wrap-up emphasizing the email list and
    donate, while the quiz stays available. The page is statically
    prerendered, so the build-time state is baked in and a mount
    effect re-resolves against the device clock.
@@ -505,11 +511,19 @@ keyed to the client session. There is no separate results page:
 - *Completed*: the route IS the results — score, answer review, and the
   verification code render again on every return, without replaying.
 
-Because the completed state is durable, links out of the game (newsletter,
-donate) navigate normally in the same tab; nothing on the completion screen
-needs a new tab to protect the code. When device storage is unavailable
-(private browsing, full quota), the links fall back to opening in a new tab so
-navigation cannot discard the only copy of the code. The only way to leave the completed state
+Because the completed state is durable, a link out of the game that stays on
+this platform navigates normally in the same tab; nothing on the completion
+screen needs a new tab to protect the code. When device storage is unavailable
+(private browsing, full quota), those links fall back to opening in a new tab
+so navigation cannot discard the only copy of the code.
+
+A link whose destination leaves the platform — the email list and donate both
+do today — opens in a new browsing context regardless, because the reason is
+different: the attendee is standing at the event holding a check-in code, and
+sending them off-platform in the same tab takes the screen a volunteer is about
+to ask for. The two reasons are independent, so making the completed state
+durable never silently returns an off-platform link to the same tab.
+The only way to leave the completed state
 is the explicit retake action, which carries the reassurance line "Retaking
 never changes your code or your reward entry" — the backend keeps one reward
 entry per session and returns the same verification code on every completion.

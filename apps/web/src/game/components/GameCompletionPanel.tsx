@@ -1,5 +1,8 @@
 /** Completion-state panel for verification, retries, retakes, and answer review. */
-import type { CompletionCtaContent } from "../../../../../shared/events/completionCta";
+import type {
+  CompletionCtaContent,
+  CompletionCtaLink,
+} from "../../../../../shared/events/completionCta";
 import { answersMatch } from "../../../../../shared/game-config";
 import type { AttendeeRedemptionStatus } from "../../../../../shared/redemption";
 import type { GameConfig } from "../../data/games";
@@ -50,7 +53,9 @@ type GameCompletionPanelProps = {
   /**
    * True when the completed state is confirmed written to device storage.
    * While false, the in-memory state is the only copy of the verification
-   * code, so CTA links keep the pre-persistence new-tab fallback.
+   * code, so same-origin CTA links keep the pre-persistence new-tab
+   * fallback. Links their content declares external open in a new context
+   * either way — see `ctaLinkAttrs` below.
    */
   isCompletionPersisted: boolean;
   isSubmitting: boolean;
@@ -90,15 +95,26 @@ export function GameCompletionPanel({
   // once the completion result exists, below the verification block, and
   // only for events registered in the completion CTA registry.
   const shouldShowCta =
-    Boolean(completion) && Boolean(cta?.newsletter ?? cta?.donate);
-  // Same-tab navigation is only safe once the completed state is confirmed
-  // durable on the device; when storage is unavailable (privacy mode, quota)
-  // the links fall back to a new tab so navigating cannot destroy the only
-  // copy of the verification code.
-  const ctaLinkTarget = isCompletionPersisted
-    ? undefined
-    : ("_blank" as const);
-  const ctaLinkRel = isCompletionPersisted ? undefined : "noopener";
+    Boolean(completion) && Boolean(cta?.emailList ?? cta?.donate);
+  // Two independent reasons a CTA link opens in a new browsing context, and
+  // they do not substitute for one another:
+  //
+  //   1. The link is external by its own content (`CompletionCtaLink.external`).
+  //      It leaves the platform, so it always opens in a new context —
+  //      including once the completed state is durable.
+  //   2. The completed state is not yet confirmed persisted on the device
+  //      (privacy mode, quota). The in-memory state is then the only copy of
+  //      the verification code, so a same-tab navigation could destroy it.
+  //      This reason is about *this* app's state, so it applies to the
+  //      same-origin links whose navigation could leave the app — an external
+  //      link is already covered by (1).
+  //
+  // A same-origin link therefore keeps exactly the pre-existing
+  // persistence-derived behavior.
+  const ctaLinkAttrs = (link: CompletionCtaLink) =>
+    link.external || !isCompletionPersisted
+      ? { target: "_blank" as const, rel: "noopener" }
+      : { target: undefined, rel: undefined };
 
   return (
     <section className="panel completion-panel">
@@ -221,24 +237,22 @@ export function GameCompletionPanel({
       {shouldShowCta && cta ? (
         <aside className="completion-cta" aria-labelledby="completion-cta-heading">
           <h3 id="completion-cta-heading">{cta.heading}</h3>
-          {cta.newsletter ? (
+          {cta.emailList ? (
             <div className="completion-cta-item">
-              <p>{cta.newsletter.body}</p>
-              {/* Plain anchor: the signup route is owned by apps/site, so the
-                  navigation must be a hard load for the proxy to re-evaluate.
-                  The destination is config-owned — never derived from the game
-                  slug, which may not name a feedback-enabled event. Same tab
-                  when the completed state (including the verification code)
-                  is confirmed persisted on the device (`gameSessionPersistence`)
-                  — returning then restores this screen without a replay; new
-                  tab otherwise, per `ctaLinkTarget` above. */}
+              <p>{cta.emailList.body}</p>
+              {/* Plain anchor: a same-origin destination here is owned by
+                  apps/site, so the navigation must be a hard load for the
+                  proxy to re-evaluate. The destination is config-owned —
+                  never derived from the game slug, which may not name the
+                  event the CTA points at. New-tab behavior comes from
+                  `ctaLinkAttrs` above, which reads the link's own
+                  `external` declaration and the device-persistence state. */}
               <a
                 className="completion-cta-button"
-                href={cta.newsletter.href}
-                rel={ctaLinkRel}
-                target={ctaLinkTarget}
+                href={cta.emailList.href}
+                {...ctaLinkAttrs(cta.emailList)}
               >
-                {cta.newsletter.buttonLabel}
+                {cta.emailList.buttonLabel}
               </a>
             </div>
           ) : null}
@@ -251,8 +265,7 @@ export function GameCompletionPanel({
               <a
                 className="completion-cta-button completion-cta-button-warm"
                 href={cta.donate.href}
-                rel={ctaLinkRel}
-                target={ctaLinkTarget}
+                {...ctaLinkAttrs(cta.donate)}
               >
                 {cta.donate.buttonLabel}
               </a>
