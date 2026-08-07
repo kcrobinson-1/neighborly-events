@@ -139,6 +139,45 @@ Reduce deployment risk and contributor friction before the live event.
   is worth deciding once rather than per event.
   Detail: N/A
 
+- [ ] **`dev` In-flight completion snapshot is discarded on content drift, defeating the server's replay path**
+  `isValidSubmittingSnapshot` in
+  [`gameSessionPersistence.ts`](/apps/web/src/game/gameSessionPersistence.ts)
+  rejects a `submitting` snapshot whose content fingerprint no longer
+  matches the published questions. But `complete-game` resolves a
+  landed attempt from `(eventId, requestId, sessionId)` and returns
+  **before** loading or validating current content — a short-circuit
+  added specifically so drifted replays can still recover. So the
+  client throws away a replayable request id for exactly the reason
+  the server was built to tolerate. Concretely: an attendee submits,
+  content is republished mid-flight, they reload, and instead of
+  replaying the request id that may already have landed they get a
+  fresh run. Republishing during an event is not hypothetical — the
+  reward-language sweep republished madrona and harvest to v3 while
+  live. **Goal:** a reload after a submission does not discard a
+  request id the server would still honor. The fingerprint check is
+  right for the `in progress` kind (stale answers against changed
+  questions are genuinely unrecoverable) and wrong for `submitting`;
+  splitting the two is one option. Note this is narrow — the
+  entitlement is one-per-session so the code stays stable — but it
+  costs the attendee a retake.
+  Detail: N/A
+
+- [ ] **`dev` Banned reward nouns are unenforced in admin-authored content**
+  The product rule forbids "trinket" and "raffle"
+  ([`product.md`](/docs/product.md)), and checked-in copy and seed
+  content are swept. Admin-authored content is not: `validateGameConfig`
+  checks question/answer structure only, and neither the save nor the
+  publish path inspects wording, so an organizer can publish either
+  noun in a prompt, explanation, option, or event field. The live rows
+  were swept once by hand and nothing keeps them clean. **Goal:** the
+  rule is enforced where content is authored rather than depending on
+  a periodic manual sweep. Options differ in strictness and in who
+  they interrupt — a publish-time validation error, a soft authoring
+  warning, or a checklist item in the existing publish checklist —
+  and the choice is a product call about how hard to block an
+  organizer mid-publish.
+  Detail: N/A
+
 - [ ] **`dev` Wire the admin e2e suite into PR CI**
   `npm run test:e2e:admin` is excluded from both
   [`ci.yml`](/.github/workflows/ci.yml) and `validate:local`, so it

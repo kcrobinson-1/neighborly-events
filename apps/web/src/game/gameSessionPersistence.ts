@@ -13,13 +13,20 @@ import { computeContentFingerprint } from "./contentFingerprint";
  * code — is recoverable without retaking.
  *
  * The cached completion is the recovery mechanism, not a re-fetch through the
- * completion RPC's replay path. Replaying the RPC requires resending the same
- * request id, answers, score, and duration — the exact payload this module
- * would have to persist anyway — so a re-fetch adds a network dependency at
- * an outdoor event without shrinking the persisted surface. The backend still
- * owns the entitlement: retakes resubmit through the normal flow and the RPC
- * returns the existing entitlement, which is why retaking never changes the
- * code or the reward entry.
+ * completion function's replay path. The reason is offline recovery: the
+ * completed screen re-renders with no network at an outdoor event on bad cell
+ * service.
+ *
+ * It is NOT that a re-fetch would have to persist the same payload — an
+ * earlier version of this comment claimed that and was wrong. `complete-game`
+ * resolves a landed attempt from (eventId, requestId, sessionId) alone and
+ * returns before loading or validating current content, and the request
+ * carries no score at all (the server recomputes it from trusted content). A
+ * replay-based recovery would need only two ids persisted.
+ *
+ * The backend still owns the entitlement: retakes resubmit through the normal
+ * flow and the RPC returns the existing entitlement, which is why retaking
+ * never changes the code or the reward entry.
  *
  * Snapshots are validated on read: an envelope written by a different client
  * session, malformed JSON, or an in-progress snapshot that no longer matches

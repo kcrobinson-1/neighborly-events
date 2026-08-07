@@ -165,14 +165,27 @@ grouped into a dedicated `apps/web/src/game/` module:
   code — is recoverable on return without retaking.
 
   The recovery mechanism is the **cached completion, not a re-fetch**
-  through the completion RPC's replay path. Replaying requires
-  resending the identical request id, answers, score, and duration —
-  the exact payload the module would have to persist anyway — so a
-  re-fetch would add a network dependency at an outdoor event without
-  shrinking the persisted surface. The backend still owns the
-  entitlement: a retake resubmits through the normal flow and the RPC
-  returns the existing entitlement, which is why retaking never
-  changes the code or the reward entry.
+  through the completion function's replay path. The tradeoff is
+  narrower than it might look, so state it accurately: `complete-game`
+  resolves a landed attempt with
+  `findCompletionByRequestId({eventId, requestId, sessionId})` and
+  returns it **before** loading or validating current published
+  content, precisely so content drift cannot block recovery of a
+  completion that already landed. The request carries no score at all —
+  the server recomputes it from trusted content. So a replay-based
+  recovery would need only the event id and request id persisted, not
+  the full snapshot.
+
+  What the cached completion buys is therefore **offline recovery**,
+  not a smaller persisted surface: the completed screen re-renders with
+  no network at an outdoor event on bad cell service. That is the
+  reason to prefer it; "a re-fetch would have to persist the same
+  payload anyway" is not, and earlier drafts of this section and of the
+  module's own header comment said so incorrectly.
+
+  The backend still owns the entitlement: a retake resubmits through
+  the normal flow and the RPC returns the existing entitlement, which
+  is why retaking never changes the code or the reward entry.
 
   Snapshots are validated on read and discarded on mismatch (wrong
   client session, malformed JSON, or an in-progress snapshot whose

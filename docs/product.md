@@ -78,11 +78,19 @@ and the answer binds the product, not just one event's design:
   event-wide *presenting* sponsor appears on every night; a *headliner*
   sponsor is credited per night alongside that night's artist. Both are
   content, not code.
-- **Reward language bans two nouns.** The words "trinket" and "raffle"
-  appear nowhere in the product — not in either app's copy, not in seed
-  content, not in admin-authored question rows. That prohibition is the
-  rule, and it is a product rule rather than a per-event style
-  preference. The canonical replacement phrasing is the generic "show
+- **Reward language bans two nouns.** "Trinket" and "raffle" are
+  forbidden. This is a product rule rather than a per-event style
+  preference, but be precise about what enforces it, because the
+  enforcement is uneven: checked-in copy and seed content are swept and
+  stay swept because the repo is reviewed. **Admin-authored content is
+  not validated at all** — `validateGameConfig` checks question and
+  answer structure only, and neither the save nor the publish path
+  inspects wording, so an organizer can type "raffle" into a prompt,
+  explanation, option, or event field and it will publish. The live
+  rows were swept once by hand (33/33 questions) and nothing keeps them
+  clean. For authored content this is guidance backed by review, not a
+  guarantee; adding a canonical server-side check is a tracked
+  follow-up. The canonical replacement phrasing is the generic "show
   your code to the booth to claim a reward," but **natural variants are
   expected and allowed**: shipped copy says "your reward entry is now
   recorded," "you're checked in for the reward," and seeds
