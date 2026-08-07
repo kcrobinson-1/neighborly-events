@@ -83,18 +83,17 @@ Must be resolved before QR codes are printed or the first real event runs.
   **1.17:1** against that fill and **1.00:1** against the cream page
   behind it — effectively invisible — and the input fill itself is
   **1.18:1** against the page. Nothing visually identifies the control
-  at the WCAG 1.4.11 3:1 bar. Affects three controls on two masthead
-  destinations: the signup email input
-  ([`_signup.scss:46`](/apps/site/app/styles/_signup.scss)) and the
-  feedback textarea + email input
-  ([`_event.scss:669`](/apps/site/app/styles/_event.scss)). **Goal:**
+  at the WCAG 1.4.11 3:1 bar. Affects the feedback textarea and email
+  input ([`_event.scss:669`](/apps/site/app/styles/_event.scss)) —
+  originally three controls across two routes, until the signup route
+  and its identically-treated email input were removed. **Goal:**
   a sighted attendee can tell where the input is. One option among
   several is a per-theme control-boundary token that Madrona sets to
   an opaque olive or ink at 3:1+, leaving other themes on today's
   derived alpha border — but a heavier border, an inset fill contrast,
   or a filled control treatment all reach the same goal and differ in
   how much they disturb the poster look. Tier 1 because attendees hit
-  the signup and feedback forms during the event; the measurement is
+  the feedback form during the event; the measurement is
   recorded in [`docs/styling.md`](/docs/styling.md) so it does not
   need re-deriving.
   Detail: N/A
@@ -128,7 +127,7 @@ Reduce deployment risk and contributor friction before the live event.
 
 - [ ] **`decision` Post-season teardown for a finished event**
   After an event's final night, its landing page resolves to a
-  season-wrap state (newsletter and donate emphasized, quiz still
+  season-wrap state (email list and donate emphasized, quiz still
   available) and stays there indefinitely — nothing expires it. That
   is the right immediate behavior, but no one has decided what a
   finished event should look like a month or a year later: whether the
@@ -355,22 +354,40 @@ prioritization before starting.
   feedback shapes the requirements.
   Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
 
-- [ ] **`dev` Feedback + subscription plugin scoping**
-  Scoping pass for a single absorbed surface that owns: the
-  standalone newsletter signup page (shipped in-platform at
-  `/event/<slug>/signup`; the plugin would absorb/relocate it), an
-  embeddable email-entry widget for event homepages, the relocated
-  feedback page, the in-product organizer read + CSV export of
-  `newsletter_opt_ins`, and the schema-namespace move from
-  `public.*` to a plugin-specific schema. The data shape and write
-  contract are settled — every public surface calls the internal
-  `subscribe_email` SECURITY DEFINER helper with a hardcoded
-  `source_surface` literal, against the append-only
-  `newsletter_opt_ins` log, gated by the `newsletter_enabled_events`
-  registry. The plugin scoping decides UI shape, embedding
-  mechanism, namespace placement, and per-surface trigger / copy /
-  UX.
+- [ ] **`dev` Rewrite or close the feedback + subscription plugin item**
+  This item was scoped around absorbing the standalone signup page at
+  `/event/<slug>/signup` and an embeddable email-entry widget. That
+  page has been removed from the platform, and the product position
+  that replaced it is that the platform points at an organization's
+  own list rather than running one — so the item's premise no longer
+  holds and it cannot be worked as written. What survives is the
+  organizer-facing half: the relocated feedback page, the in-product
+  read + CSV export of `newsletter_opt_ins`, and the schema-namespace
+  move from `public.*` to a plugin-specific schema. The write contract
+  is unchanged — every writer calls the internal `subscribe_email`
+  SECURITY DEFINER helper with a hardcoded `source_surface` literal,
+  against the append-only `newsletter_opt_ins` log, gated by the
+  `newsletter_enabled_events` registry — but the feedback form's
+  checkbox is now its only public caller. Decide whether the
+  organizer-facing remainder is worth a plugin or belongs in the admin
+  workspace, then rewrite this item or close it.
   Detail: TBD
+
+- [ ] **`dev` Decide how an event expresses which subpages it has**
+  Today it cannot. Content presence gates the *render* but not the
+  *route*: each event subroute's `generateStaticParams` enumerates the
+  full registered-slug list, so every event prerenders every subpage
+  and an event that never opted in still publishes a crawlable path
+  showing an inline disabled state. The masthead cannot gate at all —
+  it never receives `EventContent` and all its link slots are
+  required. Removing the signup surface took the live instance of this
+  away (two test events were publishing signup pages for a form
+  neither authored) without answering the question. Trigger: a second
+  non-test event wanting a different page set. Meets the multi-tenancy
+  work in
+  [`organization-isolation-roadmap.md`](/docs/tracking/organization-isolation-roadmap.md)
+  eventually.
+  Detail: N/A
 
 ---
 
@@ -418,10 +435,12 @@ Execute in any order.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Add a stable PR screenshot upload path](/docs/tracking/dev-workflow-improvements.md)
 
 - [ ] **`dev` Resolve cross-app links from apps/web outside the site-origin proxy**
-  Web-rendered links to site-owned routes (e.g. the completion-screen
-  newsletter CTA) resolve only behind the canonical-origin proxy; on the bare
-  Vite dev server they fall to the SPA not-found page. Evaluate a Vite dev
-  proxy or an origin-aware href helper.
+  Web-rendered links to site-owned routes (e.g. the masthead's Feedback link)
+  resolve only behind the canonical-origin proxy; on the bare Vite dev server
+  they fall to the SPA not-found page. Evaluate a Vite dev proxy or an
+  origin-aware href helper. The completion-screen CTA was this item's worked
+  example until both its destinations became external absolute URLs; the gap
+  is unchanged but the example needs replacing.
   Detail: [`docs/tracking/dev-workflow-improvements.md` — Resolve cross-app links from apps/web outside the site-origin proxy](/docs/tracking/dev-workflow-improvements.md)
 
 - [ ] **`db` Test-entitlement deletion requires manual unwinding of circular FK**

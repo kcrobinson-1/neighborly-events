@@ -330,25 +330,19 @@ grouped into a dedicated `apps/web/src/game/` module:
   same attendee may produce additional rows across visits or
   reloads — deduplication is an export-time analytics concern,
   not a DB-level invariant.
-- `apps/site/app/event/[slug]/signup/page.tsx` and
-  `apps/site/app/event/[slug]/signup/SignupForm.tsx`
-  Public standalone newsletter-signup route at
-  `/event/:slug/signup`, mirroring the feedback route's shape:
-  route availability gated by the per-event content module's
-  `newsletterSignup` block (`generateStaticParams` from the same
-  registered-slug list, landing-parity `noindex` metadata,
-  `notFound()` on unknown slugs, inline disabled state when the
-  block is absent, and `<ThemeScope>` wrapping on both rendered
-  branches). The client form collects one required email and
-  submits through the `submit_newsletter_signup` SECURITY DEFINER
-  RPC into the `newsletter_opt_ins` consent log; the DB-level
-  `newsletter_enabled_events` registry enforces the slug
-  invariant at submit time via the repointed
-  `newsletter_opt_ins.event_slug` FK, so enabling a new event
-  requires both a content-module update and a registry seed.
-  Repeat submissions of the same email succeed and append
-  additional consent rows — deduplication stays an export-time
-  concern.
+  The platform serves no email-signup route. It had one — a
+  `/event/:slug/signup` form mirroring the feedback route's shape
+  — and it was removed: the launch event's organization already
+  runs its list on a mail provider, so an attendee-facing
+  email-list affordance is now a content-owned external
+  destination rather than a page this platform serves. Note the
+  route's availability was never per-event despite reading that
+  way: `generateStaticParams` enumerated the full registered-slug
+  list and content presence switched only the *render* branch, so
+  every registered event published a crawlable signup path whether
+  or not it had opted in. Making the route set per-event is an
+  open question, not something the removal answered — see
+  [`backlog.md`](/docs/backlog.md).
 - `apps/site/components/event/`
   Section components composed by `EventLandingPage` (header,
   schedule, lineup, sponsors, FAQ, CTA, footer, plus
@@ -598,7 +592,7 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   Cross-app shared UI component plus per-event content registry —
   the pattern for event "global chrome" that must render identically
   in both apps. Owns the `EventMasthead` sticky header bar (brand
-  lockup as the Home link; Quiz, Newsletter, Feedback links; Donate
+  lockup as the Home link; Quiz, Email list, Feedback links; Donate
   pill) and the slug → `EventMastheadContent` registry at
   [`shared/masthead/mastheadContent.ts`](/shared/masthead/mastheadContent.ts).
   Presence in the registry is the render gate: routes resolve
@@ -611,8 +605,15 @@ The shared layer now exposes a stable entrypoint plus focused implementation mod
   topology — apps/site injects `next/link` for its own routes via
   [`apps/site/components/event/SiteEventMasthead.tsx`](/apps/site/components/event/SiteEventMasthead.tsx)
   and leaves the quiz link on the default hard anchor; apps/web
-  injects nothing, because every destination the bar names is
-  site-owned and must hard-navigate through the proxy origin. The
+  injects nothing, because the site-owned destinations must
+  hard-navigate through the proxy origin. Whether a link leaves the
+  platform is content rather than mechanism: each link declares
+  `external`, and the component opens exactly those in a new browsing
+  context with `rel="noopener"` — no component branch names a link
+  slot to decide it, and the injected-link props carry `target` / `rel`
+  so an injected component cannot silently drop them. An external item
+  is also excluded from the active-page vocabulary, since the platform
+  serves no page it could be current for. The
   component is SSR-safe (no `'use client'`, no effects, no framework
   imports) and styles only through Theme tokens (`--header-bg`,
   `--header-fg`, `--accent`, `--font-heading`) under app-neutral
@@ -1094,6 +1095,23 @@ The Supabase side is intentionally small:
   mirrors `feedback_enabled_events`: anon no grants,
   authenticated SELECT gated by the organizer/admin policy,
   service role unrestricted (Supabase baseline).
+  `submit_newsletter_signup` was dropped by
+  `20260807000000_drop_standalone_newsletter_signup.sql`; the
+  registry, the FK repoint, and the email CHECK this migration
+  installed all remain in force.
+- `supabase/migrations/20260807000000_drop_standalone_newsletter_signup.sql`
+  Drops `public.submit_newsletter_signup(text, text)` in the same
+  change that removed the on-site signup route — its only caller.
+  DROP FUNCTION takes the function's EXECUTE grants with it, so no
+  anon-callable write path survives without a caller. Everything
+  the feedback form's opt-in checkbox depends on is deliberately
+  untouched: `newsletter_opt_ins` (the consent log), the
+  `newsletter_enabled_events` registry its FK targets under
+  ON DELETE RESTRICT, and the internal `subscribe_email` helper
+  that both the dropped wrapper and `submit_feedback` call. No
+  rows are removed; the `source_surface` CHECK still admits
+  `'standalone'` because it is the recorded provenance of rows
+  already in the log.
 
 ## What Is Implemented Now
 

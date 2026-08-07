@@ -591,9 +591,11 @@ surfaces shipping to attendees; all three are filed Tier 1 in
 visual design change across the themes that share the token, not a doc
 edit.
 
-**1. Form-control boundaries.** Measured on the signup route's email
-input ([`_signup.scss:46`](/apps/site/app/styles/_signup.scss), `1px
-solid var(--border-soft)` on `var(--surface-card)`):
+**1. Form-control boundaries.** Measured on an event form's email
+input (`1px solid var(--border-soft)` on `var(--surface-card)` — the
+treatment `_event.scss` gives the feedback route's controls; the same
+ratios were first measured on the since-removed signup route, which
+used the identical pairing):
 
 | Pairing | Ratio |
 | --- | --- |
@@ -601,10 +603,10 @@ solid var(--border-soft)` on `var(--surface-card)`):
 | the same border vs the cream page behind it | **1.00** |
 | input fill `#fffdf2` vs cream page `#f8e9c8` | **1.18** |
 
-The border is effectively invisible against the page. Same treatment on
-the feedback route's textarea and email input
-([`_event.scss:669`](/apps/site/app/styles/_event.scss)) — three
-controls across two routes, both masthead destinations.
+The border is effectively invisible against the page. The live
+instances are the feedback route's textarea and email input
+([`_event.scss:669`](/apps/site/app/styles/_event.scss)) — two
+controls on the one attendee form the platform still serves.
 
 **2. The focus ring.** `$focus-ring` is `3px solid
 var(--secondary-focus)`, and `--secondary-focus` is the derived
@@ -645,7 +647,7 @@ listed in the two tables below — nothing wider.
 | near-white `#fffdf2` (`headerFg`) | dark green `#2e4a34` (`headerBg`) | **9.60** | Masthead + footer nav links. |
 | gold `#e0b040` (`accent`) | dark green `#2e4a34` | **4.87** | Masthead brand name and active-item underline. |
 | dark green `#2e4a34` | gold `#e0b040` | **4.87** | Masthead **Donate pill** (gold fill, green label). |
-| deep green `#1c2e20` (`ctaFg`) | gold `#e0b040` (`ctaSurface`) | **7.15** | Completion-screen Newsletter CTA. |
+| deep green `#1c2e20` (`ctaFg`) | gold `#e0b040` (`ctaSurface`) | **7.15** | Completion-screen Email list CTA. |
 | deep ink `#2a2016` (`ctaWarmFg`) | poster orange `#d9822b` (`ctaWarmSurface`) | **5.45** | Completion-screen **Donate CTA** — see the donate note below. |
 | olive `#68681f` (`secondary`) | cream `#f8e9c8` | **4.87** | Olive as text on the page field. |
 | near-white `#fffdf2` | olive `#68681f` | **5.74** | Near-white text on an olive fill. |
@@ -704,7 +706,7 @@ different palettes — this has caused confusion more than once:
 
 The orange fill is an organizer decision — poster orange is the
 brand's warm accent and the organizer wanted donate to read warm
-rather than gold, distinct from the newsletter CTA next to it. The
+rather than gold, distinct from the email-list CTA next to it. The
 fill is therefore fixed; the foreground is what moved.
 
 **White (or near-white) on poster orange is banned.** The design
