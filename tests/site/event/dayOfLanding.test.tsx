@@ -275,17 +275,47 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     expect(cards[2].textContent).toContain("Frames in Motion");
   });
 
-  it("renders the trimmed FAQ (no what-is-this entry) and the footer band", () => {
+  it("renders no FAQ section", () => {
     setClock("2026-08-11T19:00:00Z");
     const { container } = renderMadrona();
 
-    expect(screen.getByRole("heading", { name: "Questions" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Questions" })).toBeNull();
+    expect(container.querySelector(".event-landing-faq")).toBeNull();
+    // The entries the page used to carry, by their own text: a
+    // heading-only assertion would still pass if the section rendered
+    // headless.
     expect(
-      screen.queryByText("What is Music in the Playfield?"),
+      screen.queryByText("Why is there no concert on Tuesday, August 4?"),
     ).toBeNull();
-    expect(
-      screen.getByText("Why is there no concert on Tuesday, August 4?"),
-    ).toBeTruthy();
+    expect(screen.queryByText("Where do I park?")).toBeNull();
+  });
+
+  it("still renders a day-of FAQ for an event that authors one", () => {
+    // The capability outlives madrona's content: the renderer and the
+    // four `.event-landing-faq-*` rules are kept for the next event on
+    // this layout that has something to answer. Without this case the
+    // section could be deleted outright and nothing would fail.
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          faq: [{ question: "Is there parking?", answer: "Street only." }],
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Questions" })).toBeTruthy();
+    expect(container.querySelector(".event-landing-faq-list")).not.toBeNull();
+    expect(screen.getByText("Is there parking?")).toBeTruthy();
+  });
+
+  it("renders the footer band", () => {
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = renderMadrona();
 
     const footer = container.querySelector(".event-landing-footer");
     expect(footer?.textContent).toContain(

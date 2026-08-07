@@ -443,6 +443,13 @@
   color: var(--cta-warm-fg);
 }
 
+/* No currently registered event renders these four rules: madrona is
+ * the only event on the day-of layout and it authors no `faq`. They
+ * stay because the capability did not go away with the content —
+ * `EventDayOfLanding` still renders the section for any event that
+ * authors entries, so deleting the rules would leave the next one to
+ * do it rendering an unstyled disclosure list. Delete them together
+ * with that block, or not at all. */
 .event-landing-faq-list {
   margin: 0;
   padding: 0;

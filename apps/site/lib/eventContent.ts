@@ -355,7 +355,16 @@ export type EventContent = {
     shortDescription?: string;
     socialLinks?: Array<{ label: string; href: string }>;
   }>;
-  faq: Array<{ question: string; answer: string }>;
+  /**
+   * Optional because an event can legitimately have nothing to
+   * answer. The day-of landing is the case that made it so: it is
+   * read by someone already standing at the event, and an FAQ
+   * answering what-is-this / how-much / where-do-I-park is written
+   * for someone still deciding whether to come. Both renderers
+   * truthiness-guard it, so an event that omits it renders no
+   * section and no heading.
+   */
+  faq?: Array<{ question: string; answer: string }>;
   cta: { label: string; sublabel?: string };
   feedback?: {
     cta: {

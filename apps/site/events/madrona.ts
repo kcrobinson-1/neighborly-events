@@ -73,10 +73,14 @@ import type { EventContent } from "../lib/eventContent.ts";
  * and the OG card, `schedule` remains the generic-agenda source of
  * truth for any surface that wants it, and `lineup` feeds the
  * On-stage section (tagline = `bio`, blurb = `extendedBio`, chips =
- * `artistLinks`) and the This-season strip. The FAQ renders below
- * This season, trimmed of the what-is-this entry per the spec's
- * no-reintroduction rule (§1) — remaining entries are day-of
- * practical answers.
+ * `artistLinks`) and the This-season strip.
+ *
+ * `faq` is deliberately absent. The day-of page is read by someone
+ * already standing at the Playfield, and the entries it carried
+ * answered what-is-this, how-much, and where-do-I-park — questions a
+ * person asks while deciding whether to come, on a page they only
+ * reach once they have. The FAQ capability is untouched at the
+ * platform level; the two test events still render it.
  *
  * Band `artistLinks` carry each artist's verified web presence:
  * only URLs confirmed against the artist's own official site or
@@ -394,32 +398,6 @@ export const madronaContent: EventContent = {
       tier: "Hosting",
       shortDescription:
         "The neighborhood association that hosts Music in the Playfield — three free Tuesday concerts every August.",
-    },
-  ],
-  faq: [
-    {
-      question: "Why is there no concert on Tuesday, August 4?",
-      answer:
-        "That night is deliberately left open — August 4 is Seattle Night Out, and the series skips it so neighbors can be at their block parties. Concerts run the three Tuesdays after: August 11, 18, and 25.",
-    },
-    {
-      question: "How much does it cost?",
-      answer: "All three evenings are free to attend.",
-    },
-    {
-      question: "What if it rains?",
-      answer:
-        "Concerts are free, family-friendly, and held rain or shine.",
-    },
-    {
-      question: "Where do I park?",
-      answer:
-        "There is no dedicated event parking — on-street parking is available in the surrounding neighborhood, and walking or biking is encouraged.",
-    },
-    {
-      question: "Is the playfield accessible?",
-      answer:
-        "The listening area is the playfield's open lawn, reachable from the sidewalk. For specific accessibility questions, check with the Madrona Neighborhood Association at madrona.us.",
     },
   ],
   cta: {

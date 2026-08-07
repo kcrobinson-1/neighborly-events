@@ -137,7 +137,7 @@ export function EventDayOfLanding({
         initialNowMs={initialNowMs}
       />
 
-      {content.faq.length > 0 ? (
+      {content.faq && content.faq.length > 0 ? (
         <section
           className="event-landing-section event-landing-faq"
           aria-labelledby="event-landing-faq-heading"

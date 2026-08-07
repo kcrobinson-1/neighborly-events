@@ -82,7 +82,9 @@ export function EventLandingPage({
         {content.sponsors.length > 0 ? (
           <EventSponsors sponsors={content.sponsors} />
         ) : null}
-        {content.faq.length > 0 ? <EventFAQ faq={content.faq} /> : null}
+        {content.faq && content.faq.length > 0 ? (
+          <EventFAQ faq={content.faq} />
+        ) : null}
         <EventCTA cta={content.cta} slug={slug} />
         {content.feedback ? (
           <EventFeedbackCTA feedback={content.feedback} slug={slug} />

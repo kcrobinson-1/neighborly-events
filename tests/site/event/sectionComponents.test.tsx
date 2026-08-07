@@ -411,7 +411,7 @@ describe("EventSponsors", () => {
 
 describe("EventFAQ", () => {
   it("renders each FAQ question inside a <summary>", () => {
-    const { container } = render(<EventFAQ faq={baseContent.faq} />);
+    const { container } = render(<EventFAQ faq={baseContent.faq!} />);
     const summary = container.querySelector("summary");
     expect(summary).not.toBeNull();
     expect(summary?.textContent).toBe("Is this real?");
