@@ -97,6 +97,7 @@ const madronaCompletionCta: CompletionCtaContent = {
       "These concerts are free because neighbors chip in — 100% of donations go to the association.",
     buttonLabel: "Support the Playfield",
     href: madronaFacts.donateHref,
+    external: true,
   },
 };
 

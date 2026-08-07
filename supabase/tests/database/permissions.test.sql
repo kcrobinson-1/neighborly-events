@@ -1227,8 +1227,8 @@ select is(
     where n.nspname = 'public'
       and p.prokind = 'f'
       and p.prorettype <> 'pg_catalog.trigger'::regtype),
-  16,
-  'public has exactly 16 callable (non-trigger) functions (every function covered above)'
+  15,
+  'public has exactly 15 callable (non-trigger) functions (every function covered above)'
 );
 
 select * from finish();

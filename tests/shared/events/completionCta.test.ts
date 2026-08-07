@@ -40,25 +40,40 @@ describe("getCompletionCta", () => {
     }
   });
 
-  it("keeps every email-list destination an external https address that declares itself external", () => {
+  it("keeps every email-list destination an external https address", () => {
     // Replaces the invariant that required these hrefs to be on-site
     // `/event/<slug>/signup` paths. The platform no longer serves an
     // email-signup route, so the posture the registry now has to hold is
-    // the opposite one: the destination belongs to whoever runs the
-    // list, and the panel needs the `external` declaration to open it in
-    // a new context. Asserting the scheme alone would not catch a
-    // destination that leaves the platform without declaring it, which
-    // would silently open the association's signup page in the same tab.
+    // the opposite one: the destination belongs to whoever runs the list.
     for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
       if (cta.emailList) {
         expect(
           cta.emailList.href.startsWith("https://"),
           `${slug} email-list href is https`,
         ).toBe(true);
+      }
+    }
+  });
+
+  it("declares externality on exactly the links that leave the platform", () => {
+    // Registry-wide, not per-section. The panel opens a new browsing
+    // context for every link carrying `external`, so a link that leaves
+    // the platform without declaring it opens in the same tab — taking
+    // the screen holding the attendee's check-in code with it — and one
+    // that declares it without leaving strands the reader in a second
+    // tab on a page this platform serves.
+    //
+    // Scoped per-section rather than registry-wide, this missed the
+    // donation link: it was the pre-existing off-platform CTA and
+    // nothing re-checked it when the rule it now obeys was introduced.
+    for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
+      for (const [section, link] of Object.entries(cta)) {
+        if (typeof link !== "object" || link === null) continue;
+        const leavesPlatform = /^https?:\/\//.test(link.href);
         expect(
-          cta.emailList.external,
-          `${slug} email-list href declares externality`,
-        ).toBe(true);
+          Boolean(link.external),
+          `${slug} ${section} (${link.href})`,
+        ).toBe(leavesPlatform);
       }
     }
   });

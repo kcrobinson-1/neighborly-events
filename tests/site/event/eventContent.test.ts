@@ -8,6 +8,7 @@ import {
   parseEventDate,
   registeredEventSlugs,
 } from "../../../apps/site/lib/eventContent.ts";
+import { getCompletionCta } from "../../../shared/events/completionCta.ts";
 import { getEventMasthead } from "../../../shared/masthead/index.ts";
 
 describe("getEventContentBySlug", () => {
@@ -106,6 +107,45 @@ describe("madrona launch content", () => {
     expect(getEventMasthead("madrona")?.donate.href).toBe(
       madronaContent.donate?.href,
     );
+  });
+
+  it("shares the email-list destination with the shared completion-CTA registry", () => {
+    // Four surfaces offer the association's list and all four have to
+    // reach the same address; two of them live in registries this
+    // module cannot import from, so the equality is asserted where the
+    // two shapes meet.
+    expect(madronaContent.landing?.actions.emailList.href).toBe(
+      getEventMasthead("madrona")?.emailList.href,
+    );
+    expect(madronaContent.landing?.actions.emailList.href).toBe(
+      getCompletionCta("madrona")?.emailList?.href,
+    );
+  });
+});
+
+describe("landing action destinations", () => {
+  it("declares externality on exactly the actions that leave the platform", () => {
+    // The third of three registries carrying the same rule, alongside
+    // shared/masthead/mastheadContent.ts and shared/events/completionCta.ts.
+    // The renderer opens a new browsing context for exactly the actions
+    // carrying `external`, so an absolute destination that omits it
+    // takes the day-of page away from an attendee mid-concert.
+    //
+    // Walks every registered event rather than madrona alone, so an
+    // event added tomorrow is covered without editing this test.
+    for (const slug of registeredEventSlugs) {
+      const actions = getEventContentBySlug(slug)?.landing?.actions;
+      if (!actions) continue;
+
+      for (const [name, action] of Object.entries(actions)) {
+        if (!action.href) continue;
+        const leavesPlatform = /^https?:\/\//.test(action.href);
+        expect(
+          Boolean(action.external),
+          `${slug} ${name} (${action.href})`,
+        ).toBe(leavesPlatform);
+      }
+    }
   });
 });
 
