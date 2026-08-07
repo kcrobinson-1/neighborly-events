@@ -1,15 +1,26 @@
-import { describe, expect, it } from "vitest";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { readPublicSvg } from "../../../apps/site/lib/readPublicSvg.ts";
 
 /**
- * Filesystem-facing tests run from the repo root (vitest's cwd), so
- * they exercise the `apps/site/public` probe branch; `next build`
- * exercises the `public` branch with the same files. Reading the
- * real committed masthead doubles as an asset-presence check for the
- * launch content's `mastheadSvgPath`.
+ * `readPublicSvg` resolves against `process.cwd()/public` through a
+ * single statically-scoped expression (the shape Next's file tracing
+ * requires — see the module doc), so these tests `chdir` into
+ * `apps/site` the way `next build` runs, and restore afterwards.
+ * Reading the real committed masthead doubles as an asset-presence
+ * check for the launch content's `mastheadSvgPath`.
  */
 describe("readPublicSvg", () => {
+  const repoRootCwd = process.cwd();
+
+  beforeAll(() => {
+    process.chdir(join(repoRootCwd, "apps", "site"));
+  });
+
+  afterAll(() => {
+    process.chdir(repoRootCwd);
+  });
   it("reads the committed madrona masthead and strips the XML declaration", () => {
     const markup = readPublicSvg("/events/madrona/masthead.svg");
     expect(markup).not.toBeNull();

@@ -17,6 +17,39 @@ import {
 import { ARTIST_LINK_SLOTS } from "./EventLineup.tsx";
 
 /**
+ * A sponsor credit's logo, linked when the content supplies a
+ * verified destination and plain otherwise — the same
+ * render-when-present posture as every optional content field, so
+ * the "logo-only until a URL is verified" contract on
+ * `EventPresentingSponsor` / `EventNightHeadlinerSponsor` actually
+ * has a rendering counterpart. External anchor, new tab.
+ */
+function SponsorLogo({
+  className,
+  logoSrc,
+  logoAlt,
+  href,
+}: {
+  className: string;
+  logoSrc: string;
+  logoAlt: string;
+  href?: string;
+}) {
+  /* eslint-disable-next-line @next/next/no-img-element --
+     Plain `<img>` matches the deliberate choice across the event
+     section components (see EventSponsors). */
+  const logo = <img className={className} src={logoSrc} alt={logoAlt} />;
+
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer">
+      {logo}
+    </a>
+  ) : (
+    logo
+  );
+}
+
+/**
  * The resolver-driven middle of the day-of landing page: Tonight (or
  * Next concert) run-of-show, the presenting-sponsor band, On stage,
  * and the This-season strip — or the season-wrap section once the
@@ -90,14 +123,19 @@ export function LandingTonightSections({
           This season
         </h2>
         <ul className="event-landing-season">
-          {seasonNights.map((night) => {
+          {seasonNights.map((night, nightIndex) => {
             const nightPerformer = lineup.find(
               (entry) => entry.slug === night.performerSlug,
             );
-            const isFeatured = featuredNight?.date === night.date;
+            // Object identity, not date equality: `resolveTonight`
+            // returns the registered night object, so with duplicate
+            // dates only the resolver's pick (earliest-listed) gets
+            // the featured ring. The key carries the index for the
+            // same duplicate-date reason.
+            const isFeatured = featuredNight === night;
             return (
               <li
-                key={night.date}
+                key={`${night.date}-${nightIndex}`}
                 className={
                   isFeatured
                     ? "event-landing-season-card event-landing-season-card-now"
@@ -203,13 +241,11 @@ export function LandingTonightSections({
           aria-label={`Presenting sponsor: ${landing.presentingSponsor.name}`}
         >
           <p className="event-landing-presenting-eyebrow">Presenting sponsor</p>
-          {/* eslint-disable-next-line @next/next/no-img-element --
-              Plain `<img>` matches the deliberate choice across the
-              event section components (see EventSponsors). */}
-          <img
+          <SponsorLogo
             className="event-landing-presenting-logo"
-            src={landing.presentingSponsor.logoSrc}
-            alt={landing.presentingSponsor.logoAlt}
+            logoSrc={landing.presentingSponsor.logoSrc}
+            logoAlt={landing.presentingSponsor.logoAlt}
+            href={landing.presentingSponsor.href}
           />
         </aside>
       ) : null}
@@ -269,12 +305,11 @@ export function LandingTonightSections({
           {night.headlinerSponsor ? (
             <div className="event-landing-headliner">
               <p>{performer.name}&rsquo;s performance is brought to you by</p>
-              {/* eslint-disable-next-line @next/next/no-img-element --
-                  Same plain-`<img>` posture as above. */}
-              <img
+              <SponsorLogo
                 className="event-landing-headliner-logo"
-                src={night.headlinerSponsor.logoSrc}
-                alt={night.headlinerSponsor.logoAlt}
+                logoSrc={night.headlinerSponsor.logoSrc}
+                logoAlt={night.headlinerSponsor.logoAlt}
+                href={night.headlinerSponsor.href}
               />
             </div>
           ) : null}

@@ -181,12 +181,20 @@ references — no `color-mix()` call sites in partials.
 | `$color-accent-glow` | `rgba(227,178,60,0.28)` | `--accent` | 28% | `--accent-glow` |
 | `$color-text-disabled-surface` | `rgba(31,58,50,0.18)` | `--text` | 18% | `--text-disabled-surface` |
 | `$color-grid-line` | `rgba(31,58,50,0.04)` | `--text` | 4% | `--grid-line` |
+| — (no legacy SCSS alias) | — | `--accent` | 55% | `--accent-rule` |
+| — (no legacy SCSS alias) | — | `--text` | 28% | `--text-shadow` |
 
 `$color-text-disabled-surface` and `$color-grid-line` are the same
 RGB as `$color-text` at low alpha — the disabled-button overlay
 visually inherits the foreground color, and the layout grid pattern
 is a low-opacity foreground tint. Both are themable so they track the
 brand text color when a per-event Theme overrides it.
+
+`--accent-rule` (dotted section rules and row separators) and
+`--text-shadow` (the hard-offset shadow color under raised action
+tiles) were added with the day-of landing layout in apps/site; they
+post-date the migration audit, so they have no legacy `$…` alias —
+they exist only as emitted custom properties.
 
 ### Typography — themable (family); structural (weights)
 

@@ -109,8 +109,10 @@ export function themeToStyle(theme: Theme): Record<string, string> {
     "--radius-card": theme.cardRadius,
     "--radius-control": theme.controlRadius,
 
-    // Brand-tied derived shades. Percentages must stay in sync
-    // with `apps/web/src/styles/_tokens.scss` lines 148-170.
+    // Brand-tied derived shades. Percentages must stay in sync with
+    // the derived-shades `:root` block in
+    // `apps/web/src/styles/_tokens.scss` and the classification
+    // table in `docs/styling.md`.
     "--primary-surface": mix(theme.primary, 12),
     "--primary-surface-strong": mix(theme.primary, 14),
     "--primary-border": mix(theme.primary, 24),
@@ -131,8 +133,10 @@ export function themeToStyle(theme: Theme): Record<string, string> {
     "--accent-surface-pending": mix(theme.accent, 12),
     "--accent-border": mix(theme.accent, 26),
     "--accent-glow": mix(theme.accent, 28),
+    "--accent-rule": mix(theme.accent, 55),
 
     "--text-disabled-surface": mix(theme.text, 18),
+    "--text-shadow": mix(theme.text, 28),
     // `gridLine` is an optional override of this derived shade (a
     // flat theme sets `transparent` to hide the backdrop grid).
     "--grid-line": theme.gridLine ?? mix(theme.text, 4),

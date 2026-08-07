@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { EventLandingPage } from "../../../apps/site/components/event/EventLandingPage.tsx";
+import { LandingTonightSections } from "../../../apps/site/components/event/LandingTonightSections.tsx";
 import { harvestBlockPartyContent } from "../../../apps/site/events/harvest-block-party.ts";
 import { madronaContent } from "../../../apps/site/events/madrona.ts";
 import { riversideJamContent } from "../../../apps/site/events/riverside-jam.ts";
@@ -313,6 +314,102 @@ describe("EventDayOfLanding — season wrap", () => {
     expect(
       container.querySelectorAll(".event-landing-season-card-now"),
     ).toHaveLength(0);
+  });
+});
+
+describe("LandingTonightSections — sponsor links and duplicate dates", () => {
+  const landingFixture = {
+    ...madronaContent.landing!,
+    presentingSponsor: {
+      name: "Linked Sponsor",
+      logoSrc: "/synthetic/linked-sponsor.png",
+      logoAlt: "Linked Sponsor logo",
+      href: "https://sponsor.example.org",
+    },
+  };
+
+  function renderSections(nights: NonNullable<typeof madronaContent.nights>) {
+    return render(
+      <LandingTonightSections
+        nights={nights}
+        lineup={madronaContent.lineup}
+        landing={landingFixture}
+        slug="madrona"
+        donateHref={null}
+        hasNewsletter={false}
+        initialNowMs={Date.now()}
+      />,
+    );
+  }
+
+  it("wraps sponsor logos in external anchors when the content supplies an href", () => {
+    setClock("2026-08-11T19:00:00Z");
+    const nights = {
+      timezone: "America/Los_Angeles",
+      nights: [
+        {
+          ...madronaContent.nights!.nights[0],
+          headlinerSponsor: {
+            name: "Poppie",
+            logoSrc: "/events/madrona/sponsors/poppie.png",
+            logoAlt: "Poppie logo",
+            href: "https://poppie.example.org",
+          },
+        },
+      ],
+    };
+    const { container } = renderSections(nights);
+
+    const presentingLink = container.querySelector(
+      ".event-landing-presenting a",
+    );
+    expect(presentingLink?.getAttribute("href")).toBe(
+      "https://sponsor.example.org",
+    );
+    expect(presentingLink?.getAttribute("target")).toBe("_blank");
+    expect(presentingLink?.getAttribute("rel")).toBe("noopener noreferrer");
+
+    const headlinerLink = container.querySelector(
+      ".event-landing-headliner a",
+    );
+    expect(headlinerLink?.getAttribute("href")).toBe(
+      "https://poppie.example.org",
+    );
+  });
+
+  it("renders href-less sponsor logos as plain images (madrona's launch content)", () => {
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = renderMadrona();
+    expect(container.querySelector(".event-landing-presenting a")).toBeNull();
+    expect(container.querySelector(".event-landing-headliner a")).toBeNull();
+  });
+
+  it("features only the resolver's pick when two nights share a date", () => {
+    setClock("2026-08-11T19:00:00Z");
+    const [opening, ...rest] = madronaContent.nights!.nights;
+    const nights = {
+      timezone: "America/Los_Angeles",
+      nights: [
+        opening,
+        { ...opening, label: "Duplicate-Date Night" },
+        ...rest,
+      ],
+    };
+    const { container } = renderSections(nights);
+
+    const cards = container.querySelectorAll(".event-landing-season-card");
+    expect(cards).toHaveLength(4);
+    // Earliest-listed duplicate wins in resolveTonight; only that
+    // object's card is featured.
+    expect(
+      container.querySelectorAll(".event-landing-season-card-now"),
+    ).toHaveLength(1);
+    expect(cards[0].classList.contains("event-landing-season-card-now")).toBe(
+      true,
+    );
+    expect(cards[1].classList.contains("event-landing-season-card-now")).toBe(
+      false,
+    );
   });
 });
 
