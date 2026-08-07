@@ -20,7 +20,13 @@
  * `EventContent.newsletterSignup` block that makes
  * `/event/<slug>/signup` a real form route. The completion panel
  * links there with a plain same-origin anchor because the signup
- * route is owned by apps/site across the proxy topology. This registry is the deliberately
+ * route is owned by apps/site across the proxy topology. CTA links
+ * navigate in the same tab once the completed quiz state (including
+ * the check-in code) is confirmed persisted on the device — leaving
+ * the quiz app is then loss-free and returning restores the results
+ * without a replay; when device storage is unavailable the panel
+ * falls back to new-tab links so navigation cannot destroy the only
+ * copy of the code. This registry is the deliberately
  * lightweight launch-mode conditional (driver: Aug 11 Madrona launch
  * push); if per-event content later consolidates into a shared
  * registry, fold this module into it.

@@ -2,8 +2,11 @@ import type {
   GameCompletionResult,
   SubmitGameCompletionInput,
 } from "../types/game";
-import { getLocalStorage } from "./browserStorage";
 import { buildLocalCompletionResult } from "./localGameFallback";
+import {
+  readStoredServerSessionToken,
+  writeStoredServerSessionToken,
+} from "./serverSessionToken";
 import {
   createSupabaseAuthHeaders,
   getMissingSupabaseConfigMessage,
@@ -18,43 +21,15 @@ import {
  * Supabase. The local-only prototype fallback lives in
  * `./localGameFallback` and is dispatched into from `submitGameCompletion`
  * when Supabase is unconfigured and the explicit prototype gate is on.
+ * The signed session token storage lives in `./serverSessionToken` so the
+ * device-local persistence layer can key state to the same session.
  */
-/** Browser storage key for the signed server session token fallback. */
-const serverSessionTokenStorageKey = "neighborly.server-session-token.v1";
-
 /** Response shape returned when the backend prepares the signed session. */
 type IssueSessionResponse = {
   issuedNewSession: boolean;
   sessionReady: boolean;
   sessionToken?: string;
 };
-
-/** Reads the signed backend session token fallback from browser storage. */
-function readStoredServerSessionToken() {
-  const storage = getLocalStorage();
-
-  if (!storage) {
-    return "";
-  }
-
-  return storage.getItem(serverSessionTokenStorageKey)?.trim() ?? "";
-}
-
-/** Stores or clears the signed backend session token fallback. */
-function writeStoredServerSessionToken(sessionToken: string | null) {
-  const storage = getLocalStorage();
-
-  if (!storage) {
-    return;
-  }
-
-  if (sessionToken) {
-    storage.setItem(serverSessionTokenStorageKey, sessionToken);
-    return;
-  }
-
-  storage.removeItem(serverSessionTokenStorageKey);
-}
 
 /** Converts the completion response into a typed result or throws a helpful error. */
 async function handleCompletionResponse(response: Response) {

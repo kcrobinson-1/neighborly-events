@@ -3,15 +3,18 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
 import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
 
-const { mockCreateRequestId, mockSubmitGameCompletion } = vi.hoisted(() => {
-  return {
-    mockCreateRequestId: vi.fn(),
-    mockSubmitGameCompletion: vi.fn(),
-  };
-});
+const { mockCreateRequestId, mockReadActiveClientSessionId, mockSubmitGameCompletion } =
+  vi.hoisted(() => {
+    return {
+      mockCreateRequestId: vi.fn(),
+      mockReadActiveClientSessionId: vi.fn(),
+      mockSubmitGameCompletion: vi.fn(),
+    };
+  });
 
 // The reducer and side-effect orchestration are the behavior under test here,
-// so we mock only the API boundary and request-id generator.
+// so we mock only the API boundary, the request-id generator, and the
+// env-coupled session-identity resolver that gates device persistence.
 vi.mock("../../../apps/web/src/lib/gameApi.ts", () => ({
   submitGameCompletion: mockSubmitGameCompletion,
 }));
@@ -20,7 +23,40 @@ vi.mock("../../../apps/web/src/lib/session.ts", () => ({
   createRequestId: mockCreateRequestId,
 }));
 
+vi.mock("../../../apps/web/src/lib/clientSessionId.ts", () => ({
+  readActiveClientSessionId: mockReadActiveClientSessionId,
+}));
+
+import { computeContentFingerprint } from "../../../apps/web/src/game/gameSessionPersistence.ts";
 import { useGameSession } from "../../../apps/web/src/game/useGameSession.ts";
+
+// Node's experimental webstorage global shadows jsdom's localStorage in the
+// test runtime, so the suite installs the same in-memory Storage stand-in the
+// gameApi tests use.
+function createMemoryStorage() {
+  const values = new Map<string, string>();
+
+  return {
+    clear() {
+      values.clear();
+    },
+    getItem(key: string) {
+      return values.has(key) ? values.get(key) ?? null : null;
+    },
+    key(index: number) {
+      return Array.from(values.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      values.delete(key);
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+    get length() {
+      return values.size;
+    },
+  };
+}
 
 function createCompletionResult(overrides: Partial<GameCompletionResult> = {}): GameCompletionResult {
   return {
@@ -164,10 +200,20 @@ function createInstantFeedbackGame(): GameConfig {
 describe("useGameSession", () => {
   beforeEach(() => {
     mockCreateRequestId.mockReset();
+    mockReadActiveClientSessionId.mockReset();
     mockSubmitGameCompletion.mockReset();
     // A stable id makes the retry/idempotency assertions readable and matches
     // the product requirement that the same completion attempt reuses its key.
     mockCreateRequestId.mockReturnValue("req-123");
+    // No session identity by default: persistence stays inert so the
+    // state-machine tests exercise exactly the pre-persistence behavior.
+    mockReadActiveClientSessionId.mockReturnValue(null);
+    // Node's experimental webstorage global shadows jsdom's localStorage in
+    // the test runtime, so install a fresh in-memory Storage stand-in.
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: createMemoryStorage(),
+    });
   });
 
   afterEach(() => {
@@ -469,6 +515,447 @@ describe("useGameSession", () => {
         "a",
         "b",
       ]);
+    });
+  });
+
+  describe("device persistence", () => {
+    const storageKey = (gameId: string) => `neighborly.game-session.v1.${gameId}`;
+
+    function seedSnapshot(gameId: string, snapshot: unknown) {
+      window.localStorage.setItem(
+        storageKey(gameId),
+        JSON.stringify({
+          clientSessionId: "session-test",
+          savedAt: "2026-08-06T12:00:00.000Z",
+          snapshot,
+        }),
+      );
+    }
+
+    beforeEach(() => {
+      mockReadActiveClientSessionId.mockReturnValue("session-test");
+    });
+
+    it("restores a completed snapshot on mount without resubmitting", () => {
+      const game = createFinalScoreGame();
+      const completion = createCompletionResult();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completion,
+        kind: "complete",
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isComplete).toBe(true);
+      expect(result.current.latestCompletion).toEqual(completion);
+      expect(result.current.answers).toEqual({ q1: ["b"], q2: ["a", "c"] });
+      expect(result.current.score).toBe(completion.score);
+      expect(mockSubmitGameCompletion).not.toHaveBeenCalled();
+    });
+
+    it("restores an in-progress snapshot at the saved question with its option order", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        contentFingerprint: computeContentFingerprint(game),
+        currentIndex: 1,
+        elapsedMs: 65000,
+        kind: "in_progress",
+        optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isStarted).toBe(true);
+      expect(result.current.isShowingQuestion).toBe(true);
+      expect(result.current.currentIndex).toBe(1);
+      expect(result.current.answers).toEqual({ q1: ["b"] });
+      // The attempt's persisted permutation is re-applied, not re-rolled.
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "c",
+        "a",
+        "b",
+      ]);
+
+      act(() => {
+        result.current.goBack();
+      });
+
+      expect(result.current.currentQuestion?.options.map((o) => o.id)).toEqual([
+        "b",
+        "a",
+      ]);
+      expect(result.current.pendingSelection).toEqual(["b"]);
+    });
+
+    it("restores the saved answer as the pending selection for the current question", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        contentFingerprint: computeContentFingerprint(game),
+        currentIndex: 0,
+        elapsedMs: null,
+        kind: "in_progress",
+        optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.currentIndex).toBe(0);
+      expect(result.current.pendingSelection).toEqual(["b"]);
+      expect(result.current.canSubmit).toBe(true);
+    });
+
+    it("ignores a snapshot for a different client session", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completion: createCompletionResult(),
+        kind: "complete",
+      });
+      mockReadActiveClientSessionId.mockReturnValue("session-other");
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isStarted).toBe(false);
+      expect(result.current.latestCompletion).toBeNull();
+    });
+
+    it("persists progress during play and the completion at the end", async () => {
+      const game = createFinalScoreGame();
+      const completion = createCompletionResult();
+      mockSubmitGameCompletion.mockResolvedValue(completion);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      const storedMidRun = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedMidRun?.clientSessionId).toBe("session-test");
+      expect(storedMidRun?.snapshot).toMatchObject({
+        answers: { q1: ["b"] },
+        currentIndex: 1,
+        kind: "in_progress",
+      });
+
+      act(() => {
+        result.current.selectOption("c");
+        result.current.selectOption("a");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      const storedComplete = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedComplete?.snapshot).toMatchObject({
+        completion,
+        kind: "complete",
+      });
+      expect(result.current.isCompletionPersisted).toBe(true);
+    });
+
+    it("writes a submitting snapshot carrying the request id before the POST resolves", async () => {
+      const game = createFinalScoreGame(1);
+      let resolveSubmission!: (completion: GameCompletionResult) => void;
+      mockSubmitGameCompletion.mockReturnValue(
+        new Promise<GameCompletionResult>((resolve) => {
+          resolveSubmission = resolve;
+        }),
+      );
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      expect(result.current.isSubmittingCompletion).toBe(true);
+
+      // The in-flight snapshot must hold the final answer AND the request id
+      // so a reload replays the identical payload into the RPC's dedup.
+      const storedSubmitting = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedSubmitting?.snapshot).toMatchObject({
+        answers: { q1: ["b"] },
+        completionRequestId: "req-123",
+        kind: "submitting",
+      });
+      expect(storedSubmitting?.snapshot?.durationMs).toEqual(expect.any(Number));
+      expect(storedSubmitting?.snapshot?.durationMs).toBeGreaterThanOrEqual(0);
+
+      await act(async () => {
+        resolveSubmission(createCompletionResult({ score: 1 }));
+      });
+
+      expect(result.current.isComplete).toBe(true);
+    });
+
+    it("restores an in-flight submission and replays the same request id and duration", async () => {
+      const game = createFinalScoreGame();
+      const completion = createCompletionResult();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completionRequestId: "req-restored",
+        contentFingerprint: computeContentFingerprint(game),
+        durationMs: 61500,
+        kind: "submitting",
+      });
+      mockSubmitGameCompletion.mockResolvedValue(completion);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      expect(result.current.latestCompletion).toEqual(completion);
+      expect(mockSubmitGameCompletion).toHaveBeenCalledTimes(1);
+      // Same request id + same answers → the backend returns the original
+      // attempt instead of recording a duplicate completion row.
+      expect(mockSubmitGameCompletion.mock.calls[0]?.[0]).toMatchObject({
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        eventId: game.id,
+        requestId: "req-restored",
+      });
+      // The replay reports the originally computed elapsed time (plus only
+      // the milliseconds spent restoring), not one inflated by the gap
+      // between unload and reload.
+      const replayedDuration = mockSubmitGameCompletion.mock.calls[0]?.[0]?.durationMs;
+      expect(replayedDuration).toBeGreaterThanOrEqual(61500);
+      expect(replayedDuration).toBeLessThan(61500 + 10000);
+
+      const storedComplete = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(storedComplete?.snapshot).toMatchObject({ kind: "complete" });
+      expect(result.current.isCompletionPersisted).toBe(true);
+    });
+
+    // NOTE: the StrictMode double-mount hazard on restored submitting
+    // snapshots is covered by the e2e suite, not here — Vitest resolves the
+    // production React build, where StrictMode never double-invokes
+    // effects, so a jsdom test passes with or without the guard release.
+
+    it("starts fresh when grading-relevant content changed under stable ids", () => {
+      const game = createFinalScoreGame();
+      const editedGame = {
+        ...game,
+        questions: game.questions.map((question) =>
+          question.id === "q1"
+            ? { ...question, correctAnswerIds: ["a"] }
+            : question,
+        ),
+      };
+      // Snapshot written against the original content; the hook mounts with
+      // the edited config.
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        contentFingerprint: computeContentFingerprint(game),
+        currentIndex: 1,
+        elapsedMs: null,
+        kind: "in_progress",
+        optionOrder: { q1: ["a", "b"], q2: ["a", "b", "c"] },
+      });
+
+      const { result } = renderHook(() => useGameSession(editedGame));
+
+      expect(result.current.isStarted).toBe(false);
+      expect(result.current.answers).toEqual({});
+    });
+
+    it("excludes time away from a resumed run's eventual duration", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+      // Attendee left mid-run with 60s of active play; the snapshot's
+      // savedAt could be days old — only elapsed active time is persisted.
+      seedSnapshot(game.id, {
+        answers: {},
+        contentFingerprint: computeContentFingerprint(game),
+        currentIndex: 0,
+        elapsedMs: 60000,
+        kind: "in_progress",
+        optionOrder: { q1: ["a", "b"] },
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      // Rebased clock: duration ≈ persisted active time + the seconds spent
+      // finishing now, never the days away.
+      const submittedDuration = mockSubmitGameCompletion.mock.calls[0]?.[0]?.durationMs;
+      expect(submittedDuration).toBeGreaterThanOrEqual(60000);
+      expect(submittedDuration).toBeLessThan(60000 + 10000);
+    });
+
+    it("keeps a completed snapshot safe from a stale tab still mid-run", async () => {
+      const game = createFinalScoreGame(1);
+      const completion = createCompletionResult({ score: 1 });
+      mockSubmitGameCompletion.mockResolvedValue(completion);
+
+      // Tab B starts a run first (writes in_progress snapshots).
+      const staleTab = renderHook(() => useGameSession(game));
+      act(() => {
+        staleTab.result.current.start();
+      });
+
+      // Tab A completes the quiz, persisting the completed snapshot.
+      const completingTab = renderHook(() => useGameSession(game));
+      act(() => {
+        completingTab.result.current.start();
+        completingTab.result.current.selectOption("b");
+        completingTab.result.current.submit();
+      });
+      await waitFor(() => {
+        expect(completingTab.result.current.isComplete).toBe(true);
+      });
+
+      // Tab B keeps playing: its write-throughs must not clobber the
+      // completed snapshot.
+      act(() => {
+        staleTab.result.current.selectOption("a");
+      });
+
+      const stored = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(stored?.snapshot?.kind).toBe("complete");
+      expect(stored?.snapshot?.completion).toEqual(completion);
+
+      // An explicit retake in the completed tab IS allowed to replace it.
+      act(() => {
+        completingTab.result.current.resetForRetake();
+      });
+
+      const afterRetake = JSON.parse(
+        window.localStorage.getItem(storageKey(game.id)) ?? "null",
+      );
+      expect(afterRetake?.snapshot?.kind).toBe("in_progress");
+    });
+
+    it("reports the completion as not persisted when the snapshot write fails", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+      // No client session identity → persistence is disabled, so the CTA
+      // links must keep their new-tab fallback.
+      mockReadActiveClientSessionId.mockReturnValue(null);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      expect(window.localStorage.getItem(storageKey(game.id))).toBeNull();
+      expect(result.current.isCompletionPersisted).toBe(false);
+    });
+
+    it("marks a restored completed snapshot as durable", () => {
+      const game = createFinalScoreGame();
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"], q2: ["a", "c"] },
+        completion: createCompletionResult(),
+        kind: "complete",
+      });
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      expect(result.current.isCompletionPersisted).toBe(true);
+    });
+
+    it("clears the snapshot when the session resets to the intro", async () => {
+      const game = createFinalScoreGame(1);
+      mockSubmitGameCompletion.mockResolvedValue(createCompletionResult({ score: 1 }));
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.start();
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.isComplete).toBe(true);
+      });
+
+      expect(window.localStorage.getItem(storageKey(game.id))).not.toBeNull();
+
+      act(() => {
+        result.current.reset();
+      });
+
+      expect(window.localStorage.getItem(storageKey(game.id))).toBeNull();
+    });
+
+    it("lets a restored completion retake and resubmit through the normal flow", async () => {
+      const game = createFinalScoreGame(1);
+      const replayCompletion = createCompletionResult({
+        attemptNumber: 2,
+        entitlement: {
+          createdAt: "2026-08-06T12:00:00.000Z",
+          status: "existing",
+          verificationCode: "MMP-1234ABCD",
+        },
+        score: 1,
+      });
+      seedSnapshot(game.id, {
+        answers: { q1: ["b"] },
+        completion: createCompletionResult({ score: 1 }),
+        kind: "complete",
+      });
+      mockSubmitGameCompletion.mockResolvedValue(replayCompletion);
+
+      const { result } = renderHook(() => useGameSession(game));
+
+      act(() => {
+        result.current.resetForRetake();
+      });
+
+      expect(result.current.isComplete).toBe(false);
+      expect(result.current.isShowingQuestion).toBe(true);
+
+      act(() => {
+        result.current.selectOption("b");
+        result.current.submit();
+      });
+
+      await waitFor(() => {
+        expect(result.current.latestCompletion).toEqual(replayCompletion);
+      });
+
+      // The retake resubmits and the backend returns the existing entitlement:
+      // same code, no new reward entry.
+      expect(
+        result.current.latestCompletion?.entitlement.verificationCode,
+      ).toBe("MMP-1234ABCD");
     });
   });
 

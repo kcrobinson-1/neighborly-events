@@ -1,0 +1,466 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { GameConfig } from "../../../apps/web/src/data/games.ts";
+import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
+
+const { mockReadActiveClientSessionId } = vi.hoisted(() => ({
+  mockReadActiveClientSessionId: vi.fn(),
+}));
+
+// The session-identity resolver is env-coupled (Supabase config vs prototype
+// fallback), so tests pin it directly; storage behavior stays real via jsdom.
+vi.mock("../../../apps/web/src/lib/clientSessionId.ts", () => ({
+  readActiveClientSessionId: mockReadActiveClientSessionId,
+}));
+
+import {
+  applyOptionOrder,
+  clearPersistedGameSnapshot,
+  computeContentFingerprint,
+  extractOptionOrder,
+  readPersistedGameSnapshot,
+  writePersistedGameSnapshot,
+  type PersistedGameSnapshot,
+} from "../../../apps/web/src/game/gameSessionPersistence.ts";
+
+// Node's experimental webstorage global shadows jsdom's localStorage in the
+// test runtime, so the suite installs the same in-memory Storage stand-in the
+// gameApi tests use.
+function createMemoryStorage() {
+  const values = new Map<string, string>();
+
+  return {
+    clear() {
+      values.clear();
+    },
+    getItem(key: string) {
+      return values.has(key) ? values.get(key) ?? null : null;
+    },
+    key(index: number) {
+      return Array.from(values.keys())[index] ?? null;
+    },
+    removeItem(key: string) {
+      values.delete(key);
+    },
+    setItem(key: string, value: string) {
+      values.set(key, value);
+    },
+    get length() {
+      return values.size;
+    },
+  };
+}
+
+function createGame(): GameConfig {
+  return {
+    id: "test-persisted",
+    slug: "test-persisted",
+    name: "Test Persisted",
+    location: "Seattle",
+    estimatedMinutes: 2,
+    entitlementLabel: "reward ticket",
+    intro: "Test intro",
+    summary: "Test summary",
+    feedbackMode: "final_score_reveal",
+    questions: [
+      {
+        id: "q1",
+        sponsor: "Sponsor One",
+        prompt: "Question one?",
+        selectionMode: "single" as const,
+        correctAnswerIds: ["b"],
+        options: [
+          { id: "a", label: "Option A" },
+          { id: "b", label: "Option B" },
+        ],
+      },
+      {
+        id: "q2",
+        sponsor: "Sponsor Two",
+        prompt: "Question two?",
+        selectionMode: "multiple" as const,
+        correctAnswerIds: ["a", "c"],
+        options: [
+          { id: "a", label: "Option A" },
+          { id: "b", label: "Option B" },
+          { id: "c", label: "Option C" },
+        ],
+      },
+    ],
+  };
+}
+
+function createCompletionResult(): GameCompletionResult {
+  return {
+    attemptNumber: 1,
+    completionId: "cmp-123",
+    entitlement: {
+      createdAt: "2026-08-06T12:00:00.000Z",
+      status: "new",
+      verificationCode: "MMP-1234",
+    },
+    message: "You're checked in for the reward.",
+    entitlementEligible: true,
+    score: 2,
+  };
+}
+
+function createInProgressSnapshot(): PersistedGameSnapshot {
+  return {
+    answers: { q1: ["b"] },
+    contentFingerprint: computeContentFingerprint(createGame()),
+    currentIndex: 1,
+    elapsedMs: 65000,
+    kind: "in_progress",
+    optionOrder: { q1: ["b", "a"], q2: ["c", "a", "b"] },
+  };
+}
+
+function createSubmittingSnapshot(): PersistedGameSnapshot {
+  return {
+    answers: { q1: ["b"], q2: ["a", "c"] },
+    completionRequestId: "req-inflight",
+    contentFingerprint: computeContentFingerprint(createGame()),
+    durationMs: 61500,
+    kind: "submitting",
+  };
+}
+
+const storageKey = "neighborly.game-session.v1.test-persisted";
+
+describe("gameSessionPersistence", () => {
+  beforeEach(() => {
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: createMemoryStorage(),
+    });
+    mockReadActiveClientSessionId.mockReset();
+    mockReadActiveClientSessionId.mockReturnValue("session-test");
+  });
+
+  it("round-trips an in-progress snapshot", () => {
+    const game = createGame();
+    const snapshot = createInProgressSnapshot();
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
+  });
+
+  it("round-trips a submitting snapshot", () => {
+    const game = createGame();
+    const snapshot = createSubmittingSnapshot();
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
+  });
+
+  it("discards a submitting snapshot without a request id, a valid duration, or current answers", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, {
+      ...createSubmittingSnapshot(),
+      completionRequestId: "",
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+
+    writePersistedGameSnapshot(game.id, {
+      ...createSubmittingSnapshot(),
+      durationMs: -5,
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+
+    writePersistedGameSnapshot(game.id, {
+      ...createSubmittingSnapshot(),
+      answers: { "q-removed": ["b"] },
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("discards an in-progress snapshot when grading-relevant content changed under stable ids", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, createInProgressSnapshot());
+
+    // Same question and option ids, different correct answer: the
+    // fingerprint must invalidate what the permutation check alone accepts.
+    const editedGame = {
+      ...game,
+      questions: game.questions.map((question) =>
+        question.id === "q1"
+          ? { ...question, correctAnswerIds: ["a"] }
+          : question,
+      ),
+    };
+
+    expect(readPersistedGameSnapshot(editedGame)).toBeNull();
+    // The unchanged config still accepts it.
+    expect(readPersistedGameSnapshot(game)).not.toBeNull();
+  });
+
+  it("discards a submitting snapshot when grading-relevant content changed", () => {
+    const game = createGame();
+    const snapshot = createSubmittingSnapshot();
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    // The completion endpoint validates answers against current content
+    // BEFORE its request-id dedup, so a drifted replay 400s forever;
+    // discarding restarts the run and the per-session entitlement returns
+    // the same code on the new completion.
+    const editedGame = {
+      ...game,
+      questions: game.questions.map((question) =>
+        question.id === "q1"
+          ? { ...question, correctAnswerIds: ["a"] }
+          : question,
+      ),
+    };
+
+    expect(readPersistedGameSnapshot(editedGame)).toBeNull();
+  });
+
+  it("keeps a submitting snapshot across cosmetic (non-grading) edits", () => {
+    const game = createGame();
+    const snapshot = createSubmittingSnapshot();
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    // Sponsor labels are not grading-relevant, so the fingerprint tolerates
+    // them and the finished run survives.
+    const editedGame = {
+      ...game,
+      questions: game.questions.map((question) =>
+        question.id === "q1" ? { ...question, sponsor: "New Sponsor" } : question,
+      ),
+    };
+
+    expect(readPersistedGameSnapshot(editedGame)).toEqual(snapshot);
+  });
+
+  it("blocks non-complete writes from replacing a completed snapshot by default", () => {
+    const game = createGame();
+    const completedSnapshot: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completion: createCompletionResult(),
+      kind: "complete",
+    };
+
+    writePersistedGameSnapshot(game.id, completedSnapshot);
+
+    // A stale second tab still mid-run writes through unconditionally; the
+    // monotonic default must protect the completed results and code.
+    expect(writePersistedGameSnapshot(game.id, createInProgressSnapshot())).toBe(
+      false,
+    );
+    expect(writePersistedGameSnapshot(game.id, createSubmittingSnapshot())).toBe(
+      false,
+    );
+    expect(readPersistedGameSnapshot(game)).toEqual(completedSnapshot);
+
+    // An explicit restart (reset/retake) is allowed to replace it.
+    expect(
+      writePersistedGameSnapshot(game.id, createInProgressSnapshot(), {
+        allowReplaceComplete: true,
+      }),
+    ).toBe(true);
+    expect(readPersistedGameSnapshot(game)).toEqual(createInProgressSnapshot());
+  });
+
+  it("never rolls a stored completion back to an older attempt", () => {
+    const game = createGame();
+    const newerCompletion: PersistedGameSnapshot = {
+      answers: { q1: ["a"], q2: ["b"] },
+      completion: { ...createCompletionResult(), attemptNumber: 2, score: 1 },
+      kind: "complete",
+    };
+    const olderCompletion: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completion: { ...createCompletionResult(), attemptNumber: 1 },
+      kind: "complete",
+    };
+
+    writePersistedGameSnapshot(game.id, newerCompletion);
+
+    // Two tabs finished attempts and the older response landed last: its
+    // write must not replace the newer attempt's score and review.
+    expect(writePersistedGameSnapshot(game.id, olderCompletion)).toBe(false);
+    expect(readPersistedGameSnapshot(game)).toEqual(newerCompletion);
+
+    // Equal attempts may rewrite (idempotent replays), newer ones advance.
+    expect(
+      writePersistedGameSnapshot(game.id, {
+        ...newerCompletion,
+        completion: { ...createCompletionResult(), attemptNumber: 3 },
+      }),
+    ).toBe(true);
+  });
+
+  it("lets a new session's writes replace another session's completed envelope", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, {
+      answers: {},
+      completion: createCompletionResult(),
+      kind: "complete",
+    });
+    // A different session's stale envelope never blocks the active session.
+    mockReadActiveClientSessionId.mockReturnValue("session-other");
+
+    expect(writePersistedGameSnapshot(game.id, createInProgressSnapshot())).toBe(
+      true,
+    );
+  });
+
+  it("degrades to null when storage methods throw", () => {
+    const game = createGame();
+    const throwingStorage = {
+      clear() {},
+      getItem() {
+        throw new Error("blocked");
+      },
+      key() {
+        return null;
+      },
+      removeItem() {
+        throw new Error("blocked");
+      },
+      setItem() {
+        throw new Error("blocked");
+      },
+      length: 0,
+    };
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: throwingStorage,
+    });
+
+    // Mount-time paths must degrade, not crash: read → null, write reports
+    // failure, clear is a no-op.
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+    expect(writePersistedGameSnapshot(game.id, createInProgressSnapshot())).toBe(
+      false,
+    );
+    expect(() => clearPersistedGameSnapshot(game.id)).not.toThrow();
+  });
+
+  it("round-trips a completed snapshot", () => {
+    const game = createGame();
+    const snapshot: PersistedGameSnapshot = {
+      answers: { q1: ["b"], q2: ["a", "c"] },
+      completion: createCompletionResult(),
+      kind: "complete",
+    };
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
+  });
+
+  it("neither reads nor writes without a client session identity", () => {
+    const game = createGame();
+    mockReadActiveClientSessionId.mockReturnValue(null);
+
+    writePersistedGameSnapshot(game.id, createInProgressSnapshot());
+    expect(window.localStorage.getItem(storageKey)).toBeNull();
+
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        clientSessionId: "session-test",
+        savedAt: "2026-08-06T12:00:00.000Z",
+        snapshot: createInProgressSnapshot(),
+      }),
+    );
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("ignores a snapshot written by a different client session", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, createInProgressSnapshot());
+    mockReadActiveClientSessionId.mockReturnValue("session-other");
+
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("ignores malformed stored values", () => {
+    const game = createGame();
+
+    window.localStorage.setItem(storageKey, "{not json");
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+
+    window.localStorage.setItem(storageKey, JSON.stringify({ snapshot: 42 }));
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("discards an in-progress snapshot when the question content drifted", () => {
+    const game = createGame();
+    const snapshot = createInProgressSnapshot();
+
+    writePersistedGameSnapshot(game.id, {
+      ...snapshot,
+      optionOrder: { ...snapshot.optionOrder, q2: ["c", "a", "zz"] },
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+
+    writePersistedGameSnapshot(game.id, {
+      ...snapshot,
+      answers: { "q-removed": ["b"] },
+    });
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("discards an in-progress snapshot with an out-of-range index", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, {
+      ...createInProgressSnapshot(),
+      currentIndex: 2,
+    });
+
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("keeps a completed snapshot even when question content drifted", () => {
+    const game = createGame();
+    const snapshot: PersistedGameSnapshot = {
+      // The answer review degrades gracefully for unknown ids; the check-in
+      // code must survive content republishes.
+      answers: { "q-removed": ["x"] },
+      completion: createCompletionResult(),
+      kind: "complete",
+    };
+
+    writePersistedGameSnapshot(game.id, snapshot);
+
+    expect(readPersistedGameSnapshot(game)).toEqual(snapshot);
+  });
+
+  it("clears the stored snapshot", () => {
+    const game = createGame();
+
+    writePersistedGameSnapshot(game.id, createInProgressSnapshot());
+    clearPersistedGameSnapshot(game.id);
+
+    expect(window.localStorage.getItem(storageKey)).toBeNull();
+    expect(readPersistedGameSnapshot(game)).toBeNull();
+  });
+
+  it("extracts and re-applies a per-question option order", () => {
+    const game = createGame();
+    const order = { q1: ["b", "a"], q2: ["c", "a", "b"] };
+
+    const reordered = applyOptionOrder(game, order);
+
+    expect(
+      reordered.questions.map((question) => question.options.map((o) => o.id)),
+    ).toEqual([
+      ["b", "a"],
+      ["c", "a", "b"],
+    ]);
+    expect(extractOptionOrder(reordered)).toEqual(order);
+    // The source config is never mutated.
+    expect(game.questions[0].options.map((o) => o.id)).toEqual(["a", "b"]);
+  });
+});

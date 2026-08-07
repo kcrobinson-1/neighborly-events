@@ -80,7 +80,7 @@ function writeStoredJson<T>(key: string, value: T) {
 }
 
 /** Returns the prototype session id, creating it on first use in the browser. */
-function getOrCreateLocalPrototypeSessionId() {
+export function getOrCreateLocalPrototypeSessionId() {
   const storage = getLocalStorage();
 
   if (!storage) {

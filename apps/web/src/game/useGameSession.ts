@@ -8,25 +8,93 @@ import {
   getGameSessionViewState,
 } from "./gameSessionSelectors";
 import {
+  applyOptionOrder,
+  clearPersistedGameSnapshot,
+  computeContentFingerprint,
+  extractOptionOrder,
+  readPersistedGameSnapshot,
+  writePersistedGameSnapshot,
+} from "./gameSessionPersistence";
+import {
   createCompletionRequestId,
   createGameState,
+  createRestoredCompleteState,
+  createRestoredInProgressState,
+  createRestoredSubmittingState,
   gameReducer,
 } from "./gameSessionState";
 import { shuffleGameOptions } from "./shuffleGameOptions";
 
 /** Manages the complete game session lifecycle for a single game instance. */
 export function useGameSession(game: GameConfig) {
-  const [state, dispatch] = useReducer(gameReducer, undefined, () => createGameState());
+  // A persisted snapshot (same device, same client session) restores the quiz
+  // to the state the attendee left — mid-run or completed — so navigating away
+  // or reloading never costs progress or the check-in code. Restore is
+  // mount-only by design: later snapshot writes originate from this hook.
+  const [restoredSnapshot] = useState(() => readPersistedGameSnapshot(game));
+  const [state, dispatch] = useReducer(gameReducer, undefined, () => {
+    if (restoredSnapshot?.kind === "complete") {
+      return createRestoredCompleteState(
+        restoredSnapshot.answers,
+        restoredSnapshot.completion,
+      );
+    }
+
+    if (restoredSnapshot?.kind === "submitting") {
+      return createRestoredSubmittingState(
+        restoredSnapshot.answers,
+        restoredSnapshot.completionRequestId,
+        // Back-date startedAt by the persisted duration so the replayed
+        // request reports the original elapsed time, not one inflated by
+        // however long the page was gone.
+        Date.now() - restoredSnapshot.durationMs,
+      );
+    }
+
+    if (restoredSnapshot?.kind === "in_progress") {
+      return createRestoredInProgressState(
+        restoredSnapshot.answers,
+        restoredSnapshot.currentIndex,
+        // Rebase the run clock from the persisted active elapsed time so
+        // hours away from the page never count toward the duration.
+        restoredSnapshot.elapsedMs === null
+          ? null
+          : Date.now() - restoredSnapshot.elapsedMs,
+        game.questions[restoredSnapshot.currentIndex]?.id ?? null,
+      );
+    }
+
+    return createGameState();
+  });
   const handledSubmissionRequestId = useRef<string | null>(null);
+  // Snapshot writes are monotonic across tabs: only a tab in which the
+  // attendee explicitly restarted (reset or retake) may replace a stored
+  // completed snapshot with a non-complete one. A stale second tab that is
+  // still mid-run keeps ticking, but its write-throughs cannot destroy the
+  // completed results another tab already persisted.
+  const hasExplicitRestartRef = useRef(false);
+  // True only while the completed state is confirmed written to device
+  // storage. A completed snapshot restored from storage is durable by
+  // construction; otherwise the submission callback records the write's
+  // outcome, and reset/retake clear it. Consumers use this to keep the
+  // new-tab link fallback when the in-memory state is the only copy of the
+  // verification code.
+  const [isCompletionPersisted, setIsCompletionPersisted] = useState(
+    () => restoredSnapshot?.kind === "complete",
+  );
   // Answer options render in a per-attempt random order so the authored order
   // cannot leak the correct answer. The shuffled copy lives in state so one
   // permutation stays stable for the whole attempt (back-navigation included);
   // only a game change or a retake draws a fresh one. Keyed by game.id — the
   // same key the reset effect below uses — because the game object's identity
-  // is not stable across renders in every caller.
+  // is not stable across renders in every caller. A restored in-progress
+  // attempt re-applies its persisted permutation instead of re-rolling.
   const [shuffled, setShuffled] = useState(() => ({
     gameId: game.id,
-    game: shuffleGameOptions(game),
+    game:
+      restoredSnapshot?.kind === "in_progress"
+        ? applyOptionOrder(game, restoredSnapshot.optionOrder)
+        : shuffleGameOptions(game),
   }));
 
   if (shuffled.gameId !== game.id) {
@@ -35,7 +103,16 @@ export function useGameSession(game: GameConfig) {
 
   const shuffledGame = shuffled.gameId === game.id ? shuffled.game : game;
 
+  // Reset only when the mounted hook is handed a different game; running on
+  // mount as well would discard the snapshot restored above.
+  const activeGameIdRef = useRef(game.id);
+
   useEffect(() => {
+    if (activeGameIdRef.current === game.id) {
+      return;
+    }
+
+    activeGameIdRef.current = game.id;
     dispatch({ type: "reset" });
     handledSubmissionRequestId.current = null;
   }, [game.id]);
@@ -72,7 +149,8 @@ export function useGameSession(game: GameConfig) {
       return;
     }
 
-    handledSubmissionRequestId.current = state.completionRequestId;
+    const requestId = state.completionRequestId;
+    handledSubmissionRequestId.current = requestId;
 
     const durationMs =
       state.startedAt === null ? 0 : Math.max(0, Date.now() - state.startedAt);
@@ -82,10 +160,21 @@ export function useGameSession(game: GameConfig) {
       answers: state.answers,
       durationMs,
       eventId: game.id,
-      requestId: state.completionRequestId,
+      requestId,
     })
       .then((completion) => {
         if (!isCancelled) {
+          // The completed snapshot is written here, in the async completion
+          // callback, rather than in the write-through effect below: the
+          // write's success feeds `isCompletionPersisted`, and updating that
+          // state synchronously inside an effect would cascade renders.
+          setIsCompletionPersisted(
+            writePersistedGameSnapshot(game.id, {
+              answers: state.answers,
+              completion,
+              kind: "complete",
+            }),
+          );
           dispatch({ type: "completeCompletionSubmit", completion });
         }
       })
@@ -103,6 +192,17 @@ export function useGameSession(game: GameConfig) {
 
     return () => {
       isCancelled = true;
+      // Release the request-id guard for the handler this cleanup cancels.
+      // Without this, StrictMode's dev-only mount→cleanup→mount cycle on a
+      // restored submitting snapshot would strand the screen: the first
+      // setup's response is cancelled and the second setup sees the id as
+      // already handled. Re-submitting the same request id is safe — the
+      // backend dedupes it into one completion. Covered by the e2e
+      // StrictMode test, not jsdom: Vitest resolves the production React
+      // build, which never double-invokes effects.
+      if (handledSubmissionRequestId.current === requestId) {
+        handledSubmissionRequestId.current = null;
+      }
     };
   }, [
     game.id,
@@ -112,11 +212,75 @@ export function useGameSession(game: GameConfig) {
     state.startedAt,
   ]);
 
+  useEffect(() => {
+    // Write-through persistence per phase. The completed snapshot is written
+    // by the submission callback above (its success feeds
+    // `isCompletionPersisted`); a completed snapshot restored from storage
+    // needs no rewrite. A failed submission (`complete` without a result)
+    // intentionally keeps the `submitting` snapshot, so a reload — like the
+    // on-screen retry — replays the identical request id.
+    if (state.phase === "intro") {
+      clearPersistedGameSnapshot(game.id);
+      return;
+    }
+
+    const writeOptions = {
+      allowReplaceComplete: hasExplicitRestartRef.current,
+    };
+
+    if (state.phase === "question" || state.phase === "answer_revealed") {
+      writePersistedGameSnapshot(
+        game.id,
+        {
+          answers: state.answers,
+          // The fingerprint is shuffle-invariant, so the shuffled copy and
+          // the source config produce the same value.
+          contentFingerprint: computeContentFingerprint(shuffledGame),
+          currentIndex: state.currentIndex,
+          // Persist active elapsed time, not the absolute start: restore
+          // rebases the clock so time away never inflates the duration.
+          elapsedMs:
+            state.startedAt === null
+              ? null
+              : Math.max(0, Date.now() - state.startedAt),
+          kind: "in_progress",
+          optionOrder: extractOptionOrder(shuffledGame),
+        },
+        writeOptions,
+      );
+      return;
+    }
+
+    if (state.phase === "submitting_completion" && state.completionRequestId) {
+      // Written before the POST's outcome is known: a reload mid-submission
+      // restores straight into this phase and resubmits the same request id,
+      // which the completion RPC dedupes into the original attempt. The
+      // duration is frozen here so a later restore replays the original
+      // elapsed time.
+      writePersistedGameSnapshot(
+        game.id,
+        {
+          answers: state.answers,
+          completionRequestId: state.completionRequestId,
+          contentFingerprint: computeContentFingerprint(shuffledGame),
+          durationMs:
+            state.startedAt === null
+              ? 0
+              : Math.max(0, Date.now() - state.startedAt),
+          kind: "submitting",
+        },
+        writeOptions,
+      );
+    }
+  }, [game.id, shuffledGame, state]);
+
   const start = () => {
     dispatch({ type: "start", startedAt: Date.now() });
   };
 
   const reset = () => {
+    hasExplicitRestartRef.current = true;
+    setIsCompletionPersisted(false);
     dispatch({ type: "reset" });
   };
 
@@ -197,6 +361,8 @@ export function useGameSession(game: GameConfig) {
   };
 
   const resetForRetake = () => {
+    hasExplicitRestartRef.current = true;
+    setIsCompletionPersisted(false);
     handledSubmissionRequestId.current = null;
     setShuffled({ gameId: game.id, game: shuffleGameOptions(game) });
     dispatch({
@@ -229,6 +395,7 @@ export function useGameSession(game: GameConfig) {
     feedbackMessage: state.feedbackMessage,
     goBack,
     isComplete,
+    isCompletionPersisted,
     isShowingAnswerReveal,
     isShowingQuestion,
     isStarted,
