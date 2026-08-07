@@ -90,7 +90,7 @@ function createCta(
     },
     volunteer: {
       body:
-        "Setup's at 4:30, takedown's at 8:30 — we can always use another set of hands.",
+        "These concerts run on volunteers — and so does everything else the association does. We can always use another set of hands.",
       buttonLabel: "Volunteer",
       href: "https://madrona.us/volunteers/",
       external: true,

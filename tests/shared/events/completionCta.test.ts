@@ -95,6 +95,25 @@ describe("getCompletionCta", () => {
     }
   });
 
+  it("keeps every CTA body free of clock times — this block has no date gate", () => {
+    // `GameCompletionPanel` reads no clock and `getCompletionCta` takes
+    // no date: the block renders on every completion for as long as the
+    // quiz route is up, including long after a season ends. Copy naming
+    // a time of day therefore cannot expire, so it must not be written.
+    //
+    // The day-of landing's volunteer section is the deliberate contrast
+    // — it may be time-specific precisely because it resolves against
+    // the event clock and drops its night-of ask with the season.
+    for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
+      for (const [section, link] of Object.entries(cta)) {
+        if (typeof link !== "object" || link === null) continue;
+        expect(link.body, `${slug} ${section} body names a clock time`).not.toMatch(
+          /\b\d{1,2}:\d{2}\b/,
+        );
+      }
+    }
+  });
+
   it("names no CTA section a newsletter — the association's newsletter is a printed mailer", () => {
     for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
       for (const link of [cta.emailList, cta.donate, cta.volunteer]) {

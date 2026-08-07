@@ -117,9 +117,19 @@ const madronaCompletionCta: CompletionCtaContent = {
     href: madronaFacts.donateHref,
     external: true,
   },
+  /**
+   * Time-neutral on purpose, unlike the landing page's night-of ask.
+   * This panel has no clock: it renders on every completion for as
+   * long as the quiz route is up, including long after the season
+   * ends, so copy naming setup and takedown times would keep asking
+   * for help at concerts that are over. The landing section can be
+   * specific because it resolves against the event clock and drops
+   * its night-of ask with the season; this one cannot, so it asks for
+   * the year-round commitment its destination actually describes.
+   */
   volunteer: {
     body:
-      "Setup's at 4:30, takedown's at 8:30 — we can always use another set of hands.",
+      "These concerts run on volunteers — and so does everything else the association does. We can always use another set of hands.",
     buttonLabel: "Volunteer",
     href: madronaFacts.volunteerHref,
     external: true,
