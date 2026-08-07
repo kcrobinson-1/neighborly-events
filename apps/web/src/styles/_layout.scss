@@ -5,6 +5,15 @@
   position: relative;
   min-height: 100vh;
   padding: $space-11 $space-7 $space-site-bottom;
+  // Page-field paint. Lives here (not on `body`) so the shell sits
+  // inside `<ThemeScope>` and per-event Themes reach the page
+  // surface; the default reproduces the historical body recipe.
+  background: var(--page-surface);
+  // A themed `--page-head-margin` full-bleed (`calc(50% - 50vw)`)
+  // overhangs by half the scrollbar width on browsers with classic
+  // scrollbars; `clip` swallows the overhang without creating a
+  // scroll container (so future sticky descendants keep working).
+  overflow-x: clip;
 }
 
 // `<ThemeScope>` (shared/styles/ThemeScope.tsx) emits a wrapper `<div>`
@@ -58,6 +67,11 @@
   margin-top: 56px;
 }
 
+// Structural chrome. The attendee quiz panels re-declare border /
+// background / shadow from the themable `--panel-*` tokens in
+// `_game-panels.scss`; operator surfaces (admin, redeem,
+// redemptions) and route-state shells keep this chrome on every
+// theme.
 .panel {
   padding: $space-10;
   border: 1px solid var(--border);
@@ -94,6 +108,9 @@
   gap: $space-5;
 }
 
+// Structural title type. The quiz page-head re-declares the display
+// face and themed sizing in `_game-panels.scss`; operator topbars
+// keep this type on every theme.
 .topbar h1,
 .not-found-layout h1 {
   margin: 4px 0 0;

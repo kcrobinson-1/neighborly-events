@@ -8,14 +8,18 @@ html {
   scroll-behavior: smooth;
 }
 
+// The page field itself is painted by `.site-shell` (see
+// `_layout.scss`) via the themable `--page-surface`, so a per-event
+// Theme reaches the page background from inside `<ThemeScope>`. The
+// body paints the document canvas (elastic-overscroll area): the
+// `:root` `--bg` here is the unthemed default, and `App.tsx` syncs
+// an inline body background to the event Theme's `bg` on themed
+// routes (the scope is a descendant and cannot cascade up to it).
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, var(--accent-glow), transparent 30%),
-    radial-gradient(circle at top right, var(--secondary-glow), transparent 32%),
-    linear-gradient(180deg, var(--page-gradient-start) 0%, var(--bg) 48%, var(--page-gradient-end) 100%);
+  background: var(--bg);
   color: var(--text);
 }
 

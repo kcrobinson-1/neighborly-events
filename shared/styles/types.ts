@@ -76,6 +76,76 @@ export type Theme = {
   // `bodyFontFamily`.
   accentFontFamily?: string;
 
+  // Quiz-surface vocabulary (Madrona redesign R4). Same optionality
+  // contract: omitted fields derive defaults in `themeToStyle.ts`
+  // that reproduce the pre-extension rendering, mirrored by
+  // `var()`-form fallbacks in apps/web's `:root`.
+  //
+  // `pageSurface` — full CSS `background` value for the page field
+  // (`--page-surface`). Default: the layered glow-and-gradient
+  // recipe derived from `accent`, `secondary`, `pageGradientStart`,
+  // `bg`, and `pageGradientEnd`. A flat theme sets a single color.
+  pageSurface?: string;
+  // `gridLine` — backdrop grid line color (`--grid-line`). Default:
+  // the existing `text` 4% derived shade. `transparent` hides the
+  // grid.
+  gridLine?: string;
+  // `panelSurface` / `panelBorder` / `panelShadow` — attendee quiz
+  // panel chrome (`--panel-surface`, `--panel-border`,
+  // `--panel-shadow`), consumed only by the quiz panels; operator
+  // surfaces keep the structural `.panel` chrome on every theme.
+  // Surface/border defaults: `surface` and `1px solid <border>`.
+  // `panelShadow` is deliberately bound to the literal `"none"`
+  // (shadow *posture*, not a recipe): composite shadow recipes stay
+  // platform-shared structural, so a theme may only remove the
+  // panel shadow, never redefine it. A flat theme sets
+  // `transparent` / `none` / `none` to de-bubble.
+  panelSurface?: string;
+  panelBorder?: string;
+  panelShadow?: "none";
+  // Page-head band (`--page-head-surface`, `--page-head-rule`,
+  // `--page-head-posture`→margin/padding). Defaults render no band:
+  // `transparent`, `none`, plain flow. A banded theme sets a band
+  // surface (typically `surfaceBand`), a bottom-rule border
+  // shorthand, and `pageHeadPosture: "band"`. The posture is a
+  // bounded literal: the full-bleed margin and band padding are
+  // structural constants owned by `themeToStyle.ts` /
+  // `_game-panels.scss`, so themes cannot inject arbitrary layout
+  // metrics.
+  pageHeadSurface?: string;
+  pageHeadRule?: string;
+  pageHeadPosture?: "band";
+  // `pageHeadTitleSize` (`--page-head-title-size`) and
+  // `headingLetterSpacing` (`--heading-letter-spacing`) are emitted
+  // ONLY when set — call sites carry their structural fallbacks in
+  // `var(--…, fallback)` form, so there is no derived default and no
+  // `:root` declaration.
+  pageHeadTitleSize?: string;
+  headingLetterSpacing?: string;
+  // Answer option rows (`--option-border`,
+  // `--option-selected-border-color`, `--option-selected-surface`).
+  // Defaults: `1px solid <border>` and the secondary 56% / 18%
+  // derived shades.
+  optionBorder?: string;
+  optionSelectedBorderColor?: string;
+  optionSelectedSurface?: string;
+  // Completion code block (`--code-surface`, `--code-border`).
+  // Defaults: the success/secondary layered recipe over `whiteTint`,
+  // and `1px solid` the structural success border.
+  codeSurface?: string;
+  codeBorder?: string;
+  // Completion CTA buttons (`--cta-surface`, `--cta-fg`) and the
+  // warm variant used by the donate action (`--cta-warm-surface`,
+  // `--cta-warm-fg`). Defaults: secondary 14% / `secondary`; the
+  // warm pair falls back to the resolved base pair.
+  ctaSurface?: string;
+  ctaFg?: string;
+  ctaWarmSurface?: string;
+  ctaWarmFg?: string;
+  // `sponsorLabel` — sponsor attribution line color
+  // (`--sponsor-label`). Default: `text`.
+  sponsorLabel?: string;
+
   // Themable radii. Pill radius (999px) is structural and stays in
   // platform SCSS — it does not theme.
   panelRadius: string;

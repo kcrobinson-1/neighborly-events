@@ -26,7 +26,11 @@ export const madronaTheme: Theme = {
   surfaceCard: "#fffdf2",
   surfaceCardMuted: "#f1dfb8",
   text: "#3a3226",
-  muted: "#6f6350",
+  // Secondary text. Deepened from the poster's `#6f6350` so it
+  // clears WCAG AA for normal text on every madrona surface — the
+  // putty band is the tightest (5.1:1; `#6f6350` measured 4.47:1
+  // there), cream 5.6:1, near-white 6.6:1.
+  muted: "#655a48",
   border: "rgba(58, 50, 38, 0.14)",
   borderSoft: "rgba(58, 50, 38, 0.09)",
   borderMuted: "rgba(58, 50, 38, 0.12)",
@@ -57,6 +61,49 @@ export const madronaTheme: Theme = {
   headerBg: "#2e4a34",
   headerFg: "#fffdf2",
   surfaceBand: "#f1dfb8",
+
+  // Quiz-surface vocabulary (R4 de-bubbling): one continuous flat
+  // cream page — no glow gradients, no backdrop grid, no floating
+  // panel chrome. Values mirror the madrona-experience mock's Quiz
+  // and Quiz·Done views.
+  pageSurface: "#f8e9c8",
+  gridLine: "transparent",
+  panelSurface: "transparent",
+  panelBorder: "none",
+  panelShadow: "none",
+
+  // Putty page-head band with a gold bottom rule, bled to the
+  // viewport edges via the bounded band posture; Bebas display
+  // sizing with the poster tracking.
+  pageHeadSurface: "#f1dfb8",
+  pageHeadRule: "3px solid #d9a62b",
+  pageHeadPosture: "band",
+  pageHeadTitleSize: "2rem",
+  headingLetterSpacing: "0.06em",
+
+  // Olive-bordered option rows; selected = dark-green border over a
+  // darker-cream fill.
+  optionBorder: "2.5px solid #8b8b2e",
+  optionSelectedBorderColor: "#2e4a34",
+  optionSelectedSurface: "#ede3c2",
+
+  // Booth check-in code block: putty surface, gold border.
+  codeSurface: "#f1dfb8",
+  codeBorder: "2.5px solid #d9a62b",
+
+  // Completion CTAs: gold Newsletter and warm-orange Donate (the
+  // poster's warm accent — garnish-tier, so it lives here rather
+  // than as a brand base). Foregrounds are deepened past the mock's
+  // pairings to clear WCAG AA for normal text: deep green on gold
+  // (6.5:1), deep warm ink on orange (5.5:1) — the mock's
+  // near-white-on-orange measured 2.9:1.
+  ctaSurface: "#d9a62b",
+  ctaFg: "#1c2e20",
+  ctaWarmSurface: "#d9822b",
+  ctaWarmFg: "#2a2016",
+
+  // Sponsor attribution line — the poster's purple, label-only.
+  sponsorLabel: "#6b4e8e",
 
   // Themable radii — the poster look is flatter than the platform
   // default; mock uses 10–14px rounding.

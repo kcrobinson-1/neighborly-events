@@ -130,6 +130,11 @@ describe("GamePage", () => {
 
     expect(screen.getByText(`Finish to earn your ${game.entitlementLabel}`)).toBeTruthy();
 
+    // The reward line names an event-owned redemption location, so
+    // an event without a `quizPageHead` registry entry renders no
+    // page-head subtext at all (today's look).
+    expect(document.querySelector(".game-page-subtext")).toBeNull();
+
     fireEvent.click(screen.getByRole("button", { name: "Start game" }));
 
     await waitFor(() => {
@@ -137,6 +142,21 @@ describe("GamePage", () => {
     });
     expect(mockUseAttendeeRedemptionStatus).toHaveBeenCalledWith(null);
     expect(sessionState.start).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders the registry reward line with the config question count for registered events", () => {
+    const game = createGame({ slug: "madrona" });
+    mockUseGameSession.mockReturnValue(createSessionState(game));
+
+    render(<GamePage game={game} onNavigate={() => {}} />);
+
+    // Count from the config (one question in this fixture), reward
+    // line from the `quizPageHead` registry entry for the slug.
+    expect(
+      screen.getByText(
+        "One question. Show your code at the booth when you're done to claim a reward.",
+      ),
+    ).toBeTruthy();
   });
 
   it("shows the start-screen error when the backend session bootstrap fails", async () => {

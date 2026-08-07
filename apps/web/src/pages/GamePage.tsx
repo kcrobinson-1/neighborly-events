@@ -6,10 +6,12 @@ import { CorrectAnswerPanel } from "../game/components/CorrectAnswerPanel";
 import { CurrentQuestionPanel } from "../game/components/CurrentQuestionPanel";
 import { GameCompletionPanel } from "../game/components/GameCompletionPanel";
 import { GameIntroPanel } from "../game/components/GameIntroPanel";
+import { getPageHeadSubtext } from "../game/gameUtils";
 import { useGameSession } from "../game/useGameSession";
 import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
 import { getCompletionCta } from "../../../../shared/events/completionCta";
+import { getQuizPageHead } from "../../../../shared/events/quizPageHead";
 import { routes } from "../../../../shared/urls";
 
 /** Props for the top-level game route. */
@@ -56,6 +58,9 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
   );
 
   const questionCount = game.questions.length;
+  // Event-owned page-head copy: the reward line names the event's
+  // redemption location, so it renders only for registered slugs.
+  const pageHeadCopy = getQuizPageHead(game.slug);
   const isGameActive = isStarted && !isComplete && !isSubmittingCompletion;
   const handleStart = async () => {
     setIsStartingSession(true);
@@ -91,21 +96,34 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
       </nav>
 
       <section className="app-card">
-        <header className={`topbar${isGameActive ? " topbar-compact" : ""}`}>
-          <div>
-            {!isGameActive ? (
-              <p className="eyebrow">{game.location} neighborhood event</p>
+        {/* Page-head: title block plus the reward subtext. Renders as
+            plain flow on the token defaults; themes with a banded
+            page-head (Madrona's putty band) style it via the
+            quiz-surface tokens — no event-keyed branches here. */}
+        <div className="game-page-head">
+          <div className="game-page-head-inner">
+            <header className={`topbar${isGameActive ? " topbar-compact" : ""}`}>
+              <div>
+                {!isGameActive ? (
+                  <p className="eyebrow">{game.location} neighborhood event</p>
+                ) : null}
+                <h1 className={isGameActive ? "topbar-title-compact" : undefined}>
+                  {game.name}
+                </h1>
+              </div>
+              {isGameActive ? (
+                <div className="progress-copy progress-pill" aria-live="polite">
+                  Question {currentIndex + 1} of {questionCount}
+                </div>
+              ) : null}
+            </header>
+            {pageHeadCopy ? (
+              <p className="game-page-subtext">
+                {getPageHeadSubtext(questionCount, pageHeadCopy.rewardLine)}
+              </p>
             ) : null}
-            <h1 className={isGameActive ? "topbar-title-compact" : undefined}>
-              {game.name}
-            </h1>
           </div>
-          {isGameActive ? (
-            <div className="progress-copy progress-pill" aria-live="polite">
-              Question {currentIndex + 1} of {questionCount}
-            </div>
-          ) : null}
-        </header>
+        </div>
 
         {!isStarted ? (
           <GameIntroPanel

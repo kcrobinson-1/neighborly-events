@@ -1,4 +1,4 @@
-import { lazy, type ReactNode, Suspense } from "react";
+import { lazy, type ReactNode, Suspense, useEffect } from "react";
 import { EventAdminPage } from "./pages/EventAdminPage";
 import { GameRoutePage } from "./pages/GameRoutePage";
 import { LazyRouteErrorBoundary } from "./pages/LazyRouteErrorBoundary";
@@ -49,40 +49,48 @@ function LazyRouteFallback(
   );
 }
 
+/** A matched page plus the event slug whose Theme should scope it. */
+type PageContent = {
+  node: ReactNode;
+  themeSlug: string | null;
+};
+
 /** Resolves the pathname to the page component that should be rendered. */
 function getPageContent(
   pathname: string,
   navigate: (path: string, options?: { replace?: boolean }) => void,
-): ReactNode {
+): PageContent {
   const matchedEventAdmin = matchEventAdminPath(pathname);
 
   if (matchedEventAdmin) {
-    return (
-      <ThemeScope theme={getThemeForSlug(matchedEventAdmin.slug)}>
+    return {
+      node: (
         <EventAdminPage
           key={matchedEventAdmin.slug}
           onNavigate={navigate}
           slug={matchedEventAdmin.slug}
         />
-      </ThemeScope>
-    );
+      ),
+      themeSlug: matchedEventAdmin.slug,
+    };
   }
 
   const matchedGame = matchGamePath(pathname);
 
   if (matchedGame) {
-    return (
-      <ThemeScope theme={getThemeForSlug(matchedGame.slug)}>
+    return {
+      node: (
         <GameRoutePage key={matchedGame.slug} onNavigate={navigate} slug={matchedGame.slug} />
-      </ThemeScope>
-    );
+      ),
+      themeSlug: matchedGame.slug,
+    };
   }
 
   const matchedRedeem = matchGameRedeemPath(pathname);
 
   if (matchedRedeem) {
-    return (
-      <ThemeScope theme={getThemeForSlug(matchedRedeem.slug)}>
+    return {
+      node: (
         <LazyRouteErrorBoundary
           body="We couldn't load the redeem surface. Reload to try again."
           chip="Redeem unavailable"
@@ -106,15 +114,16 @@ function getPageContent(
             />
           </Suspense>
         </LazyRouteErrorBoundary>
-      </ThemeScope>
-    );
+      ),
+      themeSlug: matchedRedeem.slug,
+    };
   }
 
   const matchedRedemptions = matchGameRedemptionsPath(pathname);
 
   if (matchedRedemptions) {
-    return (
-      <ThemeScope theme={getThemeForSlug(matchedRedemptions.slug)}>
+    return {
+      node: (
         <LazyRouteErrorBoundary
           body="We couldn't load the redemption monitoring surface. Reload to try again."
           chip="Redemptions unavailable"
@@ -138,24 +147,52 @@ function getPageContent(
             />
           </Suspense>
         </LazyRouteErrorBoundary>
-      </ThemeScope>
-    );
+      ),
+      themeSlug: matchedRedemptions.slug,
+    };
   }
 
-  return <NotFoundPage onNavigate={navigate} />;
+  return { node: <NotFoundPage onNavigate={navigate} />, themeSlug: null };
 }
 
 /** Root application shell for the web prototype. */
 function App() {
   const { pathname, navigate } = usePathnameNavigation();
-  const content = getPageContent(pathname, navigate);
+  const { node, themeSlug } = getPageContent(pathname, navigate);
+  const theme = themeSlug !== null ? getThemeForSlug(themeSlug) : null;
+  const canvasBackground = theme?.bg ?? null;
 
-  return (
+  // The document canvas (elastic-overscroll area) is painted by
+  // `body`, an ancestor of `<ThemeScope>`, so a Theme's tokens cannot
+  // reach it through the cascade. Sync it imperatively with the
+  // event's flat `bg` so overscroll matches the themed page tone;
+  // clearing on unmatched routes falls back to the `:root` default.
+  useEffect(() => {
+    if (canvasBackground === null) {
+      return;
+    }
+
+    document.body.style.background = canvasBackground;
+
+    return () => {
+      document.body.style.background = "";
+    };
+  }, [canvasBackground]);
+
+  // `<ThemeScope>` wraps the `.site-shell` element (not just the page
+  // content) so the shell's page-surface paint (`--page-surface` in
+  // `_layout.scss`) resolves against the event's Theme. The wrapper
+  // stays `display: contents` (`_layout.scss`), so shell layout is
+  // unchanged. Unmatched routes render unscoped against the `:root`
+  // defaults.
+  const shell = (
     <main className="site-shell">
       <section className="backdrop" aria-hidden="true" />
-      {content}
+      {node}
     </main>
   );
+
+  return theme !== null ? <ThemeScope theme={theme}>{shell}</ThemeScope> : shell;
 }
 
 export default App;

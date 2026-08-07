@@ -245,8 +245,11 @@ export function GameCompletionPanel({
           {cta.donate ? (
             <div className="completion-cta-item">
               <p>{cta.donate.body}</p>
+              {/* Warm CTA variant: renders identically to the base
+                  CTA on the token defaults; themes may style the
+                  donate action separately via `--cta-warm-*`. */}
               <a
-                className="completion-cta-button"
+                className="completion-cta-button completion-cta-button-warm"
                 href={cta.donate.href}
                 rel={ctaLinkRel}
                 target={ctaLinkTarget}
