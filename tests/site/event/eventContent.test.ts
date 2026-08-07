@@ -8,6 +8,7 @@ import {
   parseEventDate,
   registeredEventSlugs,
 } from "../../../apps/site/lib/eventContent.ts";
+import { getEventMasthead } from "../../../shared/masthead/index.ts";
 
 describe("getEventContentBySlug", () => {
   it("returns the registered content for the harvest-block-party slug", () => {
@@ -97,17 +98,12 @@ describe("madrona launch content", () => {
     );
   });
 
-  it("carries all four masthead quick links with config-owned destinations", () => {
-    expect(madronaContent.masthead?.quiz?.href).toBe("/event/madrona/game");
-    expect(madronaContent.masthead?.feedback?.href).toBe(
-      "/event/madrona/feedback",
-    );
-    expect(madronaContent.masthead?.signup?.href).toBe(
-      "/event/madrona/signup",
-    );
-    // Same Zeffy destination as the donate section — both compose
+  it("shares the donate destination with the shared masthead registry", () => {
+    // The masthead moved to the cross-app registry
+    // (shared/masthead/mastheadContent.ts — covered by its own test
+    // suite); both it and the donate section compose the Zeffy URL
     // from madrona-facts.ts, so a URL change moves them together.
-    expect(madronaContent.masthead?.donate?.href).toBe(
+    expect(getEventMasthead("madrona")?.donate.href).toBe(
       madronaContent.donate?.href,
     );
   });

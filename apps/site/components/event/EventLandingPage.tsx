@@ -1,3 +1,4 @@
+import type { EventMastheadContent } from "../../../../shared/masthead/index.ts";
 import type { EventContent } from "../../lib/eventContent.ts";
 import { EventCTA } from "./EventCTA.tsx";
 import { EventDonateCTA } from "./EventDonateCTA.tsx";
@@ -6,9 +7,9 @@ import { EventFeedbackCTA } from "./EventFeedbackCTA.tsx";
 import { EventFooter } from "./EventFooter.tsx";
 import { EventHeader } from "./EventHeader.tsx";
 import { EventLineup } from "./EventLineup.tsx";
-import { EventMasthead } from "./EventMasthead.tsx";
 import { EventSchedule } from "./EventSchedule.tsx";
 import { EventSponsors } from "./EventSponsors.tsx";
+import { SiteEventMasthead } from "./SiteEventMasthead.tsx";
 import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
 
 /**
@@ -18,35 +19,48 @@ import { TestEventDisclaimer } from "./TestEventDisclaimer.tsx";
  * non-empty when rendered. Empty arrays render as omitted sections
  * (no empty section heading); this is honest degraded state for
  * content authors, not a rendering bug.
+ *
+ * `masthead` is the shared sticky header bar, resolved by the route
+ * from the per-event registry (`getEventMasthead(slug)`) and passed
+ * down so this template stays a pure function of its props. It
+ * renders as a sibling *above* `<main>` — full-bleed at the top of
+ * the viewport, outside the shell's inline padding — and the
+ * `.event-masthead + main` rule in `_masthead.scss` collapses the
+ * shell's dead top gap only when the bar is present, keeping
+ * masthead-less events byte-identical.
  */
 export function EventLandingPage({
   content,
   slug,
+  masthead,
 }: {
   content: EventContent;
   slug: string;
+  masthead?: EventMastheadContent | null;
 }) {
   return (
-    <main className="event-shell">
-      {content.testEvent ? <TestEventDisclaimer /> : null}
-      {content.masthead ? <EventMasthead masthead={content.masthead} /> : null}
-      <EventHeader content={content} slug={slug} />
-      {content.schedule.days.length > 0 ? (
-        <EventSchedule schedule={content.schedule} />
-      ) : null}
-      {content.lineup.length > 0 ? (
-        <EventLineup lineup={content.lineup} />
-      ) : null}
-      {content.sponsors.length > 0 ? (
-        <EventSponsors sponsors={content.sponsors} />
-      ) : null}
-      {content.faq.length > 0 ? <EventFAQ faq={content.faq} /> : null}
-      <EventCTA cta={content.cta} slug={slug} />
-      {content.feedback ? (
-        <EventFeedbackCTA feedback={content.feedback} slug={slug} />
-      ) : null}
-      {content.donate ? <EventDonateCTA donate={content.donate} /> : null}
-      <EventFooter footer={content.footer} />
-    </main>
+    <>
+      {masthead ? <SiteEventMasthead masthead={masthead} /> : null}
+      <main className="event-shell">
+        {content.testEvent ? <TestEventDisclaimer /> : null}
+        <EventHeader content={content} slug={slug} />
+        {content.schedule.days.length > 0 ? (
+          <EventSchedule schedule={content.schedule} />
+        ) : null}
+        {content.lineup.length > 0 ? (
+          <EventLineup lineup={content.lineup} />
+        ) : null}
+        {content.sponsors.length > 0 ? (
+          <EventSponsors sponsors={content.sponsors} />
+        ) : null}
+        {content.faq.length > 0 ? <EventFAQ faq={content.faq} /> : null}
+        <EventCTA cta={content.cta} slug={slug} />
+        {content.feedback ? (
+          <EventFeedbackCTA feedback={content.feedback} slug={slug} />
+        ) : null}
+        {content.donate ? <EventDonateCTA donate={content.donate} /> : null}
+        <EventFooter footer={content.footer} />
+      </main>
+    </>
   );
 }

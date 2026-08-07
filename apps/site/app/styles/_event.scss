@@ -234,8 +234,7 @@
 /*
  * Artist-link chips: one recognizable, consistently-ordered chip
  * per verified platform (`EventLineup` owns the labels and order).
- * The 44px min-height keeps the tap target phone-friendly, same as
- * `.event-masthead-link`.
+ * The 44px min-height keeps the tap target phone-friendly.
  */
 .event-lineup-artist-links {
   display: flex;
