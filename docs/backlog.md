@@ -354,6 +354,27 @@ prioritization before starting.
   feedback shapes the requirements.
   Detail: [`docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md` — Backlog Impact](/docs/plans/epics/demo-expansion/m3-demo-mode-auth-bypass.md)
 
+- [ ] **`dev` Finish making day-of donate externality content-owned**
+  The cross-cutting invariant is that whether a link opens in a new
+  browsing context is expressed in that link's own content shape and
+  applied uniformly, with no component deciding it by naming a link
+  slot. Four link shapes now honor that — `MastheadLink`,
+  `EventLandingAction`, `CompletionCtaLink`, and the day-of volunteer
+  section's `yearRound`. The donate slot does not: `EventContent.donate`
+  carries no externality field, so `EventDayOfLanding` and the
+  season-wrap action both hardcode `target="_blank"` by slot. It is
+  correct for every event authoring donate today, which is why it has
+  survived — the cost is that a future organization whose donation page
+  lives on its own site is forced into a new tab it never asked for,
+  and the invariant reads as satisfied while one slot is exempt.
+  Bounded: add the field, derive the attributes at both call sites,
+  and assert the same-tab case (the positive case passes either way, so
+  only the negative one discriminates). Surfaced by review on the
+  volunteer section, which had the same defect and was fixed there.
+  The sponsor-logo and artist-link anchors are deliberately out of
+  scope — those destinations are third-party by construction.
+  Detail: TBD
+
 - [ ] **`dev` Rewrite or close the feedback + subscription plugin item**
   This item was scoped around absorbing the standalone signup page at
   `/event/<slug>/signup` and an embeddable email-entry widget. That

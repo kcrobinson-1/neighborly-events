@@ -320,6 +320,21 @@ export type EventDayOfLandingContent = {
       body: string;
       actionLabel: string;
       href: string;
+      /**
+       * Declares that this destination leaves the platform; the
+       * renderer opens exactly the links carrying it in a new
+       * browsing context with `rel="noopener"`. Same name, same
+       * meaning as the field on `EventLandingAction` above,
+       * `MastheadLink` (`shared/masthead/mastheadContent.ts`), and
+       * `CompletionCtaLink` (`shared/events/completionCta.ts`).
+       *
+       * Not hardcoded in the renderer even though every event
+       * authoring this today sets it: this block is
+       * platform-generic, and an organization whose volunteer page
+       * is a page on its own site would otherwise be forced into a
+       * new tab it never asked for.
+       */
+      external?: boolean;
     };
   };
   footer: {

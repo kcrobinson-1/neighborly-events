@@ -260,6 +260,7 @@ export const madronaContent: EventContent = {
         body: "The association is all volunteers — parks, safety, events, communications. If tonight made you want in, there’s a spot for you.",
         actionLabel: "Volunteer with the association",
         href: madronaFacts.volunteerHref,
+        external: true,
       },
     },
     footer: {

@@ -239,8 +239,8 @@ export function LandingTonightSections({
           <a
             className="event-landing-volunteer-action"
             href={landing.volunteer.yearRound.href}
-            target="_blank"
-            rel="noopener"
+            target={landing.volunteer.yearRound.external ? "_blank" : undefined}
+            rel={landing.volunteer.yearRound.external ? "noopener" : undefined}
           >
             {landing.volunteer.yearRound.actionLabel}
           </a>

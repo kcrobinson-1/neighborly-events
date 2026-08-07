@@ -558,6 +558,46 @@ describe("EventDayOfLanding — volunteer section", () => {
     ).toBeTruthy();
   });
 
+  it("keeps the year-round link in the same tab when its content declares no externality", () => {
+    // Externality is content-owned, not decided by the renderer naming
+    // this slot. The block is platform-generic: an organization whose
+    // volunteer page lives on its own site would otherwise be forced
+    // into a new tab it never asked for. Asserting the negative case is
+    // the only way to tell a content-driven attribute from a hardcoded
+    // one — madrona sets `external`, so the positive case passes either
+    // way.
+    setClock(CONCERT_DAY);
+    const landing = madronaContent.landing!;
+    const { container } = render(
+      <EventLandingPage
+        content={{
+          ...madronaContent,
+          landing: {
+            ...landing,
+            volunteer: {
+              ...landing.volunteer!,
+              yearRound: {
+                ...landing.volunteer!.yearRound,
+                href: "/volunteer",
+                external: undefined,
+              },
+            },
+          },
+        }}
+        slug="madrona"
+        masthead={getEventMasthead("madrona")}
+        mastheadSvgMarkup={SVG_FIXTURE}
+      />,
+    );
+
+    const link = within(
+      container.querySelector(".event-landing-volunteer") as HTMLElement,
+    ).getByRole("link", { name: "Volunteer with the association" });
+    expect(link.getAttribute("href")).toBe("/volunteer");
+    expect(link.getAttribute("target")).toBeNull();
+    expect(link.getAttribute("rel")).toBeNull();
+  });
+
   it("renders no section for an event that authors no volunteer block", () => {
     // Render-when-present, asserted at both clocks because the section
     // is built in the resolver's component and returned from two
