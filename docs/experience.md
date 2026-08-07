@@ -156,6 +156,53 @@ There should not be a traditional marketing-style homepage in front of the game.
 
 Example entry promise: "Answer 6 quick questions, support local sponsors, and get a reward ticket in under 2 minutes."
 
+## Event Landing Page (Day-Of Companion)
+
+An event's landing page is the day-of companion to the organizer's own
+marketing presence, not a second marketing site. Visitors arrive
+already knowing what the event is — from a poster, a newsletter, or
+the organizer's website — so the page never reintroduces it: no
+address block, no what-is-this paragraph, no series-length subheader.
+Its jobs, in order: welcome you, show tonight, and put the actions —
+quiz, newsletter, feedback, donate — one tap away.
+
+Events opt into this layout by authoring `EventContent.landing`
+(events without it keep the generic multi-section template). The
+layout, top to bottom:
+
+1. **Hero** — brand gradient, the event's masthead art inlined as
+   SVG, and one short accent-face welcome line. Nothing else.
+2. **Action grid** — four big tiles (quiz / newsletter / feedback /
+   donate), each with a one-line subtitle. Destinations are
+   renderer-owned so the grid can never disagree with the routes.
+3. **Tonight** — the featured night's date line and per-night
+   run-of-show, resolved by `resolveTonight` in the event's own
+   timezone: on a concert day the page shows that night until local
+   midnight (post-show visitors still see tonight); other days show
+   the next night retitled "Next concert"; after the final night the
+   section becomes a season wrap-up emphasizing newsletter and
+   donate, while the quiz stays available. The page is statically
+   prerendered, so the build-time state is baked in and a mount
+   effect re-resolves against the device clock.
+4. **Presenting sponsor band** — tinted full-width band naming the
+   event-wide presenting sponsor, every night.
+5. **On stage** — the featured night's artist: photo, accent-face
+   tagline, short bio, verified-link chips (a chip's presence is a
+   claim of verification), and the night's headliner-sponsor credit
+   line.
+6. **This season** — a compact strip of the season's nights with the
+   featured night highlighted; the only nod to the series. Deep
+   artist content lives one tap away or on the organizer's site.
+7. **FAQ** (optional) — day-of practical answers only, per the
+   no-reintroduction rule above.
+8. **Footer** — dark brand band: banner line, the volunteer-run
+   sentence, and the contact address.
+
+Reward-language rule, restated from the design spec because it binds
+all surfaces including this one: the words "trinket" and "raffle"
+appear nowhere; the only reward phrasing is the generic "show your
+code to the booth to claim a reward."
+
 ## Should Each Question Be Its Own Page?
 
 No. Each question should be a single visible card inside a lightweight SPA flow, not a separate hard-loaded page.

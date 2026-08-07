@@ -8,8 +8,10 @@ type ArtistLinks = NonNullable<
  * Display labels and render order for the artist-link chips. The
  * order is fixed here, not by content-object key order, so every
  * band card presents the same platforms in the same sequence.
+ * Exported so the day-of landing's On-stage section renders the same
+ * slots in the same order from one table.
  */
-const ARTIST_LINK_SLOTS: ReadonlyArray<{
+export const ARTIST_LINK_SLOTS: ReadonlyArray<{
   key: keyof ArtistLinks;
   label: string;
 }> = [

@@ -10,6 +10,8 @@ import type {
 import { parseEventDate } from "../../../apps/site/lib/eventContent.ts";
 import {
   formatNightDate,
+  formatNightDateShort,
+  resolvableNights,
   resolveTonight,
 } from "../../../apps/site/lib/eventNights.ts";
 
@@ -157,6 +159,54 @@ describe("formatNightDate", () => {
   it("falls back to the raw string for invalid dates", () => {
     expect(formatNightDate("2026-02-30")).toBe("2026-02-30");
     expect(formatNightDate("not-a-date")).toBe("not-a-date");
+  });
+});
+
+describe("formatNightDateShort", () => {
+  it("formats a night date as abbreviated month and day", () => {
+    expect(formatNightDateShort("2026-08-11")).toBe("Aug 11");
+    expect(formatNightDateShort("2026-12-05")).toBe("Dec 5");
+  });
+
+  it("falls back to the raw string for invalid dates", () => {
+    expect(formatNightDateShort("2026-02-30")).toBe("2026-02-30");
+    expect(formatNightDateShort("not-a-date")).toBe("not-a-date");
+  });
+});
+
+describe("resolvableNights", () => {
+  it("sorts valid nights ascending without mutating the input", () => {
+    const unsorted: EventNights = {
+      timezone: "America/Los_Angeles",
+      nights: [night("2026-08-25"), night("2026-08-11"), night("2026-08-18")],
+    };
+    expect(resolvableNights(unsorted).map((n) => n.date)).toEqual([
+      "2026-08-11",
+      "2026-08-18",
+      "2026-08-25",
+    ]);
+    expect(unsorted.nights.map((n) => n.date)).toEqual([
+      "2026-08-25",
+      "2026-08-11",
+      "2026-08-18",
+    ]);
+  });
+
+  it("drops nights whose date fails calendar validation", () => {
+    const withTypo: EventNights = {
+      timezone: "America/Los_Angeles",
+      nights: [night("2026-08-32"), night("2026-08-18")],
+    };
+    expect(resolvableNights(withTypo).map((n) => n.date)).toEqual([
+      "2026-08-18",
+    ]);
+  });
+
+  it("returns the registered night objects, not copies", () => {
+    // Same referential-identity stance as `resolveTonight`, so the
+    // This-season strip's featured-card comparison against the
+    // resolved night can never miss.
+    expect(resolvableNights(tuesdays)[0]).toBe(tuesdays.nights[0]);
   });
 });
 
