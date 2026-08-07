@@ -10,8 +10,13 @@ describe("getCompletionCta", () => {
 
     expect(cta).not.toBeNull();
     expect(cta?.heading).toBe("Enjoying Music in the Playfield?");
-    expect(cta?.newsletter?.buttonLabel).toBe("Sign up for updates");
-    expect(cta?.newsletter?.href).toBe("/event/madrona/signup");
+    expect(cta?.emailList?.buttonLabel).toBe("Join the email list");
+    expect(cta?.emailList?.body).toBe(
+      "Next week's lineup and neighborhood news, straight from the association.",
+    );
+    expect(cta?.emailList?.href).toBe(
+      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+    );
     expect(cta?.donate?.buttonLabel).toBe("Support the Playfield");
     expect(cta?.donate?.href).toBe(
       "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
@@ -35,20 +40,39 @@ describe("getCompletionCta", () => {
     }
   });
 
-  it("keeps newsletter destinations on same-origin signup paths for newsletter-enabled events", () => {
-    // The set of slugs with a standalone signup surface: apps/site's
-    // EventContent registry entries carrying `newsletterSignup`, backed
-    // by newsletter_enabled_events.
-    const newsletterEnabledSlugs = new Set(["madrona"]);
-
+  it("keeps every email-list destination an external https address that declares itself external", () => {
+    // Replaces the invariant that required these hrefs to be on-site
+    // `/event/<slug>/signup` paths. The platform no longer serves an
+    // email-signup route, so the posture the registry now has to hold is
+    // the opposite one: the destination belongs to whoever runs the
+    // list, and the panel needs the `external` declaration to open it in
+    // a new context. Asserting the scheme alone would not catch a
+    // destination that leaves the platform without declaring it, which
+    // would silently open the association's signup page in the same tab.
     for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
-      if (cta.newsletter) {
-        const match = cta.newsletter.href.match(/^\/event\/([^/]+)\/signup$/);
-        expect(match, `${slug} newsletter href shape`).not.toBeNull();
+      if (cta.emailList) {
         expect(
-          newsletterEnabledSlugs.has(match![1]),
-          `${slug} newsletter href targets a newsletter-enabled event`,
+          cta.emailList.href.startsWith("https://"),
+          `${slug} email-list href is https`,
         ).toBe(true);
+        expect(
+          cta.emailList.external,
+          `${slug} email-list href declares externality`,
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("names no CTA section a newsletter — the association's newsletter is a printed mailer", () => {
+    for (const [slug, cta] of Object.entries(completionCtaBySlug)) {
+      for (const link of [cta.emailList, cta.donate]) {
+        if (!link) continue;
+        expect(link.buttonLabel.toLowerCase(), `${slug} button`).not.toContain(
+          "newsletter",
+        );
+        expect(link.body.toLowerCase(), `${slug} body`).not.toContain(
+          "newsletter",
+        );
       }
     }
   });

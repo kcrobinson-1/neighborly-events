@@ -95,18 +95,17 @@
  * (`harvest-block-party`, `riverside-jam`) deliberately omit
  * `feedback` so the omission-guard falsifier stays structural.
  *
- * `newsletterSignup?` is the standalone email-capture counterpart to
- * `feedback?`, with the same presence semantics on its own route:
- * presence makes `/event/<slug>/signup` a real single-field form
- * route; absence renders the friendly disabled state there. The
- * form's anon write path is the `submit_newsletter_signup` SECURITY
- * DEFINER RPC, gated at the DB by the `newsletter_enabled_events`
- * registry (a seam deliberately separate from
- * `feedback_enabled_events`, so an event can offer signup without
- * offering feedback) — as with `feedback?`, enabling a new event
- * takes both a content-module edit (to surface the form) and a
- * registry seed (to admit writes). The two test events omit the
- * field so the omission-guard falsifier stays structural.
+ * There is no on-site email-signup counterpart to `feedback?`. The
+ * platform had one — a `newsletterSignup` block gating a
+ * `/event/<slug>/signup` form route — and it was removed: an
+ * association that already runs its own list on a mail provider is
+ * better served by the platform pointing at that list than by
+ * competing with it, and no event asked for the on-site surface. An
+ * event's email-list affordance is now a content-owned external
+ * destination on `landing.actions.emailList` (and on the completion
+ * CTA registry, and the masthead registry) rather than a route the
+ * platform serves. The opt-in checkbox on the feedback form is
+ * unaffected and keeps writing to the same consent log.
  *
  * `donate?` is the donation counterpart to `feedback?`, following
  * the same named-outer-field discipline (not a generic `links[]`):
@@ -275,7 +274,13 @@ export type EventDayOfLandingContent = {
   };
   actions: {
     quiz: EventLandingAction;
-    newsletter: EventLandingAction;
+    /**
+     * The email-list tile and the season-wrap action. Both render
+     * only when this action carries an `href` — the platform serves
+     * no email-signup route to derive one from, so an event that
+     * omits it offers no email-list affordance at all.
+     */
+    emailList: EventLandingAction;
     feedback: EventLandingAction;
     donate: EventLandingAction;
   };
@@ -367,14 +372,6 @@ export type EventContent = {
       placeholder?: string;
       newsletterOptInLabel: string;
     };
-    thankYouMessage: string;
-  };
-  newsletterSignup?: {
-    heading: string;
-    body?: string;
-    emailLabel: string;
-    emailPlaceholder?: string;
-    submitLabel: string;
     thankYouMessage: string;
   };
   donate?: {

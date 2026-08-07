@@ -13,23 +13,21 @@
  * Every CTA section carries its own `href` — the component renders
  * destinations from config and never derives them from the game
  * slug, so a registry key (like the demo fixture below) can point at
- * a destination owned by a different slug. `newsletter.href` must be
- * the same-origin signup path of an event whose newsletter surface
- * is enabled — the `newsletter_enabled_events` row seeded by the
- * standalone-signup migration plus the apps/site
- * `EventContent.newsletterSignup` block that makes
- * `/event/<slug>/signup` a real form route. The completion panel
- * links there with a plain same-origin anchor because the signup
- * route is owned by apps/site across the proxy topology. CTA links
- * navigate in the same tab once the completed quiz state (including
- * the check-in code) is confirmed persisted on the device — leaving
- * the quiz app is then loss-free and returning restores the results
- * without a replay; when device storage is unavailable the panel
- * falls back to new-tab links so navigation cannot destroy the only
- * copy of the code. This registry is the deliberately
- * lightweight launch-mode conditional (driver: Aug 11 Madrona launch
- * push); if per-event content later consolidates into a shared
- * registry, fold this module into it.
+ * a destination owned by a different slug.
+ *
+ * A section whose content sets `external` opens in a new browsing
+ * context always. A same-origin section navigates in the same tab
+ * once the completed quiz state (including the check-in code) is
+ * confirmed persisted on the device — leaving the quiz app is then
+ * loss-free and returning restores the results without a replay —
+ * and falls back to a new tab when device storage is unavailable, so
+ * navigation cannot destroy the only copy of the code. The two rules
+ * are independent; see `GameCompletionPanel`'s `ctaLinkAttrs`.
+ *
+ * This registry is the deliberately lightweight launch-mode
+ * conditional (driver: Aug 11 Madrona launch push); if per-event
+ * content later consolidates into a shared registry, fold this
+ * module into it.
  *
  * Config-owned hrefs keep destinations out of component code so
  * events without an entry stay unaffected and a URL swap is a
@@ -38,18 +36,16 @@
  * `first-sample` is the local-prototype demo fixture of the Madrona
  * experience (`shared/game-config/sample-games.ts`); it mirrors the
  * `madrona` entry so local UI review and the demo flow exercise the
- * block. The mirror shares the `madrona` object, so its newsletter
- * href names the real `/event/madrona/signup` route rather than a
- * nonexistent `first-sample` one. Same-origin resolution still
- * requires an origin that proxies site routes (the canonical site
- * origin and its preview deployments): on the bare Vite dev server —
- * the only place the fixture resolves — and on the direct apps/web
- * host there is no cross-app proxy, so the click falls to the SPA's
- * not-found page. Accepted: the fixture exists for rendering
- * coverage, not cross-app navigation, and closing that gap is a dev-
- * topology task (a Vite dev proxy or origin-aware href helper)
- * tracked in `docs/tracking/dev-workflow-improvements.md`, not a
- * content concern.
+ * block. The mirror shares the `madrona` object, so both of its
+ * destinations are the association's real ones rather than
+ * nonexistent `first-sample` equivalents. Both are absolute external
+ * URLs, so they resolve identically from every origin — including the
+ * bare Vite dev server, where the fixture is the only entry that
+ * renders. (Before the email-list destination moved off the platform
+ * it was a same-origin path that only resolved behind the cross-app
+ * proxy; that dev-topology gap, still tracked in
+ * `docs/tracking/dev-workflow-improvements.md`, no longer touches
+ * this registry.)
  */
 
 import { madronaFacts } from "./madrona-facts.ts";
@@ -77,21 +73,24 @@ export type CompletionCtaLink = {
 export type CompletionCtaContent = {
   heading: string;
   /**
-   * Present only when the event's newsletter surface is enabled;
-   * `href` is the same-origin `/event/<slug>/signup` path of that
-   * surface.
+   * Present only when the event has an email-list destination to
+   * offer. `href` is that destination, whatever it is — the
+   * organization's own signup page on a mail provider, for events
+   * like Madrona whose list the platform does not own.
    */
-  newsletter?: CompletionCtaLink;
+  emailList?: CompletionCtaLink;
   /** Present only when the event has a donation destination. */
   donate?: CompletionCtaLink;
 };
 
 const madronaCompletionCta: CompletionCtaContent = {
   heading: "Enjoying Music in the Playfield?",
-  newsletter: {
-    body: "Get next week's lineup and neighborhood events in your inbox.",
-    buttonLabel: "Sign up for updates",
-    href: "/event/madrona/signup",
+  emailList: {
+    body:
+      "Next week's lineup and neighborhood news, straight from the association.",
+    buttonLabel: "Join the email list",
+    href: madronaFacts.emailListHref,
+    external: true,
   },
   donate: {
     body:

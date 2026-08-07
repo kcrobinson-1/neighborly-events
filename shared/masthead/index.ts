@@ -3,6 +3,7 @@ export {
   type EventMastheadActiveItem,
   type EventMastheadLinkComponent,
   type EventMastheadLinkProps,
+  type EventMastheadNavItem,
 } from "./EventMasthead.tsx";
 export {
   getEventMasthead,

@@ -125,17 +125,17 @@ import type { EventContent } from "../lib/eventContent.ts";
  * `shared/masthead/mastheadContent.ts` because the quiz app renders
  * the same bar and this apps/site module is not importable there.
  *
- * `newsletterSignup` opts madrona in to the standalone email-capture
- * route at `/event/madrona/signup`: presence here renders the form
- * (absence would render the route's disabled state), and anon
- * submissions flow through the `submit_newsletter_signup` RPC into
- * the same `newsletter_opt_ins` consent log the feedback form's
- * checkbox writes to — gated at the DB by the
- * `newsletter_enabled_events` registry row seeded alongside the RPC's
- * migration. Copy here composes nothing from `madrona-facts.ts`
- * because it restates no shared fact (no reward, booth, or donation
- * reference); if a future revision does, compose it from the facts
- * module rather than restating the literal.
+ * The email-list affordance (`landing.actions.emailList`) points at
+ * the association's own Mailchimp signup page, composed from
+ * `madrona-facts.ts` because three surfaces state the same address:
+ * this tile, the masthead nav item, and the quiz completion panel.
+ * The platform serves no signup route of its own — the association
+ * already runs the list, and it is not called a newsletter anywhere
+ * an attendee reads, because the association's newsletter is a
+ * printed mailer. The feedback form's opt-in checkbox is a separate
+ * seam and is unchanged: it still writes through `subscribe_email`
+ * into the `newsletter_opt_ins` consent log, gated at the DB by the
+ * `newsletter_enabled_events` registry row.
  */
 /** The 5:30 PM booth-opening session, identical on all three nights. */
 const boothOpensSession = {
@@ -214,9 +214,11 @@ export const madronaContent: EventContent = {
         label: "Take the quiz",
         subtitle: "how well do you know Madrona?",
       },
-      newsletter: {
-        label: "Newsletter",
-        subtitle: "next week’s lineup, in your inbox",
+      emailList: {
+        label: "Email list",
+        subtitle: "neighborhood news from the association",
+        href: madronaFacts.emailListHref,
+        external: true,
       },
       feedback: {
         label: "Feedback",
@@ -441,15 +443,6 @@ export const madronaContent: EventContent = {
       newsletterOptInLabel: "Add me to the Madrona Neighborhood Association mailing list",
     },
     thankYouMessage: "Thanks — every response goes straight to the organizers.",
-  },
-  newsletterSignup: {
-    heading: "Sign up for updates",
-    body: "Get next week's lineup and neighborhood events in your inbox — straight from the Madrona Neighborhood Association.",
-    emailLabel: "Email",
-    emailPlaceholder: "you@example.com",
-    submitLabel: "Sign me up",
-    thankYouMessage:
-      "You're on the list — see you at the Playfield.",
   },
   donate: {
     heading: "Keep the Playfield free",

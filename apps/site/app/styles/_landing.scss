@@ -18,7 +18,7 @@
  * `--accent-garnish`, and the donate tile takes the
  * `--cta-warm-surface` / `--cta-warm-fg` pair the quiz's donate CTA
  * already uses, so the two surfaces cannot drift onto different
- * oranges. The newsletter tile likewise shares `--cta-surface` /
+ * oranges. The email-list tile likewise shares `--cta-surface` /
  * `--cta-fg` with its quiz counterpart.
  *
  * Opacity reductions are deliberately absent throughout (action-tile
@@ -128,7 +128,7 @@
   background: var(--primary);
 }
 
-.event-landing-action-newsletter {
+.event-landing-action-email-list {
   background: var(--cta-surface);
   color: var(--cta-fg);
 }
@@ -424,7 +424,7 @@
   letter-spacing: 1.5px;
 }
 
-.event-landing-wrap-action-newsletter {
+.event-landing-wrap-action-email-list {
   background: var(--cta-surface);
   color: var(--cta-fg);
 }

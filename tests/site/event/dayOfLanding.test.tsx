@@ -89,7 +89,7 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     expect(container.querySelector(".event-landing-welcome")).not.toBeNull();
   });
 
-  it("renders the four action tiles with renderer-owned destinations", () => {
+  it("renders the four action tiles, three renderer-owned and the email list content-owned", () => {
     setClock("2026-08-11T19:00:00Z");
     const { container } = renderMadrona();
     const actions = within(
@@ -98,14 +98,37 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
 
     const quiz = actions.getByRole("link", { name: /Take the quiz/ });
     expect(quiz.getAttribute("href")).toBe("/event/madrona/game");
-    const newsletter = actions.getByRole("link", { name: /Newsletter/ });
-    expect(newsletter.getAttribute("href")).toBe("/event/madrona/signup");
     const feedback = actions.getByRole("link", { name: /Feedback/ });
     expect(feedback.getAttribute("href")).toBe("/event/madrona/feedback");
     const donate = actions.getByRole("link", { name: /Donate/ });
     expect(donate.getAttribute("href")).toBe(madronaContent.donate?.href);
     expect(donate.getAttribute("target")).toBe("_blank");
     expect(donate.getAttribute("rel")).toBe("noopener");
+
+    // The email-list tile's destination is content-owned rather than
+    // composed from the slug, and it leaves the platform — so the
+    // destination and the new-context attributes are asserted in one
+    // case: a correct address opened in the same tab would still drop
+    // the reader out of the day-of page mid-concert.
+    const emailList = actions.getByRole("link", { name: /Email list/ });
+    expect(emailList.getAttribute("href")).toBe(
+      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+    );
+    expect(emailList.getAttribute("target")).toBe("_blank");
+    expect(emailList.getAttribute("rel")).toBe("noopener");
+    expect(emailList.textContent).toContain(
+      "neighborhood news from the association",
+    );
+  });
+
+  it("names no attendee-facing affordance a newsletter", () => {
+    // The association's newsletter is a printed mailer delivered in the
+    // mail. Asserting over the rendered page rather than over the
+    // content module catches a renderer-owned string too.
+    setClock("2026-08-11T19:00:00Z");
+    const { container } = renderMadrona();
+
+    expect(container.textContent?.toLowerCase()).not.toContain("newsletter");
   });
 
   it("renders Tonight with the night's date line and starred main-set rows", () => {
@@ -289,13 +312,17 @@ describe("EventDayOfLanding — season wrap", () => {
     expect(container.querySelector(".event-landing-presenting")).toBeNull();
     expect(container.querySelector(".event-landing-sched")).toBeNull();
 
-    // Newsletter + Donate emphasized; the quiz tile stays available
+    // Email list + Donate emphasized; the quiz tile stays available
     // in the action grid above.
     const wrapActions = container.querySelector(".event-landing-wrap-actions");
-    const newsletter = within(wrapActions as HTMLElement).getByRole("link", {
-      name: "Newsletter",
+    const emailList = within(wrapActions as HTMLElement).getByRole("link", {
+      name: "Email list",
     });
-    expect(newsletter.getAttribute("href")).toBe("/event/madrona/signup");
+    expect(emailList.getAttribute("href")).toBe(
+      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+    );
+    expect(emailList.getAttribute("target")).toBe("_blank");
+    expect(emailList.getAttribute("rel")).toBe("noopener");
     const donate = within(wrapActions as HTMLElement).getByRole("link", {
       name: "Donate",
     });

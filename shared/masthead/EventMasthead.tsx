@@ -2,12 +2,17 @@ import type { ComponentType, ReactNode } from "react";
 
 import type { EventMastheadContent, MastheadLink } from "./mastheadContent.ts";
 
+/** The nav items the bar renders, in order, between brand and pill. */
+export type EventMastheadNavItem = "quiz" | "emailList" | "feedback";
+
 /**
  * Items that can carry the active-page underline. `donate` is
  * excluded (the pill is never an "active page") and the brand lockup
- * is the Home link, which has no underline state.
+ * is the Home link, which has no underline state. `emailList` is
+ * excluded because its destination is external: the platform serves
+ * no page for it, so it can never be the page the reader is on.
  */
-export type EventMastheadActiveItem = "quiz" | "newsletter" | "feedback";
+export type EventMastheadActiveItem = "quiz" | "feedback";
 
 /**
  * Props the injected link components must accept. `target` / `rel`
@@ -72,16 +77,16 @@ function PlainAnchor({
  * the bar must render inside a themed scope.
  *
  * Layout (spec §3): the brand lockup IS the Home link — no separate
- * "Home" item — then Quiz, Newsletter, Feedback, and Donate as the
- * one visually distinct pill. `active` draws the gold underline on
- * the current page's item. At phone width the nav scrolls
- * horizontally rather than collapsing to a hamburger.
+ * "Home" item — then the nav items and Donate as the one visually
+ * distinct pill. `active` draws the gold underline on the current
+ * page's item. At phone width the nav scrolls horizontally rather
+ * than collapsing to a hamburger.
  *
  * Navigation mechanism is injected per link through `linkComponents`
  * because same-app vs cross-app differs by consumer: apps/site passes
- * `next/link` for its own routes (home, newsletter, feedback) and
- * leaves quiz on the default plain anchor so the hard load re-enters
- * the apps/web Vercel rewrite (the `EventHeader` hero-CTA rationale);
+ * `next/link` for its own routes (home, feedback) and leaves quiz on
+ * the default plain anchor so the hard load re-enters the apps/web
+ * Vercel rewrite (the `EventHeader` hero-CTA rationale);
  * apps/web passes nothing and every link hard-navigates through the
  * proxy (the `completionCta` precedent). `donate` renders as the pill
  * and is not injectable, but its new-tab behavior is no longer
@@ -97,21 +102,17 @@ export function EventMasthead({
   masthead: EventMastheadContent;
   active?: EventMastheadActiveItem;
   linkComponents?: Partial<
-    Record<"home" | EventMastheadActiveItem, EventMastheadLinkComponent>
+    Record<"home" | EventMastheadNavItem, EventMastheadLinkComponent>
   >;
 }) {
   const HomeLink = linkComponents?.home ?? PlainAnchor;
 
-  const navLinkClass = (item: EventMastheadActiveItem) =>
+  const navLinkClass = (item: EventMastheadNavItem) =>
     item === active
       ? "event-masthead-link event-masthead-link-active"
       : "event-masthead-link";
 
-  const navItems: EventMastheadActiveItem[] = [
-    "quiz",
-    "newsletter",
-    "feedback",
-  ];
+  const navItems: EventMastheadNavItem[] = ["quiz", "emailList", "feedback"];
 
   return (
     <header className="event-masthead">

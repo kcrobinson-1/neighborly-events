@@ -1,7 +1,10 @@
 /**
- * Client-side "structurally email-shaped" gate shared by the feedback
- * form and the standalone newsletter signup form (extracted from
- * `FeedbackForm.tsx` when the signup form became its second consumer).
+ * Client-side "structurally email-shaped" gate for the feedback
+ * form's optional email field. It lives in its own module because it
+ * once had a second consumer — the standalone signup form, since
+ * removed with its route — and because its DB-level counterpart is
+ * shared by every writer to the opt-in log, so the two shapes are
+ * easier to keep in step named than inlined.
  *
  * Decision 6 of the feedback epic: presence of `@`, at least one
  * non-whitespace non-`@` character on each side, and at least one `.`

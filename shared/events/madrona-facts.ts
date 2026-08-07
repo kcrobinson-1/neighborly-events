@@ -24,6 +24,18 @@ export const madronaFacts = {
   /** The Madrona Neighborhood Association's Zeffy donation form. */
   donateHref:
     "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+  /**
+   * The association's Mailchimp community-email signup page — the
+   * canonical destination it points people at everywhere else, and
+   * the one every attendee-facing email-list affordance resolves to
+   * (masthead, landing action grid, season wrap, completion panel).
+   *
+   * Not called a newsletter anywhere attendees can read: the
+   * association's newsletter is a printed mailer delivered in the
+   * mail, so the word names the wrong artifact.
+   */
+  emailListHref:
+    "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
   /** The booth where quiz completion is redeemed for the reward. */
   booth: {
     name: "Madrona Neighborhood Association booth",

@@ -95,7 +95,7 @@ export function GameCompletionPanel({
   // once the completion result exists, below the verification block, and
   // only for events registered in the completion CTA registry.
   const shouldShowCta =
-    Boolean(completion) && Boolean(cta?.newsletter ?? cta?.donate);
+    Boolean(completion) && Boolean(cta?.emailList ?? cta?.donate);
   // Two independent reasons a CTA link opens in a new browsing context, and
   // they do not substitute for one another:
   //
@@ -237,9 +237,9 @@ export function GameCompletionPanel({
       {shouldShowCta && cta ? (
         <aside className="completion-cta" aria-labelledby="completion-cta-heading">
           <h3 id="completion-cta-heading">{cta.heading}</h3>
-          {cta.newsletter ? (
+          {cta.emailList ? (
             <div className="completion-cta-item">
-              <p>{cta.newsletter.body}</p>
+              <p>{cta.emailList.body}</p>
               {/* Plain anchor: a same-origin destination here is owned by
                   apps/site, so the navigation must be a hard load for the
                   proxy to re-evaluate. The destination is config-owned —
@@ -249,10 +249,10 @@ export function GameCompletionPanel({
                   `external` declaration and the device-persistence state. */}
               <a
                 className="completion-cta-button"
-                href={cta.newsletter.href}
-                {...ctaLinkAttrs(cta.newsletter)}
+                href={cta.emailList.href}
+                {...ctaLinkAttrs(cta.emailList)}
               >
-                {cta.newsletter.buttonLabel}
+                {cta.emailList.buttonLabel}
               </a>
             </div>
           ) : null}

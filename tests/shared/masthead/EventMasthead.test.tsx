@@ -16,7 +16,11 @@ const mastheadFixture: EventMastheadContent = {
     homeHref: "/event/synthetic-event",
   },
   quiz: { label: "Quiz", href: "/event/synthetic-event/game" },
-  newsletter: { label: "Newsletter", href: "/event/synthetic-event/signup" },
+  emailList: {
+    label: "Email list",
+    href: "https://lists.example.org/synthetic-event",
+    external: true,
+  },
   feedback: { label: "Feedback", href: "/event/synthetic-event/feedback" },
   donate: {
     label: "Donate",
@@ -31,7 +35,7 @@ const mastheadFixture: EventMastheadContent = {
  * expectation for each slot is read off that slot's `external`
  * declaration, so moving the declaration moves the expectation.
  */
-const LINK_SLOTS = ["quiz", "newsletter", "feedback", "donate"] as const;
+const LINK_SLOTS = ["quiz", "emailList", "feedback", "donate"] as const;
 
 describe("EventMasthead", () => {
   it("renders the brand lockup as the Home link plus the four nav links with config-owned hrefs", () => {
@@ -49,8 +53,8 @@ describe("EventMasthead", () => {
       "/event/synthetic-event/game",
     );
     expect(
-      screen.getByRole("link", { name: "Newsletter" }).getAttribute("href"),
-    ).toBe("/event/synthetic-event/signup");
+      screen.getByRole("link", { name: "Email list" }).getAttribute("href"),
+    ).toBe("https://lists.example.org/synthetic-event");
     expect(
       screen.getByRole("link", { name: "Feedback" }).getAttribute("href"),
     ).toBe("/event/synthetic-event/feedback");
@@ -91,13 +95,13 @@ describe("EventMasthead", () => {
       <EventMasthead
         masthead={{
           ...mastheadFixture,
-          newsletter: { ...mastheadFixture.newsletter, external: true },
+          emailList: { ...mastheadFixture.emailList, external: true },
           donate: { ...mastheadFixture.donate, external: false },
         }}
       />,
     );
 
-    const navItem = screen.getByRole("link", { name: "Newsletter" });
+    const navItem = screen.getByRole("link", { name: "Email list" });
     expect(navItem.getAttribute("target")).toBe("_blank");
     expect(navItem.getAttribute("rel")).toContain("noopener");
 
@@ -107,13 +111,16 @@ describe("EventMasthead", () => {
   });
 
   it("marks the active item with the active class and aria-current=page", () => {
-    render(<EventMasthead masthead={mastheadFixture} active="newsletter" />);
+    render(<EventMasthead masthead={mastheadFixture} active="feedback" />);
 
-    const newsletter = screen.getByRole("link", { name: "Newsletter" });
-    expect(newsletter.className).toContain("event-masthead-link-active");
-    expect(newsletter.getAttribute("aria-current")).toBe("page");
+    const feedback = screen.getByRole("link", { name: "Feedback" });
+    expect(feedback.className).toContain("event-masthead-link-active");
+    expect(feedback.getAttribute("aria-current")).toBe("page");
 
-    for (const name of ["Quiz", "Feedback", "Donate"]) {
+    // "Email list" is absent from this list because the active-item type
+    // no longer admits it: its destination is external, so the platform
+    // serves no page it could be the active one for.
+    for (const name of ["Quiz", "Email list", "Donate"]) {
       const link = screen.getByRole("link", { name });
       expect(link.className).not.toContain("event-masthead-link-active");
       expect(link.getAttribute("aria-current")).toBeNull();
@@ -142,13 +149,13 @@ describe("EventMasthead", () => {
       <EventMasthead
         masthead={{
           ...mastheadFixture,
-          newsletter: { ...mastheadFixture.newsletter, external: true },
+          emailList: { ...mastheadFixture.emailList, external: true },
         }}
-        linkComponents={{ newsletter: StubLink, feedback: StubLink }}
+        linkComponents={{ emailList: StubLink, feedback: StubLink }}
       />,
     );
 
-    const external = screen.getByRole("link", { name: "Newsletter" });
+    const external = screen.getByRole("link", { name: "Email list" });
     expect(external.getAttribute("target")).toBe("_blank");
     expect(external.getAttribute("rel")).toContain("noopener");
 
@@ -180,7 +187,7 @@ describe("EventMasthead", () => {
       <EventMasthead
         masthead={mastheadFixture}
         active="feedback"
-        linkComponents={{ home: StubLink, newsletter: StubLink, feedback: StubLink }}
+        linkComponents={{ home: StubLink, emailList: StubLink, feedback: StubLink }}
       />,
     );
 
@@ -190,7 +197,7 @@ describe("EventMasthead", () => {
     expect(brand.getAttribute("data-injected")).toBe("true");
     expect(
       screen
-        .getByRole("link", { name: "Newsletter" })
+        .getByRole("link", { name: "Email list" })
         .getAttribute("data-injected"),
     ).toBe("true");
 

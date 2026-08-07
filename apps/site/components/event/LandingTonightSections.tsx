@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import type {
@@ -90,17 +89,13 @@ export function LandingTonightSections({
   nights,
   lineup,
   landing,
-  slug,
   donateHref,
-  hasNewsletter,
   initialNowMs,
 }: {
   nights: EventNights | null;
   lineup: EventContent["lineup"];
   landing: EventDayOfLandingContent;
-  slug: string;
   donateHref: string | null;
-  hasNewsletter: boolean;
   initialNowMs: number;
 }) {
   const [now, setNow] = useState(() => new Date(initialNowMs));
@@ -198,13 +193,17 @@ export function LandingTonightSections({
           </h2>
           <p className="event-landing-wrap-body">{landing.seasonWrap.body}</p>
           <div className="event-landing-wrap-actions">
-            {hasNewsletter ? (
-              <Link
-                className="event-landing-wrap-action event-landing-wrap-action-newsletter"
-                href={`/event/${encodeURIComponent(slug)}/signup`}
+            {landing.actions.emailList.href ? (
+              <a
+                className="event-landing-wrap-action event-landing-wrap-action-email-list"
+                href={landing.actions.emailList.href}
+                target={
+                  landing.actions.emailList.external ? "_blank" : undefined
+                }
+                rel={landing.actions.emailList.external ? "noopener" : undefined}
               >
-                {landing.actions.newsletter.label}
-              </Link>
+                {landing.actions.emailList.label}
+              </a>
             ) : null}
             {donateHref ? (
               <a
