@@ -2,7 +2,8 @@
 
 @media (max-width: 640px) {
   .site-shell {
-    padding: 18px 14px 32px;
+    --shell-padding-top: 18px;
+    padding: var(--shell-padding-top) 14px 32px;
   }
 
   .topbar,

@@ -3,8 +3,19 @@
 
 .site-shell {
   position: relative;
-  min-height: 100vh;
-  padding: $space-11 $space-7 $space-site-bottom;
+  // Fills the viewport as a flex item of `#root` (`_base.scss`)
+  // rather than through its own `min-height: 100vh`, so a masthead
+  // above it takes its height out of the shell instead of adding a
+  // bar's worth of scroll to every page. Alone in the column the
+  // computed height is unchanged.
+  flex: 1 0 auto;
+  // Top padding is published as a custom property so rules that need
+  // to cancel it can track it instead of restating the literal —
+  // today the page-head band's flush pull under the masthead
+  // (`_masthead.scss`). Kept in sync across breakpoints by the
+  // `.site-shell` override in `_responsive.scss`.
+  --shell-padding-top: #{$space-11};
+  padding: var(--shell-padding-top) $space-7 $space-site-bottom;
   // Page-field paint. Lives here (not on `body`) so the shell sits
   // inside `<ThemeScope>` and per-event Themes reach the page
   // surface; the default reproduces the historical body recipe.

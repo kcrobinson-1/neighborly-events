@@ -19,6 +19,15 @@
  * same-app for apps/site (the signup route) is cross-app for apps/web
  * behind the proxy, so the mechanism cannot live in content. The one
  * exception is `donate`, always an external new-tab anchor.
+ *
+ * From apps/web the site-owned destinations (home, newsletter,
+ * feedback) resolve only on an origin that proxies site routes — the
+ * canonical site origin and its preview deployments. On the bare Vite
+ * dev server and the direct apps/web host they fall to the SPA's
+ * not-found page, exactly as `completionCta.ts`'s links do. Accepted:
+ * closing it is a dev-topology task tracked in
+ * `docs/tracking/dev-workflow-improvements.md`, not a content or
+ * component concern.
  */
 
 import { madronaFacts } from "../events/madrona-facts.ts";

@@ -83,14 +83,26 @@ Minimum validation:
 
 Status: open
 
-Cross-app destinations rendered inside apps/web (today: the completion-screen
-newsletter CTA's same-origin `/event/<slug>/feedback` href) resolve correctly
-only on origins that proxy site-owned routes — the canonical apps/site origin
-and its preview deployments. On the bare Vite dev server and on the direct
-apps/web Vercel host there is no cross-app proxy, so those links fall to the
-SPA's not-found page. This is a property of the split-app topology, not of any
-one link; it currently degrades gracefully but makes local click-through review
-of cross-app affordances impossible.
+Cross-app destinations rendered inside apps/web resolve correctly only on
+origins that proxy site-owned routes — the canonical apps/site origin and its
+preview deployments. On the bare Vite dev server and on the direct apps/web
+Vercel host there is no cross-app proxy, so those links fall to the SPA's
+not-found page. This is a property of the split-app topology, not of any one
+link; it currently degrades gracefully but makes local click-through review of
+cross-app affordances impossible.
+
+Affected today:
+
+- the completion-screen CTA's same-origin `/event/<slug>/signup` href
+  (`shared/events/completionCta.ts`)
+- every link in the shared event masthead now that the quiz app renders it —
+  the brand lockup (event landing), Newsletter, and Feedback. All three are
+  site-owned routes, so on the dev server the header bar's nav dead-ends
+  where the CTA already did. Accepted, not worked around in the quiz app:
+  the bar's `href`s are the same config-owned destinations apps/site links to,
+  and rewriting them per origin is this item's job, not the masthead's.
+  (Quiz and Donate are unaffected — Quiz is the apps/web route itself, Donate
+  is an external absolute URL.)
 
 Value:
 
@@ -98,6 +110,8 @@ Value:
   dead-ending at the SPA not-found page
 - future web → site links (feedback, landing, donation-adjacent surfaces)
   inherit a working local path instead of re-litigating this per link
+- header nav is reviewable locally, which is now the main cross-app surface
+  in the quiz app
 
 Options to evaluate:
 
@@ -112,8 +126,10 @@ Options to evaluate:
 Minimum validation:
 
 - from `npm run dev:web:local`, complete the featured demo and click the
-  newsletter CTA; confirm it reaches the feedback form (or the documented
+  newsletter CTA; confirm it reaches the signup form (or the documented
   fallback behavior when apps/site is not running)
+- on a quiz route whose event registers a masthead, click the header bar's
+  brand lockup, Newsletter, and Feedback links; confirm the same
 
 ### Add an admin UI-review capture mode
 

@@ -32,7 +32,14 @@ a {
   color: inherit;
 }
 
+// Column flow for the app's top-level strips: the sticky event
+// masthead (when the route's event registers one) above the page
+// shell, which grows to fill whatever the bar leaves. Keeping the
+// viewport-filling job here rather than on `.site-shell` is what
+// stops the bar's own height from pushing every page past 100vh.
 #root {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
 }
 

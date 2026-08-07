@@ -2,6 +2,10 @@
 @use "./styles/tokens";
 @use "./styles/base";
 @use "./styles/layout";
+// The bar itself is shared with apps/site (same component); the
+// partial below adds only apps/web's shell-adjacency rule.
+@use "../../../shared/styles/event-masthead";
+@use "./styles/masthead";
 @use "./styles/admin";
 @use "./styles/signin";
 @use "./styles/game";

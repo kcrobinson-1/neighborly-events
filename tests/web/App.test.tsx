@@ -99,4 +99,58 @@ describe("App", () => {
     unmount();
     expect(document.body.style.background).toBe("");
   });
+
+  it("renders the shared masthead above the shell on a registered event's quiz route", () => {
+    mockUsePathnameNavigation.mockReturnValue({
+      navigate: vi.fn(),
+      pathname: "/event/madrona/game",
+    });
+
+    const { container } = render(<App />);
+
+    const masthead = container.querySelector(".event-masthead");
+    expect(masthead).not.toBeNull();
+
+    // Inside the themed scope (the bar's colors and display face are
+    // Theme tokens) and immediately above the shell, which is what the
+    // `.event-masthead + .site-shell` flush rule keys on.
+    expect(masthead?.closest(".theme-scope")).not.toBeNull();
+    expect(masthead?.nextElementSibling?.className).toBe("site-shell");
+
+    // The quiz is this route, so its item carries the active marking.
+    const quiz = screen.getByRole("link", { name: "Quiz" });
+    expect(quiz.className).toContain("event-masthead-link-active");
+    expect(quiz.getAttribute("aria-current")).toBe("page");
+
+    // No link components are injected in apps/web: every destination
+    // is site-owned and has to hard-navigate through the proxy
+    // origin, which the shared component's plain anchors do.
+    for (const name of ["Quiz", "Newsletter", "Feedback"]) {
+      expect(screen.getByRole("link", { name }).tagName).toBe("A");
+    }
+  });
+
+  it("renders no masthead for an event that registers none", () => {
+    mockUsePathnameNavigation.mockReturnValue({
+      navigate: vi.fn(),
+      pathname: "/event/harvest-block-party/game",
+    });
+
+    const { container } = render(<App />);
+
+    expect(screen.getByText("Game Route Page")).toBeTruthy();
+    expect(container.querySelector(".event-masthead")).toBeNull();
+  });
+
+  it("keeps the attendee masthead off the operator routes of a registered event", () => {
+    mockUsePathnameNavigation.mockReturnValue({
+      navigate: vi.fn(),
+      pathname: "/event/madrona/admin",
+    });
+
+    const { container } = render(<App />);
+
+    expect(screen.getByText("Event Admin Page: madrona")).toBeTruthy();
+    expect(container.querySelector(".event-masthead")).toBeNull();
+  });
 });
