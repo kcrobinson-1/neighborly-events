@@ -58,6 +58,46 @@ export const madronaTheme: Theme = {
   headerFg: "#fffdf2",
   surfaceBand: "#f1dfb8",
 
+  // Quiz-surface vocabulary (R4 de-bubbling): one continuous flat
+  // cream page — no glow gradients, no backdrop grid, no floating
+  // panel chrome. Values mirror the madrona-experience mock's Quiz
+  // and Quiz·Done views.
+  pageSurface: "#f8e9c8",
+  gridLine: "transparent",
+  panelSurface: "transparent",
+  panelBorder: "none",
+  panelShadow: "none",
+
+  // Putty page-head band with a gold bottom rule, bled to the
+  // viewport edges; Bebas display sizing with the poster tracking.
+  pageHeadSurface: "#f1dfb8",
+  pageHeadRule: "3px solid #d9a62b",
+  pageHeadMargin: "0 calc(50% - 50vw)",
+  pageHeadPadding: "18px",
+  pageHeadTitleSize: "2rem",
+  headingLetterSpacing: "0.06em",
+
+  // Olive-bordered option rows; selected = dark-green border over a
+  // darker-cream fill.
+  optionBorder: "2.5px solid #8b8b2e",
+  optionSelectedBorderColor: "#2e4a34",
+  optionSelectedSurface: "#ede3c2",
+
+  // Booth check-in code block: putty surface, gold border.
+  codeSurface: "#f1dfb8",
+  codeBorder: "2.5px solid #d9a62b",
+
+  // Completion CTAs: gold Newsletter on dark green; warm orange
+  // Donate (the poster's warm accent — garnish-tier, so it lives
+  // here rather than as a brand base) on near-white.
+  ctaSurface: "#d9a62b",
+  ctaFg: "#2e4a34",
+  ctaWarmSurface: "#d9822b",
+  ctaWarmFg: "#fffdf2",
+
+  // Sponsor attribution line — the poster's purple, label-only.
+  sponsorLabel: "#6b4e8e",
+
   // Themable radii — the poster look is flatter than the platform
   // default; mock uses 10–14px rounding.
   panelRadius: "14px",
