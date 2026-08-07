@@ -11,6 +11,11 @@ const path = require("node:path");
 const { chromium, devices } = require("playwright");
 
 const defaultBaseUrl = "http://127.0.0.1:4173";
+// apps/site's `next dev` origin — a different app on a different port
+// from the attendee captures above, so `--mode site` defaults here
+// rather than to the apps/web origin.
+const defaultSiteBaseUrl = "http://127.0.0.1:3000";
+const defaultSiteSlug = "madrona";
 const defaultOutputRoot = path.join("tmp", "ui-review");
 const adminEnvPath = path.join("apps", "web", ".env");
 
@@ -194,6 +199,47 @@ async function captureFeaturedFlow(page, baseUrl, runDirectory) {
   await clickOptionAndSubmit(page, "That the attendee is officially done");
   await page.getByRole("heading", { name: "Show this screen at the volunteer table" }).waitFor();
   await capture(page, runDirectory, "04-featured-completion.png");
+}
+
+/**
+ * Captures the apps/site day-of landing page for an event that adopts
+ * that layout. Separate mode rather than a step of the attendee flow
+ * because the page is served by apps/site (`npm run dev:site`, port
+ * 3000 by default), not by the apps/web origin the attendee captures
+ * run against — one Playwright run cannot straddle both without a
+ * proxy origin.
+ *
+ * `--slug` selects the event; the default is the launch event whose
+ * landing page the day-of layout was built for.
+ */
+async function captureSiteMode(baseUrl, runDirectory, slug) {
+  console.log(`Capturing apps/site day-of landing for "${slug}"...`);
+
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ ...devices["iPhone 13"] });
+  const page = await context.newPage();
+  const consoleErrors = [];
+
+  page.on("console", (msg) => {
+    if (msg.type() === "error") consoleErrors.push(msg.text());
+  });
+
+  await page.goto(`${baseUrl}/event/${encodeURIComponent(slug)}`, {
+    waitUntil: "networkidle",
+  });
+  // The action grid is the last thing the layout paints above the fold
+  // and the surface this capture exists to compare, so wait on it
+  // rather than on a generic load event.
+  await page.locator(".event-landing-actions").waitFor({ timeout: 15000 });
+  await capture(page, runDirectory, "01-site-day-of-landing-mobile.png");
+  console.log("  01-site-day-of-landing-mobile.png");
+
+  if (consoleErrors.length > 0) {
+    console.warn("  [site landing console errors]", consoleErrors);
+  }
+
+  await browser.close();
+  console.log(`Site UI review artifacts written to ${runDirectory}`);
 }
 
 /** Captures the incorrect and correct feedback states in the spotlight mode. */
@@ -986,6 +1032,15 @@ async function main() {
 
   if (options["mode"] === "admin") {
     await captureAdminMode(baseUrl, runDirectory);
+    return;
+  }
+
+  if (options["mode"] === "site") {
+    await captureSiteMode(
+      options["base-url"] ?? process.env.UI_REVIEW_SITE_BASE_URL ?? defaultSiteBaseUrl,
+      runDirectory,
+      options["slug"] ?? defaultSiteSlug,
+    );
     return;
   }
 

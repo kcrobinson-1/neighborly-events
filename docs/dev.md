@@ -673,6 +673,32 @@ Notes:
   with wildcard CORS headers; use a configured remote Supabase project when you
   need a full browser-backed trust-path review
 
+### Site day-of landing UI review
+
+The default capture mode drives the apps/web attendee flow. The day-of
+landing page is served by apps/site, on a different port, so it has its
+own mode rather than an extra step of that flow.
+
+Prerequisites:
+
+- apps/site must be running locally (`npm run dev:site`, port 3000)
+- Playwright Chromium must be installed
+
+Run:
+
+```bash
+npm run ui:review:capture:site
+```
+
+Pass `--slug <event-slug>` for an event other than `madrona`, and
+`--base-url` when `next dev` is not on `http://127.0.0.1:3000`.
+
+Screenshots captured (written to `tmp/ui-review/<timestamp>/`):
+
+| File | State |
+|------|-------|
+| `01-site-day-of-landing-mobile.png` | Day-of landing page, iPhone 13 viewport |
+
 ### Admin UI review
 
 Use the admin capture mode to screenshot the authenticated admin shell without
