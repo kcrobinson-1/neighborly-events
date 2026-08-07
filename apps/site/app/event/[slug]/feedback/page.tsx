@@ -6,6 +6,8 @@ import {
   getEventContentBySlug,
   registeredEventSlugs,
 } from "../../../../lib/eventContent.ts";
+import { SiteEventMasthead } from "../../../../components/event/SiteEventMasthead.tsx";
+import { getEventMasthead } from "../../../../../../shared/masthead/index.ts";
 import {
   ThemeScope,
   getThemeForSlug,
@@ -85,10 +87,17 @@ export default async function Page({
   }
 
   const theme = getThemeForSlug(content.themeSlug);
+  // Shared sticky header bar (global chrome for events that register
+  // one; test events resolve null and render byte-identically).
+  // Active item: this route IS the Feedback destination.
+  const masthead = getEventMasthead(slug);
 
   if (!content.feedback) {
     return (
       <ThemeScope theme={theme}>
+        {masthead ? (
+          <SiteEventMasthead masthead={masthead} active="feedback" />
+        ) : null}
         <main className="event-feedback-disabled">
           <h1 className="event-section-heading">{content.meta.title}</h1>
           <p>Feedback isn&apos;t being collected for this event.</p>
@@ -105,6 +114,9 @@ export default async function Page({
 
   return (
     <ThemeScope theme={theme}>
+      {masthead ? (
+        <SiteEventMasthead masthead={masthead} active="feedback" />
+      ) : null}
       <FeedbackForm feedback={content.feedback} slug={slug} />
     </ThemeScope>
   );

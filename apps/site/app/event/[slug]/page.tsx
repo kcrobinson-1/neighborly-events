@@ -6,6 +6,7 @@ import {
   getEventContentBySlug,
   registeredEventSlugs,
 } from "../../../lib/eventContent.ts";
+import { getEventMasthead } from "../../../../../shared/masthead/index.ts";
 import { ThemeScope, getThemeForSlug } from "../../../../../shared/styles";
 import { normalizeEventSlug } from "../../../../../shared/urls";
 
@@ -114,7 +115,11 @@ export default async function Page({
 
   return (
     <ThemeScope theme={getThemeForSlug(content.themeSlug)}>
-      <EventLandingPage content={content} slug={slug} />
+      <EventLandingPage
+        content={content}
+        slug={slug}
+        masthead={getEventMasthead(slug)}
+      />
     </ThemeScope>
   );
 }
