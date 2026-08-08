@@ -51,37 +51,23 @@ next event and update this date. A dead citation is worse than no
 citation, and a live one pointing at something other than what the
 sentence says is worse still.
 
-## How identifiers are chosen
+## Identifiers
 
-Nothing below is player-facing, but it decides what a returning
-attendee's answer review says, so it belongs with the copy rather than
-with the code.
+The rule is in [`README.md`](./README.md) and is not repeated here.
+What belongs with the copy is the one judgment it forced.
 
-An option's id is a bare letter — `a`, `b`, `c`, `d` — and says nothing
-about the option. A question's id is a readable slug naming what the
-question asks, never what the answer is: `bathhouse-current-use`, not
-`bathhouse-dance-studio`. The asymmetry is deliberate, because the two
-are edited at completely different rates.
+Question 1 replaced a question that asked what the neighborhood was
+named after. Same topic, different question — new prompt, four new
+options, a different answer — so it took a new slug,
+`first-named-madrona`, rather than the `q1` it displaced. Reusing that
+key would have read the old question's stored answers against these
+options and told a returning attendee they had answered something they
+never saw.
 
-Option wording changes often, so the key must not describe it. An id
-that describes its option starts lying the moment the option is
-reworded, and the copy that renders is the label, so the lie is
-invisible on screen and only shows up to whoever reads the database
-later.
-
-Question replacement is rare, and it is the one edit that must not be
-silent. `game_completions.submitted_answers` stores ids and no labels,
-so a stored answer means whatever the id means *today*. The answer
-review resolves `answers[question.id]` before it resolves any option,
-which is why a replaced question takes a new slug: reusing it reads the
-old question's answer against the new question's options and renders a
-confident wrong sentence. Question 1 is the worked example — it
-replaced a question that asked what the neighborhood was named after,
-so it is `first-named-madrona` and not the `q1` it displaced.
-
-Rewording a prompt is not replacement, and it keeps its slug. The test
-is whether a stored answer from before the edit still means what it
-meant: if the options and the answer survive the edit, so does the id.
+Questions 2 through 5 are the same questions with new explanations, so
+they kept their identity and only their option ids changed. Every
+option id in this deck is a bare letter, which is why none appear
+below: they carry no meaning to record.
 
 ---
 
@@ -138,8 +124,7 @@ Junius Rochester, [Seattle Neighborhoods: Madrona, Thumbnail History](https://ww
 > In 1969, the Seattle chapter of the Black Panther Party launched its
 > Free Breakfast Program for schoolchildren at which Madrona location?
 
-**Options** — wording unchanged from the current quiz; the ids are
-new, per the identifier rules above.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. Madrona Grace Presbyterian Church *(correct)*
 2. Madrona Elementary School
@@ -172,8 +157,7 @@ Quintard Taylor, *The Forging of a Black Community: Seattle's Central District f
 
 > What is the statue outside the Madrona library called?
 
-**Options** — wording unchanged from the current quiz; the ids are
-new, per the identifier rules above.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. The Peaceable Kingdom *(correct)*
 2. The Lion and the Lamb
@@ -209,8 +193,7 @@ Thomas Veith, [*History of the Central Area*](https://www.seattle.gov/documents/
 > What is the current use of the Madrona Bathhouse on the waterfront in
 > Madrona Park?
 
-**Options** — wording unchanged from the current quiz; the ids are
-new, per the identifier rules above.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. A dance studio *(correct)*
 2. A community theater
@@ -244,8 +227,7 @@ Erin Naomi Burrows, [Byrd and the Bath House: A Case Study of Spectrum Dance The
 > Before being renamed to MLK Jr Way, what was the name of the street
 > that borders the western edge of Madrona?
 
-**Options** — wording unchanged from the current quiz; the ids are
-new, per the identifier rules above.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. Empire Way *(correct)*
 2. Hill Way

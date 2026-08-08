@@ -35,17 +35,9 @@ import type { GameSeedConfig } from "./seed-config.ts";
  * so a future "Create New Event" admin-UI affordance could
  * adopt the same content as a starter template if needed.
  *
- * Identifiers follow the split in
- * [`architecture-guardrails.md`](../../docs/agents/reference/architecture-guardrails.md):
- * option ids are bare letters that say nothing about the option, and
- * question ids are readable slugs naming what the question asks. The
- * reason both halves matter is that `game_completions.submitted_answers`
- * stores ids and no labels, so an id is the only surviving record of
- * what an attendee picked. Reword an option freely — the letter carries
- * no claim to go stale. Replace a question and it must take a new
- * slug, because the answer review looks up `answers[question.id]`
- * first and would otherwise read the old question's answer against the
- * new question's options.
+ * Question and option ids follow the rule in
+ * [`README.md`](./README.md): bare-letter option ids, question ids
+ * that name the question and are never reused.
  */
 const madronaGameContent: AuthoringGameDraftContent = {
   id: "madrona",
@@ -68,11 +60,9 @@ const madronaGameContent: AuthoringGameDraftContent = {
   allowRetake: true,
   questions: [
     {
-      // Not the `q1` this replaced. That question asked what the neighborhood
-      // was named after; this one asks what was named first, and every option
-      // and the answer changed with it. Reusing the key would have pointed
-      // stored answers from the old question at this one — see the identifier
-      // rules in the module header.
+      // Not the `q1` this replaced: that question asked what the neighborhood
+      // was named after, and every option and the answer changed with it. A
+      // replaced question takes a new id rather than inheriting the old one.
       id: "first-named-madrona",
       // No sponsor and no sponsor fact on any question: the sponsor slot never
       // sold this year and the printed sign is unsponsored, so the screen and

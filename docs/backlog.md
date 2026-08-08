@@ -104,7 +104,7 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
-- [ ] **`dev` Run seeded game content through the shared config validator**
+- [ ] **`dev` Run seeded game content through the shared runtime parser**
   `scripts/release/seed-game-content.cjs` upserts a draft and calls
   `publish_game_event_draft` after checking only identity and env-shape fields,
   so no shared invariant in `validateGameConfig` is enforced on that path. The
@@ -115,23 +115,35 @@ Reduce deployment risk and contributor friction before the live event.
   it on read. The bypass predates per-question sources and covers every
   invariant, not just those; sources is where it first produces a
   publishes-then-fails-to-read outcome.
+  **Call the parser, not just the validator.** `validateGameConfig`
+  assumes an already-shaped `GameConfig` and checks structure only, so
+  it is the wrong gate on its own for a seed module that reaches the
+  script through `import()`. Node strips types without type-checking
+  them, so nothing on that path establishes the shape the validator
+  assumes. Measured: content with a numeric `prompt` and a numeric
+  option `label` passes `validateGameConfig` and is refused by
+  `parseAuthoringGameDraftContent` with "prompt must be a string" —
+  and PostgreSQL's `->>` projection would turn that number into
+  player-facing text. The parser also rejects everything the validator
+  rejects (unresolvable correct-answer ids, duplicate option ids, a
+  bare address in a source line all fail both), so it is the strict
+  superset and the one to wire in.
   **No longer blocked.** This entry recorded the blocker as the script
   being plain CommonJS under `node` with no TypeScript loader. That has
   stopped being true: `node` imports `shared/game-config/index.ts`
-  directly and resolves `validateGameConfig` as a function, and
+  directly and resolves the shared entry points as functions, and
   `loadSeedConfig` in the same script already dynamic-`import()`s a
   TypeScript module for its `--content` argument. The remaining work is
-  calling the validator, not reaching it.
+  calling the parser, not reaching it.
   **Newly load-bearing.** If the admin question editor is retired,
   admin's parse-on-read stops catching bad seeded content and this
-  becomes the only gate on the sole write path.
-  `computePublishChecklist` re-implements five question-level checks
-  that `validateGameConfig` also makes — at least one question, options
-  present, a correct answer present, single-select having exactly one,
-  and correct-answer ids resolving to real options — and the shared
-  validator additionally enforces unique question ids, unique option
-  ids, and source-line renderability. It is a strict superset, so it is
-  a complete substitute, but only once the seed path calls it.
+  becomes the only gate on the sole write path — which is the reason
+  the gate has to be the parser. `computePublishChecklist` re-implements
+  five question-level checks the shared surface also makes (at least one
+  question, options present, a correct answer present, single-select
+  having exactly one, correct-answer ids resolving to real options), so
+  retiring the editor costs nothing there; what it costs is
+  parse-on-read, and only wiring in the parser replaces that.
   Detail: N/A
 
 - [ ] **`dev` One write path for question content**
@@ -143,13 +155,13 @@ Reduce deployment risk and contributor friction before the live event.
   Retiring question and option authoring is one option, keeping
   publish, unpublish, status, and event-details editing so day-of
   lifecycle control does not become a git operation. Blocked on the
-  validator item above: retiring the editor removes parse-on-read,
-  which is currently the only thing catching invalid seeded content.
-  Note one thing the decision costs. The content-identifier rule in
-  [`architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
-  picks bare-letter option ids partly so seed modules and
-  admin-authored drafts generate the same ids; if the editor is retired
-  that convergence argument lapses and only the reword-safety argument
+  parser item above: retiring the editor removes parse-on-read, which
+  is currently the only thing catching mistyped seeded content.
+  Note one thing the decision costs. The identifier rule in
+  [`shared/events/README.md`](/shared/events/README.md) picks
+  bare-letter option ids partly so seed modules and admin-authored
+  drafts generate the same ids; if the editor is retired that
+  convergence argument lapses and only the reword-safety argument
   carries the rule, which it does on its own.
   Detail: N/A
 

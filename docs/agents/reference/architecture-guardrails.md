@@ -24,38 +24,6 @@ If quiz correctness, scoring, or answer validation changes, make sure the shared
 Do not treat the local browser-only completion fallback as production backend behavior.
 Do not default to the local browser-only completion fallback when a remote Supabase integration run is feasible.
 
-### Content Identifier Discipline
-
-`game_completions.submitted_answers` stores question and option ids and
-no labels, so an id is the only surviving record of what an attendee
-picked, and it means whatever that id means the next time content is
-published. Two rules follow, and they point in opposite directions on
-purpose.
-
-**Option ids describe nothing.** Use bare letters (`a`, `b`, `c`, `d`),
-scoped per question by the `(event_id, question_id, id)` primary key on
-`game_question_options`. Option wording is the most-edited content in
-the repo, and a descriptive id starts lying the first time its label is
-reworded — silently, because the screen renders the label. Bare letters
-are also what the admin editor's `createOptionId` generates, so seed
-modules and admin-authored drafts converge instead of drifting.
-Authored order is not display order: `shuffleGameOptions` permutes per
-attempt, and grading is id-based end to end.
-
-**Question ids describe the question, and are never reused.** A
-readable slug naming what the question asks, never what its answer is.
-Replacing a question — new prompt, new options, new answer — mints a
-new slug; rewording a prompt keeps the existing one. The test is
-whether a stored answer from before the edit still means what it meant.
-This matters because the answer review resolves `answers[question.id]`
-before it resolves any option, so a reused question id reads the old
-question's stored answer against the new question's options and renders
-a confident wrong sentence rather than failing visibly.
-
-This binds new and replaced content. Events published before the rule
-keep their existing ids, because their ids anchor real completion rows
-and a sweep would rewrite what those rows mean.
-
 ### Styling Token Discipline
 
 Every styling token belongs to one of two buckets: **per-event brand
