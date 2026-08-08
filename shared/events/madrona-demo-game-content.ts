@@ -81,7 +81,7 @@ const madronaGameContent: AuthoringGameDraftContent = {
         { id: "d", label: "A real estate plat" },
       ],
       explanation:
-        "The land company developing the hillside laid out a private park on the waterfront to anchor the trolley line it was building, which was a standard trick for selling lots. J. E. Ayer, one of the property owners who contributed ground for the park, suggested calling it Madrona after the tree. However, this might have been more of a marketing move than a description, since there were very few of that tree in the area. Parks historian Don Sherwood's files say the park held \"scarcely more than a few little (Madrona) sprouts,\" and a Seattle Post-Intelligencer story from September 6, 1927 called the name \"a pioneer jest,\" because madrona trees \"were not that prominent a feature.\"\n\nThe name travelled up the hill, and fast. Pretty soon the entire neighborhood was called Madrona, and the landmarks followed one at a time. The schoolhouse at the top of the hill, Randell School, became Madrona in 1904 when a new building replaced the original barn. The road down to the park became Madrona Drive in 1915. The streetcar was the #8 Madrona by the 1930s.",
+        "The land company developing the hillside laid out a private park on the waterfront to anchor the trolley line it was building, which was a standard trick for selling lots. J. E. Ayer, one of the property owners who contributed ground for the park, suggested calling it Madrona after the tree. However, this might have been more of a marketing move than a description, since there were very few of that tree in the area. Parks historian Don Sherwood's files say the park held \"scarcely more than a few little (Madrona) sprouts,\" and a Seattle Post-Intelligencer story from September 6, 1927 called the name \"a pioneer jest,\" because madrona trees \"were not that prominent a feature.\"\n\nThe name traveled up the hill, and fast. Pretty soon the entire neighborhood was called Madrona, and the landmarks followed one at a time. The schoolhouse at the top of the hill, Randell School, became Madrona in 1904 when a new building replaced the original barn. The road down to the park became Madrona Drive in 1915. The streetcar was the #8 Madrona by the 1930s.",
       sources: [
         "Don Sherwood, [Madrona Park](https://www.seattle.gov/documents/Departments/CityArchive/Sherwood/MadronaPk.pdf) and [Madrona Playground](https://www.seattle.gov/documents/departments/cityarchive/sherwood/madronapg.pdf) history sheets, Don Sherwood Parks History Collection, Seattle Municipal Archives",
         "Nile Thompson, Carolyn J. Marr, and Nick Rousso, [Seattle Public Schools, 1862-2023: Madrona Elementary School](https://www.historylink.org/File/10551), HistoryLink Essay 10551",
@@ -134,7 +134,7 @@ const madronaGameContent: AuthoringGameDraftContent = {
       // only; an explanation renders as plain text, so `*a title*` would print
       // its asterisks. Work titles in explanation prose stay unmarked.
       explanation:
-        "Richard Beyer, who also made Waiting for the Interurban in Fremont, cast the aluminum group and it was installed on the library lawn in 1984. The panther and the pig sit on top of a granite boulder, with the wolf and the sheep at the base. The four animals stand in for groups living in the neighborhood at the time, the panther for the Black Panthers, the pig for the police, the sheep for the elderly, and the wolf for the street toughs, all coexisting peaceably. The name became the neighborhood's unofficial motto.",
+        "Richard Beyer, who also made Waiting for the Interurban in Fremont, cast the aluminum group and it was installed on the library lawn in 1984. The panther and the pig sit on top of a granite boulder, with the wolf and the sheep at the base. The four animals stand in for groups living in the neighborhood at the time, the panther for the Black Panthers, the pig for the police, the sheep for the elderly, and the wolf for the street toughs, four uneasy neighbors sharing one rock. That is where the title The Peaceable Kingdom comes from, and Madrona has used it as an unofficial motto ever since.",
       sources: [
         "David Wilma, [Madrona-Sally Goldmark Branch, The Seattle Public Library](https://www.historylink.org/File/4034), HistoryLink Essay 4034, 2002",
         "[Madrona-Sally Goldmark Branch Highlights](https://www.spl.org/hours-and-locations/madrona-sally-goldmark-branch/madrona-sally-goldmark-branch-highlights), The Seattle Public Library",
@@ -145,7 +145,11 @@ const madronaGameContent: AuthoringGameDraftContent = {
     {
       id: "bathhouse-current-use",
       sponsor: null,
-      prompt: "What is the current use of the Madrona Bathhouse on the waterfront in Madrona Park?",
+      // The stem names Madrona once. It used to read "the Madrona Bathhouse
+      // on the waterfront in Madrona Park", which said the word twice and
+      // buried the question inside the location.
+      prompt:
+        "The old bathhouse down at Madrona Park is still in use. What happens in it now?",
       selectionMode: "single",
       correctAnswerIds: ["a"],
       options: [

@@ -67,7 +67,7 @@ first night, or between seasons. Events published before the rule otherwise
 keep their existing ids, which anchor real completion rows a rename would
 silently reinterpret.
 
-[`madrona-quiz-revision-2-copy.md`](./madrona-quiz-revision-2-copy.md) is the
+[`madrona-quiz-copy.md`](./madrona-quiz-copy.md) is the
 editorial record for Madrona's question copy: the prompts, options,
 explanations, and source lines as authored, plus what each source supports and
 where two of them disagree. It exists because the seed module can say what the
