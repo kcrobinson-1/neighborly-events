@@ -136,7 +136,12 @@ export function mapAuthoringGameDraftContentToGameConfig(
       ...(question.sponsorFact !== undefined
         ? { sponsorFact: question.sponsorFact }
         : {}),
-      ...(question.sources !== undefined
+      // Empty normalizes to absent, matching the published path. The column
+      // defaults to '[]', so every published question carries an empty array
+      // that `mapPublishedGameRowsToGameConfig` drops; keeping `[]` here would
+      // make the two hydration paths return different shapes for the same
+      // content, and leave a consumer to handle both.
+      ...(question.sources !== undefined && question.sources.length > 0
         ? { sources: [...question.sources] }
         : {}),
     })),

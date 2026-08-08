@@ -298,6 +298,19 @@ describe("source lines in the draft payload", () => {
     expect(game.questions[0].sources).toEqual(sources);
   });
 
+  // The published path drops an empty array, because the column defaults to
+  // '[]' and every published question therefore carries one. This path has to
+  // drop it too, or the same content hydrates into two different shapes
+  // depending on which one loaded it.
+  it("omits an empty list through the runtime mapper, as the published path does", () => {
+    const game = mapAuthoringGameDraftContentToGameConfig(
+      draftWithSources([]) as AuthoringGameDraftContent,
+    );
+
+    expect(game.questions[0].sources).toBeUndefined();
+    expect("sources" in game.questions[0]).toBe(false);
+  });
+
   it("refuses to validate a draft whose source line cannot render safely", () => {
     expect(() =>
       validateAuthoringGameDraftContent(
