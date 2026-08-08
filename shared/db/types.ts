@@ -443,6 +443,7 @@ export type Database = {
           selection_mode: string
           sponsor: string | null
           sponsor_fact: string | null
+          sources: Json
         }
         Insert: {
           display_order: number
@@ -453,6 +454,7 @@ export type Database = {
           selection_mode: string
           sponsor?: string | null
           sponsor_fact?: string | null
+          sources?: Json
         }
         Update: {
           display_order?: number
@@ -463,6 +465,7 @@ export type Database = {
           selection_mode?: string
           sponsor?: string | null
           sponsor_fact?: string | null
+          sources?: Json
         }
         Relationships: [
           {
