@@ -104,6 +104,21 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
+- [ ] **`dev` Run seeded game content through the shared config validator**
+  `scripts/release/seed-game-content.cjs` upserts a draft and calls
+  `publish_game_event_draft` after checking only identity and env-shape fields,
+  so no shared invariant in `validateGameConfig` is enforced on that path. The
+  database constraints are deliberately weaker than the TypeScript rules, so a
+  seed can publish content that every reader then rejects — a seeded source
+  line that is blank or carries a bare web address publishes cleanly and makes
+  the draft unopenable in admin, since `parseAuthoringGameDraftContent` refuses
+  it on read. The bypass predates per-question sources and covers every
+  invariant, not just those; sources is where it first produces a
+  publishes-then-fails-to-read outcome. Blocked on the script being plain
+  CommonJS under `node` with no TypeScript loader, so importing the shared
+  validator is the actual work.
+  Detail: N/A
+
 - [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**
   Slice 2 added view grant checks, but its pgTAP file still relies on underlying
   `game_event_drafts` RLS coverage for the “authenticated but not allowlisted
