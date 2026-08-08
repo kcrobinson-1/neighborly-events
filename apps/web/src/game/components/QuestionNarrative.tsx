@@ -63,8 +63,10 @@ function renderSourceSegments(segments: SourceSegment[]): ReactNode[] {
           // Inside the anchor, so it is part of the link's accessible name
           // rather than a visual cue sitting next to it — the point is that a
           // reader knows it is a PDF *before* deciding to open it, and a
-          // screen-reader user learns that from the link name.
-          <span className="question-source-pdf">PDF</span>
+          // screen-reader user learns that from the link name. Parenthesized
+          // as literal text so the marker reads the same way to everyone
+          // rather than depending on a badge shape to carry the meaning.
+          <span className="question-source-pdf">(PDF)</span>
         ) : null}
       </a>
     );

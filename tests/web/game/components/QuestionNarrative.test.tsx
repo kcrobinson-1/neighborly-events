@@ -146,7 +146,7 @@ describe("QuestionNarrative", () => {
 
       // Accessible name, not a sibling element: a reader deciding whether to
       // follow the link has to learn it is a PDF from the link itself.
-      expect(screen.getByRole("link", { name: "Landmark report PDF" })).toBeTruthy();
+      expect(screen.getByRole("link", { name: "Landmark report (PDF)" })).toBeTruthy();
       expect(screen.getByRole("link", { name: "Web page" })).toBeTruthy();
     });
 
