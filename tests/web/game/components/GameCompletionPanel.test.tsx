@@ -323,14 +323,23 @@ describe("GameCompletionPanel", () => {
     ).toBeTruthy();
   });
 
-  it("hides the answer-review block in non-blocking mode because reveals were shown during play", () => {
+  // These two modes used to be the ones that withheld the review, on the
+  // reasoning that the player had already seen each answer during play. The
+  // reveal is shown once and cannot be returned to, so those were in fact the
+  // modes with no second reading of the answers — and, now that questions
+  // carry sources, no second chance at a citation. The review renders wherever
+  // a completion exists.
+  it.each([
+    { feedbackMode: "instant_feedback_non_blocking" as const },
+    { feedbackMode: "instant_feedback_required" as const },
+  ])("renders the answer-review block in $feedbackMode", ({ feedbackMode }) => {
     render(
       <GameCompletionPanel
         answers={{ q1: ["a"] }}
         completion={createCompletionResult()}
         completionError={null}
         cta={null}
-        game={createGame({ feedbackMode: "instant_feedback_non_blocking" })}
+        game={createGame({ feedbackMode })}
         isCompletionPersisted={true}
         isSubmitting={false}
         onReset={() => {}}
@@ -342,23 +351,26 @@ describe("GameCompletionPanel", () => {
       />,
     );
 
-    // Verification block must still render; the answer-review block must not.
+    // The verification block still renders alongside it — the review is added
+    // to this screen, not swapped in for the check-in code.
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
-    expect(screen.queryByText("Final score")).toBeNull();
-    expect(screen.queryByText("Your answer:", { exact: false })).toBeNull();
-    expect(screen.queryByText("Correct answer:", { exact: false })).toBeNull();
+    expect(screen.getByText("Final score")).toBeTruthy();
+    expect(screen.getByText("Your answer:", { exact: false })).toBeTruthy();
+    expect(screen.getByText("Correct answer:", { exact: false })).toBeTruthy();
   });
 
-  it("hides the answer-review block in instant-feedback-required mode for the same reason", () => {
+  it("withholds the answer-review block until the completion exists", () => {
+    // Completion, not feedback mode, is what the review now waits on: the
+    // score it reports is the trusted backend one.
     render(
       <GameCompletionPanel
-        answers={{ q1: ["b"] }}
-        completion={createCompletionResult()}
+        answers={{ q1: ["a"] }}
+        completion={null}
         completionError={null}
         cta={null}
-        game={createGame({ feedbackMode: "instant_feedback_required" })}
+        game={createGame()}
         isCompletionPersisted={true}
-        isSubmitting={false}
+        isSubmitting={true}
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
@@ -406,7 +418,7 @@ describe("GameCompletionPanel", () => {
       ).toBeTruthy();
     });
 
-    it("keeps the check-in code as the leading block when review is disabled", () => {
+    it("keeps the check-in code above the CTA in an instant-feedback mode", () => {
       const { container } = render(
         <GameCompletionPanel
           answers={{ q1: ["a"] }}
@@ -425,11 +437,18 @@ describe("GameCompletionPanel", () => {
         />,
       );
 
-      expect(container.querySelector(".results-block")).toBeNull();
+      // The review renders here too now, so the ordering this case is about
+      // is the token-then-CTA pair below it, not the review's absence.
+      const resultsBlock = container.querySelector(".results-block");
       const tokenBlock = container.querySelector(".token-block");
       const ctaBlock = container.querySelector(".completion-cta");
+      expect(resultsBlock).not.toBeNull();
       expect(tokenBlock).not.toBeNull();
       expect(ctaBlock).not.toBeNull();
+      expect(
+        resultsBlock!.compareDocumentPosition(tokenBlock!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
       expect(
         tokenBlock!.compareDocumentPosition(ctaBlock!) &
           Node.DOCUMENT_POSITION_FOLLOWING,
