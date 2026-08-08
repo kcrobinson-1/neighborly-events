@@ -21,30 +21,48 @@ seedable demo game content, and the completion-screen CTA registry
 
 `game_completions.submitted_answers` stores question and option ids and no
 labels, so an id is the only surviving record of what an attendee picked, and
-it means whatever that id means the next time content is published. Seed
-content follows two rules that point opposite ways for that reason.
+it means whatever that id means the next time content is published. Every rule
+below follows from that one fact.
 
-**Option ids describe nothing** — bare letters (`a`, `b`, `c`, `d`), scoped per
-question by the `(event_id, question_id, id)` primary key on
-`game_question_options`. Option wording is the most-edited content here, and a
-descriptive id starts lying the first time its label is reworded, silently,
-because the screen renders the label. Bare letters are also what the admin
-editor's `createOptionId` generates, so seed modules and admin-authored drafts
-converge rather than drift. Authored order is not display order:
-`shuffleGameOptions` permutes per attempt and grading is id-based end to end.
+**An id is an identity, and identities are never re-issued.** This holds at
+both levels. Rewording keeps the existing id — the point of the scheme is that
+wording can change freely. Replacing the thing itself mints an id that has
+never been used on that event before. The test is one sentence: does a stored
+answer from before the edit still mean what it meant? If yes, keep the id; if
+no, the old id must be retired rather than reassigned.
 
-**Question ids describe the question, and are never reused** — a readable slug
-naming what the question asks, never what its answer is. Replacing a question
-mints a new slug; rewording a prompt keeps the existing one. The test is
-whether a stored answer from before the edit still means what it meant. This
-matters because the answer review resolves `answers[question.id]` before it
-resolves any option, so a reused question id reads the old question's stored
-answer against the new question's options and renders a confident wrong
-sentence instead of failing visibly.
+Reassignment is the failure this prevents, and it is silent. `getOptionLabels`
+resolves stored ids against whatever options exist now and drops the misses,
+and the answer review resolves `answers[question.id]` before it resolves any
+option. So an id handed to new content reads an old attendee's answer against
+it and renders a confident wrong sentence, where a retired id would simply
+fail to resolve and show nothing.
 
-Both bind new and replaced content. Events published before the rule keep their
-existing ids, which anchor real completion rows a rename would silently
-reinterpret.
+**Option ids are bare letters** — `a`, `b`, `c`, `d`, scoped per question by
+the `(event_id, question_id, id)` primary key on `game_question_options`.
+Option wording is the most-edited content here, and a *descriptive* id starts
+lying the first time its label is reworded, silently, because the screen
+renders the label. Carrying no description is not the same as carrying no
+identity: after a semantic replacement the next letter is `e`, not the freed
+`b`. Authored order is not display order — `shuffleGameOptions` permutes per
+attempt and grading is id-based end to end.
+
+Note one gap this rule cannot close on its own. The admin editor's
+`createOptionId` picks the lowest *currently unused* letter, so deleting an
+option and adding a replacement through the UI re-issues the freed id. The
+rule binds seed-module authoring; the UI can still violate it, tracked in
+[`docs/backlog.md`](/docs/backlog.md).
+
+**Question ids are readable slugs** naming what the question asks, never what
+its answer is.
+
+**Adopting the scheme on an existing event is a one-time migration**, not an
+application of the rule. Every stored answer for that event stops resolving at
+once, because the ids it names no longer exist. That is acceptable only while
+no attendee holds a completion snapshot worth preserving — before an event's
+first night, or between seasons. Events published before the rule otherwise
+keep their existing ids, which anchor real completion rows a rename would
+silently reinterpret.
 
 [`madrona-quiz-revision-2-copy.md`](./madrona-quiz-revision-2-copy.md) is the
 editorial record for Madrona's question copy: the prompts, options,

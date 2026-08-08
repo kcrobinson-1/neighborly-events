@@ -157,12 +157,34 @@ Reduce deployment risk and contributor friction before the live event.
   lifecycle control does not become a git operation. Blocked on the
   parser item above: retiring the editor removes parse-on-read, which
   is currently the only thing catching mistyped seeded content.
-  Note one thing the decision costs. The identifier rule in
-  [`shared/events/README.md`](/shared/events/README.md) picks
-  bare-letter option ids partly so seed modules and admin-authored
-  drafts generate the same ids; if the editor is retired that
-  convergence argument lapses and only the reword-safety argument
-  carries the rule, which it does on its own.
+  Note one thing the decision resolves. The option-id reuse entry below
+  is a defect in that editor; retiring question and option authoring
+  would close it by deletion rather than by fixing it, so the two
+  should be sequenced together rather than fixed independently.
+  Detail: N/A
+
+- [ ] **`dev` The admin option editor re-issues retired option ids**
+  `createOptionId` in
+  [`questionStructure.ts`](/apps/web/src/admin/questionStructure.ts)
+  returns the lowest letter not currently in use, so deleting an option
+  and adding a replacement hands the freed id straight to different
+  content. Driven directly, a question with options `a`–`d` loses `a`
+  and the next added option is issued `a` again, now labelled something
+  else. That breaks the identifier rule in
+  [`shared/events/README.md`](/shared/events/README.md), which requires
+  a semantic replacement to take a never-used id: because
+  `game_completions.submitted_answers` stores ids and no labels, and
+  `getOptionLabels` resolves stored ids against whatever options exist
+  now, every stored `a` silently re-points at the new option and the
+  answer review reports an answer the attendee never gave. A retired id
+  would fail to resolve and show nothing instead. **Goal:** an option id
+  freed by a deletion is never handed to new content. The fix needs
+  knowledge the draft does not carry — the draft holds only current
+  options, so retired ids have to come from a stored high-water mark or
+  from the published version history, which is what makes this more
+  than a one-line change. Seed-module authoring follows the rule today;
+  this is the UI path that can still violate it. Pairs with the write
+  path entry above, which may retire this editor outright.
   Detail: N/A
 
 - [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**

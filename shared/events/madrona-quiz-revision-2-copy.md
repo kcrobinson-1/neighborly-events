@@ -54,20 +54,28 @@ sentence says is worse still.
 ## Identifiers
 
 The rule is in [`README.md`](./README.md) and is not repeated here.
-What belongs with the copy is the one judgment it forced.
+Two things belong with the copy instead.
 
-Question 1 replaced a question that asked what the neighborhood was
-named after. Same topic, different question — new prompt, four new
-options, a different answer — so it took a new slug,
-`first-named-madrona`, rather than the `q1` it displaced. Reusing that
-key would have read the old question's stored answers against these
-options and told a returning attendee they had answered something they
-never saw.
+**Every id on this quiz was reissued at once.** That is the one-time
+migration the README describes, not the rule in action — under the
+rule, questions 2 through 5 would have kept their old keys, because
+their prompts, options, and answers did not change and only their
+explanations did. Renaming them anyway was a deliberate cost, paid
+while the only stored answers for this event came from pre-season
+testing. It is not repeatable: after this, a question keeps its id
+unless the question itself is replaced.
 
-Questions 2 through 5 are the same questions with new explanations, so
-they kept their identity and only their option ids changed. Every
-option id in this deck is a bare letter, which is why none appear
-below: they carry no meaning to record.
+**Question 1 is the case that would have needed a new id regardless.**
+It replaced a question asking what the neighborhood was named after —
+same topic, different question, with a new prompt, four new options,
+and a different answer. Reusing that key would have read the old
+question's stored answers against these options and told a returning
+attendee they had answered something they never saw.
+
+Option ids are bare letters and so appear nowhere below; there is
+nothing about them to record editorially. They are still identities,
+though — replacing an option later means the next unused letter, not
+the one the replaced option gave up.
 
 ---
 

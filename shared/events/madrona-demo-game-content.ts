@@ -37,7 +37,8 @@ import type { GameSeedConfig } from "./seed-config.ts";
  *
  * Question and option ids follow the rule in
  * [`README.md`](./README.md): bare-letter option ids, question ids
- * that name the question and are never reused.
+ * that name what the question asks, and at both levels an id that is
+ * retired rather than reassigned when the thing it named is replaced.
  */
 const madronaGameContent: AuthoringGameDraftContent = {
   id: "madrona",
