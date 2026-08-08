@@ -8,12 +8,32 @@ attribution removed, per-question feedback moved inline, and a visible
 source list under every explanation.
 
 Scoped to land across three sequential implementing PRs after the
-docs-only PR that carries this plan, per `## PR Sequence` below. PR 3
-is knowable in advance as last to merge, so it carries the close-out —
-the Status flip to `Landed` and the scoping-doc deletion — and the
-"Parallel implementing PRs" exception in the Plan-to-PR Completion Gate
-is deliberately not invoked. Status moves to `In progress` when PR 1
-merges.
+docs-only PR that carries this plan, then a doc-only close-out PR, per
+`## PR Sequence` below.
+
+Two of the Plan-to-PR Completion Gate's exceptions are in play and only
+one is invoked. **"Parallel implementing PRs" is not invoked:** the PRs
+are strictly ordered and the last one is knowable in advance, so the
+default applies. **"Post-release validation" is invoked:** this plan's
+Validation Gate names two checks that cannot run until Madrona content
+is published, which is after the last implementing PR merges — opening
+every source link from the built quiz, and a live play-through on a
+phone. PR 3 therefore merges with Status
+`In progress pending live quiz verification`, and a doc-only close-out
+PR flips it to `Landed` once those checks pass.
+
+The label follows the non-smoke precedents at
+[docs/testing-tiers.md:146-148](/docs/testing-tiers.md)
+(`In progress pending deployed-origin verification`,
+`In progress pending production cookie-boundary verification`): a stable
+noun phrase naming the verification, sharing the `In progress pending`
+prefix that keeps plan state queryable. One label covers both checks
+because they are one post-publish pass against one deployment, not two
+independently schedulable gates.
+
+Status moves to `In progress` when PR 1 merges, to
+`In progress pending live quiz verification` when PR 3 merges, and to
+`Landed` in the close-out PR.
 
 Drafted 2026-08-08 against the revision-2 copy authority described in
 C1; promoted from `In draft` the same day after the promotion gate's
@@ -86,8 +106,8 @@ After this ships:
   submitting, whether they were right, the explanation, and the
   explanation's sources, without a second tap.
 - Every source renders as a real list entry under a labelled heading in
-  the same view as the explanation, not behind a disclosure, a tooltip,
-  a hover state, or a collapsed expander.
+  every view that presents the answer as settled, not behind a
+  disclosure, a tooltip, a hover state, or a collapsed expander.
 - Every sourced link is an anchor whose visible text is the title of
   the piece; no source renders as a bare address or as an
   undifferentiated word like "here."
@@ -265,11 +285,22 @@ re-run as a Validation Gate item on PR 3 rather than trusted forward.
 
 ## Cross-Cutting Invariants
 
-- **Explanation and sources are one unit.** Every surface that renders a
-  question's explanation renders that question's sources directly
-  beneath it, from the same rendering module, under the same heading.
+- **Explanation and sources are one unit wherever an answer is
+  presented as settled.** Every surface that presents a question's
+  answer as settled renders that question's sources directly beneath the
+  explanation, from the same rendering module, under the same heading.
   There are three such surfaces — correct reveal, incorrect reveal,
   end-of-quiz review — and they must not drift.
+
+  A fourth surface renders a question's explanation and is deliberately
+  outside this invariant: the retry banner on the active question card
+  in must-get-it-right mode, which shows the explanation as a hint while
+  the answer is still open (`Verified by:`
+  [apps/web/src/game/gameSessionState.ts:245-254](/apps/web/src/game/gameSessionState.ts),
+  which sets the message from the explanation on the wrong-answer
+  branch, rendered at
+  [apps/web/src/game/components/CurrentQuestionPanel.tsx:60-66](/apps/web/src/game/components/CurrentQuestionPanel.tsx)).
+  C5 names the exclusion and its guarantee.
 - **No source ever renders as a bare address.** Neither a refused link
   target nor a malformed link's address reaches the screen. C2 rejects
   both at authoring time; the renderer's plain-text degrade path is the
@@ -336,8 +367,10 @@ carries no sponsor line and no per-question sponsor attribution.
 The deck's editorial commentary is not player-facing and does not enter
 the seed module.
 
-The deck also records the date its links were last retrieved. PR 3
-updates that date to the date its own link check ran.
+The deck also records the date its links were last retrieved. The
+close-out PR updates that date to the date the link check ran. It cannot
+be PR 3: the check runs against the published quiz, which does not exist
+until PR 3 has merged and been published.
 
 ### C2 — Shared question shape
 
@@ -448,6 +481,29 @@ incorrect-answer reveal, and the end-of-quiz answer review — each render
 this one component in place of their current single-paragraph
 explanation rendering. No site renders sources by any other means.
 
+**The retry banner is excluded, and the exclusion is asserted.** The
+active question card's wrong-answer banner in must-get-it-right mode
+renders a question's explanation as a hint on a question that is still
+open, and it does not gain sources. Two reasons, and the second is the
+load-bearing one:
+
+- It is a nudge inside an unresolved question, not a result. A source
+  list belongs where a claim is being made, and the banner is not making
+  one yet — it reappears on every wrong attempt, and an eighteen-line
+  citation list under the options would push the submit control off a
+  phone screen on each of them.
+- The citation is not lost, only deferred. In that mode a player cannot
+  advance without answering correctly, which reaches the correct-answer
+  reveal; and C6 renders the end-of-quiz review in every feedback mode.
+  Both carry the full source list. No player can finish a run having
+  seen an explanation and never its sources.
+
+Because that argument depends on an absence, the absence is asserted
+rather than assumed: a test renders the banner for a question that has
+sources and asserts no source list appears. Without it, a later change
+that quietly adds sources to the banner would satisfy every other test
+in the suite.
+
 ### C6 — Results screen
 
 The score card and the per-question answer review render whenever a
@@ -548,10 +604,13 @@ these are the settled calls the implementation is bound to.
 ## PR Sequence
 
 Estimate per the rules-and-estimates rule cited under Files To Touch;
-the contracts do not move with the split. The PRs are strictly ordered —
-each depends on the type, constant, or column the previous one
-introduced — so "last to merge" is knowable in advance and PR 3 carries
-the close-out.
+the contracts do not move with the split. The implementing PRs are
+strictly ordered — each depends on the type, constant, or column the
+previous one introduced — so "last to merge" is knowable in advance.
+The close-out is a separate doc-only PR rather than a commit inside PR 3
+because the checks it records cannot run until PR 3's content is
+published, per the post-release-validation exception invoked in the
+Status block.
 
 ### PR 0 — this plan and the copy deck
 
@@ -608,20 +667,42 @@ and `harvest-block-party` too. That is intended per decision 5, and it
 is named in the PR body so it is reviewed as a deliberate change rather
 than noticed as a side effect.
 
-### PR 3 — Madrona content and close-out
+### PR 3 — Madrona content
 
-Satisfies C8, and carries the close-out.
+Satisfies C8.
 
 *Commits.* The seed module transcription against the deck PR 0 landed,
 with any copy correction committed to the deck first on this branch; the
-documentation currency updates; the close-out commit that flips Status
-to `Landed` and deletes the sibling scoping doc. Followed by the
-seed-and-publish run and the live play-through.
+documentation currency updates; the backlog entry this plan's Backlog
+Impact promises; and the Status move to
+`In progress pending live quiz verification`. Followed by the
+seed-and-publish run.
 
-This is the only copy-dependent PR. It is last so that copy still under
-correction never blocks the capability work, and so that the first
-production exercise of the new column happens before, not with, the
-first production exercise of the new content.
+This is the only copy-dependent PR. It is last among the implementing
+PRs so that copy still under correction never blocks the capability
+work, and so that the first production exercise of the new column
+happens before, not with, the first production exercise of the new
+content.
+
+It does not flip Status to `Landed` and does not delete the scoping doc.
+Both are close-out work, and the close-out cannot be honest until the
+post-publish checks have run.
+
+### PR 4 — close-out
+
+Doc-only, opened after the post-publish checks pass.
+
+*Commits.* One. It flips Status from
+`In progress pending live quiz verification` to `Landed`, records the
+evidence for both checks, updates the copy deck's recorded link-retrieval
+date to the date the link check ran per C1, and deletes the sibling
+scoping doc.
+
+The window between PR 3's merge and this PR is bounded by how long the
+seed, the publish, and one phone play-through take — not by review, and
+not by a scheduled release. If the checks fail, this PR is not opened;
+the fix lands as a further implementing PR and the plan stays at the
+pending label, which is the state the label exists to make visible.
 
 ### Ordering rationale
 
@@ -701,11 +782,22 @@ and do not move with the estimate.
   [tests/scripts/seed-game-content.test.ts](/tests/scripts/seed-game-content.test.ts)
 - [supabase/tests/database/game_authoring_phase3_publish_projection.test.sql](/supabase/tests/database/game_authoring_phase3_publish_projection.test.sql)
   — projection coverage for the new column
+- [tests/web/game/components/CurrentQuestionPanel.test.tsx](/tests/web/game/components/CurrentQuestionPanel.test.tsx)
+  — the asserted absence C5 requires on the retry banner
+- [docs/backlog.md](/docs/backlog.md) — the two entries Backlog Impact
+  opens; PR 3
 - [README.md](/README.md), [docs/architecture.md](/docs/architecture.md),
   [shared/game-config/README.md](/shared/game-config/README.md),
   [apps/web/src/game/README.md](/apps/web/src/game/README.md),
   [shared/events/README.md](/shared/events/README.md) — per the
   Documentation Currency PR Gate
+- [shared/events/madrona-quiz-revision-2-copy.md](/shared/events/madrona-quiz-revision-2-copy.md)
+  — the recorded link-retrieval date only; PR 4
+
+### Removed
+
+- `docs/plans/scoping/madrona-quiz-revision-2.md` — deleted in PR 4 as
+  close-out, not in PR 3
 
 ### Intentionally not touched
 
@@ -778,15 +870,18 @@ site build, so that command is run on its own.
   passes on the platform default theme and fails under Madrona, which is
   why the measurement is taken under the event's own theme.
 
-**PR 3 also runs, after merge and publish:**
+**After PR 3 merges and its content is published**, two checks run.
+Neither can run earlier, which is why PR 3 merges at
+`In progress pending live quiz verification` and the close-out PR
+records both:
 
 - **All eighteen source links resolve,** checked by opening each one from
   the built quiz rather than from the deck, so the check exercises the
   parser and the renderer as well as the address. *Falsifier:* a link
   that resolves when pasted into a browser but renders with a truncated
   or mis-parsed target in the quiz — which a deck-side check cannot
-  surface and an in-quiz check can. The deck's recorded retrieval date is
-  updated to the date this ran.
+  surface and an in-quiz check can. The close-out PR records the date
+  this ran into the deck.
 - **A full play-through of the live Madrona quiz on a phone:** five
   questions, an explanation and sources after each, no sponsor name
   anywhere, no back affordance, and the complete review plus an
@@ -934,9 +1029,25 @@ Walked on PR 3, which carries the documentation commit.
 
 ## Backlog Impact
 
-- **Opened.** A shared-code item for the reveal-then-re-answer hole,
-  scoped to every feedback mode that reveals an answer, referencing this
+Both entries below are written into
+[docs/backlog.md](/docs/backlog.md) under Tier 2, Operational
+Confidence, in PR 3's documentation commit. That file is named in Files
+To Touch. An "Opened" claim with no edit that opens anything is a
+promise that evaporates when the scoping doc is deleted, which is what
+review caught on the previous revision.
+
+- **Opened.** A shared-code item for the reveal-then-re-answer hole:
+  in any feedback mode that reveals an answer, back navigation lets the
+  revealed answer be resubmitted and overwrite the graded response. C8
+  closes it for Madrona with a content field; the general fix touches
+  the session state machine and `harvest-block-party`. References this
   plan's Out Of Scope entry.
+- **Opened.** A copy item for the must-get-it-right retry banner, which
+  renders a question's explanation as its wrong-answer hint. For
+  content written the way Madrona's is, the explanation states the
+  answer, so the hint gives it away on the first wrong attempt. Noticed
+  while scoping the fourth explanation surface in C5; unrelated to
+  sources and not fixed here.
 - **Changed.** Nothing.
 - **Closed.** Nothing.
 

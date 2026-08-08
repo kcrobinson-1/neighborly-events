@@ -177,7 +177,9 @@ exists to fix.
 ### 7. The work ships as three sequential PRs, not one
 
 Schema and shared shape; then rendering, results, and authoring; then
-content and close-out.
+content. A fourth, doc-only close-out PR follows once the post-publish
+checks pass; it carries no decisions and is not part of this
+decomposition.
 
 An earlier draft of this decision said one PR, on the reasoning that no
 intermediate state has independent value. That reasoning was applied to
@@ -248,11 +250,19 @@ phase plan files: the PRs are commit-level decomposition of one phase,
 not phases in their own right, because none of them has independent
 stakeholder value.
 
-Because the PRs are strictly ordered and PR 3 is knowable in advance as
-last, the plan takes the Plan-to-PR Completion Gate's default —
-last-to-merge carries the close-out — rather than invoking the
-"Parallel implementing PRs" exception. The plan says so in its Status
-block.
+Because the PRs are strictly ordered and the last implementing PR is
+knowable in advance, the plan does not invoke the Plan-to-PR Completion
+Gate's "Parallel implementing PRs" exception.
+
+It does invoke the other one. The plan's Validation Gate names two
+checks that cannot run until Madrona content is published — opening
+every source link from the built quiz, and a live play-through — and
+publication follows the last implementing PR's merge. That is the
+post-release-validation exception, so the last implementing PR merges at
+`In progress pending live quiz verification` and a doc-only close-out PR
+flips to `Landed`. The close-out therefore is not carried by the
+last-to-merge implementing PR, which an earlier revision of this doc
+asserted. The plan's Status block states both calls.
 
 ## Reality-check inputs the plan must verify
 
