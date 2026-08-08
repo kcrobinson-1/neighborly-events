@@ -27,9 +27,25 @@ alter table public.game_questions
     );
 
 -- Re-declared to project the new column. `create or replace function` preserves
--- ownership and existing privileges, so the revoke/grant block is deliberately
--- not re-issued here; the routine's privilege posture is asserted unchanged by
--- the committed permissions test rather than restated in this migration.
+-- ownership and existing privileges, so no revoke or grant is issued here.
+--
+-- Post-state of every object this migration touches, named rather than implied
+-- (db-permissions-snapshot CCI-4):
+--
+--   public.game_questions
+--     RLS: enabled. One SELECT policy for anon and authenticated, gated on the
+--     parent game_events row having published_at not null. Unchanged — the new
+--     column is covered by the existing row-scoped policy.
+--     Grants: table-level, unchanged. The new column inherits them; PostgreSQL
+--     column privileges default to the table grant when none is column-scoped,
+--     and none is.
+--     https://www.postgresql.org/docs/17/sql-grant.html
+--
+--   public.publish_game_event_draft(text, uuid)
+--     SECURITY DEFINER, owner postgres, search_path pinned to public.
+--     EXECUTE: postgres and service_role only. anon, authenticated and PUBLIC
+--     hold none. Unchanged — `create or replace` preserves the ACL, which is
+--     why the revoke/grant block from the defining migration is not repeated.
 
 create or replace function public.publish_game_event_draft(
   p_event_id text,
