@@ -92,7 +92,7 @@ test("completes the featured attendee flow on mobile", async ({ page }) => {
   await clickOptionAndSubmit(page, "That the attendee is officially done");
 
   await expect(
-    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+    page.getByRole("heading", { name: "Show this screen at the MNA booth" }),
   ).toBeVisible();
   await expect(page.getByText("You're checked in for the reward.")).toBeVisible();
   await expect(page.locator(".token-block strong")).not.toHaveText("Loading...");
@@ -105,7 +105,7 @@ test("completes the featured attendee flow on mobile", async ({ page }) => {
   await page.reload({ waitUntil: "networkidle" });
 
   await expect(
-    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+    page.getByRole("heading", { name: "Show this screen at the MNA booth" }),
   ).toBeVisible();
   await expect(page.locator(".token-block strong")).toHaveText(verificationCode);
   await expect(
@@ -155,7 +155,7 @@ test("completes a restored in-flight submission under the dev build's StrictMode
   await page.reload({ waitUntil: "networkidle" });
 
   await expect(
-    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+    page.getByRole("heading", { name: "Show this screen at the MNA booth" }),
   ).toBeVisible();
   await expect(page.locator(".token-block strong")).not.toHaveText("Loading...");
 });

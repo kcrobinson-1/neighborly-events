@@ -180,6 +180,7 @@ describe("GameCompletionPanel", () => {
           onReset={() => {}}
           onRetake={() => {}}
           onRetrySubmission={() => {}}
+          redemptionLocationName={null}
           score={1}
           showRetake={true}
           status={createStatus(expectedStatusKind)}
@@ -214,11 +215,7 @@ describe("GameCompletionPanel", () => {
             name: "Show this screen at the volunteer table",
           }),
         ).toBeTruthy();
-        expect(
-          screen.getByText(
-            "Your reward entry is ready. Show this screen and code to the volunteer.",
-          ),
-        ).toBeTruthy();
+        expect(screen.getByText("Your reward entry is ready.")).toBeTruthy();
       } else {
         expect(
           screen.getByRole("heading", {
@@ -254,6 +251,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("unredeemed")}
@@ -275,6 +273,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("redeemed")}
@@ -307,6 +306,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("unredeemed")}
@@ -330,6 +330,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("unredeemed")}
@@ -362,6 +363,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("unredeemed")}
@@ -400,6 +402,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("unredeemed")}
@@ -429,6 +432,7 @@ describe("GameCompletionPanel", () => {
         onReset={() => {}}
         onRetake={() => {}}
         onRetrySubmission={() => {}}
+        redemptionLocationName={null}
         score={1}
         showRetake={true}
         status={createStatus("unredeemed")}
@@ -436,6 +440,54 @@ describe("GameCompletionPanel", () => {
     );
 
     expect(screen.queryByText("Final score")).toBeNull();
+  });
+
+  describe("redemption location", () => {
+    const renderWithLocation = (redemptionLocationName: string | null) =>
+      render(
+        <GameCompletionPanel
+          answers={{ q1: ["a"] }}
+          completion={createCompletionResult()}
+          completionError={null}
+          cta={null}
+          game={createGame()}
+          isCompletionPersisted={true}
+          isSubmitting={false}
+          onReset={() => {}}
+          onRetake={() => {}}
+          onRetrySubmission={() => {}}
+          redemptionLocationName={redemptionLocationName}
+          score={1}
+          showRetake={true}
+          status={createStatus("unredeemed")}
+        />,
+      );
+
+    it("names the event's own redemption location in the heading", () => {
+      // A literal, not a registry read: the contract under test is that
+      // whatever the registry supplies reaches the heading verbatim, and
+      // reading the live registry here would pass just as well if the
+      // panel ignored the prop and hardcoded Madrona's wording.
+      renderWithLocation("the MNA booth");
+
+      expect(
+        screen.getByRole("heading", {
+          name: "Show this screen at the MNA booth",
+        }),
+      ).toBeTruthy();
+    });
+
+    it("keeps the generic wording for events that register no location", () => {
+      // The panel is the platform renderer for every event, so an event
+      // with no registry entry must not inherit another event's furniture.
+      renderWithLocation(null);
+
+      expect(
+        screen.getByRole("heading", {
+          name: "Show this screen at the volunteer table",
+        }),
+      ).toBeTruthy();
+    });
   });
 
   describe("block ordering", () => {
@@ -452,6 +504,7 @@ describe("GameCompletionPanel", () => {
           onReset={() => {}}
           onRetake={() => {}}
           onRetrySubmission={() => {}}
+          redemptionLocationName={null}
           score={1}
           showRetake={true}
           status={createStatus("unredeemed")}
@@ -478,10 +531,9 @@ describe("GameCompletionPanel", () => {
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
       // The code sits above the explanations rather than after them, so its
-      // instruction stays about showing the code, not about scrolling.
-      expect(
-        screen.getByText("Show this code to the volunteer to check in."),
-      ).toBeTruthy();
+      // instruction stays about showing the code, not about scrolling. It
+      // also names no place — the heading above the block does that.
+      expect(screen.getByText("Show this code to check in.")).toBeTruthy();
     });
 
     it("keeps the check-in code above the CTA in an instant-feedback mode", () => {
@@ -497,6 +549,7 @@ describe("GameCompletionPanel", () => {
           onReset={() => {}}
           onRetake={() => {}}
           onRetrySubmission={() => {}}
+          redemptionLocationName={null}
           score={1}
           showRetake={true}
           status={createStatus("unredeemed")}
@@ -539,6 +592,7 @@ describe("GameCompletionPanel", () => {
         onReset={onReset}
         onRetake={() => {}}
         onRetrySubmission={onRetrySubmission}
+        redemptionLocationName={null}
         score={0}
         showRetake={true}
         status={createStatus("unknown")}
@@ -574,6 +628,7 @@ describe("GameCompletionPanel", () => {
           onReset={() => {}}
           onRetake={() => {}}
           onRetrySubmission={() => {}}
+          redemptionLocationName={null}
           score={1}
           showRetake={true}
           status={createStatus(statusKind)}

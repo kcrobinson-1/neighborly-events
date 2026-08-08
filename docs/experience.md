@@ -133,7 +133,8 @@ Across the experience, the copy should follow these rules:
 
 - Use demo language on preview surfaces and attendee language on game surfaces.
 - Lead with what the user gets or does next, not with internal product framing.
-- Prefer concrete phrases like "Start game", "Show this screen at the volunteer table", and "Start over" over abstract labels.
+- Prefer concrete phrases like "Start game", "Show this screen at the MNA booth", and "Start over" over abstract labels.
+- Name the redemption place the same way on every surface an attendee reads. One physical table called "the booth" on the quiz page head, "the volunteer table" on the completion heading, and "the volunteer" on the code card is three names, and volunteers and printed signage cannot match all three. The name is event-owned content and lives in the `redemptionLocation` registry (`shared/events/redemptionLocation.ts`); surfaces compose from it rather than restating it. Events that register no location keep the platform's generic "the volunteer table" wording.
 - Keep buttons and helper text action-first and easy to scan from a distance.
 - Use proof-oriented language on completion screens so the handoff feels trustworthy.
 - Keep error messages recoverable first; any development-only setup detail should come after the user-facing explanation.
@@ -528,7 +529,7 @@ Recommended elements:
 - strong success headline
 - reward-entry confirmation
 - large verification token, badge, or timestamped proof state
-- instruction such as "Show this screen to the volunteer table"
+- instruction naming the event's redemption location, such as "Show this screen at the MNA booth" — from the `redemptionLocation` registry, not written into the renderer
 
 Before that official proof arrives, the app should show a dedicated completion-pending state immediately after the last answer is submitted.
 

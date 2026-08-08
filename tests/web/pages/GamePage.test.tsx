@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
 import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
+import { getQuizPageHead } from "../../../shared/events/quizPageHead.ts";
 
 const {
   mockEnsureServerSession,
@@ -150,13 +151,13 @@ describe("GamePage", () => {
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
-    // Count from the config (one question in this fixture), reward
-    // line from the `quizPageHead` registry entry for the slug.
-    expect(
-      screen.getByText(
-        "One question. Show your code at the booth when you're done to claim a reward.",
-      ),
-    ).toBeTruthy();
+    // The contract is the composition: config-derived count lead, then
+    // the registry's reward line verbatim. Read the line from the
+    // registry rather than restating it, so a copy edit there does not
+    // fail this test while a broken composition still does.
+    const rewardLine = getQuizPageHead("madrona")?.rewardLine;
+    expect(rewardLine).toBeTruthy();
+    expect(screen.getByText(`One question. ${rewardLine}`)).toBeTruthy();
   });
 
   it("keeps the demo-overview nav for events without a masthead", () => {
