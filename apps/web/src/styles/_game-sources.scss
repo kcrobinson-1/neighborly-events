@@ -1,0 +1,95 @@
+@use "./mixins" as *;
+@use "./tokens" as *;
+
+// The settled-answer narrative: the copy a surface resolved, then that
+// question's sources. One component renders it on all three settled
+// surfaces, so its spacing lives here rather than being repeated in each
+// panel partial.
+.question-narrative {
+  @include stack($space-4);
+}
+
+// Internal rhythm is the grid gap above, so the paragraphs give up the UA
+// margins they would otherwise add on top of it.
+.question-narrative > p {
+  margin: 0;
+}
+
+// The reveal panels lay out in normal flow with no gap of their own, so the
+// bare paragraph this block replaced carried its separation from the continue
+// button in its own margins — 1em, which is `$space-7`. Inside a review card
+// the rhythm is the card's grid gap instead and the narrative takes no margin,
+// which is what the direct-child selector distinguishes.
+.completion-panel > .question-narrative {
+  margin: $space-7 0;
+}
+
+.question-sources {
+  @include stack($space-2);
+}
+
+// Subordinate to the explanation above it — quieter color, lighter weight
+// than a heading — but held at the same size as the panel's other small
+// copy (`.token-meta`, `.completion-retake-note`) rather than shrinking
+// past it.
+.question-sources-label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.02em;
+}
+
+.question-sources-list {
+  margin: 0;
+  // Matches `.intro-list`, the other bulleted list in the quiz flow.
+  padding-left: $space-8;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+// Source titles run long and the quiz column is 320px at its narrowest, so
+// an entry breaks inside a word rather than pushing the panel sideways.
+.question-sources-list li {
+  overflow-wrap: anywhere;
+}
+
+.question-sources-list li + li {
+  margin-top: $space-2;
+}
+
+// Emphasis marks publication titles, which is the one place a source line has
+// to distinguish a name from the words around it. `:root` sets
+// `font-synthesis: none`, and the Madrona body face ships regular and bold
+// only — so `<em>` computed to `italic` and rendered at a byte-identical
+// width, making the construct silently inert on the theme it was written for.
+// Re-enabled here only, and only for style: the global rule still holds
+// everywhere else, and faux-bold stays off.
+.question-sources-list em {
+  font-synthesis: style;
+}
+
+// Deliberately not bolded. The whole block is subordinate to the explanation
+// above it, and a run of semibold underlined links reads heavier than the
+// paragraph it is supporting. Underline rather than color alone is what marks
+// the link, so weight is not needed to carry that job.
+.question-source-link {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+// Marks a PDF target before it is opened. Sits inside the anchor so it joins
+// the link's accessible name.
+//
+// No pill and no surface of its own, deliberately. A tinted badge measured
+// 3.55:1 against the Madrona panel — the tint darkens the background under
+// text that is neither large nor exempt — and any surface token picked to fix
+// that would only hold for the themes checked. Inheriting the link's color
+// makes the marker exactly as legible as the link it belongs to, in every
+// theme, with nothing left to re-verify per theme.
+.question-source-pdf {
+  margin-left: $space-1;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.02em;
+}

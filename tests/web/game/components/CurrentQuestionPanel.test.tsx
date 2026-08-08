@@ -83,4 +83,35 @@ describe("CurrentQuestionPanel", () => {
       screen.getByRole<HTMLButtonElement>("button", { name: "Submit answers" }).disabled,
     ).toBe(true);
   });
+
+  it("does not cite sources in the retry banner", () => {
+    // The retry banner is the fourth surface that shows a question's
+    // explanation, and the only one where the answer is not settled: the
+    // player is still choosing. A citation there would be evidence attached
+    // to an open question. Nothing is lost by withholding it — this mode
+    // always reaches the correct-answer reveal, and the results review now
+    // renders in every feedback mode. Asserted because it is exactly the kind
+    // of thing a later change adds for symmetry.
+    render(
+      <CurrentQuestionPanel
+        canGoBack={false}
+        canSubmit={true}
+        currentIndex={0}
+        feedbackKind="incorrect"
+        feedbackMessage="That one is not right yet."
+        onGoBack={() => {}}
+        onOptionSelect={() => {}}
+        onSubmit={() => {}}
+        pendingSelection={["a"]}
+        question={createQuestion({
+          sources: ["[Seattle Municipal Archives](https://example.org/record)"],
+        })}
+        questionCount={2}
+      />,
+    );
+
+    expect(screen.getByText("That one is not right yet.")).toBeTruthy();
+    expect(screen.queryByText("Sources")).toBeNull();
+    expect(screen.queryByRole("link")).toBeNull();
+  });
 });

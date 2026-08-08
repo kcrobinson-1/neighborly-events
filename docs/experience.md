@@ -402,6 +402,14 @@ Important requirement:
 
 Any game using these modes needs a defined correct answer for each scored question.
 
+The modes differ in what the attendee sees *during* play, not in what they can
+read at the end. Every completed game shows the same completion screen: the
+final score, a per-question review of their answers against the correct ones
+with any explanation and its sources, and the verification code. An in-play
+reveal is shown once, between questions, and cannot be returned to — so it is
+not a substitute for the review, and the instant-feedback modes need the review
+for the same reason final-score-reveal does.
+
 ### Final Score Reveal
 
 In this mode, the attendee moves through the full game without interruption and sees the results at the end.
@@ -482,6 +490,27 @@ Bad patterns:
 - interstitial ads
 - autoplay media
 - multiple sponsor messages on one screen
+
+### Sources
+
+A question may carry sources — the references behind whatever claim it makes.
+They render wherever the quiz presents an answer as settled: under the
+explanation on both in-play reveals, and under the note on each card of the
+end-of-game review. They do not appear on a question the attendee is still
+answering; the retry prompt in instant-feedback-required mode is a hint, not a
+citation.
+
+Rules that make them worth reading:
+
+- a source is a titled link, never a bare web address on screen
+- the list carries a visible "Sources" label, quieter than the explanation
+  above it but no smaller than the screen's other small copy
+- a link that opens a PDF says so before it is followed
+- links leave the platform, so they open in a new context
+
+Sources exist because a neighborhood quiz makes contested local claims, and a
+neighbor who knows one of them is wrong will otherwise discount all of them.
+The point is to let someone check a single claim, not to look authoritative.
 
 ## Completion Screen
 

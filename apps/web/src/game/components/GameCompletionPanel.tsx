@@ -7,6 +7,7 @@ import { answersMatch } from "../../../../../shared/game-config";
 import type { AttendeeRedemptionStatus } from "../../../../../shared/redemption";
 import type { GameConfig } from "../../data/games";
 import { getOptionLabels } from "../gameUtils";
+import { QuestionNarrative } from "./QuestionNarrative";
 import type { Answers, GameCompletionResult } from "../../types/game";
 
 function getChipText(
@@ -86,8 +87,15 @@ export function GameCompletionPanel({
   const isEntitlementNew = completion?.entitlement.status === "new";
   const verificationCode = completion?.entitlement.verificationCode ?? null;
   const shouldShowVerification = isSubmitting || Boolean(completion);
-  const shouldShowAnswerReview =
-    Boolean(completion) && game.feedbackMode === "final_score_reveal";
+  // Every completion gets a score card and a per-question review, in every
+  // feedback mode. The review used to be withheld from the two instant-
+  // feedback modes on the reasoning that a player had already seen each
+  // answer during play. That holds for correctness, but not for anything
+  // durable: a reveal is shown once, between questions, and cannot be
+  // returned to — so a mode that reveals as it goes was the mode with no
+  // place to read the answers again, and now that questions carry sources,
+  // no place to follow a citation either.
+  const shouldShowAnswerReview = Boolean(completion);
   const completionChipText = getChipText(status.kind, Boolean(isEntitlementNew));
   const completionHeadline = getHeadline(status.kind);
   const completionMessage = getBodyCopy(status.kind, Boolean(isEntitlementNew));
@@ -201,11 +209,13 @@ export function GameCompletionPanel({
                   >
                     {isCorrect ? "Correct" : "Not correct"}
                   </p>
-                  {question.sponsorFact ?? question.explanation ? (
-                    <p className="answer-review-note">
-                      {question.sponsorFact ?? question.explanation}
-                    </p>
-                  ) : null}
+                  {/* `sponsorFact` displacing `explanation` is the existing
+                      resolver behavior on this surface and stays as it is —
+                      the precedence is being fixed as content, not here. */}
+                  <QuestionNarrative
+                    copy={question.sponsorFact ?? question.explanation ?? null}
+                    question={question}
+                  />
                 </article>
               );
             })}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   mapPublishedGameRowsToGameConfig,
+  PUBLISHED_GAME_QUESTION_COLUMNS,
   type PublishedGameEventRow,
   type PublishedGameOptionRow,
   type PublishedGameQuestionRow,
@@ -206,5 +207,67 @@ describe("mapPublishedGameRowsToGameConfig", () => {
     });
 
     expect(game.questions[0].sponsor).toBeNull();
+  });
+
+  describe("question sources", () => {
+    // createQuestionRows index 1 is q1 (display_order 1), which sorts first.
+    function mapWithQ1Sources(
+      sources: PublishedGameQuestionRow["sources"],
+    ) {
+      return mapPublishedGameRowsToGameConfig({
+        event: createEventRow(),
+        options: createOptionRows(),
+        questions: createQuestionRows([{}, { sources }]),
+      }).questions[0];
+    }
+
+    it("carries the source lines through in authored order", () => {
+      expect(
+        mapWithQ1Sources(["[First](https://example.org)", "Second line"]).sources,
+      ).toEqual(["[First](https://example.org)", "Second line"]);
+    });
+
+    it.each([
+      { label: "an absent key", value: undefined },
+      { label: "a JSON null", value: null },
+      { label: "an empty list", value: [] },
+    ])(
+      "leaves the field off the question for $label",
+      ({ value }) => {
+        // Absent, null, and empty all mean "no sources", and all three have to
+        // produce the same shape: the draft path normalizes empty to absent, so
+        // a published question that kept `sources: []` would make the two
+        // hydration paths disagree for identical content.
+        expect("sources" in mapWithQ1Sources(value)).toBe(false);
+      },
+    );
+  });
+});
+
+describe("PUBLISHED_GAME_QUESTION_COLUMNS", () => {
+  it("selects the sources column", () => {
+    // The read paths cast their rows rather than inferring them, so nothing
+    // else fails when this column is missing from the select — the field just
+    // silently never arrives and no question ever renders a citation.
+    expect(PUBLISHED_GAME_QUESTION_COLUMNS).toContain("sources");
+  });
+
+  it("names every column the published question row type declares", () => {
+    // The row type and the select list are two halves of one contract, and a
+    // cast is what joins them. Comparing them here is the only place a column
+    // added to one and forgotten in the other shows up before runtime.
+    expect([...PUBLISHED_GAME_QUESTION_COLUMNS].sort()).toEqual(
+      [
+        "display_order",
+        "event_id",
+        "explanation",
+        "id",
+        "prompt",
+        "selection_mode",
+        "sources",
+        "sponsor",
+        "sponsor_fact",
+      ].sort(),
+    );
   });
 });

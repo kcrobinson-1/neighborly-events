@@ -24,8 +24,46 @@ export type AdminQuestionFormValues = {
   prompt: string;
   selectionMode: SelectionMode;
   sponsor: string;
+  /**
+   * The source lines as one block of text, newline-separated — the field is a
+   * textarea, and `Question.sources` is a list. `readSourceLines` and
+   * `writeSourceLines` are the only two places that conversion happens.
+   */
+  sources: string;
   sponsorFact: string;
 };
+
+/**
+ * Splits the authoring textarea into canonical source lines.
+ *
+ * Save-time only. Doing this on every keystroke would make the field
+ * impossible to type in: the textarea is controlled from this content, so
+ * trimming a line the user is still writing snaps the trailing space away
+ * before the next render, and dropping a blank line eats the newline that was
+ * about to start the next source. `readEditedSourceLines` is what the edit
+ * path uses instead.
+ */
+function readSourceLines(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Splits the textarea for the edit buffer, preserving it exactly.
+ *
+ * The inverse of `writeSourceLines`, which is what makes the round trip
+ * through draft content lossless while the organizer is mid-word.
+ */
+function readEditedSourceLines(text: string) {
+  return text.split("\n");
+}
+
+/** Renders stored source lines back into the authoring textarea. */
+function writeSourceLines(sources: string[] | undefined) {
+  return (sources ?? []).join("\n");
+}
 
 function createRequiredMessage(label: string) {
   return `${label} is required.`;
@@ -121,6 +159,10 @@ function createNormalizedQuestion(question: Question): Question {
 
   const explanation = trimOptional(question.explanation ?? "");
   const sponsorFact = trimOptional(question.sponsorFact ?? "");
+  // Blank lines are dropped and each line is trimmed, so a list that empties
+  // out becomes absent rather than `[]` — matching how both hydration paths
+  // normalize it, and how the two optional strings below behave.
+  const sources = readSourceLines(writeSourceLines(question.sources));
 
   const canonical = {
     ...question,
@@ -133,15 +175,18 @@ function createNormalizedQuestion(question: Question): Question {
     sponsor: trimOptional(question.sponsor ?? "") ?? null,
   };
 
-  // These two are absent rather than empty when they trim to nothing, which a
-  // spread cannot express — it would carry the untrimmed original through.
+  // These three are absent rather than empty when they normalize to nothing,
+  // which a spread cannot express — it would carry the untrimmed original
+  // through.
   delete canonical.explanation;
   delete canonical.sponsorFact;
+  delete canonical.sources;
 
   return {
     ...canonical,
     ...(explanation ? { explanation } : {}),
     ...(sponsorFact ? { sponsorFact } : {}),
+    ...(sources.length > 0 ? { sources } : {}),
   };
 }
 
@@ -200,11 +245,18 @@ export function updateQuestionFormValues(
 
     delete next.explanation;
     delete next.sponsorFact;
+    delete next.sources;
 
+    // Empty text omits the field rather than storing `[""]`, so editing any
+    // other field on a question that has no sources does not invent one and
+    // trip the dirty check. Any non-empty text is stored verbatim; blank lines
+    // and stray whitespace are the organizer's working state and get
+    // normalized by `createNormalizedQuestion` at save.
     return {
       ...next,
       ...(values.explanation ? { explanation: values.explanation } : {}),
       ...(values.sponsorFact ? { sponsorFact: values.sponsorFact } : {}),
+      ...(values.sources ? { sources: readEditedSourceLines(values.sources) } : {}),
     };
   });
 }
@@ -236,6 +288,7 @@ export function createQuestionFormValues(
     prompt: question.prompt,
     selectionMode: question.selectionMode,
     sponsor: question.sponsor ?? "",
+    sources: writeSourceLines(question.sources),
     sponsorFact: question.sponsorFact ?? "",
   };
 }

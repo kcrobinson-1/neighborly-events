@@ -1,5 +1,6 @@
 /** Success panel shown between questions in instant-feedback game mode. */
 import type { Question } from "../../data/games";
+import { QuestionNarrative } from "./QuestionNarrative";
 
 /** Props for the instant-feedback success panel. */
 type CorrectAnswerPanelProps = {
@@ -20,7 +21,7 @@ export function CorrectAnswerPanel({
     <section className="panel completion-panel">
       <span className="chip chip-success">Correct</span>
       {question.sponsor ? <h2>{question.sponsor}</h2> : null}
-      <p>{feedbackMessage}</p>
+      <QuestionNarrative copy={feedbackMessage} question={question} />
       <button className="primary-button" onClick={onContinue} type="button">
         {isLastQuestion ? "See your results" : "Continue"}
       </button>

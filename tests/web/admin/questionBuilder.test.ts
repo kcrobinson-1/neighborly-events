@@ -205,11 +205,12 @@ describe("applyQuestionFormValues", () => {
   });
 });
 
-// The admin form owns a fixed set of fields. Anything else on a question has
-// to survive an edit, and `sources` is the first field the form does not own.
-// Both mappers used to rebuild each question by naming every field, so saving
-// any one question erased citations from the whole draft.
-describe("fields the question form does not own", () => {
+// `sources` is now a field the form owns: it round-trips through a textarea
+// as newline-separated text. The preservation cases below stayed after that
+// change because what they protect did not — both mappers used to rebuild each
+// question by naming every field, so saving any one question erased citations
+// from the whole draft, and only the edited question is supposed to move.
+describe("source lines through the question form", () => {
   const firstSources = ["[The Title](https://example.org/first)"];
   const secondSources = ["[Another](https://example.org/second)"];
   const gameWithSources = {
@@ -258,6 +259,83 @@ describe("fields the question form does not own", () => {
 
     expect("explanation" in nextContent.questions[0]).toBe(false);
     expect("sponsorFact" in nextContent.questions[0]).toBe(false);
+  });
+
+  it("reads stored source lines into the textarea one per line", () => {
+    const values = createQuestionFormValues(
+      {
+        ...gameWithSources,
+        questions: [
+          {
+            ...gameWithSources.questions[0],
+            sources: ["First line", "Second line"],
+          },
+          ...gameWithSources.questions.slice(1),
+        ],
+      },
+      editedQuestionId,
+    );
+
+    expect(values.sources).toBe("First line\nSecond line");
+  });
+
+  it("writes edited textarea text back as ordered source lines", () => {
+    const nextContent = updateQuestionFormValues(
+      gameWithSources,
+      editedQuestionId,
+      {
+        ...createQuestionFormValues(gameWithSources, editedQuestionId),
+        sources: "[One](https://example.org/one)\n[Two](https://example.org/two)",
+      },
+    );
+
+    expect(nextContent.questions[0].sources).toEqual([
+      "[One](https://example.org/one)",
+      "[Two](https://example.org/two)",
+    ]);
+  });
+
+  it("drops blank lines and surrounding whitespace from the textarea", () => {
+    // Trailing newlines are what a textarea produces by simply being typed
+    // into, and a blank source line is rejected by draft validation — so the
+    // authoring path has to normalize them rather than let a save fail.
+    const nextContent = prepareQuestionContentForSave(
+      updateQuestionFormValues(gameWithSources, editedQuestionId, {
+        ...createQuestionFormValues(gameWithSources, editedQuestionId),
+        sources: "  [One](https://example.org/one)  \n\n   \n[Two](https://example.org/two)\n",
+      }),
+    );
+
+    expect(nextContent.questions[0].sources).toEqual([
+      "[One](https://example.org/one)",
+      "[Two](https://example.org/two)",
+    ]);
+  });
+
+  it("removes the field entirely when the textarea is cleared", () => {
+    // Absent, not `[]`. Both hydration paths normalize an empty list to absent,
+    // so a draft that kept `[]` would round-trip differently than it published.
+    const nextContent = prepareQuestionContentForSave(
+      updateQuestionFormValues(gameWithSources, editedQuestionId, {
+        ...createQuestionFormValues(gameWithSources, editedQuestionId),
+        sources: "\n  \n",
+      }),
+    );
+
+    expect("sources" in nextContent.questions[0]).toBe(false);
+  });
+
+  it("rejects a save whose source line leaves an address outside a link", () => {
+    // The shared validator is what enforces the grammar; this asserts the
+    // authoring path actually reaches it rather than saving past it.
+    expect(() =>
+      prepareQuestionContentForSave(
+        updateQuestionFormValues(gameWithSources, editedQuestionId, {
+          ...createQuestionFormValues(gameWithSources, editedQuestionId),
+          sources: "[Unclosed](https://example.org/one",
+        }),
+      )
+    ).toThrow(/web address outside a link/);
   });
 });
 
