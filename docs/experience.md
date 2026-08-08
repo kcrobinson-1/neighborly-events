@@ -556,8 +556,12 @@ keyed to the client session. There is no separate results page:
 - *Not started*: the route shows the intro screen.
 - *In progress*: returning or reloading resumes at the question the attendee
   left, with earlier answers and the attempt's option order intact.
-- *Completed*: the route IS the results — score, answer review, and the
-  verification code render again on every return, without replaying.
+- *Completed*: the route IS the results — score, verification code, and the
+  answer review render again on every return, without replaying. The code sits
+  directly under the score and above the review: each reviewed question carries
+  an explanation and its sources, so a code placed after the review lands
+  several screens past the fold on a phone, and the code is what the attendee
+  is standing at the booth to show.
 
 Because the completed state is durable, a link out of the game that stays on
 this platform navigates normally in the same tab; nothing on the completion

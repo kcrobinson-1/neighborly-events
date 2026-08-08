@@ -129,6 +129,50 @@ export function GameCompletionPanel({
       ? { target: "_blank" as const, rel: "noopener" }
       : { target: undefined, rel: undefined };
 
+  // The check-in code is why the player is on this screen, so it renders
+  // directly under the score and above the per-question review. It used to
+  // sit below the review, which was short when a reviewed question was a
+  // line of correctness; now that each one carries an explanation and its
+  // sources, the review is long enough to push the code well past the fold
+  // on a phone.
+  //
+  // It has exactly one render site, always the same child slot of
+  // `.results-block`, and that is load-bearing rather than tidiness: this
+  // block is the `role="status"` live region that announces the code
+  // arriving. Rendering it from two branches — standalone while in flight,
+  // then inside the results block once the completion lands — remounts the
+  // live region at the exact moment its content becomes meaningful, and a
+  // live region inserted with its content already in place is announced
+  // unreliably. Keeping one node means the "Loading..." to code transition
+  // is a text change inside a region the screen reader is already watching.
+  // The surrounding score card and answer review are the parts that come
+  // and go; the block between them does not.
+  const verificationBlock = shouldShowVerification ? (
+    <div
+      aria-busy={isSubmitting}
+      className={`token-block${isSubmitting ? " token-block-pending" : ""}`}
+      role="status"
+    >
+      <div className="token-status">
+        {isSubmitting ? <span aria-hidden="true" className="token-spinner" /> : null}
+        <span className="token-label">Check-in code</span>
+      </div>
+      <strong>{verificationCode ?? "Loading..."}</strong>
+      <p className="token-instruction">
+        {completion
+          ? "Show this code to the volunteer to check in."
+          : "Please wait here. The volunteer code will appear in this spot as soon as check-in is complete."}
+      </p>
+      <span className="token-meta">
+        {completion
+          ? isEntitlementNew
+            ? "Your reward entry is now recorded."
+            : "Your earlier reward entry still counts. This replay does not add another one."
+          : "This usually takes just a moment, even on slower service."}
+      </span>
+    </div>
+  ) : null;
+
   return (
     <section className="panel completion-panel">
       <span
@@ -164,88 +208,72 @@ export function GameCompletionPanel({
               "Try again to finish your reward check-in."}
       </p>
 
-      {shouldShowAnswerReview ? (
+      {shouldShowVerification || shouldShowAnswerReview ? (
         <div className="results-block">
-          <div className="score-card">
-            <span className="token-label">Final score</span>
-            <strong>
-              {score} / {game.questions.length}
-            </strong>
-          </div>
-          <div className="answer-review-list">
-            {game.questions.map((question) => {
-              const selectedAnswerIds = answers[question.id] ?? [];
-              const selectedLabels = getOptionLabels(question, selectedAnswerIds);
-              const correctLabels = getOptionLabels(
-                question,
-                question.correctAnswerIds,
-              );
-              const isCorrect = answersMatch(
-                selectedAnswerIds,
-                question.correctAnswerIds,
-              );
+          {shouldShowAnswerReview ? (
+            <div className="score-card">
+              <span className="token-label">Final score</span>
+              <strong>
+                {score} / {game.questions.length}
+              </strong>
+            </div>
+          ) : null}
+          {verificationBlock}
+          {shouldShowAnswerReview ? (
+            <div className="answer-review-list">
+              {game.questions.map((question) => {
+                const selectedAnswerIds = answers[question.id] ?? [];
+                const selectedLabels = getOptionLabels(
+                  question,
+                  selectedAnswerIds,
+                );
+                const correctLabels = getOptionLabels(
+                  question,
+                  question.correctAnswerIds,
+                );
+                const isCorrect = answersMatch(
+                  selectedAnswerIds,
+                  question.correctAnswerIds,
+                );
 
-              return (
-                <article className="answer-review-card" key={question.id}>
-                  {question.sponsor ? (
-                    <p className="sponsor-label">Sponsored by {question.sponsor}</p>
-                  ) : null}
-                  <h3>{question.prompt}</h3>
-                  <p>
-                    <strong>Your answer:</strong>{" "}
-                    {selectedLabels.length > 0
-                      ? selectedLabels.join(", ")
-                      : "No answer recorded"}
-                  </p>
-                  <p>
-                    <strong>Correct answer:</strong> {correctLabels.join(", ")}
-                  </p>
-                  <p
-                    className={
-                      isCorrect
-                        ? "review-status review-status-correct"
-                        : "review-status review-status-incorrect"
-                    }
-                  >
-                    {isCorrect ? "Correct" : "Not correct"}
-                  </p>
-                  {/* `sponsorFact` displacing `explanation` is the existing
-                      resolver behavior on this surface and stays as it is —
-                      the precedence is being fixed as content, not here. */}
-                  <QuestionNarrative
-                    copy={question.sponsorFact ?? question.explanation ?? null}
-                    question={question}
-                  />
-                </article>
-              );
-            })}
-          </div>
-        </div>
-      ) : null}
-
-      {shouldShowVerification ? (
-        <div
-          aria-busy={isSubmitting}
-          className={`token-block${isSubmitting ? " token-block-pending" : ""}`}
-          role="status"
-        >
-          <div className="token-status">
-            {isSubmitting ? <span aria-hidden="true" className="token-spinner" /> : null}
-            <span className="token-label">Check-in code</span>
-          </div>
-          <strong>{verificationCode ?? "Loading..."}</strong>
-          <p className="token-instruction">
-            {completion
-              ? "Show this code to the volunteer to check in."
-              : "Please wait here. The volunteer code will appear in this spot as soon as check-in is complete."}
-          </p>
-          <span className="token-meta">
-            {completion
-              ? isEntitlementNew
-                ? "Your reward entry is now recorded."
-                : "Your earlier reward entry still counts. This replay does not add another one."
-              : "This usually takes just a moment, even on slower service."}
-          </span>
+                return (
+                  <article className="answer-review-card" key={question.id}>
+                    {question.sponsor ? (
+                      <p className="sponsor-label">
+                        Sponsored by {question.sponsor}
+                      </p>
+                    ) : null}
+                    <h3>{question.prompt}</h3>
+                    <p>
+                      <strong>Your answer:</strong>{" "}
+                      {selectedLabels.length > 0
+                        ? selectedLabels.join(", ")
+                        : "No answer recorded"}
+                    </p>
+                    <p>
+                      <strong>Correct answer:</strong> {correctLabels.join(", ")}
+                    </p>
+                    <p
+                      className={
+                        isCorrect
+                          ? "review-status review-status-correct"
+                          : "review-status review-status-incorrect"
+                      }
+                    >
+                      {isCorrect ? "Correct" : "Not correct"}
+                    </p>
+                    {/* `sponsorFact` displacing `explanation` is the existing
+                        resolver behavior on this surface and stays as it is —
+                        the precedence is being fixed as content, not here. */}
+                    <QuestionNarrative
+                      copy={question.sponsorFact ?? question.explanation ?? null}
+                      question={question}
+                    />
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       ) : null}
 

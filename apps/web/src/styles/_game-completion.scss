@@ -5,7 +5,6 @@
   @include stack($space-3);
   justify-content: center;
   min-height: $token-block-min-height;
-  margin: 8px 0 18px;
   padding: 18px;
   border-radius: var(--radius-card);
   // Themable check-in code block chrome; defaults reproduce the
