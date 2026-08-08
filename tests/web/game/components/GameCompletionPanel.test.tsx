@@ -286,6 +286,61 @@ describe("GameCompletionPanel", () => {
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
   });
 
+  it("keeps the verification code block mounted as the completion arrives", () => {
+    // The block is the `role="status"` live region that announces the code.
+    // The in-flight state has no score card and no answer review, so it is
+    // tempting to render the block standalone there and inside the results
+    // block once there is something to review — but that remounts the live
+    // region at the one moment its content becomes meaningful, and a live
+    // region inserted with its content already present is announced
+    // unreliably. The block keeps one parent; the score card and the review
+    // are what appear around it.
+    const { container, rerender } = render(
+      <GameCompletionPanel
+        answers={{ q1: ["a"] }}
+        completion={null}
+        completionError={null}
+        cta={null}
+        game={createGame()}
+        isCompletionPersisted={true}
+        isSubmitting={true}
+        onReset={() => {}}
+        onRetake={() => {}}
+        onRetrySubmission={() => {}}
+        score={1}
+        showRetake={true}
+        status={createStatus("unredeemed")}
+      />,
+    );
+
+    const inFlightTokenBlock = container.querySelector(".token-block");
+    expect(inFlightTokenBlock).not.toBeNull();
+    expect(container.querySelector(".score-card")).toBeNull();
+    expect(container.querySelector(".answer-review-list")).toBeNull();
+
+    rerender(
+      <GameCompletionPanel
+        answers={{ q1: ["a"] }}
+        completion={createCompletionResult()}
+        completionError={null}
+        cta={null}
+        game={createGame()}
+        isCompletionPersisted={true}
+        isSubmitting={false}
+        onReset={() => {}}
+        onRetake={() => {}}
+        onRetrySubmission={() => {}}
+        score={1}
+        showRetake={true}
+        status={createStatus("unredeemed")}
+      />,
+    );
+
+    expect(container.querySelector(".token-block")).toBe(inFlightTokenBlock);
+    expect(container.querySelector(".score-card")).not.toBeNull();
+    expect(container.querySelector(".answer-review-list")).not.toBeNull();
+  });
+
   it("renders a reviewed question's sources beneath its note", () => {
     render(
       <GameCompletionPanel
@@ -384,7 +439,7 @@ describe("GameCompletionPanel", () => {
   });
 
   describe("block ordering", () => {
-    it("renders the results block above the check-in code when review is enabled", () => {
+    it("renders the check-in code between the score card and the answer review", () => {
       const { container } = render(
         <GameCompletionPanel
           answers={{ q1: ["a"] }}
@@ -403,16 +458,27 @@ describe("GameCompletionPanel", () => {
         />,
       );
 
-      const resultsBlock = container.querySelector(".results-block");
+      // Asserted against the score card and the review list, not against
+      // `.results-block` as a whole: the code is now a child of that block,
+      // and `compareDocumentPosition` reports a descendant as FOLLOWING its
+      // ancestor, so an ancestor-relative check would pass wherever inside
+      // the block the code landed.
+      const scoreCard = container.querySelector(".score-card");
       const tokenBlock = container.querySelector(".token-block");
-      expect(resultsBlock).not.toBeNull();
+      const reviewList = container.querySelector(".answer-review-list");
+      expect(scoreCard).not.toBeNull();
       expect(tokenBlock).not.toBeNull();
+      expect(reviewList).not.toBeNull();
       expect(
-        resultsBlock!.compareDocumentPosition(tokenBlock!) &
+        scoreCard!.compareDocumentPosition(tokenBlock!) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
-      // The code now sits below the review, so its instruction must not
-      // reference scrolling down to the answers.
+      expect(
+        tokenBlock!.compareDocumentPosition(reviewList!) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      // The code sits above the explanations rather than after them, so its
+      // instruction stays about showing the code, not about scrolling.
       expect(
         screen.getByText("Show this code to the volunteer to check in."),
       ).toBeTruthy();
@@ -437,16 +503,17 @@ describe("GameCompletionPanel", () => {
         />,
       );
 
-      // The review renders here too now, so the ordering this case is about
-      // is the token-then-CTA pair below it, not the review's absence.
-      const resultsBlock = container.querySelector(".results-block");
+      // The review renders here too now, so what this case is about is the
+      // CTA staying below the code. Where the code sits relative to the score
+      // and the review is the previous case's subject.
+      const scoreCard = container.querySelector(".score-card");
       const tokenBlock = container.querySelector(".token-block");
       const ctaBlock = container.querySelector(".completion-cta");
-      expect(resultsBlock).not.toBeNull();
+      expect(scoreCard).not.toBeNull();
       expect(tokenBlock).not.toBeNull();
       expect(ctaBlock).not.toBeNull();
       expect(
-        resultsBlock!.compareDocumentPosition(tokenBlock!) &
+        scoreCard!.compareDocumentPosition(tokenBlock!) &
           Node.DOCUMENT_POSITION_FOLLOWING,
       ).toBeTruthy();
       expect(
