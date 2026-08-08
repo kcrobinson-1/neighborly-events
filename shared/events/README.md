@@ -17,5 +17,14 @@ test-event allowlist ([`testEventAllowlist.ts`](./testEventAllowlist.ts)),
 seedable demo game content, and the completion-screen CTA registry
 ([`completionCta.ts`](./completionCta.ts)).
 
+[`madrona-quiz-revision-2-copy.md`](./madrona-quiz-revision-2-copy.md) is the
+editorial record for Madrona's question copy: the prompts, options,
+explanations, and source lines as authored, plus what each source supports and
+where two of them disagree. It exists because the seed module can say what the
+copy is but not why a claim is worded the way it is, and the sources only earn
+their place if the reasoning behind them is recoverable. It is not loaded by
+anything and does not publish — `madrona-demo-game-content.ts` is what ships,
+and wins if the two ever drift.
+
 The extraction landed through
 [`docs/plans/archive/m1/shared-events-foundation.md`](/docs/plans/archive/m1/shared-events-foundation.md).
