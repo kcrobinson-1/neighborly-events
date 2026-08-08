@@ -98,3 +98,61 @@ describe("validateGames", () => {
     );
   });
 });
+
+describe("source line validation", () => {
+  function gameWithSources(sources: string[]) {
+    const game = createTestGame();
+    game.questions[0].sources = sources;
+    return game;
+  }
+
+  it("accepts a question with no sources at all", () => {
+    expect(() => validateGameConfig(createTestGame())).not.toThrow();
+  });
+
+  it("accepts an https link, a print entry, and emphasis", () => {
+    expect(() =>
+      validateGameConfig(
+        gameWithSources([
+          "A. Author, [The Title](https://example.org/piece), A Journal",
+          "T. Author, *A Book*, A University Press",
+        ]),
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects a blank entry", () => {
+    expect(() => validateGameConfig(gameWithSources(["   "]))).toThrow(
+      /must not be blank/,
+    );
+  });
+
+  it("rejects a link target that is not an http or https address", () => {
+    expect(() =>
+      validateGameConfig(gameWithSources(["[Click](javascript:alert)"])),
+    ).toThrow(/unsupported target/);
+  });
+
+  it("rejects an address left outside link markup", () => {
+    expect(() =>
+      validateGameConfig(
+        gameWithSources(["Author, see https://example.org/piece"]),
+      ),
+    ).toThrow(/outside a link/);
+  });
+
+  it("rejects an unclosed link, which would otherwise print its address", () => {
+    expect(() =>
+      validateGameConfig(
+        gameWithSources(["Author, [The Title](https://example.org/piece"]),
+      ),
+    ).toThrow(/outside a link/);
+  });
+
+  it("does not repeat the offending text back in the message", () => {
+    expect(() =>
+      validateGameConfig(gameWithSources(["[Click](javascript:alert)"])),
+    ).toThrow(/^(?!.*javascript:).*$/s);
+  });
+});
+

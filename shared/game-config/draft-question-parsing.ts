@@ -3,6 +3,7 @@ import {
   expectNullableString,
   expectObjectArray,
   expectOptionalString,
+  expectOptionalStringArray,
   expectString,
   expectStringArray,
 } from "./draft-json.ts";
@@ -74,6 +75,11 @@ function parseQuestion(input: JsonRecord, index: number): Question {
     "sponsorFact",
     `Question "${questionId}" sponsorFact`,
   );
+  const sources = expectOptionalStringArray(
+    input,
+    "sources",
+    `Question "${questionId}" sources`,
+  );
 
   return {
     id: questionId,
@@ -97,6 +103,7 @@ function parseQuestion(input: JsonRecord, index: number): Question {
       parseAnswerOption(option, questionId, optionIndex)),
     ...(explanation !== undefined ? { explanation } : {}),
     ...(sponsorFact !== undefined ? { sponsorFact } : {}),
+    ...(sources !== undefined ? { sources } : {}),
   };
 }
 

@@ -205,6 +205,62 @@ describe("applyQuestionFormValues", () => {
   });
 });
 
+// The admin form owns a fixed set of fields. Anything else on a question has
+// to survive an edit, and `sources` is the first field the form does not own.
+// Both mappers used to rebuild each question by naming every field, so saving
+// any one question erased citations from the whole draft.
+describe("fields the question form does not own", () => {
+  const firstSources = ["[The Title](https://example.org/first)"];
+  const secondSources = ["[Another](https://example.org/second)"];
+  const gameWithSources = {
+    ...sampleGame,
+    questions: [
+      { ...sampleGame.questions[0], sources: firstSources },
+      { ...sampleGame.questions[1], sources: secondSources },
+      ...sampleGame.questions.slice(2),
+    ],
+  };
+  const editedQuestionId = gameWithSources.questions[0].id;
+
+  it("keeps the edited question's own source lines", () => {
+    const nextContent = updateQuestionFormValues(
+      gameWithSources,
+      editedQuestionId,
+      {
+        ...createQuestionFormValues(gameWithSources, editedQuestionId),
+        prompt: "Updated prompt",
+      },
+    );
+
+    expect(nextContent.questions[0].sources).toEqual(firstSources);
+  });
+
+  it("keeps source lines on every other question when one is saved", () => {
+    const nextContent = prepareQuestionContentForSave(
+      updateQuestionFormValues(gameWithSources, editedQuestionId, {
+        ...createQuestionFormValues(gameWithSources, editedQuestionId),
+        prompt: "Updated prompt",
+      }),
+    );
+
+    expect(nextContent.questions[0].sources).toEqual(firstSources);
+    expect(nextContent.questions[1].sources).toEqual(secondSources);
+  });
+
+  it("still drops explanation and sponsor fact when they are cleared", () => {
+    const nextContent = prepareQuestionContentForSave(
+      updateQuestionFormValues(gameWithSources, editedQuestionId, {
+        ...createQuestionFormValues(gameWithSources, editedQuestionId),
+        explanation: "   ",
+        sponsorFact: "   ",
+      }),
+    );
+
+    expect("explanation" in nextContent.questions[0]).toBe(false);
+    expect("sponsorFact" in nextContent.questions[0]).toBe(false);
+  });
+});
+
 describe("question structure helpers", () => {
   it("adds a valid placeholder question with the first available question id", () => {
     const { content, focusedQuestionId } = addQuestion(sampleGame);
