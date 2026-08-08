@@ -4,6 +4,7 @@
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
 .completion-cta-button:focus-visible,
+.question-source-link:focus-visible,
 .text-link:focus-visible {
   @include focus-ring;
 }

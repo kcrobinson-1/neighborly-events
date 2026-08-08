@@ -1,6 +1,7 @@
 /** Reveal panel shown after a wrong submission in non-blocking feedback mode. */
 import type { Question } from "../../data/games";
 import { getOptionLabels } from "../gameUtils";
+import { QuestionNarrative } from "./QuestionNarrative";
 
 /** Props for the wrong-but-revealed answer panel. */
 type AnswerRevealPanelProps = {
@@ -32,7 +33,7 @@ export function AnswerRevealPanel({
           <strong>{correctLabelHeading}:</strong> {correctLabels.join(", ")}
         </p>
       ) : null}
-      <p>{feedbackMessage}</p>
+      <QuestionNarrative copy={feedbackMessage} question={question} />
       <button className="primary-button" onClick={onContinue} type="button">
         {isLastQuestion ? "See your results" : "Continue"}
       </button>

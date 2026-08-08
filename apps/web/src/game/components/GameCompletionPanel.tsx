@@ -7,6 +7,7 @@ import { answersMatch } from "../../../../../shared/game-config";
 import type { AttendeeRedemptionStatus } from "../../../../../shared/redemption";
 import type { GameConfig } from "../../data/games";
 import { getOptionLabels } from "../gameUtils";
+import { QuestionNarrative } from "./QuestionNarrative";
 import type { Answers, GameCompletionResult } from "../../types/game";
 
 function getChipText(
@@ -201,11 +202,13 @@ export function GameCompletionPanel({
                   >
                     {isCorrect ? "Correct" : "Not correct"}
                   </p>
-                  {question.sponsorFact ?? question.explanation ? (
-                    <p className="answer-review-note">
-                      {question.sponsorFact ?? question.explanation}
-                    </p>
-                  ) : null}
+                  {/* `sponsorFact` displacing `explanation` is the existing
+                      resolver behavior on this surface and stays as it is —
+                      the precedence is being fixed as content, not here. */}
+                  <QuestionNarrative
+                    copy={question.sponsorFact ?? question.explanation ?? null}
+                    question={question}
+                  />
                 </article>
               );
             })}

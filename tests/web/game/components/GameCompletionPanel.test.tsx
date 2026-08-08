@@ -286,6 +286,43 @@ describe("GameCompletionPanel", () => {
     expect(screen.getByText("MMP-1234ABCD")).toBeTruthy();
   });
 
+  it("renders a reviewed question's sources beneath its note", () => {
+    render(
+      <GameCompletionPanel
+        answers={{ q1: ["a"] }}
+        completion={createCompletionResult()}
+        completionError={null}
+        cta={null}
+        game={createGame({
+          questions: [
+            {
+              ...createGame().questions[0],
+              explanation: "The sculpture was installed in 1974.",
+              sources: ["[Seattle Municipal Archives](https://example.org/record)"],
+            },
+          ],
+        })}
+        isCompletionPersisted={true}
+        isSubmitting={false}
+        onReset={() => {}}
+        onRetake={() => {}}
+        onRetrySubmission={() => {}}
+        score={1}
+        showRetake={true}
+        status={createStatus("unredeemed")}
+      />,
+    );
+
+    const note = screen.getByText("The sculpture was installed in 1974.");
+    const list = screen.getByRole("list", { name: "Sources" });
+    expect(
+      screen.getByRole("link", { name: "Seattle Municipal Archives" }),
+    ).toBeTruthy();
+    expect(
+      note.compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("hides the answer-review block in non-blocking mode because reveals were shown during play", () => {
     render(
       <GameCompletionPanel
