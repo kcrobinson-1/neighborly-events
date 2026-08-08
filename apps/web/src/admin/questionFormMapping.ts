@@ -103,28 +103,45 @@ function assertCorrectAnswerIds(
   }
 }
 
+/**
+ * Canonicalizes one question.
+ *
+ * Spreads rather than enumerates. Enumerating meant every field of `Question`
+ * had to be named here, so a field added to the type was silently dropped on
+ * save with no compile error — which is how `sources` came to be erased from
+ * an entire draft by editing any one of its questions. The spread carries
+ * whatever the type grows next; only fields this function actually transforms
+ * are named below.
+ */
 function createNormalizedQuestion(question: Question): Question {
   const optionIds = new Set(question.options.map((option) => option.id));
   const correctAnswerIds = [...question.correctAnswerIds];
 
   assertCorrectAnswerIds(correctAnswerIds, question.selectionMode, optionIds);
 
-  return {
-    id: question.id,
+  const explanation = trimOptional(question.explanation ?? "");
+  const sponsorFact = trimOptional(question.sponsorFact ?? "");
+
+  const canonical = {
+    ...question,
     correctAnswerIds,
     options: question.options.map((option) => ({
       id: option.id,
       label: trimRequired(option.label, `Option ${option.id} label`),
     })),
     prompt: trimRequired(question.prompt, "Question prompt"),
-    selectionMode: question.selectionMode,
     sponsor: trimOptional(question.sponsor ?? "") ?? null,
-    ...(trimOptional(question.explanation ?? "")
-      ? { explanation: trimOptional(question.explanation ?? "") }
-      : {}),
-    ...(trimOptional(question.sponsorFact ?? "")
-      ? { sponsorFact: trimOptional(question.sponsorFact ?? "") }
-      : {}),
+  };
+
+  // These two are absent rather than empty when they trim to nothing, which a
+  // spread cannot express — it would carry the untrimmed original through.
+  delete canonical.explanation;
+  delete canonical.sponsorFact;
+
+  return {
+    ...canonical,
+    ...(explanation ? { explanation } : {}),
+    ...(sponsorFact ? { sponsorFact } : {}),
   };
 }
 
@@ -155,29 +172,41 @@ export function updateQuestionFormValues(
   questionId: string,
   values: AdminQuestionFormValues,
 ): AuthoringGameDraftContent {
-  return replaceQuestion(content, questionId, (question) => ({
-    id: question.id,
-    correctAnswerIds: getCorrectAnswerIdsFromOptions(values),
-    options: question.options.map((option) => {
-      const optionValues = values.options.find(
-        (entry) => entry.id === option.id,
-      );
+  return replaceQuestion(content, questionId, (question) => {
+    // Spread for the same reason as `createNormalizedQuestion`: the form owns
+    // a fixed set of fields, and everything it does not own has to survive the
+    // edit rather than depend on being listed here.
+    const next = {
+      ...question,
+      correctAnswerIds: getCorrectAnswerIdsFromOptions(values),
+      options: question.options.map((option) => {
+        const optionValues = values.options.find(
+          (entry) => entry.id === option.id,
+        );
 
-      if (!optionValues) {
-        throw new Error(`Option "${option.id}" is missing.`);
-      }
+        if (!optionValues) {
+          throw new Error(`Option "${option.id}" is missing.`);
+        }
 
-      return {
-        id: option.id,
-        label: optionValues.label,
-      };
-    }),
-    prompt: values.prompt,
-    selectionMode: values.selectionMode,
-    sponsor: values.sponsor,
-    ...(values.explanation ? { explanation: values.explanation } : {}),
-    ...(values.sponsorFact ? { sponsorFact: values.sponsorFact } : {}),
-  }));
+        return {
+          id: option.id,
+          label: optionValues.label,
+        };
+      }),
+      prompt: values.prompt,
+      selectionMode: values.selectionMode,
+      sponsor: values.sponsor,
+    };
+
+    delete next.explanation;
+    delete next.sponsorFact;
+
+    return {
+      ...next,
+      ...(values.explanation ? { explanation: values.explanation } : {}),
+      ...(values.sponsorFact ? { sponsorFact: values.sponsorFact } : {}),
+    };
+  });
 }
 
 /**
