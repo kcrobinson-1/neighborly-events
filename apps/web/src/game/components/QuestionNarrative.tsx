@@ -24,25 +24,25 @@ type QuestionNarrativeProps = {
   question: Question;
 };
 
-/** Renders one inline run of a source line or a link label. */
+/** Renders one text or emphasis run, wherever it appears. */
+function renderTextSegment(segment: SourceTextSegment, key: number): ReactNode {
+  return segment.kind === "emphasis" ? (
+    <em key={key}>{segment.text}</em>
+  ) : (
+    segment.text
+  );
+}
+
+/** Renders the runs inside a link's visible label. */
 function renderTextSegments(segments: SourceTextSegment[]): ReactNode[] {
-  return segments.map((segment, index) =>
-    segment.kind === "emphasis" ? (
-      <em key={index}>{segment.text}</em>
-    ) : (
-      segment.text
-    ));
+  return segments.map(renderTextSegment);
 }
 
 /** Renders one parsed source line, anchors included. */
 function renderSourceSegments(segments: SourceSegment[]): ReactNode[] {
   return segments.map((segment, index) => {
     if (segment.kind !== "link") {
-      return segment.kind === "emphasis" ? (
-        <em key={index}>{segment.text}</em>
-      ) : (
-        segment.text
-      );
+      return renderTextSegment(segment, index);
     }
 
     return (
