@@ -136,6 +136,9 @@ export function mapAuthoringGameDraftContentToGameConfig(
       ...(question.sponsorFact !== undefined
         ? { sponsorFact: question.sponsorFact }
         : {}),
+      ...(question.sources !== undefined
+        ? { sources: [...question.sources] }
+        : {}),
     })),
     ...(draft.allowBackNavigation !== undefined
       ? { allowBackNavigation: draft.allowBackNavigation }

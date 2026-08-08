@@ -132,3 +132,16 @@ export function expectObjectArray(
   return value.map((entry, index) =>
     expectRecord(entry, `${label} entry ${index + 1}`));
 }
+
+/** Reads an optional array of strings from a JSON record. */
+export function expectOptionalStringArray(
+  record: JsonRecord,
+  key: string,
+  label: string,
+): string[] | undefined {
+  if (!(key in record)) {
+    return undefined;
+  }
+
+  return expectStringArray(record, key, label);
+}

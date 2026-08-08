@@ -1,5 +1,6 @@
 import { normalizeOptionIds } from "./answers.ts";
-import type { GameConfig } from "./types.ts";
+import { parseSourceLine } from "./questionNarrative.ts";
+import type { GameConfig, Question } from "./types.ts";
 
 /** Throws immediately when sample data reuses an identifier that must be unique. */
 function assertUnique(values: string[], label: string) {
@@ -12,6 +13,45 @@ function assertUnique(values: string[], label: string) {
 
     seen.add(value);
   }
+}
+
+/**
+ * Rejects source lines that cannot be rendered safely.
+ *
+ * Two grounds, and the second is the one that is easy to miss. Refusing only
+ * the targets inside recognised link markup leaves a hole: an unclosed link
+ * matches no markup at all, falls through to the renderer's plain-text path,
+ * and prints its address on screen. Authoring-time rejection is what closes
+ * it; the renderer's degrade path cannot.
+ *
+ * Neither message repeats the offending text back. In the hostile case it is
+ * attacker-supplied and the message surfaces in the admin UI; in the realistic
+ * case the author needs to know the fix, not what they typed.
+ */
+function assertSourcesRenderable(question: Question, gameId: string) {
+  (question.sources ?? []).forEach((line, index) => {
+    const position = `source ${index + 1}`;
+
+    if (!line.trim()) {
+      throw new Error(
+        `Question "${question.id}" in game "${gameId}" ${position} must not be blank.`,
+      );
+    }
+
+    const { bareAddresses, rejectedLinkTargets } = parseSourceLine(line);
+
+    if (rejectedLinkTargets.length > 0) {
+      throw new Error(
+        `Question "${question.id}" in game "${gameId}" ${position} links to an unsupported target. Use an http or https address.`,
+      );
+    }
+
+    if (bareAddresses.length > 0) {
+      throw new Error(
+        `Question "${question.id}" in game "${gameId}" ${position} has a web address outside a link. Write it as [Title](address).`,
+      );
+    }
+  });
 }
 
 /** Validates a single game config regardless of where its content originated. */
@@ -61,6 +101,8 @@ export function validateGameConfig(game: GameConfig) {
         );
       }
     }
+
+    assertSourcesRenderable(question, game.id);
   }
 }
 

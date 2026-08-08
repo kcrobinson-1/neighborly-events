@@ -23,6 +23,8 @@ export type Question = {
   correctAnswerIds: string[];
   explanation?: string;
   sponsorFact?: string;
+  /** Ordered source lines shown beneath this question's explanation. */
+  sources?: string[];
 };
 
 /** Top-level configuration for a playable game experience. */
