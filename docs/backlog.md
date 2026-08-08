@@ -176,6 +176,35 @@ Reduce deployment risk and contributor friction before the live event.
   costs the attendee a retake.
   Detail: N/A
 
+- [ ] **`dev` A restored completion renders its answer review against whatever content is live now**
+  The `complete` snapshot in
+  [`gameSessionPersistence.ts`](/apps/web/src/game/gameSessionPersistence.ts)
+  stores only `answers` and `completion` — no content fingerprint — and
+  its restore path validates their shape and nothing else. The
+  `in progress` and `submitting` kinds both carry a fingerprint and are
+  discarded on drift; `complete` deliberately survives it, so the
+  check-in code comes back after a republish. The answer review is
+  rendered from those stored answers against the **currently loaded**
+  game, so if questions or options changed underneath, the screen can
+  attribute an answer to a different question, report "No answer
+  recorded" for a question the attendee did answer, or pair a trusted
+  score with a different question count and show something like `5 / 4`.
+  Republishing while an event is live is not hypothetical — a reward-
+  language sweep republished madrona and harvest to v3 mid-event. The
+  exposure widened when the review stopped being gated on
+  `final_score_reveal` and started rendering for every completion, so
+  all three feedback modes now reach it rather than one. **Goal:** a
+  returning attendee never sees their answers described against
+  questions they did not answer, without losing the check-in code that
+  the fingerprint-free snapshot exists to protect. Fingerprinting the
+  review separately from the code, or persisting the reviewed questions
+  alongside the answers, are two options among several — the shape
+  depends on whether a drifted review should degrade to a score-only
+  card or disappear. Pairs with the in-flight snapshot entry above:
+  both are the same underlying question about which parts of a snapshot
+  should survive content drift.
+  Detail: N/A
+
 - [ ] **`dev` Banned reward nouns are unenforced in admin-authored content**
   The product rule forbids "trinket" and "raffle"
   ([`product.md`](/docs/product.md)), and checked-in copy and seed
