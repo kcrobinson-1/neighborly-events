@@ -34,6 +34,18 @@ import type { GameSeedConfig } from "./seed-config.ts";
  * consumer; the module is exported from `shared/events/index.ts`
  * so a future "Create New Event" admin-UI affordance could
  * adopt the same content as a starter template if needed.
+ *
+ * Identifiers follow the split in
+ * [`architecture-guardrails.md`](../../docs/agents/reference/architecture-guardrails.md):
+ * option ids are bare letters that say nothing about the option, and
+ * question ids are readable slugs naming what the question asks. The
+ * reason both halves matter is that `game_completions.submitted_answers`
+ * stores ids and no labels, so an id is the only surviving record of
+ * what an attendee picked. Reword an option freely — the letter carries
+ * no claim to go stale. Replace a question and it must take a new
+ * slug, because the answer review looks up `answers[question.id]`
+ * first and would otherwise read the old question's answer against the
+ * new question's options.
  */
 const madronaGameContent: AuthoringGameDraftContent = {
   id: "madrona",
@@ -56,7 +68,12 @@ const madronaGameContent: AuthoringGameDraftContent = {
   allowRetake: true,
   questions: [
     {
-      id: "q1",
+      // Not the `q1` this replaced. That question asked what the neighborhood
+      // was named after; this one asks what was named first, and every option
+      // and the answer changed with it. Reusing the key would have pointed
+      // stored answers from the old question at this one — see the identifier
+      // rules in the module header.
+      id: "first-named-madrona",
       // No sponsor and no sponsor fact on any question: the sponsor slot never
       // sold this year and the printed sign is unsponsored, so the screen and
       // the sign agree. The sponsor fact matters beyond the name — the reveal
@@ -65,12 +82,12 @@ const madronaGameContent: AuthoringGameDraftContent = {
       sponsor: null,
       prompt: "What was the first thing in the neighborhood to be named Madrona?",
       selectionMode: "single",
-      correctAnswerIds: ["q1-trolley-park"],
+      correctAnswerIds: ["a"],
       options: [
-        { id: "q1-trolley-park", label: "A private trolley park" },
-        { id: "q1-schoolhouse", label: "A schoolhouse" },
-        { id: "q1-streetcar-line", label: "A streetcar line" },
-        { id: "q1-real-estate-plat", label: "A real estate plat" },
+        { id: "a", label: "A private trolley park" },
+        { id: "b", label: "A schoolhouse" },
+        { id: "c", label: "A streetcar line" },
+        { id: "d", label: "A real estate plat" },
       ],
       explanation:
         "The land company developing the hillside laid out a private park on the waterfront to anchor the trolley line it was building, which was a standard trick for selling lots. J. E. Ayer, one of the property owners who contributed ground for the park, suggested calling it Madrona after the tree. However, this might have been more of a marketing move than a description, since there were very few of that tree in the area. Parks historian Don Sherwood's files say the park held \"scarcely more than a few little (Madrona) sprouts,\" and a Seattle Post-Intelligencer story from September 6, 1927 called the name \"a pioneer jest,\" because madrona trees \"were not that prominent a feature.\"\n\nThe name travelled up the hill, and fast. Pretty soon the entire neighborhood was called Madrona, and the landmarks followed one at a time. The schoolhouse at the top of the hill, Randell School, became Madrona in 1904 when a new building replaced the original barn. The road down to the park became Madrona Drive in 1915. The streetcar was the #8 Madrona by the 1930s.",
@@ -83,17 +100,17 @@ const madronaGameContent: AuthoringGameDraftContent = {
       ],
     },
     {
-      id: "q2",
+      id: "free-breakfast-location",
       sponsor: null,
       prompt:
         "In 1969, the Seattle chapter of the Black Panther Party launched its Free Breakfast Program for schoolchildren at which Madrona location?",
       selectionMode: "single",
-      correctAnswerIds: ["q2-madrona-grace-presbyterian"],
+      correctAnswerIds: ["a"],
       options: [
-        { id: "q2-madrona-grace-presbyterian", label: "Madrona Grace Presbyterian Church" },
-        { id: "q2-madrona-elementary", label: "Madrona Elementary School" },
-        { id: "q2-madrona-library", label: "The Madrona Branch Library" },
-        { id: "q2-madrona-community-center", label: "Madrona Community Center" },
+        { id: "a", label: "Madrona Grace Presbyterian Church" },
+        { id: "b", label: "Madrona Elementary School" },
+        { id: "c", label: "The Madrona Branch Library" },
+        { id: "d", label: "Madrona Community Center" },
       ],
       explanation:
         "The program launched at 832 32nd Avenue, the building that is Madrona Grace Presbyterian Church today. In 1969 it went by Madrona Community Presbyterian Church, having merged with Grace Presbyterian in 1953. Elmer Dixon III coordinated it. From that one kitchen the program grew to five locations and served an estimated 300,000 meals between 1969 and 1977.",
@@ -105,16 +122,16 @@ const madronaGameContent: AuthoringGameDraftContent = {
       ],
     },
     {
-      id: "q3",
+      id: "library-statue-name",
       sponsor: null,
       prompt: "What is the statue outside the Madrona library called?",
       selectionMode: "single",
-      correctAnswerIds: ["q3-peaceable-kingdom"],
+      correctAnswerIds: ["a"],
       options: [
-        { id: "q3-peaceable-kingdom", label: "The Peaceable Kingdom" },
-        { id: "q3-lion-and-the-lamb", label: "The Lion and the Lamb" },
-        { id: "q3-common-ground", label: "Common Ground" },
-        { id: "q3-madrona-menagerie", label: "The Madrona Menagerie" },
+        { id: "a", label: "The Peaceable Kingdom" },
+        { id: "b", label: "The Lion and the Lamb" },
+        { id: "c", label: "Common Ground" },
+        { id: "d", label: "The Madrona Menagerie" },
       ],
       // HistoryLink says the animals have their paws on a book. There is no
       // book — the library's own page for the branch describes the boulder
@@ -135,16 +152,16 @@ const madronaGameContent: AuthoringGameDraftContent = {
       ],
     },
     {
-      id: "q4",
+      id: "bathhouse-current-use",
       sponsor: null,
       prompt: "What is the current use of the Madrona Bathhouse on the waterfront in Madrona Park?",
       selectionMode: "single",
-      correctAnswerIds: ["q4-dance-studio"],
+      correctAnswerIds: ["a"],
       options: [
-        { id: "q4-dance-studio", label: "A dance studio" },
-        { id: "q4-community-theater", label: "A community theater" },
-        { id: "q4-clay-studio", label: "A clay studio" },
-        { id: "q4-boathouse", label: "A boathouse for kayak and paddleboard rentals" },
+        { id: "a", label: "A dance studio" },
+        { id: "b", label: "A community theater" },
+        { id: "c", label: "A clay studio" },
+        { id: "d", label: "A boathouse for kayak and paddleboard rentals" },
       ],
       explanation:
         "A wood-frame bathhouse went up in 1919 and was replaced by the brick building that still stands, built in two parts across 1927 and 1928. Swimmers gave way to dancers in 1971, when a second story was added to create studio space. Spectrum Dance Theater, founded in 1982, has been based there since, with choreographer Donald Byrd as artistic director since 2002.",
@@ -156,16 +173,16 @@ const madronaGameContent: AuthoringGameDraftContent = {
       ],
     },
     {
-      id: "q5",
+      id: "mlk-way-former-name",
       sponsor: null,
       prompt: "Before being renamed to MLK Jr Way, what was the name of the street that borders the western edge of Madrona?",
       selectionMode: "single",
-      correctAnswerIds: ["q5-empire-way"],
+      correctAnswerIds: ["a"],
       options: [
-        { id: "q5-empire-way", label: "Empire Way" },
-        { id: "q5-hill-way", label: "Hill Way" },
-        { id: "q5-cascade-way", label: "Cascade Way" },
-        { id: "q5-pacific-way", label: "Pacific Way" },
+        { id: "a", label: "Empire Way" },
+        { id: "b", label: "Hill Way" },
+        { id: "c", label: "Cascade Way" },
+        { id: "d", label: "Pacific Way" },
       ],
       // The two sources disagree about the start, so the copy carries no start
       // date: Banel dates the KYAC broadcast to November 1980, while Kemezis
