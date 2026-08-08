@@ -1,5 +1,6 @@
 import {
   mapPublishedGameRowsToGameConfig,
+  PUBLISHED_GAME_QUESTION_COLUMNS,
   type FeedbackMode,
   type GameConfig,
   type PublishedGameEventRow,
@@ -135,16 +136,7 @@ export async function loadPublishedGameBySlug(slug: string): Promise<GameConfig 
       {
         event_id: `eq.${eventRow.id}`,
         order: "display_order.asc",
-        select: [
-          "event_id",
-          "id",
-          "display_order",
-          "sponsor",
-          "prompt",
-          "selection_mode",
-          "explanation",
-          "sponsor_fact",
-        ].join(","),
+        select: PUBLISHED_GAME_QUESTION_COLUMNS.join(","),
       },
       "We couldn't load this game event right now.",
     ),

@@ -21,12 +21,20 @@ export {
 } from "./draft-content.ts";
 export {
   mapPublishedGameRowsToGameConfig,
+  PUBLISHED_GAME_QUESTION_COLUMNS,
   type PublishedGameEventRow,
   type PublishedGameOptionRow,
   type PublishedGameQuestionRow,
   type PublishedGameRows,
 } from "./db-content.ts";
 export { validateGameConfig, validateGames } from "./game-validation.ts";
+export {
+  parseSourceLine,
+  splitExplanationParagraphs,
+  type ParsedSourceLine,
+  type SourceSegment,
+  type SourceTextSegment,
+} from "./questionNarrative.ts";
 export type {
   AnswerOption,
   AnswerValidationResult,

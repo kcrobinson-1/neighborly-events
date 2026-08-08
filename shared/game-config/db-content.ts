@@ -20,6 +20,29 @@ export type PublishedGameEventRow = {
   summary: string;
 };
 
+/**
+ * The question columns every read path that hydrates a playable game config
+ * selects.
+ *
+ * One owner on purpose. Both read paths — the browser's and the completion
+ * Edge Function's loader — cast their result rather than inferring it, so a
+ * column added to one list and forgotten in the other produces no compile
+ * error and fails at runtime instead. Neither path may hold a column-name
+ * literal of its own; the absence of literals is what makes them agree, and
+ * it is greppable.
+ */
+export const PUBLISHED_GAME_QUESTION_COLUMNS = [
+  "event_id",
+  "id",
+  "display_order",
+  "sponsor",
+  "prompt",
+  "selection_mode",
+  "explanation",
+  "sponsor_fact",
+  "sources",
+] as const;
+
 /** Published question row fetched from the game content tables. */
 export type PublishedGameQuestionRow = {
   display_order: number;
@@ -30,6 +53,7 @@ export type PublishedGameQuestionRow = {
   selection_mode: SelectionMode;
   sponsor: string | null;
   sponsor_fact: string | null;
+  sources: string[] | null;
 };
 
 /** Published option row fetched from the game content tables. */
@@ -130,6 +154,9 @@ export function mapPublishedGameRowsToGameConfig(
             .map((option) => option.id),
           explanation: question.explanation ?? undefined,
           sponsorFact: question.sponsor_fact ?? undefined,
+          ...(question.sources && question.sources.length > 0
+            ? { sources: question.sources }
+            : {}),
           options: questionOptions
             .sort((left, right) => left.display_order - right.display_order)
             .map((option) => ({

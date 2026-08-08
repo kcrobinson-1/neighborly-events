@@ -1,6 +1,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2.101.1";
 import {
   mapPublishedGameRowsToGameConfig,
+  PUBLISHED_GAME_QUESTION_COLUMNS,
   type GameConfig,
   type PublishedGameEventRow,
   type PublishedGameOptionRow,
@@ -21,16 +22,7 @@ const publishedGameEventColumns = [
   "allow_retake",
 ].join(", ");
 
-const publishedGameQuestionColumns = [
-  "event_id",
-  "id",
-  "display_order",
-  "sponsor",
-  "prompt",
-  "selection_mode",
-  "explanation",
-  "sponsor_fact",
-].join(", ");
+const publishedGameQuestionColumns = PUBLISHED_GAME_QUESTION_COLUMNS.join(", ");
 
 const publishedGameOptionColumns = [
   "event_id",
