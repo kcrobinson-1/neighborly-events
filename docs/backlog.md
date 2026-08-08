@@ -257,6 +257,62 @@ Reduce deployment risk and contributor friction before the live event.
   time.
   Detail: [`docs/tracking/release-readiness-current.md` — Pass 2026-05-04 G6 + Follow-ups](/docs/tracking/release-readiness-current.md)
 
+- [ ] **`dev` A revealed answer can be re-answered when back navigation is on**
+  Either instant feedback mode reveals whether an answer was right
+  before the player moves on. If the event also allows back navigation,
+  returning to an answered question restores the stored selection into
+  an editable state and submitting again overwrites the graded answer —
+  so a player who reads "not quite" can walk back and score the point.
+  Nothing in the shared config layer refuses the combination, and
+  nothing in the play path refuses the second submit; the two settings
+  are independently valid and only interact badly together. Madrona
+  closes it as content by turning back navigation off
+  ([`madrona-demo-game-content.ts`](/shared/events/madrona-demo-game-content.ts)),
+  which works for one event and leaves the next author free to pick
+  both. **Goal:** an organizer cannot ship a quiz where the revealed
+  answer is re-answerable, whether or not they know the interaction
+  exists. Refusing the combination in `validateGameConfig`, or locking a
+  revealed question against resubmission regardless of navigation, are
+  two options among several — the first is cheaper and forecloses a
+  layout someone may legitimately want, the second is the general fix.
+  Detail: N/A
+
+- [ ] **`ux` A sponsor fact hides the explanation instead of accompanying it**
+  Where a question sets `sponsorFact`, the reveal resolvers and the
+  results review both prefer it and the question's `explanation` never
+  renders on any surface — including, now, its sources. The two fields
+  are not alternatives in any editorial sense: one is a sponsor's blurb,
+  the other is why the answer is what it is, and an author filling in
+  the first silently deletes the second from the screen. Nothing in
+  admin says so. Madrona avoids it by carrying no sponsor facts at all,
+  so the repo currently has no live instance and the shadowing is
+  invisible to every test. **Goal:** setting a sponsor fact does not
+  cost the player the explanation. Rendering both in a defined order, or
+  merging the two fields entirely and letting sponsor attribution be its
+  own slot, are two options among several — the choice is a product call
+  about whether a sponsor blurb is content or chrome, and it should be
+  made before a sponsored event is authored rather than after.
+  Detail: N/A
+
+- [ ] **`dev` No seeded demo exercises `final_score_reveal`**
+  The three seeded demos were positioned to cover one feedback mode
+  each, and
+  [`riverside-jam-game-content.ts`](/shared/events/riverside-jam-game-content.ts)
+  documents that split. Madrona moving to
+  `instant_feedback_non_blocking` for its live event leaves it and
+  Harvest Block Party on the same mode and `final_score_reveal` on none,
+  so the mode that defers all feedback to the end — and the completion
+  surfaces peculiar to it — no longer appears on any demo an organizer
+  or reviewer can play. Nothing fails: the mode is still valid config
+  and still unit-tested, it just has no live surface. **Goal:** every
+  feedback mode is reachable on a seeded demo without hand-authoring an
+  event. Moving Riverside to the uncovered mode, or adding a fourth
+  seed, are two options among several — the first spends Riverside's
+  `instant_feedback_required` coverage to buy this one and the second
+  adds a demo to maintain, so the call depends on whether the seeded set
+  is meant to be exhaustive or merely representative.
+  Detail: N/A
+
 ---
 
 ## Tier 3 — Admin Authoring Polish

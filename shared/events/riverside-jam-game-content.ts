@@ -17,11 +17,15 @@ import type { GameSeedConfig } from "./seed-config.ts";
  * demo), light per-question sponsor attribution (one of four questions
  * sponsored — most have `sponsor: null` to exercise the unsponsored
  * question UI), and tight flow flags (no back navigation, no retake).
- * Madrona runs `final_score_reveal` with mostly-unsponsored single-
- * select questions; Harvest Block Party runs `instant_feedback_non_blocking`
- * with heavy sponsor attribution and permissive flow flags. The trio
- * together covers all three feedback modes, both selection modes,
- * sponsor-attribution UI on/off, and both flow-flag combinations.
+ * Madrona and Harvest Block Party both run
+ * `instant_feedback_non_blocking`: Madrona with single-select questions,
+ * no sponsor attribution anywhere, and back navigation off; Harvest with
+ * heavy attribution and permissive flow flags. The trio covers both
+ * selection modes, sponsor-attribution UI on and off, and three of the
+ * four flow-flag combinations — but only two of the three feedback
+ * modes. Nothing seeded runs `final_score_reveal` since Madrona moved
+ * off it for its live event, so that mode reaches no demo surface;
+ * `docs/backlog.md` carries the gap.
  *
  * Question topics are sourced from the apps/site landing module so a
  * visitor who reads the landing then plays the quiz sees consistent
