@@ -114,9 +114,43 @@ Reduce deployment risk and contributor friction before the live event.
   the draft unopenable in admin, since `parseAuthoringGameDraftContent` refuses
   it on read. The bypass predates per-question sources and covers every
   invariant, not just those; sources is where it first produces a
-  publishes-then-fails-to-read outcome. Blocked on the script being plain
-  CommonJS under `node` with no TypeScript loader, so importing the shared
-  validator is the actual work.
+  publishes-then-fails-to-read outcome.
+  **No longer blocked.** This entry recorded the blocker as the script
+  being plain CommonJS under `node` with no TypeScript loader. That has
+  stopped being true: `node` imports `shared/game-config/index.ts`
+  directly and resolves `validateGameConfig` as a function, and
+  `loadSeedConfig` in the same script already dynamic-`import()`s a
+  TypeScript module for its `--content` argument. The remaining work is
+  calling the validator, not reaching it.
+  **Newly load-bearing.** If the admin question editor is retired,
+  admin's parse-on-read stops catching bad seeded content and this
+  becomes the only gate on the sole write path.
+  `computePublishChecklist` re-implements five question-level checks
+  that `validateGameConfig` also makes — at least one question, options
+  present, a correct answer present, single-select having exactly one,
+  and correct-answer ids resolving to real options — and the shared
+  validator additionally enforces unique question ids, unique option
+  ids, and source-line renderability. It is a strict superset, so it is
+  a complete substitute, but only once the seed path calls it.
+  Detail: N/A
+
+- [ ] **`dev` One write path for question content**
+  Question content has two authoring surfaces — the admin question
+  editor and the seed module plus `scripts/release/seed-game-content.cjs`
+  — and only the second is used. Every content-model change lands
+  twice; per-question sources spent roughly half its diff on UI nobody
+  opens. **Goal:** one place that can change what a player reads.
+  Retiring question and option authoring is one option, keeping
+  publish, unpublish, status, and event-details editing so day-of
+  lifecycle control does not become a git operation. Blocked on the
+  validator item above: retiring the editor removes parse-on-read,
+  which is currently the only thing catching invalid seeded content.
+  Note one thing the decision costs. The content-identifier rule in
+  [`architecture-guardrails.md`](/docs/agents/reference/architecture-guardrails.md)
+  picks bare-letter option ids partly so seed modules and
+  admin-authored drafts generate the same ids; if the editor is retired
+  that convergence argument lapses and only the reword-safety argument
+  carries the rule, which it does on its own.
   Detail: N/A
 
 - [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**
