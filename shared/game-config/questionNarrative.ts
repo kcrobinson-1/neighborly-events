@@ -94,6 +94,41 @@ function isAcceptableTarget(url: URL | null) {
   return url !== null && (url.protocol === "https:" || url.protocol === "http:");
 }
 
+/**
+ * Finds addresses left sitting in what the reader would actually see.
+ *
+ * Scans each run of consecutive non-link segments joined back together, which
+ * is the text the renderer emits. Scanning segments individually misses an
+ * address that emphasis splits — `*www*.example.org` tokenizes into `www` and
+ * `.example.org`, and neither half matches — while scanning the authored line
+ * misses it too, since `www*.` is not `www.`. Only the reconstruction sees
+ * what prints.
+ *
+ * Runs break at links, so text either side of an anchor is never joined into
+ * an address that was not there. A refused link contributes its label to the
+ * run and its target to nothing, so a refusal is reported once, as a refusal.
+ */
+function findBareAddresses(segments: SourceSegment[]): string[] {
+  const addresses: string[] = [];
+  let run = "";
+
+  const scanRun = () => {
+    addresses.push(...(run.match(BARE_ADDRESS_PATTERN) ?? []));
+    run = "";
+  };
+
+  for (const segment of segments) {
+    if (segment.kind === "link") {
+      scanRun();
+    } else {
+      run += segment.text;
+    }
+  }
+
+  scanRun();
+  return addresses;
+}
+
 /** Splits one authored source line into renderable inline pieces. */
 export function parseSourceLine(line: string): ParsedSourceLine {
   const segments: SourceSegment[] = [];
@@ -119,7 +154,9 @@ export function parseSourceLine(line: string): ParsedSourceLine {
       });
     } else {
       // Degrade to the label text. The refused target never reaches `segments`,
-      // so it can neither render as an anchor nor print as an address.
+      // so it can neither render as an anchor nor print as an address — and
+      // because the scan below reads `segments`, a refusal is never also
+      // reported as a bare address.
       rejectedLinkTargets.push(href);
       segments.push(...parseEmphasis(label));
     }
@@ -131,13 +168,11 @@ export function parseSourceLine(line: string): ParsedSourceLine {
     segments.push(...parseEmphasis(line.slice(cursor)));
   }
 
-  // Scan only the non-link pieces. A refused link contributes its label here
-  // but not its target, so a refusal is never also reported as a bare address.
-  const bareAddresses = segments
-    .filter((segment): segment is SourceTextSegment => segment.kind !== "link")
-    .flatMap((segment) => segment.text.match(BARE_ADDRESS_PATTERN) ?? []);
-
-  return { bareAddresses, rejectedLinkTargets, segments };
+  return {
+    bareAddresses: findBareAddresses(segments),
+    rejectedLinkTargets,
+    segments,
+  };
 }
 
 /** Splits an explanation into paragraphs on blank lines. */

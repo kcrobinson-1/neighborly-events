@@ -194,6 +194,37 @@ describe("parseSourceLine", () => {
     expect(bareAddresses).toEqual([address]);
   });
 
+  // Emphasis tokenizing used to split an address across segments, and each
+  // piece matched nothing alone: `https://` has nothing after the scheme, and
+  // `example.org` has no scheme. The renderer joins them back into a visible
+  // address, so the scan reads the authored text rather than the segments.
+  it.each([
+    ["https://*example.org*", "https://example.org"],
+    ["Author, *www*.example.org/piece", "Author, www.example.org/piece"],
+    ["see *https*://example.org/piece", "see https://example.org/piece"],
+  ])("reports the address in %s, which emphasis splits", (line, rendered) => {
+    const { bareAddresses, segments } = parseSourceLine(line);
+
+    // What the renderer would put on screen still contains the raw address,
+    // which is the thing the guard exists to keep out.
+    expect(
+      segments
+        .filter((segment) => segment.kind !== "link")
+        .map((segment) => segment.text)
+        .join(""),
+    ).toBe(rendered);
+    expect(bareAddresses).not.toEqual([]);
+  });
+
+  it("does not report a refused link's target as a bare address", () => {
+    const { bareAddresses, rejectedLinkTargets } = parseSourceLine(
+      "Author, [The Title](ftp://example.org/piece), A Journal",
+    );
+
+    expect(rejectedLinkTargets).toEqual(["ftp://example.org/piece"]);
+    expect(bareAddresses).toEqual([]);
+  });
+
   it("accepts an uppercase scheme inside link markup, so the guard must match it", () => {
     // `new URL` lowercases the scheme, so this target is a valid link. The
     // bare-address guard has to be case-insensitive for the same reason, or
