@@ -52,7 +52,10 @@ const LINK_PATTERN = /\[([^\]]+)\]\(([^\s()]+)\)/g;
 const EMPHASIS_PATTERN = /\*([^*]+)\*/g;
 // Catches what an unclosed link leaves behind: `[Title](https://host` matches
 // no link, falls through to the plain-text path, and would print its address.
-const BARE_ADDRESS_PATTERN = /(?:https?:\/\/|www\.)\S+/g;
+// Case-insensitive to match `readTarget`, which parses through `new URL` and so
+// accepts `HTTPS://host` as a link. A case-sensitive guard here would let the
+// same uppercase address through as plain text.
+const BARE_ADDRESS_PATTERN = /(?:https?:\/\/|www\.)\S+/gi;
 
 /** Splits a run of plain text into text and emphasis segments. */
 function parseEmphasis(text: string): SourceTextSegment[] {

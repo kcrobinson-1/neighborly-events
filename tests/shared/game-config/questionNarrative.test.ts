@@ -184,6 +184,29 @@ describe("parseSourceLine", () => {
     expect(bareAddresses).toEqual(["www.example.org/piece"]);
   });
 
+  it.each([
+    ["HTTPS://example.org/piece"],
+    ["Https://example.org/piece"],
+    ["WWW.example.org/piece"],
+  ])("reports the bare address %s whatever its case", (address) => {
+    const { bareAddresses } = parseSourceLine(`Author, see ${address}`);
+
+    expect(bareAddresses).toEqual([address]);
+  });
+
+  it("accepts an uppercase scheme inside link markup, so the guard must match it", () => {
+    // `new URL` lowercases the scheme, so this target is a valid link. The
+    // bare-address guard has to be case-insensitive for the same reason, or
+    // the identical address prints as plain text once it falls outside markup.
+    const { bareAddresses, rejectedLinkTargets, segments } = parseSourceLine(
+      "Author, [The Title](HTTPS://example.org/piece)",
+    );
+
+    expect(linkSegments(segments)).toHaveLength(1);
+    expect(rejectedLinkTargets).toEqual([]);
+    expect(bareAddresses).toEqual([]);
+  });
+
   it("renders unmatched brackets literally without reporting anything", () => {
     const line = "Author, [The Title, A Journal";
     const { bareAddresses, rejectedLinkTargets, segments } = parseSourceLine(line);
