@@ -23,10 +23,22 @@ function getChipText(
     : "Ready for volunteer check-in";
 }
 
-function getHeadline(status: AttendeeRedemptionStatus["kind"]) {
-  return status === "redeemed"
-    ? "Your volunteer check-in is complete"
-    : "Show this screen at the volunteer table";
+/**
+ * `redemptionLocationName` is the event's own name for the place the
+ * code is shown, article included, from the `redemptionLocation`
+ * registry. It is null for events that register none, and the
+ * generic "volunteer table" wording below is what those keep — the
+ * platform renderer does not know any one event's furniture.
+ */
+function getHeadline(
+  status: AttendeeRedemptionStatus["kind"],
+  redemptionLocationName: string | null,
+) {
+  if (status === "redeemed") {
+    return "Your volunteer check-in is complete";
+  }
+
+  return `Show this screen at ${redemptionLocationName ?? "the volunteer table"}`;
 }
 
 function getBodyCopy(
@@ -63,6 +75,13 @@ type GameCompletionPanelProps = {
   onReset: () => void;
   onRetake: () => void;
   onRetrySubmission: () => void;
+  /**
+   * The event's own name for where the code is shown, article
+   * included ("the MNA booth"), from the `redemptionLocation`
+   * registry. Null for events that register none, which keep the
+   * generic wording — see `getHeadline`.
+   */
+  redemptionLocationName: string | null;
   score: number;
   showRetake: boolean;
   status: AttendeeRedemptionStatus;
@@ -80,6 +99,7 @@ export function GameCompletionPanel({
   onReset,
   onRetake,
   onRetrySubmission,
+  redemptionLocationName,
   score,
   showRetake,
   status,
@@ -97,7 +117,7 @@ export function GameCompletionPanel({
   // no place to follow a citation either.
   const shouldShowAnswerReview = Boolean(completion);
   const completionChipText = getChipText(status.kind, Boolean(isEntitlementNew));
-  const completionHeadline = getHeadline(status.kind);
+  const completionHeadline = getHeadline(status.kind, redemptionLocationName);
   const completionMessage = getBodyCopy(status.kind, Boolean(isEntitlementNew));
   // The CTA rides on the entitlement but never blocks it: it renders only
   // once the completion result exists, below the verification block, and
@@ -159,8 +179,13 @@ export function GameCompletionPanel({
       </div>
       <strong>{verificationCode ?? "Loading..."}</strong>
       <p className="token-instruction">
+        {/* No place named here. The heading directly above this block
+            already says where to take the code, and with the block now
+            sitting under the score rather than below the whole review,
+            the two lines are close enough that restating it read as
+            three names for one table. */}
         {completion
-          ? "Show this code to the volunteer to check in."
+          ? "Show this code to check in."
           : "Please wait here. The volunteer code will appear in this spot as soon as check-in is complete."}
       </p>
       <span className="token-meta">
@@ -260,7 +285,11 @@ export function GameCompletionPanel({
                           : "review-status review-status-incorrect"
                       }
                     >
-                      {isCorrect ? "Correct" : "Not correct"}
+                      {/* "Not quite", not "Not correct": the reveal chip
+                          shown during play already says "Not quite", and
+                          a player meets that wording first and more often
+                          than this recap. */}
+                      {isCorrect ? "Correct" : "Not quite"}
                     </p>
                     {/* `sponsorFact` displacing `explanation` is the existing
                         resolver behavior on this surface and stays as it is —

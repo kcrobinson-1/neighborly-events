@@ -12,6 +12,7 @@ import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
 import { getCompletionCta } from "../../../../shared/events/completionCta";
 import { getQuizPageHead } from "../../../../shared/events/quizPageHead";
+import { getRedemptionLocation } from "../../../../shared/events/redemptionLocation";
 import { getEventMasthead } from "../../../../shared/masthead";
 import { routes } from "../../../../shared/urls";
 
@@ -198,6 +199,9 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
             onReset={reset}
             onRetake={resetForRetake}
             onRetrySubmission={retryCompletionSubmission}
+            redemptionLocationName={
+              getRedemptionLocation(game.slug)?.name ?? null
+            }
             score={score}
             showRetake={allowRetake}
             status={redemptionStatus}
