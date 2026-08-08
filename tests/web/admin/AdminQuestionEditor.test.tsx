@@ -2,6 +2,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AdminQuestionEditor } from "../../../apps/web/src/admin/AdminQuestionEditor";
+import { prepareQuestionContentForSave } from "../../../apps/web/src/admin/questionFormMapping";
 import { getGameById } from "../../../shared/game-config/sample-fixtures";
 import type { DraftEventDetail } from "../../../apps/web/src/lib/adminGameApi";
 
@@ -105,6 +106,84 @@ describe("AdminQuestionEditor source authoring", () => {
     expect(savedContent.questions[0].sources).toEqual([
       "[Seattle Municipal Archives](https://example.org/record)",
     ]);
+  });
+
+  /**
+   * Typed one character at a time, reading the field back between keystrokes.
+   * The distinction matters: the textarea is controlled from draft content, so
+   * a normalizing round trip is invisible to a test that sets a complete value
+   * in one `change` — which is how the original coverage here missed that
+   * trimming on every keystroke made the field impossible to type in.
+   */
+  function type(field: HTMLTextAreaElement, text: string) {
+    for (const character of text) {
+      fireEvent.change(field, { target: { value: field.value + character } });
+    }
+  }
+
+  it("keeps the spaces between words while a title is being typed", () => {
+    renderEditor(makeDraft());
+    const field = getSourcesField();
+
+    type(field, "Seattle Times");
+
+    expect(field.value).toBe("Seattle Times");
+  });
+
+  it("keeps a newline so a second source can be started", () => {
+    renderEditor(makeDraft());
+    const field = getSourcesField();
+
+    type(field, "First\nSecond");
+
+    expect(field.value).toBe("First\nSecond");
+  });
+
+  it("hands the working text over verbatim and normalizes it downstream", () => {
+    // Trailing whitespace and blank lines are legitimate mid-edit state — the
+    // organizer's cursor position, not content. They survive in the field and
+    // in what the editor hands to `onSave`; `prepareQuestionContentForSave`,
+    // which `useSelectedDraft` applies to that payload before persisting, is
+    // where they are dropped. Composed here rather than assumed, so the pair
+    // is covered end to end even though the editor is not the normalizer.
+    const working =
+      "  [One](https://example.org/one)  \n\n\n[Two](https://example.org/two)\n";
+    const { onSave } = renderEditor(makeDraft());
+    const field = getSourcesField();
+
+    fireEvent.change(field, { target: { value: working } });
+    expect(field.value).toBe(working);
+
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    const handedOver = onSave.mock.calls[0][0];
+    expect(handedOver.questions[0].sources).toEqual([
+      "  [One](https://example.org/one)  ",
+      "",
+      "",
+      "[Two](https://example.org/two)",
+      "",
+    ]);
+    expect(
+      prepareQuestionContentForSave(handedOver).questions[0].sources,
+    ).toEqual([
+      "[One](https://example.org/one)",
+      "[Two](https://example.org/two)",
+    ]);
+  });
+
+  it("does not invent a sources field when another field is edited", () => {
+    // A question with no sources must stay that way through an unrelated edit,
+    // or the empty textarea writes `[""]` into content and the dirty check
+    // reports a change the organizer never made.
+    const { onSave } = renderEditor(makeDraft());
+
+    fireEvent.change(screen.getByLabelText("Sponsor fact"), {
+      target: { value: "A new sponsor fact." },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save question changes" }));
+
+    expect("sources" in onSave.mock.calls[0][0].questions[0]).toBe(false);
   });
 
   it("clears the field back to no sources at all", () => {
