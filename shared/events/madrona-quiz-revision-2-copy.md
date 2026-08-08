@@ -51,6 +51,32 @@ next event and update this date. A dead citation is worse than no
 citation, and a live one pointing at something other than what the
 sentence says is worse still.
 
+## Identifiers
+
+The rule is in [`README.md`](./README.md) and is not repeated here.
+Two things belong with the copy instead.
+
+**Every id on this quiz was reissued at once.** That is the one-time
+migration the README describes, not the rule in action — under the
+rule, questions 2 through 5 would have kept their old keys, because
+their prompts, options, and answers did not change and only their
+explanations did. Renaming them anyway was a deliberate cost, paid
+while the only stored answers for this event came from pre-season
+testing. It is not repeatable: after this, a question keeps its id
+unless the question itself is replaced.
+
+**Question 1 is the case that would have needed a new id regardless.**
+It replaced a question asking what the neighborhood was named after —
+same topic, different question, with a new prompt, four new options,
+and a different answer. Reusing that key would have read the old
+question's stored answers against these options and told a returning
+attendee they had answered something they never saw.
+
+Option ids are bare letters and so appear nowhere below; there is
+nothing about them to record editorially. They are still identities,
+though — replacing an option later means the next unused letter, not
+the one the replaced option gave up.
+
 ---
 
 ## Question 1
@@ -106,7 +132,7 @@ Junius Rochester, [Seattle Neighborhoods: Madrona, Thumbnail History](https://ww
 > In 1969, the Seattle chapter of the Black Panther Party launched its
 > Free Breakfast Program for schoolchildren at which Madrona location?
 
-**Options** — unchanged from the current quiz.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. Madrona Grace Presbyterian Church *(correct)*
 2. Madrona Elementary School
@@ -139,7 +165,7 @@ Quintard Taylor, *The Forging of a Black Community: Seattle's Central District f
 
 > What is the statue outside the Madrona library called?
 
-**Options** — unchanged from the current quiz.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. The Peaceable Kingdom *(correct)*
 2. The Lion and the Lamb
@@ -175,7 +201,7 @@ Thomas Veith, [*History of the Central Area*](https://www.seattle.gov/documents/
 > What is the current use of the Madrona Bathhouse on the waterfront in
 > Madrona Park?
 
-**Options** — unchanged from the current quiz.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. A dance studio *(correct)*
 2. A community theater
@@ -209,7 +235,7 @@ Erin Naomi Burrows, [Byrd and the Bath House: A Case Study of Spectrum Dance The
 > Before being renamed to MLK Jr Way, what was the name of the street
 > that borders the western edge of Madrona?
 
-**Options** — unchanged from the current quiz.
+**Options** — wording unchanged from the current quiz; the ids are new.
 
 1. Empire Way *(correct)*
 2. Hill Way

@@ -104,7 +104,7 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
-- [ ] **`dev` Run seeded game content through the shared config validator**
+- [ ] **`dev` Run seeded game content through the shared runtime parser**
   `scripts/release/seed-game-content.cjs` upserts a draft and calls
   `publish_game_event_draft` after checking only identity and env-shape fields,
   so no shared invariant in `validateGameConfig` is enforced on that path. The
@@ -114,9 +114,97 @@ Reduce deployment risk and contributor friction before the live event.
   the draft unopenable in admin, since `parseAuthoringGameDraftContent` refuses
   it on read. The bypass predates per-question sources and covers every
   invariant, not just those; sources is where it first produces a
-  publishes-then-fails-to-read outcome. Blocked on the script being plain
-  CommonJS under `node` with no TypeScript loader, so importing the shared
-  validator is the actual work.
+  publishes-then-fails-to-read outcome.
+  **Call the parser, not just the validator.** `validateGameConfig`
+  assumes an already-shaped `GameConfig` and checks structure only, so
+  it is the wrong gate on its own for a seed module that reaches the
+  script through `import()`. Node strips types without type-checking
+  them, so nothing on that path establishes the shape the validator
+  assumes. Measured: content with a numeric `prompt` and a numeric
+  option `label` passes `validateGameConfig` and is refused by
+  `parseAuthoringGameDraftContent` with "prompt must be a string" —
+  and PostgreSQL's `->>` projection would turn that number into
+  player-facing text. The parser also rejects everything the validator
+  rejects (unresolvable correct-answer ids, duplicate option ids, a
+  bare address in a source line all fail both), so it is the strict
+  superset and the one to wire in.
+  **No longer blocked.** This entry recorded the blocker as the script
+  being plain CommonJS under `node` with no TypeScript loader. That has
+  stopped being true: `node` imports `shared/game-config/index.ts`
+  directly and resolves the shared entry points as functions, and
+  `loadSeedConfig` in the same script already dynamic-`import()`s a
+  TypeScript module for its `--content` argument. The remaining work is
+  calling the parser, not reaching it.
+  **Newly load-bearing.** If the admin question editor is retired,
+  admin's parse-on-read stops catching bad seeded content and this
+  becomes the only gate on the sole write path — which is the reason
+  the gate has to be the parser. `computePublishChecklist` re-implements
+  five question-level checks the shared surface also makes (at least one
+  question, options present, a correct answer present, single-select
+  having exactly one, correct-answer ids resolving to real options), so
+  retiring the editor costs nothing there; what it costs is
+  parse-on-read, and only wiring in the parser replaces that.
+  Detail: N/A
+
+- [ ] **`dev` One write path for question content**
+  Question content has two authoring surfaces — the admin question
+  editor and the seed module plus `scripts/release/seed-game-content.cjs`
+  — and only the second is used. Every content-model change lands
+  twice; per-question sources spent roughly half its diff on UI nobody
+  opens. **Goal:** one place that can change what a player reads.
+  Retiring question and option authoring is one option, keeping
+  publish, unpublish, status, and event-details editing so day-of
+  lifecycle control does not become a git operation. Blocked on the
+  parser item above: retiring the editor removes parse-on-read, which
+  is currently the only thing catching mistyped seeded content.
+  Note one thing the decision resolves. The id-reuse entry below is a
+  defect in both of that editor's id generators; retiring question and
+  option authoring would close it by deletion rather than by fixing it,
+  so the two should be sequenced together rather than fixed
+  independently.
+  Detail: N/A
+
+- [ ] **`dev` The admin editor re-issues retired question and option ids**
+  Both id generators in
+  [`questionStructure.ts`](/apps/web/src/admin/questionStructure.ts)
+  pick the lowest identifier not *currently* in use, so an id freed by a
+  deletion is handed straight to different content. `createOptionId`
+  returns the lowest unused letter: driven directly, a question with
+  options `a`–`d` loses `a` and the next added option is issued `a`
+  again, now labelled something else. `createQuestionId` returns the
+  lowest unused `q{n}` and has the same hole, reachable through both Add
+  Question and Duplicate Question.
+  This breaks the identifier rule in
+  [`shared/events/README.md`](/shared/events/README.md), which requires
+  a replacement to take a never-used id. `game_completions.submitted_answers`
+  stores ids and no labels; the answer review resolves
+  `answers[question.id]` and then resolves option ids against whatever
+  options exist now. So a re-issued id makes the review report an answer
+  the attendee never gave, where a retired id would fail to resolve and
+  show nothing.
+  **The two generators compose, and that is what makes this worth
+  fixing rather than tolerating.** A question-id collision used to be
+  survivable by accident: stored answers carried per-question option
+  slugs, so a re-issued `q1` met options whose ids could not match, and
+  the review degraded visibly. Now that every question's options are
+  `a`–`d`, a re-issued question id lands on option ids that are
+  guaranteed to collide, and the two failures multiply into a confident
+  wrong answer instead of a blank one.
+  Concretely today: Madrona's five questions carry slugs, so `q1` reads
+  as free and the first Add Question re-issues it — the exact id the
+  identifier migration retired, and the key under which all existing
+  Madrona completions store their first answer. Nothing has triggered it
+  because the question editor has never been used on that event
+  (`game_event_drafts.last_saved_by` is null) and the seed path never
+  calls either generator.
+  **Goal:** an id freed by a deletion is never handed to new content, at
+  either level. The fix needs knowledge the draft does not carry — the
+  draft holds only current content, so retired ids have to come from a
+  stored high-water mark or from `game_event_versions` history, which is
+  what makes this more than a one-line change. Seed-module authoring
+  follows the rule today; this is the UI path that can still violate it.
+  Pairs with the write path entry above, which may retire this editor
+  outright.
   Detail: N/A
 
 - [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**
