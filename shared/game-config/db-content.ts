@@ -40,7 +40,20 @@ export const PUBLISHED_GAME_QUESTION_COLUMNS = [
   "selection_mode",
   "explanation",
   "sponsor_fact",
-  "sources",
+  // `sources` is deliberately absent, and adding it is a release-ordering
+  // decision rather than a column-list edit.
+  //
+  // The release flow in docs/dev.md publishes the frontend from Vercel's git
+  // integration (step 4) before release.yml applies production migrations
+  // (step 5). A release that both adds a column and selects it therefore
+  // serves a frontend that names a column the schema does not have yet, and
+  // PostgREST rejects the whole question query rather than the one column —
+  // so every game route fails to load until the migration lands, and keeps
+  // failing if that release fails.
+  //
+  // The migration that adds the column and the publish routine that fills it
+  // ship here; reading it waits for a later release, by which time the schema
+  // has long been live.
 ] as const;
 
 /** Published question row fetched from the game content tables. */
@@ -53,7 +66,12 @@ export type PublishedGameQuestionRow = {
   selection_mode: SelectionMode;
   sponsor: string | null;
   sponsor_fact: string | null;
-  sources: string[] | null;
+  /**
+   * Optional because `PUBLISHED_GAME_QUESTION_COLUMNS` does not select it yet —
+   * see the note there. A row read today has no such key at all; the mapper
+   * already treats that identically to an empty list.
+   */
+  sources?: string[] | null;
 };
 
 /** Published option row fetched from the game content tables. */

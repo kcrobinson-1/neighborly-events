@@ -149,7 +149,7 @@ describe("shared/events published API", () => {
 
     expect(fetchMock.mock.calls.map((call) => String(call[0]))).toEqual([
       `https://example.supabase.co/rest/v1/game_events?published_at=not.is.null&select=id%2Cslug%2Cname%2Clocation%2Cestimated_minutes%2Centitlement_label%2Cintro%2Csummary%2Cfeedback_mode%2Callow_back_navigation%2Callow_retake&slug=eq.${sampleGame.slug}`,
-      "https://example.supabase.co/rest/v1/game_questions?event_id=eq.madrona-music-2026&order=display_order.asc&select=event_id%2Cid%2Cdisplay_order%2Csponsor%2Cprompt%2Cselection_mode%2Cexplanation%2Csponsor_fact%2Csources",
+      "https://example.supabase.co/rest/v1/game_questions?event_id=eq.madrona-music-2026&order=display_order.asc&select=event_id%2Cid%2Cdisplay_order%2Csponsor%2Cprompt%2Cselection_mode%2Cexplanation%2Csponsor_fact",
       "https://example.supabase.co/rest/v1/game_question_options?event_id=eq.madrona-music-2026&order=question_id.asc%2Cdisplay_order.asc&select=event_id%2Cquestion_id%2Cid%2Cdisplay_order%2Clabel%2Cis_correct",
     ]);
   });
