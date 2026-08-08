@@ -235,7 +235,16 @@ async function captureFeaturedFlow(page, baseUrl, runDirectory) {
   }).waitFor();
 
   await clickOptionAndSubmit(page, "That the attendee is officially done");
-  await page.getByRole("heading", { name: "Show this screen at the volunteer table" }).waitFor();
+  // Wait on the rendered check-in code rather than the completion heading.
+  // The heading names the event's redemption location, which is content
+  // from the `redemptionLocation` registry — pinning its wording here made
+  // a copy edit break the screenshot run. The code block is the structural
+  // signal that the completion actually landed, and its `strong` holds
+  // "Loading..." until the entitlement arrives.
+  await page
+    .locator(".token-block strong")
+    .filter({ hasNotText: "Loading..." })
+    .waitFor();
   await capture(page, runDirectory, "04-featured-completion.png");
 }
 

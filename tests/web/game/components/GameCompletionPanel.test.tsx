@@ -215,11 +215,7 @@ describe("GameCompletionPanel", () => {
             name: "Show this screen at the volunteer table",
           }),
         ).toBeTruthy();
-        expect(
-          screen.getByText(
-            "Your reward entry is ready. Show this screen and code to the volunteer.",
-          ),
-        ).toBeTruthy();
+        expect(screen.getByText("Your reward entry is ready.")).toBeTruthy();
       } else {
         expect(
           screen.getByRole("heading", {

@@ -48,14 +48,10 @@ test("completes the attendee flow against trusted backend persistence", async ({
   await clickOptionAndSubmit(page, "That the attendee is officially done");
 
   await expect(
-    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+    page.getByRole("heading", { name: "Show this screen at the MNA booth" }),
   ).toBeVisible();
   await expect(page.getByText("Ready for volunteer check-in")).toBeVisible();
-  await expect(
-    page.getByText(
-      "Your reward entry is ready. Show this screen and code to the volunteer.",
-    ),
-  ).toBeVisible();
+  await expect(page.getByText("Your reward entry is ready.")).toBeVisible();
 
   const verificationCodeLocator = page.locator(".token-block strong");
   await expect(verificationCodeLocator).not.toHaveText("Loading...");
@@ -123,7 +119,7 @@ test("rejects malformed completion payload before persistence, then succeeds on 
   await activate(retryButton);
 
   await expect(
-    page.getByRole("heading", { name: "Show this screen at the volunteer table" }),
+    page.getByRole("heading", { name: "Show this screen at the MNA booth" }),
   ).toBeVisible();
   await expect(page.getByText("Ready for volunteer check-in")).toBeVisible();
 

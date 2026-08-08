@@ -51,9 +51,13 @@ function getBodyCopy(
       : "You're still checked in for the reward. Playing again does not add another reward entry.";
   }
 
+  // No second "show this" sentence here. The heading above already says
+  // where to take the screen and the code block below says to show the
+  // code, so restating it in between made three imperatives in a row —
+  // the `unknown` branch above is a bare confirmation for the same reason.
   return status === "redeemed"
     ? "A volunteer has redeemed this code. You're all set."
-    : "Your reward entry is ready. Show this screen and code to the volunteer.";
+    : "Your reward entry is ready.";
 }
 
 /** Props for the game completion screen. */
