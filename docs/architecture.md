@@ -1112,6 +1112,29 @@ The Supabase side is intentionally small:
   rows are removed; the `source_surface` CHECK still admits
   `'standalone'` because it is the recorded provenance of rows
   already in the log.
+- `supabase/migrations/20260808000000_add_game_question_sources.sql`
+  Adds `game_questions.sources` (jsonb, NOT NULL, default `'[]'`) —
+  the ordered source lines rendered beneath a question's
+  explanation. Constrained so the value is an array whose every
+  member is a string, expressed with `jsonb_path_exists` rather
+  than the `not exists (select …)` shape a CHECK constraint cannot
+  contain. A JSON null is caught by the array-type conjunct, not
+  by NULL semantics: the column is NOT NULL, so the constraint
+  never evaluates to unknown. No backfill — the publish routine
+  deletes and reinserts every question row for an event on each
+  publish, so existing rows take the default and are replaced in
+  the ordinary course of publishing.
+  Re-declares `publish_game_event_draft` to project the column,
+  branching on the draft value's JSON type rather than
+  `coalesce`, which catches an absent key but not a JSON null —
+  and a JSON null would fail the CHECK and abort the publish
+  transaction for every event, not just the one being published.
+  `create or replace` preserves ownership and the existing ACL, so
+  no revoke/grant block is reissued: the function stays SECURITY
+  DEFINER, owner postgres, EXECUTE held by postgres and
+  service_role only. RLS and grants on `game_questions` are
+  untouched; the new column inherits the existing row-scoped
+  SELECT policy and the table-level grant.
 
 ## What Is Implemented Now
 
