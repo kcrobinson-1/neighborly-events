@@ -1,4 +1,8 @@
-# Madrona Quiz — Revision 2 Copy Deck
+# Madrona Quiz Copy Deck
+
+Current as of 2026-08-08. This deck is not named after the revision that
+produced it: it is the living record of what the quiz says, and the file
+was renamed off "revision 2" the first time a later revision landed.
 
 The question copy for `madrona.us/musicintheplayfield` as authored,
 together with what each source actually supports. Everything inside the
@@ -106,7 +110,7 @@ the one the replaced option gave up.
 > name "a pioneer jest," because madrona trees "were not that prominent
 > a feature."
 >
-> The name travelled up the hill, and fast. Pretty soon the entire
+> The name traveled up the hill, and fast. Pretty soon the entire
 > neighborhood was called Madrona, and the landmarks followed one at a
 > time. The schoolhouse at the top of the hill, Randell School, became
 > Madrona in 1904 when a new building replaced the original barn. The
@@ -180,8 +184,9 @@ Quintard Taylor, *The Forging of a Black Community: Seattle's Central District f
 > the wolf and the sheep at the base. The four animals stand in for
 > groups living in the neighborhood at the time, the panther for the
 > Black Panthers, the pig for the police, the sheep for the elderly, and
-> the wolf for the street toughs, all coexisting peaceably. The name
-> became the neighborhood's unofficial motto.
+> the wolf for the street toughs, four uneasy neighbors sharing one
+> rock. That is where the title The Peaceable Kingdom comes from, and
+> Madrona has used it as an unofficial motto ever since.
 
 **Sources**
 
@@ -198,8 +203,8 @@ Thomas Veith, [*History of the Central Area*](https://www.seattle.gov/documents/
 
 **Prompt**
 
-> What is the current use of the Madrona Bathhouse on the waterfront in
-> Madrona Park?
+> The old bathhouse down at Madrona Park is still in use. What happens
+> in it now?
 
 **Options** — wording unchanged from the current quiz; the ids are new.
 
