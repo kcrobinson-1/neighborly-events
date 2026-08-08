@@ -157,34 +157,54 @@ Reduce deployment risk and contributor friction before the live event.
   lifecycle control does not become a git operation. Blocked on the
   parser item above: retiring the editor removes parse-on-read, which
   is currently the only thing catching mistyped seeded content.
-  Note one thing the decision resolves. The option-id reuse entry below
-  is a defect in that editor; retiring question and option authoring
-  would close it by deletion rather than by fixing it, so the two
-  should be sequenced together rather than fixed independently.
+  Note one thing the decision resolves. The id-reuse entry below is a
+  defect in both of that editor's id generators; retiring question and
+  option authoring would close it by deletion rather than by fixing it,
+  so the two should be sequenced together rather than fixed
+  independently.
   Detail: N/A
 
-- [ ] **`dev` The admin option editor re-issues retired option ids**
-  `createOptionId` in
+- [ ] **`dev` The admin editor re-issues retired question and option ids**
+  Both id generators in
   [`questionStructure.ts`](/apps/web/src/admin/questionStructure.ts)
-  returns the lowest letter not currently in use, so deleting an option
-  and adding a replacement hands the freed id straight to different
-  content. Driven directly, a question with options `a`–`d` loses `a`
-  and the next added option is issued `a` again, now labelled something
-  else. That breaks the identifier rule in
+  pick the lowest identifier not *currently* in use, so an id freed by a
+  deletion is handed straight to different content. `createOptionId`
+  returns the lowest unused letter: driven directly, a question with
+  options `a`–`d` loses `a` and the next added option is issued `a`
+  again, now labelled something else. `createQuestionId` returns the
+  lowest unused `q{n}` and has the same hole, reachable through both Add
+  Question and Duplicate Question.
+  This breaks the identifier rule in
   [`shared/events/README.md`](/shared/events/README.md), which requires
-  a semantic replacement to take a never-used id: because
-  `game_completions.submitted_answers` stores ids and no labels, and
-  `getOptionLabels` resolves stored ids against whatever options exist
-  now, every stored `a` silently re-points at the new option and the
-  answer review reports an answer the attendee never gave. A retired id
-  would fail to resolve and show nothing instead. **Goal:** an option id
-  freed by a deletion is never handed to new content. The fix needs
-  knowledge the draft does not carry — the draft holds only current
-  options, so retired ids have to come from a stored high-water mark or
-  from the published version history, which is what makes this more
-  than a one-line change. Seed-module authoring follows the rule today;
-  this is the UI path that can still violate it. Pairs with the write
-  path entry above, which may retire this editor outright.
+  a replacement to take a never-used id. `game_completions.submitted_answers`
+  stores ids and no labels; the answer review resolves
+  `answers[question.id]` and then resolves option ids against whatever
+  options exist now. So a re-issued id makes the review report an answer
+  the attendee never gave, where a retired id would fail to resolve and
+  show nothing.
+  **The two generators compose, and that is what makes this worth
+  fixing rather than tolerating.** A question-id collision used to be
+  survivable by accident: stored answers carried per-question option
+  slugs, so a re-issued `q1` met options whose ids could not match, and
+  the review degraded visibly. Now that every question's options are
+  `a`–`d`, a re-issued question id lands on option ids that are
+  guaranteed to collide, and the two failures multiply into a confident
+  wrong answer instead of a blank one.
+  Concretely today: Madrona's five questions carry slugs, so `q1` reads
+  as free and the first Add Question re-issues it — the exact id the
+  identifier migration retired, and the key under which all existing
+  Madrona completions store their first answer. Nothing has triggered it
+  because the question editor has never been used on that event
+  (`game_event_drafts.last_saved_by` is null) and the seed path never
+  calls either generator.
+  **Goal:** an id freed by a deletion is never handed to new content, at
+  either level. The fix needs knowledge the draft does not carry — the
+  draft holds only current content, so retired ids have to come from a
+  stored high-water mark or from `game_event_versions` history, which is
+  what makes this more than a one-line change. Seed-module authoring
+  follows the rule today; this is the UI path that can still violate it.
+  Pairs with the write path entry above, which may retire this editor
+  outright.
   Detail: N/A
 
 - [ ] **`dev` Assert allowlist-filtered zero-row access on `game_event_admin_status`**

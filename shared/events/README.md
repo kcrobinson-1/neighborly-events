@@ -47,10 +47,13 @@ identity: after a semantic replacement the next letter is `e`, not the freed
 `b`. Authored order is not display order — `shuffleGameOptions` permutes per
 attempt and grading is id-based end to end.
 
-Note one gap this rule cannot close on its own. The admin editor's
-`createOptionId` picks the lowest *currently unused* letter, so deleting an
-option and adding a replacement through the UI re-issues the freed id. The
-rule binds seed-module authoring; the UI can still violate it, tracked in
+Note one gap this rule cannot close on its own. Both of the admin editor's id
+generators pick the lowest *currently unused* identifier — `createOptionId` a
+letter, `createQuestionId` a `q{n}` — so deleting either a question or an
+option and adding a replacement through the UI re-issues the freed id. The two
+compound: a re-issued question id now meets option ids guaranteed to collide
+with it, because every question's options are letters. The rule binds
+seed-module authoring; the UI can still violate it, tracked in
 [`docs/backlog.md`](/docs/backlog.md).
 
 **Question ids are readable slugs** naming what the question asks, never what
