@@ -24,7 +24,7 @@ type AdminQuestionFieldsProps = {
   onUpdateTextValue: (
     field: keyof Pick<
       AdminQuestionFormValues,
-      "explanation" | "prompt" | "sponsor" | "sponsorFact"
+      "explanation" | "prompt" | "sources" | "sponsor" | "sponsorFact"
     >,
     value: string,
   ) => void;
@@ -171,6 +171,29 @@ export function AdminQuestionFields({
           value={values.explanation}
         />
       </label>
+      {/* Sits under the explanation because that is where it renders: one
+          source per line, shown to the player beneath the explanation. The
+          `div` + `htmlFor` shape (rather than a wrapping label) keeps the
+          grammar hint out of the field's accessible name and attaches it as a
+          description instead. */}
+      <div className="admin-field">
+        <label htmlFor="admin-question-sources">
+          <span className="admin-field-label">Sources</span>
+        </label>
+        <textarea
+          aria-describedby="admin-question-sources-hint"
+          className="admin-input admin-textarea"
+          disabled={disabled}
+          id="admin-question-sources"
+          onChange={(event) => onUpdateTextValue("sources", event.target.value)}
+          value={values.sources}
+        />
+        <span className="admin-field-hint" id="admin-question-sources-hint">
+          One source per line. Link with [Title](https://example.org) and
+          emphasize with *italics*. A bare web address outside a link is
+          rejected on save.
+        </span>
+      </div>
       <label className="admin-field">
         <span className="admin-field-label">Sponsor fact</span>
         <textarea

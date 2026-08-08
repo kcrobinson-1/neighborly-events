@@ -24,8 +24,27 @@ export type AdminQuestionFormValues = {
   prompt: string;
   selectionMode: SelectionMode;
   sponsor: string;
+  /**
+   * The source lines as one block of text, newline-separated — the field is a
+   * textarea, and `Question.sources` is a list. `readSourceLines` and
+   * `writeSourceLines` are the only two places that conversion happens.
+   */
+  sources: string;
   sponsorFact: string;
 };
+
+/** Splits the authoring textarea into source lines, dropping blank ones. */
+function readSourceLines(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+/** Renders stored source lines back into the authoring textarea. */
+function writeSourceLines(sources: string[] | undefined) {
+  return (sources ?? []).join("\n");
+}
 
 function createRequiredMessage(label: string) {
   return `${label} is required.`;
@@ -121,6 +140,10 @@ function createNormalizedQuestion(question: Question): Question {
 
   const explanation = trimOptional(question.explanation ?? "");
   const sponsorFact = trimOptional(question.sponsorFact ?? "");
+  // Blank lines are dropped and each line is trimmed, so a list that empties
+  // out becomes absent rather than `[]` — matching how both hydration paths
+  // normalize it, and how the two optional strings below behave.
+  const sources = readSourceLines(writeSourceLines(question.sources));
 
   const canonical = {
     ...question,
@@ -133,15 +156,18 @@ function createNormalizedQuestion(question: Question): Question {
     sponsor: trimOptional(question.sponsor ?? "") ?? null,
   };
 
-  // These two are absent rather than empty when they trim to nothing, which a
-  // spread cannot express — it would carry the untrimmed original through.
+  // These three are absent rather than empty when they normalize to nothing,
+  // which a spread cannot express — it would carry the untrimmed original
+  // through.
   delete canonical.explanation;
   delete canonical.sponsorFact;
+  delete canonical.sources;
 
   return {
     ...canonical,
     ...(explanation ? { explanation } : {}),
     ...(sponsorFact ? { sponsorFact } : {}),
+    ...(sources.length > 0 ? { sources } : {}),
   };
 }
 
@@ -198,13 +224,17 @@ export function updateQuestionFormValues(
       sponsor: values.sponsor,
     };
 
+    const sources = readSourceLines(values.sources);
+
     delete next.explanation;
     delete next.sponsorFact;
+    delete next.sources;
 
     return {
       ...next,
       ...(values.explanation ? { explanation: values.explanation } : {}),
       ...(values.sponsorFact ? { sponsorFact: values.sponsorFact } : {}),
+      ...(sources.length > 0 ? { sources } : {}),
     };
   });
 }
@@ -236,6 +266,7 @@ export function createQuestionFormValues(
     prompt: question.prompt,
     selectionMode: question.selectionMode,
     sponsor: question.sponsor ?? "",
+    sources: writeSourceLines(question.sources),
     sponsorFact: question.sponsorFact ?? "",
   };
 }

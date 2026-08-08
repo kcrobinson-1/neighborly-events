@@ -92,7 +92,7 @@ export function AdminQuestionEditor({
   const updateTextValue = (
     field: keyof Pick<
       AdminQuestionFormValues,
-      "explanation" | "prompt" | "sponsor" | "sponsorFact"
+      "explanation" | "prompt" | "sources" | "sponsor" | "sponsorFact"
     >,
     value: string,
   ) => {
