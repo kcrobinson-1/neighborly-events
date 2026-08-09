@@ -363,7 +363,42 @@ proxy, and CDN config changes to a production build of the destination
 app and records the M2 phase 2.3 case where a dev-server check hid a
 missing asset proxy rule until pre-merge review.
 
-## Naming
+## Cross-Cutting Invariants
+
+The parent's I1, I2, and I3 bind this phase and are **not** restated
+here — a phase plan cites its parent's invariants rather than copying
+them. What follows is the layer the parent cannot see: rules that hold
+*between this PR's own file surfaces*, which became necessary once the
+phase grew a probe runner and workflow wiring alongside the mapping,
+config, test, and docs. Each breaks silently, with every file looking
+correct read on its own.
+
+**L1. The mapping is the only place a hostname or slug is written.**
+The config's rewrite rows, the unit test's expectations, the probe
+runner's target list, and the topology table's rows all derive from it
+or assert against it. The sharp edge is the test: one that hardcodes
+the expected hostname passes while asserting nothing about the
+derivation, which is worse than having no test, because it reports
+coverage the phase does not have.
+
+**L2. Every check surface carries a canonical-host assertion beside
+its organizer-host one.** That means the unit test, the local parity
+probe, and the production runner each — not one of the three standing
+in for the others. They drift independently, and a surface that
+exercises only the new host cannot observe the regression the parent's
+I1 exists to prevent.
+
+**L3. The emitted rewrite set and the documented topology are one
+statement.** The config is authoritative and the topology table
+describes it, including which phase each row runs in. A row added to
+either alone leaves both internally consistent and jointly wrong.
+
+**L4. Nothing this phase adds resolves a host by pattern.** The
+condition matches its mapped hostname exactly (C2), and the runner
+selects its targets from the mapping rather than by matching a shape.
+An exact-match rule enforced at one surface and approximated at
+another is indistinguishable from working until an unmapped near-match
+host arrives.
 
 The mapping module is `shared/urls/organizerHosts.ts`. `shared/urls/`
 is the home rather than `shared/events/` because the mapping is URL
