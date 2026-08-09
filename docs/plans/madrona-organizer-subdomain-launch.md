@@ -135,9 +135,19 @@ direction, and the two directions ship in separate PRs:
   resolve a path relative to the mount, so a bare `/game` on a
   mapped host matches with the `madrona` slug. Purely additive:
   nothing emits short paths yet, so no rendered output changes.
-- **Emit side (4b).** `routes.*` builders emit paths relative to the
-  mount, so the game-route builder yields `/game` on the organizer
-  host and `/event/madrona/game` everywhere else.
+- **Emit side (4b).** Builders for the route family C2 actually
+  rewrites — the event landing, feedback, and game routes — emit
+  paths relative to the mount, so the game-route builder yields
+  `/game` on the organizer host and `/event/madrona/game`
+  everywhere else. **Every other builder keeps emitting long
+  paths on every host**, including the per-event admin, redeem,
+  and redemptions routes. Those three are valid post-sign-in
+  destinations (`AuthNextPath` excludes only the callback route),
+  and the auth callback navigates the full document; a
+  mount-relative builder would send an organizer to a short path
+  C2 does not serve, producing a 404 on the return leg of
+  sign-in. Widening the emit set and widening C2's rewrite table
+  are the same decision and must move together.
 - The mount resolves from the browser's current host against a
   mirror of C1's table. Static table, mirroring the per-event table
   that already lives in `shared/masthead/mastheadContent.ts`.
@@ -222,6 +232,13 @@ deployed.
 
 **I5. Parse before emit.** No surface emits a short path before the
 matchers accept it. This is what makes 4a inert and 4b the switch.
+
+**I6. The set of mount-relative builders equals the set of
+rewritten sources.** C2's rewrite table and C5's emit set are two
+authoring sites for one answer to "which paths are short on an
+organizer host." A builder that emits a short path C2 does not
+serve produces a 404; a rewrite with no builder is dead config.
+Changing either set changes both in the same PR.
 
 ## Naming
 
@@ -319,7 +336,17 @@ to the second. The decoy is **renamed**, not deleted: it holds
 `AAB-` entitlement rows, so removing it would orphan real
 completion records, and the failure this item prevents is
 verification against the wrong event — a distinct name is
-sufficient for that. Sequence anywhere; it gates nothing.
+sufficient for that.
+
+It gates no *implementing* phase and may land in any of them or in
+its own PR, but it is a required close-out boundary: the failure it
+prevents is verifying phase 4b against the wrong event, so the
+`Landed` flip cannot claim a verified organizer host while two rows
+still answer to the same name. Its validation is part of the
+close-out walk — a query of `game_events` returns exactly one row
+carrying the Madrona display name, and the decoy's entitlement rows
+are still reachable under their own event after the rename (per
+R7, the join key is re-derived before the rename targets anything).
 
 ## Status lifecycle and close-out
 
@@ -341,8 +368,9 @@ Gate For Plans With Post-Release Validation":
   written.
 - `In progress pending organizer-host verification` → `Landed` in a
   follow-up doc-only commit once the phase 3 and 4b production
-  checks pass, recording the verification evidence. That same
-  commit deletes the scoping doc.
+  checks pass **and the data-hygiene item's validation passes**,
+  recording the verification evidence. That same commit deletes the
+  scoping doc.
 
 ## Self-Review Audits
 
