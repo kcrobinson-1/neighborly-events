@@ -17,15 +17,21 @@ makes that domain serve the event it belongs to, and makes the event
 actually work when reached through it.
 
 The second half is the part that was not obvious. A per-event
-organizer domain is a distinct browser origin, and three systems
-gate behavior by origin: the edge-function CORS allowlist rejects
-it, Supabase Auth does not list it as a valid redirect target, and
-the site's page metadata advertises a different origin entirely. All
-three fail on that host today regardless of what URL path a visitor
-types, so the quiz cannot mint a check-in code there even at the
-long `/event/madrona/game` path that already circulates. Short URLs
-are the visible goal; origin admission is what makes them worth
-having.
+organizer domain is a distinct browser origin, and several systems
+gate behavior by origin. Two of them break the event outright: the
+edge-function CORS allowlist rejects the origin, so the quiz cannot
+mint a check-in code there even at the long `/event/madrona/game`
+path that already circulates, and Supabase Auth does not list the
+host as a valid redirect target, so sign-in initiated there lands
+somewhere else. Both fail regardless of what URL a visitor types.
+Short URLs are the visible goal; origin admission is what makes them
+worth having.
+
+A third origin-coupled surface — the site's page metadata, which
+advertises one origin for every host — turns out **not** to be
+fixable at this plan's chosen cost, because the event routes are
+statically generated. C4 and C4b record why, and what the plan
+accepts instead.
 
 Conceptually this touches the site's routing layer, the shared route
 and header contracts both apps render from, the attendee game SPA's
@@ -53,8 +59,9 @@ After all phases land:
 - The quiz completes and mints an `MIP-####` code on that origin.
 - Organizer and volunteer sign-in initiated from that origin returns
   to that origin.
-- Pages served on that origin advertise it as their canonical and
-  Open Graph URL.
+- Page metadata is unchanged: canonical and Open Graph URLs name the
+  site origin on every host, per C4. Retargeting them per host needs
+  the same dynamic rendering C4b defers, so it is not in this plan.
 - Every other host — the canonical `*.vercel.app` alias, preview
   aliases, localhost — behaves exactly as it does today, including
   the demo index at `/` and the existing long event paths.
@@ -67,9 +74,9 @@ A single table maps an organizer hostname to the event slug it
 serves. It has one entry today: `music.madrona.us` maps to the
 `madrona` event.
 
-The table has exactly one home in `apps/site`, and three consumers
-read it: the short-path rewrites (C2), the per-event metadata base
-(C4), and — mirrored per C5 — the client route layer.
+The table has exactly one home in `apps/site`, and two consumers
+read it: the short-path rewrites (C2) and — mirrored per C5 — the
+client route layer. Metadata is not a consumer, per C4.
 
 The module carries no imports, because `next.config.ts` reads it at
 config-evaluation time (see R6).
@@ -115,18 +122,38 @@ The address bar reads `music.madrona.us/game` after load. This
 requires C5's parse side; the C2 row for `/game` ships in phase 4b,
 never before 4a.
 
-### C4. Per-event metadata base
+### C4. Page metadata stays on the canonical site origin
 
-Event pages served on a mapped organizer host emit that host in
-`openGraph.url` and the canonical link. The site-wide
-`NEXT_PUBLIC_SITE_ORIGIN` remains the default for every page not on
-a mapped host, and is not retargeted.
+Metadata is **not** retargeted per host. Event pages emit the
+site-wide origin in `openGraph.url` and the canonical link on every
+host, including the organizer host, and `NEXT_PUBLIC_SITE_ORIGIN`
+is not changed.
+
+This is the same constraint C4b names, applied to metadata:
+`generateMetadata` runs at build time for a statically generated
+route, so it has no request host to branch on. A per-event metadata
+base could advertise the organizer host on *both* aliases or the
+site origin on both — it cannot advertise a different origin per
+host. Only dynamic rendering can, which C4b defers.
+
+**What this costs, stated plainly:** a link shared from the
+organizer host renders its preview with the canonical alias as the
+URL. Title, description, and image are unaffected, so the preview
+is correct in everything except the domain it displays.
+
+**What it does not cost:** the canonical link naming one origin
+across both hosts is the behavior `rel="canonical"` exists for — it
+tells search engines the two hosts are one page rather than
+splitting them as duplicates. Retargeting it per host would have
+been the less correct choice on that axis.
 
 **Verified by:** `apps/site/app/layout.tsx` sets a single
 `metadataBase` from `resolveMetadataBaseOrigin()`;
 `apps/site/app/event/[slug]/page.tsx` `generateMetadata` emits
 `openGraph.url` as a relative event path, which resolves against
-that one base for every event. Retargeting the global would make
+that one base for every event, and the same file declares
+`generateStaticParams` — so both the base and the relative path are
+fixed at build time. Retargeting the global instead would make
 `harvest-block-party` and `riverside-jam` pages advertise URLs on
 Madrona's domain.
 
@@ -158,10 +185,14 @@ short paths. What is lost is address-bar consistency after the
 first tap, not reachability.
 
 This is the cheaper of two shapes. Making the event routes
-dynamically rendered would let the server read the request host and
-emit short paths everywhere, at the cost of per-request rendering
-on the day-of attendee landing page. That trade is deliberately not
-taken for one event and is tracked in
+dynamically rendered would let the server read the request host,
+which buys **two** things at once: short paths through in-page
+navigation, and the per-host canonical and Open Graph URLs C4
+declines for the same reason. Both are blocked by the same
+constraint and unblocked by the same change, which is why they are
+one backlog entry rather than two. The cost is per-request
+rendering on the day-of attendee landing page. That trade is
+deliberately not taken for one event and is tracked in
 [`docs/backlog.md`](/docs/backlog.md) instead.
 
 ### C5. The client route layer gains a mount point
@@ -242,26 +273,40 @@ The organizer origin joins `defaultAllowedOrigins` in
 remains for local and temporary extras only.
 
 **The allowlist is bundled per function, so admission is only as
-complete as the redeploy.** Six functions bundle
-`_shared/cors.ts` — `issue-session`, `complete-game`,
-`read-demo-event`, `redeem-entitlement`,
-`reverse-entitlement-redemption`, and `get-redemption-status` — and
-Supabase deploys them one at a time. Every one of them is
-redeployed together. Redeploying only the function the probe
-exercises is the specific failure this names: a player on the
-organizer host would pass `issue-session`, play the whole quiz, and
-take a 403 at completion — which is the exact "cannot mint a code"
-symptom this phase exists to remove, reintroduced one function
-later.
+complete as the redeploy.** **Every edge function the project has —
+all ten — bundles `_shared/cors.ts`**, and Supabase deploys them one
+at a time. All ten are redeployed together. The contract is
+therefore "redeploy the whole function set," not a list to
+maintain: any future function reaches the allowlist the moment it
+gates on origin, and a list would go stale silently.
 
-**Verified by:** `complete-game` reaches the allowlist through
-`complete-game/dependencies.ts` and `complete-game/response.ts`,
-and `createCompleteGameHandler` returns 403 on an unrecognized
-origin ahead of every other branch; the remaining four import
-`_shared/cors.ts` directly in their `index.ts`;
+Redeploying only the function a probe exercises is the specific
+failure this names, and it has two distinct shapes. An attendee on
+the organizer host would pass `issue-session`, play the whole quiz,
+and take a 403 at completion — the exact "cannot mint a code"
+symptom this phase exists to remove, reintroduced one function
+later. An organizer signing in on that host would then find that
+saving a draft, generating a code, publishing, and unpublishing all
+403 as well.
+
+**Verified by:** all ten function directories reach `cors.ts`, by
+three different routes — six import it directly in `index.ts`
+(`issue-session`, `read-demo-event`, `redeem-entitlement`,
+`reverse-entitlement-redemption`, `get-redemption-status`, and
+`complete-game` via its own `dependencies.ts` and `response.ts`),
+and the remaining four (`save-draft`, `generate-event-code`,
+`publish-draft`, `unpublish-event`) reach it indirectly through
+`_shared/authoring-http.ts`, which imports `createCorsHeaders` and
+`getAllowedOrigin` from it. `createCompleteGameHandler` returns 403
+on an unrecognized origin ahead of every other branch.
 [`docs/dev.md`](/docs/dev.md) documents deployment as one
 `functions deploy` invocation per function, with no all-functions
 wrapper in `package.json` or `scripts/`.
+
+The indirect four are the reason this contract names the whole set
+rather than an enumeration: a grep for the direct import path finds
+six and misses them, which is the error this wording exists to
+prevent from recurring.
 
 **Verified by:** the deployed `functions/_shared/cors.ts` (live
 `issue-session`, version 183) carries no organizer origin; the
@@ -338,7 +383,6 @@ Estimate Deviations callout.*
 |---|---|
 | `apps/site/lib/eventHostRouting.ts` | 3 |
 | `tests/site/eventHostRouting.test.ts` | 3 |
-| `tests/site/event/eventMetadataOrigin.test.ts` | 3 |
 | `shared/urls/eventMount.ts` | 4a |
 | `tests/shared/urls/eventMount.test.ts` | 4a |
 
@@ -349,7 +393,6 @@ Estimate Deviations callout.*
 | `supabase/functions/_shared/cors.ts` | 1 |
 | `tests/supabase/functions/cors.test.ts` | 1 |
 | `apps/site/next.config.ts` | 3 (root, `/feedback`), 4b (`/game`) |
-| `apps/site/app/event/[slug]/page.tsx` | 3 |
 | `shared/urls/routes.ts` | 4a (matchers), 4b (builders) |
 | `shared/urls/index.ts` | 4a |
 | `tests/shared/urls/*` | 4a, 4b |
@@ -375,20 +418,22 @@ Estimate Deviations callout.*
 ## Phases
 
 **Phase 1 — Origin admission.** C7. One code line, one test, and a
-redeploy of **every function that bundles the allowlist** — see C7
-for why that is six functions and not one. Independently
-verifiable: a credentialed request from the organizer origin
-returns an `Access-Control-Allow-Origin` echo instead of 403.
-Unblocks the long path immediately, before any routing work exists.
+redeploy of **the entire function set** — see C7 for why that is all
+ten and not one. Independently verifiable: a credentialed request
+from the organizer origin returns an `Access-Control-Allow-Origin`
+echo instead of 403. Unblocks the long path immediately, before any
+routing work exists.
 
 **Phase 2 — Auth URL configuration.** C8. Console-side plus the doc
 updates that record it. No application code. Independent of every
 other phase.
 
-**Phase 3 — Organizer host mapping in apps/site.** C1, C2 (root and
-`/feedback` rows), C4. The organizer host serves the event landing
-and feedback form on short paths, with correct share metadata.
-`/game` still resolves only at its long path.
+**Phase 3 — Organizer host mapping in apps/site.** C1 and C2's root
+and `/feedback` rows. The organizer host serves the event landing
+and feedback form on short paths. `/game` still resolves only at
+its long path. C4 is a no-op contract here — it records that
+metadata is deliberately not retargeted, so it adds no work to this
+phase.
 
 **Phase 4 — Mount-aware route contract.** Two PRs, split by
 direction per I5:
@@ -483,11 +528,13 @@ Per phase, `npm run lint` plus the checks below.
 a credentialed `OPTIONS` and `POST` from the organizer origin
 returns that origin echoed in `Access-Control-Allow-Origin`, and the
 same request from an unlisted origin still returns 403 — probed
-against **each of the six functions named in C7**, not only
-`issue-session`. A per-function probe is the only check that
-distinguishes "the allowlist is right" from "the allowlist is right
-and every function has it," and those two states differ by a live
-403 at quiz completion.
+against **every deployed function**, not only `issue-session`. A
+per-function probe is the only check that distinguishes "the
+allowlist is right" from "the allowlist is right and every function
+has it," and those two states differ by a live 403 at quiz
+completion. Enumerating the function set from the filesystem rather
+than from a written list is what keeps the probe complete as
+functions are added.
 
 **Phase 2:** magic-link sign-in initiated from the organizer host
 returns to the organizer host; sign-in from the canonical alias is
@@ -497,9 +544,12 @@ unchanged.
 `/` and `/feedback` on the organizer host return the Madrona pages
 with the path unchanged; `/event/madrona*` still resolves; the
 canonical alias still serves the demo index at `/` and still 404s
-`/feedback`; the event page's `og:url` and canonical link name the
-organizer host on that host and the site origin on the canonical
-alias.
+`/feedback`. Per C4 the event page's `og:url` and canonical link
+name the site origin on **both** hosts; the assertion is that they
+are identical across the two, which is the check that would fail if
+someone later retargeted `NEXT_PUBLIC_SITE_ORIGIN` to close the
+metadata gap the cheap way and pointed the other two events at
+Madrona's domain.
 
 **Phase 4a:** `npm test` plus `npm run build:web`. The gate for an
 inert change is evidence of inertness: rendered output and emitted
@@ -626,7 +676,11 @@ rename does not silently miss the rows it is meant to disambiguate.
 
 ## Out Of Scope
 
-- Retargeting `NEXT_PUBLIC_SITE_ORIGIN` (C4 supersedes).
+- Retargeting `NEXT_PUBLIC_SITE_ORIGIN`. It feeds one site-wide
+  `metadataBase`, so pointing it at Madrona's domain would make
+  `harvest-block-party` and `riverside-jam` advertise URLs there
+  too. Per-host metadata needs dynamic rendering, not a retargeted
+  global (C4).
 - A generic organizer-onboarding self-serve flow. Two table entries
   per host is the deliberate ceiling for one organizer.
 - Custom SMTP (R4).
@@ -664,9 +718,9 @@ No backlog entry covered this before now. One is now tracked in
 [`docs/backlog.md`](/docs/backlog.md) under "Tier 2 — Operational
 Confidence," scoped to the game route's share metadata and naming
 this plan as what made it visible. Closing it stays out of this
-plan's scope — C4 covers event-page metadata, not the game route's,
-and the game route is served by `apps/web` from a single static
-document.
+plan's scope: the game route is served by `apps/web` from a single
+static document, and C4 leaves event-page metadata unchanged
+rather than extending it anywhere.
 
 ## Related Docs
 

@@ -249,17 +249,29 @@ shapes live in the plan's Contracts and Phases sections, not here.
   pointing it at a deployment documented as not customer-facing
   means every fallback lands where users should not be. Low blast
   radius: real flows pass explicit allowlisted redirect URLs.
-- **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone and
-  add a per-event metadata base instead. It feeds one site-wide
-  `metadataBase`, so retargeting it would make the other two events
-  advertise URLs on Madrona's domain.
+- **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone.
+  It feeds one site-wide `metadataBase`, so retargeting it would
+  make the other two events advertise URLs on Madrona's domain.
+  This scoping proposed a per-event metadata base as the
+  replacement; plan review found that shape unbuildable at the
+  plan's chosen cost, because the event routes are statically
+  generated and `generateMetadata` therefore has no request host to
+  branch on. The plan's C4 records the outcome — metadata stays on
+  the site origin for every host — and files per-host metadata with
+  the dynamic-rendering tradeoff it shares with short-path
+  navigation.
 - **O5 — volunteer authentication.** Struck by decision; the
   2-messages/hour ceiling is accepted rather than solved. Carried
   into the plan's Risk Register with the condition that resurfaces
   it. Custom SMTP is therefore out of the plan's phase 2, which is
   auth *URL* configuration only.
 - **O6 — lookalike-event cleanup.** Resolved to in scope, as an
-  independent data item gating nothing.
+  independent data item. It gates no *implementing* phase and may
+  land in any of them, but the plan makes it a **required close-out
+  boundary**: the `Landed` flip cannot claim a verified organizer
+  host while two rows answer to the same display name, because that
+  is exactly what would make the phase 4b verification untrustworthy.
+  Not optional — see the plan's "Status lifecycle and close-out."
 
 ## Plan structure handoff
 
@@ -273,16 +285,20 @@ is authoritative; this records what handed over.
    closed — O5 struck it, and it carries into the plan's Risk
    Register instead.
 3. **Host short paths in `apps/site`.** Closes D2 and applies D4's
-   literal-source constraint, shaped by O4 for the metadata half.
-   The `/game` row is not in this phase; O1 put it behind the route
-   contract.
+   literal-source constraint. The `/game` row is not in this phase;
+   O1 put it behind the route contract. O4's metadata half did not
+   survive plan review — see O4 — so this phase carries routing
+   only.
 4. **Host-aware route contract.** Made unconditional by O1's
    resolution, and split into parse and emit PRs by the plan's
-   parse-before-emit invariant. Closes D3 and D11.
+   parse-before-emit invariant. Closes D3, and closes D11 only for
+   the browser-rendered masthead; the plan's C4b explains why the
+   server-rendered half stays on long paths.
 
-The lookalike-event cleanup (D9) rides along as an independent data
-item per O6 rather than being forced into a phase. Phases 1 and 2
-have no dependency on the routing work.
+The lookalike-event cleanup (D9) rides along per O6 rather than
+being forced into a phase, but is a required close-out boundary
+rather than an optional tidy-up. Phases 1 and 2 have no dependency
+on the routing work.
 
 ## Reality-check inputs
 

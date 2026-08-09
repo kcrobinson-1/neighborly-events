@@ -401,25 +401,35 @@ Reduce deployment risk and contributor friction before the live event.
   is meant to be exhaustive or merely representative.
   Detail: N/A
 
-- [ ] **`ux` Organizer-host short paths do not survive in-page navigation**
-  On an organizer host such as `music.madrona.us`, short paths are the
-  entry form — typed, scanned, pasted — but the first tap inside the
-  site drops the visitor onto `/event/<slug>/*` and leaves them there.
-  The cause is that [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+- [ ] **`ux` Organizer hosts can't get host-specific paths or share metadata**
+  Two symptoms, one cause. On an organizer host such as
+  `music.madrona.us`, (a) short paths are the entry form — typed,
+  scanned, pasted — but the first tap inside the site drops the visitor
+  onto `/event/<slug>/*` and leaves them there, and (b) a link shared
+  from that host renders its preview with the canonical alias as the
+  URL, because `og:url` and the canonical link name the site origin on
+  every host. Title, description, and image are correct; only the
+  displayed domain is not.
+  The shared cause is that [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
   declares `generateStaticParams`, so one HTML document serves every
   host, and the link-bearing components
   ([`EventHeader.tsx`](/apps/site/components/event/EventHeader.tsx),
   [`EventCTA.tsx`](/apps/site/components/event/EventCTA.tsx),
   [`EventDayOfLanding.tsx`](/apps/site/components/event/EventDayOfLanding.tsx),
   [`EventFeedbackCTA.tsx`](/apps/site/components/event/EventFeedbackCTA.tsx))
-  render on the server with no request host to resolve a mount from.
-  Nothing breaks — the long paths serve identically on the organizer
-  host — so this is address-bar consistency, not reachability;
+  render on the server with no request host to resolve a mount from —
+  and `generateMetadata` runs at build time for the same reason, which
+  is why the metadata symptom has the identical root. Nothing breaks —
+  the long paths serve identically on the organizer host, and the
+  shared previews carry the right content — so both are consistency
+  issues, not reachability;
   [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)
-  C4b accepts it deliberately for one event. **Goal:** a visitor who
-  arrives on a short path stays on short paths through in-page
-  navigation. Note the shape of the cause before picking a fix: the
-  host has to reach the code that emits the href, so the options are
+  C4 and C4b accept them deliberately for one event. **Goal:** a
+  visitor who arrives on a short path stays on short paths through
+  in-page navigation, and a link shared from an organizer host shows
+  that host. Note the shape of the cause before picking a fix: the
+  request host has to reach the code that emits the href and the
+  metadata, so the options are
   rendering the event routes dynamically (server reads the request
   host, at the cost of per-request rendering on the day-of landing
   page attendees load on cell data) or prerendering a per-host variant
