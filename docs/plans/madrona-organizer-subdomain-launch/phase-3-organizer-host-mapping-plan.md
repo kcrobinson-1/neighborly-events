@@ -517,6 +517,72 @@ callout.*
   not routing; the routing authority is the Next config.
 - `supabase/functions/`. Origin admission is phase 1's surface.
 
+## Execution Steps
+
+*Estimate of the expected shape, not a binding rule. Implementation
+may resequence when a structural call requires it; deviations are
+reported per the Plan-to-PR Completion Gate's Estimate Deviations
+callout.*
+
+The repo's implementation workflow already owns the generic gates —
+branch state before the first edit, commit boundaries named up front,
+continuous validation rather than validation only at the end, an
+automated code-review pass before documentation cleanup, docs updated
+to describe the reviewed implementation, and a final whole-branch
+self-review. Those are not restated here; restating a canonical
+workflow inside each plan is how plan docs accrete without adding
+constraint. **Verified by:**
+[`docs/agents/workflows/implementation.md`](/docs/agents/workflows/implementation.md)
+"Full Structured Path" enumerates each of those gates, and
+[`docs/agents/workflows/plan-implementation.md`](/docs/agents/workflows/plan-implementation.md)
+carries the Plan-to-PR Completion Gate the implementing PR walks.
+
+What follows is only what is specific to this phase, where getting the
+order wrong produces a misleading result rather than a slower one.
+
+1. **Assemble the production build before trusting any local probe.**
+   The standalone entrypoint needs the build's static output and
+   public directory copied alongside it. Confirm a hashed
+   `_next/static` asset returns its stylesheet content type *before*
+   running parity or behavior assertions — skipped, every such request
+   404s and reads as the asset-parity failure the gate exists to
+   catch. This precondition is why it is step one rather than a note
+   inside the gate.
+2. **Land the mapping, the config derivation, and the unit test
+   together, and run the unit test against a deliberately wrong
+   mapping once.** A test that passes whether or not the derivation
+   reads the mapping is the L1 failure, and the only cheap way to know
+   it fails is to make it fail.
+3. **Exercise the probe runner pre-merge against the canonical host.**
+   Its organizer-host rows do not resolve until this merges, but the
+   canonical alias resolves today, so the runner's own correctness —
+   argument handling, host selection from the mapping, the
+   empty-set guard, assertion wiring — is verifiable before merge even
+   though its subject is not. Without this the runner ships never
+   having run, and its first execution is the one the close-out
+   depends on.
+4. **Update the topology table in the same commit as the config
+   change**, not in the docs pass. They are one statement per L3, and
+   separating them is what leaves both internally consistent and
+   jointly wrong.
+
+## Commit Boundaries
+
+*Estimate of cohesive review chunks; the implementer can refine.*
+
+Three slices, each reviewable on its own and each leaving the repo
+working:
+
+1. The mapping module, the config derivation, the unit test, and the
+   topology-table update — the routing change and its proof.
+2. The probe runner, its script entry, and its workflow wiring —
+   validation infrastructure, reviewable against the Validation Gate's
+   post-merge bullets without re-reading the routing diff.
+3. The remaining operator-facing doc updates.
+
+Review-fix commits stay distinct from these when that makes the
+history easier to follow.
+
 ## Validation Gate
 
 **Pre-merge — these gate the PR.**
