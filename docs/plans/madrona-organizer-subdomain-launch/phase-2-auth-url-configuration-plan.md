@@ -47,13 +47,16 @@ phase's implementation because they describe a console, not a file.
   organizer host.
 - Site URL names the canonical site origin, so a redirect that falls
   back to it lands on a customer-facing host.
-- Sign-in from every origin whose callback URL the allowlist admits
-  behaves as it does today, and no origin gains or loses a working
-  return leg. That is narrower than "every other origin": what happens
-  on origins the allowlist does not admit turns on a vendor behavior
-  this plan resolves by observation rather than assumption, and on one
-  of the two outcomes it is a named exception to the parent's I1. C1
-  carries both.
+- Sign-in from every origin the allowlist admitted *before* this phase
+  behaves as it does today, and none of them loses a working return leg.
+  The organizer host is the one origin whose behavior this phase changes,
+  and gaining a return leg there is the point of the bullet above — the
+  preservation claim is about the set that already worked, not about
+  every admitted origin after the change.
+- What happens on origins the allowlist does not admit is a third case,
+  narrower than either. It turns on a vendor behavior this plan resolves
+  by observation rather than assumption, and on one of the two outcomes
+  it is a named exception to the parent's I1. C1 carries both.
 - The repository's operator-facing description of Auth URL configuration
   describes the configuration that is live.
 
@@ -259,8 +262,8 @@ more weakly than C1's.
 
 The parent's I1 (every host but a mapped organizer host is unchanged)
 binds this phase and is not restated here. The Validation Gate carries
-its assertion for the admitted class; P3 carries every case that may
-need an exception recorded against it.
+its assertion for the previously-admitted class; P3 carries every case
+that may need an exception recorded against it.
 
 ## Reality-check inputs
 
@@ -390,8 +393,10 @@ post-merge.
     an explicit redirect. C1's bound on the retarget is carried by the
     default-destination observation above and by the source-tree search
     cited under C1, not by this step.
-  - It also covers only the admitted class, which is the class the Goal
-    claims is unchanged. The unlisted class is the next step.
+  - It also covers only the previously-admitted class, which is the
+    class the Goal claims is unchanged — not the organizer host, whose
+    admission is the intended change. The unlisted class is the next
+    step.
 - **The unlisted-redirect class is observed, and what the PR claims
   about it matches.** Request a link against a redirect the allowlist
   does not admit, and record the outcome — which is one of two
