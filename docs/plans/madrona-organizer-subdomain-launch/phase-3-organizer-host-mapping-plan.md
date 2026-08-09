@@ -1,6 +1,6 @@
 # Phase 3 — Organizer host mapping in `apps/site`
 
-**Status:** `Proposed`
+**Status:** `In progress pending organizer-host routing verification`
 
 ## Context
 
@@ -67,7 +67,23 @@ instead.
 
 ## PR shape and Status lifecycle
 
-One PR, plus a doc-only close-out commit.
+Two PRs, plus a doc-only close-out commit.
+
+**The split this section rejected was taken anyway, by stakeholder
+decision, to get the organizer host serving sooner.** The reasoning
+below still describes the trade correctly and is left standing rather
+than rewritten to agree with the outcome — the split's cost was
+accepted, not disproven. What shipped: the routing change and its
+proof landed first, and the post-deploy probe runner, its script
+entry, its workflow wiring, and the validation-command lists in
+`docs/dev.md` and `docs/testing.md` follow in an immediate second PR.
+
+The cost is one extra PR and a longer window at `In progress pending
+organizer-host routing verification`, not a lifecycle violation: the
+`Landed` flip already routes through a separate doc-only commit, so
+the runner lands between the routing PR and that commit rather than
+after it. The close-out still records the run URL the runner produces
+— that requirement is untouched by the split.
 
 **PR-count branch test.** The branch exists and the file list is
 sketched below under "Files to touch": a shared mapping module, the
@@ -419,7 +435,33 @@ reads, admin writes, and projection types.
 
 Claims this phase rests on, to re-verify at implementation time
 because they were established against surfaces that move
-independently.
+independently. Each bullet carries what re-verification found.
+
+**Re-verified: the leaf-module import resolves.** `next` is unchanged
+since the drafting probe, and `npm run build:site` completed with the
+mapping imported by relative path with a `.ts` extension. C1 holds as
+written; the barrel remains unexercised and the implementation did not
+need it.
+
+**Re-verified: the standalone entrypoint assembles.** Located under
+`.next/standalone` at the tracing-root-relative project path, which in
+this worktree checkout is several levels below the top. With the
+build's static output and public directory copied alongside it, a
+hashed `_next/static` stylesheet returned `text/css` — the precondition
+the parity results below rest on.
+
+**Revised: `/assets/*` was reachable, so it carries a pre-merge
+absolute assertion after all.** The bullet below anticipated that the
+local environment might only manage parity on that class. It managed
+more: a real apps/web asset path returned success with its expected
+content type, identical on the organizer host, the canonical host, and
+a near-match host. Nothing about this class is deferred to post-deploy
+for want of local reach; the post-deploy run re-asserts it against the
+real hostname, which is a different claim.
+
+**Re-verified: the registered slug.** Read from the registry the
+prerender list reads, and asserted against it by the unit test rather
+than transcribed.
 
 - **The single-module import still resolves.** C1's result came from a
   probe against the `next` version pinned today, importing a leaf
@@ -480,26 +522,33 @@ independently.
 *Estimate of the expected shape, not a binding rule. Implementation
 may revise any row when a structural call requires it; deviations are
 reported per the Plan-to-PR Completion Gate's Estimate Deviations
-callout.*
+callout. The `PR` column reconciles the estimate to what shipped:
+`routing` is the first PR, `runner` the immediate follow-up the
+stakeholder-decided split created.*
 
 **New**
 
-| file | why |
-|---|---|
-| `shared/urls/organizerHosts.ts` | the mapping, per C1 and Naming |
-| `tests/shared/urls/organizerHosts.test.ts` | the assertions named in the Validation Gate |
-| a runner under `scripts/testing/` | the post-deploy host-routing probes, as a committed entry point that produces a run URL |
+| file | why | PR |
+|---|---|---|
+| `shared/urls/organizerHosts.ts` | the mapping, per C1 and Naming | routing |
+| `tests/shared/urls/organizerHosts.test.ts` | the assertions named in the Validation Gate | routing |
+| a runner under `scripts/testing/` | the post-deploy host-routing probes, as a committed entry point that produces a run URL | runner |
 
 **Modify**
 
-| file | why |
-|---|---|
-| `apps/site/next.config.ts` | the host-conditional rows, per C2 and C3 |
-| `package.json` | the script entry the runner is invoked through |
-| `.github/workflows/production-admin-smoke.yml` | where the probes run on the deployed surface — a new job there, or a sibling workflow if the environment or trigger shape does not fit |
-| `docs/architecture.md` | "Vercel routing topology" — the routing authority's prose |
-| `docs/dev.md` | "Vercel" — the onboarding step this phase contributes, and the validation-command list |
-| `docs/testing.md` | the validation-command list, per the validation-command coupling audit |
+| file | why | PR |
+|---|---|---|
+| `apps/site/next.config.ts` | the host-conditional rows, per C2 and C3 | routing |
+| `package.json` | the script entry the runner is invoked through | runner |
+| `.github/workflows/production-admin-smoke.yml` | where the probes run on the deployed surface — a new job there, or a sibling workflow if the environment or trigger shape does not fit | runner |
+| `docs/architecture.md` | "Vercel routing topology" — the routing authority's prose | routing |
+| `docs/dev.md` | "Vercel" — the onboarding step this phase contributes | routing |
+| `docs/dev.md`, `docs/testing.md` | the validation-command lists, per the validation-command coupling audit | runner |
+
+The topology table gained a host column and a phase column rather than
+only new rows: every pre-existing row had to declare the phase it runs
+in, because the phase is what the new rows depend on and a table that
+named it for only some rows would read as though the rest had none.
 
 **Intentionally not touched**
 
@@ -583,6 +632,13 @@ working:
 Review-fix commits stay distinct from these when that makes the
 history easier to follow.
 
+**What shipped**, once the split moved slice 2 into its own PR: the
+routing PR carries slice 1, plus the `docs/dev.md` onboarding step and
+this plan's Status flip — the parts of slice 3 that slice 1
+invalidates on merge. The runner PR carries slice 2 and the
+validation-command lists, which describe a command that does not exist
+until it lands.
+
 ## Validation Gate
 
 **Pre-merge — these gate the PR.**
@@ -636,9 +692,25 @@ history easier to follow.
   event — the parent's I1, asserted on the same run rather than assumed
   from the organizer-host result.
 
+**Every pre-merge bullet above passed on the routing PR**, against the
+standalone production build described in the Reality-check inputs. The
+near-match host was probed alongside the mapped and canonical ones, so
+the exact-hostname property is asserted at the served level and not
+only in the unit test; and the emitted `routes-manifest.json` was read
+directly for the phase assertion C3 requires. Two results worth
+carrying forward rather than leaving to be re-derived: the proxy rows
+still resolve through to the apps/web deployment after the phase
+change, and no class had to be deferred to post-deploy for want of
+local reach.
+
 **Post-merge — these gate the `Landed` flip.** These run from the
 committed entry point named in the Status lifecycle above, not by
 hand, so the run that passes is the artifact the close-out records.
+They are the runner PR's to satisfy: the routing PR merges without
+them, which is what the `In progress pending organizer-host routing
+verification` Status records. The manual walk the routing PR performs
+immediately post-merge is a rollback trigger, not a substitute for
+them — it produces no run URL, and the close-out still requires one.
 
 - **Establish deployment identity before any assertion counts.** The
   run confirms the origin is serving the commit under test, and until
@@ -706,6 +778,15 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
   validation commands matches the authoritative source, which is why
   the docs listed under "Files to touch — modify" include the
   command-list docs and not only the routing-topology ones.
+
+**Results.** The topology audit ran on the routing PR and pulled in
+one carrier the plan had not listed: the root `README.md` summarizes
+the same topology, and its summary had become incomplete rather than
+wrong. It gained a pointer to the owner rather than a copy of the
+table, which is the duplication audit's resolution applied to the same
+diff. The validation-command audit's trigger does not fire on the
+routing PR — it adds no script entry and no workflow change — so it
+runs on the runner PR, which is also where the command-list docs move.
 
 ## Risks
 

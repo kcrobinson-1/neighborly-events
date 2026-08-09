@@ -116,7 +116,12 @@ Runtime responsibilities are:
   origin; its [`vercel.json`](/apps/web/vercel.json) holds only
   SPA-internal rewrites (`/event/:slug/...` → `/index.html`) plus
   the test-event `X-Robots-Tag` `headers` block, with no cross-app
-  proxy back to apps/site.
+  proxy back to apps/site. A per-event organizer domain is an
+  additional alias on the same apps/site project, and serves that
+  event at short paths through host-conditional rewrites derived from
+  [`shared/urls/organizerHosts.ts`](/shared/urls/organizerHosts.ts) —
+  see [`docs/architecture.md`](/docs/architecture.md) "Vercel routing
+  topology" for the full table.
 - the browser runs the quiz flow locally during play
 - `Supabase` handles the trusted completion step at the end
 

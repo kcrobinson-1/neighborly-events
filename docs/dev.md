@@ -860,18 +860,26 @@ requirements below is the failure that is hard to read off any one of
 them.
 
 **This list is not yet the complete set, and following only what is
-here does not produce a launched organizer host.** Two further
-requirements are known and not yet supported: Supabase Auth does not
+here does not produce a launched organizer host.** One further
+requirement is known and not yet supported: Supabase Auth does not
 admit the organizer host as a redirect target, so sign-in initiated
-there returns to the wrong origin; and the host carries no event
-mapping, so its root still serves the internal demo index. Both are
-owned by later phases of
+there returns to the wrong origin. It is owned by a later phase of
 [`docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md),
 and each phase adds its requirement here as it lands. Treat the list as
 complete only once that plan does.
 
 - **Vercel alias.** CNAME the organizer host to the apps/site Vercel
   project as an additional alias.
+- **Host→event mapping entry.** Add the host to `organizerHosts` in
+  [`shared/urls/organizerHosts.ts`](/shared/urls/organizerHosts.ts),
+  naming the event's registered slug and the short paths it serves.
+  Without it the host resolves to the same deployment as every other
+  alias, so its root serves the platform demo index rather than the
+  organizer's event. `apps/site/next.config.ts` derives its
+  host-conditional rewrites from that mapping — do not hand-write a
+  rewrite row. The full topology, and why the rows use literal
+  sources and exact hostnames, is in
+  [`docs/architecture.md` — Vercel routing topology](/docs/architecture.md#vercel-routing-topology).
 - **Edge-function origin admission, plus a redeploy.** Add the origin
   to `defaultAllowedOrigins` in
   [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
