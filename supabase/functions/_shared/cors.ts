@@ -12,19 +12,32 @@ const APPS_SITE_PROJECT_SLUG = "neighborly-events-site";
 
 /**
  * Built-in origins allowed to call edge functions. The canonical site
- * origin and dev-loop hosts live here in code (visible, version-
- * controlled, reviewable) — not in a Supabase secret. CORS allowlists
- * are not sensitive (each admitted origin is reflected back in the
- * `Access-Control-Allow-Origin` response header), so encoding the
- * canonical set as a write-only secret made safe operator updates
- * impossible. This list is the floor; `EXTRA_ALLOWED_ORIGINS` (below)
- * can supplement it but never replaces it.
+ * origin, launched per-event organizer origins, and dev-loop hosts
+ * live here in code (visible, version-controlled, reviewable) — not in
+ * a Supabase secret. CORS allowlists are not sensitive (each admitted
+ * origin is reflected back in the `Access-Control-Allow-Origin`
+ * response header), so encoding the canonical set as a write-only
+ * secret made safe operator updates impossible. This list is the
+ * floor; `EXTRA_ALLOWED_ORIGINS` (below) can supplement it but never
+ * replaces it.
+ *
+ * **Adding an origin here is not live until the edge functions are
+ * redeployed**, and every deployable function compiles this module in
+ * — directly or through a shared helper — so they all have to ship
+ * together. The release workflow's `supabase functions deploy` takes
+ * no function argument, which is the all-functions form, so the normal
+ * merge path satisfies that by construction; a hand-run deploy is the
+ * case that can leave the origin rejected on whatever it missed.
  */
 const defaultAllowedOrigins = new Set([
   "http://127.0.0.1:4173",
   "http://127.0.0.1:5173",
   "http://localhost:4173",
   "http://localhost:5173",
+  // Madrona's organizer domain, aliased to the apps/site Vercel
+  // project. Per-event organizer origins are exact-string entries;
+  // nothing keys on "is this a custom domain."
+  "https://music.madrona.us",
   "https://neighborly-events-site.vercel.app",
 ]);
 
