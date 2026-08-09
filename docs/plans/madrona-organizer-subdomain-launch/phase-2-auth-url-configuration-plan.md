@@ -17,12 +17,13 @@ An organizer's domain is a distinct browser origin, and Supabase Auth
 decides where a sign-in link returns by matching the requested redirect
 against a per-project allowlist. The organizer host is not on that list,
 so a volunteer or organizer who signs in from the domain printed on the
-event's materials is not returned to it. Separately, the fallback the
-project falls back *to* — its Site URL — points at the plugin
-deployment, which the canonical-origin work documented as not
-customer-facing, so the default destination is wrong on its own terms.
-Whether the first failure routes through the second is vendor behavior
-C1 pins down rather than assumes. Both halves are configuration, both
+event's materials is not returned to it. Separately, the project's Site
+URL — the destination a sign-in defaults to when it requests none —
+points at the plugin deployment, which the canonical-origin work
+documented as not customer-facing, so the default is wrong on its own
+terms. Whether the first failure routes through the second is vendor
+behavior C1 pins down rather than assumes. Both halves are configuration,
+both
 are one console visit, and neither is visible in the repository. This
 phase closes them and writes down what changed, because the repository's
 description of this configuration is the only copy anyone can review.
@@ -115,12 +116,13 @@ non-organizer host is precisely what a check exercising only the
 organizer host would miss, which is the failure I1 names.
 
 So this phase does not argue the exception away, and it does not narrow
-I1 to fit. **If the observation lands on the fallback shape, the
-exception is recorded in the parent alongside I1 — naming the affected
-class and the destination change — before this phase lands.** Under the
-rejection shape there is no exception to record. The change itself is
-the one O3 chose in either case; what is conditional is the bookkeeping
-I1 is owed.
+I1 to fit. If the observation lands on the fallback shape, this is one
+of the cases P3 gates: before the phase lands, either the exception is
+recorded in the parent alongside I1 — naming the affected class and the
+destination change — or the retarget is reshaped so the class is not
+affected. Under the rejection shape there is nothing to record. The
+change itself is the one O3 chose either way; what is conditional is the
+bookkeeping I1 is owed.
 
 **Verified by:** the allowlist snapshot the task's scoping recorded
 under D6 carries the apps/web alias, the apps/site alias, and localhost
@@ -240,10 +242,25 @@ the allowlist does not admit are a separate question, answered in C1.
 composes its callback redirect against a localhost base URL, so those
 entries are load-bearing for the auth fixtures.
 
+**P3. Every Site URL consumer the repository cannot see gets the same
+gate.** Site URL has consumers outside the repo: dashboard-managed email
+templates are the known one, and the unadmitted-redirect path in C1 may
+be another. Each is discovered in the console at implementation time
+rather than derived from code, so this plan cannot enumerate them and
+does not try. Whichever turns up, the treatment is identical — if the
+retarget changes what that consumer emits, or where it sends someone,
+then before this phase lands **either** the I1 exception is recorded in
+the parent naming the affected surface and class, **or** the retarget is
+reshaped so that consumer's output does not change. Recording the
+observation in the PR does not clear the gate on its own. Stating this
+once is what keeps two structurally identical cases from carrying
+different bars, which is how the email-template case came to be gated
+more weakly than C1's.
+
 The parent's I1 (every host but a mapped organizer host is unchanged)
 binds this phase and is not restated here. The Validation Gate carries
-its assertion for the admitted class, and C1 carries the one case that
-may need an exception recorded against it.
+its assertion for the admitted class; P3 carries every case that may
+need an exception recorded against it.
 
 ## Reality-check inputs
 
@@ -254,11 +271,10 @@ file, and so can drift without any commit:
   Read at scoping time. Re-read them at implementation time and capture
   them as the rollback record per C3 — the same read serves both.
 - **Whether any dashboard-managed email template interpolates Site
-  URL.** If one does, the retarget changes the links that template
-  emits on every host, which is an I1 question this plan has not
-  answered. Resolve it in the console before the change; if a template
-  does interpolate it, walk the consequence against I1 and record the
-  outcome in the PR.
+  URL.** Resolve it in the console before the change. If one does, the
+  retarget changes what that template emits on every host, and P3's gate
+  applies — the same bar C1's unadmitted-redirect case carries.
+  Recording the observation in the PR does not clear it.
 - **Supabase's redirect-URL matching semantics at implementation
   time.** C2's shape rests on the wildcard definitions cited above.
   Re-read the vendor page rather than trusting this plan's summary of
@@ -337,16 +353,20 @@ post-merge.
   [`apps/site/next.config.ts`](/apps/site/next.config.ts) declares no
   host condition on any rewrite, so neither route's resolution depends
   on which alias was requested.
-  The falsifier is discriminating in both directions: if the new entry
-  is absent or malformed, the link falls back to Site URL, which after
-  C1 is the canonical site alias — a different host from the organizer's
-  either way, so "landed on the organizer host" cannot be produced by
-  the failure this step is meant to catch.
+  The falsifier does not depend on the open vendor question: if the new
+  entry is absent or malformed, the organizer host's callback is not
+  admitted, and an unadmitted callback either sends the visitor to some
+  other host or produces no usable link at all. Neither outcome can be
+  mistaken for the one this step looks for, so "landed back on the
+  organizer host" cannot be produced by the failure it is meant to
+  catch.
 - **The Site URL retarget is observed, not read back.** Reading the
   field returns what was just typed into it and cannot distinguish a
   saved setting from an unsaved one, or a setting from its effect.
-  Observe the fallback instead: a link generated with no explicit
-  redirect lands on the canonical site alias.
+  Observe the documented default instead: a link generated with no
+  explicit redirect lands on the canonical site alias. This is the one
+  Site URL behavior the vendor does state, which is why it is the step
+  that proves the retarget took.
 - **Unchanged elsewhere (parent I1).** Run the Production Admin Smoke —
   `npm run test:e2e:admin:production-smoke`, or its workflow. It
   round-trips a real magic link generated against the production
@@ -368,8 +388,8 @@ post-merge.
     passes that stack's API URL to the tests.
   - The smoke exercises the allowlist, not Site URL, because it passes
     an explicit redirect. C1's bound on the retarget is carried by the
-    fallback observation above and by the source-tree search cited under
-    C1, not by this step.
+    default-destination observation above and by the source-tree search
+    cited under C1, not by this step.
   - It also covers only the admitted class, which is the class the Goal
     claims is unchanged. The unlisted class is the next step.
 - **The unlisted-redirect class is observed, and what the PR claims
@@ -384,9 +404,10 @@ post-merge.
 
   This resolves the open reality-check input and decides which shape the
   PR describes; leaving it open would put an unverified vendor-behavior
-  claim in a durable doc. The phase lands under either outcome — but
-  under the fallback outcome, landing also requires the I1 exception
-  named in C1 to be recorded in the parent first.
+  claim in a durable doc. The phase lands under either outcome — but the
+  outcome that changes what an unadmitted origin sees is one P3 gates,
+  so landing then requires the parent-recorded I1 exception or a
+  reshaped retarget first, not merely this record.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
 

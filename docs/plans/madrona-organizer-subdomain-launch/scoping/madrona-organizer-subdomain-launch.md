@@ -259,11 +259,17 @@ shapes live in the task plan and its phase plans, not here.
   `defaultAllowedOrigins`. An allowlist is authorization surface,
   not a secret; every admitted origin is echoed back in the response
   header regardless. It belongs where it is reviewed and diffable.
-- **O3 — Site URL retarget.** Resolved to retarget. The Site URL is
-  the fallback for redirects that do not match the allowlist, so
-  pointing it at a deployment documented as not customer-facing
-  means every fallback lands where users should not be. Low blast
-  radius: real flows pass explicit allowlisted redirect URLs.
+- **O3 — Site URL retarget.** Resolved to retarget. Supabase documents
+  Site URL as the default redirect for a flow that requests none, so
+  pointing it at a deployment documented as not customer-facing makes
+  the default destination wrong on its own terms. Low blast radius:
+  real flows pass explicit redirect URLs the allowlist admits. An
+  earlier form of this decision also asserted that Site URL is the
+  fallback for redirects the allowlist does *not* match, and used that
+  as part of the rationale. The vendor does not document that behavior;
+  it is withdrawn here for the same reason it was withdrawn from D6,
+  and the phase 2 plan's C1 resolves it by observation. The retarget
+  decision does not depend on it.
 - **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone.
   It feeds one site-wide `metadataBase`, so retargeting it would
   make every other event advertise URLs on Madrona's domain.
