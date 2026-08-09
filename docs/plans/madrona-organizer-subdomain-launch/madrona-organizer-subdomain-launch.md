@@ -145,9 +145,10 @@ that was missed.
 
 Each phase plan is drafted before that phase's implementation, per
 the just-in-time rule, and carries its own contracts, file inventory,
-validation gate, and self-review audits. Phase 1's is drafted; the
-rest are named here with the outcome they own, so the decomposition
-and ordering are reviewable now.
+validation gate, and self-review audits. Each entry below links its plan
+file once that plan exists; the entries still without one are named with
+the outcome they own, so the decomposition and ordering are reviewable
+now.
 
 **Phase 1 — Origin admission at the edge-function boundary.**
 [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md).
@@ -155,11 +156,12 @@ Admits the organizer origin to the edge functions, which makes the
 quiz playable on that host at the long event path. Depends on
 nothing, so it goes first.
 
-**Phase 2 — Auth URL configuration.** Retargets Site URL to the
-canonical site origin and admits the organizer host to the redirect
-allowlist. Console-side plus the docs that record it; no application
-code. Shares no surface with the other phases, so it can land
-anywhere in the order.
+**Phase 2 — Auth URL configuration.**
+[`phase-2-auth-url-configuration-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md).
+Retargets Site URL to the canonical site origin and admits the organizer
+host to the redirect allowlist. Console-side plus the docs that record
+it; no application code. Shares no surface with the other phases, so it
+can land anywhere in the order.
 
 **Phase 3 — Organizer host mapping in `apps/site`.** The organizer
 host serves the event landing and feedback surfaces at short paths.
