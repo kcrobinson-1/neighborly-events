@@ -184,11 +184,12 @@ Admits the organizer origin to the edge functions, which makes the
 quiz playable on that host at the long event path. Depends on
 nothing, so it goes first.
 
-**Phase 2 — Auth URL configuration.** Retargets Site URL to the
-canonical site origin and admits the organizer host to the redirect
-allowlist. Console-side plus the docs that record it; no application
-code. Shares no surface with the other phases, so it can land
-anywhere in the order.
+**Phase 2 — Auth URL configuration.**
+[`phase-2-auth-url-configuration-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md).
+Retargets Site URL to the canonical site origin and admits the organizer
+host to the redirect allowlist. Console-side plus the docs that record
+it; no application code. Shares no surface with the other phases, so it
+can land anywhere in the order.
 
 **Phase 3 — Organizer host mapping in `apps/site`.**
 [`phase-3-organizer-host-mapping-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3-organizer-host-mapping-plan.md).
@@ -347,9 +348,13 @@ false by construction.
 Each phase updates the operator-facing docs its own change
 invalidates. Across the task, the onboarding steps in
 [`docs/dev.md`](/docs/dev.md) "Vercel" must end up naming every
-requirement together — Vercel alias, mapping entry, and origin
-admission plus redeploy — because satisfying only some of them is the
-failure that produced this plan.
+requirement together — Vercel alias, mapping entry, edge-function
+origin admission plus redeploy, and the Supabase Auth redirect entry —
+because satisfying only some of them is the failure that produced this
+plan. The auth redirect belongs on that list for the same reason the
+others do: an organizer host that is aliased, mapped, and admitted at
+the edge still cannot complete a sign-in without it, and nothing about
+the first three requirements surfaces the fourth.
 
 ## Risk Register
 

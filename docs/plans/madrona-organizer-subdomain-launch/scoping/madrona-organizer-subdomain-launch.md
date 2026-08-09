@@ -104,8 +104,16 @@ so it cannot admit an organizer domain either.
 Site URL is the apps/web deployment alias, which the
 canonical-origin plan states is not a customer-facing origin. The
 redirect allowlist has 8 entries and none matches the organizer
-subdomain, so a magic link initiated from the organizer host falls
-back to the plugin host.
+subdomain, so a magic link initiated from the organizer host does not
+return to it.
+
+The "falls back to the plugin host" half of this decision as originally
+written asserted a vendor behavior — that a redirect the allowlist does
+not admit is replaced by Site URL — that the Supabase redirect-URL
+documentation does not state. Phase 2's plan states its contract over
+admitted origins only and resolves the unadmitted case by observation;
+see that plan's C1. The decision this D6 records is unaffected: the
+allowlist does not match the organizer host either way.
 
 **Verified by:** Supabase dashboard → Authentication → URL
 Configuration: Site URL as described; redirect URLs are the apps/web
@@ -251,11 +259,17 @@ shapes live in the task plan and its phase plans, not here.
   `defaultAllowedOrigins`. An allowlist is authorization surface,
   not a secret; every admitted origin is echoed back in the response
   header regardless. It belongs where it is reviewed and diffable.
-- **O3 — Site URL retarget.** Resolved to retarget. The Site URL is
-  the fallback for redirects that do not match the allowlist, so
-  pointing it at a deployment documented as not customer-facing
-  means every fallback lands where users should not be. Low blast
-  radius: real flows pass explicit allowlisted redirect URLs.
+- **O3 — Site URL retarget.** Resolved to retarget. Supabase documents
+  Site URL as the default redirect for a flow that requests none, so
+  pointing it at a deployment documented as not customer-facing makes
+  the default destination wrong on its own terms. Low blast radius:
+  real flows pass explicit redirect URLs the allowlist admits. An
+  earlier form of this decision also asserted that Site URL is the
+  fallback for redirects the allowlist does *not* match, and used that
+  as part of the rationale. The vendor does not document that behavior;
+  it is withdrawn here for the same reason it was withdrawn from D6,
+  and the phase 2 plan's C1 resolves it by observation. The retarget
+  decision does not depend on it.
 - **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone.
   It feeds one site-wide `metadataBase`, so retargeting it would
   make every other event advertise URLs on Madrona's domain.
