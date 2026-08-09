@@ -2,7 +2,27 @@
 
 **Status:** `Proposed`
 
-One PR.
+One PR, plus a doc-only close-out commit.
+
+**Status lifecycle.** This phase's functional checks run against
+deployed functions, and the release workflow deploys them only after
+a successful CI run on `main` — so they are structurally post-merge,
+the same way a production smoke is. The phase therefore takes the
+**Post-release validation** exception per
+[`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
+Gate For Plans With Post-Release Validation":
+
+- `Proposed` → `In progress pending organizer-origin admission` when
+  the implementing PR merges. That exact label is this phase's stable
+  name for the check.
+- `In progress pending organizer-origin admission` → `Landed` in a
+  follow-up doc-only commit once the post-deploy checks below pass,
+  recording the release run URL.
+
+**Verified by:** `.github/workflows/release.yml` triggers on a
+completed CI `workflow_run` against `main` and deploys edge functions
+in that job, so no pre-merge state of this branch reaches the
+production function runtime.
 
 ## Context
 
@@ -63,22 +83,25 @@ is unset today and nothing depends on it.
 ### C2. Admission is only as complete as the deploy
 
 Per the parent's I3: every deployable function that compiles the
-allowlist in is redeployed together, and membership is resolved from
-the **import graph** — not from a search for the CORS module's path.
+allowlist in must carry the new entry, and membership is resolved
+from the **import graph** — not from a search for the CORS module's
+path. Some functions reach the allowlist through a shared helper
+rather than importing it themselves, so a path search under-reports
+and silently drops them. That is an error made once while drafting
+this plan, which is why the contract names the whole set rather than
+a roster.
 
-Some functions reach the allowlist through a shared helper rather
-than importing it themselves, so a path search under-reports and
-silently drops them. This is not hypothetical; it is an error made
-once while drafting this plan, which is why the contract is stated as
-the whole deployed set rather than a roster that can go stale as
-functions are added.
-
-Redeploying only the function a probe exercises has two distinct
-failure shapes, and neither surfaces until someone hits it. An
-attendee passes session issuance, plays the entire quiz, and takes a
-rejection at completion — the exact "cannot mint a code" symptom this
-phase exists to remove, reintroduced one function later. An organizer
-signs in and finds the authoring actions rejected the same way.
+**The normal release path already satisfies this.** The release
+workflow deploys the whole function set in one invocation rather than
+naming functions individually, so a merge to `main` redeploys
+everything that carries the allowlist. The contract therefore binds
+the *exception*: any out-of-band or manual deploy used to get this
+live faster must cover the whole set, because a partial one leaves
+the origin rejected on whatever was missed. Both failure shapes are
+silent until someone reaches them — an attendee passes session
+issuance, plays the entire quiz, and takes a rejection at completion;
+an organizer signs in and finds the authoring actions rejected the
+same way.
 
 **Verified by:** `supabase/functions/_shared/authoring-http.ts`
 imports `createCorsHeaders` and `getAllowedOrigin` from `./cors.ts`,
@@ -86,9 +109,10 @@ and the authoring functions consume that helper rather than the CORS
 module directly; `complete-game` reaches it through its own
 `dependencies.ts` and `response.ts`, and `createCompleteGameHandler`
 returns a 403 on an unrecognized origin ahead of every other branch.
-[`docs/dev.md`](/docs/dev.md) documents deployment as one
-`functions deploy` invocation per function, with no all-functions
-wrapper in `package.json` or `scripts/`.
+`.github/workflows/release.yml` runs `supabase functions deploy` with
+no function argument, which is the all-functions form;
+[`docs/dev.md`](/docs/dev.md)'s per-function invocations are the
+manual fork-setup path, not the release path.
 
 ## Reality-check inputs
 
@@ -156,9 +180,12 @@ callout.*
   rejected.
 
 This phase's gate has no host-conditional routing in it, so unlike
-the later routing phases it is not bound by the parent's
-preview-URL constraint — but the post-deploy probes still run against
-deployed functions, since a local suite cannot exercise a deploy.
+the later routing phases it is not bound by the parent's preview-URL
+constraint. It is still post-merge for a different reason — the
+release workflow deploys functions only after CI passes on `main` —
+which is what puts it on the post-release Status exception recorded
+above. Everything above the "post-deploy" bullet runs pre-merge and
+gates the PR; everything from it down gates the `Landed` flip.
 
 ## Self-Review Audits
 
@@ -173,10 +200,13 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 ## Risks
 
 **R1. The redeploy is the part with no test.** The code change is
-covered by the Deno suite, but "every function was redeployed" is an
-operational step with no automated gate. The per-function probe is
-the compensating control, and it is why the gate enumerates the
-function set from the filesystem rather than from prose.
+covered by the Deno suite, but "every function carries the new entry"
+is an operational property with no automated gate. On the release
+path it holds by construction, since that workflow deploys the whole
+set; the risk is a manual deploy taken to get this live sooner. The
+per-function probe is the compensating control either way, and it is
+why the gate enumerates the function set from the filesystem rather
+than from prose.
 
 **R2. Admission is necessary, not sufficient.** Landing this phase
 makes the quiz work on the organizer host at the long path. Sign-in

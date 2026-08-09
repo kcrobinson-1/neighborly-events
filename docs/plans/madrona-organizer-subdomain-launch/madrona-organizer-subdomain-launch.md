@@ -227,11 +227,27 @@ as estimates.
 the Madrona display name, and recent completions have gone to the
 decoy. It is renamed rather than deleted, because it holds real
 entitlement rows that a delete would orphan and a distinct name is
-enough to prevent the failure that matters: verifying a phase
-against the wrong event. It gates no implementing phase and may ride
-in any of them, but it **must land no later than phase 4b** — both
-because 4b's verification depends on it, and because letting it
-trail 4b would make 4b not the last implementing PR.
+enough to prevent the failure that matters: verifying a phase against
+the wrong event.
+
+**The rename has to be durable, not applied to production only.** The
+decoy is seeded by a migration, so any environment rebuilt from
+migrations restores the duplicate name — a dashboard edit would
+satisfy a production check while every fresh database immediately
+reintroduces the condition. The durable outcome this item owns is
+that a database built from migrations has one row carrying the
+Madrona display name; the mechanism is the implementing phase's call.
+
+**Verified by:**
+`supabase/migrations/20260406130000_add_published_quiz_content.sql`
+inserts the `first-sample` row with the Madrona display name. The
+same insert also answers R5: it sets an `id` distinct from the slug,
+which is the value the entitlement rows key off.
+
+It gates no implementing phase and may ride in any of them, but it
+**must land no later than phase 4b** — both because 4b's verification
+depends on it, and because letting it trail 4b would make 4b not the
+last implementing PR.
 
 ## Status lifecycle and close-out
 
@@ -256,7 +272,10 @@ Gate For Plans With Post-Release Validation":
 - `In progress pending organizer-host verification` → `Landed` in a
   follow-up doc-only commit once the production checks and the
   data-hygiene validation pass, recording the verification evidence.
-  That same commit deletes the scoping doc.
+  That same commit deletes the scoping doc. The data-hygiene check is
+  satisfied against a database built from migrations, not against
+  production alone — per that item, a production-only edit does not
+  close it.
 
 Each phase plan flips its own Status as its PR merges, per the
 Plan-to-PR Completion Gate; this doc's Status flips with the last.
@@ -306,13 +325,14 @@ inactivity-pause behavior on the free Supabase plan is not a risk for
 a live event. The project is in daily use. Re-check before any event
 that follows a long quiet period.
 
-**R5. The decoy event's entitlement rows are keyed by a value that
-does not match its slug.** Scoping observed the decoy's codes under
-an `event_id` that is not its slug. That is consistent with
-`event_id` being an identifier other than the slug, but the
-relationship was not read from the schema. The data-hygiene item
-re-derives the actual key column before renaming anything, so the
-rename does not silently miss the rows it is meant to disambiguate.
+**R5. The decoy's entitlement rows key off its id, not its slug.**
+Scoping observed the decoy's codes under an `event_id` that is not
+its slug and left the relationship unread. The seeding migration
+cited under the data-hygiene item resolves it — the row carries an
+`id` distinct from its slug, and that id is what the entitlement rows
+reference. The residual risk is narrower than it was: a rename that
+targets rows by slug would match nothing. Confirm the key column
+against the generated types before writing the change.
 
 ## Out Of Scope
 

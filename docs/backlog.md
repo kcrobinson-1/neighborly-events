@@ -425,9 +425,10 @@ Reduce deployment risk and contributor friction before the live event.
   scanned, pasted — but the first tap inside the site drops the visitor
   onto `/event/<slug>/*` and leaves them there, and (b) a link shared
   from that host renders its preview with the canonical alias as the
-  URL, because `og:url` and the canonical link name the site origin on
-  every host. Title, description, and image are correct; only the
-  displayed domain is not.
+  URL, because `og:url` names the site origin on every host. Title,
+  description, and image are correct; only the displayed domain is
+  not. (No canonical link is involved — none is emitted anywhere; see
+  the preceding entry.)
   The shared cause is that [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
   declares `generateStaticParams`, so one HTML document serves every
   host, and the link-bearing components
@@ -442,7 +443,7 @@ Reduce deployment risk and contributor friction before the live event.
   shared previews carry the right content — so both are consistency
   issues, not reachability;
   [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
-  C4 and C4b accept them deliberately for one event. **Goal:** a
+  C2 accepts them deliberately for one event. **Goal:** a
   visitor who arrives on a short path stays on short paths through
   in-page navigation, and a link shared from an organizer host shows
   that host. Note the shape of the cause before picking a fix: the
