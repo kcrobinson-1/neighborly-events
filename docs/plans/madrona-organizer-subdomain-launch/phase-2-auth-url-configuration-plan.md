@@ -47,9 +47,12 @@ phase's implementation because they describe a console, not a file.
 - Site URL names the canonical site origin, so a redirect that falls
   back to it lands on a customer-facing host.
 - Sign-in from every origin whose callback URL the allowlist admits
-  behaves as it does today. No origin gains or loses a working return
-  leg — C1 says why that is narrower than "every other origin," and why
-  the difference is not an exception to the parent's I1.
+  behaves as it does today, and no origin gains or loses a working
+  return leg. That is narrower than "every other origin": what happens
+  on origins the allowlist does not admit turns on a vendor behavior
+  this plan resolves by observation rather than assumption, and on one
+  of the two outcomes it is a named exception to the parent's I1. C1
+  carries both.
 - The repository's operator-facing description of Auth URL configuration
   describes the configuration that is live.
 
@@ -94,15 +97,30 @@ behavior this plan has not established. The commonly reported shape is a
 fall back to Site URL, which is the setting C1 retargets; the vendor's
 own redirect-URL page does not state it. Neither shape is asserted here.
 
-What holds under both shapes is what the Goal claims. No origin in that
-class returns to itself today, so none of them loses a working return
-leg. If the fallback shape is the real one, such an origin's sign-in
+What holds under both shapes is one half of what the Goal claims: no
+origin in that class returns to itself today, so none of them loses a
+working return leg.
+
+The other half — whether anything about that class changes at all —
+depends on which shape is real, and the parent's I1 is what makes the
+difference matter. Under the rejection shape, nothing changes and I1 is
+untouched. Under the fallback shape, an unadmitted origin's sign-in
 moves from landing on the plugin deployment to landing on the canonical
-site origin — a change, and one in the direction O3 chose. If the
-request is rejected outright instead, nothing about that class changes.
-This is also why the phase needs no carve-out against the parent's I1:
-that invariant protects hosts that work today, and an origin whose
-callback is unlisted is not one of them.
+site origin: a non-organizer host behaving differently, which is what
+I1 covers on its face. An earlier draft of this section argued I1 did
+not reach that case because the affected origins have no working return
+leg today. That substitutes the invariant's rationale for its text, and
+the rationale points the same way regardless — collateral change on a
+non-organizer host is precisely what a check exercising only the
+organizer host would miss, which is the failure I1 names.
+
+So this phase does not argue the exception away, and it does not narrow
+I1 to fit. **If the observation lands on the fallback shape, the
+exception is recorded in the parent alongside I1 — naming the affected
+class and the destination change — before this phase lands.** Under the
+rejection shape there is no exception to record. The change itself is
+the one O3 chose in either case; what is conditional is the bookkeeping
+I1 is owed.
 
 **Verified by:** the allowlist snapshot the task's scoping recorded
 under D6 carries the apps/web alias, the apps/site alias, and localhost
@@ -223,8 +241,9 @@ composes its callback redirect against a localhost base URL, so those
 entries are load-bearing for the auth fixtures.
 
 The parent's I1 (every host but a mapped organizer host is unchanged)
-binds this phase and is not restated here; the Validation Gate carries
-its assertion.
+binds this phase and is not restated here. The Validation Gate carries
+its assertion for the admitted class, and C1 carries the one case that
+may need an exception recorded against it.
 
 ## Reality-check inputs
 
@@ -247,9 +266,12 @@ file, and so can drift without any commit:
 - **What Supabase does with an explicit redirect the allowlist does not
   admit.** C1 states its bound over allowlisted origins because this is
   unresolved, and the vendor documents it nowhere this plan could find.
-  A service-role link generated against a deliberately unlisted redirect
-  settles it in one observation. Resolve it before the PR claims
-  anything about that class, and record which shape it is.
+  A service-role link requested against a deliberately unlisted redirect
+  settles it in one attempt, whose outcome is either a link with a
+  destination or a failure — the Validation Gate treats both as records
+  rather than treating one as the only result. Resolve it before the PR
+  claims anything about that class, and record which shape it is; the
+  answer also decides whether C1's conditional I1 exception fires.
 
 ## Files to touch
 
@@ -351,13 +373,20 @@ post-merge.
   - It also covers only the admitted class, which is the class the Goal
     claims is unchanged. The unlisted class is the next step.
 - **The unlisted-redirect class is observed, and what the PR claims
-  about it matches.** Generate a link against a redirect the allowlist
-  does not admit and record where it lands. This resolves the open
-  reality-check input and decides which of C1's two shapes the PR
-  describes; leaving it open would put an unverified vendor-behavior
-  claim in a durable doc, which is the failure mode this step exists to
-  prevent. Under either outcome the phase still lands — the step changes
-  what is written, not whether the change is right.
+  about it matches.** Request a link against a redirect the allowlist
+  does not admit, and record the outcome — which is one of two
+  observables, not one. Either a link is produced and lands somewhere,
+  and the destination is the record; or the request fails, and the error
+  is the record. Naming only the first would leave the step with no
+  observable at all under the shape C1 says is possible, so it could not
+  discriminate the two candidates and would report the rejection shape
+  as an inconclusive run.
+
+  This resolves the open reality-check input and decides which shape the
+  PR describes; leaving it open would put an unverified vendor-behavior
+  claim in a durable doc. The phase lands under either outcome — but
+  under the fallback outcome, landing also requires the I1 exception
+  named in C1 to be recorded in the parent first.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
 
