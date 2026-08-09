@@ -182,8 +182,13 @@ Why manual for now:
     in-code `defaultAllowedOrigins` set in
     [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts).
     Leave unset unless you have origins to admit beyond the defaults
-    (the canonical apps/site Vercel alias plus the localhost dev
-    hosts are already in defaults). Cannot remove a default origin.
+    (the canonical apps/site Vercel alias, the localhost dev hosts, and
+    each launched per-event organizer origin are already in defaults).
+    Cannot remove a default origin. A launched origin belongs in the
+    in-code list, not here: an allowlist is authorization surface
+    rather than a secret, so it belongs where it is reviewed and
+    diffable, and this variable is additive and environment-local.
+    Reach for it for a temporary or machine-local extra.
   - `APPS_SITE_VERCEL_SCOPE` — Vercel team slug; opts in to admitting
     apps/site preview/branch aliases scoped to that team. Independent
     of `EXTRA_ALLOWED_ORIGINS`.
@@ -223,7 +228,9 @@ For a new deployment from a fork:
    [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts);
    only set the optional `EXTRA_ALLOWED_ORIGINS` /
    `APPS_SITE_VERCEL_SCOPE` env vars if you need extras beyond the
-   canonical defaults.
+   canonical defaults. Editing that list is a code change that is not
+   live until the edge functions are redeployed — see "Origin Admission
+   Is Only As Complete As The Deploy" below.
 8. Set the Supabase Auth Site URL to the deployed web origin and add
    `<origin>/auth/callback` as a redirect URL for each of your local
    and deployed origins.
@@ -231,6 +238,39 @@ For a new deployment from a fork:
 10. Recreate the desired GitHub branch protection and Actions secret
    configuration, including the `SUPABASE_ACCESS_TOKEN`,
    `SUPABASE_DB_PASSWORD`, and `SUPABASE_PROJECT_REF` release secrets.
+
+## Origin Admission Is Only As Complete As The Deploy
+
+The CORS allowlist in
+[`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
+is compiled into every deployable edge function, so admitting an
+origin is a code change that takes effect one function at a time, as
+each is redeployed. Two consequences an operator cannot infer from
+the diff:
+
+- **Merging is not deploying.** The entry is live only after
+  `.github/workflows/release.yml` runs, which it does on a completed
+  CI run against `main`.
+- **A partial deploy is the failure mode.** Membership is resolved
+  from the **import graph**, not from a search for the module's path:
+  some functions reach the allowlist through
+  `_shared/authoring-http.ts` or their own `dependencies.ts` rather
+  than importing it themselves, so a path search under-reports and
+  silently drops them. The release workflow runs
+  `supabase functions deploy` with no function argument — the
+  all-functions form — so the normal merge path covers the set by
+  construction. A hand-run deploy is the case that has to name every
+  function, and a partial one leaves the origin rejected on whatever
+  it missed.
+
+Both failure shapes are silent until someone reaches the surface that
+was missed: an attendee passes session issuance, plays the whole quiz,
+and takes a rejection at completion; an organizer signs in and finds
+the authoring actions rejected the same way. Verify by sending a
+preflight from the origin to **each** deployed function and confirming
+the origin is echoed in `Access-Control-Allow-Origin` — a
+single-function probe cannot distinguish "the allowlist is right" from
+"the allowlist is right and every function has it."
 
 ## Live Monitoring And Log Triage
 

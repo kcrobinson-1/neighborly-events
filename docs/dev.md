@@ -853,6 +853,24 @@ aliases (see [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical
   apps/web deployment (see "Vercel two-project monorepo layout" below)
 - create your own local `.vercel/` link metadata after checkout; the folder is git-ignored on purpose
 
+Onboarding a per-event organizer subdomain takes more than the Vercel
+alias. Aliasing the host makes the event's pages resolve on it, but the
+host is a distinct browser origin, and satisfying only some of the
+requirements below is the failure that is hard to read off any one of
+them:
+
+- **Vercel alias.** CNAME the organizer host to the apps/site Vercel
+  project as an additional alias.
+- **Edge-function origin admission, plus a redeploy.** Add the origin
+  to `defaultAllowedOrigins` in
+  [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
+  — in code, not in `EXTRA_ALLOWED_ORIGINS`. Until that ships **and**
+  every edge function is redeployed, the quiz cannot mint a check-in
+  code on that host: the functions reject the origin before any handler
+  logic runs. See [`docs/operations.md`](/docs/operations.md) "Origin
+  Admission Is Only As Complete As The Deploy" for why the redeploy
+  has to cover the whole function set.
+
 ### Vercel two-project monorepo layout
 
 `apps/web` and `apps/site` are deployed as separate Vercel projects
