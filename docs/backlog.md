@@ -401,6 +401,96 @@ Reduce deployment risk and contributor friction before the live event.
   is meant to be exhaustive or merely representative.
   Detail: N/A
 
+- [ ] **`ux` No page emits a canonical link, and two hosts now serve the same content**
+  [`apps/site/app/layout.tsx`](/apps/site/app/layout.tsx) sets `title`
+  and `metadataBase`; [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+  `generateMetadata` sets `openGraph`, `twitter`, and `robots`. Neither
+  sets `alternates.canonical`, and Next.js emits `<link rel="canonical">`
+  only from that field — it does not derive one from `openGraph.url` —
+  so no route serves a canonical link. This was harmless while each
+  page had one URL. Once an organizer domain serves the same event
+  pages as the canonical alias (see
+  [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)),
+  the identical content is reachable on two hosts with nothing telling
+  a search engine they are one page rather than duplicates. **Goal:**
+  each page declares one canonical URL. Note this is *not* the
+  build-time ceiling the sibling entry describes: a canonical link
+  naming one fixed origin is compatible with static rendering, so it
+  is buildable today and independent of that decision.
+  Detail: N/A
+
+- [ ] **`ux` Organizer hosts can't get host-specific paths or share metadata**
+  Two symptoms, one cause. On an organizer host such as
+  `music.madrona.us`, (a) short paths are the entry form — typed,
+  scanned, pasted — but the first tap inside the site drops the visitor
+  onto `/event/<slug>/*` and leaves them there, and (b) a link shared
+  from that host renders its preview with the canonical alias as the
+  URL, because `og:url` names the site origin on every host. Title,
+  description, and image are correct; only the displayed domain is
+  not. (No canonical link is involved — none is emitted anywhere; see
+  the preceding entry.)
+  The shared cause is that [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+  declares `generateStaticParams`, so one HTML document serves every
+  host, and the link-bearing components
+  ([`EventHeader.tsx`](/apps/site/components/event/EventHeader.tsx),
+  [`EventCTA.tsx`](/apps/site/components/event/EventCTA.tsx),
+  [`EventDayOfLanding.tsx`](/apps/site/components/event/EventDayOfLanding.tsx),
+  [`EventFeedbackCTA.tsx`](/apps/site/components/event/EventFeedbackCTA.tsx))
+  render on the server with no request host to resolve a mount from —
+  and `generateMetadata` runs at build time for the same reason, which
+  is why the metadata symptom has the identical root. Nothing breaks —
+  the long paths serve identically on the organizer host, and the
+  shared previews carry the right content — so both are consistency
+  issues, not reachability;
+  [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
+  C2 accepts them deliberately for one event. **Goal:** a
+  visitor who arrives on a short path stays on short paths through
+  in-page navigation, and a link shared from an organizer host shows
+  that host. Note the shape of the cause before picking a fix: the
+  request host has to reach the code that emits the href and the
+  metadata, and three shapes get it there. Rendering the event routes
+  dynamically lets the server read the request host, at the cost of
+  per-request rendering on the day-of landing page attendees load on
+  cell data. Prerendering a per-host variant keeps static output and
+  doubles the prerender set per organizer host. Marking the
+  link-bearing components `"use client"` and correcting hrefs at
+  hydration keeps the initial HTML on long paths — which is what
+  crawlers and no-JS clients should see — and fixes the href before a
+  visitor can click; `apps/site` already ships client components
+  (including [`LandingTonightSections.tsx`](/apps/site/components/event/LandingTonightSections.tsx)),
+  so it is an existing pattern, but it makes hrefs
+  hydration-dependent, so a hydration mismatch degrades navigation
+  silently rather than loudly, and it gives components that are plain
+  server output today a client lifecycle.
+  **The third shape fixes only the navigation symptom, not the
+  metadata one** — `og:url` is read by crawlers that do not run JS, so
+  no client-side correction reaches it. The call gets easier once
+  there is a second organizer to weigh it against.
+  Detail: N/A
+
+- [ ] **`ux` The game route emits no share metadata**
+  Event landing pages get title, description, `openGraph`, `twitter`, and
+  an OG image from
+  [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+  `generateMetadata`. The game route has no equivalent — it is served by
+  the `apps/web` Vite SPA behind a proxy rewrite, and the SPA ships one
+  static `index.html` for every route, so a pasted quiz link renders with
+  whatever generic title that document carries. This was a latent gap
+  while the quiz URL was a long per-slug path nobody typed from memory.
+  The organizer-subdomain work at
+  [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
+  makes the organizer host's `/game` the short, memorable form of that
+  URL — which is exactly the shape people paste into messages — so the
+  gap becomes the rendering of the most-shared link on the platform.
+  **Goal:** a quiz link pasted into a message renders with the event's
+  name, description, and image. Note the shape of the cause before
+  picking a fix: the metadata has to be emitted by whatever serves the
+  document, and today that is the SPA rather than the Next.js app, so
+  options split between giving `apps/site` a metadata-emitting route in
+  front of the proxy and giving the SPA build per-event HTML — the call
+  depends on how many events the platform expects to serve at once.
+  Detail: N/A
+
 ---
 
 ## Tier 3 — Admin Authoring Polish
