@@ -109,12 +109,41 @@ No surface emits a short path before the route matchers accept one —
 that is what lets the parse-side phase land inert and makes the
 emit-side phase the switch.
 
-Separately and just as binding: the set of paths emitted as short
-must equal the set the routing layer rewrites. A builder emitting a
-short path nothing serves produces a 404, and the auth return leg is
-the live case, since post-sign-in destinations navigate the full
-document. A rewrite with no builder is dead config. Both sets change
-in the same PR.
+Separately and just as binding, and **directional**: no builder ships
+ahead of the rewrite that serves the path it emits, and no rewrite
+ships that nothing reaches. A builder emitting a short path nothing
+serves produces a 404, and the auth return leg is the live case, since
+post-sign-in destinations navigate the full document. The reverse
+order carries no such failure — a rewrite that lands before its
+builders serves a path nothing yet links to, which is inert, not
+broken.
+
+So the constraint on a rewrite is not "does a builder exist yet" but
+**"does anything reach it."** An entry path — one a visitor types,
+scans off print, or pastes — is reached by the address bar from the
+moment it ships, and stays reached after builders arrive for it later.
+A phase adding a rewrite therefore names what reaches it, and a phase
+adding a builder confirms the rewrite is already live. Where a rewrite
+and its builders land together, both sets change in the same PR.
+
+The ordering this produces across the phases here: the routing phase
+ships the landing and feedback rewrites, reached from that moment by
+the address bar; whatever later phase first emits either path does so
+against a rewrite that is already live — a builder arriving for an
+already-served path, the safe direction. The quiz's short path has the
+opposite shape and is why the parse/emit split exists at all. Which
+surfaces become emitters, and by what mechanism, is the emit-side
+phase's plan to make — this contract binds the ordering, not the
+design.
+
+Two earlier forms of this contract were wrong in opposite directions.
+The first stated the equality unconditionally, which made the routing
+phase's visitor-typed entry paths read as dead config. The second
+fixed that but forbade claiming the entry-path reading for any path a
+builder would later emit — which contradicted this plan's own
+sequencing, since the header bar does eventually emit both of them.
+Neither failure was about the intent, which has always been the 404:
+emit-before-serve is the direction that breaks.
 
 ## Cross-Cutting Invariants
 
@@ -145,9 +174,9 @@ that was missed.
 
 Each phase plan is drafted before that phase's implementation, per
 the just-in-time rule, and carries its own contracts, file inventory,
-validation gate, and self-review audits. Phase 1's is drafted; the
-rest are named here with the outcome they own, so the decomposition
-and ordering are reviewable now.
+validation gate, and self-review audits. Drafted phase plans are
+linked below; the rest are named with the outcome they own, so the
+decomposition and ordering are reviewable now.
 
 **Phase 1 — Origin admission at the edge-function boundary.**
 [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md).
@@ -161,7 +190,9 @@ allowlist. Console-side plus the docs that record it; no application
 code. Shares no surface with the other phases, so it can land
 anywhere in the order.
 
-**Phase 3 — Organizer host mapping in `apps/site`.** The organizer
+**Phase 3 — Organizer host mapping in `apps/site`.**
+[`phase-3-organizer-host-mapping-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3-organizer-host-mapping-plan.md).
+The organizer
 host serves the event landing and feedback surfaces at short paths.
 The quiz still resolves only at its long path, because the short form
 depends on the route contract phase 4 introduces.
@@ -178,6 +209,20 @@ per C3:
   quiz: a builder emitting a short path before the rewrite exists
   produces a 404, and the rewrite without the header change produces
   a header that walks visitors back off short paths.
+
+  **The per-event masthead table cannot be retargeted in place.** It
+  has two consumers: the browser-rendered SPA masthead, which has a
+  request host, and the server-rendered `apps/site` event pages, which
+  do not — they are statically generated per C1, so one document
+  serves every host. A short path written into the shared destinations
+  is therefore emitted on the canonical alias too, where the root is
+  the demo index and the short feedback path is not the event: an I1
+  break. Host-aware resolution belongs in the consumer that has a host
+  to resolve against. Recorded here rather than left for 4b to
+  rediscover. **Verified by:** `shared/masthead/EventMasthead.tsx`
+  renders the table's destinations directly as anchor hrefs, and both
+  `apps/site/app/event/[slug]/page.tsx` and its `feedback/page.tsx`
+  sibling call `getEventMasthead` for the slug they render.
 
 **On the phase/task classification — settled by the stakeholder.**
 Phases 1 and 2 each close a live defect and are technically
