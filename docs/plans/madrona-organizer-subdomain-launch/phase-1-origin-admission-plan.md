@@ -163,8 +163,12 @@ Documentation Currency PR Gate requires the "Vercel" onboarding steps
 to end up naming origin admission plus redeploy alongside the other
 per-host requirements, and this phase is the only one that owns that
 clause — deferring it would have left it assigned to no phase. The
-edit is confined to that clause; the auth-redirect and host-mapping
-entries belong to phases 2 and 3.
+edit adds only that clause as a step; the auth-redirect and
+host-mapping entries belong to phases 2 and 3. It does name both as
+known-and-not-yet-supported, because a checklist that warns against
+partial fulfillment while listing two of four requirements reads as
+complete when it is not — the failure the section exists to prevent.
+Each later phase converts its line into a step as it lands.
 
 **Intentionally not touched**
 

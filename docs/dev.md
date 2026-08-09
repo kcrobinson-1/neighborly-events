@@ -857,7 +857,18 @@ Onboarding a per-event organizer subdomain takes more than the Vercel
 alias. Aliasing the host makes the event's pages resolve on it, but the
 host is a distinct browser origin, and satisfying only some of the
 requirements below is the failure that is hard to read off any one of
-them:
+them.
+
+**This list is not yet the complete set, and following only what is
+here does not produce a launched organizer host.** Two further
+requirements are known and not yet supported: Supabase Auth does not
+admit the organizer host as a redirect target, so sign-in initiated
+there returns to the wrong origin; and the host carries no event
+mapping, so its root still serves the internal demo index. Both are
+owned by later phases of
+[`docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md),
+and each phase adds its requirement here as it lands. Treat the list as
+complete only once that plan does.
 
 - **Vercel alias.** CNAME the organizer host to the apps/site Vercel
   project as an additional alias.
