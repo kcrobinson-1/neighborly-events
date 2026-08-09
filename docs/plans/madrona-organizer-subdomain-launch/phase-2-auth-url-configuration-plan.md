@@ -17,10 +17,12 @@ An organizer's domain is a distinct browser origin, and Supabase Auth
 decides where a sign-in link returns by matching the requested redirect
 against a per-project allowlist. The organizer host is not on that list,
 so a volunteer or organizer who signs in from the domain printed on the
-event's materials is sent somewhere else entirely — to whichever host
-the project's Site URL names. That fallback host is itself the wrong
-answer: it is the plugin deployment, which the canonical-origin work
-documented as not customer-facing. Both halves are configuration, both
+event's materials is not returned to it. Separately, the fallback the
+project falls back *to* — its Site URL — points at the plugin
+deployment, which the canonical-origin work documented as not
+customer-facing, so the default destination is wrong on its own terms.
+Whether the first failure routes through the second is vendor behavior
+C1 pins down rather than assumes. Both halves are configuration, both
 are one console visit, and neither is visible in the repository. This
 phase closes them and writes down what changed, because the repository's
 description of this configuration is the only copy anyone can review.
@@ -44,8 +46,11 @@ phase's implementation because they describe a console, not a file.
   organizer host.
 - Site URL names the canonical site origin, so a redirect that falls
   back to it lands on a customer-facing host.
-- Every other origin's sign-in behaves as it does today, and the
-  repository's operator-facing description of Auth URL configuration
+- Sign-in from every origin whose callback URL the allowlist admits
+  behaves as it does today. No origin gains or loses a working return
+  leg — C1 says why that is narrower than "every other origin," and why
+  the difference is not an exception to the parent's I1.
+- The repository's operator-facing description of Auth URL configuration
   describes the configuration that is live.
 
 Sign-in returning to the right origin is not the same as the organizer
@@ -58,10 +63,12 @@ journey working end to end; R2 below says what still separates them.
 Site URL is retargeted from the plugin deployment's alias to
 `apps/site`'s canonical alias, per scoping O3.
 
-The change is bounded because Site URL is consulted only when a flow
-requests no explicit redirect, and every flow this repository contains
-supplies one. That is what keeps a project-wide setting from being a
-project-wide behavior change.
+Across every origin the allowlist admits, the change is bounded: there
+an explicit redirect decides the destination, Site URL is the default
+only for a flow that requests none, and every flow this repository
+contains requests one. That is what keeps a project-wide setting from
+being a project-wide behavior change. Origins the allowlist does not
+admit are a separate case, two paragraphs down.
 
 **Verified by:** Supabase documents Site URL as the default redirect
 used when no explicit redirect is specified
@@ -77,6 +84,36 @@ e2e fixtures generate also pass an explicit redirect
 `generateMagicLink`). Dashboard-managed email templates are the one
 consumer the repository cannot see; they are a reality-check input
 below, not an assumption here.
+
+**The bound is over allowlisted origins, which is narrower than "every
+other origin."** An explicit redirect settles the destination only where
+the allowlist admits it. For an origin whose callback URL is not
+admitted — an `apps/site` preview alias is the live example — the
+requested redirect is not honored, and what happens instead is vendor
+behavior this plan has not established. The commonly reported shape is a
+fall back to Site URL, which is the setting C1 retargets; the vendor's
+own redirect-URL page does not state it. Neither shape is asserted here.
+
+What holds under both shapes is what the Goal claims. No origin in that
+class returns to itself today, so none of them loses a working return
+leg. If the fallback shape is the real one, such an origin's sign-in
+moves from landing on the plugin deployment to landing on the canonical
+site origin — a change, and one in the direction O3 chose. If the
+request is rejected outright instead, nothing about that class changes.
+This is also why the phase needs no carve-out against the parent's I1:
+that invariant protects hosts that work today, and an origin whose
+callback is unlisted is not one of them.
+
+**Verified by:** the allowlist snapshot the task's scoping recorded
+under D6 carries the apps/web alias, the apps/site alias, and localhost
+variants, with no preview-alias pattern — so preview aliases fall in the
+unlisted class. That snapshot is a console read, and the Reality-check
+inputs below require re-reading it; that read is what settles class
+membership at implementation time. The vendor page
+(https://supabase.com/docs/guides/auth/redirect-urls) documents Site URL
+as the default when no redirect is specified and states nothing about a
+redirect the allowlist does not admit, which is why this plan resolves
+that question by test rather than by citation.
 
 `apps/site`'s canonical alias is the same origin the edge functions
 already treat as canonical, so this retarget aligns the two admission
@@ -176,9 +213,10 @@ nothing checks them against the project. Each is written from a
 post-change read of the console.
 
 **P2. This phase only adds redirect entries.** No existing entry is
-removed, narrowed, or reworded. Every other environment's return leg —
+removed, narrowed, or reworded. Every already-admitted return leg —
 including the localhost redirects the auth e2e fixtures depend on —
-keeps working because nothing it matches against was touched.
+keeps working because nothing it matches against was touched. Origins
+the allowlist does not admit are a separate question, answered in C1.
 **Verified by:**
 [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
 composes its callback redirect against a localhost base URL, so those
@@ -206,6 +244,12 @@ file, and so can drift without any commit:
   time.** C2's shape rests on the wildcard definitions cited above.
   Re-read the vendor page rather than trusting this plan's summary of
   it.
+- **What Supabase does with an explicit redirect the allowlist does not
+  admit.** C1 states its bound over allowlisted origins because this is
+  unresolved, and the vendor documents it nowhere this plan could find.
+  A service-role link generated against a deliberately unlisted redirect
+  settles it in one observation. Resolve it before the PR claims
+  anything about that class, and record which shape it is.
 
 ## Files to touch
 
@@ -304,6 +348,16 @@ post-merge.
     an explicit redirect. C1's bound on the retarget is carried by the
     fallback observation above and by the source-tree search cited under
     C1, not by this step.
+  - It also covers only the admitted class, which is the class the Goal
+    claims is unchanged. The unlisted class is the next step.
+- **The unlisted-redirect class is observed, and what the PR claims
+  about it matches.** Generate a link against a redirect the allowlist
+  does not admit and record where it lands. This resolves the open
+  reality-check input and decides which of C1's two shapes the PR
+  describes; leaving it open would put an unverified vendor-behavior
+  claim in a durable doc, which is the failure mode this step exists to
+  prevent. Under either outcome the phase still lands — the step changes
+  what is written, not whether the change is right.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
 

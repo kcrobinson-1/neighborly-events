@@ -104,8 +104,16 @@ so it cannot admit an organizer domain either.
 Site URL is the apps/web deployment alias, which the
 canonical-origin plan states is not a customer-facing origin. The
 redirect allowlist has 8 entries and none matches the organizer
-subdomain, so a magic link initiated from the organizer host falls
-back to the plugin host.
+subdomain, so a magic link initiated from the organizer host does not
+return to it.
+
+The "falls back to the plugin host" half of this decision as originally
+written asserted a vendor behavior — that a redirect the allowlist does
+not admit is replaced by Site URL — that the Supabase redirect-URL
+documentation does not state. Phase 2's plan states its contract over
+admitted origins only and resolves the unadmitted case by observation;
+see that plan's C1. The decision this D6 records is unaffected: the
+allowlist does not match the organizer host either way.
 
 **Verified by:** Supabase dashboard → Authentication → URL
 Configuration: Site URL as described; redirect URLs are the apps/web
