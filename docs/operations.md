@@ -266,10 +266,13 @@ the diff:
   creates and updates; it never deletes. A function renamed or removed
   in the repo stays deployed, frozen at the last bundle it shipped —
   including that bundle's copy of the allowlist, which from then on
-  stops tracking `cors.ts` altogether. So the deployed set is a
-  superset of `supabase/functions/`, and a stale member can go on
-  admitting origins the allowlist retired, or rejecting the current
-  one, with nothing in the repo to say so.
+  stops tracking `cors.ts` altogether. The two sets can therefore
+  diverge in both directions — a partial deploy leaves repo functions
+  the project never received, and a rename or removal leaves project
+  functions the repo cannot see — so reconcile both ways. A stale
+  member of the second kind can go on admitting origins the allowlist
+  retired, or rejecting the current one, with nothing in the repo to
+  say so.
 
 Both failure shapes are silent until someone reaches the surface that
 was missed: an attendee passes session issuance, plays the whole quiz,
@@ -284,8 +287,10 @@ Enumerate that probe set from `supabase functions list --project-ref
 <ref>`, not from `supabase/functions/`: the filesystem cannot show you
 a function the repo no longer has, which is the one most likely to be
 carrying a stale allowlist. An entry with no counterpart in the repo
-is an orphan — reconcile it with `supabase functions delete <slug>`,
-which is not reversible from the repo, since no source remains to
+is an orphan — reconcile it with `supabase functions delete <slug>
+--project-ref <ref>`, passing the same ref you listed, because delete
+otherwise targets whichever project the checkout is linked to. That
+deletion is not reversible from the repo, since no source remains to
 redeploy.
 
 ## Live Monitoring And Log Triage
