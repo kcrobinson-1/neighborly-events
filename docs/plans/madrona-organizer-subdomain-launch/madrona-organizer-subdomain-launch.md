@@ -109,28 +109,38 @@ No surface emits a short path before the route matchers accept one —
 that is what lets the parse-side phase land inert and makes the
 emit-side phase the switch.
 
-Separately and just as binding: no builder emits a short path the
-routing layer does not rewrite, and no rewrite ships that nothing
-reaches. A builder emitting a short path nothing serves produces a
-404, and the auth return leg is the live case, since post-sign-in
-destinations navigate the full document. Where a builder is the
-consumer, both sets change in the same PR.
+Separately and just as binding, and **directional**: no builder ships
+ahead of the rewrite that serves the path it emits, and no rewrite
+ships that nothing reaches. A builder emitting a short path nothing
+serves produces a 404, and the auth return leg is the live case, since
+post-sign-in destinations navigate the full document. The reverse
+order carries no such failure — a rewrite that lands before its
+builders serves a path nothing yet links to, which is inert, not
+broken.
 
-**What reaches a rewrite is not always a builder.** An entry path —
-one a visitor types, scans off print, or pastes — is reached by the
-address bar, so a rewrite serving one satisfies the second half with
-no builder anywhere. That is the whole of the exemption, and it is
-not one a phase may claim for a path a builder will later emit: the
-moment any builder produces the path, the builder-side rule binds and
-both sets change together. So a phase adding an entry-path rewrite
-names it as one, and a phase whose path has a builder on either side
-of it does not get to reason from this clause.
+So the constraint on a rewrite is not "does a builder exist yet" but
+**"does anything reach it."** An entry path — one a visitor types,
+scans off print, or pastes — is reached by the address bar from the
+moment it ships, and stays reached after builders arrive for it later.
+A phase adding a rewrite therefore names what reaches it, and a phase
+adding a builder confirms the rewrite is already live. Where a rewrite
+and its builders land together, both sets change in the same PR.
 
-An earlier form of this contract stated the equality unconditionally,
-which made the routing phase's two visitor-typed entry paths read as
-dead config and pushed that phase into arguing its own exemption in
-its own plan. The rule is stated here, where the contract lives,
-rather than carved out per phase.
+The ordering this produces across the phases here: the routing phase
+ships the landing and feedback rewrites, reached from that moment by
+the address bar; the emit-side phase later points the browser-rendered
+header bar at those same two paths, which is a builder arriving for an
+already-served path — the safe direction. The quiz's short path has
+the opposite shape and is why the parse/emit split exists at all.
+
+Two earlier forms of this contract were wrong in opposite directions.
+The first stated the equality unconditionally, which made the routing
+phase's visitor-typed entry paths read as dead config. The second
+fixed that but forbade claiming the entry-path reading for any path a
+builder would later emit — which contradicted this plan's own
+sequencing, since the header bar does eventually emit both of them.
+Neither failure was about the intent, which has always been the 404:
+emit-before-serve is the direction that breaks.
 
 ## Cross-Cutting Invariants
 

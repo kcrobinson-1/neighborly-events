@@ -5,12 +5,24 @@
 One PR, plus a doc-only close-out commit.
 
 **PR-count branch test.** The branch exists and the file list is
-sketched below under "Files to touch": one new shared module, one
-routing config, one test file, two canonical docs. Four surfaces, none
-of them a new subsystem, and the substantive logic is a mapping table
-plus the derivation that turns it into rewrite rows. Well under the
-split thresholds, and splitting mapping from config would land a
-module with no reader.
+sketched below under "Files to touch": a shared mapping module, the
+routing config, a unit test, a post-deploy probe runner with its
+script entry and workflow wiring, and the docs each of those
+invalidates. The substantive logic is a mapping table, the derivation
+that turns it into rewrite rows, and a probe runner whose assertions
+are enumerated in the Validation Gate — under the LOC threshold, and
+the subsystem count sits at the routing config plus the probe runner,
+since the mapping, test, and docs are that config's own dependents
+rather than distinct subsystems.
+
+Splitting was considered once the probe runner entered scope, and
+rejected in both available directions. Landing the mapping alone gives
+a module with no reader. Landing the probe runner separately gives a
+check with nothing to check before the rewrites exist, or one that
+must merge after the change it validates — and this phase's Status
+cannot reach `Landed` without the run that runner produces, so the
+split would put the close-out artifact in a different PR from the plan
+it closes out.
 
 **Status lifecycle.** This phase's functional checks key on a hostname
 that resolves only to production, so they are structurally post-merge
@@ -24,30 +36,40 @@ For Plans With Post-Release Validation":
   for the check.
 - `In progress pending organizer-host routing` → `Landed` in a
   follow-up doc-only commit once the post-deploy checks below pass,
-  recording evidence that they ran and passed — not merely what they
-  ran against.
+  recording the validation run URL those checks produce.
 
-**What stands in for the run URL.** The canonical gate has the
-close-out commit record the validation run URL, on the reasoning that
-it is durable external evidence rather than a soft post-merge promise.
-This phase's post-deploy checks are host-conditional HTTP probes
-against production, which no workflow in this repo runs, so there is no
-run URL to record and the gap is named here rather than papered over
-with the nearest-looking URL. What the close-out records instead: the
-production deployment the probes ran against, addressable and durable
-in the same way a run URL is, **plus the observed result of each
-post-deploy check** — the second half being what makes it evidence.
-Recording the deployment alone would identify the target and say
-nothing about the outcome.
+**The post-deploy checks run from a committed entry point, so they
+produce a run URL.** The canonical gate requires the close-out commit
+to record one, on the reasoning that it is durable external evidence
+rather than a soft post-merge promise — and a manually-walked probe
+produces no such artifact. This phase therefore does not get to
+substitute a weaker one or to argue itself an exception: its
+post-deploy checks are committed as a runnable check in the
+deployed-surface smoke family, dispatchable on demand and re-runnable
+against any organizer host, and the URL of the run that passed is what
+the close-out records.
+
+This is a scope addition over an earlier draft of this plan, which had
+the checks as a manual walk and recorded the production deployment URL
+instead. It is worth its cost beyond satisfying the gate: this task is
+the first exercise of the organizer-subdomain model and the shapes
+chosen here are the template for the next organizer, so a check that
+re-runs against a new host is the difference between a template and a
+one-time walk-through. The **Files to touch** estimate carries the
+surfaces this adds.
 
 **Verified by:** [`docs/testing-tiers.md`](/docs/testing-tiers.md)
 "Plan-to-Landed Gate For Plans With Post-Release Validation" step 2
-requires the follow-up commit to record the validation run URL and
-gives the reasoning as durable external evidence; its named capture
-path produces the `Production Deployed-Surface Smoke` run URL, which is
-the Tier 5 smoke rather than this phase's probes. The parent task
-plan's close-out already uses the broader "verification evidence"
-wording for the same reason.
+requires the follow-up commit to record the validation run URL, and
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
+"Plan-to-PR Completion Gate" states that a plan-specific carve-out
+belongs in the canonical rule rather than in a plan's own Contracts
+section — which is what rules out solving this locally.
+`.github/workflows/production-admin-smoke.yml` is the existing seam:
+it declares `workflow_dispatch` alongside a `workflow_run` trigger on
+the Release workflow's completion, targets the `production`
+environment, and reads its target origin from a repository variable
+rather than a hardcoded host.
 
 This is the same exception phase 1 takes, for a different reason: phase
 1's checks wait on the release workflow's function deploy, and this
@@ -228,33 +250,44 @@ plus the probe row under `afterFiles` with `beforeFiles` empty,
 which is the bare-array return's documented treatment
 (https://nextjs.org/docs/app/api-reference/config/next-config-js/rewrites).
 
-### C4. Both rows this phase adds are entry paths, and the plan says so
+### C4. Both rows ship ahead of their builders, which is the safe direction
 
-The parent's C3 exempts entry paths — the ones a visitor types, scans
-off print, or pastes — from the builder-side equality, because the
-address bar is what reaches them. Both rows this phase adds are entry
-paths, and this contract is where that claim is made rather than
-assumed: the organizer's root and the feedback path are the two
-addresses going into a newsletter and onto printed material, nothing
-server-rendered will link to either (the parent's C1 ceiling), and the
-set of builder-emitted short paths stays empty across this phase.
+The parent's C3 constrains a rewrite by asking what reaches it, not by
+asking whether a builder exists yet, and its ordering rule is
+directional: a builder must never ship ahead of the rewrite serving
+its path, while a rewrite landing ahead of its builders is inert
+rather than broken.
 
-C3 forbids claiming that exemption for a path a builder will later
-emit, which is a real constraint on this phase rather than a
-formality. The quiz's short path is the case it excludes: its
-consumers include the post-sign-in return leg and the event header
-bar, both of which *produce* a URL rather than receive one. So that
-row cannot ride along here on the theory that it looks like these two
-— it waits for the phase that ships its builders with it.
+Both rows this phase adds are reached from the moment they ship — the
+organizer's root and the feedback path are the two addresses going
+into a newsletter and onto printed material, and the address bar is
+what reaches them. Nothing emits either one in this phase, because the
+parent's C1 ceiling keeps every server-rendered link on long paths and
+this phase touches no builder.
 
-The check that this contract is being honored is not "did we add only
-two rows." It is: for each row, name what reaches it. A row whose
-answer is a builder does not belong in this phase.
+**Builders do arrive for these two paths later, and that is expected.**
+The emit-side phase points the browser-rendered header bar at the same
+two paths — its per-event table hardcodes the long forms today, which
+is what that phase changes. That is a builder arriving for a path
+already served, so it runs with the direction C3 protects rather than
+against it. Nothing in this phase's rows needs to be held back for it.
 
-**Verified by:** the parent task plan's C3 carries the entry-path
-clause and the constraint against claiming it for builder-emitted
-paths; its Phases section assigns the quiz's short-path rewrite to 4b
-together with the builders and the header bar, for this reason.
+What this phase must not do is add a rewrite for a path whose builder
+ships *before or with* it elsewhere. The quiz's short path is that
+case: its consumers include the post-sign-in return leg, which
+produces a URL and navigates the full document, and its rewrite
+depends on a route contract that does not exist until the parse-side
+phase. So the honoring check for each row is *what reaches this the
+day it ships* — an answer of "nothing until a later phase" disqualifies
+the row.
+
+**Verified by:** `shared/masthead/mastheadContent.ts` sets the Madrona
+masthead's home and feedback destinations as absolute long-path
+literals while its quiz destination already routes through the shared
+game builder, so the header bar is a builder for exactly these two
+paths once the emit-side phase retargets it; the parent task plan's C3
+carries the directional ordering rule, and its Phases section assigns
+the quiz's short-path rewrite to 4b together with its builders.
 
 ### C5. Every claim this phase makes about routing is a claim about a production build
 
@@ -344,14 +377,18 @@ callout.*
 |---|---|
 | `shared/urls/organizerHosts.ts` | the mapping, per C1 and Naming |
 | `tests/shared/urls/organizerHosts.test.ts` | the assertions named in the Validation Gate |
+| a runner under `scripts/testing/` | the post-deploy host-routing probes, as a committed entry point that produces a run URL |
 
 **Modify**
 
 | file | why |
 |---|---|
 | `apps/site/next.config.ts` | the host-conditional rows, per C2 and C3 |
+| `package.json` | the script entry the runner is invoked through |
+| `.github/workflows/production-admin-smoke.yml` | where the probes run on the deployed surface — a new job there, or a sibling workflow if the environment or trigger shape does not fit |
 | `docs/architecture.md` | "Vercel routing topology" — the routing authority's prose |
-| `docs/dev.md` | "Vercel" — the onboarding step this phase contributes |
+| `docs/dev.md` | "Vercel" — the onboarding step this phase contributes, and the validation-command list |
+| `docs/testing.md` | the validation-command list, per the validation-command coupling audit |
 
 **Intentionally not touched**
 
@@ -422,7 +459,9 @@ callout.*
   event — the parent's I1, asserted on the same run rather than assumed
   from the organizer-host result.
 
-**Post-merge — these gate the `Landed` flip.**
+**Post-merge — these gate the `Landed` flip.** These run from the
+committed entry point named in the Status lifecycle above, not by
+hand, so the run that passes is the artifact the close-out records.
 
 - The two bullets above, re-run against production: on the real
   organizer host, then on the canonical alias. This is the only run
@@ -432,6 +471,12 @@ callout.*
 - The absolute assertions the local environment could not make,
   including the `/assets/*` class and the existing long event paths
   on both hosts.
+- The runner takes its hosts from the mapping and from the canonical
+  origin rather than hardcoding either, so the same check re-runs
+  against the next organizer host without an edit. A runner that
+  passes because it silently probed nothing — an empty host list, a
+  skipped class — is the failure this bullet exists to prevent, so it
+  reports what it probed and fails on an empty set.
 - Rollback if any of these fail is revert-by-single-commit, per the
   parent's named constraint on routing gates.
 
@@ -448,6 +493,12 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
   docs on the same topic. The audit's resolution is to expand the
   table-named owner and leave the non-owner pointing at it, which is
   the shape those two docs already have for routing today.
+- **Validation-command coupling audit** — the post-deploy probes add a
+  script entry and change a workflow definition, both of which the
+  audit's trigger names. Its check is that every doc cataloguing
+  validation commands matches the authoritative source, which is why
+  the docs listed under "Files to touch — modify" include the
+  command-list docs and not only the routing-topology ones.
 
 ## Risks
 
