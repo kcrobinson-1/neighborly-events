@@ -121,12 +121,12 @@ organizer host would miss, which is the failure I1 names.
 So this phase does not argue the exception away, and it does not narrow
 I1 to fit. If the observation lands on the fallback shape, this is one
 of the cases P3 gates, and P3's remedy applies as written: the retarget
-is reshaped, or every parent claim the outcome falsifies is amended
-there — which for this outcome is more than the Invariant, since the
-parent's Goal names preview aliases among the hosts it promises are
+is reshaped, or every claim the outcome falsifies is amended at both
+levels — which for this outcome reaches past the parent's Invariant to
+its Goal, which names preview aliases among the hosts it promises are
 unchanged. Under the rejection shape there is nothing to amend. The
 change itself is the one O3 chose either way; what is conditional is the
-bookkeeping the parent is owed.
+bookkeeping the two docs are owed.
 
 **Verified by:** the allowlist snapshot the task's scoping recorded
 under D6 carries the apps/web alias, the apps/site alias, and localhost
@@ -254,20 +254,24 @@ rather than derived from code, so this plan cannot enumerate them and
 does not try. Whichever turns up, the treatment is identical — if the
 retarget changes what that consumer emits, or where it sends someone,
 then before this phase lands **either** the retarget is reshaped so that
-consumer's output does not change, **or** every claim in the parent that
-the outcome falsifies is amended there. The remedy is stated over the
-parent's claims as a set, not over one of them: the parent asserts the
-unchanged-host set in more than one place, and naming only its
-Cross-Cutting Invariant would let an implementation clear this gate
-while the parent's Goal — which enumerates preview aliases explicitly —
-stayed false. Recording the observation in the PR does not clear the
+consumer's output does not change, **or** every claim the outcome
+falsifies is amended — in this plan and in its parent alike.
+
+The remedy is stated over the falsified claims as a set rather than over
+named sections, because the unchanged-host promise is made in more than
+one place at both levels: this plan's Goal and C1, the parent's Goal and
+its Cross-Cutting Invariant. Naming any subset would let an
+implementation clear this gate while a doc it just landed stayed
+internally false. Recording the observation in the PR does not clear the
 gate on its own.
 
-Stating both halves once, over the consumer class and over the affected
-claims, is what keeps structurally identical cases from carrying
-different bars — which is how the email-template case came to be gated
-more weakly than C1's, and then how the parent's Goal came to be left
-out of the remedy that covered its Invariant.
+Stating both halves once — over the consumer class, and over the
+falsified claims at both levels — is what keeps structurally identical
+cases from carrying different bars. Each time this remedy was written
+narrower, review found the surface it left out: first the
+email-template case gated more weakly than C1's, then the parent's Goal
+left out of a remedy covering its Invariant, then this plan's own claims
+left out of a remedy covering the parent's.
 
 The parent's I1 (every host but a mapped organizer host is unchanged)
 binds this phase and is not restated here. The Validation Gate carries
@@ -438,7 +442,7 @@ post-merge.
   claim in a durable doc. The phase lands under either outcome — but the
   outcome that changes what an unadmitted origin sees is one P3 gates,
   so landing then requires P3's remedy first — a reshaped retarget, or
-  every falsified parent claim amended — not merely this record.
+  every falsified claim amended at both levels — not merely this record.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
 
