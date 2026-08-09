@@ -102,6 +102,18 @@ So the intro and shared game text should:
 - keep every instruction short and directional
 - sound human and confident, not promotional or technical
 
+Answering these is the **event's** job, not the platform's. The intro
+panel renders one piece of platform copy — the estimated-time chip,
+which is derived from config and which no event could phrase better —
+and otherwise composes event-owned content: a heading from the
+`quizIntro` registry (`shared/events/quizIntro.ts`) and the event's
+`intro` paragraph. It previously also rendered a heading built from
+the entitlement label and a three-bullet list answering the "may not
+know" items above in the platform's voice. Written once for every
+event, that copy could not say anything true of the event rendering
+it, and it restated a reward the page had already promised twice. An
+event that registers no heading renders none.
+
 #### Completion And Volunteer Handoff
 
 The completion state has two readers:
@@ -134,7 +146,8 @@ Across the experience, the copy should follow these rules:
 - Use demo language on preview surfaces and attendee language on game surfaces.
 - Lead with what the user gets or does next, not with internal product framing.
 - Prefer concrete phrases like "Start game", "Show this screen at the MNA booth", and "Start over" over abstract labels.
-- Name the redemption place the same way on every surface an attendee reads. One physical table called "the booth" on the quiz page head, "the volunteer table" on the completion heading, and "the volunteer" on the code card is three names, and volunteers and printed signage cannot match all three. The name is event-owned content and lives in the `redemptionLocation` registry (`shared/events/redemptionLocation.ts`); surfaces compose from it rather than restating it. Events that register no location keep the platform's generic "the volunteer table" wording.
+- Name the redemption place the same way on every surface an attendee reads. One physical table once called "the booth" above the quiz title, "the volunteer table" on the completion heading, and "the volunteer" on the code card is three names, and volunteers and printed signage cannot match all three. The name is event-owned content and lives in the `redemptionLocation` registry (`shared/events/redemptionLocation.ts`); surfaces compose from it rather than restating it. Events that register no location keep the platform's generic "the volunteer table" wording. The surviving surfaces are the completion heading and the code card — the quiz page head no longer names it, per the rule below.
+- Promise the reward once per screen. The pre-start screen said it three times: a page-head line under the title, a panel heading composed from the entitlement label, and the event's own intro paragraph. Each was defensible alone and the stack read as filler. The event's intro paragraph is the one that survives, because it is the only one an event can write in its own voice.
 - Keep buttons and helper text action-first and easy to scan from a distance.
 - Use proof-oriented language on completion screens so the handoff feels trustworthy.
 - Keep error messages recoverable first; any development-only setup detail should come after the user-facing explanation.

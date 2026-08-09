@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { GameConfig } from "../../../apps/web/src/data/games.ts";
 import type { GameCompletionResult } from "../../../apps/web/src/types/game.ts";
-import { getQuizPageHead } from "../../../shared/events/quizPageHead.ts";
+import { getQuizIntro } from "../../../shared/events/quizIntro.ts";
 
 const {
   mockEnsureServerSession,
@@ -129,11 +129,15 @@ describe("GamePage", () => {
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
-    expect(screen.getByText(`Finish to earn your ${game.entitlementLabel}`)).toBeTruthy();
-
-    // The reward line names an event-owned redemption location, so
-    // an event without a `quizPageHead` registry entry renders no
-    // page-head subtext at all (today's look).
+    // Copy on the intro panel is the event's own. The platform-authored
+    // heading that composed the entitlement label is gone, and an event
+    // with no `quizIntro` entry renders no heading at all — as is no
+    // page-head subtext promising the reward above the title.
+    expect(screen.getByText(game.intro)).toBeTruthy();
+    expect(
+      screen.queryByText(`Finish to earn your ${game.entitlementLabel}`),
+    ).toBeNull();
+    expect(document.querySelector(".intro-panel h2")).toBeNull();
     expect(document.querySelector(".game-page-subtext")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Start game" }));
@@ -145,19 +149,22 @@ describe("GamePage", () => {
     expect(sessionState.start).toHaveBeenCalledTimes(1);
   });
 
-  it("renders the registry reward line with the config question count for registered events", () => {
+  it("renders the registry heading, and no page-head subtext, for a registered event", () => {
     const game = createGame({ slug: "madrona" });
     mockUseGameSession.mockReturnValue(createSessionState(game));
 
     render(<GamePage game={game} onNavigate={() => {}} />);
 
-    // The contract is the composition: config-derived count lead, then
-    // the registry's reward line verbatim. Read the line from the
-    // registry rather than restating it, so a copy edit there does not
-    // fail this test while a broken composition still does.
-    const rewardLine = getQuizPageHead("madrona")?.rewardLine;
-    expect(rewardLine).toBeTruthy();
-    expect(screen.getByText(`One question. ${rewardLine}`)).toBeTruthy();
+    // Read the heading from the registry rather than restating it, so
+    // a copy edit there does not fail this test while a broken lookup
+    // still does.
+    const heading = getQuizIntro("madrona")?.heading;
+    expect(heading).toBeTruthy();
+    expect(screen.getByRole("heading", { name: heading })).toBeTruthy();
+
+    // The page-head subtext is gone for every event, registered or
+    // not — `madrona` is the slug that used to carry its reward line.
+    expect(document.querySelector(".game-page-subtext")).toBeNull();
   });
 
   it("keeps the demo-overview nav for events without a masthead", () => {
