@@ -145,9 +145,9 @@ that was missed.
 
 Each phase plan is drafted before that phase's implementation, per
 the just-in-time rule, and carries its own contracts, file inventory,
-validation gate, and self-review audits. Phase 1's is drafted; the
-rest are named here with the outcome they own, so the decomposition
-and ordering are reviewable now.
+validation gate, and self-review audits. Drafted phase plans are
+linked below; the rest are named with the outcome they own, so the
+decomposition and ordering are reviewable now.
 
 **Phase 1 — Origin admission at the edge-function boundary.**
 [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md).
@@ -161,7 +161,9 @@ allowlist. Console-side plus the docs that record it; no application
 code. Shares no surface with the other phases, so it can land
 anywhere in the order.
 
-**Phase 3 — Organizer host mapping in `apps/site`.** The organizer
+**Phase 3 — Organizer host mapping in `apps/site`.**
+[`phase-3-organizer-host-mapping-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3-organizer-host-mapping-plan.md).
+The organizer
 host serves the event landing and feedback surfaces at short paths.
 The quiz still resolves only at its long path, because the short form
 depends on the route contract phase 4 introduces.
