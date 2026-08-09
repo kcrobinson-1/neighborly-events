@@ -47,8 +47,22 @@ const madronaGameContent: AuthoringGameDraftContent = {
   location: "Madrona Playfield, Seattle",
   estimatedMinutes: 3,
   entitlementLabel: madronaFacts.rewardNoun,
+  // No score condition on the code: `complete_game_and_award_entitlement`
+  // awards on completion and reads `p_score` only to record it, and the
+  // panel heading directly above this paragraph already says "Finish to
+  // earn your reward". The earlier "Score high enough, then show your
+  // code" contradicted both.
+  //
+  // "Five questions" is a literal count of the array below and the one
+  // line here that goes stale if a question is added or dropped. The
+  // page-head subtext derives its count from the config; this one does
+  // not, because the sentence it sits in is written prose.
+  //
+  // "a token of appreciation" rather than `rewardNoun`: the spec allows
+  // natural variants of the generic claim line, and the reward still
+  // goes unnamed, which is the part the rule protects.
   intro:
-    `Welcome to Madrona Music in the Playfield. How well do you think you know Madrona? Take our quiz to find out. Score high enough, then show your code at the ${madronaFacts.booth.name} ${madronaFacts.booth.locationSuffix} to claim a ${madronaFacts.rewardNoun}.`,
+    `How well do you know Madrona? Five questions, some with surprising answers. They surprised us while we were writing them, and we live here. Finish the quiz and you'll get a code. Bring it to the ${madronaFacts.booth.name} ${madronaFacts.booth.locationSuffix} for a token of appreciation.`,
   summary:
     `Thanks for playing. Show your code at the ${madronaFacts.booth.name} to claim your ${madronaFacts.rewardNoun}, then settle in — the next set is about to start.`,
   // Non-blocking instant feedback: the explanation and its sources arrive
