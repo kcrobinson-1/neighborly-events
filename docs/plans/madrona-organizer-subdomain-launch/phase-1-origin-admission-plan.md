@@ -28,8 +28,8 @@ production function runtime.
 
 Parent task plan:
 [`madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md).
-This phase satisfies the parent's C3 (origin admission precedes
-anything that depends on it) and inherits its I1 and I3.
+This phase satisfies the parent's C2 (origin admission precedes
+anything that depends on it) and inherits its I1 and I4.
 
 The organizer's domain is a distinct browser origin, and the edge
 functions reject origins they do not recognize before any handler
@@ -92,7 +92,7 @@ is unset today and nothing depends on it.
 
 ### C2. Admission is only as complete as the deploy
 
-Per the parent's I3: every deployable function that compiles the
+Per the parent's I4: every deployable function that compiles the
 allowlist in must carry the new entry, and membership is resolved
 from the **import graph** — not from a search for the CORS module's
 path. Some functions reach the allowlist through a shared helper

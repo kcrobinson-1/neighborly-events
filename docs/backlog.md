@@ -443,7 +443,7 @@ Reduce deployment risk and contributor friction before the live event.
   shared previews carry the right content — so both are consistency
   issues, not reachability;
   [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
-  C2 accepts them deliberately for one event. **Goal:** a
+  C1 accepts them deliberately for one event. **Goal:** a
   visitor who arrives on a short path stays on short paths through
   in-page navigation, and a link shared from an organizer host shows
   that host. Note the shape of the cause before picking a fix: the

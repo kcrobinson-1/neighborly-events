@@ -75,9 +75,9 @@ the canonical apps/site alias.
 The probe ran against a middleware prototype, which D12 later
 replaced with host-conditional config rewrites. The result carries
 forward unchanged: it is evidence about which *sources* are safe to
-match, not about the mechanism that matches them. The plan's C2
-adopts the literal-path constraint and its Validation Gate re-runs
-this parity check against a production build.
+match, not about the mechanism that matches them. The routing
+phase's plan owns the literal-path constraint and re-runs this parity
+check against a production build.
 
 ### D5. The edge-function CORS allowlist does not admit the subdomain, and nothing mitigates it
 
@@ -142,8 +142,8 @@ in D7 names no tier restriction on custom SMTP.
 **Assumption (not verified):** that a free Supabase project's
 inactivity-pause behavior is not a risk for a live event. The
 project is in daily use; a plan that schedules a long quiet period
-before an event should re-check this. Carried into the plan's Risk
-Register as R5.
+before an event should re-check this. Carried into the task plan's
+Risk Register.
 
 ### D9. `MIP-####` is data-driven, and a same-named lookalike event exists
 
@@ -161,9 +161,11 @@ under `event_id='madrona-music-2026'` (latest 2026-08-08).
 **Not verified:** why the `AAB-` rows' `event_id` differs from the
 decoy row's slug. Both values were read directly, but the column's
 relationship to `game_events` was not read from the schema, so the
-join key is an open question. Carried into the plan's Risk Register
-as R7, because a rename that targets the wrong key disambiguates
-nothing.
+join key was an open question here. It is since settled — the seeding
+migration cited under the task plan's data-hygiene item shows the row
+carries an `id` distinct from its slug, and the id is what the
+entitlement rows reference — so a rename targeting rows by slug would
+match nothing.
 
 ### D10. Per-origin double-minting is real only where third-party cookies are dropped
 
@@ -239,8 +241,11 @@ shapes live in the task plan and its phase plans, not here.
   Relocating the game into `apps/site` was rejected as reopening the
   embedding mechanism the canonical-origin plan settled. Sets a
   4-phase plan. Sub-decision — where host-to-slug lives — resolved
-  to a static table mirrored in `shared/`, with a `game_events`
-  column as the migration path at the second organizer.
+  to a static mapping authored **once**, per the task plan's I2; an
+  earlier form of this decision prescribed a copy mirrored into
+  `shared/`, which the plan no longer requires and the routing phase
+  should not reintroduce. A `game_events` column is the migration
+  path at the second organizer.
 - **O2 — origin admission location.** Resolved to in-code
   `defaultAllowedOrigins`. An allowlist is authorization surface,
   not a secret; every admitted origin is echoed back in the response
@@ -257,7 +262,7 @@ shapes live in the task plan and its phase plans, not here.
   replacement; plan review found that shape unbuildable at the
   plan's chosen cost, because the event routes are statically
   generated and `generateMetadata` therefore has no request host to
-  branch on. The task plan's C2 records the outcome — metadata stays
+  branch on. The task plan's C1 records the outcome — metadata stays
   on the site origin for every host — and files per-host metadata
   with the dynamic-rendering tradeoff it shares with short-path
   navigation. Review also found that the canonical link this scoping
@@ -296,7 +301,7 @@ is authoritative; this records what handed over.
 4. **Host-aware route contract.** Made unconditional by O1's
    resolution, and split into parse and emit PRs by the plan's
    parse-before-emit invariant. Closes D3, and closes D11 only for
-   the browser-rendered masthead; the task plan's C2 explains why the
+   the browser-rendered masthead; the task plan's C1 explains why the
    server-rendered half stays on long paths.
 
 The lookalike-event cleanup (D9) rides along per O6 rather than
