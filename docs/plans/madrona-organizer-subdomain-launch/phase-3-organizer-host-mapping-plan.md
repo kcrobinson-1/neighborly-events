@@ -96,12 +96,39 @@ therefore takes the **Post-release validation** exception per
 [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate
 For Plans With Post-Release Validation":
 
-- `Proposed` → `In progress pending organizer-host routing` when the
-  implementing PR merges. That exact label is this phase's stable name
-  for the check.
-- `In progress pending organizer-host routing` → `Landed` in a
-  follow-up doc-only commit once the post-deploy checks below pass,
-  recording the validation run URL those checks produce.
+- `Proposed` → `In progress pending organizer-host routing verification`
+  when the implementing PR merges. That exact label is this phase's
+  stable name for the check.
+- `In progress pending organizer-host routing verification` → `Landed`
+  in a follow-up doc-only commit once the post-deploy checks below
+  pass, recording the validation run URL those checks produce.
+
+**Why this is not the canonical prod-smoke label**, recorded so the
+question is answered once rather than re-argued whenever someone reads
+the workflow wiring. The canonical `In progress pending prod smoke`
+belongs to plans whose pending check *is* the production smoke; the
+gate's own instruction is to name the specific check, and it names two
+non-smoke precedents for exactly this situation. Two further reasons
+specific to this phase. The label has to be decidable at plan time,
+and this plan deliberately leaves the implementer a choice between a
+job in the existing deployed-surface workflow and a sibling workflow —
+so a label inferred from which workflow file the job lands in would
+not be stable, which is the property the gate is protecting. And one
+label per plan is what makes the pending state attributable: two plans
+pending simultaneously under the same canonical string are
+indistinguishable, while the shared `In progress pending` prefix
+already answers the cross-plan query the gate cites.
+
+**Verified by:** [`docs/testing-tiers.md`](/docs/testing-tiers.md)
+"Plan-to-Landed Gate For Plans With Post-Release Validation" step 1
+requires a stable exact-match name for the specific check, names the
+canonical prod-smoke string for that case, lists two non-smoke
+precedents, and states that the shared prefix is what serves cross-plan
+queries. In-repo precedent runs the same way:
+[`docs/plans/canonical-origin-resolution-phase-2-plan.md`](/docs/plans/canonical-origin-resolution-phase-2-plan.md)
+is a Vercel routing change verified against the deployed origin and
+carries `In progress pending deployed-origin verification` rather than
+the canonical string, which is the closest analogue to this phase.
 
 **The post-deploy checks run from a committed entry point, so they
 produce a run URL.** The canonical gate requires the close-out commit
