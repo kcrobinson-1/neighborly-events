@@ -401,6 +401,33 @@ Reduce deployment risk and contributor friction before the live event.
   is meant to be exhaustive or merely representative.
   Detail: N/A
 
+- [ ] **`ux` Organizer-host short paths do not survive in-page navigation**
+  On an organizer host such as `music.madrona.us`, short paths are the
+  entry form — typed, scanned, pasted — but the first tap inside the
+  site drops the visitor onto `/event/<slug>/*` and leaves them there.
+  The cause is that [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+  declares `generateStaticParams`, so one HTML document serves every
+  host, and the link-bearing components
+  ([`EventHeader.tsx`](/apps/site/components/event/EventHeader.tsx),
+  [`EventCTA.tsx`](/apps/site/components/event/EventCTA.tsx),
+  [`EventDayOfLanding.tsx`](/apps/site/components/event/EventDayOfLanding.tsx),
+  [`EventFeedbackCTA.tsx`](/apps/site/components/event/EventFeedbackCTA.tsx))
+  render on the server with no request host to resolve a mount from.
+  Nothing breaks — the long paths serve identically on the organizer
+  host — so this is address-bar consistency, not reachability;
+  [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)
+  C4b accepts it deliberately for one event. **Goal:** a visitor who
+  arrives on a short path stays on short paths through in-page
+  navigation. Note the shape of the cause before picking a fix: the
+  host has to reach the code that emits the href, so the options are
+  rendering the event routes dynamically (server reads the request
+  host, at the cost of per-request rendering on the day-of landing
+  page attendees load on cell data) or prerendering a per-host variant
+  (keeps static output, doubles the prerender set per organizer host).
+  The call gets easier once there is a second organizer to weigh it
+  against.
+  Detail: N/A
+
 - [ ] **`ux` The game route emits no share metadata**
   Event landing pages get title, description, `openGraph`, `twitter`, and
   an OG image from

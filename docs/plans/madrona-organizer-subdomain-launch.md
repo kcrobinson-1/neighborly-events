@@ -42,9 +42,14 @@ After all phases land:
 - `music.madrona.us/`, `/game`, and `/feedback` serve the Madrona
   event landing, quiz, and feedback form, with the short path
   remaining in the address bar in each case.
-- In-page navigation between those three surfaces keeps visitors on
-  short paths rather than dropping them onto `/event/madrona/*` at
-  the first tap.
+- Short paths are the **entry** form: what a visitor types, scans
+  off a poster, or pastes into a message. Once inside, links
+  rendered by the statically-generated site pages use the long
+  path, which resolves identically on the organizer host; the quiz
+  SPA's own header keeps short paths because it resolves its mount
+  in the browser. See "Short paths are an entry form, not a
+  navigation invariant" below for why, and for what the long-path
+  tap actually looks like.
 - The quiz completes and mints an `MIP-####` code on that origin.
 - Organizer and volunteer sign-in initiated from that origin returns
   to that origin.
@@ -125,6 +130,40 @@ that one base for every event. Retargeting the global would make
 `harvest-block-party` and `riverside-jam` pages advertise URLs on
 Madrona's domain.
 
+### C4b. Short paths are an entry form, not a navigation invariant
+
+The mount resolves from the browser's host, so only code that runs
+in the browser can consume it. `apps/site`'s event routes are
+statically generated: one HTML document serves every host, and its
+link-bearing components render on the server with no host to read.
+Those links therefore emit long paths on every host, and this plan
+accepts that rather than working around it.
+
+**Verified by:** `apps/site/app/event/[slug]/page.tsx` declares
+`generateStaticParams`; `apps/site/components/event/EventHeader.tsx`,
+`EventCTA.tsx`, and `EventDayOfLanding.tsx` call the `routes` game
+builder, and `EventFeedbackCTA.tsx` and `EventDayOfLanding.tsx`
+compose the feedback path, all without a `"use client"` directive —
+so all five render on the server.
+
+**The consequence, rendered** (per the "Bans on surface require
+rendering the consequence" rule): a visitor opens
+`music.madrona.us/`, taps Quiz, and the address bar reads
+`music.madrona.us/event/madrona/game`. The page loads, the quiz
+plays, and the code mints — the long path is served on the
+organizer host exactly as on the canonical alias, because the
+site→plugin rewrite is host-agnostic. Once in the quiz the masthead
+is rendered by `apps/web` in the browser, so its links return to
+short paths. What is lost is address-bar consistency after the
+first tap, not reachability.
+
+This is the cheaper of two shapes. Making the event routes
+dynamically rendered would let the server read the request host and
+emit short paths everywhere, at the cost of per-request rendering
+on the day-of attendee landing page. That trade is deliberately not
+taken for one event and is tracked in
+[`docs/backlog.md`](/docs/backlog.md) instead.
+
 ### C5. The client route layer gains a mount point
 
 `shared/urls` learns that a browsing session may be mounted at an
@@ -151,6 +190,12 @@ direction, and the two directions ship in separate PRs:
 - The mount resolves from the browser's current host against a
   mirror of C1's table. Static table, mirroring the per-event table
   that already lives in `shared/masthead/mastheadContent.ts`.
+- **Only `apps/web` consumes the emit side.** `shared/urls` is
+  imported by both apps, so the mount must be absent-safe: with no
+  browser host to read — every `apps/site` server render — builders
+  fall back to long paths rather than throwing or guessing. That
+  fallback is what makes C4b's behavior the default instead of a
+  bug.
 - Off a mapped host, every matcher and builder behaves
   byte-identically to today.
 
@@ -167,10 +212,19 @@ mount must resolve client-side from the host.
 
 `shared/masthead/mastheadContent.ts` stops hardcoding absolute long
 paths and emits its internal destinations through `routes.*`, so the
-header's Home, Quiz, and Feedback links stay on short paths for a
-visitor who arrived on one. External links (`donate`, `emailList`)
-are unaffected. Links remain plain anchors — hard navigation — so
-the site→plugin rewrite re-evaluates on each crossing.
+header's Home, Quiz, and Feedback links follow the mount wherever a
+mount is readable. Per C4b that means the masthead rendered inside
+the quiz keeps a visitor on short paths, while the same masthead
+rendered by `apps/site` on the landing and feedback pages emits long
+paths. External links (`donate`, `emailList`) are unaffected. Links
+remain plain anchors — hard navigation — so the site→plugin rewrite
+re-evaluates on each crossing.
+
+The landing page's own in-content actions
+(`EventDayOfLanding.tsx`, `EventFeedbackCTA.tsx`) are **not**
+converted. They are server-rendered, so converting them would change
+nothing per C4b, and leaving them as literals keeps the plan from
+implying a short-path guarantee it cannot deliver there.
 
 **Verified by:** `mastheadContent.ts` `madronaMasthead` sets
 `brand.homeHref` and `feedback.href` as absolute long-path literals
@@ -186,6 +240,28 @@ renders it inside the SPA.
 The organizer origin joins `defaultAllowedOrigins` in
 `supabase/functions/_shared/cors.ts`. `EXTRA_ALLOWED_ORIGINS`
 remains for local and temporary extras only.
+
+**The allowlist is bundled per function, so admission is only as
+complete as the redeploy.** Six functions bundle
+`_shared/cors.ts` — `issue-session`, `complete-game`,
+`read-demo-event`, `redeem-entitlement`,
+`reverse-entitlement-redemption`, and `get-redemption-status` — and
+Supabase deploys them one at a time. Every one of them is
+redeployed together. Redeploying only the function the probe
+exercises is the specific failure this names: a player on the
+organizer host would pass `issue-session`, play the whole quiz, and
+take a 403 at completion — which is the exact "cannot mint a code"
+symptom this phase exists to remove, reintroduced one function
+later.
+
+**Verified by:** `complete-game` reaches the allowlist through
+`complete-game/dependencies.ts` and `complete-game/response.ts`,
+and `createCompleteGameHandler` returns 403 on an unrecognized
+origin ahead of every other branch; the remaining four import
+`_shared/cors.ts` directly in their `index.ts`;
+[`docs/dev.md`](/docs/dev.md) documents deployment as one
+`functions deploy` invocation per function, with no all-functions
+wrapper in `package.json` or `scripts/`.
 
 **Verified by:** the deployed `functions/_shared/cors.ts` (live
 `issue-session`, version 183) carries no organizer origin; the
@@ -291,14 +367,19 @@ Estimate Deviations callout.*
 - `NEXT_PUBLIC_SITE_ORIGIN` — per C4.
 - DNS, Vercel domain settings, deployment protection.
 - `madrona.us/musicintheplayfield` — separate site, separate host.
+- `apps/site/components/event/EventDayOfLanding.tsx` and
+  `EventFeedbackCTA.tsx` — per C6, converting their literal paths
+  would change no rendered output while implying a guarantee C4b
+  says the plan does not make.
 
 ## Phases
 
-**Phase 1 — Origin admission.** C7. One code line, one test, an
-edge-function redeploy. Independently verifiable: a credentialed
-request from the organizer origin returns an
-`Access-Control-Allow-Origin` echo instead of 403. Unblocks the long
-path immediately, before any routing work exists.
+**Phase 1 — Origin admission.** C7. One code line, one test, and a
+redeploy of **every function that bundles the allowlist** — see C7
+for why that is six functions and not one. Independently
+verifiable: a credentialed request from the organizer origin
+returns an `Access-Control-Allow-Origin` echo instead of 403.
+Unblocks the long path immediately, before any routing work exists.
 
 **Phase 2 — Auth URL configuration.** C8. Console-side plus the doc
 updates that record it. No application code. Independent of every
@@ -399,10 +480,14 @@ Per phase, `npm run lint` plus the checks below.
 **Phase 1:** `npm run test:functions` (the Deno suite covering
 `cors.ts`), run from the main checkout — worktrees have no
 `node_modules` and the Deno suite cannot resolve there. Post-deploy:
-a credentialed `OPTIONS` and `POST` to `issue-session` with the
-organizer origin returns that origin echoed in
-`Access-Control-Allow-Origin`; the same request from an unlisted
-origin still returns 403.
+a credentialed `OPTIONS` and `POST` from the organizer origin
+returns that origin echoed in `Access-Control-Allow-Origin`, and the
+same request from an unlisted origin still returns 403 — probed
+against **each of the six functions named in C7**, not only
+`issue-session`. A per-function probe is the only check that
+distinguishes "the allowlist is right" from "the allowlist is right
+and every function has it," and those two states differ by a live
+403 at quiz completion.
 
 **Phase 2:** magic-link sign-in initiated from the organizer host
 returns to the organizer host; sign-in from the canonical alias is
@@ -423,10 +508,23 @@ hrefs are unchanged on both hosts.
 **Phase 4b:** `npm test` plus `npm run build:web` and
 `npm run build:site`. On production: the quiz is playable end to
 end from the organizer host's `/game` with the address bar
-unchanged, mints an `MIP-####` code, and the header bar navigates
-between Home, Quiz, and Feedback without leaving short paths. On
-the canonical alias, `/event/madrona/game` is unchanged and `/game`
-still 404s.
+unchanged, and mints an `MIP-####` code.
+
+Navigation is asserted per C4b's split, not as a blanket
+short-path claim — the two legs differ and only one is a short-path
+guarantee:
+
+- **From the quiz**, whose masthead renders in the browser: tapping
+  Home lands on the organizer host's `/` and Feedback on its
+  `/feedback`, both short.
+- **From the landing or feedback page**, whose masthead and
+  in-content actions render on the server: taps land on
+  `/event/madrona/*` and the pages resolve normally. This is the
+  accepted behavior, so the assertion is that it *works*, not that
+  it is short.
+
+On the canonical alias, `/event/madrona/game` is unchanged and
+`/game` still 404s.
 
 **Asset consequence check (phases 3 and 4b).** Per the
 routing/proxy rule in
@@ -454,7 +552,10 @@ the Post-release validation exception recorded above.
 
 - Phase 1 updates [`docs/operations.md`](/docs/operations.md)'s
   `EXTRA_ALLOWED_ORIGINS` framing, which currently describes the
-  defaults as the canonical alias plus localhost.
+  defaults as the canonical alias plus localhost, and records that
+  an allowlist edit is not live until every function bundling it is
+  redeployed (C7). An operator who reads only the code diff has no
+  way to infer the deploy scope from it.
 - Phase 2 updates the auth-configuration surface in
   [`docs/dev.md`](/docs/dev.md).
 - Phase 3 adds the organizer-host onboarding steps to
@@ -529,6 +630,12 @@ rename does not silently miss the rows it is meant to disambiguate.
 - A generic organizer-onboarding self-serve flow. Two table entries
   per host is the deliberate ceiling for one organizer.
 - Custom SMTP (R4).
+- Dynamically rendering the event routes so server-side code can
+  read the request host (C4b). It would make short paths hold
+  through in-page navigation, and it costs per-request rendering on
+  the day-of attendee landing page. Deferred to
+  [`docs/backlog.md`](/docs/backlog.md) rather than decided for one
+  event.
 - The quiz column width on desktop. Untouched and not newly visible.
 - Relocating the game out of `apps/web` into `apps/site`. Considered
   during scoping as the alternative that removes the pathname
@@ -536,6 +643,14 @@ rename does not silently miss the rows it is meant to disambiguate.
   the canonical-origin work settled.
 
 ## Backlog Impact
+
+**Short paths not surviving in-page navigation is filed rather than
+solved.** C4b records the constraint and the accepted behavior; the
+two shapes that would remove it — dynamic rendering, or a
+prerendered per-host variant — are tracked in
+[`docs/backlog.md`](/docs/backlog.md) under "Tier 2 — Operational
+Confidence." The entry names the tradeoff on each shape so the call
+can be made against a second organizer rather than for this one.
 
 **Missing OG tags on `/game` become newly relevant.** An earlier
 draft of this plan listed them as "not newly visible," which the
