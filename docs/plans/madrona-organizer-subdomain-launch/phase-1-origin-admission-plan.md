@@ -1,6 +1,6 @@
 # Phase 1 — Origin admission at the edge-function boundary
 
-**Status:** `In progress pending organizer-origin admission`
+**Status:** `Landed`
 
 One PR, plus a doc-only close-out commit.
 
@@ -23,6 +23,34 @@ Gate For Plans With Post-Release Validation":
 completed CI `workflow_run` against `main` and deploys edge functions
 in that job, so no pre-merge state of this branch reaches the
 production function runtime.
+
+**Close-out.** Release run
+`https://github.com/kcrobinson-1/neighborly-events/actions/runs/31337235277`
+deployed the function set. Post-deploy results, each measured against
+the deployed runtime rather than read from source:
+
+- **Per-function admission.** Every deployable function, enumerated
+  from the filesystem, admits the organizer origin on a credentialed
+  preflight and POST — 10/10, against 0/10 measured immediately
+  before the deploy. An unlisted control origin is rejected 10/10,
+  unchanged.
+- **End to end on the organizer host.** The quiz was completed at the
+  event's long path on the organizer host and returned `MIP-0753` at
+  5/5. Confirmed server-side rather than from the rendered page: a
+  `game_completions` row for `event_id = 'madrona'` carrying that
+  verification code. The run reported "already checked in" because the
+  session held a prior entitlement, which is the intended no-duplicate
+  behavior and not a substitute for the completion write.
+- **Unchanged elsewhere (parent I1).** A cookie-less `issue-session`
+  POST from the canonical alias returns 200 with
+  `issuedNewSession: true` and a fresh session cookie, so a new
+  visitor's run there is unaffected; the same call from an unlisted
+  origin still returns 403 `Origin not allowed.` The canonical alias
+  also serves the game route and renders server-derived completion
+  state. A full five-question replay through the canonical alias's UI
+  was not completed — the browser pane wedged partway — so that arm
+  rests on the backend sequence and page load above rather than on a
+  UI walk.
 
 ## Context
 
