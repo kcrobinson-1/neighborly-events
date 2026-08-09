@@ -150,6 +150,36 @@ capture are live routing surface, not hypothetical; the scoping doc's
 D3 records the prefix-rewrite rejection and D4 the literal-source
 conclusion, each with its own probe.
 
+**"Exact hostname" is a property of the match, not of how the mapping
+is spelled.** The mechanism D12 chose compiles each host condition's
+value as an anchored pattern rather than comparing it literally, so a
+hostname written into the condition unchanged is not matched exactly —
+every character in it that carries meaning in a pattern widens the
+match. A domain name is mostly literal characters, but its separators
+are not, and the resulting near-matches are themselves well-formed
+hostnames rather than nonsense. The derivation from mapping to
+condition therefore neutralizes the mapping's value so it matches the
+hostname and nothing else. This is a property of the derivation, not
+of the mapping: hostnames stay written in the mapping the way an
+operator would type them.
+
+The consequence if this is missed is a silent I3 violation rather than
+a broken page — the mapped host still works, and an unmapped near-match
+host silently starts serving the organizer's event. That is why the
+Validation Gate's assertion is a **near-match hostname**, not the
+mapped-and-canonical pair: a test that exercises only those two passes
+either way, so it cannot be the check that catches this.
+
+**Verified by:** `matchHas` in
+`node_modules/next/dist/shared/lib/router/utils/prepare-destination.js`
+resolves a `host`-typed condition to the lowercased request hostname
+with any port stripped, then tests it with a `RegExp` constructed by
+anchoring the condition's value at both ends — a construction, not a
+string comparison. The emitted `apps/site/.next/routes-manifest.json`
+from the drafting-time probe carries the condition's value through
+verbatim, so nothing between the config and the matcher neutralizes it.
+Surfaced by Codex review on this plan's PR.
+
 ### C3. The new rows run ahead of the filesystem check; the existing rows do not move
 
 The organizer root has to resolve to the event landing even though the
@@ -326,7 +356,12 @@ callout.*
   destination trace back to a mapping entry and none is written
   alongside it; that every mapped slug is a registered event slug; that
   every row this phase adds carries a host condition and a literal
-  source (C2); and that the existing proxy rows are still in the
+  source (C2); that each host condition matches its mapped hostname and
+  **fails to match a near-match hostname** — one that is a well-formed
+  hostname differing from a mapped one only where a pattern would
+  otherwise absorb the difference, asserted through the same matcher
+  the runtime uses rather than by inspecting the condition's spelling
+  (C2); and that the existing proxy rows are still in the
   `afterFiles` phase in the emitted order (C3). **Verified by:** a
   drafting-time probe — a throwaway test under `tests/site/` imported
   `apps/site/next.config.ts` and awaited its `rewrites()` under
