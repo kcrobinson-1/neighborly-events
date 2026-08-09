@@ -21,6 +21,20 @@
  * Absent slugs render no heading, so events without an entry are
  * unaffected — the panel is then the intro paragraph and the start
  * button, which is what every event rendered before this registry.
+ *
+ * **This registry is an interim home.** Event-owned is not the same
+ * as organizer-owned, and this is only the first: the `intro`
+ * paragraph the heading sits on is a `game_events` column edited in
+ * /admin and projected by `publish_game_event_draft`, while a heading
+ * edit here needs a deploy. So an organizer cannot retitle their own
+ * quiz, a new event renders no heading until someone adds a line
+ * below, and the two halves of one panel travel on different clocks —
+ * a heading ships on deploy, a paragraph waits on a publish, and in
+ * between they can disagree. The heading belongs in the content
+ * schema next to `intro`; the reason it is not there yet is the cost
+ * of the migration that would put it there, not a judgment that this
+ * is where it goes. Tracked in
+ * [`docs/backlog.md`](/docs/backlog.md) under Tier 3.
  */
 
 /** How one event titles its quiz intro panel. */

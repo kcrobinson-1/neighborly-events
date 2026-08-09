@@ -458,6 +458,26 @@ event.
   and publish controls add more surface to the same page.
   Detail: [`docs/tracking/admin-ux-roadmap.md` — Clarify the desktop admin workspace hierarchy](/docs/tracking/admin-ux-roadmap.md)
 
+- [ ] **`dev` The quiz intro heading is developer-owned while the paragraph under it is organizer-owned**
+  The intro panel renders a heading and the event's `intro` paragraph
+  as one block of copy, but they come from different places. `intro`
+  is a `game_events` column an organizer edits in `/admin` and
+  `publish_game_event_draft` projects; the heading is a repo-side
+  slug registry ([`shared/events/quizIntro.ts`](/shared/events/quizIntro.ts))
+  that only a deploy can change. Two consequences: an organizer cannot
+  retitle their own quiz, and a new event renders no heading until an
+  engineer registers one. The pipes also diverge in time — a heading
+  edit ships on deploy while a paragraph edit waits on a publish, so
+  the two halves of one panel can disagree in between. **Goal:** the
+  heading reaches players through the same authoring and publish path
+  as the copy it sits on. The obvious option is a content field
+  alongside `intro` (table column, publish-routine projection, draft
+  and published mappers, admin form input) — one option among
+  several, and the heaviest part is that the publish routine is
+  re-issued in full by any migration that touches it. Registry entries
+  become seed values for events that already exist.
+  Detail: N/A
+
 ---
 
 ## Tier 4 — Post-MVP Features
