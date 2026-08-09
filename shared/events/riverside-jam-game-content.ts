@@ -40,8 +40,13 @@ const riversideJamGameContent: AuthoringGameDraftContent = {
   location: "Harborlight Pier, Anytown",
   estimatedMinutes: 3,
   entitlementLabel: "festival drink voucher",
+  // No score condition on the voucher: `complete_game_and_award_entitlement`
+  // awards on completion and reads `p_score` only to record it. The
+  // "pick the right answers to move on" clause is accurate and stays —
+  // that is this event's `instant_feedback_required` mode, which gates
+  // *progress* through the questions, not the entitlement at the end.
   intro:
-    "Welcome to Riverside Jam. Four quick questions on the lineup and the festival's surroundings — pick the right answers for each one to move on. Score high enough and you'll earn a festival drink voucher redeemable at the harbor stage bar.",
+    "Welcome to Riverside Jam. Four quick questions on the lineup and the festival's surroundings — pick the right answers for each one to move on. Finish and you'll earn a festival drink voucher redeemable at the harbor stage bar.",
   summary:
     "Thanks for playing. Bring your code to the harbor stage bar to claim your drink voucher and find a spot on the pier — the next set is about to start.",
   feedbackMode: "instant_feedback_required",

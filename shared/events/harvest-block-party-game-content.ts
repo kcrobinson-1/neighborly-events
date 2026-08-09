@@ -34,8 +34,10 @@ const harvestBlockPartyGameContent: AuthoringGameDraftContent = {
   location: "Maple Street Commons, Anytown",
   estimatedMinutes: 4,
   entitlementLabel: "harvest reward",
+  // No score condition on the reward: `complete_game_and_award_entitlement`
+  // awards on completion and reads `p_score` only to record it.
   intro:
-    "Welcome to the Harvest Block Party. Five quick questions about the weekend's programming and the neighborhood businesses making it possible. Score high enough, then show your code at the welcome booth on Maple Street to claim a harvest reward.",
+    "Welcome to the Harvest Block Party. Five quick questions about the weekend's programming and the neighborhood businesses making it possible. Finish, then show your code at the welcome booth on Maple Street to claim a harvest reward.",
   summary:
     "Thanks for playing. Show your code at the welcome booth to claim your reward, then head down Maple Street — the next set is starting soon.",
   feedbackMode: "instant_feedback_non_blocking",

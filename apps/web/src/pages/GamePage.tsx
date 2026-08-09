@@ -6,12 +6,11 @@ import { CorrectAnswerPanel } from "../game/components/CorrectAnswerPanel";
 import { CurrentQuestionPanel } from "../game/components/CurrentQuestionPanel";
 import { GameCompletionPanel } from "../game/components/GameCompletionPanel";
 import { GameIntroPanel } from "../game/components/GameIntroPanel";
-import { getPageHeadSubtext } from "../game/gameUtils";
 import { useGameSession } from "../game/useGameSession";
 import { ensureServerSession } from "../lib/gameApi";
 import { useAttendeeRedemptionStatus } from "../redemptions/useAttendeeRedemptionStatus";
 import { getCompletionCta } from "../../../../shared/events/completionCta";
-import { getQuizPageHead } from "../../../../shared/events/quizPageHead";
+import { getQuizIntro } from "../../../../shared/events/quizIntro";
 import { getRedemptionLocation } from "../../../../shared/events/redemptionLocation";
 import { getEventMasthead } from "../../../../shared/masthead";
 import { routes } from "../../../../shared/urls";
@@ -60,9 +59,6 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
   );
 
   const questionCount = game.questions.length;
-  // Event-owned page-head copy: the reward line names the event's
-  // redemption location, so it renders only for registered slugs.
-  const pageHeadCopy = getQuizPageHead(game.slug);
   // The demo-overview nav is prototype scaffolding: a way back to the
   // sample-game index plus a chip labelling the flow as a demo. An
   // event that registers the shared masthead is a real event whose
@@ -109,10 +105,18 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
       )}
 
       <section className="app-card">
-        {/* Page-head: title block plus the reward subtext. Renders as
-            plain flow on the token defaults; themes with a banded
-            page-head (Madrona's putty band) style it via the
-            quiz-surface tokens — no event-keyed branches here. */}
+        {/* Page-head: the title block. Renders as plain flow on the
+            token defaults; themes with a banded page-head (Madrona's
+            putty band) style it via the quiz-surface tokens — no
+            event-keyed branches here.
+
+            No subtext line under the title. It carried a per-event
+            "Show your code at <place> to claim a reward" sentence that
+            said what the event's own intro paragraph says a few lines
+            below it, so the screen made the same promise twice before
+            the player had answered anything. The place is still named
+            once, by the intro, and again on the completion panel where
+            the code actually appears. */}
         <div className="game-page-head">
           <div className="game-page-head-inner">
             <header className={`topbar${isGameActive ? " topbar-compact" : ""}`}>
@@ -130,17 +134,13 @@ export function GamePage({ game, onNavigate }: GamePageProps) {
                 </div>
               ) : null}
             </header>
-            {pageHeadCopy ? (
-              <p className="game-page-subtext">
-                {getPageHeadSubtext(questionCount, pageHeadCopy.rewardLine)}
-              </p>
-            ) : null}
           </div>
         </div>
 
         {!isStarted ? (
           <GameIntroPanel
             game={game}
+            heading={getQuizIntro(game.slug)?.heading ?? null}
             isStartingSession={isStartingSession}
             onStart={handleStart}
             startError={startError}

@@ -1,8 +1,7 @@
 /**
  * Per-event registry naming the place an attendee takes their
- * check-in code. Content-shaped, like `completionCta.ts`,
- * `quizPageHead.ts`, and the per-event Theme registry — it catalogs
- * launch content, not policy.
+ * check-in code. Content-shaped, like `completionCta.ts` and the
+ * per-event Theme registry — it catalogs launch content, not policy.
  *
  * This exists because the place had three names. The quiz page head
  * said "the booth", the completion heading said "the volunteer
@@ -14,6 +13,12 @@
  * swap: other events redeem somewhere else entirely (riverside-jam's
  * content names the harbor stage bar). The name is event-owned
  * content, so it lives in a registry the renderer reads.
+ *
+ * The page-head surface is gone — its line promised the reward before
+ * the player had answered anything, which the event's own intro
+ * paragraph already does — so the remaining consumers are the
+ * completion panel and the check-in code instruction, where the code
+ * being named actually exists.
  *
  * Absent slugs resolve `null` and every consumer keeps its
  * pre-registry generic wording, so events without an entry render
@@ -39,12 +44,7 @@ export type RedemptionLocationContent = {
   name: string;
 };
 
-/**
- * Exported so `quizPageHead.ts` can compose its reward line from the
- * same value the completion panel resolves at runtime, without a
- * slug lookup and a fallback for a constant this module owns.
- */
-export const madronaRedemptionLocation: RedemptionLocationContent = {
+const madronaRedemptionLocation: RedemptionLocationContent = {
   name: `the ${madronaFacts.booth.shortName}`,
 };
 
@@ -55,9 +55,9 @@ export const redemptionLocationBySlug: Record<
 > = {
   "madrona": madronaRedemptionLocation,
   // The local-prototype demo fixture of the Madrona experience mirrors
-  // the madrona entry, matching `completionCta.ts` and
-  // `quizPageHead.ts`, so a reviewer on a bare Vite dev server sees
-  // the copy that actually ships rather than a placeholder.
+  // the madrona entry, matching `completionCta.ts`, so a reviewer on a
+  // bare Vite dev server sees the copy that actually ships rather than
+  // a placeholder.
   "first-sample": madronaRedemptionLocation,
 };
 

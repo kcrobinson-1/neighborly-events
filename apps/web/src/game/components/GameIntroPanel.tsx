@@ -1,42 +1,46 @@
 /** Intro panel for the pre-game state before the player starts an attempt. */
-import type { FeedbackMode } from "../../../../../shared/game-config";
 import type { GameConfig } from "../../data/games";
 
 /** Props for the pre-game intro panel. */
 type GameIntroPanelProps = {
   game: GameConfig;
+  /**
+   * The event's name for its own quiz, from the `quizIntro` registry.
+   * `null` for events without an entry, which render no heading.
+   */
+  heading: string | null;
   isStartingSession: boolean;
   onStart: () => void | Promise<void>;
   startError: string | null;
 };
 
-const MODE_DESCRIPTIONS: Record<FeedbackMode, string> = {
-  final_score_reveal: "See your score after the last question.",
-  instant_feedback_required:
-    "Answer correctly to unlock the next question and a quick sponsor fact.",
-  instant_feedback_non_blocking:
-    "See the answer right after each question.",
-};
-
-/** Intro panel shown before the player starts a game attempt. */
+/**
+ * Intro panel shown before the player starts a game attempt.
+ *
+ * The heading and the `intro` paragraph are both event-owned; the
+ * panel writes no copy of its own beyond the length estimate. It used
+ * to: a "Finish to earn your <label>" heading composed from the
+ * entitlement label, plus a three-bullet feature list ("No sign-in",
+ * "One question on screen at a time", and a per-feedback-mode line).
+ * That restated the reward a third time on a screen that had already
+ * promised it twice, and spent the rest describing mechanics the
+ * player learns by tapping Start. Written once for every event, none
+ * of it could say anything true of the event rendering it. The length
+ * estimate survives because a player weighs it before starting and
+ * cannot infer it.
+ */
 export function GameIntroPanel({
   game,
+  heading,
   isStartingSession,
   onStart,
   startError,
 }: GameIntroPanelProps) {
-  const modeDescription = MODE_DESCRIPTIONS[game.feedbackMode];
-
   return (
     <section className="panel intro-panel">
       <span className="chip">About {game.estimatedMinutes} minutes</span>
-      <h2>Finish to earn your {game.entitlementLabel}</h2>
+      {heading ? <h2>{heading}</h2> : null}
       <p>{game.intro}</p>
-      <ul className="intro-list">
-        <li>No sign-in</li>
-        <li>One question on screen at a time</li>
-        <li>{modeDescription}</li>
-      </ul>
       {startError ? (
         <div className="feedback-banner feedback-banner-error" role="status">
           <strong>Can't start the game right now.</strong>
