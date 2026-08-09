@@ -327,6 +327,12 @@ established under conditions the plan cannot assume persist:
   event, and record why it is set as it is. Carried as plan R3.
 - **Secret list.** D5's conclusion depends on `EXTRA_ALLOWED_ORIGINS`
   remaining unset. Re-read the secrets page at drafting time.
+- **Which functions carry the allowlist.** D5 read the module, not
+  the set of functions that bundle it. Resolve that set from the
+  import graph rather than from a search for the module path —
+  functions that reach it through a shared helper do not appear in
+  such a search, and a partial redeploy leaves those origins
+  rejected. The plan's C7 states the contract that depends on this.
 - **Deployed-vs-repo drift.** D5 cites the deployed function bundle,
   which matched `main` at the time of reading. Re-confirm if any
   function is deployed in the interim.

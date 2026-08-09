@@ -12,7 +12,8 @@ Scoping doc:
 An event organizer has pointed their own domain at this platform.
 `music.madrona.us` is a live alias on the `apps/site` Vercel project,
 it is going into a newsletter and onto a stage, and today it serves
-the internal demo index — a page about two test events. This plan
+the internal demo index — a page about the platform's test events,
+not about Madrona at all. This plan
 makes that domain serve the event it belongs to, and makes the event
 actually work when reached through it.
 
@@ -93,7 +94,7 @@ hostname:
 | `/feedback` | the Madrona event feedback route | 3 |
 | `/game` | the apps/web deployment's Madrona game route, addressed directly | 4b |
 
-All three are rewrites. No redirect. Sources are literal paths, so
+Each is a rewrite. No redirect. Sources are literal paths, so
 no asset, `_next`, `/api`, or `/assets/*` request can match.
 
 **Verified by:** Next.js documents a `host`-typed condition on
@@ -153,9 +154,8 @@ been the less correct choice on that axis.
 `openGraph.url` as a relative event path, which resolves against
 that one base for every event, and the same file declares
 `generateStaticParams` — so both the base and the relative path are
-fixed at build time. Retargeting the global instead would make
-`harvest-block-party` and `riverside-jam` pages advertise URLs on
-Madrona's domain.
+fixed at build time. Retargeting the global instead would make every
+other event's pages advertise URLs on Madrona's domain.
 
 ### C4b. Short paths are an entry form, not a navigation invariant
 
@@ -170,8 +170,8 @@ accepts that rather than working around it.
 `generateStaticParams`; `apps/site/components/event/EventHeader.tsx`,
 `EventCTA.tsx`, and `EventDayOfLanding.tsx` call the `routes` game
 builder, and `EventFeedbackCTA.tsx` and `EventDayOfLanding.tsx`
-compose the feedback path, all without a `"use client"` directive —
-so all five render on the server.
+compose the feedback path, none of them carrying a `"use client"`
+directive — so every one of them renders on the server.
 
 **The consequence, rendered** (per the "Bans on surface require
 rendering the consequence" rule): a visitor opens
@@ -209,15 +209,16 @@ direction, and the two directions ship in separate PRs:
   rewrites — the event landing, feedback, and game routes — emit
   paths relative to the mount, so the game-route builder yields
   `/game` on the organizer host and `/event/madrona/game`
-  everywhere else. **Every other builder keeps emitting long
-  paths on every host**, including the per-event admin, redeem,
-  and redemptions routes. Those three are valid post-sign-in
-  destinations (`AuthNextPath` excludes only the callback route),
-  and the auth callback navigates the full document; a
-  mount-relative builder would send an organizer to a short path
-  C2 does not serve, producing a 404 on the return leg of
-  sign-in. Widening the emit set and widening C2's rewrite table
-  are the same decision and must move together.
+  everywhere else. **Every builder outside that family keeps
+  emitting long paths on every host.** The per-event admin,
+  redeem, and redemptions routes make the stake concrete: they are
+  valid post-sign-in destinations (`AuthNextPath` excludes only
+  the callback route) and the auth callback navigates the full
+  document, so a mount-relative builder would send an organizer to
+  a short path C2 does not serve, 404ing the return leg of
+  sign-in. The rule is the boundary, not that list — widening the
+  emit set and widening C2's rewrite table are the same decision
+  and must move together.
 - The mount resolves from the browser's current host against a
   mirror of C1's table. Static table, mirroring the per-event table
   that already lives in `shared/masthead/mastheadContent.ts`.
@@ -272,44 +273,44 @@ The organizer origin joins `defaultAllowedOrigins` in
 `supabase/functions/_shared/cors.ts`. `EXTRA_ALLOWED_ORIGINS`
 remains for local and temporary extras only.
 
-**The allowlist is bundled per function, so admission is only as
-complete as the redeploy.** **Every edge function the project has —
-all ten — bundles `_shared/cors.ts`**, and Supabase deploys them one
-at a time. All ten are redeployed together. The contract is
-therefore "redeploy the whole function set," not a list to
-maintain: any future function reaches the allowlist the moment it
-gates on origin, and a list would go stale silently.
+**The allowlist is bundled into each function at deploy time, so
+admission is only as complete as the redeploy.** Every function
+that reaches the shared CORS module — directly or through a shared
+helper that imports it — must be redeployed for the new origin to
+take effect there, and Supabase deploys functions one at a time.
+The contract is the whole deployed function set, deliberately not a
+list of names: a roster in a plan goes stale as functions are added,
+and the reachability set is derivable from the import graph at
+implementation time.
 
-Redeploying only the function a probe exercises is the specific
-failure this names, and it has two distinct shapes. An attendee on
-the organizer host would pass `issue-session`, play the whole quiz,
-and take a 403 at completion — the exact "cannot mint a code"
-symptom this phase exists to remove, reintroduced one function
-later. An organizer signing in on that host would then find that
-saving a draft, generating a code, publishing, and unpublishing all
-403 as well.
+**Membership is resolved from the import graph, not from a search
+for the module path.** Some functions reach the allowlist through a
+shared authoring helper rather than importing it themselves, so a
+search for direct importers under-reports and silently drops them.
+This is not hypothetical: it is the error this paragraph exists to
+prevent, made once during this plan's own review.
 
-**Verified by:** all ten function directories reach `cors.ts`, by
-three different routes — six import it directly in `index.ts`
-(`issue-session`, `read-demo-event`, `redeem-entitlement`,
-`reverse-entitlement-redemption`, `get-redemption-status`, and
-`complete-game` via its own `dependencies.ts` and `response.ts`),
-and the remaining four (`save-draft`, `generate-event-code`,
-`publish-draft`, `unpublish-event`) reach it indirectly through
-`_shared/authoring-http.ts`, which imports `createCorsHeaders` and
-`getAllowedOrigin` from it. `createCompleteGameHandler` returns 403
-on an unrecognized origin ahead of every other branch.
-[`docs/dev.md`](/docs/dev.md) documents deployment as one
-`functions deploy` invocation per function, with no all-functions
-wrapper in `package.json` or `scripts/`.
+Redeploying only the function a probe exercises is the failure this
+names, and it has two shapes. An attendee on the organizer host
+passes session issuance, plays the whole quiz, and takes a 403 at
+completion — the exact "cannot mint a code" symptom this phase
+exists to remove, reintroduced one function later. An organizer
+signing in on that host finds the authoring actions — saving,
+code generation, publish, unpublish — rejected the same way.
 
-The indirect four are the reason this contract names the whole set
-rather than an enumeration: a grep for the direct import path finds
-six and misses them, which is the error this wording exists to
-prevent from recurring.
+**Verified by:** `supabase/functions/_shared/authoring-http.ts`
+imports `createCorsHeaders` and `getAllowedOrigin` from
+`./cors.ts`, and the authoring functions consume that helper rather
+than the CORS module; `complete-game` reaches it through its own
+`dependencies.ts` and `response.ts`, and
+`createCompleteGameHandler` returns 403 on an unrecognized origin
+ahead of every other branch. [`docs/dev.md`](/docs/dev.md)
+documents deployment as one `functions deploy` invocation per
+function, with no all-functions wrapper in `package.json` or
+`scripts/`.
 
-**Verified by:** the deployed `functions/_shared/cors.ts` (live
-`issue-session`, version 183) carries no organizer origin; the
+**Verified by:** the deployed `functions/_shared/cors.ts`, read from
+the live `issue-session` bundle, carries no organizer origin; the
 project's Edge Function Secrets page lists only
 `SESSION_SIGNING_SECRET` and `APPS_SITE_VERCEL_SCOPE`, so no env var
 mitigates it. `getAllowedOrigin` has two admission paths and the
@@ -327,8 +328,8 @@ joins the redirect allowlist as a wildcard-path entry.
 
 **Verified by:** Supabase dashboard → Authentication → URL
 Configuration currently sets Site URL to the apps/web
-`*.vercel.app` alias with 8 redirect URLs, none matching the
-organizer host.
+`*.vercel.app` alias, and no entry in the redirect allowlist
+matches the organizer host.
 [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
 Goal names the apps/web origin as not customer-facing.
 
@@ -340,8 +341,8 @@ alias, not only on the organizer host. The failure this prevents is
 invisible in any test that exercises only the new host.
 
 **I2. The host→event mapping has one authoring site per layer.**
-C1 in `apps/site`, C5's mirror in `shared/`. Two entries, not five.
-A third consumer reads an existing one rather than adding a table.
+C1 in `apps/site`, C5's mirror in `shared/`, and nowhere else. A
+further consumer reads an existing one rather than adding a table.
 
 **I3. Short-path support is opt-in per host.** No behavior keys on
 "is this a custom domain" or "is this not a `.vercel.app`." Only an
@@ -417,12 +418,12 @@ Estimate Deviations callout.*
 
 ## Phases
 
-**Phase 1 — Origin admission.** C7. One code line, one test, and a
-redeploy of **the entire function set** — see C7 for why that is all
-ten and not one. Independently verifiable: a credentialed request
-from the organizer origin returns an `Access-Control-Allow-Origin`
-echo instead of 403. Unblocks the long path immediately, before any
-routing work exists.
+**Phase 1 — Origin admission.** C7. An allowlist entry, its test,
+and a redeploy of **the entire function set** — see C7 for why the
+set, and not just the probed function. Independently verifiable: a
+credentialed request from the organizer origin returns an
+`Access-Control-Allow-Origin` echo instead of 403. Unblocks the long
+path immediately, before any routing work exists.
 
 **Phase 2 — Auth URL configuration.** C8. Console-side plus the doc
 updates that record it. No application code. Independent of every
@@ -548,7 +549,7 @@ canonical alias still serves the demo index at `/` and still 404s
 name the site origin on **both** hosts; the assertion is that they
 are identical across the two, which is the check that would fail if
 someone later retargeted `NEXT_PUBLIC_SITE_ORIGIN` to close the
-metadata gap the cheap way and pointed the other two events at
+metadata gap the cheap way and pointed every other event at
 Madrona's domain.
 
 **Phase 4a:** `npm test` plus `npm run build:web`. The gate for an
@@ -612,10 +613,10 @@ the Post-release validation exception recorded above.
   [`docs/dev.md`](/docs/dev.md) "Vercel" and the short-path mapping
   to [`docs/architecture.md`](/docs/architecture.md)'s "Vercel
   routing topology".
-- Onboarding steps must name all three requirements together —
-  Vercel alias, host mapping entry, CORS default plus redeploy —
-  because shipping two of three is the failure that produced this
-  plan.
+- Onboarding steps must name every requirement together — Vercel
+  alias, host mapping entry, and CORS default plus redeploy —
+  because satisfying only some of them is the failure that produced
+  this plan.
 
 ## Risk Register
 
@@ -633,9 +634,10 @@ plausible but unverified here — prefer the direct destination.
 
 **R2. SPA mount resolution is client-side.** C5 resolves the mount
 from the browser's host, so the table is duplicated between
-`apps/site` and `shared/`. I2 bounds it to two sites; a `game_events`
-column with a resolve-by-host path is the migration when a second
-organizer arrives, and is deliberately not built now for one host.
+`apps/site` and `shared/`. I2 bounds it to those two layers; a
+`game_events` column with a resolve-by-host path is the migration
+when a second organizer arrives, and is deliberately not built now
+for one host.
 
 **R3. Deployment protection.** Both Vercel projects carry SSO
 protection scoped to all deployments except custom domains.
@@ -678,11 +680,10 @@ rename does not silently miss the rows it is meant to disambiguate.
 
 - Retargeting `NEXT_PUBLIC_SITE_ORIGIN`. It feeds one site-wide
   `metadataBase`, so pointing it at Madrona's domain would make
-  `harvest-block-party` and `riverside-jam` advertise URLs there
-  too. Per-host metadata needs dynamic rendering, not a retargeted
-  global (C4).
-- A generic organizer-onboarding self-serve flow. Two table entries
-  per host is the deliberate ceiling for one organizer.
+  every other event advertise URLs there too. Per-host metadata
+  needs dynamic rendering, not a retargeted global (C4).
+- A generic organizer-onboarding self-serve flow. Adding a row to
+  each table per I2 is the deliberate ceiling for one organizer.
 - Custom SMTP (R4).
 - Dynamically rendering the event routes so server-side code can
   read the request host (C4b). It would make short paths hold
@@ -698,13 +699,14 @@ rename does not silently miss the rows it is meant to disambiguate.
 
 ## Backlog Impact
 
-**Short paths not surviving in-page navigation is filed rather than
-solved.** C4b records the constraint and the accepted behavior; the
-two shapes that would remove it — dynamic rendering, or a
-prerendered per-host variant — are tracked in
-[`docs/backlog.md`](/docs/backlog.md) under "Tier 2 — Operational
-Confidence." The entry names the tradeoff on each shape so the call
-can be made against a second organizer rather than for this one.
+**The organizer host's build-time ceiling is filed rather than
+solved.** C4 and C4b record the constraint and the accepted
+behavior on both surfaces it touches — in-page navigation and share
+metadata. Because one change unblocks both, they are a single entry
+in [`docs/backlog.md`](/docs/backlog.md) under "Tier 2 —
+Operational Confidence" rather than two, and the entry names the
+tradeoff on each candidate shape so the call can be made against a
+second organizer rather than for this one.
 
 **Missing OG tags on `/game` become newly relevant.** An earlier
 draft of this plan listed them as "not newly visible," which the
