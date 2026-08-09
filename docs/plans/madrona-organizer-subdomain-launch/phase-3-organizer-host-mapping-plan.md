@@ -368,19 +368,37 @@ independently.
   rather than merely inconvenient, and the PR revises it to name which
   side is canonical and to require a test asserting the copies against
   each other, per I2.
-- **Serving a production build locally is not the obvious command.**
-  `apps/site` builds with `output: "standalone"`, and at drafting time
-  the start command printed a caveat that it does not work with that
-  setting while nonetheless serving the built output, and the
-  standalone directory the build produced carried no server entrypoint
-  to use instead. So the parity and behavior probes below first confirm
-  they are talking to build output — a hashed asset under
-  `_next/static` returning its stylesheet content type is the cheap
-  confirmation — before any of their results are trusted. **Verified
-  by:** `apps/site/next.config.ts` sets `output: "standalone"`; the
-  drafting-time build log and the resulting `.next/standalone`
-  directory listing are the source of the caveat and the missing
-  entrypoint.
+- **Serve the build through the generated standalone entrypoint, not
+  through the start command.** `apps/site` builds with
+  `output: "standalone"`, and the start command emits a caveat that it
+  does not work with that setting — it nonetheless serves, which makes
+  it an easy and unsupported thing to reach for. The build does emit a
+  server entrypoint; it sits under `.next/standalone` at the project's
+  path relative to the file-tracing root, which in a worktree checkout
+  is several levels deeper than the top level. Locate it rather than
+  assuming its depth.
+
+  Two things that make a probe against it lie if skipped: the
+  entrypoint needs the build's static output and the public directory
+  copied alongside it, and without them **every `_next/static` request
+  404s** — which reads as exactly the asset-parity failure this
+  phase's gate is looking for, from a setup cause rather than a
+  routing one. So the probes confirm they are talking to a
+  correctly-assembled build first: a hashed asset under `_next/static`
+  returning its stylesheet content type is the cheap confirmation, and
+  it is a precondition of the parity result rather than part of it.
+
+  **Verified by:** `apps/site/next.config.ts` sets
+  `output: "standalone"`; a drafting-time run located the emitted
+  `server.js` under `.next/standalone` at the tracing-root-relative
+  project path, started it, and served the root, a hashed
+  `_next/static` stylesheet, and the Madrona OG image route at 200
+  with their expected content types under both a spoofed organizer
+  host and the canonical host, after copying the static output and
+  public directory alongside it. An earlier draft of this bullet
+  asserted the entrypoint did not exist — a negative produced by a
+  depth-limited search rather than by a real absence. Corrected after
+  Codex review on this plan's PR.
 - **The `/assets/*` destination may be unreachable from the
   implementer's environment.** It proxies to the apps/web deployment,
   and the scoping doc records that the game proxy path could not be
