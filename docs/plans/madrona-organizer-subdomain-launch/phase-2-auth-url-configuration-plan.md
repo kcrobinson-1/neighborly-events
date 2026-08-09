@@ -120,12 +120,13 @@ organizer host would miss, which is the failure I1 names.
 
 So this phase does not argue the exception away, and it does not narrow
 I1 to fit. If the observation lands on the fallback shape, this is one
-of the cases P3 gates: before the phase lands, either the exception is
-recorded in the parent alongside I1 — naming the affected class and the
-destination change — or the retarget is reshaped so the class is not
-affected. Under the rejection shape there is nothing to record. The
+of the cases P3 gates, and P3's remedy applies as written: the retarget
+is reshaped, or every parent claim the outcome falsifies is amended
+there — which for this outcome is more than the Invariant, since the
+parent's Goal names preview aliases among the hosts it promises are
+unchanged. Under the rejection shape there is nothing to amend. The
 change itself is the one O3 chose either way; what is conditional is the
-bookkeeping I1 is owed.
+bookkeeping the parent is owed.
 
 **Verified by:** the allowlist snapshot the task's scoping recorded
 under D6 carries the apps/web alias, the apps/site alias, and localhost
@@ -252,13 +253,21 @@ be another. Each is discovered in the console at implementation time
 rather than derived from code, so this plan cannot enumerate them and
 does not try. Whichever turns up, the treatment is identical — if the
 retarget changes what that consumer emits, or where it sends someone,
-then before this phase lands **either** the I1 exception is recorded in
-the parent naming the affected surface and class, **or** the retarget is
-reshaped so that consumer's output does not change. Recording the
-observation in the PR does not clear the gate on its own. Stating this
-once is what keeps two structurally identical cases from carrying
-different bars, which is how the email-template case came to be gated
-more weakly than C1's.
+then before this phase lands **either** the retarget is reshaped so that
+consumer's output does not change, **or** every claim in the parent that
+the outcome falsifies is amended there. The remedy is stated over the
+parent's claims as a set, not over one of them: the parent asserts the
+unchanged-host set in more than one place, and naming only its
+Cross-Cutting Invariant would let an implementation clear this gate
+while the parent's Goal — which enumerates preview aliases explicitly —
+stayed false. Recording the observation in the PR does not clear the
+gate on its own.
+
+Stating both halves once, over the consumer class and over the affected
+claims, is what keeps structurally identical cases from carrying
+different bars — which is how the email-template case came to be gated
+more weakly than C1's, and then how the parent's Goal came to be left
+out of the remedy that covered its Invariant.
 
 The parent's I1 (every host but a mapped organizer host is unchanged)
 binds this phase and is not restated here. The Validation Gate carries
@@ -370,18 +379,35 @@ post-merge.
   explicit redirect lands on the canonical site alias. This is the one
   Site URL behavior the vendor does state, which is why it is the step
   that proves the retarget took.
-- **Unchanged elsewhere (parent I1).** Run the Production Admin Smoke —
-  `npm run test:e2e:admin:production-smoke`, or its workflow. It
-  round-trips a real magic link generated against the production
-  project's redirect allowlist for the production base URL, so it fails
-  if an existing entry stopped matching, and it is independent of this
-  branch because this branch deploys nothing. **Verified by:**
+- **Unchanged elsewhere (parent I1), asserted on the canonical apps/site
+  alias by name.** I1 is about that alias specifically, so the gate is
+  a magic-link round trip whose callback is the canonical alias's, and
+  the step is satisfied by observing that round trip — not by observing
+  that some production round trip passed.
+
+  The Production Admin Smoke — `npm run test:e2e:admin:production-smoke`,
+  or its workflow — is the right vehicle **only if its configured target
+  is that alias.** Its base URL and its callback override are repository
+  *variables*, not repository files, so which entry it exercises cannot
+  be read from this branch: the checked-in example documents the base
+  URL as a web deployment, and the callback can be pointed somewhere
+  else again independently of it. Read both configured values first. If
+  they resolve to the canonical alias and a matching callback, the smoke
+  discharges this step; if they do not, run the canonical-alias round
+  trip directly and treat the smoke as covering a different origin.
+  Skipping that read would let the step pass while the apps/site
+  redirect entry was broken during the console edit, which is the
+  regression it exists to catch. **Verified by:**
   [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
   runs under the admin auth fixture, whose `generateMagicLink` requests
   a service-role link with an explicit redirect;
-  [`scripts/testing/run-production-admin-smoke.cjs`](/scripts/testing/run-production-admin-smoke.cjs)
-  requires a production base URL and asserts a production guard on the
-  Supabase env names it reads.
+  [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
+  composes that redirect from `PRODUCTION_SMOKE_BASE_URL` but lets
+  `TEST_ADMIN_REDIRECT_URL` replace it outright;
+  [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
+  supplies both from repository variables; and
+  [`scripts/.env.example`](/scripts/.env.example) documents the base URL
+  as a web-deployment origin.
   - The local admin e2e wrapper is **not** a substitute here. It
     provisions a local Supabase stack, so it never touches the
     production project's Auth URL configuration and cannot fail on
@@ -411,8 +437,8 @@ post-merge.
   PR describes; leaving it open would put an unverified vendor-behavior
   claim in a durable doc. The phase lands under either outcome — but the
   outcome that changes what an unadmitted origin sees is one P3 gates,
-  so landing then requires the parent-recorded I1 exception or a
-  reshaped retarget first, not merely this record.
+  so landing then requires P3's remedy first — a reshaped retarget, or
+  every falsified parent claim amended — not merely this record.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
 
