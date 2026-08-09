@@ -161,11 +161,12 @@ under `event_id='madrona-music-2026'` (latest 2026-08-08).
 **Not verified:** why the `AAB-` rows' `event_id` differs from the
 decoy row's slug. Both values were read directly, but the column's
 relationship to `game_events` was not read from the schema, so the
-join key was an open question here. It is since settled — the seeding
-migration cited under the task plan's data-hygiene item shows the row
-carries an `id` distinct from its slug, and the id is what the
-entitlement rows reference — so a rename targeting rows by slug would
-match nothing.
+join key was an open question here. It is since settled by the seeding
+migration cited under the task plan's data-hygiene item: the row's
+`id` and `slug` hold different values, and the entitlement rows
+reference the id. The event row itself is selectable by either, so
+the distinction matters for reaching the entitlements, not for
+renaming the row.
 
 ### D10. Per-origin double-minting is real only where third-party cookies are dropped
 

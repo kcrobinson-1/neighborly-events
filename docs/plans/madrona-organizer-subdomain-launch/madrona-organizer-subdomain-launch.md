@@ -202,11 +202,19 @@ decoy. The mechanism is the implementing phase's call.
 
 **Verified by:**
 `supabase/migrations/20260406130000_add_published_quiz_content.sql`
-inserts the `first-sample` row with the Madrona display name. That
-insert also settles how the decoy's entitlements are keyed: the row
-carries an `id` distinct from its slug, and the id is what the
-entitlement rows reference, so a rename targeting rows by slug would
-match nothing.
+seeds the decoy with the Madrona display name, under the table's
+former name — the events and entitlements tables were renamed after
+that migration, so the current names are what a new migration writes
+against.
+
+That insert also settles which identifier selects what, and the two
+are not interchangeable: the row's `id` and its `slug` hold different
+values, the event row is selectable by either, and the entitlement
+rows reference the **id**. So a rename of the event row can key on
+slug, while anything that has to find or preserve the decoy's
+entitlements has to key on the id. An earlier draft of this plan said
+a slug-based rename would match nothing, which was wrong and would
+have steered an implementer off a perfectly good selector.
 
 It gates no implementing phase and may ride in any of them, but it
 **must land no later than phase 4b** — both because 4b's verification
