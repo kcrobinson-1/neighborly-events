@@ -401,6 +401,29 @@ Reduce deployment risk and contributor friction before the live event.
   is meant to be exhaustive or merely representative.
   Detail: N/A
 
+- [ ] **`ux` The game route emits no share metadata**
+  Event landing pages get title, description, `openGraph`, `twitter`, and
+  an OG image from
+  [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+  `generateMetadata`. The game route has no equivalent — it is served by
+  the `apps/web` Vite SPA behind a proxy rewrite, and the SPA ships one
+  static `index.html` for every route, so a pasted quiz link renders with
+  whatever generic title that document carries. This was a latent gap
+  while the quiz URL was a long per-slug path nobody typed from memory.
+  The organizer-subdomain work at
+  [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)
+  makes the organizer host's `/game` the short, memorable form of that
+  URL — which is exactly the shape people paste into messages — so the
+  gap becomes the rendering of the most-shared link on the platform.
+  **Goal:** a quiz link pasted into a message renders with the event's
+  name, description, and image. Note the shape of the cause before
+  picking a fix: the metadata has to be emitted by whatever serves the
+  document, and today that is the SPA rather than the Next.js app, so
+  options split between giving `apps/site` a metadata-emitting route in
+  front of the proxy and giving the SPA build per-event HTML — the call
+  depends on how many events the platform expects to serve at once.
+  Detail: N/A
+
 ---
 
 ## Tier 3 — Admin Authoring Polish
