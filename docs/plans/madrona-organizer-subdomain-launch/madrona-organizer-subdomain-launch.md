@@ -109,12 +109,28 @@ No surface emits a short path before the route matchers accept one —
 that is what lets the parse-side phase land inert and makes the
 emit-side phase the switch.
 
-Separately and just as binding: the set of paths emitted as short
-must equal the set the routing layer rewrites. A builder emitting a
-short path nothing serves produces a 404, and the auth return leg is
-the live case, since post-sign-in destinations navigate the full
-document. A rewrite with no builder is dead config. Both sets change
-in the same PR.
+Separately and just as binding: no builder emits a short path the
+routing layer does not rewrite, and no rewrite ships that nothing
+reaches. A builder emitting a short path nothing serves produces a
+404, and the auth return leg is the live case, since post-sign-in
+destinations navigate the full document. Where a builder is the
+consumer, both sets change in the same PR.
+
+**What reaches a rewrite is not always a builder.** An entry path —
+one a visitor types, scans off print, or pastes — is reached by the
+address bar, so a rewrite serving one satisfies the second half with
+no builder anywhere. That is the whole of the exemption, and it is
+not one a phase may claim for a path a builder will later emit: the
+moment any builder produces the path, the builder-side rule binds and
+both sets change together. So a phase adding an entry-path rewrite
+names it as one, and a phase whose path has a builder on either side
+of it does not get to reason from this clause.
+
+An earlier form of this contract stated the equality unconditionally,
+which made the routing phase's two visitor-typed entry paths read as
+dead config and pushed that phase into arguing its own exemption in
+its own plan. The rule is stated here, where the contract lives,
+rather than carved out per phase.
 
 ## Cross-Cutting Invariants
 

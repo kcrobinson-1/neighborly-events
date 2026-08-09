@@ -24,7 +24,30 @@ For Plans With Post-Release Validation":
   for the check.
 - `In progress pending organizer-host routing` → `Landed` in a
   follow-up doc-only commit once the post-deploy checks below pass,
-  recording the production deployment URL the checks ran against.
+  recording evidence that they ran and passed — not merely what they
+  ran against.
+
+**What stands in for the run URL.** The canonical gate has the
+close-out commit record the validation run URL, on the reasoning that
+it is durable external evidence rather than a soft post-merge promise.
+This phase's post-deploy checks are host-conditional HTTP probes
+against production, which no workflow in this repo runs, so there is no
+run URL to record and the gap is named here rather than papered over
+with the nearest-looking URL. What the close-out records instead: the
+production deployment the probes ran against, addressable and durable
+in the same way a run URL is, **plus the observed result of each
+post-deploy check** — the second half being what makes it evidence.
+Recording the deployment alone would identify the target and say
+nothing about the outcome.
+
+**Verified by:** [`docs/testing-tiers.md`](/docs/testing-tiers.md)
+"Plan-to-Landed Gate For Plans With Post-Release Validation" step 2
+requires the follow-up commit to record the validation run URL and
+gives the reasoning as durable external evidence; its named capture
+path produces the `Production Deployed-Surface Smoke` run URL, which is
+the Tier 5 smoke rather than this phase's probes. The parent task
+plan's close-out already uses the broader "verification evidence"
+wording for the same reason.
 
 This is the same exception phase 1 takes, for a different reason: phase
 1's checks wait on the release workflow's function deploy, and this
@@ -205,28 +228,33 @@ plus the probe row under `afterFiles` with `beforeFiles` empty,
 which is the bare-array return's documented treatment
 (https://nextjs.org/docs/app/api-reference/config/next-config-js/rewrites).
 
-### C4. These rows are served-but-unemitted on purpose, and that is not dead config
+### C4. Both rows this phase adds are entry paths, and the plan says so
 
-The parent's C3 requires that the set of paths emitted as short equal
-the set the routing layer rewrites, and calls a rewrite with no builder
-dead config. This phase's two rows have no builder and are not dead
-config, because their consumer is the address bar: a visitor types,
-scans, or pastes them, and the parent's C1 has already established
-that nothing server-rendered will link to them. The set of *emitted*
-short paths stays empty in this phase, which is the parse-before-emit
-direction C3 permits.
+The parent's C3 exempts entry paths — the ones a visitor types, scans
+off print, or pastes — from the builder-side equality, because the
+address bar is what reaches them. Both rows this phase adds are entry
+paths, and this contract is where that claim is made rather than
+assumed: the organizer's root and the feedback path are the two
+addresses going into a newsletter and onto printed material, nothing
+server-rendered will link to either (the parent's C1 ceiling), and the
+set of builder-emitted short paths stays empty across this phase.
 
-The same reasoning does not extend to the quiz's short path, and that
-asymmetry is why it waits. Its consumers include the post-sign-in
-return leg and the event header bar, both of which produce a URL rather
-than receiving one — so for that row, a rewrite without its builders,
-or builders without the rewrite, is the failure C3 describes. This
-phase must not add that row on the theory that it is the same shape as
-these two.
+C3 forbids claiming that exemption for a path a builder will later
+emit, which is a real constraint on this phase rather than a
+formality. The quiz's short path is the case it excludes: its
+consumers include the post-sign-in return leg and the event header
+bar, both of which *produce* a URL rather than receive one. So that
+row cannot ride along here on the theory that it looks like these two
+— it waits for the phase that ships its builders with it.
 
-**Verified by:** the parent task plan's C3 and its phase 4b
-description, which requires the builders, the header bar, and the
-quiz's short-path rewrite to ship together for exactly this reason.
+The check that this contract is being honored is not "did we add only
+two rows." It is: for each row, name what reaches it. A row whose
+answer is a builder does not belong in this phase.
+
+**Verified by:** the parent task plan's C3 carries the entry-path
+clause and the constraint against claiming it for builder-emitted
+paths; its Phases section assigns the quiz's short-path rewrite to 4b
+together with the builders and the header bar, for this reason.
 
 ### C5. Every claim this phase makes about routing is a claim about a production build
 
