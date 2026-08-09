@@ -265,12 +265,37 @@ what reaches them. Nothing emits either one in this phase, because the
 parent's C1 ceiling keeps every server-rendered link on long paths and
 this phase touches no builder.
 
-**Builders do arrive for these two paths later, and that is expected.**
-The emit-side phase points the browser-rendered header bar at the same
-two paths — its per-event table hardcodes the long forms today, which
-is what that phase changes. That is a builder arriving for a path
-already served, so it runs with the direction C3 protects rather than
-against it. Nothing in this phase's rows needs to be held back for it.
+**A builder does arrive for these two paths later, and that is
+expected.** The emit-side phase makes the event header bar resolve
+them on the organizer host, which is a builder arriving for a path
+already served — the direction C3 protects. Nothing in this phase's
+rows needs to be held back for it.
+
+**What that phase cannot do is retarget the shared destinations in
+place, and this plan records why so the constraint is not rediscovered
+there.** The per-event masthead table is read by two consumers, not
+one: the browser-rendered SPA masthead, and the server-rendered
+`apps/site` event landing and feedback pages. Those pages are
+statically generated — the parent's C1 ceiling — so one document
+serves every host, and a short path written into the shared table
+would be emitted on the canonical alias too, where the root is the
+demo index and the short feedback path is not the event. That is an
+I1 break on the host this phase promises to leave alone. So the
+host-aware behavior has to live in the consumer that has a request
+host to resolve against, and the shared table's literals stay valid
+for the host that has none.
+
+**Verified by:** `shared/masthead/mastheadContent.ts` sets the Madrona
+masthead's home and feedback destinations as absolute long-path
+literals while its quiz destination routes through the shared game
+builder; `shared/masthead/EventMasthead.tsx` renders those
+destinations directly as anchor hrefs; and both
+`apps/site/app/event/[slug]/page.tsx` and
+`apps/site/app/event/[slug]/feedback/page.tsx` call `getEventMasthead`
+for the slug they render, so the table's server-rendered consumer is
+`apps/site`, not only the SPA. Surfaced by Codex review on this plan's
+PR, against an earlier draft of this contract that described the table
+as browser-rendered only.
 
 What this phase must not do is add a rewrite for a path whose builder
 ships *before or with* it elsewhere. The quiz's short path is that
@@ -281,13 +306,10 @@ phase. So the honoring check for each row is *what reaches this the
 day it ships* — an answer of "nothing until a later phase" disqualifies
 the row.
 
-**Verified by:** `shared/masthead/mastheadContent.ts` sets the Madrona
-masthead's home and feedback destinations as absolute long-path
-literals while its quiz destination already routes through the shared
-game builder, so the header bar is a builder for exactly these two
-paths once the emit-side phase retargets it; the parent task plan's C3
-carries the directional ordering rule, and its Phases section assigns
-the quiz's short-path rewrite to 4b together with its builders.
+**Verified by:** the parent task plan's C3 carries the directional
+ordering rule, and its Phases section assigns the quiz's short-path
+rewrite to 4b together with its builders, naming the auth return leg
+as the live case for the 404 direction.
 
 ### C5. Every claim this phase makes about routing is a claim about a production build
 

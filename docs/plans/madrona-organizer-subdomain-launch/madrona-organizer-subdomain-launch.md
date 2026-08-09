@@ -128,10 +128,13 @@ and its builders land together, both sets change in the same PR.
 
 The ordering this produces across the phases here: the routing phase
 ships the landing and feedback rewrites, reached from that moment by
-the address bar; the emit-side phase later points the browser-rendered
-header bar at those same two paths, which is a builder arriving for an
-already-served path — the safe direction. The quiz's short path has
-the opposite shape and is why the parse/emit split exists at all.
+the address bar; whatever later phase first emits either path does so
+against a rewrite that is already live — a builder arriving for an
+already-served path, the safe direction. The quiz's short path has the
+opposite shape and is why the parse/emit split exists at all. Which
+surfaces become emitters, and by what mechanism, is the emit-side
+phase's plan to make — this contract binds the ordering, not the
+design.
 
 Two earlier forms of this contract were wrong in opposite directions.
 The first stated the equality unconditionally, which made the routing
@@ -206,6 +209,20 @@ per C3:
   quiz: a builder emitting a short path before the rewrite exists
   produces a 404, and the rewrite without the header change produces
   a header that walks visitors back off short paths.
+
+  **The per-event masthead table cannot be retargeted in place.** It
+  has two consumers: the browser-rendered SPA masthead, which has a
+  request host, and the server-rendered `apps/site` event pages, which
+  do not — they are statically generated per C1, so one document
+  serves every host. A short path written into the shared destinations
+  is therefore emitted on the canonical alias too, where the root is
+  the demo index and the short feedback path is not the event: an I1
+  break. Host-aware resolution belongs in the consumer that has a host
+  to resolve against. Recorded here rather than left for 4b to
+  rediscover. **Verified by:** `shared/masthead/EventMasthead.tsx`
+  renders the table's destinations directly as anchor hrefs, and both
+  `apps/site/app/event/[slug]/page.tsx` and its `feedback/page.tsx`
+  sibling call `getEventMasthead` for the slug they render.
 
 **On the phase/task classification — settled by the stakeholder.**
 Phases 1 and 2 each close a live defect and are technically
