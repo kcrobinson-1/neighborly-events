@@ -44,6 +44,56 @@ Deno.test("getAllowedOrigin admits the canonical apps/site Vercel alias by defau
   );
 });
 
+Deno.test("getAllowedOrigin admits the Madrona organizer origin by default (in code, not via EXTRA_ALLOWED_ORIGINS)", async () => {
+  // Load-bearing falsifier for the phase-1 contract: the organizer
+  // origin is admitted with BOTH env vars unset. If this entry had been
+  // put in `EXTRA_ALLOWED_ORIGINS` instead of the in-code allowlist,
+  // this assertion fails.
+  await withEnvironment(
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
+    () => {
+      const organizerOrigin = "https://music.madrona.us";
+      const request = createOriginRequest(
+        "https://example.com",
+        {},
+        organizerOrigin,
+      );
+
+      assertEquals(getAllowedOrigin(request), organizerOrigin);
+    },
+  );
+});
+
+Deno.test("getAllowedOrigin REJECTS organizer-domain hosts that are not the exact allowlisted origin", async () => {
+  // Admission is exact-string membership, not a domain rule. Nothing
+  // keys on "is this a custom domain" or on the registrable domain, so
+  // the apex, an unlisted subdomain, an http:// spoof, and a suffix
+  // lookalike registered by someone else all stay rejected.
+  await withEnvironment(
+    { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: null },
+    () => {
+      const rejected = [
+        "https://madrona.us",
+        "https://www.madrona.us",
+        "https://other.madrona.us",
+        "http://music.madrona.us",
+        "https://music.madrona.us.evil.example",
+        "https://music.madrona.us:8443",
+      ];
+
+      for (const origin of rejected) {
+        assertEquals(
+          getAllowedOrigin(
+            createOriginRequest("https://example.com", {}, origin),
+          ),
+          null,
+          `expected ${origin} to be rejected`,
+        );
+      }
+    },
+  );
+});
+
 Deno.test("getAllowedOrigin admits apps/site Vercel deployment-hash preview aliases when scope is configured", async () => {
   await withEnvironment(
     { EXTRA_ALLOWED_ORIGINS: null, APPS_SITE_VERCEL_SCOPE: TEST_SCOPE },

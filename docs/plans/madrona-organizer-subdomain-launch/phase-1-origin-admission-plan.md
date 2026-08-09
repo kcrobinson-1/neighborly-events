@@ -1,6 +1,6 @@
 # Phase 1 — Origin admission at the edge-function boundary
 
-**Status:** `Proposed`
+**Status:** `In progress pending organizer-origin admission`
 
 One PR, plus a doc-only close-out commit.
 
@@ -86,9 +86,11 @@ so it was never the place a launched origin was meant to live.
 
 **Verified by:** `getAllowedOrigins` in that module unions the
 built-in set with `EXTRA_ALLOWED_ORIGINS` and documents the additive
-contract; the project's Edge Function Secrets page lists only
-`SESSION_SIGNING_SECRET` and `APPS_SITE_VERCEL_SCOPE`, so the env var
-is unset today and nothing depends on it.
+contract; the project's Edge Function Secrets list carries no
+`EXTRA_ALLOWED_ORIGINS` entry — the operator-set secrets are
+`SESSION_SIGNING_SECRET` and `APPS_SITE_VERCEL_SCOPE`, alongside the
+platform-managed `SUPABASE_*` set — so the env var is unset today and
+nothing depends on it.
 
 ### C2. Admission is only as complete as the deploy
 
@@ -154,6 +156,19 @@ callout.*
 | `supabase/functions/_shared/cors.ts` |
 | `tests/supabase/functions/cors.test.ts` |
 | `docs/operations.md` |
+| `docs/dev.md` |
+
+`docs/dev.md` was added during implementation. The parent's
+Documentation Currency PR Gate requires the "Vercel" onboarding steps
+to end up naming origin admission plus redeploy alongside the other
+per-host requirements, and this phase is the only one that owns that
+clause — deferring it would have left it assigned to no phase. The
+edit adds only that clause as a step; the auth-redirect and
+host-mapping entries belong to phases 2 and 3. It does name both as
+known-and-not-yet-supported, because a checklist that warns against
+partial fulfillment while listing two of four requirements reads as
+complete when it is not — the failure the section exists to prevent.
+Each later phase converts its line into a step as it lands.
 
 **Intentionally not touched**
 
