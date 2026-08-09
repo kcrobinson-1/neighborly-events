@@ -60,9 +60,10 @@ After all phases land:
 - The quiz completes and mints an `MIP-####` code on that origin.
 - Organizer and volunteer sign-in initiated from that origin returns
   to that origin.
-- Page metadata is unchanged: canonical and Open Graph URLs name the
-  site origin on every host, per C4. Retargeting them per host needs
-  the same dynamic rendering C4b defers, so it is not in this plan.
+- Page metadata is unchanged: `openGraph.url` names the site origin
+  on every host, per C4. Retargeting it per host needs the same
+  dynamic rendering C4b defers. No canonical link is added either —
+  the site emits none today, and adding one is a separate surface.
 - Every other host — the canonical `*.vercel.app` alias, preview
   aliases, localhost — behaves exactly as it does today, including
   the demo index at `/` and the existing long event paths.
@@ -123,12 +124,11 @@ The address bar reads `music.madrona.us/game` after load. This
 requires C5's parse side; the C2 row for `/game` ships in phase 4b,
 never before 4a.
 
-### C4. Page metadata stays on the canonical site origin
+### C4. Page metadata stays on the site origin, and no canonical link is added
 
 Metadata is **not** retargeted per host. Event pages emit the
-site-wide origin in `openGraph.url` and the canonical link on every
-host, including the organizer host, and `NEXT_PUBLIC_SITE_ORIGIN`
-is not changed.
+site-wide origin in `openGraph.url` on every host, including the
+organizer host, and `NEXT_PUBLIC_SITE_ORIGIN` is not changed.
 
 This is the same constraint C4b names, applied to metadata:
 `generateMetadata` runs at build time for a statically generated
@@ -137,25 +137,34 @@ base could advertise the organizer host on *both* aliases or the
 site origin on both — it cannot advertise a different origin per
 host. Only dynamic rendering can, which C4b defers.
 
+**No canonical link is in scope, because none exists to retarget.**
+The site emits no `<link rel="canonical">` on any route today. This
+plan does not add one: doing so is a new metadata surface rather
+than a change to an existing one, and it is not what makes the
+organizer host work. The absence does become *newly relevant* — two
+hosts now serve the same page, which is the duplicate-content case
+canonical links resolve — so it is filed in
+[`docs/backlog.md`](/docs/backlog.md) rather than carried here.
+Unlike the per-host problem, that fix is compatible with static
+rendering, so it is a separate entry with a separate cause.
+
 **What this costs, stated plainly:** a link shared from the
 organizer host renders its preview with the canonical alias as the
 URL. Title, description, and image are unaffected, so the preview
 is correct in everything except the domain it displays.
 
-**What it does not cost:** the canonical link naming one origin
-across both hosts is the behavior `rel="canonical"` exists for — it
-tells search engines the two hosts are one page rather than
-splitting them as duplicates. Retargeting it per host would have
-been the less correct choice on that axis.
-
-**Verified by:** `apps/site/app/layout.tsx` sets a single
-`metadataBase` from `resolveMetadataBaseOrigin()`;
-`apps/site/app/event/[slug]/page.tsx` `generateMetadata` emits
-`openGraph.url` as a relative event path, which resolves against
-that one base for every event, and the same file declares
-`generateStaticParams` — so both the base and the relative path are
-fixed at build time. Retargeting the global instead would make every
-other event's pages advertise URLs on Madrona's domain.
+**Verified by:** `apps/site/app/layout.tsx` sets `title` and a
+single `metadataBase` from `resolveMetadataBaseOrigin()` and
+nothing else; `apps/site/app/event/[slug]/page.tsx`
+`generateMetadata` emits `openGraph.url` as a relative event path,
+which resolves against that one base for every event, and the same
+file declares `generateStaticParams` — so both the base and the
+relative path are fixed at build time. Neither file sets
+`alternates.canonical`, and Next.js emits the canonical link only
+from that field rather than deriving it from Open Graph metadata,
+which is why no canonical link is served. Retargeting the global
+instead would make every other event's pages advertise URLs on
+Madrona's domain.
 
 ### C4b. Short paths are an entry form, not a navigation invariant
 
@@ -465,23 +474,31 @@ completion records, and the failure this item prevents is
 verification against the wrong event — a distinct name is
 sufficient for that.
 
-It gates no *implementing* phase and may land in any of them or in
-its own PR, but it is a required close-out boundary: the failure it
-prevents is verifying phase 4b against the wrong event, so the
-`Landed` flip cannot claim a verified organizer host while two rows
-still answer to the same name. Its validation is part of the
-close-out walk — a query of `game_events` returns exactly one row
-carrying the Madrona display name, and the decoy's entitlement rows
-are still reachable under their own event after the rename (per
-R7, the join key is re-derived before the rename targets anything).
+It gates no *implementing* phase and may ride in any of them or in
+its own PR, but it **must land no later than phase 4b**. Two
+reasons, and the second is what fixes the sequencing: the failure it
+prevents is verifying phase 4b against the wrong event, so it has to
+precede that verification; and letting it trail 4b would make 4b not
+the last implementing PR, contradicting the close-out rationale
+below.
+
+Its validation is part of the close-out walk — a query of
+`game_events` returns exactly one row carrying the Madrona display
+name, and the decoy's entitlement rows are still reachable under
+their own event after the rename (per R7, the join key is re-derived
+before the rename targets anything).
 
 ## Status lifecycle and close-out
 
-The plan ships across five implementing PRs whose merge order is
-knowable in advance (1 and 2 are independent and land first; 3 →
-4a → 4b are strictly ordered), so phase 4b is the clearly-last-to-
-merge PR and carries the close-out. The **Parallel implementing
-PRs** exception is not invoked.
+Every implementing PR's position in the merge order is knowable in
+advance: phases 1 and 2 are independent of the routing work and land
+first, phases 3 → 4a → 4b are strictly ordered, and the data-hygiene
+item is bounded to land no later than 4b per the rule above. Phase
+4b is therefore the clearly-last-to-merge PR and carries the
+close-out, and the **Parallel implementing PRs** exception is not
+invoked — that exception exists for plans where no PR is clearly
+last, which the data item's ordering bound is precisely what
+prevents here.
 
 Phase 4b's Validation Gate names checks that structurally cannot
 run pre-merge (see "Named constraint on the gate" below), so the
@@ -545,12 +562,14 @@ unchanged.
 `/` and `/feedback` on the organizer host return the Madrona pages
 with the path unchanged; `/event/madrona*` still resolves; the
 canonical alias still serves the demo index at `/` and still 404s
-`/feedback`. Per C4 the event page's `og:url` and canonical link
-name the site origin on **both** hosts; the assertion is that they
-are identical across the two, which is the check that would fail if
-someone later retargeted `NEXT_PUBLIC_SITE_ORIGIN` to close the
-metadata gap the cheap way and pointed every other event at
-Madrona's domain.
+`/feedback`. Per C4 the event page's `og:url` names the site origin
+on **both** hosts; the assertion is that it is identical across the
+two, which is the check that would fail if someone later retargeted
+`NEXT_PUBLIC_SITE_ORIGIN` to close the metadata gap the cheap way
+and pointed every other event at Madrona's domain. Nothing is
+asserted about a canonical link: per C4 the site emits none, so an
+assertion on it would fail on both hosts for a reason unrelated to
+this plan.
 
 **Phase 4a:** `npm test` plus `npm run build:web`. The gate for an
 inert change is evidence of inertness: rendered output and emitted

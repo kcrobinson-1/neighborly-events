@@ -401,6 +401,24 @@ Reduce deployment risk and contributor friction before the live event.
   is meant to be exhaustive or merely representative.
   Detail: N/A
 
+- [ ] **`ux` No page emits a canonical link, and two hosts now serve the same content**
+  [`apps/site/app/layout.tsx`](/apps/site/app/layout.tsx) sets `title`
+  and `metadataBase`; [`apps/site/app/event/[slug]/page.tsx`](/apps/site/app/event/[slug]/page.tsx)
+  `generateMetadata` sets `openGraph`, `twitter`, and `robots`. Neither
+  sets `alternates.canonical`, and Next.js emits `<link rel="canonical">`
+  only from that field — it does not derive one from `openGraph.url` —
+  so no route serves a canonical link. This was harmless while each
+  page had one URL. Once an organizer domain serves the same event
+  pages as the canonical alias (see
+  [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)),
+  the identical content is reachable on two hosts with nothing telling
+  a search engine they are one page rather than duplicates. **Goal:**
+  each page declares one canonical URL. Note this is *not* the
+  build-time ceiling the sibling entry describes: a canonical link
+  naming one fixed origin is compatible with static rendering, so it
+  is buildable today and independent of that decision.
+  Detail: N/A
+
 - [ ] **`ux` Organizer hosts can't get host-specific paths or share metadata**
   Two symptoms, one cause. On an organizer host such as
   `music.madrona.us`, (a) short paths are the entry form — typed,
