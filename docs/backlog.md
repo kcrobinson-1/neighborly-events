@@ -410,7 +410,7 @@ Reduce deployment risk and contributor friction before the live event.
   so no route serves a canonical link. This was harmless while each
   page had one URL. Once an organizer domain serves the same event
   pages as the canonical alias (see
-  [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)),
+  [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)),
   the identical content is reachable on two hosts with nothing telling
   a search engine they are one page rather than duplicates. **Goal:**
   each page declares one canonical URL. Note this is *not* the
@@ -441,7 +441,7 @@ Reduce deployment risk and contributor friction before the live event.
   the long paths serve identically on the organizer host, and the
   shared previews carry the right content — so both are consistency
   issues, not reachability;
-  [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)
+  [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
   C4 and C4b accept them deliberately for one event. **Goal:** a
   visitor who arrives on a short path stays on short paths through
   in-page navigation, and a link shared from an organizer host shows
@@ -466,7 +466,7 @@ Reduce deployment risk and contributor friction before the live event.
   whatever generic title that document carries. This was a latent gap
   while the quiz URL was a long per-slug path nobody typed from memory.
   The organizer-subdomain work at
-  [`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md)
+  [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
   makes the organizer host's `/game` the short, memorable form of that
   URL — which is exactly the shape people paste into messages — so the
   gap becomes the rendering of the most-shared link on the platform.

@@ -1,7 +1,8 @@
 # Scoping: Madrona organizer-subdomain launch readiness
 
 Scoping doc for the task plan at
-[`docs/plans/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch.md).
+[`madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md),
+whose per-phase contracts live in sibling phase plan files.
 Transient — deletes with its sibling plan at terminal PR.
 
 ## Context
@@ -222,13 +223,13 @@ https://nextjs.org/docs/app/api-reference/file-conventions/proxy
 
 This supersedes the middleware shape a working prototype used during
 scoping, and reframes D4 from a middleware-matcher decision to a
-constraint on rewrite sources. See the plan's Contracts C2 for the
+constraint on rewrite sources. The routing phase's plan owns the
 final form.
 
 ## Open decisions to make at plan-drafting
 
 **All resolved.** Recorded here as handoff outcomes; the durable
-shapes live in the plan's Contracts and Phases sections, not here.
+shapes live in the task plan and its phase plans, not here.
 
 - **O1 — short-path shape for `/game`.** Resolved to the
   host-aware route contract (true short URL), not a redirect. The
@@ -251,15 +252,18 @@ shapes live in the plan's Contracts and Phases sections, not here.
   radius: real flows pass explicit allowlisted redirect URLs.
 - **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone.
   It feeds one site-wide `metadataBase`, so retargeting it would
-  make the other two events advertise URLs on Madrona's domain.
+  make every other event advertise URLs on Madrona's domain.
   This scoping proposed a per-event metadata base as the
   replacement; plan review found that shape unbuildable at the
   plan's chosen cost, because the event routes are statically
   generated and `generateMetadata` therefore has no request host to
-  branch on. The plan's C4 records the outcome — metadata stays on
-  the site origin for every host — and files per-host metadata with
-  the dynamic-rendering tradeoff it shares with short-path
-  navigation.
+  branch on. The task plan's C2 records the outcome — metadata stays
+  on the site origin for every host — and files per-host metadata
+  with the dynamic-rendering tradeoff it shares with short-path
+  navigation. Review also found that the canonical link this scoping
+  assumed alongside `openGraph.url` is not emitted at all, so there
+  was never one to retarget; that gap is filed separately, because
+  fixing it is compatible with static rendering.
 - **O5 — volunteer authentication.** Struck by decision; the
   2-messages/hour ceiling is accepted rather than solved. Carried
   into the plan's Risk Register with the condition that resurfaces
@@ -292,7 +296,7 @@ is authoritative; this records what handed over.
 4. **Host-aware route contract.** Made unconditional by O1's
    resolution, and split into parse and emit PRs by the plan's
    parse-before-emit invariant. Closes D3, and closes D11 only for
-   the browser-rendered masthead; the plan's C4b explains why the
+   the browser-rendered masthead; the task plan's C2 explains why the
    server-rendered half stays on long paths.
 
 The lookalike-event cleanup (D9) rides along per O6 rather than
@@ -332,7 +336,8 @@ established under conditions the plan cannot assume persist:
   import graph rather than from a search for the module path —
   functions that reach it through a shared helper do not appear in
   such a search, and a partial redeploy leaves those origins
-  rejected. The plan's C7 states the contract that depends on this.
+  rejected. The origin-admission phase plan states the contract that depends on
+  this.
 - **Deployed-vs-repo drift.** D5 cites the deployed function bundle,
   which matched `main` at the time of reading. Re-confirm if any
   function is deployed in the interim.
