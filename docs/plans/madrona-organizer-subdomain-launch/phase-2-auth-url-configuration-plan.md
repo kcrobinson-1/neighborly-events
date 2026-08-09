@@ -2,36 +2,9 @@
 
 **Status:** `Proposed`
 
-One PR, and no close-out commit.
-
-**Status lifecycle.** This phase flips `Proposed` → `Landed` in its own
-implementing PR — the default under the Plan-to-PR Completion Gate. It
-does **not** take the **Post-release validation** exception, and the
-reason it differs from phase 1 is worth stating rather than inheriting.
-
-Phase 1's checks run against deployed edge functions, and the code that
-carries its change reaches the function runtime only after a merge to
-`main`; the check is therefore structurally post-merge. Phase 2's change
-is not carried by anything this PR ships. The configuration lives in the
-Supabase project, takes effect when it is saved, and is reachable in
-production from that moment — before the PR is opened, and independent
-of whether it is ever merged. Every check this phase names can therefore
-run before the PR exists, which is exactly the condition the default
-same-PR flip is for. Reaching for the exception here would claim a
-post-merge dependency that does not exist.
-
-**Verified by:** `supabase/config.toml` carries only per-function
-sections and no auth block, so Auth URL configuration has no
-representation in the repo;
-[`docs/operations.md`](/docs/operations.md) "Manually Maintained
-Settings" lists Auth URL configuration under its Supabase subsection; and
-`.github/workflows/release.yml`'s Supabase job pushes migrations and
-deploys functions without pushing configuration, so no merge to `main`
-writes this setting.
-
-The consequence of that same ordering is that the PR reviews the
-*record* of a change already live, not a proposal. C3 below states what
-that requires.
+One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
+in that same PR rather than in a follow-up; C3 says why, and what the
+ordering it implies requires.
 
 ## Context
 
@@ -139,11 +112,37 @@ organizer host uses — a reader who finds a wildcard entry against a
 doc that describes only exact paths has no way to tell a decision from a
 mistake.
 
-### C3. The configuration change lands before the PR, and the PR records the live state
+### C3. The configuration change lands before the PR, and Status flips in that PR
 
-The ordering here is contract, not trajectory: what the PR merges is a
-description, and a description is only correct relative to a state that
-already exists.
+This phase flips `Proposed` → `Landed` in its own implementing PR — the
+default under the Plan-to-PR Completion Gate. It does **not** take the
+**Post-release validation** exception, and the reason it differs from
+phase 1 is worth stating rather than inheriting.
+
+Phase 1's checks run against deployed edge functions, and the code that
+carries its change reaches the function runtime only after a merge to
+`main`; the check is therefore structurally post-merge. This phase's
+change is not carried by anything its PR ships. The configuration lives
+in the Supabase project, takes effect when it is saved, and is reachable
+in production from that moment — before the PR is opened, and
+independent of whether it is ever merged. Every check this phase names
+can therefore run before the PR exists, which is exactly the condition
+the default same-PR flip is for. Reaching for the exception would claim
+a post-merge dependency that does not exist.
+
+**Verified by:** `supabase/config.toml` carries only per-function
+sections and no auth block, so Auth URL configuration has no
+representation in the repo;
+[`docs/operations.md`](/docs/operations.md) "Manually Maintained
+Settings" lists Auth URL configuration under its Supabase subsection;
+and `.github/workflows/release.yml`'s Supabase job pushes migrations and
+deploys functions without pushing configuration, so no merge to `main`
+writes this setting.
+
+What follows from the same fact is an ordering, and the ordering is
+contract rather than trajectory: what the PR merges is a description,
+and a description is only correct relative to a state that already
+exists.
 
 - **The prior values are captured before anything is edited.** The
   console keeps no history, so a rollback that is not recorded first is
@@ -380,9 +379,12 @@ Two statements are load-bearing enough to name specifically:
 
 - The organizer-subdomain onboarding requirements. Per the parent's
   Documentation Currency PR Gate, `docs/dev.md` "Vercel" must end up
-  naming every requirement together; this phase contributes the redirect
-  admission, alongside the Vercel alias, the mapping entry, and the
-  origin admission plus redeploy that other phases contribute.
+  naming every requirement together; this phase contributes the Supabase
+  Auth redirect entry, alongside the Vercel alias, the mapping entry,
+  and the edge-function origin admission plus redeploy that other phases
+  contribute. That list did not carry the redirect entry when this plan
+  was drafted — the omission was found in review of this phase and fixed
+  in the parent, since the parent owns the close-out the list gates.
 - The convention the redirect allowlist follows, per C2 — that it now
   admits an exact-path shape and a wildcard-path shape, and which host
   uses which.

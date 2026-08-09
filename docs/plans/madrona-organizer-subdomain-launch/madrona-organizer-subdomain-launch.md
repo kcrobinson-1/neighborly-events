@@ -304,9 +304,13 @@ false by construction.
 Each phase updates the operator-facing docs its own change
 invalidates. Across the task, the onboarding steps in
 [`docs/dev.md`](/docs/dev.md) "Vercel" must end up naming every
-requirement together — Vercel alias, mapping entry, and origin
-admission plus redeploy — because satisfying only some of them is the
-failure that produced this plan.
+requirement together — Vercel alias, mapping entry, edge-function
+origin admission plus redeploy, and the Supabase Auth redirect entry —
+because satisfying only some of them is the failure that produced this
+plan. The auth redirect belongs on that list for the same reason the
+others do: an organizer host that is aliased, mapped, and admitted at
+the edge still cannot complete a sign-in without it, and nothing about
+the first three requirements surfaces the fourth.
 
 ## Risk Register
 
