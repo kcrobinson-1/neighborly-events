@@ -448,13 +448,24 @@ Reduce deployment risk and contributor friction before the live event.
   in-page navigation, and a link shared from an organizer host shows
   that host. Note the shape of the cause before picking a fix: the
   request host has to reach the code that emits the href and the
-  metadata, so the options are
-  rendering the event routes dynamically (server reads the request
-  host, at the cost of per-request rendering on the day-of landing
-  page attendees load on cell data) or prerendering a per-host variant
-  (keeps static output, doubles the prerender set per organizer host).
-  The call gets easier once there is a second organizer to weigh it
-  against.
+  metadata, and three shapes get it there. Rendering the event routes
+  dynamically lets the server read the request host, at the cost of
+  per-request rendering on the day-of landing page attendees load on
+  cell data. Prerendering a per-host variant keeps static output and
+  doubles the prerender set per organizer host. Marking the
+  link-bearing components `"use client"` and correcting hrefs at
+  hydration keeps the initial HTML on long paths — which is what
+  crawlers and no-JS clients should see — and fixes the href before a
+  visitor can click; `apps/site` already ships client components
+  (including [`LandingTonightSections.tsx`](/apps/site/components/event/LandingTonightSections.tsx)),
+  so it is an existing pattern, but it makes hrefs
+  hydration-dependent, so a hydration mismatch degrades navigation
+  silently rather than loudly, and it gives components that are plain
+  server output today a client lifecycle.
+  **The third shape fixes only the navigation symptom, not the
+  metadata one** — `og:url` is read by crawlers that do not run JS, so
+  no client-side correction reaches it. The call gets easier once
+  there is a second organizer to weigh it against.
   Detail: N/A
 
 - [ ] **`ux` The game route emits no share metadata**

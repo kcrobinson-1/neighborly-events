@@ -41,13 +41,23 @@ that makes the event work on the organizer's domain at all, and it
 is worth landing on its own because it needs none of the routing
 work the later phases do.
 
-**Scoping-doc skip.** This phase invokes the narrow-surface
-carve-out: it touches one subsystem (edge-function shared code),
-well under the file-count bound, adds no new public-API contract or
-route family, introduces no cross-cutting invariant of its own
-(it consumes the parent's), and uses the allowlist mechanism already
-in the codebase. Per that carve-out the reality-check inputs are
-absorbed inline below rather than in a separate artifact.
+**Scoping.** This phase does not carry its own scoping doc and does
+not need the narrow-surface carve-out to justify that: the task's
+scoping doc already owns this phase's deliberation. D5 establishes
+that the origin is rejected and that nothing mitigates it, and O2
+resolves where the entry belongs — in code rather than in a secret —
+with the rejected alternative recorded. Those are exactly the
+decisions a phase-1 scoping doc would have had to make, and
+duplicating them here would be the scoping-restates-plan trap.
+
+An earlier draft invoked the narrow-surface carve-out instead. That
+was the wrong justification: the carve-out is for plans with *no*
+scoping deliberation behind them, and it invites an argument about
+whether an allowlist edit counts as an authz boundary. The reason
+this phase needs no second artifact is that the first one covers it.
+The reality-check inputs below are the phase-specific residue —
+claims that can drift between the task's scoping and this phase's
+implementation.
 
 ## Goal
 

@@ -4,9 +4,10 @@
 
 Task plan with separated phase plan files, N = 4 phases plus one
 independent data item. Per-phase contracts, file inventories, and
-validation gates live in the phase plans, which are drafted
-just-in-time before each phase's implementation; this doc owns only
-what has to hold *across* phases.
+per-phase validation live in the phase plans, which are drafted
+just-in-time before each phase's implementation; this doc owns what
+has to hold *across* phases, including the acceptance walk under
+Validation Gate that no single phase can run.
 
 Scoping doc:
 [`scoping/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md).
@@ -65,27 +66,42 @@ scoped to a single phase — rewrite sources, builder signatures,
 masthead destinations, function deploy mechanics, metadata fields —
 belongs to that phase's plan.
 
-### C1. One authoring site per layer for the host→event mapping
+### C1. The host→event mapping has one authoring site
 
 An organizer hostname maps to the event slug it serves. That mapping
-is authored in `apps/site` for the routing layer and mirrored in
-`shared/` for the client route layer, and nowhere else. A further
-consumer reads one of those rather than adding a table.
+is authored **once**. Every consumer — the routing layer's rewrites
+and the client route layer's mount resolution — reads that one
+source rather than restating it.
 
-Two layers is a deliberate ceiling, not an accident: the site config
-is evaluated in Node before any bundle exists, and the SPA resolves
-its mount in the browser, so neither can read the other's copy. When
-a second organizer arrives, a `game_events` column with a
-resolve-by-host path replaces both; it is not built now for one host.
+**A single shared module is the target shape**, and the routing
+phase's plan owns proving it. `shared/` is the natural home: it is
+already imported by both apps, and `shared/masthead/mastheadContent.ts`
+already carries a per-event table there. The open question is whether
+Next's config loader resolves a `shared/` import under the repo's
+extension-ful convention, since `apps/site/next.config.ts` imports
+only the `NextConfig` type today and has never pulled in a local
+module. That is a build check, not a design question, and it belongs
+to the phase that writes the import.
 
-**Verified by:** `apps/site/next.config.ts` imports only the
-`NextConfig` type today, so the config has no access to app-layer
-modules at evaluation time; `apps/web/src/usePathnameNavigation.ts`
-reads `window.location.pathname` and `apps/web/src/App.tsx`
-`getPageContent` dispatches on it, so the SPA's only input is the
-browser URL. `shared/masthead/mastheadContent.ts` already carries a
-per-event table in `shared/`, so the mirror is a precedent rather
-than a new pattern.
+**If and only if that resolution fails**, the fallback is a second
+copy — and it is a copy under an explicit no-drift obligation, not
+an independent owner: the phase that introduces it says which side is
+canonical and asserts the two against each other in tests. A
+duplicated mapping that silently disagrees would let the rewrite and
+the emitted paths resolve different events, which is why the
+single-source shape is the target rather than merely the tidier
+option.
+
+When a second organizer arrives, a `game_events` column with a
+resolve-by-host path replaces whatever shape this lands on; it is not
+built now for one host.
+
+**Verified by:** `apps/site/app/event/[slug]/page.tsx` imports
+`shared/masthead`, `shared/styles`, and `shared/urls` by relative
+path with `.ts` extensions, so app-layer code already consumes
+`shared/`; `apps/site/next.config.ts` imports only a type today, so
+the config loader's behavior on such an import is untested here
+rather than known to fail.
 
 ### C2. Short paths are an entry form, not a navigation invariant
 
@@ -189,13 +205,26 @@ the sequencing is reviewable now.
 **Phase 1 — Origin admission at the edge-function boundary.**
 [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md).
 Admits the organizer origin to the edge functions. Independently
-verifiable and independently valuable: it unblocks the quiz at its
-existing long path before any routing work exists.
+verifiable and independently revertible, and it depends on nothing
+else, which is why it goes first.
+
+It is **not** independently valuable, and an earlier draft of this
+plan said it was. Nobody reaches the organizer host for Madrona until
+phase 3 makes it serve the event — the host still returns the demo
+index until then — so admitting the origin ships no outcome a visitor
+or organizer can observe on its own. That is what keeps it a phase
+under the task/phase picker rather than a task in its own right: it
+is a sequence step toward one outcome, not a unit with standalone
+stakeholder value. The same holds for phase 2, whose auth
+configuration is unobservable until there is a reason to sign in from
+that host.
 
 **Phase 2 — Auth URL configuration.** Retargets Site URL to the
 canonical site origin and admits the organizer host to the redirect
 allowlist. Console-side plus the docs that record it; no application
-code. Independent of every other phase.
+code. Orderable independently of every other phase — it shares no
+surface with them — which is a statement about sequencing freedom,
+not about standalone value.
 
 **Phase 3 — Organizer host mapping in `apps/site`.** The organizer
 host serves the event landing and feedback surfaces at short paths.
@@ -249,6 +278,38 @@ It gates no implementing phase and may ride in any of them, but it
 depends on it, and because letting it trail 4b would make 4b not the
 last implementing PR.
 
+## Validation Gate
+
+Each phase carries its own gate; this one is the acceptance walk for
+the task as a whole, run once at close-out. It exists because the
+Goal's outcomes are the *composition* of the phases — no single phase
+plan owns "a visitor can do the whole thing on this host," and a task
+whose phases each pass individually can still fail as a journey.
+
+On production, on the organizer host, in a private window, on a phone
+and a laptop:
+
+- **The attendee journey, unbroken.** Arrive at the short root, reach
+  the quiz, complete it, and receive an `MIP-####` code — without
+  hitting a rejected origin, a 404, or a page that fails to load, at
+  any step and on any of the surfaces the journey crosses.
+- **The organizer journey.** Sign in from that host and land back on
+  it, then exercise an authoring action that calls an edge function.
+  This is the check that composes phase 1's admission with phase 2's
+  redirect configuration; each phase verifies its own half, and only
+  this step verifies that a real sign-in followed by real work
+  succeeds end to end.
+- **The event is unambiguous.** A database built from migrations has
+  one row carrying the Madrona display name, so the checks above are
+  known to have run against the right event.
+- **Every other host is untouched (I1).** The same attendee journey
+  on the canonical alias behaves as it does today, and that alias
+  still serves the demo index at its root.
+
+**Named constraint.** This walk is post-merge by construction — see
+the constraint below — so it gates the `Landed` flip rather than any
+PR.
+
 ## Status lifecycle and close-out
 
 Every implementing PR's position in the merge order is knowable in
@@ -271,7 +332,8 @@ Gate For Plans With Post-Release Validation":
   for the check, used verbatim wherever the status is written.
 - `In progress pending organizer-host verification` → `Landed` in a
   follow-up doc-only commit once the production checks and the
-  data-hygiene validation pass, recording the verification evidence.
+  data-hygiene validation pass **and the task-level Validation Gate
+  above passes**, recording the verification evidence.
   That same commit deletes the scoping doc. The data-hygiene check is
   satisfied against a database built from migrations, not against
   production alone — per that item, a production-only edit does not
@@ -302,10 +364,14 @@ some of them is the failure that produced this plan.
 Cross-phase risks only; risks scoped to one phase live in that
 phase's plan.
 
-**R1. The mapping is duplicated across two layers.** C1 bounds it and
-names the migration, but until a second organizer forces that
-migration, the two copies can drift. Each phase that touches either
-copy asserts against the other.
+**R1. The mapping may end up duplicated.** C1 targets a single shared
+module, but that rests on a config-loader resolution check the
+routing phase has to run. If it fails, the fallback is a second copy,
+and two copies drift silently — a disagreement makes the rewrite and
+the emitted paths resolve different events, with nothing failing
+loudly. The phase that introduces a second copy owns the no-drift
+assertion; this risk is closed either by the single-module shape
+landing or by that assertion existing.
 
 **R2. Deployment protection.** Both Vercel projects carry SSO
 protection scoped to all deployments except custom domains.
@@ -345,8 +411,8 @@ against the generated types before writing the change.
 - Adding a canonical link. The site emits none today; that is a new
   metadata surface, not a change this launch needs, and it is filed
   separately because the fix is compatible with static rendering.
-- A generic organizer-onboarding self-serve flow. Adding a row to
-  each table per C1 is the deliberate ceiling for one organizer.
+- A generic organizer-onboarding self-serve flow. Adding a mapping
+  entry per C1 is the deliberate ceiling for one organizer.
 - Custom SMTP (R3).
 - Relocating the game out of `apps/web` into `apps/site`. Considered
   during scoping as the alternative that removes the pathname
