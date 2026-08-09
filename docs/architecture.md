@@ -1513,7 +1513,8 @@ Customer-visible URLs resolve on apps/site's primary alias; the
 apps/web plugin deployment is reached only through one-direction
 proxy rewrites from apps/site for the plugin-owned route prefixes.
 `apps/site/next.config.ts` is the routing authority. Rewrites resolve
-in two phases, and the phase matters more than file order does:
+by phase before they resolve by order, and this config uses two of
+Next.js' three phases:
 
 - **`beforeFiles`** rows are matched *ahead of* the filesystem check,
   so a row here wins against a real route. That is what lets an
@@ -1522,6 +1523,8 @@ in two phases, and the phase matters more than file order does:
 - **`afterFiles`** rows are consulted only once nothing on the
   filesystem matched. A returned bare array is treated as `afterFiles`,
   which is the phase every proxy row has always run in.
+- **`fallback`** — rows that run after dynamic routes too — is unused
+  here and carries no rows.
 
 Within a phase, rewrites apply in file order ("first match wins"), so
 most-specific rules come first.
