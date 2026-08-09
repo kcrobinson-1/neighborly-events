@@ -2,6 +2,71 @@
 
 **Status:** `Proposed`
 
+## Context
+
+`music.madrona.us` already resolves to the `apps/site` Vercel project,
+and today its root serves the platform demo index — a page about the
+platform's sample events. This phase is the change that makes the
+organizer's own domain serve the organizer's own event: its root
+becomes the Madrona landing page, and one path below it becomes the
+Madrona feedback form. Those are the two addresses that go into a
+newsletter and onto printed material, and they are short enough to say
+out loud.
+
+It happens now because the domain is live and about to be advertised,
+and because the two surfaces it covers are the ones that can move
+without touching anything else. The quiz's short address needs a change
+to the route contract shared between the two apps, which is a later
+phase; these two need only the routing layer to know which event this
+host belongs to.
+
+Conceptually this touches three things: the routing layer of the
+public site, a small piece of shared data saying which hostname stands
+for which event, and the operator-facing docs that describe the
+routing topology. It changes nothing a visitor sees on any other
+hostname.
+
+Parent task plan:
+[`madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md).
+This phase is bound by its C1 (the static-generation ceiling) and C3
+(parse before emit, and emit only what is served), and inherits its
+I1, I2, and I3.
+
+**Scoping.** This phase does not carry its own scoping doc and does
+not need the narrow-surface carve-out to justify that — the same
+position phase 1 takes, and for the same reason: the task's scoping
+doc already owns this phase's deliberation. D2 establishes that the
+landing and feedback routes resolve by rewrite because neither reads
+the request path; D4 establishes that literal-path sources are the
+safe rewrite shape and records the asset-parity probe behind that
+conclusion; D12 establishes host-conditional config rewrites as the
+mechanism, rather than a proxy or middleware file, because the
+`middleware` convention is deprecated as of Next.js 16. Those are
+exactly the decisions a phase-3 scoping doc would have had to make.
+The Reality-check inputs section below is the phase-specific residue —
+claims that can drift between the task's scoping and this phase's
+implementation, plus the two the drafting session resolved by running
+the check.
+
+## Goal
+
+- On the organizer host, the root serves the Madrona event landing and
+  one short path below it serves the Madrona feedback form, with the
+  requested path unchanged in the address bar.
+- On every other host — the canonical `*.vercel.app` alias, preview
+  aliases, localhost — nothing changes: the root still serves the demo
+  index, the existing long event paths still serve, and the
+  plugin-owned proxy rewrites still resolve.
+- Which hostname stands for which event is written down once, and the
+  routing layer reads it rather than restating it.
+
+Not in this phase's goal, and named here so the phase is not read as
+delivering them: the quiz's short address, and any per-host page
+metadata. Both are recorded under Out Of Scope with where they go
+instead.
+
+## PR shape and Status lifecycle
+
 One PR, plus a doc-only close-out commit.
 
 **PR-count branch test.** The branch exists and the file list is
@@ -71,6 +136,13 @@ the Release workflow's completion, targets the `production`
 environment, and reads its target origin from a repository variable
 rather than a hardcoded host.
 
+**What that seam does not bring with it** is a guarantee that the
+deployment under test is live when the run starts — see the
+deployment-identity bullet in the Validation Gate, which this phase's
+runner has to satisfy on its own. Inheriting the seam's trigger and
+its readiness helper without inheriting that gap is the mistake
+available here.
+
 This is the same exception phase 1 takes, for a different reason: phase
 1's checks wait on the release workflow's function deploy, and this
 phase's wait on a hostname that only production resolves. A claim that
@@ -80,69 +152,6 @@ a preview deploy validated this phase would be false by construction.
 close-out" section, "Named constraint on every routing gate," states
 the preview-URL constraint and requires each routing phase's plan to
 say so.
-
-## Context
-
-`music.madrona.us` already resolves to the `apps/site` Vercel project,
-and today its root serves the platform demo index — a page about the
-platform's sample events. This phase is the change that makes the
-organizer's own domain serve the organizer's own event: its root
-becomes the Madrona landing page, and one path below it becomes the
-Madrona feedback form. Those are the two addresses that go into a
-newsletter and onto printed material, and they are short enough to say
-out loud.
-
-It happens now because the domain is live and about to be advertised,
-and because the two surfaces it covers are the ones that can move
-without touching anything else. The quiz's short address needs a change
-to the route contract shared between the two apps, which is a later
-phase; these two need only the routing layer to know which event this
-host belongs to.
-
-Conceptually this touches three things: the routing layer of the
-public site, a small piece of shared data saying which hostname stands
-for which event, and the operator-facing docs that describe the
-routing topology. It changes nothing a visitor sees on any other
-hostname.
-
-Parent task plan:
-[`madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md).
-This phase is bound by its C1 (the static-generation ceiling) and C3
-(parse before emit, and emit only what is served), and inherits its
-I1, I2, and I3.
-
-**Scoping.** This phase does not carry its own scoping doc and does
-not need the narrow-surface carve-out to justify that — the same
-position phase 1 takes, and for the same reason: the task's scoping
-doc already owns this phase's deliberation. D2 establishes that the
-landing and feedback routes resolve by rewrite because neither reads
-the request path; D4 establishes that literal-path sources are the
-safe rewrite shape and records the asset-parity probe behind that
-conclusion; D12 establishes host-conditional config rewrites as the
-mechanism, rather than a proxy or middleware file, because the
-`middleware` convention is deprecated as of Next.js 16. Those are
-exactly the decisions a phase-3 scoping doc would have had to make.
-The Reality-check inputs section below is the phase-specific residue —
-claims that can drift between the task's scoping and this phase's
-implementation, plus the two the drafting session resolved by running
-the check.
-
-## Goal
-
-- On the organizer host, the root serves the Madrona event landing and
-  one short path below it serves the Madrona feedback form, with the
-  requested path unchanged in the address bar.
-- On every other host — the canonical `*.vercel.app` alias, preview
-  aliases, localhost — nothing changes: the root still serves the demo
-  index, the existing long event paths still serve, and the
-  plugin-owned proxy rewrites still resolve.
-- Which hostname stands for which event is written down once, and the
-  routing layer reads it rather than restating it.
-
-Not in this phase's goal, and named here so the phase is not read as
-delivering them: the quiz's short address, and any per-host page
-metadata. Both are recorded under Out Of Scope with where they go
-instead.
 
 ## Contracts
 
@@ -485,6 +494,34 @@ callout.*
 committed entry point named in the Status lifecycle above, not by
 hand, so the run that passes is the artifact the close-out records.
 
+- **Establish deployment identity before any assertion counts.** The
+  run confirms the origin is serving the commit under test, and until
+  it has, a failing assertion means "not deployed yet" and the run
+  keeps waiting within a bound rather than reporting failure. This is
+  the discriminator the rest of the post-merge gate depends on: every
+  assertion below fails identically against a stale build and against
+  a genuinely wrong rewrite, and the plan attaches a rollback to that
+  failure — so without an identity check the gate can trigger a revert
+  for a deploy that was merely still propagating.
+
+  Two specifics make this a real race rather than a theoretical one.
+  The workflow this check joins triggers on the Release workflow's
+  completion, and Release synchronizes Supabase only — it neither
+  performs nor waits for the Vercel deployment, which the Git
+  integration runs independently. And the readiness helper that
+  workflow already uses treats any non-error status as ready, which
+  the *previous* deployment returns for every path this phase does not
+  change. Reusing that helper unchanged would satisfy readiness
+  against the old build.
+
+  **Verified by:** `.github/workflows/release.yml`'s only job is named
+  for syncing Supabase and its steps link the project, push
+  migrations, and deploy functions, with no Vercel step or wait;
+  `waitForRouteReady` in
+  `scripts/testing/run-production-admin-smoke.cjs` returns as soon as
+  a response status is at least 200 and below 400, with its comment
+  scoping that contract to transient 404s during propagation.
+  Surfaced by Codex review on this plan's PR.
 - The two bullets above, re-run against production: on the real
   organizer host, then on the canonical alias. This is the only run
   that exercises the real hostname, so it is the run that can fail for
@@ -499,8 +536,10 @@ hand, so the run that passes is the artifact the close-out records.
   passes because it silently probed nothing — an empty host list, a
   skipped class — is the failure this bullet exists to prevent, so it
   reports what it probed and fails on an empty set.
-- Rollback if any of these fail is revert-by-single-commit, per the
-  parent's named constraint on routing gates.
+- Rollback if any of these fail **after deployment identity is
+  established** is revert-by-single-commit, per the parent's named
+  constraint on routing gates. A failure before that point is a
+  not-yet-deployed signal and is not grounds for a revert.
 
 ## Self-Review Audits
 
