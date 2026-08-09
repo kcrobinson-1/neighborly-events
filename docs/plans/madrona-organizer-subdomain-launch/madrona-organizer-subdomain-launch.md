@@ -179,12 +179,20 @@ per C3:
   produces a 404, and the rewrite without the header change produces
   a header that walks visitors back off short paths.
 
-**On the phase/task classification.** Phases 1 and 2 each close a
-live defect and are observable alone, which under a strict reading of
-the task/phase picker argues for calling them tasks. They stay phases
-because the outcome anyone asked for is the launch; five task-level
-units with five close-outs would cost more bookkeeping than the
-distinction buys.
+**On the phase/task classification — settled by the stakeholder.**
+Phases 1 and 2 each close a live defect and are technically
+observable alone, which under a reading of the task/phase picker that
+equates observability with value argues for calling them tasks. They
+are phases. The picker asks whether what ships has independent
+*stakeholder* value, and the stakeholder for this work has answered
+directly: no value is realized until the organizer host is launched,
+and intermediate states that are odd or partially working in the
+meantime are acceptable. Technical observability was standing in as a
+proxy for that question; the answer supersedes the proxy.
+
+This also fixes the boundary the picker cares about: every phase here
+realizes value only together, at launch. Recorded so the question
+does not get re-litigated from the proxy.
 
 **Independent — data hygiene.** `game_events` carries two rows with
 the Madrona display name, and recent completions have gone to the
