@@ -245,7 +245,7 @@ The CORS allowlist in
 [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
 is compiled into every deployable edge function, so admitting an
 origin is a code change that takes effect one function at a time, as
-each is redeployed. Two consequences an operator cannot infer from
+each is redeployed. Three consequences an operator cannot infer from
 the diff:
 
 - **Merging is not deploying.** The entry is live only after
@@ -262,6 +262,14 @@ the diff:
   construction. A hand-run deploy is the case that has to name every
   function, and a partial one leaves the origin rejected on whatever
   it missed.
+- **The deployed set outlives the repo.** `supabase functions deploy`
+  creates and updates; it never deletes. A function renamed or removed
+  in the repo stays deployed, frozen at the last bundle it shipped —
+  including that bundle's copy of the allowlist, which from then on
+  stops tracking `cors.ts` altogether. So the deployed set is a
+  superset of `supabase/functions/`, and a stale member can go on
+  admitting origins the allowlist retired, or rejecting the current
+  one, with nothing in the repo to say so.
 
 Both failure shapes are silent until someone reaches the surface that
 was missed: an attendee passes session issuance, plays the whole quiz,
@@ -271,6 +279,14 @@ preflight from the origin to **each** deployed function and confirming
 the origin is echoed in `Access-Control-Allow-Origin` — a
 single-function probe cannot distinguish "the allowlist is right" from
 "the allowlist is right and every function has it."
+
+Enumerate that probe set from `supabase functions list --project-ref
+<ref>`, not from `supabase/functions/`: the filesystem cannot show you
+a function the repo no longer has, which is the one most likely to be
+carrying a stale allowlist. An entry with no counterpart in the repo
+is an orphan — reconcile it with `supabase functions delete <slug>`,
+which is not reversible from the repo, since no source remains to
+redeploy.
 
 ## Live Monitoring And Log Triage
 
