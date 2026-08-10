@@ -171,8 +171,11 @@ Start in GitHub Actions job logs for `Production Deployed-Surface Smoke`.
    - validate `PRODUCTION_SMOKE_BASE_URL` and deployed route health
    - the specific misconfiguration to rule out first: the base URL
      pointed at apps/web rather than the canonical apps/site origin.
-     `/admin` is polled first and does not exist on apps/web, so this
-     presents as a readiness timeout that names no cause
+     `/admin` is polled first and does not exist on apps/web, and the
+     poller treats 404 as deployment propagation and retries, so it
+     burns the full timeout before failing as
+     `Timed out waiting for /admin. Last failure: Unexpected status 404` —
+     a 404 in that line means wrong origin, not a slow deploy
 2. **Auth redirect or session setup failure**
    - likely Supabase Auth Site URL/redirect mismatch
    - validate Auth URL settings and `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL`
