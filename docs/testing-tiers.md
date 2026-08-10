@@ -160,6 +160,24 @@ deployed origin.
    commit; see [`dev.md`](/docs/dev.md) "Watching The Post-Merge
    Chain."
 
+   **Where the check has no automatable entry point, the recorded
+   observations are the evidence instead.** Some post-release checks are
+   a set of requests against a deployed origin with no runner behind
+   them, and building one purely to generate a URL inverts the cost the
+   check is worth. In that case the follow-up commit records, for each
+   assertion, the exact request made and the response values observed —
+   specific enough that a reader can re-issue it and compare. That is
+   the bar this substitution has to clear, and it is a real one: a
+   recorded request is *more* re-runnable than a run URL, which points
+   at a past execution nobody can repeat. What it must not become is a
+   claim that the check passed with nothing a reader could act on.
+
+   Two conditions bound it. The plan states why no runner exists, so the
+   absence is a decision rather than an omission. And an assertion that
+   *is* covered by a committed test cites that test rather than a manual
+   observation — a check with an automatable entry point uses it, and
+   this substitution is only for the ones without.
+
 This is the carve-out
 [`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
 "Plan-to-PR Completion Gate" points to.

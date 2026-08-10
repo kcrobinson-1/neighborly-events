@@ -305,27 +305,18 @@ left here. What remains is the residue of a plan whose implementing work
 finished before its verification, and the gate's default — flip when the
 plan is satisfied — is what covers it.
 
-**Phase 3's `Landed` flip is not resolved by this amendment, and the
-gap is named rather than assumed away.** Phase 3 merged under the
-**Post-release validation** exception, whose close-out is defined as a
-follow-up commit that *records the validation run URL* — durable
-external evidence, explicitly distinguished from anything already in
-git. The probe runner was to produce that URL. With it dropped, a
-manual walk produces the observations but no artifact, so phase 3
-cannot exit the exception on the terms the exception sets.
-
-That is a conflict with a canonical rule, and the canonical rule says a
-plan-specific carve-out belongs in the rule rather than in a plan's own
-Contracts section. So this plan does not grant itself one. Phase 3 stays
-at `In progress pending organizer-host routing verification` until
-either a runnable check yielding a run URL exists, or
-[`docs/testing-tiers.md`](/docs/testing-tiers.md)'s gate is amended to
-cover post-release checks that have no automatable artifact. Surfaced by
-review of the phase-3b drop.
+**Phase 3 is `Landed`.** Its post-merge routing checks were walked
+against production on 2026-08-10 and recorded in its own plan — the
+requests made and the `x-matched-path` values observed — under the
+substitution [`docs/testing-tiers.md`](/docs/testing-tiers.md)'s
+Plan-to-Landed gate allows where a check has no automatable entry
+point. That substitution was added to the canonical rule rather than
+granted here, because a plan does not get to write its own exception.
 
 Phases 1 and 2 flipped their own Status in their implementing PRs, per
-the Plan-to-PR Completion Gate. Phase 3 is the exception and it is
-unresolved — see the note above it.
+the Plan-to-PR Completion Gate; phase 3 flipped in the follow-up commit
+its own lifecycle names. Every phase plan is now terminal, so this doc
+is the only one left to flip.
 
 **Named constraint on every routing gate.** Host-conditional behavior
 cannot be exercised on a preview URL, because it keys on a hostname
