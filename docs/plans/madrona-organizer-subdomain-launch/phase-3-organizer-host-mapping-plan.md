@@ -521,12 +521,16 @@ than transcribed.
   depth-limited search rather than by a real absence. Corrected after
   Codex review on this plan's PR.
 - **The `/assets/*` destination may be unreachable from the
-  implementer's environment.** It proxies to the apps/web deployment,
-  and the scoping doc records that the game proxy path could not be
-  exercised from the authoring sandbox. This does not invalidate the
-  parity comparison — see the discriminator in the Validation Gate —
-  but it does mean the absolute assertion on that class lands
-  post-deploy rather than pre-merge.
+  implementer's environment** — *anticipated, and it did not happen;
+  superseded by the Revised note above.* It proxies to the apps/web
+  deployment, and the scoping doc records that the game proxy path
+  could not be exercised from the authoring sandbox. Had that held,
+  the absolute assertion on that class would have landed post-deploy
+  rather than pre-merge, and the parity comparison would still have
+  been valid — see the discriminator in the Validation Gate. It did
+  not hold: the class carries a pre-merge absolute assertion, and its
+  post-merge bullet is a production recheck rather than deferred
+  coverage.
 - **The event's registered slug.** The mapping's value has to be the
   slug `apps/site` prerenders the event under, not the event's display
   name and not the identifier the entitlement rows carry. The parent's
@@ -746,9 +750,16 @@ URL, and the close-out still requires one.
   that exercises the real hostname, so it is the run that can fail for
   reasons a spoofed header cannot reproduce — DNS, alias attachment,
   and deployment protection among them.
-- The absolute assertions the local environment could not make,
-  including the `/assets/*` class and the existing long event paths
-  on both hosts.
+- The `/assets/*` class and the existing long event paths, on both
+  hosts. **These are production rechecks, not deferred coverage.** An
+  earlier form of this bullet read them as assertions the local
+  environment could not make, on the expectation recorded in
+  Reality-check inputs that the proxy destination might be
+  unreachable from the implementer's sandbox. It was reachable, and
+  both classes carry an absolute pre-merge assertion. What the
+  production run adds is a different claim: that they hold against
+  the real hostname, through the real edge, with real deployment
+  protection — none of which a spoofed `Host` header reproduces.
 - The runner takes its hosts from the mapping and from the canonical
   origin rather than hardcoding either, so the same check re-runs
   against the next organizer host without an edit. A runner that

@@ -1,6 +1,6 @@
 # Phase 3b — Post-deploy organizer-host routing probes
 
-**Status:** `Proposed`
+**Status:** `In draft`
 
 ## Context
 
@@ -41,11 +41,42 @@ Sibling:
 which owns the routing change this runner probes and states the
 assertions the runner makes.
 
-**Scoping.** No scoping doc. The deliberation this phase would have
-carried is already recorded in phase 3 — what the probes assert, why
-they run from a committed entry point, which workflow seam they join,
-and what that seam does not bring with it. This phase implements those
-decisions; it does not reopen them.
+**Scoping is required, and this doc is `In draft` until it exists.**
+The narrow-surface carve-out does not apply: its fifth criterion is
+"no novel mechanism," and C2 below needs one. Proving that an origin
+is serving the commit under test has no established pattern in this
+repo — nothing under `scripts/`, `apps/site/`, or `.github/workflows/`
+reads a deployed commit marker, and the readiness helper the existing
+seam uses answers a different question, as C2 records. Until that
+mechanism is resolved, C2 states a requirement without naming how it
+is met, and the runner cannot reliably tell a stale deployment from a
+broken rewrite — the discriminator its rollback gate depends on.
+
+**Verified by:**
+[`docs/agents/planning/plan.md`](/docs/agents/planning/plan.md)
+"Narrow-surface plans may skip the scoping doc" requires all five
+criteria to hold and routes a novel mechanism to the
+"Spike before plan for novel mechanisms" rule; a grep for a deployed
+commit marker across `scripts/`, `apps/site/app/`, `apps/site/lib/`,
+and `.github/workflows/` returns nothing. Surfaced by Codex review on
+phase 3's implementing PR, against a first draft of this doc that
+claimed the carve-out and carried `Proposed`.
+
+**The pending input**, per the promotion gate: what proves deployment
+identity. The candidates a scoping pass weighs are an
+application-served commit marker on apps/site, the deployment
+metadata Vercel exposes for the alias under test, and a content
+fingerprint of a route this phase's own change alters. Each differs
+in what it proves and in what it costs the routing phase — the first
+adds a surface phase 3 deliberately did not add. `In draft` → `Proposed`
+follows that resolution and the promotion gate's self-review walk.
+
+What is *not* open, and does not need re-deliberating: what the probes
+assert, why they run from a committed entry point, and which workflow
+seam they join. Phase 3 settled those.
+
+The rest of this doc is the structure that scoping resolves into, laid
+out now so the deferral is legible rather than a placeholder.
 
 ## Goal
 
@@ -107,6 +138,12 @@ runner is indistinguishable from working until an unmapped near-match
 host arrives.
 
 ### C2. Deployment identity is established before any assertion counts
+
+**Not decision-complete — this is the contract the pending input
+resolves, and the reason this doc is `In draft`.** What follows states
+the requirement and why it binds; *how* identity is proven is the open
+question named in Context, and promotion to `Proposed` means this
+contract names a mechanism.
 
 The run confirms the origin is serving the commit under test. Until it
 has, a failing assertion means "not deployed yet" and the run keeps
