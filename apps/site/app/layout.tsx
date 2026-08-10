@@ -3,6 +3,7 @@ import type { CSSProperties } from "react";
 import { Fraunces, Inter } from "next/font/google";
 
 import { platformTheme, themeToStyle } from "../../../shared/styles";
+import { AnalyticsMount } from "../components/AnalyticsMount.tsx";
 
 import "./globals.scss";
 
@@ -112,6 +113,11 @@ export const metadata: Metadata = {
  * layout sets the platform palette directly so routes that have
  * not yet wrapped (in 1.5.2, all of them) still render with Sage
  * Civic identity.
+ *
+ * `<AnalyticsMount />` sits last in `<body>` and renders no DOM: it is
+ * the Vercel Web Analytics beacon for every apps/site route. Placed
+ * here rather than per-route because pageview coverage is a property
+ * of the origin, not of any one page.
  */
 export default function RootLayout({
   children,
@@ -124,7 +130,10 @@ export default function RootLayout({
       className={`${inter.variable} ${fraunces.variable}`}
       style={themeToStyle(platformTheme) as CSSProperties}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <AnalyticsMount />
+      </body>
     </html>
   );
 }
