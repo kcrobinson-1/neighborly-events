@@ -268,7 +268,8 @@ In short:
 - create your own Vercel project for `apps/web`
 - create your own Vercel project for `apps/site`
 - set the frontend env vars in both Vercel projects
-- set Supabase secrets such as `SESSION_SIGNING_SECRET` (CORS allowlist lives in code at `supabase/functions/_shared/cors.ts`; only set the optional `EXTRA_ALLOWED_ORIGINS` env var if you have origins beyond the canonical defaults)
+- set Supabase secrets such as `SESSION_SIGNING_SECRET`
+- admit your own `apps/site` origin in the edge-function CORS allowlist — the defaults in `supabase/functions/_shared/cors.ts` are this repo's origins, not yours, and an unadmitted origin is rejected before any handler logic runs. Set `EXTRA_ALLOWED_ORIGINS` to it, or add it to the in-code list and redeploy every edge function.
 
 ## Release Model
 

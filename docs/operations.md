@@ -260,14 +260,29 @@ For a new deployment from a fork:
 6. Add `NEXT_PUBLIC_SUPABASE_URL` and
    `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` in the apps/site
    Vercel project.
-7. Set `SESSION_SIGNING_SECRET` in Supabase. CORS allowlist origins
-   live in code at
-   [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts);
-   only set the optional `EXTRA_ALLOWED_ORIGINS` /
-   `APPS_SITE_VERCEL_SCOPE` env vars if you need extras beyond the
-   canonical defaults. Editing that list is a code change that is not
-   live until the edge functions are redeployed — see "Origin Admission
-   Is Only As Complete As The Deploy" below.
+7. Set `SESSION_SIGNING_SECRET` in Supabase, and admit your fork's
+   apps/site origin from step 4 in the edge-function CORS allowlist.
+   The in-code defaults at
+   [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
+   are canonical for *this* repo's deployment — the localhost dev
+   hosts, the upstream apps/site Vercel alias, and each launched
+   upstream organizer origin — so your fork's site alias is not among
+   them, and admitting it is required rather than an extra. Until you
+   do, the edge functions reject that origin before any handler logic
+   runs, and game start, save-draft, publish, unpublish, redeem, and
+   reverse redemption all fail from your own site. Either route works:
+   - set `EXTRA_ALLOWED_ORIGINS` on the Supabase project to your
+     apps/site origin — additive to the defaults, no code change; or
+   - add the origin to `defaultAllowedOrigins` in `cors.ts`, the
+     reviewed and version-controlled home for a launched origin. That
+     edit is not live until **every** edge function is redeployed —
+     see "Origin Admission Is Only As Complete As The Deploy" below.
+
+   `APPS_SITE_VERCEL_SCOPE` stays optional and admits only apps/site
+   preview and branch aliases. Its matcher is pinned to the upstream
+   project slug hard-coded in `cors.ts`, so on a fork whose apps/site
+   Vercel project has a different name it matches nothing; admit fork
+   preview origins through one of the two routes above instead.
 8. Set the Supabase Auth Site URL to the deployed web origin and add
    `<origin>/**` as a redirect URL for each of your local origins,
    deployed aliases, and any organizer domain.

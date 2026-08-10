@@ -803,17 +803,24 @@ npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 npx supabase secrets set SESSION_SIGNING_SECRET=your-long-random-secret
-# CORS allowlist is in code at supabase/functions/_shared/cors.ts.
-# Only set EXTRA_ALLOWED_ORIGINS if you need extras beyond the defaults
-# (canonical apps/site Vercel alias + localhost dev hosts), e.g.:
-# npx supabase secrets set EXTRA_ALLOWED_ORIGINS=https://your-extra-origin.example
-npx supabase functions deploy issue-session
-npx supabase functions deploy complete-game
-npx supabase functions deploy save-draft
-npx supabase functions deploy generate-event-code
-npx supabase functions deploy publish-draft
-npx supabase functions deploy unpublish-event
+# The CORS allowlist is in code at supabase/functions/_shared/cors.ts,
+# and its defaults are this repo's origins: the localhost dev hosts,
+# the upstream apps/site Vercel alias, and each launched upstream
+# organizer origin. Your fork's apps/site origin is not among them and
+# must be admitted, or every edge function rejects it before any
+# handler logic runs. Set it here (additive, no code change):
+npx supabase secrets set EXTRA_ALLOWED_ORIGINS=https://your-apps-site-origin.example
+# Or add it to defaultAllowedOrigins in cors.ts instead — the reviewed,
+# version-controlled home for a launched origin, live only once every
+# function below is redeployed.
+npx supabase functions deploy
 ```
+
+The argument-free `functions deploy` is the all-functions form, which is
+what the release workflow runs. Deploying by name is the partial-deploy
+failure mode described in [`operations.md`](/docs/operations.md) "Origin
+Admission Is Only As Complete As The Deploy": a named subset leaves the
+origin rejected on whatever it missed.
 
 Then set these frontend env vars locally and in your Vercel project:
 
