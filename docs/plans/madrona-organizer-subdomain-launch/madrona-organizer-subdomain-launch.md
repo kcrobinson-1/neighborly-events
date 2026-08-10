@@ -538,14 +538,18 @@ unconditionally.
 
 ## Backlog Impact
 
-Three entries in [`docs/backlog.md`](/docs/backlog.md) were opened by
+Four entries in [`docs/backlog.md`](/docs/backlog.md) were opened by
 this work, all under "Tier 2 — Operational Confidence": the organizer
 host's build-time ceiling (C1's constraint, on both the navigation
 and metadata surfaces it touches, with the candidate shapes and their
 tradeoffs); the absence of any canonical link, newly relevant once
-two hosts serve identical content; and the game route's missing share
+two hosts serve identical content; the game route's missing share
 metadata, newly relevant once the quiz link is one people paste from
-a host that is not the canonical alias.
+a host that is not the canonical alias; and the breadth of the Supabase
+Auth redirect allowlist, where every entry wildcards its whole path —
+opened by phase 2, which found the shape while documenting the
+organizer host's entry and found that the repository had been
+recommending a narrower shape that does not work.
 
 ## Related Docs
 

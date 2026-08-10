@@ -6,10 +6,12 @@ One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
 in that same PR rather than in a follow-up; C2 says why, and what the
 ordering it implies requires.
 
-Every step of the Validation Gate has run and passed, including the
-canonical-alias round trip asserting the parent's I1 — discharged by
-the Production Admin Smoke, whose configured target was read rather
-than assumed. That step records the run.
+Every step of the Validation Gate that applies to this diff has run and
+passed, including the canonical-alias round trip asserting the parent's
+I1 — discharged by the Production Admin Smoke, whose configured target
+was read rather than assumed. The one step that does not apply is
+`npm run lint`, which reads no file this diff touches; the gate records
+that disposition rather than counting it as passed.
 
 ## Context
 
@@ -258,10 +260,18 @@ The rows below are where those statements are expected to be found.
 | `README.md` |
 | `docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md` |
 
-The last three rows were not in this plan's estimate. Each states what
-shape the redirect allowlist takes, so each falls inside the
-Documentation Currency PR Gate's category — which is the category
-being stated over a file list rather than as one paying off.
+**Four rows were not in this plan's estimate**, and each is named
+rather than counted: `docs/tracking/production-admin-smoke-tracking.md`
+(required an exact callback entry as a smoke precondition),
+`docs/plans/canonical-origin-resolution.md` (its prose and its binding
+Post-state both named the exact path), `docs/tracking/continuous-deployment-roadmap.md`
+(named a production `/admin` origin as a Phase 1 precondition), and
+`README.md` (twice — the fork-bootstrap list and the admin-setup list,
+one naming each path shape). Every one states what shape the redirect
+allowlist takes, so every one falls inside the Documentation Currency PR
+Gate's category. That is the category being stated over a file list
+rather than as one paying off: the estimate named three files and the
+correct answer was seven.
 
 **Deliberately not corrected here:** `docs/operations.md` describes a
 cross-app proxy topology that no longer exists. Real defect, filed
@@ -293,10 +303,16 @@ correcting documentation in one category should not acquire a second.
 Every step runs before the PR is opened, per C2. Nothing here is
 post-merge.
 
-- **`npm run lint`, reported for what it is.** The lint command's file
-  selection reaches source directories and the apps/site workspace, not
-  markdown, so a pass is evidence the branch is clean rather than
-  evidence about this diff. **Verified by:** the `lint` script in
+- **`npm run lint` — not run, and deferred here rather than left
+  implied.** This diff changes only markdown. The lint command's file
+  selection reaches source directories and the apps/site workspace, so
+  it reads none of the files this diff touches: a pass would be evidence
+  the branch is clean, not evidence about this change. It was also not
+  runnable where the work happened — a git worktree has no
+  `node_modules`, and running it from the main checkout would lint that
+  checkout's branch rather than this one. Both facts point the same way,
+  so the step is recorded as not applicable to this diff rather than as
+  passed. **Verified by:** the `lint` script in
   [`package.json`](/package.json) names source directories plus the
   apps/site workspace lint, and neither
   [`eslint.config.mjs`](/eslint.config.mjs) nor
