@@ -89,8 +89,8 @@ redirect URLs" defines the separator set and the two wildcard forms.
 
 **This was drafted as a deliberate widening of the repository's
 documented convention. The console says otherwise.** The
-implementation-time read found all nine entries in the globstar path
-form. The documented convention — one exact callback-path entry per
+implementation-time read found every entry in the globstar path form.
+The documented convention — one exact callback-path entry per
 environment — is live on none of them, so the organizer entry is not a
 widening; it is the shape every other origin uses.
 
@@ -222,11 +222,12 @@ file, and so can drift without any commit:
   rollback record per C2. Do not write the entry's shape into the docs
   from the shape this plan specifies — C1 says what to ask for, the
   console says what is there, and the docs describe the console.
-  **Resolved at implementation:** nine entries, every one of the form
-  `<origin>/**` — the apps/web alias, the apps/site alias, six
+  **Resolved at implementation:** every entry is of the form
+  `<origin>/**` — the apps/web alias, the apps/site alias, the
   localhost/127.0.0.1 variants across ports 3000/4173/5173, and
-  `https://music.madrona.us/**`. Eight of the nine match the set the
-  scoping read recorded, so the change is provably additive. This read
+  `https://music.madrona.us/**`. Every origin the scoping read recorded
+  is still listed, and the organizer host is the only addition, so the
+  change is provably additive. This read
   is what forced C1's reframe, and it is the case for keeping this
   section: had the docs been written from the plan's own description,
   the diff would have shipped a convention nobody follows.
@@ -260,18 +261,18 @@ The rows below are where those statements are expected to be found.
 | `README.md` |
 | `docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md` |
 
-**Four rows were not in this plan's estimate**, and each is named
-rather than counted: `docs/tracking/production-admin-smoke-tracking.md`
-(required an exact callback entry as a smoke precondition),
+**Rows not in this plan's estimate**, each with what it said:
+`docs/tracking/production-admin-smoke-tracking.md` (required an exact
+callback entry as a smoke precondition),
 `docs/plans/canonical-origin-resolution.md` (its prose and its binding
-Post-state both named the exact path), `docs/tracking/continuous-deployment-roadmap.md`
-(named a production `/admin` origin as a Phase 1 precondition), and
-`README.md` (twice — the fork-bootstrap list and the admin-setup list,
-one naming each path shape). Every one states what shape the redirect
-allowlist takes, so every one falls inside the Documentation Currency PR
-Gate's category. That is the category being stated over a file list
-rather than as one paying off: the estimate named three files and the
-correct answer was seven.
+Post-state both named the exact path),
+`docs/tracking/continuous-deployment-roadmap.md` (named a production
+`/admin` origin as a Phase 1 precondition), and `README.md` (twice — the
+fork-bootstrap list and the admin-setup list, which name different path
+shapes). Each states what shape the redirect allowlist takes, so each
+falls inside the Documentation Currency PR Gate's category. The estimate
+named the files it could foresee and missed the rest, which is why the
+gate is stated over a category.
 
 **Deliberately not corrected here:** `docs/operations.md` describes a
 cross-app proxy topology that no longer exists. Real defect, filed
@@ -333,10 +334,10 @@ post-merge.
   condition is that the smoke's configured target is that alias, and
   both values were read rather than assumed. `PRODUCTION_SMOKE_BASE_URL`
   is the canonical alias. The callback override
-  `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is absent from the repository
-  (zero action variables) and from the `production` environment (three,
-  none of them it) — both scopes, because the workflow runs under
-  `environment: production`. Run:
+  `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is defined in neither scope —
+  the repository defines no action variables at all, and the
+  `production` environment's set does not include it. Both scopes matter
+  because the workflow runs under `environment: production`. Run:
   https://github.com/kcrobinson-1/neighborly-events/actions/runs/31428911625
   (2026-08-10 20:24:59Z, after the console edit).
 
@@ -360,20 +361,19 @@ post-merge.
   configuration and cannot fail on allowlist drift.
 
 - **The docs match the console — satisfied, and it is what this diff
-  mostly consists of.** Eleven surfaces described a redirect entry the
-  console does not carry — some naming an exact `/auth/callback` path,
-  some naming `/admin` — against nine live `<origin>/**` entries.
-  Corrected in `docs/operations.md` (two places),
-  `docs/architecture.md`, `docs/dev.md` (three),
+  mostly consists of.** Every live entry is `<origin>/**`. The
+  repository described something else — some surfaces naming an exact
+  `/auth/callback` path, some naming `/admin` — in `docs/operations.md`,
+  `docs/architecture.md`, `docs/dev.md`,
   `docs/tracking/production-admin-smoke-tracking.md`,
   `docs/tracking/continuous-deployment-roadmap.md`,
   `docs/plans/canonical-origin-resolution.md` (prose and Post-state),
-  and `README.md` (two). No Site URL statement was touched, per Files to
-  touch.
+  and `README.md`. All corrected. No Site URL statement was touched, per
+  Files to touch.
 
   **Sweep by concept, not by path.** A search for `auth/callback` never
   finds the surfaces that write the same guidance as `/admin`; a search
-  for "redirect URL" finds all eleven, because every surface giving this
+  for "redirect URL" finds them all, because every surface giving this
   guidance has to say that phrase. Landed plan docs recording what they
   did at the time are left alone — they are history, not guidance.
 
@@ -411,8 +411,9 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 **R1. The wildcard path is wider than the vendor recommends — across
 every entry, not just this one.** Supabase recommends an exact redirect
 path in production and reserves the globstar for development and preview
-URLs (https://supabase.com/docs/guides/auth/redirect-urls). All nine
-entries take the globstar, eight of which predate this phase. The
+URLs (https://supabase.com/docs/guides/auth/redirect-urls). Every entry
+takes the globstar, and all but the organizer host's predate this
+phase. The
 vendor's recommendation does not transfer unmodified here: the exact
 form it recommends does not admit this app's query-bearing callback, as
 C1 records, so "follow the vendor recommendation" is not an available
@@ -427,7 +428,7 @@ take the token — which the backlog entry records as its own question.
 This phase does not narrow it. Matching the eight is the conservative
 move for a phase whose premise is "add one entry"; making the organizer
 host the only exact-path entry would leave the allowlist internally
-inconsistent for no gain, and narrowing all nine is a change to
+inconsistent for no gain, and narrowing every entry is a change to
 production auth configuration with its own blast radius and no
 connection to this launch. Filed in
 [`docs/backlog.md`](/docs/backlog.md) as its own question. The narrower
@@ -474,8 +475,8 @@ Two statements are load-bearing enough to name specifically:
   `<origin>/**` entry per origin, uniformly. Four surfaces described an
   exact-callback-path convention that was not live; each is corrected
   rather than extended, because there is no second shape to document.
-  A reader who finds nine globstar entries against a doc describing
-  exact paths cannot tell a decision from a mistake, which is the same
+  A reader who finds globstar entries against a doc describing exact
+  paths cannot tell a decision from a mistake, which is the same
   failure in the opposite direction from the one this bullet was
   originally written to prevent.
 

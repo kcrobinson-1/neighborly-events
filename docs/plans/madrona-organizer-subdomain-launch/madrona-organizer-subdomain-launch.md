@@ -538,8 +538,8 @@ unconditionally.
 
 ## Backlog Impact
 
-Four entries in [`docs/backlog.md`](/docs/backlog.md) were opened by
-this work, all under "Tier 2 — Operational Confidence": the organizer
+Entries in [`docs/backlog.md`](/docs/backlog.md) opened by this work,
+all under "Tier 2 — Operational Confidence": the organizer
 host's build-time ceiling (C1's constraint, on both the navigation
 and metadata surfaces it touches, with the candidate shapes and their
 tradeoffs); the absence of any canonical link, newly relevant once

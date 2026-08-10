@@ -105,19 +105,19 @@ Must be resolved before QR codes are printed or the first real event runs.
 Reduce deployment risk and contributor friction before the live event.
 
 - [ ] **`decision` Every Supabase Auth redirect entry wildcards its whole path**
-  All nine entries in Authentication → URL Configuration → Redirect URLs
-  take the form `<origin>/**`: the apps/web alias, the apps/site alias,
-  six localhost and 127.0.0.1 variants, and the organizer domain.
+  Every entry in Authentication → URL Configuration → Redirect URLs
+  takes the form `<origin>/**`: the apps/web alias, the apps/site alias,
+  the localhost and 127.0.0.1 variants, and the organizer domain.
   Supabase recommends an exact redirect path in production and reserves
   the globstar for development and preview URLs
   (https://supabase.com/docs/guides/auth/redirect-urls). What the
   breadth costs is the set of paths on each host to which a sign-in
-  token may be delivered. **That cost is not uniform across the nine,
-  and an earlier version of this entry understated it by treating them
-  as one class.** For the three deployed origins the bound is real:
-  each host is a literal, and every path on it is served by one of our
-  own Vercel projects. For the six localhost and 127.0.0.1 entries it
-  is not — any process listening on that port on a contributor's
+  token may be delivered. **That cost is not uniform, and an earlier
+  version of this entry understated it by treating the entries as one
+  class.** For the deployed origins the bound is real: each host is a
+  literal, and every path on it is served by one of our own Vercel
+  projects. For the localhost and 127.0.0.1 entries it is not — any
+  process listening on that port on a contributor's
   machine can serve the callback path and read the delivered sign-in
   token, which is a third-party surface inside the wildcard. The token
   is a developer's own, on their own machine, which is why this is a
@@ -142,9 +142,9 @@ Reduce deployment risk and contributor friction before the live event.
   shape has to be tested against a real sign-in before it is adopted,
   not reasoned about from the wildcard syntax — that is the step whose
   absence produced the last regression. Note the cost of changing at
-  all: the console has no diff, no review, and no test, so nine edits
-  are nine chances to typo a value whose failure mode is a broken
-  sign-in nobody notices until someone tries. Surfaced while documenting
+  all: the console has no diff, no review, and no test, so every edit
+  is a chance to typo a value whose failure mode is a broken sign-in
+  nobody notices until someone tries. Surfaced while documenting
   the organizer host's entry, when the repo's docs turned out to
   describe an exact-path convention no entry has ever followed.
   Detail: N/A
