@@ -289,6 +289,27 @@ On production, in a private window, on a phone and a laptop:
   work succeeds. Nothing here depends on Site URL — every flow in this
   repository requests an explicit redirect, which is the asymmetry
   that took the retarget out of scope.
+
+  **Partly walked on 2026-08-09.** A fresh magic-link sign-in on the
+  organizer host returned to it, and a redemption then committed from
+  that origin. That discharges the sign-in leg and shows one edge
+  function admitting the organizer origin under a real session.
+  **Verified by:** `submitRedeemAttempt` in
+  [`apps/web/src/redeem/useRedeemSubmit.ts`](/apps/web/src/redeem/useRedeemSubmit.ts)
+  POSTs to the `redeem-entitlement` function URL with a bearer access
+  token. Recorded here because it cannot be re-run: the entitlement row
+  it consumed was test data and has since been cleared.
+
+  **It does not discharge the authoring leg, and I4 is why that
+  distinction is not pedantry.** Redemption is the volunteer path —
+  `redeem-entitlement` — not an authoring action, which reaches
+  `save-draft` and `publish-draft` instead. Origin admission is
+  compiled into each deployed function separately, so a redeem call
+  succeeding is evidence about `redeem-entitlement` and about nothing
+  else; a partial rollout that missed the authoring functions would
+  look exactly like this. That is the failure I4 names. The close-out
+  still runs an authoring action on the organizer host, and it is the
+  step that would catch it.
 - **The event is unambiguous.** Both the production database and a
   database built from migrations carry one row with the Madrona
   display name, and the decoy's entitlement rows remain reachable
@@ -517,14 +538,18 @@ unconditionally.
 
 ## Backlog Impact
 
-Three entries in [`docs/backlog.md`](/docs/backlog.md) were opened by
-this work, all under "Tier 2 — Operational Confidence": the organizer
+Entries in [`docs/backlog.md`](/docs/backlog.md) opened by this work,
+all under "Tier 2 — Operational Confidence": the organizer
 host's build-time ceiling (C1's constraint, on both the navigation
 and metadata surfaces it touches, with the candidate shapes and their
 tradeoffs); the absence of any canonical link, newly relevant once
-two hosts serve identical content; and the game route's missing share
+two hosts serve identical content; the game route's missing share
 metadata, newly relevant once the quiz link is one people paste from
-a host that is not the canonical alias.
+a host that is not the canonical alias; and the breadth of the Supabase
+Auth redirect allowlist, where every entry wildcards its whole path —
+opened by phase 2, which found the shape while documenting the
+organizer host's entry and found that the repository had been
+recommending a narrower shape that does not work.
 
 ## Related Docs
 

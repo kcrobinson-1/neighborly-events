@@ -1222,13 +1222,19 @@ apps/web's per-event editor runs the `is_organizer_for_event OR
 is_root_admin` gate.
 
 The browser requests magic links with `requestMagicLink(email,
-{ next: routes.admin })`, which transits the return trip through
-`/auth/callback?next=/admin`. The Supabase Auth dashboard redirect URL
-allowlist must include `<origin>/auth/callback` for every environment,
-and the project Site URL should match the deployed web origin so email
-links do not fall back to a local default. Adding a new authenticated
-route in a later phase only requires extending `AppPath` and the
-`validateNextPath` allow-list — no new dashboard entry is needed.
+{ next: routes.admin })`, which composes the redirect against the
+current browser origin and transits the return trip through
+`/auth/callback?next=/admin`. Because the redirect is origin-relative,
+every origin a visitor can reach an authenticated surface on needs its
+own allowlist entry — deployed aliases and organizer domains alike, not
+only the canonical one. The Supabase Auth dashboard redirect URL
+allowlist carries one `<origin>/**` entry per origin, and the project
+Site URL should match the deployed web origin so email links do not
+fall back to a local default. Adding a new authenticated route only
+requires extending `AppPath` and the `validateNextPath` allow-list — the
+globstar already covers its path, so no new dashboard entry is needed.
+See [`docs/operations.md`](/docs/operations.md) "Manually Maintained
+Settings" for the entry shape and what bounds its breadth.
 
 Both admin surfaces can create, duplicate, and update event-level,
 question-level, and answer-option private draft content, but the backend API

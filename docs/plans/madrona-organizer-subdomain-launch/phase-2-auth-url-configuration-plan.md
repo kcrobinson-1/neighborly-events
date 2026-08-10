@@ -1,10 +1,17 @@
 # Phase 2 — Auth URL configuration
 
-**Status:** `Proposed`
+**Status:** `Landed`
 
 One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
 in that same PR rather than in a follow-up; C2 says why, and what the
 ordering it implies requires.
+
+Every step of the Validation Gate that applies to this diff has run and
+passed, including the canonical-alias round trip asserting the parent's
+I1 — discharged by the Production Admin Smoke, whose configured target
+was read rather than assumed. The one step that does not apply is
+`npm run lint`, which reads no file this diff touches; the gate records
+that disposition rather than counting it as passed.
 
 ## Context
 
@@ -80,17 +87,31 @@ path without widening the host. **Verified by:**
 https://supabase.com/docs/guides/auth/redirect-urls "Use wildcards in
 redirect URLs" defines the separator set and the two wildcard forms.
 
-This is a deliberate widening of the repository's documented convention,
-which is one exact callback-path entry per environment
-([`docs/operations.md`](/docs/operations.md) "Manually Maintained
-Settings", the Supabase subsection's Auth URL configuration bullets). The
-narrower shape is available and is what the vendor recommends for
-production; R1 records why the wider one is taken here and what it
-costs. The docs this phase
-ships record that the convention now admits two shapes and which one the
-organizer host uses — a reader who finds a wildcard entry against a
-doc that describes only exact paths has no way to tell a decision from a
-mistake.
+**This was drafted as a deliberate widening of the repository's
+documented convention. The console says otherwise.** The
+implementation-time read found every entry in the globstar path form.
+The documented convention — one exact callback-path entry per
+environment — is live on none of them, so the organizer entry is not a
+widening; it is the shape every other origin uses.
+
+**The exact-path convention was not merely abandoned; it was found not
+to work.** An exact entry does not admit the `?next=` query string that
+`requestMagicLink` puts on every callback URL, and Supabase falls back
+to Site URL when the match fails. This repository hit that during M2
+phase 2.2, diagnosed it, and switched to double-asterisk entries; the
+docs were never updated to follow. So what this phase corrects is not
+drift from an arbitrary choice but guidance that kept recommending a
+shape already tried and reverted. **Verified by:**
+`docs/plans/archive/m2/m2-phase-2-2-plan.md` records the blocked
+round-trip, names the query-string mismatch as the cause, and names
+double-asterisk entries as the fix; `requestMagicLink` in
+[`shared/auth/api.ts`](/shared/auth/api.ts) composes the callback path
+with a `next` query parameter appended.
+
+The divergence predates this phase — the operator who made the console
+edit confirms it was add-only — which is what keeps P2 true. R1 follows:
+the wildcard's breadth is a project-wide condition rather than a call
+this entry makes.
 
 ### C2. The configuration change lands before the PR, and Status flips in that PR
 
@@ -201,6 +222,15 @@ file, and so can drift without any commit:
   rollback record per C2. Do not write the entry's shape into the docs
   from the shape this plan specifies — C1 says what to ask for, the
   console says what is there, and the docs describe the console.
+  **Resolved at implementation:** every entry is of the form
+  `<origin>/**` — the apps/web alias, the apps/site alias, the
+  localhost/127.0.0.1 variants across ports 3000/4173/5173, and
+  `https://music.madrona.us/**`. Every origin the scoping read recorded
+  is still listed, and the organizer host is the only addition, so the
+  change is provably additive. This read
+  is what forced C1's reframe, and it is the case for keeping this
+  section: had the docs been written from the plan's own description,
+  the diff would have shipped a convention nobody follows.
 - **Supabase's redirect-URL matching semantics at implementation
   time.** C1's shape rests on the wildcard definitions cited above.
   Re-read the vendor page rather than trusting this plan's summary of
@@ -225,7 +255,29 @@ The rows below are where those statements are expected to be found.
 | `docs/operations.md` |
 | `docs/dev.md` |
 | `docs/architecture.md` |
+| `docs/tracking/production-admin-smoke-tracking.md` |
+| `docs/plans/canonical-origin-resolution.md` |
+| `docs/tracking/continuous-deployment-roadmap.md` |
+| `README.md` |
 | `docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md` |
+
+**Rows not in this plan's estimate**, each with what it said:
+`docs/tracking/production-admin-smoke-tracking.md` (required an exact
+callback entry as a smoke precondition),
+`docs/plans/canonical-origin-resolution.md` (its prose and its binding
+Post-state both named the exact path),
+`docs/tracking/continuous-deployment-roadmap.md` (named a production
+`/admin` origin as a Phase 1 precondition), and `README.md` (twice — the
+fork-bootstrap list and the admin-setup list, which name different path
+shapes). Each states what shape the redirect allowlist takes, so each
+falls inside the Documentation Currency PR Gate's category. The estimate
+named the files it could foresee and missed the rest, which is why the
+gate is stated over a category.
+
+**Deliberately not corrected here:** `docs/operations.md` describes a
+cross-app proxy topology that no longer exists. Real defect, filed
+separately. It says nothing about the redirect allowlist, and a phase
+correcting documentation in one category should not acquire a second.
 
 **Intentionally not touched**
 
@@ -252,94 +304,83 @@ The rows below are where those statements are expected to be found.
 Every step runs before the PR is opened, per C2. Nothing here is
 post-merge.
 
-- **`npm run lint`, reported for what it is.** This diff is
-  documentation, and the lint command's file selection reaches source
-  directories and the apps/site workspace, not markdown — so a pass is
-  evidence that the branch is clean, not evidence about this change. It
-  is run and reported as such rather than presented as a gate this diff
+- **`npm run lint` — not run, and deferred here rather than left
+  implied.** This diff changes only markdown. The lint command's file
+  selection reaches source directories and the apps/site workspace, so
+  it reads none of the files this diff touches: a pass would be evidence
+  the branch is clean, not evidence about this change. It was also not
+  runnable where the work happened — a git worktree has no
+  `node_modules`, and running it from the main checkout would lint that
+  checkout's branch rather than this one. Both facts point the same way,
+  so the step is recorded as not applicable to this diff rather than as
   passed. **Verified by:** the `lint` script in
   [`package.json`](/package.json) names source directories plus the
   apps/site workspace lint, and neither
   [`eslint.config.mjs`](/eslint.config.mjs) nor
   [`apps/site/eslint.config.mjs`](/apps/site/eslint.config.mjs)
   registers a markdown processor.
-- **Sign-in from the organizer host returns to the organizer host.**
-  Request a magic link on an authenticated surface reached on the
-  organizer host, open the link, and confirm the browser lands back on
-  that host — through the callback and on to the requested destination.
-  Such a surface already resolves there: the apps/site routes that
-  render the magic-link form and the callback are host-agnostic, and the
-  organizer host is an alias of that same Vercel project. **Verified
-  by:** the apps/site admin route renders the shared sign-in form and
-  calls `requestMagicLink`, the apps/site auth-callback route renders
-  the shared callback page, and
-  [`apps/site/next.config.ts`](/apps/site/next.config.ts) declares no
-  host condition on any rewrite, so neither route's resolution depends
-  on which alias was requested.
-  The falsifier does not depend on what Supabase does with an
-  unadmitted redirect: if the new entry is absent or malformed, the
-  organizer host's callback is not admitted, and an unadmitted callback
-  either sends the visitor to some other host or produces no usable
-  link at all. Neither outcome can be mistaken for the one this step
-  looks for, so "landed back on the organizer host" cannot be produced
-  by the failure it is meant to catch.
 
-  **This step is also the only proof the entry took.** Reading the
-  console field back confirms what it says, not that it matches; a
-  malformed pattern reads exactly like a working one. The round trip is
-  what distinguishes them, which is why the read-back required by C2
-  and P1 governs what the *docs* say and this step governs whether the
-  configuration *works*.
+- **Sign-in from the organizer host returns to the organizer host —
+  satisfied.** A fresh magic-link sign-in was requested on
+  `music.madrona.us`; the link returned the browser to that host at the
+  redeem surface, where a redemption then committed. This is the only
+  check that distinguishes a working entry from a malformed one, since
+  the console field reads identically either way. Recorded here because
+  a reviewer cannot re-run it: the entitlement row that carried it was
+  test data and has since been cleared.
+
 - **Unchanged elsewhere (parent I1), asserted on the canonical apps/site
-  alias by name.** I1 is about that alias specifically, so the gate is
-  a magic-link round trip whose callback is the canonical alias's, and
-  the step is satisfied by observing that round trip — not by observing
-  that some production round trip passed.
+  alias — satisfied by the Production Admin Smoke.** This step's
+  condition is that the smoke's configured target is that alias, and
+  both values were read rather than assumed. `PRODUCTION_SMOKE_BASE_URL`
+  is the canonical alias. The callback override
+  `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is defined in neither scope —
+  the repository defines no action variables at all, and the
+  `production` environment's set does not include it. Both scopes matter
+  because the workflow runs under `environment: production`. Run:
+  https://github.com/kcrobinson-1/neighborly-events/actions/runs/31428911625
+  (2026-08-10 20:24:59Z, after the console edit).
 
-  The Production Admin Smoke — `npm run test:e2e:admin:production-smoke`,
-  or its workflow — is the right vehicle **only if its configured target
-  is that alias.** Its base URL and its callback override are repository
-  *variables*, not repository files, so which entry it exercises cannot
-  be read from this branch: the checked-in example documents the base
-  URL as a web deployment, and the callback can be pointed somewhere
-  else again independently of it. Read both configured values first. If
-  they resolve to the canonical alias and a matching callback, the smoke
-  discharges this step; if they do not, run the canonical-alias round
-  trip directly and treat the smoke as covering a different origin.
-  Skipping that read would let the step pass while the apps/site
-  redirect entry was broken during the console edit, which is the
-  regression it exists to catch. **Verified by:**
-  [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
-  runs under the admin auth fixture, whose `generateMagicLink` requests
-  a service-role link with an explicit redirect;
+  **It proves function, not presence**, which a console read cannot. The
+  spec asserts a heading rather than a hostname, which discriminates only
+  because the fallback host does not serve that heading: Site URL names
+  the plugin alias, and `apps/web/vercel.json` carries no `/admin` or
+  `/auth/callback` rewrite. Asserting the hostname outright would be
+  better, and is a test change this documentation-only phase does not
+  make. **Verified by:**
   [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
-  composes that redirect from `PRODUCTION_SMOKE_BASE_URL` but lets
-  `TEST_ADMIN_REDIRECT_URL` replace it outright;
-  [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
-  supplies both from repository variables; and
-  [`scripts/.env.example`](/scripts/.env.example) documents the base URL
-  as a web-deployment origin.
-  - The local admin e2e wrapper is **not** a substitute here. It
-    provisions a local Supabase stack, so it never touches the
-    production project's Auth URL configuration and cannot fail on
-    allowlist drift. **Verified by:**
-    [`scripts/testing/run-admin-e2e-tests.cjs`](/scripts/testing/run-admin-e2e-tests.cjs)
-    starts a local Supabase stack and a local functions runtime and
-    passes that stack's API URL to the tests.
-  - The smoke exercises the allowlist, because it passes an explicit
-    redirect — which is exactly the surface this phase changes, so it
-    is the right instrument rather than an approximate one.
-  - It covers only the previously-admitted class, which is the class
-    the Goal claims is unchanged — not the organizer host, whose
-    admission is the intended change and whose round trip is the step
-    above.
-- **The docs match the console.** Walk every statement the diff makes
-  about Auth URL configuration against a fresh console read, per P1.
+  composes the redirect from the smoke base URL, the callback path, and
+  a `next` parameter naming the admin route, when
+  `TEST_ADMIN_REDIRECT_URL` is absent;
+  [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
+  navigates the generated link and asserts the "Game draft access"
+  heading.
+
+  The local admin e2e wrapper is not a substitute: it provisions a local
+  Supabase stack, so it never touches the production project's Auth URL
+  configuration and cannot fail on allowlist drift.
+
+- **The docs match the console — satisfied, and it is what this diff
+  mostly consists of.** Every live entry is `<origin>/**`. The
+  repository described something else — some surfaces naming an exact
+  `/auth/callback` path, some naming `/admin` — in `docs/operations.md`,
+  `docs/architecture.md`, `docs/dev.md`,
+  `docs/tracking/production-admin-smoke-tracking.md`,
+  `docs/tracking/continuous-deployment-roadmap.md`,
+  `docs/plans/canonical-origin-resolution.md` (prose and Post-state),
+  and `README.md`. All corrected. No Site URL statement was touched, per
+  Files to touch.
+
+  **Sweep by concept, not by path.** A search for `auth/callback` never
+  finds the surfaces that write the same guidance as `/admin`; a search
+  for "redirect URL" finds them all, because every surface giving this
+  guidance has to say that phrase. Landed plan docs recording what they
+  did at the time are left alone — they are history, not guidance.
 
 The parent's named constraint on routing gates does not bind this phase:
-it changes no host-conditional routing. The organizer-host step above
-does run against production, for the unrelated reason that the organizer
-host resolves only there — and it is still pre-merge, because what it
+it changes no host-conditional routing. The organizer-host step does run
+against production, for the unrelated reason that the organizer host
+resolves only there — and it is still pre-merge, because what it
 exercises is project configuration rather than anything this branch
 deploys.
 
@@ -367,18 +408,32 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 ## Risks
 
-**R1. The wildcard path is wider than the vendor recommends.** Supabase
-recommends an exact redirect path in production and reserves the
-globstar for development and preview URLs
-(https://supabase.com/docs/guides/auth/redirect-urls). C1 takes the
-wider shape anyway: the console is the surface with no diff, no review,
-and no test, so the cost of a return visit is real, and one entry covers
-the host's return paths without another one. What it buys the wideness
-with is the set of paths on that one host to which a sign-in token may
-be delivered — bounded by the host being a literal, and by every path on
-it being served by our own Vercel project. The narrower per-path entry
-remains expressible in the same console field, so this is a reversible
-call, not a fork.
+**R1. The wildcard path is wider than the vendor recommends — across
+every entry, not just this one.** Supabase recommends an exact redirect
+path in production and reserves the globstar for development and preview
+URLs (https://supabase.com/docs/guides/auth/redirect-urls). Every entry
+takes the globstar, and all but the organizer host's predate this
+phase. The
+vendor's recommendation does not transfer unmodified here: the exact
+form it recommends does not admit this app's query-bearing callback, as
+C1 records, so "follow the vendor recommendation" is not an available
+one-line remedy. What the
+breadth costs is the set of paths on each host to which a sign-in token
+may be delivered. Every host is a literal, so no unintended host is
+admitted; the path bound then differs by class. On the three deployed
+origins every path is served by one of our own Vercel projects. On the
+six localhost entries it is not — any local process on that port can
+take the token — which the backlog entry records as its own question.
+
+This phase does not narrow it. Matching the eight is the conservative
+move for a phase whose premise is "add one entry"; making the organizer
+host the only exact-path entry would leave the allowlist internally
+inconsistent for no gain, and narrowing every entry is a change to
+production auth configuration with its own blast radius and no
+connection to this launch. Filed in
+[`docs/backlog.md`](/docs/backlog.md) as its own question. The narrower
+per-path shape stays expressible in the same console field, so this is
+a deferral, not a fork.
 
 **R2. Returning to the right origin is not a working organizer
 journey.** This phase decides where a sign-in link lands. What the
@@ -416,9 +471,14 @@ Two statements are load-bearing enough to name specifically:
   contribute. That list did not carry the redirect entry when this plan
   was drafted — the omission was found in review of this phase and fixed
   in the parent, since the parent owns the close-out the list gates.
-- The convention the redirect allowlist follows, per C1 — that it now
-  admits an exact-path shape and a wildcard-path shape, and which host
-  uses which.
+- The shape the redirect allowlist actually uses, per C1 — one
+  `<origin>/**` entry per origin, uniformly. Four surfaces described an
+  exact-callback-path convention that was not live; each is corrected
+  rather than extended, because there is no second shape to document.
+  A reader who finds globstar entries against a doc describing exact
+  paths cannot tell a decision from a mistake, which is the same
+  failure in the opposite direction from the one this bullet was
+  originally written to prevent.
 
 ## Out Of Scope
 

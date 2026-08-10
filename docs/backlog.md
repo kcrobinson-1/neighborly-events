@@ -104,6 +104,51 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
+- [ ] **`decision` Every Supabase Auth redirect entry wildcards its whole path**
+  Every entry in Authentication → URL Configuration → Redirect URLs
+  takes the form `<origin>/**`: the apps/web alias, the apps/site alias,
+  the localhost and 127.0.0.1 variants, and the organizer domain.
+  Supabase recommends an exact redirect path in production and reserves
+  the globstar for development and preview URLs
+  (https://supabase.com/docs/guides/auth/redirect-urls). What the
+  breadth costs is the set of paths on each host to which a sign-in
+  token may be delivered. **That cost is not uniform, and an earlier
+  version of this entry understated it by treating the entries as one
+  class.** For the deployed origins the bound is real: each host is a
+  literal, and every path on it is served by one of our own Vercel
+  projects. For the localhost and 127.0.0.1 entries it is not — any
+  process listening on that port on a contributor's
+  machine can serve the callback path and read the delivered sign-in
+  token, which is a third-party surface inside the wildcard. The token
+  is a developer's own, on their own machine, which is why this is a
+  hygiene question rather than an incident; but the two classes deserve
+  separate answers and the deployed-host argument does not carry the
+  local ones. Nothing is known to be broken.
+  **The globstar is a deliberate fix, not drift, and any narrowing
+  proposal has to clear the bar that produced it.** `requestMagicLink`
+  requests `/auth/callback?next=…`, not the bare path, and exact-match
+  entries do not admit that query string — Supabase falls back to Site
+  URL on every attempt. This repo hit exactly that and recorded it in
+  `docs/plans/archive/m2/m2-phase-2-2-plan.md`, where the recorded fix
+  was to switch to double-asterisk entries. So the naive narrowing
+  (`<origin>/auth/callback`) is not an untried option, it is a known
+  regression, and the repo's own docs recommended it for months after
+  the console had stopped following them.
+  **Goal:** decide whether a narrower entry that still admits the
+  query-bearing callback is worth adopting, or whether the current
+  breadth is accepted deliberately and documented as such — answered
+  separately for the deployed origins and the local ones, since the
+  exposure differs and so may the answer. Any candidate
+  shape has to be tested against a real sign-in before it is adopted,
+  not reasoned about from the wildcard syntax — that is the step whose
+  absence produced the last regression. Note the cost of changing at
+  all: the console has no diff, no review, and no test, so every edit
+  is a chance to typo a value whose failure mode is a broken sign-in
+  nobody notices until someone tries. Surfaced while documenting
+  the organizer host's entry, when the repo's docs turned out to
+  describe an exact-path convention no entry has ever followed.
+  Detail: N/A
+
 - [ ] **`dev` Run seeded game content through the shared runtime parser**
   `scripts/release/seed-game-content.cjs` upserts a draft and calls
   `publish_game_event_draft` after checking only identity and env-shape fields,

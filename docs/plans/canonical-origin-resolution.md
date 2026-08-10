@@ -128,8 +128,7 @@ After this plan lands its full sequence:
   plugin origin. Magic-link `emailRedirectTo` composes against the
   canonical origin (the user is signing in on the canonical origin in
   the first place), and the Supabase Auth dashboard's redirect-URL
-  allowlist names the canonical origin's `/auth/callback` rather than
-  the plugin's.
+  allowlist admits the canonical origin rather than the plugin's.
 - `NEXT_PUBLIC_SITE_ORIGIN` (currently documented in
   [`apps/site/.env.example:3-9`](/apps/site/.env.example) as
   "set this to apps/web's hostname") is reframed: it is the canonical
@@ -295,7 +294,7 @@ settled embedding mechanism — see "Investigations resolved in-PR").
 The
 auth callback resolves on the canonical origin natively (no cross-
 project proxy). The Supabase Auth redirect-URL allowlist is updated
-to name the canonical origin's `/auth/callback`.
+to admit the canonical origin.
 `NEXT_PUBLIC_SITE_ORIGIN`'s production value flips to the canonical
 origin (`apps/site`'s primary alias on Vercel; the real domain when
 that rolls). The Edge Function CORS allowlist

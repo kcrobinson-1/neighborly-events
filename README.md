@@ -199,9 +199,13 @@ Supabase-backed published content in this mode.
 
 The admin authoring shell and authoring APIs also require:
 
-- Supabase Auth Site URL and redirect URL allowlist that include each
-  `<origin>/auth/callback` you use (admin sign-in and future
-  authenticated routes all return through that single handler)
+- Supabase Auth Site URL, and a redirect URL allowlist entry of the
+  form `<origin>/**` for each origin you sign in from. Admin sign-in
+  and every other authenticated route return through the single
+  `/auth/callback` handler, but the callback carries a `?next=` query
+  and an exact-path entry does not admit it — Supabase falls back to
+  Site URL. See [`docs/operations.md`](/docs/operations.md) "Manually
+  Maintained Settings".
 - your normalized admin email to be active in `public.admin_users`
 
 If you do not have backend access and only need frontend iteration:
@@ -258,7 +262,8 @@ In short:
 
 - create your own Supabase project
 - apply the repo migrations and deploy the Edge Functions
-- configure Supabase Auth redirect URLs for your `/admin` origins
+- configure Supabase Auth redirect URLs as `<origin>/**` for each
+  origin you sign in from
 - add at least one allowlisted admin email in `public.admin_users`
 - create your own Vercel project for `apps/web`
 - create your own Vercel project for `apps/site`

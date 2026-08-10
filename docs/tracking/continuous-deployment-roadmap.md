@@ -270,8 +270,8 @@ these platform and proof-run steps:
     `defaultAllowedOrigins` (CORS allowlist lives in code, not in a
     secret); the optional `EXTRA_ALLOWED_ORIGINS` env var is set only
     if the operator has admitted-origin extras beyond the defaults
-  - Supabase Auth Site URL and redirect URLs include the production `/admin`
-    origin
+  - Supabase Auth Site URL is set, and redirect URLs include an
+    `<origin>/**` entry for the production origin
   - at least one active admin email exists in `public.admin_users`
 - run Phase 1 acceptance checks after merge:
   - push or merge a non-doc change and confirm full `CI` runs
