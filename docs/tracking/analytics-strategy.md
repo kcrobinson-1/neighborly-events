@@ -240,10 +240,13 @@ Two consequences follow, and both are load-bearing:
 
   The practical consequence is worth stating before someone prints
   something: **tagging a QR code or a poster URL with `utm_*` buys
-  nothing measurable today.** The parameters ride along and are
-  recorded with the pageview, so an upgrade would surface them
-  retroactively for whatever window the plan retains — but nobody
-  should print signage expecting to read the result this season.
+  nothing measurable today**, and nobody should print signage
+  expecting to read the result this season. Whether an upgrade would
+  surface past parameters *retroactively* is **unverified** — it
+  depends on whether Vercel stores UTM fields on the base tier and
+  merely gates the view, or discards them at ingestion, and on the
+  tier's retention window. Do not plan on backfill. Treat tagging an
+  inbound URL as free and inert rather than as a deferred payoff.
 
   Distinguishing traffic sources on this tier is possible, but neither
   lever is a labeling trick and both have a catch:
@@ -263,6 +266,19 @@ Two consequences follow, and both are load-bearing:
     against the deployed origin before it reaches the printer: a QR
     code pointing at a 404 cannot be recalled, which is a worse
     failure than the missing attribution it was meant to buy.
+
+  There is one distinct-path pair that already exists and needs no
+  build. The organizer host maps `/` to the event landing with a
+  **rewrite**, not a redirect, so a visitor who lands on
+  `music.madrona.us/` keeps `/` as their browser path and reports a
+  pageview for `/`, while a visitor who arrives at
+  `music.madrona.us/event/madrona` reports `/event/madrona`. Both
+  resolve today (verified 2026-08-10) and both appear as their own row
+  in the ungated Pages breakdown. Pointing one printed artifact at the
+  root and another at the long path separates those two audiences for
+  free. It only discriminates to the extent the artifacts actually
+  differ — if every sign, flyer, and spoken reference says
+  `music.madrona.us`, the `/` row is simply everyone.
 
 #### Beacon routing across the cross-app proxy
 
