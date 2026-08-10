@@ -115,18 +115,28 @@ Reduce deployment risk and contributor friction before the live event.
   token may be delivered; what bounds it is that every host is a
   literal — no hostname is patterned — and every path on those hosts is
   served by one of our own Vercel projects, so there is no third-party
-  surface inside the wildcard. Nothing is known to be broken. **Goal:**
-  decide deliberately whether the exact-path shape
-  (`<origin>/auth/callback`) is worth adopting across all entries, since
-  every authenticated route in the app returns through that one
-  path — see [`shared/urls/routes.ts`](/shared/urls/routes.ts) — which
-  is what makes narrowing cheap here and would not be true of an app
-  with several return paths. Note the cost before picking: the console
-  has no diff, no review, and no test, so nine edits are nine chances to
-  typo a value whose failure mode is a broken sign-in nobody notices
-  until someone tries. Surfaced while documenting the organizer host's
-  entry, when the repo's docs turned out to describe an exact-path
-  convention no entry has ever followed.
+  surface inside the wildcard. Nothing is known to be broken.
+  **The globstar is a deliberate fix, not drift, and any narrowing
+  proposal has to clear the bar that produced it.** `requestMagicLink`
+  requests `/auth/callback?next=…`, not the bare path, and exact-match
+  entries do not admit that query string — Supabase falls back to Site
+  URL on every attempt. This repo hit exactly that and recorded it in
+  `docs/plans/archive/m2/m2-phase-2-2-plan.md`, where the recorded fix
+  was to switch to double-asterisk entries. So the naive narrowing
+  (`<origin>/auth/callback`) is not an untried option, it is a known
+  regression, and the repo's own docs recommended it for months after
+  the console had stopped following them.
+  **Goal:** decide whether a narrower entry that still admits the
+  query-bearing callback is worth adopting, or whether the current
+  breadth is accepted deliberately and documented as such. Any candidate
+  shape has to be tested against a real sign-in before it is adopted,
+  not reasoned about from the wildcard syntax — that is the step whose
+  absence produced the last regression. Note the cost of changing at
+  all: the console has no diff, no review, and no test, so nine edits
+  are nine chances to typo a value whose failure mode is a broken
+  sign-in nobody notices until someone tries. Surfaced while documenting
+  the organizer host's entry, when the repo's docs turned out to
+  describe an exact-path convention no entry has ever followed.
   Detail: N/A
 
 - [ ] **`dev` Run seeded game content through the shared runtime parser**

@@ -1,10 +1,15 @@
 # Phase 2 — Auth URL configuration
 
-**Status:** `Landed`
+**Status:** `Proposed`
 
 One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
 in that same PR rather than in a follow-up; C2 says why, and what the
 ordering it implies requires.
+
+**Held at `Proposed`:** every step of the Validation Gate has run and
+passed except the canonical-alias round trip asserting the parent's I1,
+which is recorded there as outstanding. It is one sign-in, and the flip
+follows the observation.
 
 ## Context
 
@@ -98,16 +103,29 @@ is simply wrong. This is P1 doing its job: the copies were remembered
 rather than re-derived, and nothing checks them against the project.
 
 **The divergence predates this phase**, which matters because the
-alternative would have falsified P2. The scoping-time read recorded
-which origins were listed but not what path shape each carried, so the
-evidence alone left two histories open: the entries were always
-globstar and the docs were never right, or the eight were exact-path
-and were widened alongside the organizer host's addition. The
-stakeholder who made the console edit confirms it was add-only — the
-eight were untouched and already carried the globstar. So the docs have
-been describing a convention nobody follows, independently of anything
-this phase did, and this phase's diff corrects a pre-existing error
-rather than documenting its own change.
+alternative would have falsified P2. The stakeholder who made the
+console edit confirms it was add-only — the eight were untouched and
+already carried the globstar. So the docs have been describing a
+convention nobody follows, independently of anything this phase did,
+and this phase's diff corrects a pre-existing error rather than
+documenting its own change.
+
+**And the exact-path convention was not merely abandoned; it was found
+not to work.** An exact entry does not admit the `?next=` query string
+that `requestMagicLink` puts on every callback URL, and Supabase falls
+back to Site URL when the match fails. This repository hit that during
+M2 phase 2.2, diagnosed it, and switched to double-asterisk entries.
+The console has been right ever since and the docs were never updated
+to follow. That reframes the correction this phase ships: not "the docs
+drifted from an arbitrary choice" but "the docs kept recommending a
+shape that had already been tried and reverted." **Verified by:**
+`docs/plans/archive/m2/m2-phase-2-2-plan.md` records the blocked
+round-trip, names the query-string mismatch as the cause, and names
+double-asterisk entries as the fix; `requestMagicLink` in
+[`shared/auth/api.ts`](/shared/auth/api.ts) composes
+`${routes.authCallback}?next=…`. Surfaced by Codex review on this
+phase's PR, against a first version of this section that recorded the
+divergence without its cause.
 
 R1 changes with it — the wildcard's breadth is a project-wide condition
 rather than a call this entry makes.
@@ -253,7 +271,14 @@ The rows below are where those statements are expected to be found.
 | `docs/operations.md` |
 | `docs/dev.md` |
 | `docs/architecture.md` |
+| `docs/tracking/production-admin-smoke-tracking.md` |
+| `docs/plans/canonical-origin-resolution.md` |
 | `docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md` |
+
+The last two rows were not in this plan's estimate. Both state what
+shape the redirect allowlist takes, so both fall inside the
+Documentation Currency PR Gate's category — which is the category
+being stated over a file list rather than as one paying off.
 
 **Intentionally not touched**
 
@@ -330,24 +355,29 @@ post-merge.
   the step is satisfied by observing that round trip — not by observing
   that some production round trip passed.
 
-  **Satisfied by the add-only console read instead, and the substitution
-  is recorded rather than assumed.** This step names one regression: the
-  apps/site redirect entry broken during the console edit. Two things
-  rule it out together — the implementation-time read shows
-  `https://neighborly-events-site.vercel.app/**` present and in the same
-  form as every other origin, and the operator who made the edit
-  confirms it added the organizer entry and touched nothing else. An
-  entry that worked before, was not edited, and reads unchanged is not
-  the regression this step exists to catch.
+  **OUTSTANDING — this is what holds the phase at `Proposed`.** A
+  console read was offered as a substitute: the read shows
+  `https://neighborly-events-site.vercel.app/**` present and unchanged,
+  and the operator who made the edit confirms it added one entry and
+  touched nothing else. That is real evidence, and it rules out the
+  entry having been *removed or reworded*. It does not establish that
+  the entry still *functions*, which is what this step asserts and what
+  the Goal's promise about previously-admitted origins rests on.
 
-  What the round trip would prove and this does not is that the entry
-  *functions*, as opposed to existing unchanged. That gap is real but
-  empty here: functioning was established before this phase by every
-  prior sign-in through that alias, and nothing in this phase's change
-  set could have disturbed it. The round trip remains the stronger
-  instrument and is what a future phase touching existing entries must
-  run; this substitution is available only because the change was
-  additive.
+  The substitution was written into this plan and then withdrawn. It
+  failed on its own terms: it was appended to a step whose text says
+  only the round trip satisfies it, so the plan argued with itself, and
+  the paragraph making the case conceded the gap in its second sentence.
+  A gate that needs defending twice is usually cheaper to satisfy than
+  to reword. Recorded rather than deleted because the reasoning recurs —
+  an add-only change genuinely is weaker evidence *for* than *against*,
+  and the temptation to treat "nothing was touched" as "everything still
+  works" is exactly what this step exists to refuse.
+
+  Satisfying it: one magic-link sign-in whose callback is the canonical
+  apps/site alias, observed landing back on that alias. On that
+  observation this step is marked satisfied and Status flips to
+  `Landed`; nothing else in this phase is outstanding.
 
   The Production Admin Smoke — `npm run test:e2e:admin:production-smoke`,
   or its workflow — is the right vehicle **only if its configured target
@@ -389,11 +419,20 @@ post-merge.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
   **Done, and it is what caught the error this diff mostly consists
-  of.** Four surfaces described exact-callback-path entries; the console
-  carries nine globstar entries. `docs/operations.md` (two places),
-  `docs/architecture.md`, and `docs/dev.md` (two places) were corrected
-  to the live shape. No statement about Site URL was touched, per Files
-  to touch.
+  of.** Six surfaces described exact-callback-path entries; the console
+  carries nine globstar entries. Corrected: `docs/operations.md` (two
+  places), `docs/architecture.md`, `docs/dev.md` (two places),
+  `docs/tracking/production-admin-smoke-tracking.md`, and
+  `docs/plans/canonical-origin-resolution.md`. No statement about Site
+  URL was touched, per Files to touch.
+
+  **The last two were missed on the first pass and found by review**,
+  which is the argument for this gate being stated over the category
+  rather than over a file list. The first sweep read the files the plan
+  named; the surfaces that were wrong included two the plan did not
+  anticipate, in `docs/tracking/` and in a sibling plan. A repo-wide
+  search for the pattern is the sweep this step requires, not a walk of
+  Files to touch.
 
 The parent's named constraint on routing gates does not bind this phase:
 it changes no host-conditional routing. The organizer-host step above
@@ -430,7 +469,11 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 every entry, not just this one.** Supabase recommends an exact redirect
 path in production and reserves the globstar for development and preview
 URLs (https://supabase.com/docs/guides/auth/redirect-urls). All nine
-entries take the globstar, eight of which predate this phase. What the
+entries take the globstar, eight of which predate this phase. The
+vendor's recommendation does not transfer unmodified here: the exact
+form it recommends does not admit this app's query-bearing callback, as
+C1 records, so "follow the vendor recommendation" is not an available
+one-line remedy. What the
 breadth costs is the set of paths on each host to which a sign-in token
 may be delivered — bounded by every host being a literal, and by every
 path on those hosts being served by one of our own Vercel projects.

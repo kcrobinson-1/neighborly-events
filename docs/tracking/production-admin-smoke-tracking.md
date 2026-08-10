@@ -99,8 +99,12 @@ Optional fixture overrides:
 
 ### Supabase Runtime Requirements
 
-- Auth Site URL and redirect URL allowlist must include the deployed
-  `<origin>/auth/callback` entry used by smoke and admin sign-in
+- Auth Site URL and redirect URL allowlist must admit the deployed
+  origin's callback. The live allowlist does this with one `<origin>/**`
+  entry per origin rather than an exact callback path — an exact entry
+  does not admit the `?next=` query the callback carries. See
+  [`docs/operations.md`](/docs/operations.md) "Manually Maintained
+  Settings" for the shape and why it is that shape.
 - `public.admin_users` allowlist must permit the smoke admin and deny the smoke denied user
 - the deployed web origin used by smoke must be admitted by [`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts) — either present in `defaultAllowedOrigins` (the canonical apps/site Vercel alias is) or added via the additive `EXTRA_ALLOWED_ORIGINS` env var
 - `save-draft`, `publish-draft`, and `unpublish-event` must be deployed and healthy

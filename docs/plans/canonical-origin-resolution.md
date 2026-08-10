@@ -128,8 +128,7 @@ After this plan lands its full sequence:
   plugin origin. Magic-link `emailRedirectTo` composes against the
   canonical origin (the user is signing in on the canonical origin in
   the first place), and the Supabase Auth dashboard's redirect-URL
-  allowlist names the canonical origin's `/auth/callback` rather than
-  the plugin's.
+  allowlist admits the canonical origin rather than the plugin's.
 - `NEXT_PUBLIC_SITE_ORIGIN` (currently documented in
   [`apps/site/.env.example:3-9`](/apps/site/.env.example) as
   "set this to apps/web's hostname") is reframed: it is the canonical
