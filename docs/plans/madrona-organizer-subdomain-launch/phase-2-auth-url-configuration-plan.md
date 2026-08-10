@@ -1,15 +1,15 @@
 # Phase 2 — Auth URL configuration
 
-**Status:** `Proposed`
+**Status:** `Landed`
 
 One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
 in that same PR rather than in a follow-up; C2 says why, and what the
 ordering it implies requires.
 
-**Held at `Proposed`:** every step of the Validation Gate has run and
-passed except the canonical-alias round trip asserting the parent's I1,
-which is recorded there as outstanding. It is one sign-in, and the flip
-follows the observation.
+Every step of the Validation Gate has run and passed, including the
+canonical-alias round trip asserting the parent's I1 — discharged by
+the Production Admin Smoke, whose configured target was read rather
+than assumed. That step records the run.
 
 ## Context
 
@@ -355,29 +355,44 @@ post-merge.
   the step is satisfied by observing that round trip — not by observing
   that some production round trip passed.
 
-  **OUTSTANDING — this is what holds the phase at `Proposed`.** A
-  console read was offered as a substitute: the read shows
-  `https://neighborly-events-site.vercel.app/**` present and unchanged,
-  and the operator who made the edit confirms it added one entry and
-  touched nothing else. That is real evidence, and it rules out the
-  entry having been *removed or reworded*. It does not establish that
-  the entry still *functions*, which is what this step asserts and what
-  the Goal's promise about previously-admitted origins rests on.
+  **SATISFIED by the Production Admin Smoke**, which is the vehicle
+  this step names, on the condition this step sets — that its configured
+  target is the canonical alias. Both configured values were read rather
+  than assumed, which is what the condition requires:
+  `PRODUCTION_SMOKE_BASE_URL` is the canonical apps/site alias, and the
+  callback override `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is unset (the
+  repository defines zero repository-level variables), so the fixture
+  composes the redirect from the base URL. The run requests a
+  service-role link with an explicit redirect to that alias's callback,
+  navigates a browser to the returned link, and asserts an apps/site
+  admin surface renders. Run:
+  https://github.com/kcrobinson-1/neighborly-events/actions/runs/31428911625
+  (2026-08-10 20:24:59Z, after the console edit; "Run production admin
+  smoke" succeeded).
 
-  The substitution was written into this plan and then withdrawn. It
-  failed on its own terms: it was appended to a step whose text says
-  only the round trip satisfies it, so the plan argued with itself, and
-  the paragraph making the case conceded the gap in its second sentence.
-  A gate that needs defending twice is usually cheaper to satisfy than
-  to reword. Recorded rather than deleted because the reasoning recurs —
-  an add-only change genuinely is weaker evidence *for* than *against*,
-  and the temptation to treat "nothing was touched" as "everything still
-  works" is exactly what this step exists to refuse.
+  **This proves function, not just presence**, which is what the step
+  asks and what a console read could not give. Had the apps/site entry
+  stopped matching, Supabase would not have honored the requested
+  redirect, the browser would have landed elsewhere, and the admin
+  surface assertion would have failed. **Verified by:**
+  [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
+  composes `${baseUrl}/auth/callback?next=/admin` when
+  `TEST_ADMIN_REDIRECT_URL` is absent, and
+  [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
+  navigates the generated link and asserts the "Game draft access"
+  heading.
 
-  Satisfying it: one magic-link sign-in whose callback is the canonical
-  apps/site alias, observed landing back on that alias. On that
-  observation this step is marked satisfied and Status flips to
-  `Landed`; nothing else in this phase is outstanding.
+  **An earlier version of this plan substituted a console read here**,
+  arguing that an add-only change cannot have broken an untouched entry.
+  That was withdrawn twice under review before this run was found. It
+  failed on its own terms — appended to a step whose text says only the
+  round trip satisfies it, conceding the gap in its own second sentence.
+  Recorded because the reasoning recurs: an add-only change is strong
+  evidence that nothing was *removed* and no evidence that anything
+  still *works*, and the check that closed this gap had been running on
+  every release the whole time. The lesson is not that the substitution
+  was too weak; it is that the step named its own instrument and nobody
+  read the two variables that decide whether it applies.
 
   The Production Admin Smoke — `npm run test:e2e:admin:production-smoke`,
   or its workflow — is the right vehicle **only if its configured target
