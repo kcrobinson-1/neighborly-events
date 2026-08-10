@@ -122,8 +122,8 @@ shape that had already been tried and reverted." **Verified by:**
 `docs/plans/archive/m2/m2-phase-2-2-plan.md` records the blocked
 round-trip, names the query-string mismatch as the cause, and names
 double-asterisk entries as the fix; `requestMagicLink` in
-[`shared/auth/api.ts`](/shared/auth/api.ts) composes
-`${routes.authCallback}?next=…`. Surfaced by Codex review on this
+[`shared/auth/api.ts`](/shared/auth/api.ts) composes the callback path
+with a `next` query parameter appended. Surfaced by Codex review on this
 phase's PR, against a first version of this section that recorded the
 divergence without its cause.
 
@@ -282,17 +282,25 @@ shape the redirect allowlist takes, so each falls inside the
 Documentation Currency PR Gate's category — which is the category
 being stated over a file list rather than as one paying off.
 
-One further row is a deviation on different grounds. `docs/operations.md`
-claimed `apps/web/vercel.json` carries proxy rewrites for
-apps/site-owned `/`, `/auth/callback`, and `/admin*`; that file carries
-no such rules and has not since the canonical origin moved. That is not
-a redirect-allowlist statement, so it sits outside this gate's category
-and would normally be left for its own change. It is corrected here
-because it is load-bearing for this phase's own I1 evidence — a reviewer
-reading it would conclude the production smoke cannot discriminate a
-broken canonical entry, which is exactly the objection raised against
-this phase. Leaving a false statement in place that invalidates this
-plan's reasoning is worse than the small scope stretch.
+**One correction was attempted here and then reverted, deliberately.**
+`docs/operations.md` claims `apps/web/vercel.json` carries proxy
+rewrites for apps/site-owned `/`, `/auth/callback`, and `/admin*`; that
+file carries no such rules and has not since the canonical origin
+moved. It is a real defect, and it is not this phase's — it says nothing
+about the redirect allowlist. It was corrected here on the argument
+that it is load-bearing for this phase's I1 evidence, and that argument
+does not hold: the evidence rests on `apps/web/vercel.json` itself,
+which is authoritative, and a stale doc describing it changes nothing
+about what that file contains. What the stale doc did was make a
+reviewer's incorrect objection look reasonable, which is a cost paid in
+review time, not in correctness.
+
+Correcting it also did not stay one line. The same claim appears three
+times in that file, so the fix pulled in the fork-bootstrap runbook and
+the smoke-interpretation prose — neither of which has anything to do
+with auth redirects. Reverted, and filed as its own item. A phase that
+corrects documentation in one category should not acquire a second
+category because a reviewer misread the first.
 
 **Intentionally not touched**
 
@@ -377,8 +385,8 @@ post-merge.
   callback override `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is unset, so
   the fixture composes the redirect from the base URL. **Both scopes
   were read, because the workflow runs under `environment: production`
-  and a `${{ vars.* }}` reference resolves against the environment as
-  well as the repository:** the repository defines zero action
+  and its variable references resolve against the environment as well as
+  the repository:** the repository defines zero action
   variables, and the `production` environment defines exactly three
   (`PRODUCTION_SMOKE_BASE_URL`,
   `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`,
@@ -413,7 +421,8 @@ post-merge.
   a test change this documentation-only phase does not make.
   **Verified by:**
   [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
-  composes `${baseUrl}/auth/callback?next=/admin` when
+  composes the redirect from the smoke base URL, the callback path, and
+  a `next` parameter naming the admin route, when
   `TEST_ADMIN_REDIRECT_URL` is absent, and
   [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
   navigates the generated link and asserts the "Game draft access"
