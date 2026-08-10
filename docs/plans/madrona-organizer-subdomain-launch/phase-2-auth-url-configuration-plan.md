@@ -86,49 +86,30 @@ https://supabase.com/docs/guides/auth/redirect-urls "Use wildcards in
 redirect URLs" defines the separator set and the two wildcard forms.
 
 **This was drafted as a deliberate widening of the repository's
-documented convention. The console says otherwise, and the console
-wins.** The implementation-time read required by the Reality-check
-inputs found every one of the nine entries in the globstar path form —
-the apps/web alias, the apps/site alias, the six localhost variants,
-and the organizer host alike. The repository's documented convention,
-one exact callback-path entry per environment
-([`docs/operations.md`](/docs/operations.md) "Manually Maintained
-Settings", plus `docs/architecture.md` and two places in
-`docs/dev.md`), describes a state that is not live on any entry.
+documented convention. The console says otherwise.** The
+implementation-time read found all nine entries in the globstar path
+form. The documented convention — one exact callback-path entry per
+environment — is live on none of them, so the organizer entry is not a
+widening; it is the shape every other origin uses.
 
-So the organizer entry is not a widening of anything. It is the shape
-every other origin uses, and what this phase's docs correct is not "the
-convention now admits two shapes" but a four-surface description that
-is simply wrong. This is P1 doing its job: the copies were remembered
-rather than re-derived, and nothing checks them against the project.
-
-**The divergence predates this phase**, which matters because the
-alternative would have falsified P2. The stakeholder who made the
-console edit confirms it was add-only — the eight were untouched and
-already carried the globstar. So the docs have been describing a
-convention nobody follows, independently of anything this phase did,
-and this phase's diff corrects a pre-existing error rather than
-documenting its own change.
-
-**And the exact-path convention was not merely abandoned; it was found
-not to work.** An exact entry does not admit the `?next=` query string
-that `requestMagicLink` puts on every callback URL, and Supabase falls
-back to Site URL when the match fails. This repository hit that during
-M2 phase 2.2, diagnosed it, and switched to double-asterisk entries.
-The console has been right ever since and the docs were never updated
-to follow. That reframes the correction this phase ships: not "the docs
-drifted from an arbitrary choice" but "the docs kept recommending a
-shape that had already been tried and reverted." **Verified by:**
+**The exact-path convention was not merely abandoned; it was found not
+to work.** An exact entry does not admit the `?next=` query string that
+`requestMagicLink` puts on every callback URL, and Supabase falls back
+to Site URL when the match fails. This repository hit that during M2
+phase 2.2, diagnosed it, and switched to double-asterisk entries; the
+docs were never updated to follow. So what this phase corrects is not
+drift from an arbitrary choice but guidance that kept recommending a
+shape already tried and reverted. **Verified by:**
 `docs/plans/archive/m2/m2-phase-2-2-plan.md` records the blocked
 round-trip, names the query-string mismatch as the cause, and names
 double-asterisk entries as the fix; `requestMagicLink` in
 [`shared/auth/api.ts`](/shared/auth/api.ts) composes the callback path
-with a `next` query parameter appended. Surfaced by Codex review on this
-phase's PR, against a first version of this section that recorded the
-divergence without its cause.
+with a `next` query parameter appended.
 
-R1 changes with it — the wildcard's breadth is a project-wide condition
-rather than a call this entry makes.
+The divergence predates this phase — the operator who made the console
+edit confirms it was add-only — which is what keeps P2 true. R1 follows:
+the wildcard's breadth is a project-wide condition rather than a call
+this entry makes.
 
 ### C2. The configuration change lands before the PR, and Status flips in that PR
 
@@ -282,25 +263,10 @@ shape the redirect allowlist takes, so each falls inside the
 Documentation Currency PR Gate's category — which is the category
 being stated over a file list rather than as one paying off.
 
-**One correction was attempted here and then reverted, deliberately.**
-`docs/operations.md` claims `apps/web/vercel.json` carries proxy
-rewrites for apps/site-owned `/`, `/auth/callback`, and `/admin*`; that
-file carries no such rules and has not since the canonical origin
-moved. It is a real defect, and it is not this phase's — it says nothing
-about the redirect allowlist. It was corrected here on the argument
-that it is load-bearing for this phase's I1 evidence, and that argument
-does not hold: the evidence rests on `apps/web/vercel.json` itself,
-which is authoritative, and a stale doc describing it changes nothing
-about what that file contains. What the stale doc did was make a
-reviewer's incorrect objection look reasonable, which is a cost paid in
-review time, not in correctness.
-
-Correcting it also did not stay one line. The same claim appears three
-times in that file, so the fix pulled in the fork-bootstrap runbook and
-the smoke-interpretation prose — neither of which has anything to do
-with auth redirects. Reverted, and filed as its own item. A phase that
-corrects documentation in one category should not acquire a second
-category because a reviewer misread the first.
+**Deliberately not corrected here:** `docs/operations.md` describes a
+cross-app proxy topology that no longer exists. Real defect, filed
+separately. It says nothing about the redirect allowlist, and a phase
+correcting documentation in one category should not acquire a second.
 
 **Intentionally not touched**
 
@@ -327,211 +293,78 @@ category because a reviewer misread the first.
 Every step runs before the PR is opened, per C2. Nothing here is
 post-merge.
 
-- **`npm run lint`, reported for what it is.** This diff is
-  documentation, and the lint command's file selection reaches source
-  directories and the apps/site workspace, not markdown — so a pass is
-  evidence that the branch is clean, not evidence about this change. It
-  is run and reported as such rather than presented as a gate this diff
-  passed. **Verified by:** the `lint` script in
+- **`npm run lint`, reported for what it is.** The lint command's file
+  selection reaches source directories and the apps/site workspace, not
+  markdown, so a pass is evidence the branch is clean rather than
+  evidence about this diff. **Verified by:** the `lint` script in
   [`package.json`](/package.json) names source directories plus the
   apps/site workspace lint, and neither
   [`eslint.config.mjs`](/eslint.config.mjs) nor
   [`apps/site/eslint.config.mjs`](/apps/site/eslint.config.mjs)
   registers a markdown processor.
-- **Sign-in from the organizer host returns to the organizer host.**
-  Request a magic link on an authenticated surface reached on the
-  organizer host, open the link, and confirm the browser lands back on
-  that host — through the callback and on to the requested destination.
-  Such a surface already resolves there: the apps/site routes that
-  render the magic-link form and the callback are host-agnostic, and the
-  organizer host is an alias of that same Vercel project. **Verified
-  by:** the apps/site admin route renders the shared sign-in form and
-  calls `requestMagicLink`, the apps/site auth-callback route renders
-  the shared callback page, and
-  [`apps/site/next.config.ts`](/apps/site/next.config.ts) declares no
-  host condition on any rewrite, so neither route's resolution depends
-  on which alias was requested.
-  The falsifier does not depend on what Supabase does with an
-  unadmitted redirect: if the new entry is absent or malformed, the
-  organizer host's callback is not admitted, and an unadmitted callback
-  either sends the visitor to some other host or produces no usable
-  link at all. Neither outcome can be mistaken for the one this step
-  looks for, so "landed back on the organizer host" cannot be produced
-  by the failure it is meant to catch.
 
-  **This step is also the only proof the entry took.** Reading the
-  console field back confirms what it says, not that it matches; a
-  malformed pattern reads exactly like a working one. The round trip is
-  what distinguishes them, which is why the read-back required by C2
-  and P1 governs what the *docs* say and this step governs whether the
-  configuration *works*.
+- **Sign-in from the organizer host returns to the organizer host —
+  satisfied.** A fresh magic-link sign-in was requested on
+  `music.madrona.us`; the link returned the browser to that host at the
+  redeem surface, where a redemption then committed. This is the only
+  check that distinguishes a working entry from a malformed one, since
+  the console field reads identically either way. Recorded here because
+  a reviewer cannot re-run it: the entitlement row that carried it was
+  test data and has since been cleared.
 
-  **Satisfied.** A fresh magic-link sign-in was requested on
-  `music.madrona.us`, and the link returned the browser to that host at
-  the redeem surface, where a redemption then committed. Recorded here
-  because it cannot be re-run by a reviewer: the entitlement row that
-  carried it was test data and has since been cleared.
 - **Unchanged elsewhere (parent I1), asserted on the canonical apps/site
-  alias by name.** I1 is about that alias specifically, so the gate is
-  a magic-link round trip whose callback is the canonical alias's, and
-  the step is satisfied by observing that round trip — not by observing
-  that some production round trip passed.
-
-  **SATISFIED by the Production Admin Smoke**, which is the vehicle
-  this step names, on the condition this step sets — that its configured
-  target is the canonical alias. Both configured values were read rather
-  than assumed, which is what the condition requires:
-  `PRODUCTION_SMOKE_BASE_URL` is the canonical apps/site alias, and the
-  callback override `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is unset, so
-  the fixture composes the redirect from the base URL. **Both scopes
-  were read, because the workflow runs under `environment: production`
-  and its variable references resolve against the environment as well as
-  the repository:** the repository defines zero action
-  variables, and the `production` environment defines exactly three
-  (`PRODUCTION_SMOKE_BASE_URL`,
-  `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`,
-  `PRODUCTION_SMOKE_SUPABASE_URL`). The override is absent from both.
-  An earlier version of this record cited only the repository scope,
-  which would not have ruled out an environment-level override —
-  surfaced by Codex review. The run requests a
-  service-role link with an explicit redirect to that alias's callback,
-  navigates a browser to the returned link, and asserts an apps/site
-  admin surface renders. Run:
+  alias — satisfied by the Production Admin Smoke.** This step's
+  condition is that the smoke's configured target is that alias, and
+  both values were read rather than assumed. `PRODUCTION_SMOKE_BASE_URL`
+  is the canonical alias. The callback override
+  `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is absent from the repository
+  (zero action variables) and from the `production` environment (three,
+  none of them it) — both scopes, because the workflow runs under
+  `environment: production`. Run:
   https://github.com/kcrobinson-1/neighborly-events/actions/runs/31428911625
-  (2026-08-10 20:24:59Z, after the console edit; "Run production admin
-  smoke" succeeded).
+  (2026-08-10 20:24:59Z, after the console edit).
 
-  **This proves function, not just presence**, which is what the step
-  asks and what a console read could not give. Had the apps/site entry
-  stopped matching, Supabase would not have honored the requested
-  redirect, the browser would have landed on Site URL's host, and the
-  admin surface assertion would have failed.
-
-  **That last step is the load-bearing one, and it was challenged:** the
-  spec asserts a heading rather than the final hostname, so it only
-  discriminates if the fallback host does not serve that heading. It
-  does not. Site URL names the plugin deployment's alias, and
-  `apps/web/vercel.json` carries five rewrites, all of them `/event/…`
-  sources pointing at `/index.html` — no `/admin`, no `/auth/callback`.
-  The apps/site-owned proxy rules that once made those paths resolve on
-  the plugin host were removed when the canonical origin moved. So a
-  fallback landing cannot render "Game draft access"; it renders
-  nothing. The heading assertion is a host assertion in effect, though
-  not in form. Asserting the hostname outright would be better and is
-  a test change this documentation-only phase does not make.
-  **Verified by:**
+  **It proves function, not presence**, which a console read cannot. The
+  spec asserts a heading rather than a hostname, which discriminates only
+  because the fallback host does not serve that heading: Site URL names
+  the plugin alias, and `apps/web/vercel.json` carries no `/admin` or
+  `/auth/callback` rewrite. Asserting the hostname outright would be
+  better, and is a test change this documentation-only phase does not
+  make. **Verified by:**
   [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
   composes the redirect from the smoke base URL, the callback path, and
   a `next` parameter naming the admin route, when
-  `TEST_ADMIN_REDIRECT_URL` is absent, and
+  `TEST_ADMIN_REDIRECT_URL` is absent;
   [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
   navigates the generated link and asserts the "Game draft access"
   heading.
 
-  **An earlier version of this plan substituted a console read here**,
-  arguing that an add-only change cannot have broken an untouched entry.
-  That was withdrawn twice under review before this run was found. It
-  failed on its own terms — appended to a step whose text says only the
-  round trip satisfies it, conceding the gap in its own second sentence.
-  Recorded because the reasoning recurs: an add-only change is strong
-  evidence that nothing was *removed* and no evidence that anything
-  still *works*, and the check that closed this gap had been running on
-  every release the whole time. The lesson is not that the substitution
-  was too weak; it is that the step named its own instrument and nobody
-  read the two variables that decide whether it applies.
+  The local admin e2e wrapper is not a substitute: it provisions a local
+  Supabase stack, so it never touches the production project's Auth URL
+  configuration and cannot fail on allowlist drift.
 
-  The Production Admin Smoke — `npm run test:e2e:admin:production-smoke`,
-  or its workflow — is the right vehicle **only if its configured target
-  is that alias.** Its base URL and its callback override are repository
-  *variables*, not repository files, so which entry it exercises cannot
-  be read from this branch: the checked-in example documents the base
-  URL as a web deployment, and the callback can be pointed somewhere
-  else again independently of it. Read both configured values first. If
-  they resolve to the canonical alias and a matching callback, the smoke
-  discharges this step; if they do not, run the canonical-alias round
-  trip directly and treat the smoke as covering a different origin.
-  Skipping that read would let the step pass while the apps/site
-  redirect entry was broken during the console edit, which is the
-  regression it exists to catch. **Verified by:**
-  [`tests/e2e/admin-production-smoke.spec.ts`](/tests/e2e/admin-production-smoke.spec.ts)
-  runs under the admin auth fixture, whose `generateMagicLink` requests
-  a service-role link with an explicit redirect;
-  [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
-  composes that redirect from `PRODUCTION_SMOKE_BASE_URL` but lets
-  `TEST_ADMIN_REDIRECT_URL` replace it outright;
-  [`.github/workflows/production-admin-smoke.yml`](/.github/workflows/production-admin-smoke.yml)
-  supplies both from repository variables; and
-  [`scripts/.env.example`](/scripts/.env.example) documents the base URL
-  as a web-deployment origin.
-  - The local admin e2e wrapper is **not** a substitute here. It
-    provisions a local Supabase stack, so it never touches the
-    production project's Auth URL configuration and cannot fail on
-    allowlist drift. **Verified by:**
-    [`scripts/testing/run-admin-e2e-tests.cjs`](/scripts/testing/run-admin-e2e-tests.cjs)
-    starts a local Supabase stack and a local functions runtime and
-    passes that stack's API URL to the tests.
-  - The smoke exercises the allowlist, because it passes an explicit
-    redirect — which is exactly the surface this phase changes, so it
-    is the right instrument rather than an approximate one.
-  - It covers only the previously-admitted class, which is the class
-    the Goal claims is unchanged — not the organizer host, whose
-    admission is the intended change and whose round trip is the step
-    above.
-- **The docs match the console.** Walk every statement the diff makes
-  about Auth URL configuration against a fresh console read, per P1.
-  **Done, and it is what caught the error this diff mostly consists
-  of.** Eleven surfaces described a redirect entry the console does not
-  carry — some naming an exact `/auth/callback` path, some naming
-  `/admin` — against nine live globstar entries. Corrected:
-  `docs/operations.md` (two places), `docs/architecture.md`,
-  `docs/dev.md` (three places),
+- **The docs match the console — satisfied, and it is what this diff
+  mostly consists of.** Eleven surfaces described a redirect entry the
+  console does not carry — some naming an exact `/auth/callback` path,
+  some naming `/admin` — against nine live `<origin>/**` entries.
+  Corrected in `docs/operations.md` (two places),
+  `docs/architecture.md`, `docs/dev.md` (three),
   `docs/tracking/production-admin-smoke-tracking.md`,
   `docs/tracking/continuous-deployment-roadmap.md`,
-  `docs/plans/canonical-origin-resolution.md` (prose and its Post-state),
-  and `README.md` (two places). No statement about Site URL was touched,
-  per Files to touch.
+  `docs/plans/canonical-origin-resolution.md` (prose and Post-state),
+  and `README.md` (two). No Site URL statement was touched, per Files to
+  touch.
 
-  **Seven of the eleven were missed across three passes and found by
-  review.** Each pass failed differently, and the sequence is the
-  useful record:
-
-  1. Read the files this plan named. Missed everything the plan did not
-     anticipate.
-  2. Grepped repo-wide for `auth/callback`, then filtered the hits by
-     keyword. The filter dropped `README.md`.
-  3. Grepped repo-wide for `auth/callback` unfiltered. Still missed
-     three surfaces, because they name the path as `/admin` — the
-     search string was never going to match them.
-
-  The pattern that works is the **concept**, not the path: a search for
-  "redirect URL" across non-archive docs finds all eleven, because every
-  one of them has to say that phrase to give the guidance. Searching for
-  a path token assumes the writer picked the same token, and across
-  eleven surfaces written at different times they did not.
-
-  This is why the gate is stated over the category rather than a file
-  list, and it is now also why it should be read as requiring a
-  concept-level sweep. A file list would have had to be right the first
-  time; three greps in a row were wrong in three different ways.
-
-  **The same failure then repeated on a claim rather than a citation.**
-  A review finding corrected the wildcard's risk bound in the backlog
-  entry; the identical sentence sat in two other places this diff had
-  written — `docs/operations.md` and this plan's own R1 — and only the
-  cited one was fixed. Applying a correction to the surface that was
-  named, while leaving the copies the same author wrote in the same
-  change, is the same defect as sweeping by file list. A correction is
-  finished when every instance of the corrected claim is found, and the
-  search for those is the claim itself, not the finding's file path.
-
-  Landed plan docs recording what they did at the time are left alone —
-  they are history, not current guidance. What was corrected is guidance
-  a reader would act on today.
+  **Sweep by concept, not by path.** A search for `auth/callback` never
+  finds the surfaces that write the same guidance as `/admin`; a search
+  for "redirect URL" finds all eleven, because every surface giving this
+  guidance has to say that phrase. Landed plan docs recording what they
+  did at the time are left alone — they are history, not guidance.
 
 The parent's named constraint on routing gates does not bind this phase:
-it changes no host-conditional routing. The organizer-host step above
-does run against production, for the unrelated reason that the organizer
-host resolves only there — and it is still pre-merge, because what it
+it changes no host-conditional routing. The organizer-host step does run
+against production, for the unrelated reason that the organizer host
+resolves only there — and it is still pre-merge, because what it
 exercises is project configuration rather than anything this branch
 deploys.
 
