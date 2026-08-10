@@ -344,11 +344,17 @@ so by the time that PR is ready the walk is runnable — while phase
 So the close-out has two branches, the same shape phase 3b's own
 lifecycle carries and for the same reason:
 
-- **If the Validation Gate above has passed before phase 3b's
-  implementing PR is opened**, `Proposed` → `Landed` in that PR,
+- **If the Validation Gate above has passed at any point before phase
+  3b's implementing PR merges**, `Proposed` → `Landed` in that PR,
   recording the verification evidence. That PR deletes the scoping
   doc. This is the default same-PR flip, available because the walk
-  was runnable.
+  was runnable. The cutoff is the merge, not the PR's opening: a walk
+  that passes while the PR is in review satisfies the gate just as
+  fully, and treating it otherwise would manufacture a pending state
+  and a follow-up commit for a plan whose validation was complete.
+  Amending the PR to record late-arriving evidence is the normal
+  course. Phase 3b's own lifecycle uses the same pre-merge cutoff, and
+  so does the Plan-to-PR Completion Gate.
 - **Otherwise** the plan takes the **Post-release validation**
   exception per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
   "Plan-to-Landed Gate For Plans With Post-Release Validation":
