@@ -368,9 +368,18 @@ path — a proxied path can fail in either, independently:
   are apps/site's own routes — open the apps/site project
 - `/event/:slug/game*`, `/event/:slug/admin*`, and `/assets/*` resolve on
   apps/site and proxy into apps/web. A failure here is apps/site's rewrite,
-  apps/web's deploy, or apps/web's build; check apps/web directly at its own
-  `*.vercel.app` host to tell "the plugin is broken" from "the proxy is
-  broken"
+  apps/web's deploy, or apps/web's build — check both projects
+
+Opening apps/web directly at its own `*.vercel.app` host separates "the
+plugin is broken" from "the proxy is broken", but **only for the static
+SPA document and its `/assets/*` bundles**. Do not read a functional result
+off that host: the browser then sends the apps/web alias as the request
+origin, and `defaultAllowedOrigins` in
+[`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
+admits the canonical apps/site origin, not the apps/web one. A perfectly
+healthy game start, save, publish, or redeem will fail there and only
+there — the rejection happens before any handler logic runs, so it reads
+as a broken plugin. Keep every functional check on the canonical origin.
 
 1. Open the Vercel project that owns the failing path.
 2. Confirm the latest production deployment points at the expected Git commit.

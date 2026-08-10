@@ -198,7 +198,7 @@ when a gate counts as met:
 | --- | --- | --- | --- |
 | G1 | Trust-path behavior is validated against real Supabase, not mocks only | `npm run test:supabase` passes locally; pgTAP confirms entitlement uniqueness, request idempotency, verification-code stability, redemption idempotency (`redeem_entitlement` / `reverse_entitlement_redemption` RPCs), and event-scoped role helpers (`is_agent_for_event`, `is_organizer_for_event`, `is_root_admin`) | [testing.md — Trust-Path Validation Strategy](/docs/testing.md) |
 | G2 | Attendee mobile flow works end to end in a real browser | `npm run test:e2e` passes and the captured mobile smoke sequence covers intro → answer → completion → direct route load on `/event/:slug/game` | [testing.md — UX And End-To-End Browser Flow](/docs/testing.md) |
-| G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | Both phases of the `Production Deployed-Surface Smoke` workflow have passed for the release candidate commit (`npm run test:e2e:admin:production-smoke` followed by `npm run test:e2e:redemption:production-smoke` against deployed Supabase + the canonical apps/site origin, automatic on release or via `workflow_dispatch`). The admin phase covers `/admin`, a native apps/site route with no cross-app rewrite in the path. The redemption phase exercises the agent redeem path (`/event/:slug/game/redeem`), the organizer list/filter/sheet path (`/event/:slug/game/redemptions`), and the organizer reverse-redemption path against the dedicated production smoke event; those are apps/web SPA routes, so this phase — not the admin phase — is what incidentally exercises the site → plugin proxy rewrites. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
+| G3 | Admin authoring, publish, unpublish, and the redemption operator surfaces work against deployed production | Both phases of the `Production Deployed-Surface Smoke` workflow have passed for the release candidate commit (`npm run test:e2e:admin:production-smoke` followed by `npm run test:e2e:redemption:production-smoke` against deployed Supabase + the canonical apps/site origin, automatic on release or via `workflow_dispatch`). The admin phase reaches `/admin` natively (an apps/site route, no rewrite in the path) and also visits `/event/:slug/admin` and `/event/:slug/game`, which are proxied. The redemption phase exercises the agent redeem path (`/event/:slug/game/redeem`), the organizer list/filter/sheet path (`/event/:slug/game/redemptions`), and the organizer reverse-redemption path against the dedicated production smoke event, all of them proxied. Both phases therefore exercise the site → plugin rewrites incidentally; neither asserts on them directly. | [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md) |
 | G4 | Completion, starts, and redemption instrumentation is in place for the event | `game_starts`, `game_completions`, `game_entitlements`, and the redemption columns/RPCs populate correctly in a local Supabase run; the production Supabase project has every migration through `20260427010000_broaden_event_scoped_rls.sql` applied before attendees arrive | [analytics-strategy.md](/docs/tracking/analytics-strategy.md) and [redemption-design.md](/docs/redemption-design.md) |
 | G5 | Release-blocking open questions are either decided or explicitly deferred | Each item mirrored under the **Release-blocking open questions** subheading of the current pass entry in [`release-readiness-current.md`](/docs/tracking/release-readiness-current.md) has a linked decision or a recorded post-event deferral, per the mirror contract in [Release-Blocking Open Questions](#release-blocking-open-questions) below; the pass also confirms that no item in [open-questions.md](/docs/open-questions.md) that should be release-blocking is missing from that mirror | [open-questions.md](/docs/open-questions.md) |
 | G6 | Operational visibility is sufficient to detect a live event failure | The observability review in [3. Monitoring, Logging, And Observability](#3-monitoring-logging-and-observability) has been completed against the release candidate, including both Vercel projects (`apps/web` and `apps/site`), the cross-app rewrite path, and the expanded Edge Function surface; any resulting gaps are in `backlog.md` with a Tier 1 or Tier 2 placement or explicitly deferred | [analytics-strategy.md](/docs/tracking/analytics-strategy.md) and this doc |
@@ -264,10 +264,10 @@ How to run:
 5. After merge and deploy, confirm both phases of the `Production
    Deployed-Surface Smoke` workflow ran successfully against the release
    commit (or trigger a `workflow_dispatch` rerun). The admin phase
-   covers `/admin`, a native apps/site route with no cross-app rewrite
-   in the path; the redemption phase exercises the deployed redeem and
-   redemptions operator surfaces, which are apps/web SPA routes and so
-   implicitly exercise the site → plugin proxy rewrites.
+   reaches `/admin` natively and also visits the proxied
+   `/event/:slug/{admin,game}` routes; the redemption phase exercises
+   the deployed redeem and redemptions operator surfaces, also proxied.
+   Both cross the site → plugin rewrites without asserting on them.
    See [production-admin-smoke-tracking.md](/docs/tracking/production-admin-smoke-tracking.md).
 6. Walk the [Proposed Test Inventory in testing.md](/docs/testing.md) against the
    current repo and list any item that is no longer representative of the
@@ -859,11 +859,11 @@ Candidates currently open:
 - **Decide how cross-app routing failures count.** G6 covers both
   Vercel projects and the cross-app rewrite at the operator-runbook
   level, but no gate currently requires *automated* evidence that
-  the rewrites resolve correctly post-deploy beyond what the
-  redemption phase of the production smoke run incidentally
-  exercises. Decide whether to add a synthetic check for the
-  site → plugin (apps/site → apps/web) rewrites or treat that
-  incidental coverage as sufficient for the current MVP.
+  the rewrites resolve correctly post-deploy beyond what both phases
+  of the production smoke run incidentally exercise. Decide whether to
+  add a synthetic check for the site → plugin (apps/site → apps/web)
+  rewrites or treat that incidental coverage as sufficient for the
+  current MVP.
 - **Decide whether M0 phase 0.3 verification questions
   (cookie/token boundary across path-routed Vercel projects) become
   release-blocking when the next real-event milestone (Madrona)
