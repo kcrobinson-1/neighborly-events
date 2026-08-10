@@ -234,6 +234,18 @@ On production, in a private window, on a phone and a laptop:
   into the quiz is the expected behavior per C1, not a failure of
   this step; what the step watches for is a surface that does not
   work, not a URL that is not short.
+
+  **Satisfied.** The quiz was played through to completion on
+  `music.madrona.us` on 2026-08-10, minting `MIP-2881`. The surfaces it
+  crosses were measured independently the same day: the short root and
+  the short feedback path resolve on that host, the long event path and
+  the game path both return 200 there, and the asset classes the journey
+  loads return their expected content types — all recorded in phase 3's
+  plan. The "rejected origin" clause has its own measurement: a CORS
+  preflight to the deployed `issue-session` function returns 200 with
+  `access-control-allow-origin: https://music.madrona.us`, while an
+  origin outside the allowlist returns 403 with no such header. That
+  contrast is what makes the 200 evidence rather than a default.
 - **The organizer journey.** Sign in from the organizer host, land
   back on it, then exercise an authoring action that calls an edge
   function. This is the only step that composes phase 1's admission
@@ -253,8 +265,14 @@ On production, in a private window, on a phone and a laptop:
   token. Recorded here because it cannot be re-run: the entitlement row
   it consumed was test data and has since been cleared.
 
-  **It does not discharge the authoring leg, and I4 is why that
-  distinction is not pedantry.** Redemption is the volunteer path —
+  **The authoring leg is outstanding, by decision, and it is the only
+  thing between this plan and `Landed`.** Walking it means signing in on
+  the organizer host and taking an authoring action — saving a draft or
+  publishing one — so that `save-draft` or `publish-draft` is called
+  from that origin. The stakeholder chose to leave the step as written
+  rather than narrow it or walk it now.
+
+  **I4 is why the distinction is not pedantry.** Redemption is the volunteer path —
   `redeem-entitlement` — not an authoring action, which reaches
   `save-draft` and `publish-draft` instead. Origin admission is
   compiled into each deployed function separately, so a redeem call
@@ -285,9 +303,17 @@ On production, in a private window, on a phone and a laptop:
   rather than reusing the organizer-host journey, which would fail at
   its first step by design.
 
+  **Satisfied, measured 2026-08-10.** On the canonical alias the root
+  reports `x-matched-path: /` and is titled "Neighborly Events", the
+  short feedback path reports `/404` and returns 404, and the long event
+  paths and the game path return 200. Short-path leakage would show as
+  the root matching `/event/madrona`; it does not. Recorded with the
+  requests and responses in phase 3's plan.
+
 This walk is post-merge by construction — see the constraint below. It
 is post-merge to every PR that puts the behavior it walks into
-production, and all of those have landed, so it is runnable now.
+production, and all of those have landed. Three of its four steps are
+satisfied and recorded above; the fourth names what remains.
 
 ## Status lifecycle and close-out
 
@@ -297,7 +323,9 @@ this plan promises is in production; what remains is verifying it.
 
 So the close-out is a single doc-only commit: `Proposed` → `Landed` once
 the Validation Gate above passes, recording the verification evidence.
-That commit deletes the scoping doc. Neither named exception to the
+That commit deletes the scoping doc. **What it waits on is one step:**
+an authoring action taken on the organizer host, per the organizer
+journey. Everything else in the gate is satisfied and recorded. Neither named exception to the
 Plan-to-PR Completion Gate applies — **Parallel implementing PRs** has
 nothing to order, and **Post-release validation** describes an
 implementing PR that merges ahead of its check, which is not the shape
