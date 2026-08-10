@@ -198,6 +198,16 @@ host serves the event landing and feedback surfaces at short paths.
 The quiz still resolves only at its long path, because the short form
 depends on the route contract phase 4 introduces.
 
+**Phase 3b — Post-deploy organizer-host routing probes.**
+[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).
+The committed entry point that runs phase 3's post-deploy checks
+against the deployed surface and produces the run URL its close-out
+records. It exists as its own phase because the stakeholder chose to
+ship phase 3's routing change ahead of it, and a plan requirement
+left outstanding after a merge carries its own `Status` rather than
+hiding under the phase it was deferred from. Ordering-independent of
+phase 4; it gates only phase 3's `Landed` flip.
+
 **Phase 4 — Mount-aware route contract.** Two PRs, split by direction
 per C3:
 

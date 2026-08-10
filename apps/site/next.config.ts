@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { organizerHostRoutes } from "../../shared/urls/organizerHosts.ts";
+
 /**
  * `env` re-exposes the two `NEXT_PUBLIC_*` Supabase variables apps/site
  * reads through `apps/site/lib/supabaseBrowser.ts`. Source-level access
@@ -50,6 +52,52 @@ import type { NextConfig } from "next";
  */
 const APPS_WEB_ORIGIN = "https://neighborly-scavenger-game-web.vercel.app";
 
+/**
+ * Escapes every character a regular expression would read as syntax,
+ * so a value survives being compiled into one as a literal.
+ *
+ * Next.js compiles a `has` condition's `value` by anchoring it into a
+ * `RegExp` — a construction, not a string comparison. A hostname
+ * written through unchanged is therefore *not* matched exactly: a
+ * domain name is mostly literal characters, but its separators are
+ * not, so a host differing only at a separator still matches — and
+ * that near-match is itself a well-formed hostname someone else can
+ * register. The failure is silent — the mapped host keeps working
+ * while an unmapped near-match quietly starts serving the organizer's
+ * event — so the escaping happens here rather than in the mapping,
+ * which stays spelled the way an operator would type it.
+ */
+function escapeRegExpLiteral(value: string): string {
+  return value.replace(/[|\\{}()[\]^$+*?.-]/g, "\\$&");
+}
+
+/**
+ * Host-conditional rewrites derived from the organizer host→event
+ * mapping in
+ * [`shared/urls/organizerHosts.ts`](../../shared/urls/organizerHosts.ts).
+ * Every row names a literal source and carries an exact-hostname
+ * condition, so the blast radius is exactly the mapped literals on
+ * exactly the mapped hosts: no other path is rewritten on an organizer
+ * host, and no path at all is rewritten on an unmapped one.
+ *
+ * These run in the `beforeFiles` phase. The organizer root has to
+ * resolve to the event landing even though `/` is a real route on this
+ * app, and an `afterFiles` rewrite is only consulted after the
+ * filesystem check, so it would never reach it.
+ */
+function organizerHostRewrites() {
+  return organizerHostRoutes().map(({ hostname, shortPath, longPath }) => ({
+    source: shortPath,
+    destination: longPath,
+    has: [
+      {
+        type: "host" as const,
+        value: escapeRegExpLiteral(hostname),
+      },
+    ],
+  }));
+}
+
 const nextConfig: NextConfig = {
   output: "standalone",
   env: {
@@ -59,28 +107,35 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SITE_ORIGIN: process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "",
   },
   async rewrites() {
-    return [
-      {
-        source: "/event/:slug/game",
-        destination: `${APPS_WEB_ORIGIN}/event/:slug/game`,
-      },
-      {
-        source: "/event/:slug/game/:path*",
-        destination: `${APPS_WEB_ORIGIN}/event/:slug/game/:path*`,
-      },
-      {
-        source: "/event/:slug/admin",
-        destination: `${APPS_WEB_ORIGIN}/event/:slug/admin`,
-      },
-      {
-        source: "/event/:slug/admin/:path*",
-        destination: `${APPS_WEB_ORIGIN}/event/:slug/admin/:path*`,
-      },
-      {
-        source: "/assets/:path*",
-        destination: `${APPS_WEB_ORIGIN}/assets/:path*`,
-      },
-    ];
+    // The object form is what reaches `beforeFiles`. The proxy rows
+    // below keep the phase the bare-array return gave them — Next.js
+    // treats a returned array as `afterFiles` — so adding the
+    // organizer rows does not silently relocate them.
+    return {
+      beforeFiles: organizerHostRewrites(),
+      afterFiles: [
+        {
+          source: "/event/:slug/game",
+          destination: `${APPS_WEB_ORIGIN}/event/:slug/game`,
+        },
+        {
+          source: "/event/:slug/game/:path*",
+          destination: `${APPS_WEB_ORIGIN}/event/:slug/game/:path*`,
+        },
+        {
+          source: "/event/:slug/admin",
+          destination: `${APPS_WEB_ORIGIN}/event/:slug/admin`,
+        },
+        {
+          source: "/event/:slug/admin/:path*",
+          destination: `${APPS_WEB_ORIGIN}/event/:slug/admin/:path*`,
+        },
+        {
+          source: "/assets/:path*",
+          destination: `${APPS_WEB_ORIGIN}/assets/:path*`,
+        },
+      ],
+    };
   },
 };
 

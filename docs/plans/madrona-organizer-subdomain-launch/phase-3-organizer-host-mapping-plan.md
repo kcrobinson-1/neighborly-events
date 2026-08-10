@@ -1,6 +1,6 @@
 # Phase 3 — Organizer host mapping in `apps/site`
 
-**Status:** `Proposed`
+**Status:** `In progress pending organizer-host routing verification`
 
 ## Context
 
@@ -67,27 +67,57 @@ instead.
 
 ## PR shape and Status lifecycle
 
-One PR, plus a doc-only close-out commit.
+One PR, plus a doc-only close-out commit. **This phase is now the
+routing change only** — the post-deploy probe runner it originally
+carried moved to
+[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).
 
-**PR-count branch test.** The branch exists and the file list is
-sketched below under "Files to touch": a shared mapping module, the
-routing config, a unit test, a post-deploy probe runner with its
-script entry and workflow wiring, and the docs each of those
-invalidates. The substantive logic is a mapping table, the derivation
-that turns it into rewrite rows, and a probe runner whose assertions
-are enumerated in the Validation Gate — under the LOC threshold, and
-the subsystem count sits at the routing config plus the probe runner,
-since the mapping, test, and docs are that config's own dependents
-rather than distinct subsystems.
+**Why the split, and why it is a phase boundary rather than two PRs
+under one plan.** The stakeholder chose to ship the routing change
+ahead of the runner, to get the organizer host serving sooner. The
+reasoning below still describes that trade correctly and is left
+standing rather than rewritten to agree with the outcome — the
+split's cost was accepted, not disproven. But a deferral that leaves
+a plan requirement outstanding after a merge has to carry its own
+`Status`: this phase's label names the deployed verification, and a
+reader querying it would not learn that the runner producing that
+verification was unwritten. So the runner became phase 3b, with its
+own lifecycle, rather than an untracked remainder of this one.
 
-Splitting was considered once the probe runner entered scope, and
-rejected in both available directions. Landing the mapping alone gives
-a module with no reader. Landing the probe runner separately gives a
-check with nothing to check before the rewrites exist, or one that
-must merge after the change it validates — and this phase's Status
-cannot reach `Landed` without the run that runner produces, so the
-split would put the close-out artifact in a different PR from the plan
-it closes out.
+**Verified by:**
+[`docs/agents/workflows/plan-implementation.md`](/docs/agents/workflows/plan-implementation.md)
+"When the plan says X but reality is Y" requires a plan requirement
+that cannot be fully satisfied in the intended PR to be split along a
+phase boundary before partial work merges, so each phase's `Status`
+can flip independently. Surfaced by Codex review on this phase's
+implementing PR, against a first attempt that recorded the split in
+this section's prose while leaving both slices under one `Status`.
+
+This phase's `Landed` flip still waits on the run URL phase 3b's
+runner produces. That is a dependency between the two phases, not a
+shared Status: one passing run satisfies both, and a run that fails
+distinguishes them — a runner defect leaves this phase unverified
+rather than falsified.
+
+**PR-count branch test**, as this phase now stands: a shared mapping
+module, the routing config, a unit test, and the docs each of those
+invalidates. The substantive logic is a mapping table and the
+derivation that turns it into rewrite rows — well under the LOC
+threshold, and one subsystem, since the mapping, test, and docs are
+the routing config's own dependents rather than distinct subsystems.
+One PR.
+
+**The reasoning that argued against splitting is preserved below**,
+because the split's cost was accepted rather than disproven. It was:
+landing the mapping alone gives a module with no reader; landing the
+probe runner separately gives a check with nothing to check before the
+rewrites exist, or one that must merge after the change it validates —
+and this phase's Status cannot reach `Landed` without the run that
+runner produces, so the split puts the close-out artifact in a
+different PR from the plan it closes out. All three still hold. The
+first is answered by what shipped: the mapping landed with its reader,
+and it is the runner that was deferred, not the mapping. The other two
+are the accepted cost.
 
 **Status lifecycle.** This phase's functional checks key on a hostname
 that resolves only to production, so they are structurally post-merge
@@ -368,10 +398,13 @@ missing asset proxy rule until pre-merge review.
 The parent's I1, I2, and I3 bind this phase and are **not** restated
 here — a phase plan cites its parent's invariants rather than copying
 them. What follows is the layer the parent cannot see: rules that hold
-*between this PR's own file surfaces*, which became necessary once the
-phase grew a probe runner and workflow wiring alongside the mapping,
-config, test, and docs. Each breaks silently, with every file looking
-correct read on its own.
+*between the file surfaces this phase and phase 3b touch*. They became
+necessary once a probe runner and workflow wiring joined the mapping,
+config, test, and docs, and they stayed cross-phase when the runner
+moved to 3b — which is the case they were written for, since a rule
+holding between two files in one diff is easier to keep than one
+holding across two merges. Each breaks silently, with every file
+looking correct read on its own.
 
 **L1. The mapping is the only place a hostname or slug is written.**
 The config's rewrite rows, the unit test's expectations, the probe
@@ -419,7 +452,33 @@ reads, admin writes, and projection types.
 
 Claims this phase rests on, to re-verify at implementation time
 because they were established against surfaces that move
-independently.
+independently. Each bullet carries what re-verification found.
+
+**Re-verified: the leaf-module import resolves.** `next` is unchanged
+since the drafting probe, and `npm run build:site` completed with the
+mapping imported by relative path with a `.ts` extension. C1 holds as
+written; the barrel remains unexercised and the implementation did not
+need it.
+
+**Re-verified: the standalone entrypoint assembles.** Located under
+`.next/standalone` at the tracing-root-relative project path, which in
+this worktree checkout is several levels below the top. With the
+build's static output and public directory copied alongside it, a
+hashed `_next/static` stylesheet returned `text/css` — the precondition
+the parity results below rest on.
+
+**Revised: `/assets/*` was reachable, so it carries a pre-merge
+absolute assertion after all.** The bullet below anticipated that the
+local environment might only manage parity on that class. It managed
+more: a real apps/web asset path returned success with its expected
+content type, identical on the organizer host, the canonical host, and
+a near-match host. Nothing about this class is deferred to post-deploy
+for want of local reach; the post-deploy run re-asserts it against the
+real hostname, which is a different claim.
+
+**Re-verified: the registered slug.** Read from the registry the
+prerender list reads, and asserted against it by the unit test rather
+than transcribed.
 
 - **The single-module import still resolves.** C1's result came from a
   probe against the `next` version pinned today, importing a leaf
@@ -462,12 +521,16 @@ independently.
   depth-limited search rather than by a real absence. Corrected after
   Codex review on this plan's PR.
 - **The `/assets/*` destination may be unreachable from the
-  implementer's environment.** It proxies to the apps/web deployment,
-  and the scoping doc records that the game proxy path could not be
-  exercised from the authoring sandbox. This does not invalidate the
-  parity comparison — see the discriminator in the Validation Gate —
-  but it does mean the absolute assertion on that class lands
-  post-deploy rather than pre-merge.
+  implementer's environment** — *anticipated, and it did not happen;
+  superseded by the Revised note above.* It proxies to the apps/web
+  deployment, and the scoping doc records that the game proxy path
+  could not be exercised from the authoring sandbox. Had that held,
+  the absolute assertion on that class would have landed post-deploy
+  rather than pre-merge, and the parity comparison would still have
+  been valid — see the discriminator in the Validation Gate. It did
+  not hold: the class carries a pre-merge absolute assertion, and its
+  post-merge bullet is a production recheck rather than deferred
+  coverage.
 - **The event's registered slug.** The mapping's value has to be the
   slug `apps/site` prerenders the event under, not the event's display
   name and not the identifier the entitlement rows carry. The parent's
@@ -480,7 +543,9 @@ independently.
 *Estimate of the expected shape, not a binding rule. Implementation
 may revise any row when a structural call requires it; deviations are
 reported per the Plan-to-PR Completion Gate's Estimate Deviations
-callout.*
+callout. The runner rows this section originally carried moved out
+with the runner, to
+[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).*
 
 **New**
 
@@ -488,18 +553,20 @@ callout.*
 |---|---|
 | `shared/urls/organizerHosts.ts` | the mapping, per C1 and Naming |
 | `tests/shared/urls/organizerHosts.test.ts` | the assertions named in the Validation Gate |
-| a runner under `scripts/testing/` | the post-deploy host-routing probes, as a committed entry point that produces a run URL |
 
 **Modify**
 
 | file | why |
 |---|---|
 | `apps/site/next.config.ts` | the host-conditional rows, per C2 and C3 |
-| `package.json` | the script entry the runner is invoked through |
-| `.github/workflows/production-admin-smoke.yml` | where the probes run on the deployed surface — a new job there, or a sibling workflow if the environment or trigger shape does not fit |
 | `docs/architecture.md` | "Vercel routing topology" — the routing authority's prose |
-| `docs/dev.md` | "Vercel" — the onboarding step this phase contributes, and the validation-command list |
-| `docs/testing.md` | the validation-command list, per the validation-command coupling audit |
+| `docs/dev.md` | "Vercel" — the onboarding step this phase contributes |
+| `README.md` | its runtime summary carries the same topology, and became incomplete rather than wrong — a pointer to the owner, not a copy |
+
+The topology table gained a host column and a phase column rather than
+only new rows: every pre-existing row had to declare the phase it runs
+in, because the phase is what the new rows depend on and a table that
+named it for only some rows would read as though the rest had none.
 
 **Intentionally not touched**
 
@@ -553,15 +620,7 @@ order wrong produces a misleading result rather than a slower one.
    mapping once.** A test that passes whether or not the derivation
    reads the mapping is the L1 failure, and the only cheap way to know
    it fails is to make it fail.
-3. **Exercise the probe runner pre-merge against the canonical host.**
-   Its organizer-host rows do not resolve until this merges, but the
-   canonical alias resolves today, so the runner's own correctness —
-   argument handling, host selection from the mapping, the
-   empty-set guard, assertion wiring — is verifiable before merge even
-   though its subject is not. Without this the runner ships never
-   having run, and its first execution is the one the close-out
-   depends on.
-4. **Update the topology table in the same commit as the config
+3. **Update the topology table in the same commit as the config
    change**, not in the docs pass. They are one statement per L3, and
    separating them is what leaves both internally consistent and
    jointly wrong.
@@ -570,18 +629,20 @@ order wrong produces a misleading result rather than a slower one.
 
 *Estimate of cohesive review chunks; the implementer can refine.*
 
-Three slices, each reviewable on its own and each leaving the repo
+Two slices, each reviewable on its own and each leaving the repo
 working:
 
 1. The mapping module, the config derivation, the unit test, and the
    topology-table update — the routing change and its proof.
-2. The probe runner, its script entry, and its workflow wiring —
-   validation infrastructure, reviewable against the Validation Gate's
-   post-merge bullets without re-reading the routing diff.
-3. The remaining operator-facing doc updates.
+2. The operator-facing doc updates and this plan's Status flip.
 
 Review-fix commits stay distinct from these when that makes the
 history easier to follow.
+
+The probe runner, its script entry, and its workflow wiring were a
+third slice here before they became phase 3b; the validation-command
+lists went with them, because they describe a command that does not
+exist until that phase lands.
 
 ## Validation Gate
 
@@ -636,9 +697,25 @@ history easier to follow.
   event — the parent's I1, asserted on the same run rather than assumed
   from the organizer-host result.
 
-**Post-merge — these gate the `Landed` flip.** These run from the
-committed entry point named in the Status lifecycle above, not by
-hand, so the run that passes is the artifact the close-out records.
+**Every pre-merge bullet above passed on the routing PR**, against the
+standalone production build described in the Reality-check inputs. The
+near-match host was probed alongside the mapped and canonical ones, so
+the exact-hostname property is asserted at the served level and not
+only in the unit test; and the emitted `routes-manifest.json` was read
+directly for the phase assertion C3 requires. Two results worth
+carrying forward rather than leaving to be re-derived: the proxy rows
+still resolve through to the apps/web deployment after the phase
+change, and no class had to be deferred to post-deploy for want of
+local reach.
+
+**Post-merge — these gate the `Landed` flip.** These run from a
+committed entry point, not by hand, so the run that passes is the
+artifact the close-out records. That entry point is phase 3b's
+deliverable; this phase merges without it, which is what the
+`In progress pending organizer-host routing verification` Status
+records. The manual walk performed immediately after this phase's PR
+merges is a rollback trigger, not a substitute — it produces no run
+URL, and the close-out still requires one.
 
 - **Establish deployment identity before any assertion counts.** The
   run confirms the origin is serving the commit under test, and until
@@ -673,9 +750,16 @@ hand, so the run that passes is the artifact the close-out records.
   that exercises the real hostname, so it is the run that can fail for
   reasons a spoofed header cannot reproduce — DNS, alias attachment,
   and deployment protection among them.
-- The absolute assertions the local environment could not make,
-  including the `/assets/*` class and the existing long event paths
-  on both hosts.
+- The `/assets/*` class and the existing long event paths, on both
+  hosts. **These are production rechecks, not deferred coverage.** An
+  earlier form of this bullet read them as assertions the local
+  environment could not make, on the expectation recorded in
+  Reality-check inputs that the proxy destination might be
+  unreachable from the implementer's sandbox. It was reachable, and
+  both classes carry an absolute pre-merge assertion. What the
+  production run adds is a different claim: that they hold against
+  the real hostname, through the real edge, with real deployment
+  protection — none of which a spoofed `Host` header reproduces.
 - The runner takes its hosts from the mapping and from the canonical
   origin rather than hardcoding either, so the same check re-runs
   against the next organizer host without an edit. A runner that
@@ -706,6 +790,15 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
   validation commands matches the authoritative source, which is why
   the docs listed under "Files to touch — modify" include the
   command-list docs and not only the routing-topology ones.
+
+**Results.** The topology audit ran and pulled in one carrier this
+plan had not listed: the root `README.md` summarizes the same
+topology, and its summary had become incomplete rather than wrong. It
+gained a pointer to the owner rather than a copy of the table, which
+is the duplication audit's resolution applied to the same diff. The
+validation-command audit's trigger does not fire on this phase — it
+adds no script entry and no workflow change — so it moved to phase 3b
+along with the command-list docs.
 
 ## Risks
 

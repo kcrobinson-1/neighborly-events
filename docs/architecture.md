@@ -1512,31 +1512,102 @@ apps/site is the canonical Vercel project, established by
 Customer-visible URLs resolve on apps/site's primary alias; the
 apps/web plugin deployment is reached only through one-direction
 proxy rewrites from apps/site for the plugin-owned route prefixes.
-`apps/site/next.config.ts` is the routing authority. Vercel applies
-rewrites in file order ("first match wins"), so most-specific rules
-must come first.
+`apps/site/next.config.ts` is the routing authority. Rewrites resolve
+by phase before they resolve by order, and this config uses two of
+Next.js' three phases:
 
-| # | Path pattern | Destination | Lifetime |
-| --- | --- | --- | --- |
-| 1 | `/event/:slug/game` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped) |
-| 2 | `/event/:slug/game/:path*` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped); covers `/game/redeem` and `/game/redemptions` operator routes |
-| 3 | `/event/:slug/admin` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped); per-event admin shell |
-| 4 | `/event/:slug/admin/:path*` | apps/web plugin (proxy rewrite from apps/site) | Permanent (event-scoped) |
-| 5 | `/assets/:path*` | apps/web plugin (proxy rewrite from apps/site) | Permanent; covers Vite-emitted hashed bundles referenced from the proxied SPA |
-| 6 | `/event/:slug` | apps/site Next.js route | Permanent (event-scoped landing) |
-| 7 | `/event/:slug/feedback` | apps/site Next.js route | Permanent (event-scoped feedback page) |
-| 8 | `/event/:slug/{opengraph,twitter}-image` | apps/site file-convention metadata route | Permanent (background unfurl-consumer fetches) |
-| 9 | Any other event-scoped path not carved out above (`/event/:slug/<future-route>`) | apps/site Next.js route | Permanent default — apps/site owns event-scoped paths by default |
-| 10 | `/_next/:path*` | apps/site Next.js asset path | Permanent (native) |
-| 11 | `/admin` and `/admin/:path*` | apps/site Next.js route | Permanent (platform admin) |
-| 12 | `/auth/callback` | apps/site Next.js route (client component) | Permanent auth callback route |
-| 13 | `/` | apps/site Next.js route | Permanent platform landing |
+- **`beforeFiles`** rows are matched *ahead of* the filesystem check,
+  so a row here wins against a real route. That is what lets an
+  organizer host's `/` serve an event landing even though `/` is a
+  real page on this app. **These do not stop at the first match**:
+  Next.js checks every `beforeFiles` entry, so a later row whose
+  `source` matches an earlier row's `destination` rewrites it again.
+  Adding a row here means checking it against the destinations of the
+  rows already present, not only against their sources.
+- **`afterFiles`** rows are consulted only once nothing on the
+  filesystem matched, and are tried in order — the first one that
+  resolves to a real file, page, or dynamic route is served, so
+  most-specific rules come first. A returned bare array is treated as
+  `afterFiles`, which is the phase every proxy row has always run in.
+- **`fallback`** — rows that run after dynamic routes too — is unused
+  here and carries no rows.
 
-The proxy-rewrite destinations (rules 1-5) point at apps/web's
+**Verified by:** the `rewrites` reference bundled with the pinned
+`next` version states that `beforeFiles` rewrites "do not check the
+filesystem/dynamic routes immediately after matching a source, they
+continue until all `beforeFiles` have been checked," and describes
+`afterFiles` as tried in order with the first rewrite that resolves
+being served.
+
+The two rows this repo runs in `beforeFiles` cannot chain into each
+other: their sources are `/` and `/feedback`, and their destinations
+are under `/event/`, which neither source matches.
+
+Most rows apply on every host. The rows marked with an organizer host
+carry an exact-hostname condition and apply on that host only — see
+"Organizer host mapping" below.
+
+| # | Host | Path pattern | Destination | Phase | Lifetime |
+| --- | --- | --- | --- | --- | --- |
+| 1 | `music.madrona.us` | `/` | `/event/madrona` (apps/site Next.js route) | `beforeFiles` | Permanent (organizer-scoped landing) |
+| 2 | `music.madrona.us` | `/feedback` | `/event/madrona/feedback` (apps/site Next.js route) | `beforeFiles` | Permanent (organizer-scoped feedback page) |
+| 3 | Any | `/event/:slug/game` | apps/web plugin (proxy rewrite from apps/site) | `afterFiles` | Permanent (event-scoped) |
+| 4 | Any | `/event/:slug/game/:path*` | apps/web plugin (proxy rewrite from apps/site) | `afterFiles` | Permanent (event-scoped); covers `/game/redeem` and `/game/redemptions` operator routes |
+| 5 | Any | `/event/:slug/admin` | apps/web plugin (proxy rewrite from apps/site) | `afterFiles` | Permanent (event-scoped); per-event admin shell |
+| 6 | Any | `/event/:slug/admin/:path*` | apps/web plugin (proxy rewrite from apps/site) | `afterFiles` | Permanent (event-scoped) |
+| 7 | Any | `/assets/:path*` | apps/web plugin (proxy rewrite from apps/site) | `afterFiles` | Permanent; covers Vite-emitted hashed bundles referenced from the proxied SPA |
+| 8 | Any | `/event/:slug` | apps/site Next.js route | Filesystem | Permanent (event-scoped landing) |
+| 9 | Any | `/event/:slug/feedback` | apps/site Next.js route | Filesystem | Permanent (event-scoped feedback page) |
+| 10 | Any | `/event/:slug/{opengraph,twitter}-image` | apps/site file-convention metadata route | Filesystem | Permanent (background unfurl-consumer fetches) |
+| 11 | Any | Any other event-scoped path not carved out above (`/event/:slug/<future-route>`) | apps/site Next.js route | Filesystem | Permanent default — apps/site owns event-scoped paths by default |
+| 12 | Any | `/_next/:path*` | apps/site Next.js asset path | Filesystem | Permanent (native) |
+| 13 | Any | `/admin` and `/admin/:path*` | apps/site Next.js route | Filesystem | Permanent (platform admin) |
+| 14 | Any | `/auth/callback` | apps/site Next.js route (client component) | Filesystem | Permanent auth callback route |
+| 15 | Any | `/` | apps/site Next.js route | Filesystem | Permanent platform landing (every host but a mapped organizer host) |
+
+The proxy-rewrite destinations (rules 3-7) point at apps/web's
 Vercel-generated host via the `APPS_WEB_ORIGIN` constant in
 [`apps/site/next.config.ts`](/apps/site/next.config.ts). The plugin
 deployment is reachable directly at its own `*.vercel.app` host but
 is not advertised as a customer-facing origin.
+
+#### Organizer host mapping
+
+Rules 1-2 are derived, not written, and the table above describes
+what they emit rather than declaring it. Which hostname stands for
+which event lives in
+[`shared/urls/organizerHosts.ts`](/shared/urls/organizerHosts.ts);
+`apps/site/next.config.ts` reads that mapping and builds one
+host-conditional row per mapped path. Adding an organizer host is an
+entry in the mapping plus the onboarding steps in
+[`docs/dev.md`](/docs/dev.md) "Vercel" — never a hand-written row in
+the routing config.
+
+Three properties hold across every host-conditional row:
+
+- **Literal sources only** — never a pattern, prefix, or
+  parameterized segment. A prefix rewrite mapping everything under an
+  organizer host into the event subtree would capture `/assets/*`
+  along with it and turn a stylesheet request into an HTML document.
+- **Exact hostnames.** Nothing keys on a host's shape ("is this a
+  custom domain", "is this not a `*.vercel.app`") — only on an exact
+  mapping entry. Next.js compiles a `has` host condition's value into
+  an anchored `RegExp`, so the derivation escapes the hostname before
+  emitting it; unescaped, a near-match host that differs only at a
+  separator would match too, and silently serve the organizer's
+  event.
+- **Nothing else changes.** Every other host — the canonical
+  `*.vercel.app` alias, preview aliases, localhost — resolves exactly
+  as it did before: `/` serves the platform landing, and the long
+  `/event/:slug` paths serve on organizer hosts and everywhere else
+  alike.
+
+The organizer host serves the landing and feedback surfaces at short
+paths; the quiz resolves only at its long `/event/:slug/game` path,
+and in-page navigation moves the address bar onto long paths at the
+first tap. Those are build-time-rendering ceilings, tracked in
+[`docs/backlog.md`](/docs/backlog.md) rather than worked around per
+event.
 
 apps/web's own `vercel.json` carries SPA-internal rewrites
 (`/event/:slug/game*`, `/event/:slug/admin*`, `/event/:path*` →
