@@ -244,8 +244,25 @@ Two consequences follow, and both are load-bearing:
   recorded with the pageview, so an upgrade would surface them
   retroactively for whatever window the plan retains — but nobody
   should print signage expecting to read the result this season.
-  Distinguishing traffic sources on this tier means distinct *paths* or
-  the referrer breakdown, both of which are ungated.
+
+  Distinguishing traffic sources on this tier is possible, but neither
+  lever is a labeling trick and both have a catch:
+
+  - **The referrer breakdown is ungated but blind to print.** A QR scan
+    opens from a camera app and arrives with no referrer, so two
+    posters are indistinguishable from each other and from a typed
+    URL. It separates *online* sources only, which is not the case
+    this paragraph is about.
+  - **Distinct paths are ungated in the Pages breakdown but have to be
+    built first.** `/event/[slug]` and `/event/[slug]/feedback` are the
+    only registered landing shapes, and `apps/site/next.config.ts`
+    carries no per-source aliases, so a source-specific URL is a real
+    route, rewrite, or redirect — not a variant someone can invent at
+    print time. `/event/madrona/poster` returns 404 on production
+    (verified 2026-08-10). Anything printed must be smoke-tested
+    against the deployed origin before it reaches the printer: a QR
+    code pointing at a 404 cannot be recalled, which is a worse
+    failure than the missing attribution it was meant to buy.
 
 #### Beacon routing across the cross-app proxy
 
