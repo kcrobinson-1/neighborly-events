@@ -61,8 +61,12 @@ For this project today, that means:
   SPA route rewrites serving `/index.html` for `/event/:slug/game`, the
   per-event admin route at `/event/:slug/admin` (organizer-or-admin
   authoring), and the `/event/:path*` catchall, plus the test-event
-  `X-Robots-Tag` `headers` block. No cross-app proxy rewrites live
+  `X-Robots-Tag` `headers` block and a `git.deploymentEnabled` block
+  gating which branches deploy. No cross-app proxy rewrites live
   here; the cross-app direction is apps/site → apps/web, above
+- [`apps/site/vercel.json`](/apps/site/vercel.json)
+  the matching `git.deploymentEnabled` gate for the apps/site project;
+  it carries nothing else
 - [`apps/web/package.json`](/apps/web/package.json)
   frontend build commands
 - [`apps/web/vite.config.ts`](/apps/web/vite.config.ts)
@@ -398,13 +402,15 @@ curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game/redemp
 
 `PRODUCTION_SMOKE_BASE_URL` is the apps/site alias — the canonical
 origin — so `/admin` is a native apps/site route resolved on the
-filesystem, with no proxy in the path; a 200 there indicates apps/site's
-platform admin page rendered. `/event/<slug>/game/redeem` and
+filesystem, with no proxy in the path; a 200 there means apps/site
+served the admin document. `/event/<slug>/game/redeem` and
 `/event/<slug>/game/redemptions` are apps/web SPA routes, reached
 through the site → plugin proxy rewrites in
 [`apps/site/next.config.ts`](/apps/site/next.config.ts), so a 200 on
-those indicates both that the proxy rule fired and that apps/web served
-the SPA. The deployed-surface smoke walks both phases (admin authoring
+those means the proxy rule fired and apps/web served the SPA document.
+These are `curl -I` checks, so they establish routing only — each of
+these pages gates on client-side auth, and a 200 says nothing about
+whether it renders or signs in. The deployed-surface smoke walks both phases (admin authoring
 + redemption operator) on the dedicated smoke event.
 
 Notes:

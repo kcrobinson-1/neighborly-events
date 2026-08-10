@@ -418,9 +418,9 @@ trap: the site → plugin proxy destinations in
 `APPS_WEB_ORIGIN` constant), so `vercel dev` proxies to the
 deployed apps/web rather than the branch's local dev server;
 "vercel dev validates the new local routes" was a wrong claim
-because the config's absolute destinations were never checked. If the reality-check finds a
-discrepancy, fix the scoping before drafting the plan; do not
-carry wrong premises into plan time.
+because the config's absolute destinations were never checked.
+If the reality-check finds a discrepancy, fix the scoping before
+drafting the plan; do not carry wrong premises into plan time.
 
 ### Prefer existing wrapper scripts over lower-level CLI invocations in plan validation steps
 
