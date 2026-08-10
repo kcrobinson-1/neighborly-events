@@ -3,7 +3,7 @@
 **Status:** `Proposed`
 
 One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
-in that same PR rather than in a follow-up; C3 says why, and what the
+in that same PR rather than in a follow-up; C2 says why, and what the
 ordering it implies requires.
 
 ## Context
@@ -17,46 +17,48 @@ An organizer's domain is a distinct browser origin, and Supabase Auth
 decides where a sign-in link returns by matching the requested redirect
 against a per-project allowlist. The organizer host is not on that list,
 so a volunteer or organizer who signs in from the domain printed on the
-event's materials is not returned to it. Separately, the project's Site
-URL — the destination a sign-in defaults to when it requests none —
-points at the plugin deployment, which the canonical-origin work
-documented as not customer-facing, so the default is wrong on its own
-terms. Whether the first failure routes through the second is vendor
-behavior C1 pins down rather than assumes. Both halves are configuration,
-both
-are one console visit, and neither is visible in the repository. This
-phase closes them and writes down what changed, because the repository's
+event's materials is not returned to it. That is configuration, it is
+one console visit, and it is not visible in the repository. This phase
+closes it and writes down what changed, because the repository's
 description of this configuration is the only copy anyone can review.
+
+**This phase was trimmed to that one half.** It was drafted with a
+second: retargeting the project's Site URL from the plugin deployment's
+alias to `apps/site`'s canonical alias. The stakeholder dropped it, and
+the parent's Out Of Scope owns the reasoning — in short, every flow in
+this repository passes an explicit redirect, so the retarget buys this
+event nothing, while carrying two vendor questions this plan could not
+resolve from documentation. What that removes from this plan is a
+contract, an invariant, two validation steps, and a conditional
+exception against the parent's I1; what remains is the entry, and the
+docs that describe it.
 
 **Scoping.** This phase does not carry its own scoping doc, and does not
 need the narrow-surface carve-out to justify that: the task's scoping
-doc already owns this phase's deliberation. D6 establishes that Site URL
-names a deployment documented as not customer-facing and that no
-redirect entry matches the organizer host; O3 resolves the retarget,
-with its rationale and its blast-radius argument; O5 strikes the email
-ceiling from this phase's scope. Those are the decisions a phase-2
-scoping doc would have had to make, and restating them here would be the
-scoping-restates-plan trap. What follows is the durable contract those
-decisions imply, plus the phase-specific residue under Reality-check
-inputs — claims that can drift between the task's scoping and this
-phase's implementation because they describe a console, not a file.
+doc already owns this phase's deliberation. D6 establishes that no
+redirect entry matches the organizer host; O5 strikes the email ceiling
+from this phase's scope. (D6's Site URL half and O3, which resolved the
+retarget, are superseded by the drop above.) Those are the decisions a
+phase-2 scoping doc would have had to make, and restating them here
+would be the scoping-restates-plan trap. What follows is the durable
+contract those decisions imply, plus the phase-specific residue under
+Reality-check inputs — claims that can drift between the task's scoping
+and this phase's implementation because they describe a console, not a
+file.
 
 ## Goal
 
 - A magic link requested from the organizer host returns to the
   organizer host.
-- Site URL names the canonical site origin, so a redirect that falls
-  back to it lands on a customer-facing host.
 - Sign-in from every origin the allowlist admitted *before* this phase
   behaves as it does today, and none of them loses a working return leg.
   The organizer host is the one origin whose behavior this phase changes,
   and gaining a return leg there is the point of the bullet above — the
   preservation claim is about the set that already worked, not about
   every admitted origin after the change.
-- What happens on origins the allowlist does not admit is a third case,
-  narrower than either. It turns on a vendor behavior this plan resolves
-  by observation rather than assumption, and on one of the two outcomes
-  it is a named exception to the parent's I1. C1 carries both.
+- Origins the allowlist does not admit are unaffected. This phase only
+  adds an entry, so nothing about how an unadmitted redirect is treated
+  changes, whatever that treatment is. P2 carries this.
 - The repository's operator-facing description of Auth URL configuration
   describes the configuration that is live.
 
@@ -65,90 +67,7 @@ journey working end to end; R2 below says what still separates them.
 
 ## Contracts
 
-### C1. Site URL names the canonical site origin
-
-Site URL is retargeted from the plugin deployment's alias to
-`apps/site`'s canonical alias, per scoping O3.
-
-Across every origin the allowlist admits, the change is bounded: there
-an explicit redirect decides the destination, Site URL is the default
-only for a flow that requests none, and every flow this repository
-contains requests one. That is what keeps a project-wide setting from
-being a project-wide behavior change. Origins the allowlist does not
-admit are a separate case, two paragraphs down.
-
-**Verified by:** Supabase documents Site URL as the default redirect
-used when no explicit redirect is specified
-(https://supabase.com/docs/guides/auth/redirect-urls). `requestMagicLink`
-in [`shared/auth/api.ts`](/shared/auth/api.ts) composes an explicit
-redirect against the current browser origin on every call, and it is the
-only browser-side sign-in entry point: a search across the app, shared,
-test, script, and edge-function source trees for the other Supabase
-methods that can send or generate an auth link — password reset, OAuth,
-invite, and sign-up — returns no call sites. The service-role links the
-e2e fixtures generate also pass an explicit redirect
-([`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
-`generateMagicLink`). Dashboard-managed email templates are the one
-consumer the repository cannot see; they are a reality-check input
-below, not an assumption here.
-
-**The bound is over allowlisted origins, which is narrower than "every
-other origin."** An explicit redirect settles the destination only where
-the allowlist admits it. For an origin whose callback URL is not
-admitted — an `apps/site` preview alias is the live example — the
-requested redirect is not honored, and what happens instead is vendor
-behavior this plan has not established. The commonly reported shape is a
-fall back to Site URL, which is the setting C1 retargets; the vendor's
-own redirect-URL page does not state it. Neither shape is asserted here.
-
-What holds under both shapes is one half of what the Goal claims: no
-origin in that class returns to itself today, so none of them loses a
-working return leg.
-
-The other half — whether anything about that class changes at all —
-depends on which shape is real, and the parent's I1 is what makes the
-difference matter. Under the rejection shape, nothing changes and I1 is
-untouched. Under the fallback shape, an unadmitted origin's sign-in
-moves from landing on the plugin deployment to landing on the canonical
-site origin: a non-organizer host behaving differently, which is what
-I1 covers on its face. An earlier draft of this section argued I1 did
-not reach that case because the affected origins have no working return
-leg today. That substitutes the invariant's rationale for its text, and
-the rationale points the same way regardless — collateral change on a
-non-organizer host is precisely what a check exercising only the
-organizer host would miss, which is the failure I1 names.
-
-So this phase does not argue the exception away, and it does not narrow
-I1 to fit. If the observation lands on the fallback shape, this is one
-of the cases P3 gates, and P3's remedy applies as written: the retarget
-is reshaped, or every claim the outcome falsifies is amended at both
-levels — which for this outcome reaches past the parent's Invariant to
-its Goal, which names preview aliases among the hosts it promises are
-unchanged. Under the rejection shape there is nothing to amend. The
-change itself is the one O3 chose either way; what is conditional is the
-bookkeeping the two docs are owed.
-
-**Verified by:** the allowlist snapshot the task's scoping recorded
-under D6 carries the apps/web alias, the apps/site alias, and localhost
-variants, with no preview-alias pattern — so preview aliases fall in the
-unlisted class. That snapshot is a console read, and the Reality-check
-inputs below require re-reading it; that read is what settles class
-membership at implementation time. The vendor page
-(https://supabase.com/docs/guides/auth/redirect-urls) documents Site URL
-as the default when no redirect is specified and states nothing about a
-redirect the allowlist does not admit, which is why this plan resolves
-that question by test rather than by citation.
-
-`apps/site`'s canonical alias is the same origin the edge functions
-already treat as canonical, so this retarget aligns the two admission
-surfaces rather than introducing a third answer. **Verified by:**
-`defaultAllowedOrigins` in
-[`supabase/functions/_shared/cors.ts`](/supabase/functions/_shared/cors.ts)
-carries that alias as the single non-localhost entry, and
-[`docs/dev.md`](/docs/dev.md) "Vercel" names `apps/site`'s primary
-`*.vercel.app` alias as the canonical site origin.
-
-### C2. The organizer host is admitted by an exact-host entry with a wildcard path
+### C1. The organizer host is admitted by an exact-host entry with a wildcard path
 
 A redirect-allowlist entry is added that names the organizer host
 exactly and wildcards the path beneath it. The host is a literal; no
@@ -173,7 +92,7 @@ organizer host uses — a reader who finds a wildcard entry against a
 doc that describes only exact paths has no way to tell a decision from a
 mistake.
 
-### C3. The configuration change lands before the PR, and Status flips in that PR
+### C2. The configuration change lands before the PR, and Status flips in that PR
 
 This phase flips `Proposed` → `Landed` in its own implementing PR — the
 default under the Plan-to-PR Completion Gate. It does **not** take the
@@ -209,6 +128,15 @@ exists.
   console keeps no history, so a rollback that is not recorded first is
   not available at all. This is the phase's only rollback mechanism —
   reverting the merged commit changes documentation and nothing else.
+  The console edit is the stakeholder's to make and is not gated on
+  this plan, so it may already have happened when this phase is
+  implemented. Where it has, this bullet is spent: no pre-change
+  snapshot can be reconstructed, and the rollback record is the
+  post-change read plus the fact that the entry this phase adds is the
+  only one it added. Record that rather than implying a snapshot
+  exists — the entry is additive and P2 bounds what removing it again
+  would affect, which is what keeps the spent capture survivable
+  rather than merely regrettable.
 - **The checks in the Validation Gate run against the changed
   configuration, and pass, before the PR is opened.** Not before it is
   merged — before it is opened, because the PR body carries the
@@ -232,78 +160,51 @@ as one would leave the docs describing a state nobody restored.
 
 **P1. The console is the system of record; every copy is re-derived,
 not remembered.** More than one operator-facing surface states what
-Site URL points at and what shape the redirect allowlist takes, and
-nothing checks them against the project. Each is written from a
-post-change read of the console.
+shape the redirect allowlist takes, and nothing checks them against the
+project. Each is written from a post-change read of the console.
 
 **P2. This phase only adds redirect entries.** No existing entry is
 removed, narrowed, or reworded. Every already-admitted return leg —
 including the localhost redirects the auth e2e fixtures depend on —
-keeps working because nothing it matches against was touched. Origins
-the allowlist does not admit are a separate question, answered in C1.
+keeps working because nothing it matches against was touched.
 **Verified by:**
 [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
 composes its callback redirect against a localhost base URL, so those
 entries are load-bearing for the auth fixtures.
 
-**P3. Every Site URL consumer the repository cannot see gets the same
-gate.** Site URL has consumers outside the repo: dashboard-managed email
-templates are the known one, and the unadmitted-redirect path in C1 may
-be another. Each is discovered in the console at implementation time
-rather than derived from code, so this plan cannot enumerate them and
-does not try. Whichever turns up, the treatment is identical — if the
-retarget changes what that consumer emits, or where it sends someone,
-then before this phase lands **either** the retarget is reshaped so that
-consumer's output does not change, **or** every claim the outcome
-falsifies is amended — in this plan and in its parent alike.
-
-The remedy is stated over the falsified claims as a set rather than over
-named sections, because the unchanged-host promise is made in more than
-one place at both levels: this plan's Goal and C1, the parent's Goal and
-its Cross-Cutting Invariant. Naming any subset would let an
-implementation clear this gate while a doc it just landed stayed
-internally false. Recording the observation in the PR does not clear the
-gate on its own.
-
-Stating both halves once — over the consumer class, and over the
-falsified claims at both levels — is what keeps structurally identical
-cases from carrying different bars. Each time this remedy was written
-narrower, review found the surface it left out: first the
-email-template case gated more weakly than C1's, then the parent's Goal
-left out of a remedy covering its Invariant, then this plan's own claims
-left out of a remedy covering the parent's.
+**This is also what makes the unadmitted class a non-question.** What
+Supabase does with an explicit redirect the allowlist does not admit —
+an `apps/site` preview alias is the live example — is a vendor
+behavior this plan never established and the vendor's redirect-URL page
+does not state. It does not need establishing: whatever that treatment
+is, it is a function of the allowlist not matching, and no origin's
+match result changes here except the organizer host's, which goes from
+unmatched to matched. This was an open question only while the phase
+also retargeted Site URL, which is the setting an unadmitted redirect
+was suspected of falling back to. The drop removed both the retarget
+and the question, along with the conditional exception against the
+parent's I1 that hung on it.
 
 The parent's I1 (every host but a mapped organizer host is unchanged)
 binds this phase and is not restated here. The Validation Gate carries
-its assertion for the previously-admitted class; P3 carries every case
-that may need an exception recorded against it.
+its assertion for the previously-admitted class; the paragraph above
+carries the unadmitted one.
 
 ## Reality-check inputs
 
 Claims this phase rests on that describe a hosted console rather than a
 file, and so can drift without any commit:
 
-- **The current Site URL and the full redirect-allowlist contents.**
-  Read at scoping time. Re-read them at implementation time and capture
-  them as the rollback record per C3 — the same read serves both.
-- **Whether any dashboard-managed email template interpolates Site
-  URL.** Resolve it in the console before the change. If one does, the
-  retarget changes what that template emits on every host, and P3's gate
-  applies — the same bar C1's unadmitted-redirect case carries.
-  Recording the observation in the PR does not clear it.
+- **The full redirect-allowlist contents.** Read at scoping time.
+  Re-read at implementation time; that read is what every statement the
+  PR makes about the allowlist is written from, and it doubles as the
+  rollback record per C2. Do not write the entry's shape into the docs
+  from the shape this plan specifies — C1 says what to ask for, the
+  console says what is there, and the docs describe the console.
 - **Supabase's redirect-URL matching semantics at implementation
-  time.** C2's shape rests on the wildcard definitions cited above.
+  time.** C1's shape rests on the wildcard definitions cited above.
   Re-read the vendor page rather than trusting this plan's summary of
   it.
-- **What Supabase does with an explicit redirect the allowlist does not
-  admit.** C1 states its bound over allowlisted origins because this is
-  unresolved, and the vendor documents it nowhere this plan could find.
-  A service-role link requested against a deliberately unlisted redirect
-  settles it in one attempt, whose outcome is either a link with a
-  destination or a failure — the Validation Gate treats both as records
-  rather than treating one as the only result. Resolve it before the PR
-  claims anything about that class, and record which shape it is; the
-  answer also decides whether C1's conditional I1 exception fires.
 
 ## Files to touch
 
@@ -313,10 +214,9 @@ reported per the Plan-to-PR Completion Gate's Estimate Deviations
 callout.*
 
 The binding form of this section is the rule in the Documentation
-Currency PR Gate below — every operator-facing statement of what Site
-URL points at, and of what shape the redirect allowlist takes, describes
-the post-change configuration. The rows below are where those statements
-are expected to be found.
+Currency PR Gate below — every operator-facing statement of what shape
+the redirect allowlist takes describes the post-change configuration.
+The rows below are where those statements are expected to be found.
 
 **Modify**
 
@@ -329,6 +229,13 @@ are expected to be found.
 
 **Intentionally not touched**
 
+- **Every existing operator-facing statement about Site URL** — in
+  `docs/architecture.md`, `docs/operations.md`, and `docs/dev.md`
+  alike. Site URL is not retargeted, so those statements stay true, and
+  editing them would be the diff describing a change nobody made. This
+  row exists because the earlier two-half version of this phase would
+  have touched all of them, so the temptation to sweep them is a
+  leftover from a scope that no longer applies.
 - `supabase/config.toml`. Representing auth configuration in the repo
   is a separate change with its own blast radius — see Out Of Scope.
 - Every application, shared, and edge-function source file. This phase
@@ -342,7 +249,7 @@ are expected to be found.
 
 ## Validation Gate
 
-Every step runs before the PR is opened, per C3. Nothing here is
+Every step runs before the PR is opened, per C2. Nothing here is
 post-merge.
 
 - **`npm run lint`, reported for what it is.** This diff is
@@ -369,20 +276,20 @@ post-merge.
   [`apps/site/next.config.ts`](/apps/site/next.config.ts) declares no
   host condition on any rewrite, so neither route's resolution depends
   on which alias was requested.
-  The falsifier does not depend on the open vendor question: if the new
-  entry is absent or malformed, the organizer host's callback is not
-  admitted, and an unadmitted callback either sends the visitor to some
-  other host or produces no usable link at all. Neither outcome can be
-  mistaken for the one this step looks for, so "landed back on the
-  organizer host" cannot be produced by the failure it is meant to
-  catch.
-- **The Site URL retarget is observed, not read back.** Reading the
-  field returns what was just typed into it and cannot distinguish a
-  saved setting from an unsaved one, or a setting from its effect.
-  Observe the documented default instead: a link generated with no
-  explicit redirect lands on the canonical site alias. This is the one
-  Site URL behavior the vendor does state, which is why it is the step
-  that proves the retarget took.
+  The falsifier does not depend on what Supabase does with an
+  unadmitted redirect: if the new entry is absent or malformed, the
+  organizer host's callback is not admitted, and an unadmitted callback
+  either sends the visitor to some other host or produces no usable
+  link at all. Neither outcome can be mistaken for the one this step
+  looks for, so "landed back on the organizer host" cannot be produced
+  by the failure it is meant to catch.
+
+  **This step is also the only proof the entry took.** Reading the
+  console field back confirms what it says, not that it matches; a
+  malformed pattern reads exactly like a working one. The round trip is
+  what distinguishes them, which is why the read-back required by C2
+  and P1 governs what the *docs* say and this step governs whether the
+  configuration *works*.
 - **Unchanged elsewhere (parent I1), asserted on the canonical apps/site
   alias by name.** I1 is about that alias specifically, so the gate is
   a magic-link round trip whose callback is the canonical alias's, and
@@ -419,30 +326,13 @@ post-merge.
     [`scripts/testing/run-admin-e2e-tests.cjs`](/scripts/testing/run-admin-e2e-tests.cjs)
     starts a local Supabase stack and a local functions runtime and
     passes that stack's API URL to the tests.
-  - The smoke exercises the allowlist, not Site URL, because it passes
-    an explicit redirect. C1's bound on the retarget is carried by the
-    default-destination observation above and by the source-tree search
-    cited under C1, not by this step.
-  - It also covers only the previously-admitted class, which is the
-    class the Goal claims is unchanged — not the organizer host, whose
-    admission is the intended change. The unlisted class is the next
-    step.
-- **The unlisted-redirect class is observed, and what the PR claims
-  about it matches.** Request a link against a redirect the allowlist
-  does not admit, and record the outcome — which is one of two
-  observables, not one. Either a link is produced and lands somewhere,
-  and the destination is the record; or the request fails, and the error
-  is the record. Naming only the first would leave the step with no
-  observable at all under the shape C1 says is possible, so it could not
-  discriminate the two candidates and would report the rejection shape
-  as an inconclusive run.
-
-  This resolves the open reality-check input and decides which shape the
-  PR describes; leaving it open would put an unverified vendor-behavior
-  claim in a durable doc. The phase lands under either outcome — but the
-  outcome that changes what an unadmitted origin sees is one P3 gates,
-  so landing then requires P3's remedy first — a reshaped retarget, or
-  every falsified claim amended at both levels — not merely this record.
+  - The smoke exercises the allowlist, because it passes an explicit
+    redirect — which is exactly the surface this phase changes, so it
+    is the right instrument rather than an approximate one.
+  - It covers only the previously-admitted class, which is the class
+    the Goal claims is unchanged — not the organizer host, whose
+    admission is the intended change and whose round trip is the step
+    above.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
 
@@ -480,7 +370,7 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 **R1. The wildcard path is wider than the vendor recommends.** Supabase
 recommends an exact redirect path in production and reserves the
 globstar for development and preview URLs
-(https://supabase.com/docs/guides/auth/redirect-urls). C2 takes the
+(https://supabase.com/docs/guides/auth/redirect-urls). C1 takes the
 wider shape anyway: the console is the surface with no diff, no review,
 and no test, so the cost of a return visit is real, and one entry covers
 the host's return paths without another one. What it buys the wideness
@@ -493,9 +383,9 @@ call, not a fork.
 **R2. Returning to the right origin is not a working organizer
 journey.** This phase decides where a sign-in link lands. What the
 organizer does after landing — authoring actions that call edge
-functions — depends on phase 1's admission, and short paths on the
-organizer host depend on phases 3 and 4. Nothing here should be read as
-"the organizer host is launched."
+functions — depends on phase 1's admission, and the organizer host's
+short paths on phase 3. Nothing here should be read as "the organizer
+host is launched."
 
 **R3. The change has no automated guard.** Nothing in CI reads Auth URL
 configuration, so drift after this phase is invisible until a sign-in
@@ -508,11 +398,13 @@ drift.
 
 ## Documentation Currency PR Gate
 
-Every operator-facing statement of what Site URL points at, and of what
-shape the redirect allowlist takes, describes the post-change
-configuration. The rule is stated over the category rather than over a
-list of files because the failure it prevents is a surface that was
-missed, and a list cannot name the one that was.
+Every operator-facing statement of what shape the redirect allowlist
+takes describes the post-change configuration. The rule is stated over
+the category rather than over a list of files because the failure it
+prevents is a surface that was missed, and a list cannot name the one
+that was. Statements about Site URL are outside the category now that
+the retarget is dropped — they are unchanged and stay that way, per
+Files to touch.
 
 Two statements are load-bearing enough to name specifically:
 
@@ -524,12 +416,20 @@ Two statements are load-bearing enough to name specifically:
   contribute. That list did not carry the redirect entry when this plan
   was drafted — the omission was found in review of this phase and fixed
   in the parent, since the parent owns the close-out the list gates.
-- The convention the redirect allowlist follows, per C2 — that it now
+- The convention the redirect allowlist follows, per C1 — that it now
   admits an exact-path shape and a wildcard-path shape, and which host
   uses which.
 
 ## Out Of Scope
 
+- **Retargeting Site URL.** Drafted as this phase's second half and
+  dropped by the stakeholder; the parent's Out Of Scope, "No Site URL
+  retarget," is the durable record of the reasoning and this phase does
+  not restate it. What it means here is narrow and worth being blunt
+  about: this phase does not touch Site URL, so whatever it points at
+  it keeps pointing at — a default nothing in this repository reaches,
+  since every flow passes an explicit redirect — and every doc that
+  describes it today stays as it is.
 - **Custom SMTP, and the built-in email ceiling behind it.** Struck from
   this phase by scoping O5 and carried as a task-level risk rather than
   a phase deliverable. **Verified by:** the parent task plan's Risk
@@ -564,8 +464,9 @@ Two statements are load-bearing enough to name specifically:
 
 - [`docs/plans/canonical-origin-resolution.md`](/docs/plans/canonical-origin-resolution.md)
   — establishes that the plugin deployment is not advertised as a
-  customer-facing origin, which is what makes the current Site URL the
-  wrong target.
+  customer-facing origin, which is what made Site URL's target look
+  wrong on its own terms. That reading stands; what changed is that
+  correcting it was judged not worth its cost for this event.
 - [`docs/operations.md`](/docs/operations.md) "Manually Maintained
   Settings" — owns the boundary this phase's configuration sits on.
 - [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Tier 5" — owns the
