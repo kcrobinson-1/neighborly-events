@@ -299,8 +299,11 @@ Magic-link sign-in uses the current browser origin to request a Supabase
 Auth redirect back through `/auth/callback?next=/admin` — the role-neutral
 return handler that establishes the session and forwards the visitor to
 the validated destination. For production, Supabase Auth must have the
-deployed web origin as its Site URL and must allow the deployed
-`<origin>/auth/callback` as a redirect URL. If those dashboard values
+deployed web origin as its Site URL and must allow `<origin>/**` as a
+redirect URL for every origin an authenticated surface is reachable on.
+Because the redirect is composed against the *current* origin, a host
+that is missing from that list has no working return leg even though
+every other part of the app serves on it. If those dashboard values
 still point at a local default such as `http://localhost:3000`, emailed
 links can send admins to the wrong origin even when the app requested
 the correct redirect.
@@ -818,8 +821,9 @@ Then finish the manual authoring setup in Supabase:
 
 - set the Auth Site URL to your deployed web origin, such as
   `https://your-production-web-origin.example`
-- add Auth redirect URLs for `http://127.0.0.1:4173/admin`,
-  `http://localhost:4173/admin`, and your deployed `/admin` origin
+- add Auth redirect URLs of the form `<origin>/**` for
+  `http://127.0.0.1:4173`, `http://localhost:4173`, and your deployed
+  origin
 - add at least one normalized admin email to `public.admin_users`:
 
 ```sql
@@ -859,14 +863,10 @@ host is a distinct browser origin, and satisfying only some of the
 requirements below is the failure that is hard to read off any one of
 them.
 
-**This list is not yet the complete set, and following only what is
-here does not produce a launched organizer host.** One further
-requirement is known and not yet supported: Supabase Auth does not
-admit the organizer host as a redirect target, so sign-in initiated
-there returns to the wrong origin. It is owned by a later phase of
-[`docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md),
-and each phase adds its requirement here as it lands. Treat the list as
-complete only once that plan does.
+All four requirements below are needed. Satisfying three of them
+produces a host that looks launched and fails at the fourth — the quiz
+that cannot mint a code, or the volunteer who signs in and lands on
+someone else's domain.
 
 - **Vercel alias.** CNAME the organizer host to the apps/site Vercel
   project as an additional alias.
@@ -889,6 +889,17 @@ complete only once that plan does.
   logic runs. See [`docs/operations.md`](/docs/operations.md) "Origin
   Admission Is Only As Complete As The Deploy" for why the redeploy
   has to cover the whole function set.
+- **Supabase Auth redirect entry.** Add `https://<organizer-host>/**`
+  to Authentication → URL Configuration → Redirect URLs, the same
+  shape every other origin uses. Magic-link sign-in composes its
+  return URL against the *current* browser origin, so without this
+  entry a volunteer who opens the redeem or redemptions page on the
+  organizer host has no working return leg — the host is aliased,
+  mapped, and admitted at the edge, and sign-in still fails. Nothing
+  about the first three requirements surfaces this one. It is console
+  configuration with no representation in the repository; see
+  [`docs/operations.md`](/docs/operations.md) "Manually Maintained
+  Settings".
 
 ### Vercel two-project monorepo layout
 

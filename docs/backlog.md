@@ -104,6 +104,31 @@ Must be resolved before QR codes are printed or the first real event runs.
 
 Reduce deployment risk and contributor friction before the live event.
 
+- [ ] **`decision` Every Supabase Auth redirect entry wildcards its whole path**
+  All nine entries in Authentication → URL Configuration → Redirect URLs
+  take the form `<origin>/**`: the apps/web alias, the apps/site alias,
+  six localhost and 127.0.0.1 variants, and the organizer domain.
+  Supabase recommends an exact redirect path in production and reserves
+  the globstar for development and preview URLs
+  (https://supabase.com/docs/guides/auth/redirect-urls). What the
+  breadth costs is the set of paths on each host to which a sign-in
+  token may be delivered; what bounds it is that every host is a
+  literal — no hostname is patterned — and every path on those hosts is
+  served by one of our own Vercel projects, so there is no third-party
+  surface inside the wildcard. Nothing is known to be broken. **Goal:**
+  decide deliberately whether the exact-path shape
+  (`<origin>/auth/callback`) is worth adopting across all entries, since
+  every authenticated route in the app returns through that one
+  path — see [`shared/urls/routes.ts`](/shared/urls/routes.ts) — which
+  is what makes narrowing cheap here and would not be true of an app
+  with several return paths. Note the cost before picking: the console
+  has no diff, no review, and no test, so nine edits are nine chances to
+  typo a value whose failure mode is a broken sign-in nobody notices
+  until someone tries. Surfaced while documenting the organizer host's
+  entry, when the repo's docs turned out to describe an exact-path
+  convention no entry has ever followed.
+  Detail: N/A
+
 - [ ] **`dev` Run seeded game content through the shared runtime parser**
   `scripts/release/seed-game-content.cjs` upserts a draft and calls
   `publish_game_event_draft` after checking only identity and env-shape fields,

@@ -289,6 +289,19 @@ On production, in a private window, on a phone and a laptop:
   work succeeds. Nothing here depends on Site URL — every flow in this
   repository requests an explicit redirect, which is the asymmetry
   that took the retarget out of scope.
+
+  **Walked on 2026-08-09, ahead of the close-out.** A fresh magic-link
+  sign-in on the organizer host returned to it, and a redemption then
+  committed from that origin — and redemption is an edge-function call,
+  not an RPC, so this walk composed phase 1's admission with phase 2's
+  redirect entry rather than covering only the sign-in half. **Verified
+  by:** `submitRedeemAttempt` in
+  [`apps/web/src/redeem/useRedeemSubmit.ts`](/apps/web/src/redeem/useRedeemSubmit.ts)
+  POSTs to the `redeem-entitlement` function URL with a bearer access
+  token. Recorded here because it cannot be re-run: the entitlement row
+  it consumed was test data and has since been cleared. Re-run it at
+  close-out only if something in either phase's surface has changed
+  since.
 - **The event is unambiguous.** Both the production database and a
   database built from migrations carry one row with the Madrona
   display name, and the decoy's entitlement rows remain reachable
