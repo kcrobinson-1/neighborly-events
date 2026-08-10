@@ -1,6 +1,6 @@
 # Phase 2 — Auth URL configuration
 
-**Status:** `Proposed`
+**Status:** `Landed`
 
 One PR, and no close-out commit. The `Proposed` → `Landed` flip happens
 in that same PR rather than in a follow-up; C2 says why, and what the
@@ -80,17 +80,37 @@ path without widening the host. **Verified by:**
 https://supabase.com/docs/guides/auth/redirect-urls "Use wildcards in
 redirect URLs" defines the separator set and the two wildcard forms.
 
-This is a deliberate widening of the repository's documented convention,
-which is one exact callback-path entry per environment
+**This was drafted as a deliberate widening of the repository's
+documented convention. The console says otherwise, and the console
+wins.** The implementation-time read required by the Reality-check
+inputs found every one of the nine entries in the globstar path form —
+the apps/web alias, the apps/site alias, the six localhost variants,
+and the organizer host alike. The repository's documented convention,
+one exact callback-path entry per environment
 ([`docs/operations.md`](/docs/operations.md) "Manually Maintained
-Settings", the Supabase subsection's Auth URL configuration bullets). The
-narrower shape is available and is what the vendor recommends for
-production; R1 records why the wider one is taken here and what it
-costs. The docs this phase
-ships record that the convention now admits two shapes and which one the
-organizer host uses — a reader who finds a wildcard entry against a
-doc that describes only exact paths has no way to tell a decision from a
-mistake.
+Settings", plus `docs/architecture.md` and two places in
+`docs/dev.md`), describes a state that is not live on any entry.
+
+So the organizer entry is not a widening of anything. It is the shape
+every other origin uses, and what this phase's docs correct is not "the
+convention now admits two shapes" but a four-surface description that
+is simply wrong. This is P1 doing its job: the copies were remembered
+rather than re-derived, and nothing checks them against the project.
+
+**The divergence predates this phase**, which matters because the
+alternative would have falsified P2. The scoping-time read recorded
+which origins were listed but not what path shape each carried, so the
+evidence alone left two histories open: the entries were always
+globstar and the docs were never right, or the eight were exact-path
+and were widened alongside the organizer host's addition. The
+stakeholder who made the console edit confirms it was add-only — the
+eight were untouched and already carried the globstar. So the docs have
+been describing a convention nobody follows, independently of anything
+this phase did, and this phase's diff corrects a pre-existing error
+rather than documenting its own change.
+
+R1 changes with it — the wildcard's breadth is a project-wide condition
+rather than a call this entry makes.
 
 ### C2. The configuration change lands before the PR, and Status flips in that PR
 
@@ -201,6 +221,14 @@ file, and so can drift without any commit:
   rollback record per C2. Do not write the entry's shape into the docs
   from the shape this plan specifies — C1 says what to ask for, the
   console says what is there, and the docs describe the console.
+  **Resolved at implementation:** nine entries, every one of the form
+  `<origin>/**` — the apps/web alias, the apps/site alias, six
+  localhost/127.0.0.1 variants across ports 3000/4173/5173, and
+  `https://music.madrona.us/**`. Eight of the nine match the set the
+  scoping read recorded, so the change is provably additive. This read
+  is what forced C1's reframe, and it is the case for keeping this
+  section: had the docs been written from the plan's own description,
+  the diff would have shipped a convention nobody follows.
 - **Supabase's redirect-URL matching semantics at implementation
   time.** C1's shape rests on the wildcard definitions cited above.
   Re-read the vendor page rather than trusting this plan's summary of
@@ -290,11 +318,36 @@ post-merge.
   what distinguishes them, which is why the read-back required by C2
   and P1 governs what the *docs* say and this step governs whether the
   configuration *works*.
+
+  **Satisfied.** A fresh magic-link sign-in was requested on
+  `music.madrona.us`, and the link returned the browser to that host at
+  the redeem surface, where a redemption then committed. Recorded here
+  because it cannot be re-run by a reviewer: the entitlement row that
+  carried it was test data and has since been cleared.
 - **Unchanged elsewhere (parent I1), asserted on the canonical apps/site
   alias by name.** I1 is about that alias specifically, so the gate is
   a magic-link round trip whose callback is the canonical alias's, and
   the step is satisfied by observing that round trip — not by observing
   that some production round trip passed.
+
+  **Satisfied by the add-only console read instead, and the substitution
+  is recorded rather than assumed.** This step names one regression: the
+  apps/site redirect entry broken during the console edit. Two things
+  rule it out together — the implementation-time read shows
+  `https://neighborly-events-site.vercel.app/**` present and in the same
+  form as every other origin, and the operator who made the edit
+  confirms it added the organizer entry and touched nothing else. An
+  entry that worked before, was not edited, and reads unchanged is not
+  the regression this step exists to catch.
+
+  What the round trip would prove and this does not is that the entry
+  *functions*, as opposed to existing unchanged. That gap is real but
+  empty here: functioning was established before this phase by every
+  prior sign-in through that alias, and nothing in this phase's change
+  set could have disturbed it. The round trip remains the stronger
+  instrument and is what a future phase touching existing entries must
+  run; this substitution is available only because the change was
+  additive.
 
   The Production Admin Smoke — `npm run test:e2e:admin:production-smoke`,
   or its workflow — is the right vehicle **only if its configured target
@@ -335,6 +388,12 @@ post-merge.
     above.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
+  **Done, and it is what caught the error this diff mostly consists
+  of.** Four surfaces described exact-callback-path entries; the console
+  carries nine globstar entries. `docs/operations.md` (two places),
+  `docs/architecture.md`, and `docs/dev.md` (two places) were corrected
+  to the live shape. No statement about Site URL was touched, per Files
+  to touch.
 
 The parent's named constraint on routing gates does not bind this phase:
 it changes no host-conditional routing. The organizer-host step above
@@ -367,18 +426,24 @@ From [`docs/self-review-catalog.md`](/docs/self-review-catalog.md):
 
 ## Risks
 
-**R1. The wildcard path is wider than the vendor recommends.** Supabase
-recommends an exact redirect path in production and reserves the
-globstar for development and preview URLs
-(https://supabase.com/docs/guides/auth/redirect-urls). C1 takes the
-wider shape anyway: the console is the surface with no diff, no review,
-and no test, so the cost of a return visit is real, and one entry covers
-the host's return paths without another one. What it buys the wideness
-with is the set of paths on that one host to which a sign-in token may
-be delivered — bounded by the host being a literal, and by every path on
-it being served by our own Vercel project. The narrower per-path entry
-remains expressible in the same console field, so this is a reversible
-call, not a fork.
+**R1. The wildcard path is wider than the vendor recommends — across
+every entry, not just this one.** Supabase recommends an exact redirect
+path in production and reserves the globstar for development and preview
+URLs (https://supabase.com/docs/guides/auth/redirect-urls). All nine
+entries take the globstar, eight of which predate this phase. What the
+breadth costs is the set of paths on each host to which a sign-in token
+may be delivered — bounded by every host being a literal, and by every
+path on those hosts being served by one of our own Vercel projects.
+
+This phase does not narrow it. Matching the eight is the conservative
+move for a phase whose premise is "add one entry"; making the organizer
+host the only exact-path entry would leave the allowlist internally
+inconsistent for no gain, and narrowing all nine is a change to
+production auth configuration with its own blast radius and no
+connection to this launch. Filed in
+[`docs/backlog.md`](/docs/backlog.md) as its own question. The narrower
+per-path shape stays expressible in the same console field, so this is
+a deferral, not a fork.
 
 **R2. Returning to the right origin is not a working organizer
 journey.** This phase decides where a sign-in link lands. What the
@@ -416,9 +481,14 @@ Two statements are load-bearing enough to name specifically:
   contribute. That list did not carry the redirect entry when this plan
   was drafted — the omission was found in review of this phase and fixed
   in the parent, since the parent owns the close-out the list gates.
-- The convention the redirect allowlist follows, per C1 — that it now
-  admits an exact-path shape and a wildcard-path shape, and which host
-  uses which.
+- The shape the redirect allowlist actually uses, per C1 — one
+  `<origin>/**` entry per origin, uniformly. Four surfaces described an
+  exact-callback-path convention that was not live; each is corrected
+  rather than extended, because there is no second shape to document.
+  A reader who finds nine globstar entries against a doc describing
+  exact paths cannot tell a decision from a mistake, which is the same
+  failure in the opposite direction from the one this bullet was
+  originally written to prevent.
 
 ## Out Of Scope
 

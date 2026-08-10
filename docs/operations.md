@@ -194,12 +194,23 @@ Why manual for now:
     of `EXTRA_ALLOWED_ORIGINS`.
 - Auth URL configuration for magic-link sign-in:
   - deployed web origin as the Supabase Auth Site URL
-  - local `<origin>/auth/callback` redirect URL
-  - deployed `<origin>/auth/callback` redirect URL
-  - a single entry per environment — every authenticated route returns
-    through `/auth/callback?next=…` (`/admin`, `/event/:slug/game`,
-    `/event/:slug/admin`, `/event/:slug/game/redeem`, and
-    `/event/:slug/game/redemptions`)
+  - one redirect-URL entry per origin, of the form `<origin>/**` — a
+    literal scheme and host, with the globstar wildcarding every path
+    beneath it. Local origins, deployed aliases, and organizer domains
+    all take the same shape.
+  - one entry per origin is enough because every authenticated route
+    returns through `/auth/callback?next=…` (`/admin`,
+    `/event/:slug/game`, `/event/:slug/admin`,
+    `/event/:slug/game/redeem`, and
+    `/event/:slug/game/redemptions`), and the globstar covers that
+    path without naming it. Adding an authenticated route needs no
+    dashboard change.
+  - the path wildcard is wider than Supabase recommends for production
+    (it reserves the globstar for development and preview URLs). What
+    bounds it is the host being a literal and every path on it being
+    served by one of our own Vercel projects. Narrowing to exact
+    callback paths is expressible in the same field — see the backlog
+    entry on redirect-allowlist path breadth.
 - operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 
@@ -232,8 +243,8 @@ For a new deployment from a fork:
    live until the edge functions are redeployed — see "Origin Admission
    Is Only As Complete As The Deploy" below.
 8. Set the Supabase Auth Site URL to the deployed web origin and add
-   `<origin>/auth/callback` as a redirect URL for each of your local
-   and deployed origins.
+   `<origin>/**` as a redirect URL for each of your local origins,
+   deployed aliases, and any organizer domain.
 9. Insert at least one normalized admin email into `public.admin_users`.
 10. Recreate the desired GitHub branch protection and Actions secret
    configuration, including the `SUPABASE_ACCESS_TOKEN`,
@@ -393,7 +404,8 @@ Open the production Supabase project and inspect:
   - `unpublish-event`
 - Auth configuration:
   - Site URL is the deployed web origin
-  - redirect URLs include the deployed `/admin` origin
+  - redirect URLs carry one `<origin>/**` entry per origin, including
+    every organizer domain
 - project secrets:
   - `SESSION_SIGNING_SECRET`
 - non-secret runtime config (in code at
