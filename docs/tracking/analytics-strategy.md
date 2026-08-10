@@ -260,12 +260,27 @@ Two consequences follow, and both are load-bearing:
     built first.** `/event/[slug]` and `/event/[slug]/feedback` are the
     only registered landing shapes, and `apps/site/next.config.ts`
     carries no per-source aliases, so a source-specific URL is a real
-    route, rewrite, or redirect — not a variant someone can invent at
-    print time. `/event/madrona/poster` returns 404 on production
-    (verified 2026-08-10). Anything printed must be smoke-tested
+    route or rewrite — not a variant someone can invent at print time.
+    `/event/madrona/poster` returns 404 on production (verified
+    2026-08-10).
+
+    **A redirect does not work here, even though it resolves.** The
+    browser reaches the destination before the client-side
+    `<Analytics>` component runs, so the pageview reports the
+    *destination* path and every redirect alias collapses into one
+    Pages row. This is the same mechanism that makes the `/` rewrite
+    below work — a rewrite leaves the browser's path alone, a redirect
+    replaces it — so the two behave oppositely for attribution despite
+    both "working" in a browser.
+
+    That makes the obvious smoke test insufficient: a redirect alias
+    returns 200 at the end of the hop and passes any check that only
+    asks whether the URL resolves. **Verify the reported path, not the
+    status code** — load the alias and confirm the beacon's payload
+    carries the alias path. Anything printed must clear that check
     against the deployed origin before it reaches the printer: a QR
-    code pointing at a 404 cannot be recalled, which is a worse
-    failure than the missing attribution it was meant to buy.
+    code pointing at a 404 cannot be recalled, and one pointing at a
+    redirect yields no separation while looking fine.
 
   There is one distinct-path pair that already exists and needs no
   build. The organizer host maps `/` to the event landing with a
@@ -375,14 +390,23 @@ deliberately kept.
 
 Keeping it is worth defending, since the UTM breakdowns that would read
 it are gated on this tier and the query therefore buys nothing today.
-It stays because the asymmetry runs one way: a query string we keep and
-never read costs nothing and can be mined later — by an upgrade, or by
-a REST export — whereas one we strip at the beacon is gone from every
-future analysis, and no redeploy recovers the traffic that already
-happened. That is the same unrecoverability argument that put this
-whole instrumentation in before the first event. Fragments are dropped
-because they carry credentials; query strings are not, so the default
-falls the other way.
+
+It stays as a **cheap option, not a deferred payoff.** Stripping at the
+beacon is unilateral and irreversible — the traffic that already
+happened is gone from every future analysis and no redeploy recovers
+it — while keeping costs nothing whether or not the data ever becomes
+readable. Note the asymmetry does *not* rest on the query being
+retrievable later: whether Vercel stores these fields on the base tier,
+and whether an upgrade or a REST export would expose historical values,
+is unverified and tracked in
+[`open-questions.md`](/docs/open-questions.md) "Reporting And Sponsor
+Measurement". If the answer turns out to be no, this decision is still
+correct and simply bought nothing — which is the point of framing it as
+an option rather than a plan. Do not cite this paragraph as a reason to
+run an inbound UTM campaign.
+
+Fragments are dropped because they carry credentials; query strings are
+not, so the default falls the other way.
 
 No other redaction is applied, because no other route carries sensitive
 material in a URL: route paths contain event slugs only, and check-in

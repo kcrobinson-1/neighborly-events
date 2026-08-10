@@ -6,10 +6,11 @@
  * string *and* fragment — as the pageview's URL. The search string
  * survives deliberately. Note that it is not currently *readable*: the
  * plan's UTM breakdowns are gated, so keeping the query buys nothing
- * we can query today. It stays anyway, because the asymmetry runs one
- * way — a query we keep and never read costs nothing and can be mined
- * later, while one we strip at the beacon is gone from every future
- * analysis of traffic that already happened.
+ * we can query today, and whether it could ever be read retroactively
+ * is unverified (tracked in `docs/open-questions.md`). It stays anyway
+ * as a cheap option rather than a deferred payoff: keeping costs
+ * nothing whether or not the data becomes readable, while stripping at
+ * the beacon is irreversible for traffic that already happened.
  *
  * The fragment must not. Supabase delivers organizer sign-in
  * credentials to `/auth/callback` in the URL fragment

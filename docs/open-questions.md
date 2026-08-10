@@ -38,10 +38,30 @@ follow-up work is tracked in [`backlog.md`](/docs/backlog.md).
 
 ## Reporting And Sponsor Measurement
 
-No currently open questions in this section under the current tracking rule.
 Recommended first metrics and sponsor-proof baseline are documented in
 [`analytics-strategy.md`](/docs/tracking/analytics-strategy.md), and implementation priority
 is tracked in [`backlog.md`](/docs/backlog.md).
+
+### Does Vercel retain UTM fields on the base Web Analytics tier?
+
+UTM parameter breakdowns are gated behind Web Analytics Plus. Unresolved:
+whether the base tier **stores** the fields and gates only the view, or
+**discards** them at ingestion — and, if stored, whether a plan upgrade or a
+REST export would expose values recorded *before* the upgrade, within the
+tier's retention window.
+
+Why it matters: it is the difference between an inbound UTM campaign being a
+deferred payoff and being permanently inert. Two decisions currently rest on
+not knowing — the client beacon keeps the query string, and printed artifacts
+are advised not to rely on `utm_*` — and both are deliberately framed to stay
+correct either way. Nobody should plan an inbound campaign on the assumption
+of backfill until this is answered.
+
+How to answer it: check Vercel's retention documentation for the tier, or
+query the Web Analytics REST API for a UTM dimension over a window that
+predates any upgrade and see whether values return. Do not infer it from the
+client beacon carrying the query — that only proves what the browser sent, not
+what the platform kept.
 
 ## Development And Release Workflow
 
