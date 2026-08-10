@@ -110,10 +110,13 @@ return to it.
 The "falls back to the plugin host" half of this decision as originally
 written asserted a vendor behavior — that a redirect the allowlist does
 not admit is replaced by Site URL — that the Supabase redirect-URL
-documentation does not state. Phase 2's plan states its contract over
-admitted origins only and resolves the unadmitted case by observation;
-see that plan's C1. The decision this D6 records is unaffected: the
-allowlist does not match the organizer host either way.
+documentation does not state. That question is now moot rather than
+open: phase 2 no longer retargets Site URL, so it only adds an entry,
+and no origin's match result changes except the organizer host's. See
+that plan's P2, which carries the reasoning; the observation this
+decision once called for is not owed by anyone. The decision this D6
+records is unaffected either way: the allowlist does not match the
+organizer host.
 
 **Verified by:** Supabase dashboard → Authentication → URL
 Configuration: Site URL as described; redirect URLs are the apps/web
@@ -277,9 +280,10 @@ shapes live in the task plan and its phase plans, not here.
   earlier form of this decision also asserted that Site URL is the
   fallback for redirects the allowlist does *not* match, and used that
   as part of the rationale. The vendor does not document that behavior;
-  it is withdrawn here for the same reason it was withdrawn from D6,
-  and the phase 2 plan's C1 resolves it by observation. The retarget
-  decision does not depend on it.
+  it is withdrawn here for the same reason it was withdrawn from D6.
+  It needs no resolution now — with the retarget dropped, phase 2 only
+  adds an entry, and its P2 says why that leaves the unadmitted class
+  untouched. The retarget decision never depended on it.
 - **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone.
   It feeds one site-wide `metadataBase`, so retargeting it would
   make every other event advertise URLs on Madrona's domain.
