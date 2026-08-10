@@ -15,10 +15,11 @@ out loud.
 
 It happens now because the domain is live and about to be advertised,
 and because the two surfaces it covers are the ones that can move
-without touching anything else. The quiz's short address needs a change
-to the route contract shared between the two apps, which is a later
-phase; these two need only the routing layer to know which event this
-host belongs to.
+without touching anything else. The quiz's short address would need a
+change to the route contract shared between the two apps; that work is
+out of scope for the task, so the quiz keeps its long event path.
+These two surfaces need only the routing layer to know which event
+this host belongs to.
 
 Conceptually this touches three things: the routing layer of the
 public site, a small piece of shared data saying which hostname stands
@@ -29,8 +30,7 @@ hostname.
 Parent task plan:
 [`madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md).
 This phase is bound by its C1 (the static-generation ceiling) and C3
-(parse before emit, and emit only what is served), and inherits its
-I1, I2, and I3.
+(emit only what is served), and inherits its I1, I2, and I3.
 
 **Scoping.** This phase does not carry its own scoping doc and does
 not need the narrow-surface carve-out to justify that — the same
@@ -62,8 +62,8 @@ the check.
 
 Not in this phase's goal, and named here so the phase is not read as
 delivering them: the quiz's short address, and any per-host page
-metadata. Both are recorded under Out Of Scope with where they go
-instead.
+metadata. Both are recorded under Out Of Scope, which says what
+becomes of each — neither is waiting on a later phase of this task.
 
 ## PR shape and Status lifecycle
 
@@ -331,15 +331,16 @@ what reaches them. Nothing emits either one in this phase, because the
 parent's C1 ceiling keeps every server-rendered link on long paths and
 this phase touches no builder.
 
-**A builder does arrive for these two paths later, and that is
-expected.** The emit-side phase makes the event header bar resolve
-them on the organizer host, which is a builder arriving for a path
-already served — the direction C3 protects. Nothing in this phase's
-rows needs to be held back for it.
+**No builder ever arrives for these two paths.** A later phase was to
+make the event header bar resolve them on the organizer host — a
+builder arriving for a path already served, the direction C3 protects
+— and that phase is dropped, per the parent's Out Of Scope. Nothing in
+this phase's rows depended on it either way; what changes is only that
+these two rows are permanently entry-only.
 
-**What that phase cannot do is retarget the shared destinations in
-place, and this plan records why so the constraint is not rediscovered
-there.** The per-event masthead table is read by two consumers, not
+**Retargeting the shared destinations in place would not have worked,
+and this plan records why so the constraint survives the drop.** The
+per-event masthead table is read by two consumers, not
 one: the browser-rendered SPA masthead, and the server-rendered
 `apps/site` event landing and feedback pages. Those pages are
 statically generated — the parent's C1 ceiling — so one document
@@ -366,16 +367,15 @@ as browser-rendered only.
 What this phase must not do is add a rewrite for a path whose builder
 ships *before or with* it elsewhere. The quiz's short path is that
 case: its consumers include the post-sign-in return leg, which
-produces a URL and navigates the full document, and its rewrite
-depends on a route contract that does not exist until the parse-side
-phase. So the honoring check for each row is *what reaches this the
-day it ships* — an answer of "nothing until a later phase" disqualifies
-the row.
+produces a URL and navigates the full document. So the honoring check
+for each row is *what reaches this the day it ships* — an answer of
+"nothing yet" disqualifies the row. The quiz's short path is now out
+of scope for the task entirely, which resolves the question by removal
+rather than by sequencing.
 
 **Verified by:** the parent task plan's C3 carries the directional
-ordering rule, and its Phases section assigns the quiz's short-path
-rewrite to 4b together with its builders, naming the auth return leg
-as the live case for the 404 direction.
+ordering rule and names the auth return leg as the live case for the
+404 direction; its Out Of Scope, "No phase 4," records the removal.
 
 ### C5. Every claim this phase makes about routing is a claim about a production build
 
@@ -436,8 +436,8 @@ host arrives.
 The mapping module is `shared/urls/organizerHosts.ts`. `shared/urls/`
 is the home rather than `shared/events/` because the mapping is URL
 topology — which hostname stands for which event's route subtree — and
-`shared/urls/` already owns the canonical route table and matchers that
-phase 4 will extend to read this same mapping. Whether the module is
+`shared/urls/` already owns the canonical route table and matchers.
+Whether the module is
 re-exported from `shared/urls/index.ts` is an implementation call; the
 drafting-time probe exercised the leaf-module import only.
 
@@ -571,9 +571,10 @@ named it for only some rows would read as though the rest had none.
 **Intentionally not touched**
 
 - `shared/masthead/` and `shared/urls/routes.ts`. The header bar's
-  hardcoded long paths and the route matchers are phase 4's surface;
-  touching either here would emit or accept short paths ahead of the
-  phase that owns both directions.
+  hardcoded long paths and the route matchers stay as they are;
+  touching either here would emit or accept short paths this task
+  never serves. No later phase touches them either — the phase that
+  would have is dropped, per the parent's Out Of Scope.
 - Every metadata surface — the root layout's metadata base, the event
   routes' metadata emit, and the file-convention image routes. Per the
   parent's C1 these do not vary by host, and this phase must not
@@ -809,18 +810,18 @@ still pass, because those routes have no file shadowing them. The
 compensating control is the manifest assertion in the Validation Gate,
 which reads the emitted phase rather than the served result.
 
-**R2. This phase's mapping has exactly one consumer today.** C1's
-single-source claim is cheap to hold with one reader and gets tested
-for real in phase 4, when the route layer reads the same module from a
-different app's build. If it turns out it cannot, that is the moment
-the parent's I2 second-copy allowance applies — in phase 4's plan, with
-its canonical side named and its copies asserted against each other.
-Nothing in this phase should pre-commit that decision.
+**R2. This phase's mapping has exactly one consumer today, and stays
+that way.** C1's single-source claim is cheap to hold with one reader,
+and the phase that would have added a second — the route layer reading
+the same module from a different app's build — is dropped. Phase 3b's
+runner reads the mapping too, but from the same Node-side build, so it
+does not test the claim the dropped phase would have. The parent's I2
+second-copy allowance is therefore never exercised by this task.
 
 **R3. Landing this phase does not launch the host.** The organizer host
-serves two surfaces at short paths after this merges. The quiz's short
-path does not exist, and in-page navigation still walks a visitor onto
-long paths at the first tap — the parent's C1, accepted deliberately.
+serves two surfaces at short paths after this merges. The quiz has no
+short path, and in-page navigation walks a visitor onto long paths at
+the first tap — the parent's C1, accepted deliberately and permanently.
 Nothing here should be read as "the organizer host is launched."
 
 ## Documentation Currency PR Gate
@@ -854,11 +855,12 @@ restating it.
 Boundary calls recorded as final answers; each names where the work
 actually goes.
 
-- **The quiz's short path.** It ships in phase 4b and never before
-  phase 4a, per the parent's C3 and this plan's C4. **Verified by:**
-  the parent task plan's Phases section defines 4a as the parse side
-  and 4b as the emit side, and requires the builders, the header bar,
-  and the rewrite to ship together in 4b.
+- **The quiz's short path.** Out of scope for this phase when it was
+  drafted, because it needed a route contract no phase had built yet;
+  out of scope for the task now, because that phase was dropped. The
+  quiz is reached at its long event path on the organizer host, and
+  stays there. **Verified by:** the parent task plan's Out Of Scope,
+  "No phase 4," records the drop and what it costs.
 - **Per-host page metadata.** No metadata is retargeted per host, and
   no canonical link is added. The event routes are statically
   generated, so the metadata function has no request host to branch on
@@ -898,8 +900,8 @@ actually goes.
   surface this phase routes calls an edge function: the landing page
   is server-rendered, and the feedback form submits through a Supabase
   RPC rather than a function, so phase 1's origin admission is not a
-  prerequisite for either. It is a prerequisite for the quiz, which is
-  phase 4's surface. **Verified by:** the feedback form component under
+  prerequisite for either. It is a prerequisite for the quiz, which
+  this task serves at its long path only. **Verified by:** the feedback form component under
   `apps/site/app/event/[slug]/feedback/` submits via a Supabase client
   RPC call; the landing and feedback route modules carry no
   `"use client"` directive at their page level.

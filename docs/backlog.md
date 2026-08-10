@@ -443,7 +443,10 @@ Reduce deployment risk and contributor friction before the live event.
   shared previews carry the right content — so both are consistency
   issues, not reachability;
   [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
-  C1 accepts them deliberately for one event. **Goal:** a
+  C1 accepts them deliberately for one event. That plan drafted a phase
+  to fix the navigation symptom and dropped it — see its Out Of Scope,
+  "No phase 4" — so this entry describes a declined fix, not an
+  unfinished one. **Goal:** a
   visitor who arrives on a short path stays on short paths through
   in-page navigation, and a link shared from an organizer host shows
   that host. Note the shape of the cause before picking a fix: the
@@ -476,12 +479,15 @@ Reduce deployment risk and contributor friction before the live event.
   the `apps/web` Vite SPA behind a proxy rewrite, and the SPA ships one
   static `index.html` for every route, so a pasted quiz link renders with
   whatever generic title that document carries. This was a latent gap
-  while the quiz URL was a long per-slug path nobody typed from memory.
-  The organizer-subdomain work at
+  while the only people reaching the quiz link were reaching it from the
+  event page. The organizer-subdomain work at
   [`docs/plans/madrona-organizer-subdomain-launch/`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
-  makes the organizer host's `/game` the short, memorable form of that
-  URL — which is exactly the shape people paste into messages — so the
-  gap becomes the rendering of the most-shared link on the platform.
+  puts a real event on a domain an organizer advertises, so the quiz link
+  becomes one that attendees and volunteers paste to each other — with a
+  preview that says nothing about the event. (That plan considered
+  giving the quiz a short `/game` path on the organizer host and dropped
+  it; the link people paste is the long path, and this gap is the same
+  either way.)
   **Goal:** a quiz link pasted into a message renders with the event's
   name, description, and image. Note the shape of the cause before
   picking a fix: the metadata has to be emitted by whatever serves the

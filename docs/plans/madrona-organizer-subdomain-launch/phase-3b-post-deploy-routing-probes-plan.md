@@ -120,6 +120,17 @@ routing it checks is correct on the real hostname — and a run that
 fails distinguishes them: a runner defect leaves phase 3 unverified
 rather than falsified.
 
+**This phase's implementing PR is also the task's last, so it carries
+the parent's Status flip.** The parent moves `Proposed` → `In progress
+pending organizer-host verification` in that same PR, per its "Status
+lifecycle and close-out"; its own `Landed` flip waits on the composed
+production journey it owns, which is a different check from this
+phase's probe run and does not ride on it. Two ordering bounds make
+this PR last — the data-hygiene rename and phase 2's documentation
+each land no later than it — and the parent states both. If either
+is still outstanding when this PR is ready, that is a signal to hold
+this PR, not to carry the parent's flip anyway.
+
 ## Contracts
 
 ### C1. The runner reads its targets, and fails rather than passing empty
@@ -199,6 +210,7 @@ canonical result from the organizer-host one.
 | `docs/dev.md` | the validation-command list |
 | `docs/testing.md` | the validation-command list, per the validation-command coupling audit |
 | `phase-3-organizer-host-mapping-plan.md` | its `Landed` flip, in the follow-up doc-only commit that records the run URL |
+| `madrona-organizer-subdomain-launch.md` | the parent's flip to `In progress pending organizer-host verification`, in this phase's implementing PR |
 
 **Intentionally not touched**
 

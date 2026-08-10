@@ -2,11 +2,17 @@
 
 **Status:** `Proposed`
 
-Task plan with separated phase plan files, N = 4 phases plus one
-independent data item. This doc owns the decomposition, the
+Task plan with separated phase plan files — phases 1, 2, 3, and 3b —
+plus one independent data item. This doc owns the decomposition, the
 constraints that bound what any phase may promise, and the close-out.
 Everything else — contracts, file inventories, per-phase validation —
 belongs to the phase plans, drafted just-in-time.
+
+The decomposition has been trimmed twice since drafting, both times by
+stakeholder decision: the mount-aware route contract that would have
+put the quiz at a short path is dropped, and phase 2 is reduced to its
+redirect-allowlist half. Out Of Scope records both, with what each
+would have bought and why that was not worth its cost.
 
 Scoping doc:
 [`scoping/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md).
@@ -40,9 +46,9 @@ organizer.
 
 After all phases land:
 
-- The organizer host serves the Madrona landing, quiz, and feedback
-  surfaces at short paths, and those paths stay in the address bar
-  when a visitor arrives on one.
+- Someone who types the organizer host reaches the Madrona landing,
+  and the feedback form is reachable at a short path below it. The
+  quiz is reached from there, at its long event path.
 - The quiz completes and mints an `MIP-####` code on that origin.
 - Organizer and volunteer sign-in initiated from that origin returns
   to that origin.
@@ -52,7 +58,10 @@ After all phases land:
 
 What the plan does **not** promise is bounded by C1: short paths are
 the form visitors arrive on, not an invariant that survives every
-in-page tap.
+in-page tap. That is the end state, not a stage on the way to one —
+the phase that would have given the quiz a short path of its own, and
+kept the quiz's own in-browser links on short paths, is dropped, per
+Out Of Scope.
 
 ## Cross-Phase Contracts
 
@@ -71,10 +80,13 @@ rendering the consequence" rule): a visitor opens the organizer
 host's root, taps Quiz, and the address bar moves to the long event
 path. The page loads, the quiz plays, and the code mints — the long
 path is served on the organizer host exactly as on the canonical
-alias, because the site→plugin rewrite is host-agnostic. Inside the
-quiz, whose header renders in the browser, links return to short
-paths. What is lost is address-bar consistency after the first tap,
-not reachability.
+alias, because the site→plugin rewrite is host-agnostic. What is lost
+is address-bar consistency after the first tap, not reachability.
+
+That loss is accepted rather than deferred. Closing it means lifting
+the ceiling, which is the work Out Of Scope declines; the residual
+inconsistency is filed in [`docs/backlog.md`](/docs/backlog.md)
+alongside the metadata symptom that shares its cause.
 
 The same ceiling applies to page metadata, which is why no phase
 retargets `openGraph.url` per host and none adds a canonical link.
@@ -95,28 +107,25 @@ No phase claims a working quiz, or a working sign-in, on the
 organizer host before that origin is admitted at the edge-function
 and auth-configuration boundaries.
 
-**Verified by:** the deployed `functions/_shared/cors.ts`, read from
-the live `issue-session` bundle, carries no organizer origin, and
-`getAllowedOrigin` admits only exact-string allowlist matches plus
-apps/site Vercel preview aliases — neither of which an organizer
-domain can satisfy. Supabase's Authentication → URL Configuration
-sets Site URL to the apps/web alias, and no redirect entry matches
-the organizer host.
+**Verified by:** at scoping time the deployed
+`functions/_shared/cors.ts`, read from the live `issue-session`
+bundle, carried no organizer origin, and `getAllowedOrigin` admits
+only exact-string allowlist matches plus apps/site Vercel preview
+aliases — neither of which an organizer domain can satisfy. Supabase's
+Authentication → URL Configuration carried no redirect entry matching
+the organizer host. Both are the defects the phases close, so both
+citations are scoping-time reads rather than claims about the current
+configuration; phase 2 owns the console read-back for the auth half.
 
-### C3. Parse before emit, and emit only what is served
+### C3. Emit only what is served
 
-No surface emits a short path before the route matchers accept one —
-that is what lets the parse-side phase land inert and makes the
-emit-side phase the switch.
-
-Separately and just as binding, and **directional**: no builder ships
-ahead of the rewrite that serves the path it emits, and no rewrite
-ships that nothing reaches. A builder emitting a short path nothing
-serves produces a 404, and the auth return leg is the live case, since
-post-sign-in destinations navigate the full document. The reverse
-order carries no such failure — a rewrite that lands before its
-builders serves a path nothing yet links to, which is inert, not
-broken.
+**Directional**: no builder ships ahead of the rewrite that serves the
+path it emits, and no rewrite ships that nothing reaches. A builder
+emitting a short path nothing serves produces a 404, and the auth
+return leg is the live case, since post-sign-in destinations navigate
+the full document. The reverse order carries no such failure — a
+rewrite that lands before its builders serves a path nothing yet links
+to, which is inert, not broken.
 
 So the constraint on a rewrite is not "does a builder exist yet" but
 **"does anything reach it."** An entry path — one a visitor types,
@@ -126,24 +135,20 @@ A phase adding a rewrite therefore names what reaches it, and a phase
 adding a builder confirms the rewrite is already live. Where a rewrite
 and its builders land together, both sets change in the same PR.
 
-The ordering this produces across the phases here: the routing phase
-ships the landing and feedback rewrites, reached from that moment by
-the address bar; whatever later phase first emits either path does so
-against a rewrite that is already live — a builder arriving for an
-already-served path, the safe direction. The quiz's short path has the
-opposite shape and is why the parse/emit split exists at all. Which
-surfaces become emitters, and by what mechanism, is the emit-side
-phase's plan to make — this contract binds the ordering, not the
-design.
+The ordering this produced across the phases here: the routing phase
+shipped the landing and feedback rewrites, reached from that moment by
+the address bar, and no phase emits either path. The quiz's short path
+has the opposite shape — its live consumer is the auth return leg,
+which produces a URL and navigates the full document — and no rewrite
+for it may ship without the builders that reach it. That pairing is
+what the dropped phase owned, and is part of why dropping it is a
+clean removal rather than a partial one: nothing in the remaining
+phases emits a path that is not already served.
 
-Two earlier forms of this contract were wrong in opposite directions.
-The first stated the equality unconditionally, which made the routing
-phase's visitor-typed entry paths read as dead config. The second
-fixed that but forbade claiming the entry-path reading for any path a
-builder would later emit — which contradicted this plan's own
-sequencing, since the header bar does eventually emit both of them.
-Neither failure was about the intent, which has always been the 404:
-emit-before-serve is the direction that breaks.
+An earlier form of this contract stated the equality unconditionally,
+which made the routing phase's visitor-typed entry paths read as dead
+config. That failure was not about the intent, which has always been
+the 404: emit-before-serve is the direction that breaks.
 
 ## Cross-Cutting Invariants
 
@@ -174,9 +179,9 @@ that was missed.
 
 Each phase plan is drafted before that phase's implementation, per
 the just-in-time rule, and carries its own contracts, file inventory,
-validation gate, and self-review audits. Drafted phase plans are
-linked below; the rest are named with the outcome they own, so the
-decomposition and ordering are reviewable now.
+validation gate, and self-review audits. All four now have plan files;
+each is linked below. A fifth phase was drafted at this level and
+never got a plan file — it is dropped, and Out Of Scope records it.
 
 **Phase 1 — Origin admission at the edge-function boundary.**
 [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md).
@@ -186,17 +191,16 @@ nothing, so it goes first.
 
 **Phase 2 — Auth URL configuration.**
 [`phase-2-auth-url-configuration-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md).
-Retargets Site URL to the canonical site origin and admits the organizer
-host to the redirect allowlist. Console-side plus the docs that record
-it; no application code. Shares no surface with the other phases, so it
-can land anywhere in the order.
+Admits the organizer host to the Supabase Auth redirect allowlist.
+Console-side plus the docs that record it; no application code. Shares
+no surface with the other phases. Trimmed from two halves to one — the
+Site URL retarget it also carried is dropped, per Out Of Scope.
 
 **Phase 3 — Organizer host mapping in `apps/site`.**
 [`phase-3-organizer-host-mapping-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3-organizer-host-mapping-plan.md).
-The organizer
-host serves the event landing and feedback surfaces at short paths.
-The quiz still resolves only at its long path, because the short form
-depends on the route contract phase 4 introduces.
+The organizer host serves the event landing and feedback surfaces at
+short paths. The quiz resolves only at its long path, which is where
+it stays.
 
 **Phase 3b — Post-deploy organizer-host routing probes.**
 [`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).
@@ -205,35 +209,9 @@ against the deployed surface and produces the run URL its close-out
 records. It exists as its own phase because the stakeholder chose to
 ship phase 3's routing change ahead of it, and a plan requirement
 left outstanding after a merge carries its own `Status` rather than
-hiding under the phase it was deferred from. Ordering-independent of
-phase 4; it gates only phase 3's `Landed` flip.
-
-**Phase 4 — Mount-aware route contract.** Two PRs, split by direction
-per C3:
-
-- **4a — parse side.** The shared route layer learns that a session
-  may be mounted at an event root, and matchers accept short paths.
-  Nothing emits them, so rendered output is unchanged on every host.
-  Reviewable as a pure contract-widening diff.
-- **4b — emit side.** Builders, the event header bar, and the quiz's
-  short-path rewrite ship together, because any subset breaks the
-  quiz: a builder emitting a short path before the rewrite exists
-  produces a 404, and the rewrite without the header change produces
-  a header that walks visitors back off short paths.
-
-  **The per-event masthead table cannot be retargeted in place.** It
-  has two consumers: the browser-rendered SPA masthead, which has a
-  request host, and the server-rendered `apps/site` event pages, which
-  do not — they are statically generated per C1, so one document
-  serves every host. A short path written into the shared destinations
-  is therefore emitted on the canonical alias too, where the root is
-  the demo index and the short feedback path is not the event: an I1
-  break. Host-aware resolution belongs in the consumer that has a host
-  to resolve against. Recorded here rather than left for 4b to
-  rediscover. **Verified by:** `shared/masthead/EventMasthead.tsx`
-  renders the table's destinations directly as anchor hrefs, and both
-  `apps/site/app/event/[slug]/page.tsx` and its `feedback/page.tsx`
-  sibling call `getEventMasthead` for the slug they render.
+hiding under the phase it was deferred from. It gates phase 3's
+`Landed` flip, and it is the last implementing PR of the task — see
+"Status lifecycle and close-out."
 
 **On the phase/task classification — settled by the stakeholder.**
 Phases 1 and 2 each close a live defect and are technically
@@ -281,9 +259,10 @@ a slug-based rename would match nothing, which was wrong and would
 have steered an implementer off a perfectly good selector.
 
 It gates no implementing phase and may ride in any of them, but it
-**must land no later than phase 4b** — both because 4b's verification
-depends on it, and because letting it trail 4b would make 4b not the
-last implementing PR.
+**must land no later than phase 3b's implementing PR** — both because
+the Validation Gate below is only evidence about the right event once
+the rename is live, and because letting it trail 3b would make 3b not
+the last implementing PR.
 
 ## Validation Gate
 
@@ -298,13 +277,18 @@ On production, in a private window, on a phone and a laptop:
   at the short root, reach the quiz, complete it, and receive an
   `MIP-####` code — without hitting a rejected origin, a 404, or a
   page that fails to load, at any step or on any surface the journey
-  crosses.
+  crosses. The address bar moving to the long event path on the tap
+  into the quiz is the expected behavior per C1, not a failure of
+  this step; what the step watches for is a surface that does not
+  work, not a URL that is not short.
 - **The organizer journey.** Sign in from the organizer host, land
   back on it, then exercise an authoring action that calls an edge
   function. This is the only step that composes phase 1's admission
-  with phase 2's redirect configuration; each phase verifies its own
+  with phase 2's redirect-allowlist entry; each phase verifies its own
   half, and only this verifies that real sign-in followed by real
-  work succeeds.
+  work succeeds. Nothing here depends on Site URL — every flow in this
+  repository requests an explicit redirect, which is the asymmetry
+  that took the retarget out of scope.
 - **The event is unambiguous.** Both the production database and a
   database built from migrations carry one row with the Madrona
   display name, and the decoy's entitlement rows remain reachable
@@ -323,20 +307,36 @@ so it gates the `Landed` flip rather than any PR.
 
 ## Status lifecycle and close-out
 
-Phases 1 and 2 land first, phases 3 → 4a → 4b are strictly ordered,
-and the data-hygiene item is bounded to land no later than 4b, so
-phase 4b is the clearly-last-to-merge PR and carries the close-out.
-The **Parallel implementing PRs** exception is not invoked; the data
-item's ordering bound is what keeps it unnecessary.
+Phase 1 has landed and phase 3's routing change has merged. Three
+implementing PRs remain: phase 2's documentation of the redirect
+entry, phase 3b's probe runner, and the data-hygiene rename. **Two
+ordering bounds make phase 3b's the clearly-last-to-merge PR**, and it
+carries the close-out:
 
-Phase 4b's validation cannot run pre-merge, so the plan takes the
+- The data-hygiene rename lands no later than phase 3b's PR, per the
+  bound stated above it.
+- Phase 2's PR lands no later than phase 3b's PR. It contributes the
+  redirect entry to the onboarding list the Documentation Currency PR
+  Gate below requires to be complete together; a close-out that landed
+  ahead of it would close the task with that list still short one
+  requirement.
+
+The **Parallel implementing PRs** exception is therefore not invoked.
+It is the exception that fits when no PR is clearly last, and the
+close-out lost its previous anchor when the phase that had been last
+was dropped — but both remaining candidates have a real reason to
+precede phase 3b, so declaring the order is honest rather than
+contrived, and it avoids a separate close-out PR whose merge would
+have to wait on a production walk it cannot bound.
+
+Phase 3b's validation cannot run pre-merge, so the plan takes the
 **Post-release validation** exception per
 [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
 Gate For Plans With Post-Release Validation":
 
 - `Proposed` → `In progress pending organizer-host verification` when
-  phase 4b merges. That exact label is this plan's stable name for
-  the check.
+  phase 3b's implementing PR merges. That exact label is this plan's
+  stable name for the check.
 - `In progress pending organizer-host verification` → `Landed` in a
   follow-up doc-only commit once the Validation Gate above passes,
   recording the verification evidence. That commit deletes the
@@ -408,6 +408,86 @@ that follows a long quiet period.
   coupling entirely; rejected as reopening the embedding mechanism
   the canonical-origin work settled.
 
+### No phase 4 (the short quiz path is dropped)
+
+Earlier drafts carried a fourth phase, in two PRs: a parse side that
+taught the shared route layer a session may be mounted at an event
+root, and an emit side that shipped the quiz's short-path rewrite
+together with the builders and the event header bar that would emit
+short paths. Dropped by stakeholder decision, and dropped outright
+rather than deferred to a later plan.
+
+The goal was that someone typing `music.madrona.us` sees the site, and
+phases 1 through 3 deliver that. What phase 4 would have added on top
+is cosmetic: a shorter URL for the quiz, one a visitor could type or
+paste, plus short links inside the quiz itself. It would not have
+fixed the first tap out of the landing page — that is C1's ceiling,
+which no phase of this task was going to lift. What it would have cost
+is an edit to the repository's most shared URL surface — the route
+table and builders in `shared/urls/`, read by both deployables — plus
+host-aware resolution in the masthead consumers, in service of an
+event that works without any of it. The address bar moving to
+`/event/madrona/game` after a visitor taps through is the accepted end
+state.
+
+Two consequences of the drop are recorded rather than left implicit.
+The residual navigation inconsistency, and the metadata symptom that
+shares its cause, are filed in
+[`docs/backlog.md`](/docs/backlog.md) — they are the same entry the
+C1 ceiling already pointed at, and nothing about the drop makes them
+more urgent. And the constraint the emit side would have run into is
+worth keeping, because it is the non-obvious part and a future reader
+should not have to rediscover it: **the per-event masthead table
+cannot be retargeted in place.** It has two consumers — the
+browser-rendered SPA masthead, which has a request host, and the
+server-rendered `apps/site` event pages, which do not, because they
+are statically generated per C1. A short path written into the shared
+destinations is therefore emitted on the canonical alias too, where
+the root is the demo index and the short feedback path is not the
+event: an I1 break. Host-aware resolution belongs in the consumer that
+has a host to resolve against. **Verified by:**
+`shared/masthead/EventMasthead.tsx` renders the table's destinations
+directly as anchor hrefs, and both
+`apps/site/app/event/[slug]/page.tsx` and its `feedback/page.tsx`
+sibling call `getEventMasthead` for the slug they render.
+
+### No Site URL retarget (phase 2 trimmed to its redirect half)
+
+Phase 2 was drafted with two halves: add the organizer host to the
+redirect allowlist, and retarget the project's Site URL from the
+plugin deployment's alias to `apps/site`'s canonical alias. Only the
+first survives, by stakeholder decision.
+
+The asymmetry is the whole argument. The redirect entry fixes
+something real and specific: `EventRedeemPage`,
+`EventRedemptionsPage`, and `EventAdminPage` each request a magic link
+with a redirect composed against the current origin, so a volunteer
+who opens the redeem page on the organizer host has no working return
+leg until that host is admitted. **Verified by:** `requestMagicLink`
+in [`shared/auth/api.ts`](/shared/auth/api.ts) builds
+`emailRedirectTo` against `window.location.origin`, and
+`EventRedeemPage.tsx`, `EventRedemptionsPage.tsx`, and
+`EventAdminPage.tsx` under `apps/web/src/pages/` each call it — those
+pages are served on the organizer host through the host-agnostic
+site→plugin rewrite.
+
+The Site URL retarget, by contrast, changes a project-wide default
+that every flow in this repository overrides with an explicit
+redirect — so it buys this event nothing — and it carries the two
+vendor questions phase 2 recorded and could not resolve from
+documentation: what Supabase does with a redirect the allowlist does
+not admit, and whether any dashboard-managed email template
+interpolates Site URL. Paying an unresolved blast radius for no gain
+is the trade that was declined.
+
+This also removes a conditional exception the plan carried. Phase 2's
+retarget had one outcome under which an origin the allowlist does not
+admit — an `apps/site` preview alias is the live example — would have
+started landing somewhere new, which is an I1 break needing an
+exception recorded at both levels. With no retarget, the Goal's claim
+that preview aliases behave exactly as they do today holds
+unconditionally.
+
 ## Backlog Impact
 
 Three entries in [`docs/backlog.md`](/docs/backlog.md) were opened by
@@ -416,7 +496,8 @@ host's build-time ceiling (C1's constraint, on both the navigation
 and metadata surfaces it touches, with the candidate shapes and their
 tradeoffs); the absence of any canonical link, newly relevant once
 two hosts serve identical content; and the game route's missing share
-metadata, newly relevant once its short form is the one people paste.
+metadata, newly relevant once the quiz link is one people paste from
+a host that is not the canonical alias.
 
 ## Related Docs
 
