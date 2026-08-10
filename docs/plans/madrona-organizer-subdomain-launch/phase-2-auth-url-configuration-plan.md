@@ -273,12 +273,25 @@ The rows below are where those statements are expected to be found.
 | `docs/architecture.md` |
 | `docs/tracking/production-admin-smoke-tracking.md` |
 | `docs/plans/canonical-origin-resolution.md` |
+| `README.md` |
 | `docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md` |
 
-The last two rows were not in this plan's estimate. Both state what
-shape the redirect allowlist takes, so both fall inside the
+The last three rows were not in this plan's estimate. Each states what
+shape the redirect allowlist takes, so each falls inside the
 Documentation Currency PR Gate's category — which is the category
 being stated over a file list rather than as one paying off.
+
+One further row is a deviation on different grounds. `docs/operations.md`
+claimed `apps/web/vercel.json` carries proxy rewrites for
+apps/site-owned `/`, `/auth/callback`, and `/admin*`; that file carries
+no such rules and has not since the canonical origin moved. That is not
+a redirect-allowlist statement, so it sits outside this gate's category
+and would normally be left for its own change. It is corrected here
+because it is load-bearing for this phase's own I1 evidence — a reviewer
+reading it would conclude the production smoke cannot discriminate a
+broken canonical entry, which is exactly the objection raised against
+this phase. Leaving a false statement in place that invalidates this
+plan's reasoning is worse than the small scope stretch.
 
 **Intentionally not touched**
 
@@ -360,9 +373,18 @@ post-merge.
   target is the canonical alias. Both configured values were read rather
   than assumed, which is what the condition requires:
   `PRODUCTION_SMOKE_BASE_URL` is the canonical apps/site alias, and the
-  callback override `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is unset (the
-  repository defines zero repository-level variables), so the fixture
-  composes the redirect from the base URL. The run requests a
+  callback override `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL` is unset, so
+  the fixture composes the redirect from the base URL. **Both scopes
+  were read, because the workflow runs under `environment: production`
+  and a `${{ vars.* }}` reference resolves against the environment as
+  well as the repository:** the repository defines zero action
+  variables, and the `production` environment defines exactly three
+  (`PRODUCTION_SMOKE_BASE_URL`,
+  `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`,
+  `PRODUCTION_SMOKE_SUPABASE_URL`). The override is absent from both.
+  An earlier version of this record cited only the repository scope,
+  which would not have ruled out an environment-level override —
+  surfaced by Codex review. The run requests a
   service-role link with an explicit redirect to that alias's callback,
   navigates a browser to the returned link, and asserts an apps/site
   admin surface renders. Run:
@@ -373,8 +395,22 @@ post-merge.
   **This proves function, not just presence**, which is what the step
   asks and what a console read could not give. Had the apps/site entry
   stopped matching, Supabase would not have honored the requested
-  redirect, the browser would have landed elsewhere, and the admin
-  surface assertion would have failed. **Verified by:**
+  redirect, the browser would have landed on Site URL's host, and the
+  admin surface assertion would have failed.
+
+  **That last step is the load-bearing one, and it was challenged:** the
+  spec asserts a heading rather than the final hostname, so it only
+  discriminates if the fallback host does not serve that heading. It
+  does not. Site URL names the plugin deployment's alias, and
+  `apps/web/vercel.json` carries five rewrites, all of them `/event/…`
+  sources pointing at `/index.html` — no `/admin`, no `/auth/callback`.
+  The apps/site-owned proxy rules that once made those paths resolve on
+  the plugin host were removed when the canonical origin moved. So a
+  fallback landing cannot render "Game draft access"; it renders
+  nothing. The heading assertion is a host assertion in effect, though
+  not in form. Asserting the hostname outright would be better and is
+  a test change this documentation-only phase does not make.
+  **Verified by:**
   [`tests/e2e/admin-auth-fixture.ts`](/tests/e2e/admin-auth-fixture.ts)
   composes `${baseUrl}/auth/callback?next=/admin` when
   `TEST_ADMIN_REDIRECT_URL` is absent, and
@@ -434,20 +470,27 @@ post-merge.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
   **Done, and it is what caught the error this diff mostly consists
-  of.** Six surfaces described exact-callback-path entries; the console
-  carries nine globstar entries. Corrected: `docs/operations.md` (two
-  places), `docs/architecture.md`, `docs/dev.md` (two places),
-  `docs/tracking/production-admin-smoke-tracking.md`, and
-  `docs/plans/canonical-origin-resolution.md`. No statement about Site
-  URL was touched, per Files to touch.
+  of.** Eight surfaces described exact-callback-path entries; the
+  console carries nine globstar entries. Corrected: `docs/operations.md`
+  (two places), `docs/architecture.md`, `docs/dev.md` (two places),
+  `docs/tracking/production-admin-smoke-tracking.md`,
+  `docs/plans/canonical-origin-resolution.md` (prose and its Post-state),
+  and `README.md`. No statement about Site URL was touched, per Files to
+  touch.
 
-  **The last two were missed on the first pass and found by review**,
-  which is the argument for this gate being stated over the category
-  rather than over a file list. The first sweep read the files the plan
-  named; the surfaces that were wrong included two the plan did not
-  anticipate, in `docs/tracking/` and in a sibling plan. A repo-wide
-  search for the pattern is the sweep this step requires, not a walk of
-  Files to touch.
+  **Four of the eight were missed across two passes and found by
+  review**, which is the argument for this gate being stated over the
+  category rather than over a file list — and the argument for the sweep
+  being a bare pattern search. The first pass read the files this plan
+  named. The second grepped repo-wide but filtered the results by
+  keyword, which silently dropped `README.md` because its sentence says
+  "allowlist that include" rather than any of the words filtered on. The
+  sweep this step requires is every hit on the pattern, reviewed by
+  hand; narrowing the grep is how a surface stays missed twice.
+
+  Landed plan docs recording what they did at the time are left alone —
+  they are history, not current guidance. What was corrected is guidance
+  a reader would act on today.
 
 The parent's named constraint on routing gates does not bind this phase:
 it changes no host-conditional routing. The organizer-host step above
