@@ -1,6 +1,6 @@
 # Madrona organizer-subdomain launch
 
-**Status:** `Proposed`
+**Status:** `In progress pending organizer-host verification`
 
 Task plan with separated phase plan files — phases 1, 2, and 3 — plus
 one independent data item. This doc owns the decomposition, the
@@ -236,7 +236,9 @@ On production, in a private window, on a phone and a laptop:
   work, not a URL that is not short.
 
   **Satisfied.** The quiz was played through to completion on
-  `music.madrona.us` on 2026-08-10, minting `MIP-2881`. The surfaces it
+  `music.madrona.us` on 2026-08-10, minting a code (its digits are not recorded here — a
+  verification code is a bearer credential, and the row has since been
+  cleared with the rest of the test data). The surfaces it
   crosses were measured independently the same day: the short root and
   the short feedback path resolve on that host, the long event path and
   the game path both return 200 there, and the asset classes the journey
@@ -321,17 +323,28 @@ Phases 1, 2, and 3 have landed, and with the probe runner and the decoy
 rename both out of scope there is no implementing PR left. Everything
 this plan promises is in production; what remains is verifying it.
 
-So the close-out is a single doc-only commit: `Proposed` → `Landed` once
-the Validation Gate above passes, recording the verification evidence.
-That commit deletes the scoping doc. **What it waits on is one step:**
-an authoring action taken on the organizer host, per the organizer
-journey. Everything else in the gate is satisfied and recorded. Neither named exception to the
-Plan-to-PR Completion Gate applies — **Parallel implementing PRs** has
-nothing to order, and **Post-release validation** describes an
-implementing PR that merges ahead of its check, which is not the shape
-left here. What remains is the residue of a plan whose implementing work
-finished before its verification, and the gate's default — flip when the
-plan is satisfied — is what covers it.
+This plan takes the **Post-release validation** exception per
+[`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed Gate
+For Plans With Post-Release Validation". Its Validation Gate is an
+acceptance walk against production — a check that can only run
+post-release, which is the condition the exception names, and what
+allows the `Landed` flip to live in a follow-up commit rather than in an
+implementing PR:
+
+- `Proposed` → `In progress pending organizer-host verification` in the
+  PR that flips the last phase. That exact label is this plan's stable
+  name for the check.
+- `In progress pending organizer-host verification` → `Landed` in a
+  follow-up doc-only commit once the Validation Gate passes, recording
+  the verification evidence. That commit deletes the scoping doc.
+
+**What the flip waits on is one step:** an authoring action taken on the
+organizer host, per the organizer journey. Everything else in the gate
+is satisfied and recorded above, with the requests made and the
+responses observed.
+
+The **Parallel implementing PRs** exception is not invoked; no
+implementing PR remains for it to order.
 
 **Phase 3 is `Landed`.** Its post-merge routing checks were walked
 against production on 2026-08-10 and recorded in its own plan — the

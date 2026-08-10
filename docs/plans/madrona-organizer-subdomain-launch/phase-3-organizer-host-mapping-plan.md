@@ -648,9 +648,10 @@ Review-fix commits stay distinct from these when that makes the
 history easier to follow.
 
 The probe runner, its script entry, and its workflow wiring were a
-third slice here before they became phase 3b; the validation-command
-lists went with them, because they describe a command that does not
-exist until that phase lands.
+third slice here before they became a phase of their own, which was
+then dropped without being built. The validation-command lists went
+with them and stayed gone: they describe a command that no longer
+exists in any plan.
 
 ## Validation Gate
 
@@ -757,17 +758,28 @@ short feedback path does not resolve to the event — it 404s. Both are
 the I1 assertion made on the alias by name, not inferred from the
 organizer host's result.
 
-**Asset classes — absolute, on both hosts.** A hashed
-`_next/static/chunks` stylesheet returned 200 `text/css` on both; the
-apps/web-proxied `/assets/*` prefix returned 200 `text/css` and 200
-`application/javascript` on both; the Madrona OG image route returned
-200 `image/png` on both; `/event/madrona/game` returned 200 `text/html`
-on both. These are absolute assertions — expected status and expected
-content type — not merely parity, which is the distinction the
-pre-merge gate drew and the reason two hosts failing identically cannot
-satisfy this step. Asset paths were read from the served HTML rather
-than guessed, after a first attempt guessed a filename and measured a
-404 that proved nothing.
+**Asset classes — absolute, on both hosts.** Each path below was
+requested against `https://music.madrona.us` and against
+`https://neighborly-events-site.vercel.app`, and returned the same
+status and content type on both:
+
+| path | status | content type |
+|---|---|---|
+| `/_next/static/chunks/152p6kkvc5-6-.css` | 200 | `text/css` |
+| `/assets/index-DtLklTBr.css` | 200 | `text/css` |
+| `/assets/index-BidRzf7k.js` | 200 | `application/javascript` |
+| `/event/madrona/opengraph-image` | 200 | `image/png` |
+| `/event/madrona/game` | 200 | `text/html` |
+
+These are absolute assertions — expected status and expected content
+type — not merely parity, which is the distinction the pre-merge gate
+drew and the reason two hosts failing identically cannot satisfy this
+step. The first three are content-hashed and will change on the next
+build of either app; they are recorded as the exact requests made on
+the date above rather than as paths a later reader should expect to
+resolve. Re-issuing this check means re-reading the current hashes from
+the served HTML, which is how these were obtained after a first attempt
+guessed a filename and measured a 404 that proved nothing.
 
 **Deployment identity.** The gate required establishing that the origin
 serves the commit under test before any assertion counts, because a
@@ -822,8 +834,9 @@ topology, and its summary had become incomplete rather than wrong. It
 gained a pointer to the owner rather than a copy of the table, which
 is the duplication audit's resolution applied to the same diff. The
 validation-command audit's trigger does not fire on this phase — it
-adds no script entry and no workflow change — so it moved to phase 3b
-along with the command-list docs.
+adds no script entry and no workflow change. It moved out with the
+runner, and with the runner dropped there is no command for it to
+catalogue.
 
 ## Risks
 
@@ -837,10 +850,9 @@ which reads the emitted phase rather than the served result.
 **R2. This phase's mapping has exactly one consumer today, and stays
 that way.** C1's single-source claim is cheap to hold with one reader,
 and the phase that would have added a second — the route layer reading
-the same module from a different app's build — is dropped. Phase 3b's
-runner reads the mapping too, but from the same Node-side build, so it
-does not test the claim the dropped phase would have. The parent's I2
-second-copy allowance is therefore never exercised by this task.
+the same module from a different app's build — is dropped. So is the
+probe runner that would have read it from the Node side. The parent's
+I2 second-copy allowance is never exercised by this task.
 
 **R3. Landing this phase does not launch the host.** The organizer host
 serves two surfaces at short paths after this merges. The quiz has no
