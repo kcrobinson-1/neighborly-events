@@ -505,6 +505,16 @@ post-merge.
   concept-level sweep. A file list would have had to be right the first
   time; three greps in a row were wrong in three different ways.
 
+  **The same failure then repeated on a claim rather than a citation.**
+  A review finding corrected the wildcard's risk bound in the backlog
+  entry; the identical sentence sat in two other places this diff had
+  written — `docs/operations.md` and this plan's own R1 — and only the
+  cited one was fixed. Applying a correction to the surface that was
+  named, while leaving the copies the same author wrote in the same
+  change, is the same defect as sweeping by file list. A correction is
+  finished when every instance of the corrected claim is found, and the
+  search for those is the claim itself, not the finding's file path.
+
   Landed plan docs recording what they did at the time are left alone —
   they are history, not current guidance. What was corrected is guidance
   a reader would act on today.
@@ -550,8 +560,11 @@ form it recommends does not admit this app's query-bearing callback, as
 C1 records, so "follow the vendor recommendation" is not an available
 one-line remedy. What the
 breadth costs is the set of paths on each host to which a sign-in token
-may be delivered — bounded by every host being a literal, and by every
-path on those hosts being served by one of our own Vercel projects.
+may be delivered. Every host is a literal, so no unintended host is
+admitted; the path bound then differs by class. On the three deployed
+origins every path is served by one of our own Vercel projects. On the
+six localhost entries it is not — any local process on that port can
+take the token — which the backlog entry records as its own question.
 
 This phase does not narrow it. Matching the eight is the conservative
 move for a phase whose premise is "add one entry"; making the organizer

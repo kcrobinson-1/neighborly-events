@@ -221,11 +221,17 @@ Why manual for now:
     path without naming it. Adding an authenticated route needs no
     dashboard change.
   - the path wildcard is wider than Supabase recommends for production
-    (it reserves the globstar for development and preview URLs). What
-    bounds it is the host being a literal and every path on it being
-    served by one of our own Vercel projects. Narrowing to exact
-    callback paths is expressible in the same field — see the backlog
-    entry on redirect-allowlist path breadth.
+    (it reserves the globstar for development and preview URLs). Every
+    host in the list is a literal, so no unintended host is admitted.
+    The path breadth bounds differently per class: on the deployed
+    origins every path is served by one of our own Vercel projects, so
+    the wildcard admits nothing third-party; on the localhost entries it
+    does — any process listening on that port can serve the callback
+    path and read the delivered sign-in token. That token is the
+    developer's own on their own machine, so it is a hygiene concern
+    rather than an exposure of anyone else's session, but the deployed
+    argument does not cover it. Narrowing is expressible in the same
+    field — see the backlog entry on redirect-allowlist path breadth.
 - operational allowlist membership in `public.admin_users`
 - any dashboard-managed settings not represented by migrations, functions, or `config.toml`
 
