@@ -1519,15 +1519,29 @@ Next.js' three phases:
 - **`beforeFiles`** rows are matched *ahead of* the filesystem check,
   so a row here wins against a real route. That is what lets an
   organizer host's `/` serve an event landing even though `/` is a
-  real page on this app.
+  real page on this app. **These do not stop at the first match**:
+  Next.js checks every `beforeFiles` entry, so a later row whose
+  `source` matches an earlier row's `destination` rewrites it again.
+  Adding a row here means checking it against the destinations of the
+  rows already present, not only against their sources.
 - **`afterFiles`** rows are consulted only once nothing on the
-  filesystem matched. A returned bare array is treated as `afterFiles`,
-  which is the phase every proxy row has always run in.
+  filesystem matched, and are tried in order — the first one that
+  resolves to a real file, page, or dynamic route is served, so
+  most-specific rules come first. A returned bare array is treated as
+  `afterFiles`, which is the phase every proxy row has always run in.
 - **`fallback`** — rows that run after dynamic routes too — is unused
   here and carries no rows.
 
-Within a phase, rewrites apply in file order ("first match wins"), so
-most-specific rules come first.
+**Verified by:** the `rewrites` reference bundled with the pinned
+`next` version states that `beforeFiles` rewrites "do not check the
+filesystem/dynamic routes immediately after matching a source, they
+continue until all `beforeFiles` have been checked," and describes
+`afterFiles` as tried in order with the first rewrite that resolves
+being served.
+
+The two rows this repo runs in `beforeFiles` cannot chain into each
+other: their sources are `/` and `/feedback`, and their destinations
+are under `/event/`, which neither source matches.
 
 Most rows apply on every host. The rows marked with an organizer host
 carry an exact-hostname condition and apply on that host only — see
