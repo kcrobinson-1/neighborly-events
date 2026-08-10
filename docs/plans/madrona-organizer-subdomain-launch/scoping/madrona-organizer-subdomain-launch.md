@@ -110,10 +110,13 @@ return to it.
 The "falls back to the plugin host" half of this decision as originally
 written asserted a vendor behavior — that a redirect the allowlist does
 not admit is replaced by Site URL — that the Supabase redirect-URL
-documentation does not state. Phase 2's plan states its contract over
-admitted origins only and resolves the unadmitted case by observation;
-see that plan's C1. The decision this D6 records is unaffected: the
-allowlist does not match the organizer host either way.
+documentation does not state. That question is now moot rather than
+open: phase 2 no longer retargets Site URL, so it only adds an entry,
+and no origin's match result changes except the organizer host's. See
+that plan's P2, which carries the reasoning; the observation this
+decision once called for is not owed by anyone. The decision this D6
+records is unaffected either way: the allowlist does not match the
+organizer host.
 
 **Verified by:** Supabase dashboard → Authentication → URL
 Configuration: Site URL as described; redirect URLs are the apps/web
@@ -242,7 +245,12 @@ final form.
 **All resolved.** Recorded here as handoff outcomes; the durable
 shapes live in the task plan and its phase plans, not here.
 
-- **O1 — short-path shape for `/game`.** Resolved to the
+- **O1 — short-path shape for `/game`. Superseded: `/game` gets no
+  short path.** The stakeholder dropped the phase this decision
+  shaped; the task plan's Out Of Scope, "No phase 4," owns the
+  reasoning, and the sub-decision below about where host-to-slug
+  lives survives it — that mapping shipped in phase 3. Resolved at
+  scoping time to the
   host-aware route contract (true short URL), not a redirect. The
   cheaper redirect shape was justified by schedule pressure that no
   longer applies, and D11 shows `shared/` already carries per-event
@@ -259,7 +267,12 @@ shapes live in the task plan and its phase plans, not here.
   `defaultAllowedOrigins`. An allowlist is authorization surface,
   not a secret; every admitted origin is echoed back in the response
   header regardless. It belongs where it is reviewed and diffable.
-- **O3 — Site URL retarget.** Resolved to retarget. Supabase documents
+- **O3 — Site URL retarget. Superseded: the retarget is dropped.**
+  The stakeholder took it out of scope after this pass; the task
+  plan's Out Of Scope, "No Site URL retarget," owns the reasoning.
+  The deliberation below is left as it stood, because the drop was a
+  cost judgement rather than a finding that this reasoning was wrong.
+  Resolved at scoping time to retarget: Supabase documents
   Site URL as the default redirect for a flow that requests none, so
   pointing it at a deployment documented as not customer-facing makes
   the default destination wrong on its own terms. Low blast radius:
@@ -267,9 +280,10 @@ shapes live in the task plan and its phase plans, not here.
   earlier form of this decision also asserted that Site URL is the
   fallback for redirects the allowlist does *not* match, and used that
   as part of the rationale. The vendor does not document that behavior;
-  it is withdrawn here for the same reason it was withdrawn from D6,
-  and the phase 2 plan's C1 resolves it by observation. The retarget
-  decision does not depend on it.
+  it is withdrawn here for the same reason it was withdrawn from D6.
+  It needs no resolution now — with the retarget dropped, phase 2 only
+  adds an entry, and its P2 says why that leaves the unadmitted class
+  untouched. The retarget decision never depended on it.
 - **O4 — `NEXT_PUBLIC_SITE_ORIGIN`.** Resolved to leave it alone.
   It feeds one site-wide `metadataBase`, so retargeting it would
   make every other event advertise URLs on Madrona's domain.
@@ -294,8 +308,10 @@ shapes live in the task plan and its phase plans, not here.
   land in any of them, but the plan makes it a **required close-out
   boundary**: the `Landed` flip cannot claim a verified organizer
   host while two rows answer to the same display name, because that
-  is exactly what would make the phase 4b verification untrustworthy.
-  Not optional — see the plan's "Status lifecycle and close-out."
+  is exactly what would make the close-out verification untrustworthy.
+  Not optional — see the plan's "Status lifecycle and close-out." The
+  ordering bound moved when phase 4 was dropped: the item now lands no
+  later than phase 3b's implementing PR.
 
 ## Plan structure handoff
 
@@ -303,6 +319,12 @@ Outcome after the decisions above resolved — four phases plus one
 independent data item, sequenced so each is independently
 verifiable and independently revertible. The plan's Phases section
 is authoritative; this records what handed over.
+
+**Two of these were later trimmed by the stakeholder**, after this
+handoff: phase 2 lost its Site URL half, and phase 4 was dropped
+outright. The list below is what handed over, not what is being
+built — read the task plan's Phases and Out Of Scope sections for
+the current decomposition.
 
 1. **Origin admission.** Closes D5, shaped by O2.
 2. **Auth URL configuration.** Closes D6, shaped by O3. D7 is not
