@@ -67,10 +67,11 @@ becomes of each — neither is waiting on a later phase of this task.
 
 ## PR shape and Status lifecycle
 
-One PR, plus a doc-only close-out commit. **This phase is now the
-routing change only** — the post-deploy probe runner it originally
-carried moved to
-[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).
+One PR, plus a doc-only close-out commit. **This phase is the routing
+change only.** The post-deploy probe runner it originally carried was
+split into its own phase and then dropped without being built; the
+parent's Out Of Scope, "No phase 3b," records why and what replaces
+it.
 
 **Why the split, and why it is a phase boundary rather than two PRs
 under one plan.** The stakeholder chose to ship the routing change
@@ -93,11 +94,12 @@ can flip independently. Surfaced by Codex review on this phase's
 implementing PR, against a first attempt that recorded the split in
 this section's prose while leaving both slices under one `Status`.
 
-This phase's `Landed` flip still waits on the run URL phase 3b's
-runner produces. That is a dependency between the two phases, not a
-shared Status: one passing run satisfies both, and a run that fails
-distinguishes them — a runner defect leaves this phase unverified
-rather than falsified.
+This phase's `Landed` flip waits on the post-deploy checks below being
+walked against production and recorded here. That walk was to come from
+a committed runner producing a run URL; with the runner dropped, the
+record in this doc is the artifact. It is weaker in one specific way —
+nobody can re-run it from a command — which the parent's Out Of Scope
+weighs.
 
 **PR-count branch test**, as this phase now stands: a shared mapping
 module, the routing config, a unit test, and the docs each of those
@@ -544,8 +546,8 @@ than transcribed.
 may revise any row when a structural call requires it; deviations are
 reported per the Plan-to-PR Completion Gate's Estimate Deviations
 callout. The runner rows this section originally carried moved out
-with the runner, to
-[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).*
+with the runner, which was later dropped — see the parent's Out Of
+Scope, "No phase 3b."*
 
 **New**
 
@@ -709,13 +711,15 @@ still resolve through to the apps/web deployment after the phase
 change, and no class had to be deferred to post-deploy for want of
 local reach.
 
-**Post-merge — these gate the `Landed` flip.** These run from a
-committed entry point, not by hand, so the run that passes is the
-artifact the close-out records. That entry point is phase 3b's
-deliverable; this phase merges without it, which is what the
+**Post-merge — these gate the `Landed` flip.** These were to run from a
+committed entry point so the run that passes would be the artifact the
+close-out records. That entry point was phase 3b's deliverable and is
+dropped, so the walk is performed by hand and its result recorded here;
+the parent's Out Of Scope, "No phase 3b," weighs that trade. This phase
+merged before either, which is what the
 `In progress pending organizer-host routing verification` Status
 records. The manual walk performed immediately after this phase's PR
-merges is a rollback trigger, not a substitute — it produces no run
+merged was a rollback trigger rather than this gate — it produced no run
 URL, and the close-out still requires one.
 
 - **Establish deployment identity before any assertion counts.** The

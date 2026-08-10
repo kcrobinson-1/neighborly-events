@@ -2,8 +2,8 @@
 
 **Status:** `Proposed`
 
-Task plan with separated phase plan files — phases 1, 2, 3, and 3b —
-plus one independent data item. This doc owns the decomposition, the
+Task plan with separated phase plan files — phases 1, 2, and 3 — plus
+one independent data item. This doc owns the decomposition, the
 constraints that bound what any phase may promise, and the close-out.
 Everything else — contracts, file inventories, per-phase validation —
 belongs to the phase plans, drafted just-in-time.
@@ -179,9 +179,9 @@ that was missed.
 
 Each phase plan is drafted before that phase's implementation, per
 the just-in-time rule, and carries its own contracts, file inventory,
-validation gate, and self-review audits. All four now have plan files;
-each is linked below. A fifth phase was drafted at this level and
-never got a plan file — it is dropped, and Out Of Scope records it.
+validation gate, and self-review audits. All three have plan files; each
+is linked below. Two further phases were drafted and dropped — see Out
+Of Scope.
 
 **Phase 1 — Origin admission at the edge-function boundary.**
 [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md).
@@ -201,17 +201,6 @@ Site URL retarget it also carried is dropped, per Out Of Scope.
 The organizer host serves the event landing and feedback surfaces at
 short paths. The quiz resolves only at its long path, which is where
 it stays.
-
-**Phase 3b — Post-deploy organizer-host routing probes.**
-[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).
-The committed entry point that runs phase 3's post-deploy checks
-against the deployed surface and produces the run URL its close-out
-records. It exists as its own phase because the stakeholder chose to
-ship phase 3's routing change ahead of it, and a plan requirement
-left outstanding after a merge carries its own `Status` rather than
-hiding under the phase it was deferred from. It gates phase 3's
-`Landed` flip, and it is the last implementing PR of the task — see
-"Status lifecycle and close-out."
 
 **On the phase/task classification — settled by the stakeholder.**
 Phases 1 and 2 each close a live defect and are technically
@@ -259,10 +248,10 @@ a slug-based rename would match nothing, which was wrong and would
 have steered an implementer off a perfectly good selector.
 
 It gates no implementing phase and may ride in any of them, but it
-**must land no later than phase 3b's implementing PR** — both because
-the Validation Gate below is only evidence about the right event once
-the rename is live, and because letting it trail 3b would make 3b not
-the last implementing PR.
+**must land no later than the last implementing PR**, because the
+Validation Gate below is only evidence about the right event once the
+rename is live. With phase 3b dropped it *is* the last implementing PR,
+so it carries the close-out.
 
 ## Validation Gate
 
@@ -323,72 +312,54 @@ On production, in a private window, on a phone and a laptop:
   rather than reusing the organizer-host journey, which would fail at
   its first step by design.
 
-This walk is post-merge by construction — see the constraint below.
-What it is post-merge *to* is every PR that puts the behavior it walks
-into production, not to whichever PR happens to be last: phase 3b adds
-no production behavior for the walk to wait on. The close-out below
-is what that distinction buys.
+This walk is post-merge by construction — see the constraint below. It
+is post-merge to every PR that puts the behavior it walks into
+production, which is what makes the data-hygiene rename its last
+prerequisite.
 
 ## Status lifecycle and close-out
 
-Phase 1 has landed and phase 3's routing change has merged. Three
-implementing PRs remain: phase 2's documentation of the redirect
-entry, phase 3b's probe runner, and the data-hygiene rename. **Two
-ordering bounds make phase 3b's the clearly-last-to-merge PR**, and it
-carries the close-out:
+Phases 1, 2, and 3 have landed. One implementing PR remains — the
+data-hygiene rename — so it is trivially the last, and it carries the
+close-out.
 
-- The data-hygiene rename lands no later than phase 3b's PR, per the
-  bound stated above it.
-- Phase 2's PR lands no later than phase 3b's PR. It contributes the
-  redirect entry to the onboarding list the Documentation Currency PR
-  Gate below requires to be complete together; a close-out that landed
-  ahead of it would close the task with that list still short one
-  requirement.
+The **Parallel implementing PRs** exception is not invoked; with one
+implementing PR left there is nothing for it to resolve.
 
-The **Parallel implementing PRs** exception is therefore not invoked.
-It is the exception that fits when no PR is clearly last, and the
-close-out lost its previous anchor when the phase that had been last
-was dropped — but both remaining candidates have a real reason to
-precede phase 3b, so declaring the order is honest rather than
-contrived, and it avoids a separate close-out PR whose merge would
-have to wait on a production walk it cannot bound.
+**This plan's gate is the composed journey above.** It needs everything
+it walks already live: phase 1's admission, phase 3's routing, phase 2's
+redirect entry, and the data-hygiene rename. The first three have
+landed, so the walk becomes runnable when the rename does.
 
-**This plan's gate is the composed journey above, not phase 3b's probe
-run** — two checks with two different subjects, and only the second is
-structurally post-merge to phase 3b. The journey needs everything it
-walks already live: phase 1's admission, phase 3's routing, phase 2's
-redirect entry, and the data-hygiene rename. Each of those is another
-PR's merge, and every one is bounded to land no later than phase 3b's,
-so by the time that PR is ready the walk is runnable — while phase
-3b's own runner adds nothing to production for the walk to wait on.
+So the close-out has two branches, decided by whether the walk has
+passed:
 
-So the close-out has two branches, the same shape phase 3b's own
-lifecycle carries and for the same reason:
-
-- **If the Validation Gate above has passed at any point before phase
-  3b's implementing PR merges**, `Proposed` → `Landed` in that PR,
-  recording the verification evidence. That PR deletes the scoping
-  doc. This is the default same-PR flip, available because the walk
-  was runnable. The cutoff is the merge, not the PR's opening: a walk
-  that passes while the PR is in review satisfies the gate just as
-  fully, and treating it otherwise would manufacture a pending state
-  and a follow-up commit for a plan whose validation was complete.
-  Amending the PR to record late-arriving evidence is the normal
-  course. Phase 3b's own lifecycle uses the same pre-merge cutoff, and
-  so does the Plan-to-PR Completion Gate.
+- **If the Validation Gate above has passed at any point before the
+  rename's PR merges**, `Proposed` → `Landed` in that PR, recording the
+  verification evidence. That PR deletes the scoping doc. The cutoff is
+  the merge, not the PR's opening: a walk that passes while the PR is in
+  review satisfies the gate just as fully, and treating it otherwise
+  would manufacture a pending state and a follow-up commit for a plan
+  whose validation was complete. Amending the PR to record
+  late-arriving evidence is the normal course.
 - **Otherwise** the plan takes the **Post-release validation**
   exception per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
   "Plan-to-Landed Gate For Plans With Post-Release Validation":
   `Proposed` → `In progress pending organizer-host verification` when
-  phase 3b's implementing PR merges — that exact label is this plan's
-  stable name for the check — then → `Landed` in a follow-up doc-only
-  commit once the walk passes, recording the evidence. That commit
-  deletes the scoping doc.
+  that PR merges — that exact label is this plan's stable name for the
+  check — then → `Landed` in a follow-up doc-only commit once the walk
+  passes, recording the evidence. That commit deletes the scoping doc.
 
 The two branches are not a choice the implementer makes freely: the
 first is taken whenever the walk has in fact passed, and reaching for
 the second when it has is the drift the Plan-to-PR Completion Gate
 forbids.
+
+**Phase 3's `Landed` flip rides with the close-out.** It was waiting on
+a run URL from the probe runner that is now dropped, so what discharges
+its post-merge Validation Gate is the same production walk this plan's
+close-out records — performed by hand and written into both docs. Out Of
+Scope explains why a committed runner was not worth building for it.
 
 Each phase plan flips its own Status as its PR merges, per the
 Plan-to-PR Completion Gate; this doc's flips with the last.
@@ -498,6 +469,44 @@ has a host to resolve against. **Verified by:**
 directly as anchor hrefs, and both
 `apps/site/app/event/[slug]/page.tsx` and its `feedback/page.tsx`
 sibling call `getEventMasthead` for the slug they render.
+
+### No phase 3b (the committed probe runner is dropped)
+
+Phase 3b was to be a runner under `scripts/testing/` that probed an
+organizer host's routing against the deployed surface, wired into the
+deployed-surface smoke family, producing a run URL that would let phase
+3 flip to `Landed`. It reached `In draft` and is dropped without being
+built.
+
+What it was for is the tell. Its entire product is *evidence for a plan
+status* — the routing it would check has been live and working since
+phase 3 merged, and nothing about the runner changes what a visitor
+sees. That is a real thing to want when a check must recur, and it does
+not recur here: the organizer-host routing is verified once at launch,
+and the mapping-driven generality that would let it re-run against the
+next organizer host is infrastructure for a fleet of one until a second
+organizer exists.
+
+It also carried an unresolved mechanism. Its C2 required proving that
+the origin under test is serving the commit under test, because every
+assertion fails identically against a stale build and a genuinely wrong
+rewrite, and phase 3 attaches a rollback to that failure. No pattern for
+that exists in this repo, so the phase needed a scoping pass and a spike
+before it could leave `In draft`. Paying that to produce a status flip
+inverts the cost.
+
+**What replaces it:** phase 3's post-merge Validation Gate is walked by
+hand against production and recorded in phase 3's plan — the same
+assertions, the same host pair, without a committed entry point. That
+is weaker in exactly one way, and the way is worth naming: a manual walk
+leaves no artifact a future reader can re-run, so the record is the
+claim. For a check that runs once, at a launch that has already
+happened, that is the honest trade rather than a corner cut.
+
+If a second organizer host arrives, this decision should be revisited
+before the second launch rather than after — two hosts is the point
+where "verify by hand at launch" stops scaling, and the runner's design
+is recorded in this plan's git history.
 
 ### No Site URL retarget (phase 2 trimmed to its redirect half)
 
