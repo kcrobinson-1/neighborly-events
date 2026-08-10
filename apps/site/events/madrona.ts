@@ -1,4 +1,7 @@
-import { madronaFacts } from "../../../shared/events/madrona-facts.ts";
+import {
+  madronaFacts,
+  withSource,
+} from "../../../shared/events/madrona-facts.ts";
 import type { EventContent } from "../lib/eventContent.ts";
 
 /**
@@ -144,6 +147,16 @@ import type { EventContent } from "../lib/eventContent.ts";
  * seam and is unchanged: it still writes through `subscribe_email`
  * into the `newsletter_opt_ins` consent log, gated at the DB by the
  * `newsletter_enabled_events` registry row.
+ *
+ * The three outbound destinations this module states — the email-list
+ * tile, the volunteer section's year-round ask, and the donate section
+ * — are wrapped in `withSource(…, "landing")`, which is what makes a
+ * click on them attributable in Mailchimp's and Zeffy's own reporting.
+ * Nothing on our side counts those clicks; see
+ * [`docs/tracking/analytics-strategy.md`](../../../docs/tracking/analytics-strategy.md)
+ * "Vercel Web Analytics" for why, and `withSource`'s own note for what
+ * the surface literal means. The season-wrap block renders the same
+ * two tagged hrefs and so reports as `landing` too.
  */
 /** The 5:30 PM booth-opening session, identical on all three nights. */
 const boothOpensSession = {
@@ -226,7 +239,7 @@ export const madronaContent: EventContent = {
       emailList: {
         label: "Email list",
         subtitle: "neighborhood news from the association",
-        href: madronaFacts.emailListHref,
+        href: withSource(madronaFacts.emailListHref, "landing"),
         external: true,
       },
       feedback: {
@@ -259,7 +272,7 @@ export const madronaContent: EventContent = {
         heading: "Help year-round",
         body: "The association is all volunteers — parks, safety, events, communications. If tonight made you want in, there’s a spot for you.",
         actionLabel: "Volunteer with the association",
-        href: madronaFacts.volunteerHref,
+        href: withSource(madronaFacts.volunteerHref, "landing"),
         external: true,
       },
     },
@@ -450,7 +463,7 @@ export const madronaContent: EventContent = {
     heading: "Keep the Playfield free",
     body: "These concerts are free because neighbors chip in — 100% of donations go to the Madrona Neighborhood Association.",
     buttonLabel: "Support the Playfield",
-    href: madronaFacts.donateHref,
+    href: withSource(madronaFacts.donateHref, "landing"),
   },
   footer: {
     attribution:

@@ -5,6 +5,7 @@ import {
 } from "../../../shared/events/completionCta.ts";
 import { madronaFacts } from "../../../shared/events/madrona-facts.ts";
 import { madronaContent } from "../../../apps/site/events/madrona.ts";
+import { destinationOf } from "../../helpers/campaignHref.ts";
 
 describe("getCompletionCta", () => {
   it("returns the Madrona launch entry with all three CTA sections", () => {
@@ -16,15 +17,24 @@ describe("getCompletionCta", () => {
     expect(cta?.emailList?.body).toBe(
       "Next week's lineup and neighborhood news, straight from the association.",
     );
+    // Whole strings, tags included: `utm_medium=completion` is the only
+    // thing that tells the association a click came off the quiz rather
+    // than off a printed flyer, and a wrong value misattributes without
+    // breaking the link, so no other check would catch it.
     expect(cta?.emailList?.href).toBe(
-      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email" +
+        "?utm_source=neighborly&utm_medium=completion&utm_campaign=madrona-2026",
     );
     expect(cta?.donate?.buttonLabel).toBe("Support the Playfield");
     expect(cta?.donate?.href).toBe(
-      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026" +
+        "?utm_source=neighborly&utm_medium=completion&utm_campaign=madrona-2026",
     );
     expect(cta?.volunteer?.buttonLabel).toBe("Volunteer");
-    expect(cta?.volunteer?.href).toBe("https://madrona.us/volunteers/");
+    expect(cta?.volunteer?.href).toBe(
+      "https://madrona.us/volunteers/" +
+        "?utm_source=neighborly&utm_medium=completion&utm_campaign=madrona-2026",
+    );
   });
 
   it("sends the completion panel and the landing page to one volunteer address", () => {
@@ -32,12 +42,17 @@ describe("getCompletionCta", () => {
     // because they are edited in different files by different changes,
     // and a second copy of this URL is exactly the drift the facts
     // module exists to prevent.
-    expect(getCompletionCta("madrona")?.volunteer?.href).toBe(
+    //
+    // Compared on address rather than on the whole href: the two
+    // deliberately differ in `utm_medium`, which is the point of
+    // tagging them, so whole-string equality would now assert the
+    // opposite of what this test is for. Each surface's own suite pins
+    // its medium.
+    expect(destinationOf(getCompletionCta("madrona")?.volunteer?.href)).toBe(
       madronaFacts.volunteerHref,
     );
-    expect(madronaContent.landing?.volunteer?.yearRound.href).toBe(
-      madronaFacts.volunteerHref,
-    );
+    expect(destinationOf(madronaContent.landing?.volunteer?.yearRound.href))
+      .toBe(madronaFacts.volunteerHref);
   });
 
   it("mirrors the madrona entry on the first-sample demo fixture slug", () => {

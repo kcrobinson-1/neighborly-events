@@ -114,7 +114,7 @@ describe("EventDayOfLanding — madrona on a concert Tuesday", () => {
     // the reader out of the day-of page mid-concert.
     const emailList = actions.getByRole("link", { name: /Email list/ });
     expect(emailList.getAttribute("href")).toBe(
-      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+      madronaContent.landing?.actions.emailList.href,
     );
     expect(emailList.getAttribute("target")).toBe("_blank");
     expect(emailList.getAttribute("rel")).toBe("noopener");
@@ -420,7 +420,7 @@ describe("EventDayOfLanding — season wrap", () => {
       name: "Email list",
     });
     expect(emailList.getAttribute("href")).toBe(
-      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+      madronaContent.landing?.actions.emailList.href,
     );
     expect(emailList.getAttribute("target")).toBe("_blank");
     expect(emailList.getAttribute("rel")).toBe("noopener");
@@ -518,7 +518,9 @@ describe("EventDayOfLanding — volunteer section", () => {
     const yearRound = asks.getByRole("link", {
       name: "Volunteer with the association",
     });
-    expect(yearRound.getAttribute("href")).toBe("https://madrona.us/volunteers/");
+    expect(yearRound.getAttribute("href")).toBe(
+      madronaContent.landing?.volunteer?.yearRound.href,
+    );
     expect(yearRound.getAttribute("target")).toBe("_blank");
     expect(yearRound.getAttribute("rel")).toBe("noopener");
   });

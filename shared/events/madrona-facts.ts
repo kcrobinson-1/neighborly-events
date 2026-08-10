@@ -58,3 +58,62 @@ export const madronaFacts = {
     locationSuffix: "by the basketball court",
   },
 } as const;
+
+/**
+ * Which platform surface an outbound link was rendered on. Becomes the
+ * `utm_medium` value, so these literals are what the association reads
+ * in Zeffy's and Mailchimp's own campaign reporting — they are
+ * attendee-invisible but not internal, and renaming one splits a
+ * destination's history in a dashboard this repo does not own.
+ *
+ * The masthead bar, the day-of landing, and the quiz completion panel
+ * are the three surfaces that render on a concert night. The
+ * season-wrap block (`LandingTonightSections`) renders the landing's
+ * own tagged hrefs and so reports as `landing` rather than carrying a
+ * fourth value: the medium is fixed where the content is authored, and
+ * a generic renderer cannot re-tag it without knowing the campaign,
+ * which would put Madrona's campaign name inside components that serve
+ * every event. It first renders the day after the final concert, so
+ * nothing on opening night is affected either way.
+ */
+export type MadronaLinkSurface = "masthead" | "landing" | "completion";
+
+/**
+ * Tags an outbound destination with the campaign parameters that make
+ * a click attributable on the *destination's* side.
+ *
+ * The Vercel plan this platform runs on has no custom events, so
+ * nothing on our side can count a click on the email-list, donate, or
+ * volunteer affordances — see
+ * [`docs/tracking/analytics-strategy.md`](../../docs/tracking/analytics-strategy.md)
+ * "Vercel Web Analytics". These parameters are therefore the only
+ * attribution that exists for those three destinations, and they are
+ * read in Zeffy's and Mailchimp's reporting rather than in ours. A
+ * donation driven by the quiz completion panel is otherwise
+ * indistinguishable from one off a printed flyer.
+ *
+ * Called where the content is authored, not where it is rendered, so
+ * each destination's medium is fixed by the module that owns the copy
+ * and no component has to know about campaigns.
+ *
+ * Returns `href` unchanged when it does not parse as an absolute URL.
+ * Attribution is observability and the link is the attendee's actual
+ * path to the association — these have different failure priorities,
+ * and the module-load-time `throw` this would otherwise be is one that
+ * would take the whole surface down rather than one link's UTM tags.
+ */
+export function withSource(href: string, surface: MadronaLinkSurface): string {
+  let url: URL;
+
+  try {
+    url = new URL(href);
+  } catch {
+    return href;
+  }
+
+  url.searchParams.set("utm_source", "neighborly");
+  url.searchParams.set("utm_medium", surface);
+  url.searchParams.set("utm_campaign", "madrona-2026");
+
+  return url.toString();
+}

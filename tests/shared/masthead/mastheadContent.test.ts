@@ -15,13 +15,20 @@ describe("getEventMasthead", () => {
     expect(masthead?.brand.homeHref).toBe("/event/madrona");
     expect(masthead?.quiz.href).toBe("/event/madrona/game");
     expect(masthead?.emailList.label).toBe("Email list");
+    // Both external destinations carry the masthead campaign tags, and
+    // the whole string is pinned rather than just the address: the tags
+    // are what the association reads in Mailchimp's and Zeffy's own
+    // reporting, and a wrong `utm_medium` misattributes silently — the
+    // link still works, so nothing else would catch it.
     expect(masthead?.emailList.href).toBe(
-      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email",
+      "https://mailchi.mp/madrona/madrona-neighborhood-association-community-email" +
+        "?utm_source=neighborly&utm_medium=masthead&utm_campaign=madrona-2026",
     );
     expect(masthead?.emailList.external).toBe(true);
     expect(masthead?.feedback.href).toBe("/event/madrona/feedback");
     expect(masthead?.donate.href).toBe(
-      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026" +
+        "?utm_source=neighborly&utm_medium=masthead&utm_campaign=madrona-2026",
     );
     expect(masthead?.donate.external).toBe(true);
   });

@@ -153,6 +153,168 @@ This is the right choice for:
 - Sponsor engagement counts per question
 - Anything that can be computed from `game_completions`, `game_starts`, and `game_events`
 
+### Vercel Web Analytics — Adopted 2026-08-10
+
+Adopted for client-side pageview instrumentation on both apps, ahead of
+the Madrona opening night on 2026-08-11. `@vercel/analytics` is mounted
+in `apps/site/app/layout.tsx` (via `apps/site/components/AnalyticsMount.tsx`)
+and at the `apps/web` root in `apps/web/src/main.tsx`.
+
+This section was written after the fact and records a decision, not a
+recommendation to revisit. The subsections below name what it measures,
+what it cannot, and the one non-obvious deployment property.
+
+**Why it, and why now.** Every question in "End Goal of Analytics"
+about what happened *after* someone reached a page was already
+answerable from Postgres — `game_starts`, `game_completions`,
+`game_entitlements`, `feedback_submissions`, `newsletter_opt_ins` all
+record real rows. Nothing answered what happened *before*: how many
+people reached the event page at all, where they came from, on what
+devices, and how traffic distributed across the evening. That half was
+entirely absent, and like start tracking it is unrecoverable after the
+fact — an event that runs uninstrumented has no traffic history, ever.
+
+It is the right tool for this specific gap for reasons that do not
+generalize to the funnel questions PostHog answers:
+
+- **Cookieless.** No consent banner, no local storage, no device
+  identifier. The QR-code entry path stays zero-friction, which the
+  "Privacy footprint" evaluation criterion above treats as a hard
+  constraint rather than a preference.
+- **Zero marginal infrastructure.** Both apps already deploy on Vercel.
+  Enabling it is a project setting plus a component; there is no
+  account to provision, no SDK key to rotate, no second vendor holding
+  attendee data.
+- **Proportionate.** It answers reach, referrer, device mix, and
+  route breakdown, and nothing else. That matches the scale caveat in
+  "End Goal" — this is a behind-the-scenes proof layer, not a platform.
+
+It does **not** supersede the PostHog assessment below. PostHog remains
+the right tool if question-level funnel analysis becomes a priority;
+Vercel Web Analytics cannot do that at any plan tier this project would
+buy. The two answer different questions.
+
+#### What the Hobby plan does not measure
+
+The team is on Vercel's Hobby plan, where **custom events are not
+available**. Pageviews, route breakdowns, referrers, device mix, and
+UTM dimensions all work; `track()` does not.
+
+The concrete cost, stated plainly because a future reader should not
+have to rediscover it: **there is no near-side click counting on the
+email-list, donate, or volunteer CTAs.** Those are the three outbound
+affordances the platform offers, they appear on four surfaces, and the
+platform records nothing when one is clicked. Outbound engagement is
+knowable only from destination-side reporting.
+
+That is why every outbound href is tagged with campaign parameters via
+`withSource` in `shared/events/madrona-facts.ts`
+(`utm_source=neighborly`, `utm_medium=<masthead|landing|completion>`,
+`utm_campaign=madrona-2026`). The tags are read in Mailchimp's and
+Zeffy's own dashboards, not in ours. Without them a donation driven by
+the quiz completion panel is indistinguishable from one off a printed
+flyer.
+
+Two consequences follow, and both are load-bearing:
+
+- **Attribution depends on destinations preserving query parameters.**
+  If a destination strips them, clicks to it are unmeasurable and no
+  code change on our side recovers that. Zeffy was verified on
+  2026-08-10 to preserve them through to the landed donation form.
+- **Inbound and outbound UTM data are different things.** Vercel's own
+  `utmSource` / `utmMedium` / `utmCampaign` breakdowns describe traffic
+  *arriving* at our pages — a QR code or a link that carries UTM
+  parameters into `music.madrona.us`. The tags described above travel
+  the other way and never appear in Vercel's dataset. Reading one as
+  the other overstates what we know.
+
+#### Beacon routing across the cross-app proxy
+
+The two apps share one user-facing origin. apps/site is canonical, and
+`apps/site/next.config.ts` proxies `/event/:slug/game*`,
+`/event/:slug/admin*`, and `/assets/*` into the apps/web deployment. A
+browser loading the quiz is therefore on apps/site's origin even though
+apps/web served the document.
+
+The two apps resolve their beacon paths differently, and the difference
+is the whole answer. Measured on the preview deployments of both
+projects on 2026-08-10 rather than reasoned from the package source,
+which resolves differently off-platform:
+
+- **apps/site** is built on Vercel as a Next.js app, so Vercel injects
+  `NEXT_PUBLIC_VERCEL_OBSERVABILITY_CLIENT_CONFIG` at build time and
+  the mounted component uses the **project-unique path** it names
+  (observed: `/2fbd3054253333e2/script.js`).
+- **apps/web** is a Vite SPA. The `/react` entrypoint looks for
+  `REACT_APP_VERCEL_OBSERVABILITY_CLIENT_CONFIG`, Vite exposes no
+  `REACT_APP_*` variables and no `process` in the browser, so it falls
+  back to the package's hardcoded **origin-relative default**,
+  `/_vercel/insights/*` (observed on apps/web's own preview).
+
+A local build shows apps/site falling back to the same relative default,
+because the injected variable only exists on Vercel. Do not conclude
+anything about routing from a local build.
+
+Origin-relative is what makes the proxy case work: on the canonical
+origin the quiz document comes from apps/web but the browser's origin is
+apps/site, so apps/web's beacon resolves against **apps/site**. Verified
+on apps/site's preview: `/_vercel/insights/script.js` returns 200 and is
+byte-identical to the project-unique path's script (2495 bytes, same
+content hash), and a POST to `/_vercel/insights/view` returns `200 OK`.
+The served script embeds no project identifier and no hardcoded
+endpoint, so attribution follows whichever host receives the POST.
+
+So on the canonical origin, quiz pageviews are recorded by **apps/site's**
+project, not apps/web's — which is why no `viewEndpoint` /
+`eventEndpoint` / `scriptSrc` override is set, despite Vercel
+documenting those props for exactly this topology. Their documented
+purpose is to *restore* isolation between projects sharing a domain.
+Isolation is the opposite of what this platform wants: the landing page
+and the quiz are two steps of one funnel, and "how many people who
+reached the event page started the quiz" is only answerable if both
+pageviews land in one dataset.
+
+Practical consequences:
+
+- **`neighborly-events-site` is the dataset of record** for everything
+  served on the canonical origin, quiz routes included.
+- Web Analytics stays enabled on `neighborly-scavenger-game-web`
+  anyway: on its own `*.vercel.app` host — used for direct access and
+  for verification — the same relative paths resolve to its own
+  project. Verified end to end there: script `200`, view POST `200`,
+  and a client-side route change produces a second pageview, so the
+  SPA's `history.pushState` navigation is tracked and not just the
+  initial load.
+- Enabling Web Analytics on a project does not retroactively serve the
+  beacon paths from deployments built before it was enabled. Both
+  projects need a deploy after enablement before any beacon resolves;
+  before this landed, both origins returned 404 for
+  `/_vercel/insights/script.js` for exactly that reason.
+- **The proxied case depends on Vercel continuing to serve
+  `/_vercel/insights/*` alongside the project-unique path.** It is the
+  package's own hardcoded fallback and both projects serve it today,
+  but Vercel's current docs describe the unique path. If the alias is
+  ever retired, quiz pageviews stop silently — the link keeps working
+  and nothing errors. The mitigation if that happens is to pass
+  `scriptSrc` and `viewEndpoint` on apps/web pointing at apps/site's
+  unique path, accepting that the value is then a deploy-time constant
+  that has to be kept in sync. Worth re-checking whenever the funnel
+  numbers look wrong in a way starts and completions do not.
+
+#### What the beacon does not carry
+
+The vendor's client script reports `location.href` verbatim, fragment
+included. Supabase delivers organizer sign-in credentials to
+`/auth/callback` in the URL fragment, so both apps pass a `beforeSend`
+hook that drops the fragment before the beacon is sent
+(`shared/analytics/redactAnalyticsUrl.ts`). The query string is
+deliberately kept — stripping it would delete the inbound UTM
+dimensions described above.
+
+No other redaction is applied, because no other route carries sensitive
+material in a URL: route paths contain event slugs only, and check-in
+codes never appear in one.
+
 ### When PostHog is the Right Third-Party Tool
 
 PostHog is the most appropriate third-party tool if funnel visualization becomes a priority. It is open source, has a generous free cloud tier (up to one million events per month), and provides first-class React SDKs. It handles funnel analysis, session recording, and feature flags if those become relevant.
@@ -169,7 +331,7 @@ Metabase makes sense as the event count grows and the team wants to compare mult
 
 ### Tools to Avoid for This Project
 
-**Google Analytics / GA4** is optimized for web page views and sessions. It can track custom events but is not designed for domain-specific quiz funnel analysis, does not integrate with the Supabase-backed completion data, and introduces the standard Google tracking privacy implications. It is appropriate only for the marketing landing page if traffic analysis there ever becomes important.
+**Google Analytics / GA4** is optimized for web page views and sessions. It can track custom events but is not designed for domain-specific quiz funnel analysis, does not integrate with the Supabase-backed completion data, and introduces the standard Google tracking privacy implications. Traffic analysis was the one use this section previously left open to it; Vercel Web Analytics now covers that without the cookie consent GA4 would have forced onto the QR-code entry path, so there is no remaining case for it here.
 
 **Mixpanel** is well-suited for SaaS product analytics but is paid at meaningful scale and better suited to products with registered users. The attendee flow is anonymous and session-scoped, which limits Mixpanel's identity stitching value.
 
@@ -214,11 +376,28 @@ Both migrations must be applied to the production Supabase project before the
 first live event. The `game_starts` migration is a hard pre-event dependency:
 start data is permanently unrecoverable for any event that runs without it.
 
-**Demonstrable outcome:** After the first live event runs, a Supabase Studio query returns a complete funnel row — starts, completions, and entitlements — for that event. The data exists and is correct. Engineering can verify this immediately after the event closes.
+**Client-side half, added 2026-08-10.** The phase as originally written
+covered only the server-side record. Everything upstream of the first
+`issue-session` call — reach, referrer, device mix, traffic curve — was
+absent, and is unrecoverable on exactly the same terms as start data.
+Vercel Web Analytics now covers it on both apps, and every outbound CTA
+carries campaign parameters so destination-side reporting can attribute
+clicks the Hobby plan cannot count. See "Vercel Web Analytics" above.
+
+**Demonstrable outcome:** After the first live event runs, a Supabase Studio query returns a complete funnel row — starts, completions, and entitlements — for that event, and the `neighborly-events-site` Web Analytics dashboard returns pageviews for `/event/madrona` and `/event/madrona/game` over the same window. The data exists and is correct. Engineering can verify this immediately after the event closes.
 
 ### Phase 2 — Organizer Reporting Surface (Post-First-Event)
 
 Write SQL views (`event_funnel_summary`, `event_completion_summary`, `event_question_summary`) against the complete data set and build an organizer-facing reporting section in the admin workspace that surfaces them for a selected event. Write and validate the JSONB per-question queries as part of this work rather than before the event — post-event data is richer for testing than demo fixtures.
+
+Phase 2's scope is unchanged by the 2026-08-10 client-side addition and
+is still not started. Vercel Web Analytics has its own dashboard, so
+reach, referrer, and device mix are already legible to anyone with
+project access and are **not** part of what this phase has to build.
+Whether the organizer summary should restate any of those figures
+alongside the Postgres funnel — pulling them from the Web Analytics
+REST API rather than re-deriving them — is an open question for this
+phase to settle, not a settled requirement.
 
 **Demonstrable outcome:** An organizer opens the admin workspace, selects an event, and sees a post-event summary — participation funnel, score distribution, timing, and per-question answer breakdowns — without needing Supabase Studio access or a manual export.
 

@@ -32,7 +32,7 @@
  * unaffected — an absolute URL resolves the same from either app.
  */
 
-import { madronaFacts } from "../events/madrona-facts.ts";
+import { madronaFacts, withSource } from "../events/madrona-facts.ts";
 import { routes } from "../urls/index.ts";
 
 /**
@@ -80,11 +80,15 @@ const madronaMasthead: EventMastheadContent = {
   quiz: { label: "Quiz", href: routes.game("madrona") },
   emailList: {
     label: "Email list",
-    href: madronaFacts.emailListHref,
+    href: withSource(madronaFacts.emailListHref, "masthead"),
     external: true,
   },
   feedback: { label: "Feedback", href: "/event/madrona/feedback" },
-  donate: { label: "Donate", href: madronaFacts.donateHref, external: true },
+  donate: {
+    label: "Donate",
+    href: withSource(madronaFacts.donateHref, "masthead"),
+    external: true,
+  },
 };
 
 /** Slug → masthead content. Absent slugs render no header bar. */

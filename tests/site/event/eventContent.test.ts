@@ -10,6 +10,10 @@ import {
 } from "../../../apps/site/lib/eventContent.ts";
 import { getCompletionCta } from "../../../shared/events/completionCta.ts";
 import { getEventMasthead } from "../../../shared/masthead/index.ts";
+import {
+  campaignMediumOf,
+  destinationOf,
+} from "../../helpers/campaignHref.ts";
 
 describe("getEventContentBySlug", () => {
   it("returns the registered content for the harvest-block-party slug", () => {
@@ -95,8 +99,22 @@ describe("madrona launch content", () => {
 
   it("carries the donate CTA pointing at the association's donation form", () => {
     expect(madronaContent.donate?.href).toBe(
-      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026",
+      "https://www.zeffy.com/en-US/donation-form/music-in-the-playfield--2026" +
+        "?utm_source=neighborly&utm_medium=landing&utm_campaign=madrona-2026",
     );
+  });
+
+  it("tags every outbound landing destination as the landing surface", () => {
+    // Zeffy and Mailchimp report these tags on their side, and nothing
+    // on ours counts a click on them, so a wrong or missing medium is
+    // invisible until someone reads a campaign report months later.
+    // The season-wrap block renders these same hrefs, which is why it
+    // reports as `landing` too.
+    expect(campaignMediumOf(madronaContent.donate?.href)).toBe("landing");
+    expect(campaignMediumOf(madronaContent.landing?.actions.emailList.href))
+      .toBe("landing");
+    expect(campaignMediumOf(madronaContent.landing?.volunteer?.yearRound.href))
+      .toBe("landing");
   });
 
   it("shares the donate destination with the shared masthead registry", () => {
@@ -104,8 +122,11 @@ describe("madrona launch content", () => {
     // (shared/masthead/mastheadContent.ts — covered by its own test
     // suite); both it and the donate section compose the Zeffy URL
     // from madrona-facts.ts, so a URL change moves them together.
-    expect(getEventMasthead("madrona")?.donate.href).toBe(
-      madronaContent.donate?.href,
+    //
+    // Address only: the two carry different `utm_medium` values on
+    // purpose, so whole-href equality would now fail by design.
+    expect(destinationOf(getEventMasthead("madrona")?.donate.href)).toBe(
+      destinationOf(madronaContent.donate?.href),
     );
   });
 
@@ -113,12 +134,14 @@ describe("madrona launch content", () => {
     // Four surfaces offer the association's list and all four have to
     // reach the same address; two of them live in registries this
     // module cannot import from, so the equality is asserted where the
-    // two shapes meet.
-    expect(madronaContent.landing?.actions.emailList.href).toBe(
-      getEventMasthead("madrona")?.emailList.href,
+    // two shapes meet. Address only, for the same reason as above.
+    const landing = destinationOf(
+      madronaContent.landing?.actions.emailList.href,
     );
-    expect(madronaContent.landing?.actions.emailList.href).toBe(
-      getCompletionCta("madrona")?.emailList?.href,
+
+    expect(landing).toBe(destinationOf(getEventMasthead("madrona")?.emailList.href));
+    expect(landing).toBe(
+      destinationOf(getCompletionCta("madrona")?.emailList?.href),
     );
   });
 });
