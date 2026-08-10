@@ -31,7 +31,7 @@ For this project today, that means:
 | Platform | Repo-managed now | Manually maintained now |
 | --- | --- | --- |
 | GitHub | workflows, validation logic | branch protection, rulesets, required checks, reviewer policy, Actions secrets, environment approvals |
-| Vercel | `vercel.json`, frontend build config | project creation, domains, env var values, deployment protection, team access |
+| Vercel | `vercel.json`, routing config, frontend build config | project creation, domains, env var values, deployment protection, team access |
 | Supabase | `config.toml`, migrations, Edge Function source | project creation, runtime secret values, Auth URL settings, admin allowlist membership, org membership, billing, dashboard-only admin settings |
 
 ## Repo-Managed Settings
@@ -47,11 +47,22 @@ For this project today, that means:
 
 ### Vercel
 
+- [`apps/site/next.config.ts`](/apps/site/next.config.ts)
+  the canonical routing layer: the site → plugin proxy rewrites that
+  route the apps/web-owned `/event/:slug/game*`, `/event/:slug/admin*`,
+  and `/assets/*` prefixes from the canonical origin into the apps/web
+  deployment, with that deployment's host in the `APPS_WEB_ORIGIN`
+  constant; plus the host-conditional organizer-subdomain rewrites
+  derived from
+  [`shared/urls/organizerHosts.ts`](/shared/urls/organizerHosts.ts).
+  Full route table in
+  [`architecture.md` — Vercel routing topology](/docs/architecture.md#vercel-routing-topology)
 - [`apps/web/vercel.json`](/apps/web/vercel.json)
-  SPA route rewrites for `/event/:slug/game` and the per-event admin
-  route at `/event/:slug/admin` (organizer-or-admin authoring), plus
-  proxy rewrites for apps/site-owned `/`, `/auth/callback`, `/admin*`,
-  and event landing URLs
+  SPA route rewrites serving `/index.html` for `/event/:slug/game`, the
+  per-event admin route at `/event/:slug/admin` (organizer-or-admin
+  authoring), and the `/event/:path*` catchall, plus the test-event
+  `X-Robots-Tag` `headers` block. No cross-app proxy rewrites live
+  here; the cross-app direction is apps/site → apps/web, above
 - [`apps/web/package.json`](/apps/web/package.json)
   frontend build commands
 - [`apps/web/vite.config.ts`](/apps/web/vite.config.ts)
@@ -215,9 +226,14 @@ For a new deployment from a fork:
 1. Create a new Supabase project.
 2. Run the repo-backed Supabase bootstrap commands from [`dev.md`](/docs/dev.md).
 3. Create a new Vercel project for the `apps/web` app.
-4. Create a new Vercel project for the `apps/site` app and point the
-   absolute rewrite destinations in `apps/web/vercel.json` at its
-   production alias.
+4. Create a new Vercel project for the `apps/site` app — the canonical
+   project, whose alias every customer-visible URL resolves on — and
+   point the `APPS_WEB_ORIGIN` constant in
+   [`apps/site/next.config.ts`](/apps/site/next.config.ts) at the
+   apps/web production alias from step 3. That constant is the
+   destination host for the site → plugin proxy rewrites, so until it
+   names your fork's apps/web project the game and per-event admin
+   routes proxy to the upstream deployment.
 5. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY`
    in the apps/web Vercel project.
 6. Add `NEXT_PUBLIC_SUPABASE_URL` and
@@ -344,9 +360,19 @@ Detailed smoke-specific triage lives in
 
 ### Site And Frontend Checks: Vercel
 
-Use Vercel for deployment and frontend availability questions:
+Use Vercel for deployment and frontend availability questions. Two projects
+deploy from this monorepo, so start by picking the one that owns the failing
+path — a proxied path can fail in either, independently:
 
-1. Open the Vercel project for the web app.
+- `/`, `/admin*`, `/auth/callback`, and `/event/:slug` (landing and feedback)
+  are apps/site's own routes — open the apps/site project
+- `/event/:slug/game*`, `/event/:slug/admin*`, and `/assets/*` resolve on
+  apps/site and proxy into apps/web. A failure here is apps/site's rewrite,
+  apps/web's deploy, or apps/web's build; check apps/web directly at its own
+  `*.vercel.app` host to tell "the plugin is broken" from "the proxy is
+  broken"
+
+1. Open the Vercel project that owns the failing path.
 2. Confirm the latest production deployment points at the expected Git commit.
 3. Inspect deployment build logs if the site did not deploy.
 4. Inspect runtime or project logs if a route loads incorrectly or returns an
@@ -361,18 +387,22 @@ curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game/redeem
 curl -I "${PRODUCTION_SMOKE_BASE_URL%/}/event/production-smoke-event/game/redemptions"
 ```
 
-`/admin` resolves through the apps/web → apps/site cross-app proxy
-rewrite (see `apps/web/vercel.json`), so a 200 response indicates both
-the proxy rule fired and apps/site's platform admin page rendered.
-`/event/<slug>/game/redeem` and `/event/<slug>/game/redemptions` are
-SPA routes served directly by apps/web; the deployed-surface smoke
-walks both phases (admin authoring + redemption operator) on the
-dedicated smoke event.
+`PRODUCTION_SMOKE_BASE_URL` is the apps/site alias — the canonical
+origin — so `/admin` is a native apps/site route resolved on the
+filesystem, with no proxy in the path; a 200 there indicates apps/site's
+platform admin page rendered. `/event/<slug>/game/redeem` and
+`/event/<slug>/game/redemptions` are apps/web SPA routes, reached
+through the site → plugin proxy rewrites in
+[`apps/site/next.config.ts`](/apps/site/next.config.ts), so a 200 on
+those indicates both that the proxy rule fired and that apps/web served
+the SPA. The deployed-surface smoke walks both phases (admin authoring
++ redemption operator) on the dedicated smoke event.
 
 Notes:
 
-- this app is a Vite SPA, so most attendee/admin behavior runs in the browser
-  and will not produce rich Vercel server logs
+- apps/web is a Vite SPA, so most attendee and per-event admin behavior runs
+  in the browser and will not produce rich Vercel server logs; apps/site is
+  server-rendered Next.js and does log its own route handling
 - Vercel logs are still useful for deployment state, build errors, route
   rewrites, and static asset availability
 - browser console/network errors on an affected device are useful evidence when
