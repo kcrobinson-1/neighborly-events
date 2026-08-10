@@ -112,10 +112,18 @@ Reduce deployment risk and contributor friction before the live event.
   the globstar for development and preview URLs
   (https://supabase.com/docs/guides/auth/redirect-urls). What the
   breadth costs is the set of paths on each host to which a sign-in
-  token may be delivered; what bounds it is that every host is a
-  literal — no hostname is patterned — and every path on those hosts is
-  served by one of our own Vercel projects, so there is no third-party
-  surface inside the wildcard. Nothing is known to be broken.
+  token may be delivered. **That cost is not uniform across the nine,
+  and an earlier version of this entry understated it by treating them
+  as one class.** For the three deployed origins the bound is real:
+  each host is a literal, and every path on it is served by one of our
+  own Vercel projects. For the six localhost and 127.0.0.1 entries it
+  is not — any process listening on that port on a contributor's
+  machine can serve the callback path and read the delivered sign-in
+  token, which is a third-party surface inside the wildcard. The token
+  is a developer's own, on their own machine, which is why this is a
+  hygiene question rather than an incident; but the two classes deserve
+  separate answers and the deployed-host argument does not carry the
+  local ones. Nothing is known to be broken.
   **The globstar is a deliberate fix, not drift, and any narrowing
   proposal has to clear the bar that produced it.** `requestMagicLink`
   requests `/auth/callback?next=…`, not the bare path, and exact-match
@@ -128,7 +136,9 @@ Reduce deployment risk and contributor friction before the live event.
   the console had stopped following them.
   **Goal:** decide whether a narrower entry that still admits the
   query-bearing callback is worth adopting, or whether the current
-  breadth is accepted deliberately and documented as such. Any candidate
+  breadth is accepted deliberately and documented as such — answered
+  separately for the deployed origins and the local ones, since the
+  exposure differs and so may the answer. Any candidate
   shape has to be tested against a real sign-in before it is adopted,
   not reasoned about from the wildcard syntax — that is the step whose
   absence produced the last regression. Note the cost of changing at

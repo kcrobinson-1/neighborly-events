@@ -262,7 +262,8 @@ In short:
 
 - create your own Supabase project
 - apply the repo migrations and deploy the Edge Functions
-- configure Supabase Auth redirect URLs for your `/admin` origins
+- configure Supabase Auth redirect URLs as `<origin>/**` for each
+  origin you sign in from
 - add at least one allowlisted admin email in `public.admin_users`
 - create your own Vercel project for `apps/web`
 - create your own Vercel project for `apps/site`

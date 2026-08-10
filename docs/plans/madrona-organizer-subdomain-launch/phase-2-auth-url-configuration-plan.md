@@ -273,6 +273,7 @@ The rows below are where those statements are expected to be found.
 | `docs/architecture.md` |
 | `docs/tracking/production-admin-smoke-tracking.md` |
 | `docs/plans/canonical-origin-resolution.md` |
+| `docs/tracking/continuous-deployment-roadmap.md` |
 | `README.md` |
 | `docs/plans/madrona-organizer-subdomain-launch/phase-2-auth-url-configuration-plan.md` |
 
@@ -470,23 +471,39 @@ post-merge.
 - **The docs match the console.** Walk every statement the diff makes
   about Auth URL configuration against a fresh console read, per P1.
   **Done, and it is what caught the error this diff mostly consists
-  of.** Eight surfaces described exact-callback-path entries; the
-  console carries nine globstar entries. Corrected: `docs/operations.md`
-  (two places), `docs/architecture.md`, `docs/dev.md` (two places),
+  of.** Eleven surfaces described a redirect entry the console does not
+  carry — some naming an exact `/auth/callback` path, some naming
+  `/admin` — against nine live globstar entries. Corrected:
+  `docs/operations.md` (two places), `docs/architecture.md`,
+  `docs/dev.md` (three places),
   `docs/tracking/production-admin-smoke-tracking.md`,
+  `docs/tracking/continuous-deployment-roadmap.md`,
   `docs/plans/canonical-origin-resolution.md` (prose and its Post-state),
-  and `README.md`. No statement about Site URL was touched, per Files to
-  touch.
+  and `README.md` (two places). No statement about Site URL was touched,
+  per Files to touch.
 
-  **Four of the eight were missed across two passes and found by
-  review**, which is the argument for this gate being stated over the
-  category rather than over a file list — and the argument for the sweep
-  being a bare pattern search. The first pass read the files this plan
-  named. The second grepped repo-wide but filtered the results by
-  keyword, which silently dropped `README.md` because its sentence says
-  "allowlist that include" rather than any of the words filtered on. The
-  sweep this step requires is every hit on the pattern, reviewed by
-  hand; narrowing the grep is how a surface stays missed twice.
+  **Seven of the eleven were missed across three passes and found by
+  review.** Each pass failed differently, and the sequence is the
+  useful record:
+
+  1. Read the files this plan named. Missed everything the plan did not
+     anticipate.
+  2. Grepped repo-wide for `auth/callback`, then filtered the hits by
+     keyword. The filter dropped `README.md`.
+  3. Grepped repo-wide for `auth/callback` unfiltered. Still missed
+     three surfaces, because they name the path as `/admin` — the
+     search string was never going to match them.
+
+  The pattern that works is the **concept**, not the path: a search for
+  "redirect URL" across non-archive docs finds all eleven, because every
+  one of them has to say that phrase to give the guidance. Searching for
+  a path token assumes the writer picked the same token, and across
+  eleven surfaces written at different times they did not.
+
+  This is why the gate is stated over the category rather than a file
+  list, and it is now also why it should be read as requiring a
+  concept-level sweep. A file list would have had to be right the first
+  time; three greps in a row were wrong in three different ways.
 
   Landed plan docs recording what they did at the time are left alone —
   they are history, not current guidance. What was corrected is guidance

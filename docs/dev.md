@@ -434,7 +434,10 @@ Notes:
 
 If you also need the admin route locally:
 
-1. make sure Supabase Auth redirect URLs include your local `/admin` origin
+1. make sure Supabase Auth redirect URLs include an `<origin>/**` entry
+   for your local origin — magic links return through
+   `/auth/callback?next=…`, and an entry naming a bare path such as
+   `/admin` does not admit the query string
 2. add your normalized email to `public.admin_users` in the connected
    project
 3. make sure the `save-draft`, `generate-event-code`, `publish-draft`, and
