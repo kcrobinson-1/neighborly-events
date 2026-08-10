@@ -302,8 +302,11 @@ On production, in a private window, on a phone and a laptop:
   rather than reusing the organizer-host journey, which would fail at
   its first step by design.
 
-This walk is post-merge by construction — see the constraint below —
-so it gates the `Landed` flip rather than any PR.
+This walk is post-merge by construction — see the constraint below.
+What it is post-merge *to* is every PR that puts the behavior it walks
+into production, not to whichever PR happens to be last: phase 3b adds
+no production behavior for the walk to wait on. The close-out below
+is what that distinction buys.
 
 ## Status lifecycle and close-out
 
@@ -329,18 +332,36 @@ precede phase 3b, so declaring the order is honest rather than
 contrived, and it avoids a separate close-out PR whose merge would
 have to wait on a production walk it cannot bound.
 
-Phase 3b's validation cannot run pre-merge, so the plan takes the
-**Post-release validation** exception per
-[`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
-Gate For Plans With Post-Release Validation":
+**This plan's gate is the composed journey above, not phase 3b's probe
+run** — two checks with two different subjects, and only the second is
+structurally post-merge to phase 3b. The journey needs everything it
+walks already live: phase 1's admission, phase 3's routing, phase 2's
+redirect entry, and the data-hygiene rename. Each of those is another
+PR's merge, and every one is bounded to land no later than phase 3b's,
+so by the time that PR is ready the walk is runnable — while phase
+3b's own runner adds nothing to production for the walk to wait on.
 
-- `Proposed` → `In progress pending organizer-host verification` when
-  phase 3b's implementing PR merges. That exact label is this plan's
-  stable name for the check.
-- `In progress pending organizer-host verification` → `Landed` in a
-  follow-up doc-only commit once the Validation Gate above passes,
-  recording the verification evidence. That commit deletes the
-  scoping doc.
+So the close-out has two branches, the same shape phase 3b's own
+lifecycle carries and for the same reason:
+
+- **If the Validation Gate above has passed before phase 3b's
+  implementing PR is opened**, `Proposed` → `Landed` in that PR,
+  recording the verification evidence. That PR deletes the scoping
+  doc. This is the default same-PR flip, available because the walk
+  was runnable.
+- **Otherwise** the plan takes the **Post-release validation**
+  exception per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
+  "Plan-to-Landed Gate For Plans With Post-Release Validation":
+  `Proposed` → `In progress pending organizer-host verification` when
+  phase 3b's implementing PR merges — that exact label is this plan's
+  stable name for the check — then → `Landed` in a follow-up doc-only
+  commit once the walk passes, recording the evidence. That commit
+  deletes the scoping doc.
+
+The two branches are not a choice the implementer makes freely: the
+first is taken whenever the walk has in fact passed, and reaching for
+the second when it has is the drift the Plan-to-PR Completion Gate
+forbids.
 
 Each phase plan flips its own Status as its PR merges, per the
 Plan-to-PR Completion Gate; this doc's flips with the last.
