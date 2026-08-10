@@ -413,13 +413,14 @@ semantics, any other vendored or hosted dependency the codebase
 consumes but does not contain proof of), read the upstream /
 vendor documentation; "I think Vercel does X" is not a
 reality-check, "the Vercel docs at <URL> say X" is. Recurring
-trap: `apps/web/vercel.json` destinations are absolute production
-URLs, so `vercel dev` proxies to deployed apps/site rather than
-the branch's local Next.js dev server; "vercel dev validates the
-new local routes" was a wrong claim because the config's absolute
-destinations were never checked. If the reality-check finds a
-discrepancy, fix the scoping before drafting the plan; do not
-carry wrong premises into plan time.
+trap: the site → plugin proxy destinations in
+`apps/site/next.config.ts` are absolute production URLs (the
+`APPS_WEB_ORIGIN` constant), so `vercel dev` proxies to the
+deployed apps/web rather than the branch's local dev server;
+"vercel dev validates the new local routes" was a wrong claim
+because the config's absolute destinations were never checked.
+If the reality-check finds a discrepancy, fix the scoping before
+drafting the plan; do not carry wrong premises into plan time.
 
 ### Prefer existing wrapper scripts over lower-level CLI invocations in plan validation steps
 

@@ -107,7 +107,8 @@ What runs: `Production Deployed-Surface Smoke`
 (`.github/workflows/production-admin-smoke.yml`), which invokes
 `npm run test:e2e:admin:production-smoke` followed by
 `npm run test:e2e:redemption:production-smoke` against
-`PRODUCTION_SMOKE_BASE_URL` — the deployed web origin. It mutates only a
+`PRODUCTION_SMOKE_BASE_URL` — the canonical deployed origin, which is the
+apps/site project. It mutates only a
 dedicated smoke event, dedicated smoke admin/denied accounts, and
 dedicated smoke redeem-agent / redemptions-organizer accounts.
 

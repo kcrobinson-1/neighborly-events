@@ -66,7 +66,9 @@ Current release-readiness status:
 Required:
 
 - `PRODUCTION_SMOKE_BASE_URL`
-  deployed web origin for smoke browser checks, such as `https://neighborly.example`
+  the canonical deployed origin for smoke browser checks — the apps/site
+  project, not apps/web, since the runners poll `/admin` first and that
+  route exists only on apps/site
 - `PRODUCTION_SMOKE_SUPABASE_URL`
   production Supabase URL
 - `PRODUCTION_SMOKE_PUBLISHABLE_DEFAULT_KEY`
@@ -167,6 +169,16 @@ Start in GitHub Actions job logs for `Production Deployed-Surface Smoke`.
 1. **Readiness failure before Playwright starts**
    - likely deployment propagation or base URL misconfiguration
    - validate `PRODUCTION_SMOKE_BASE_URL` and deployed route health
+   - one cheap candidate to rule out: the base URL pointed at apps/web
+     rather than the canonical apps/site origin. `/admin` does not exist
+     on apps/web, and the poller treats 404 as deployment propagation
+     and retries, so it burns the full timeout and fails as
+     `Timed out waiting for /admin. Last failure: Unexpected status 404`.
+     That signature does not identify the cause on its own — the helper
+     reports the status without recording which origin answered, so the
+     same line appears when apps/site is still propagating, is down, or
+     has lost `/admin`. Confirm the configured value first because it is
+     the cheapest of those to check, not because the 404 points at it
 2. **Auth redirect or session setup failure**
    - likely Supabase Auth Site URL/redirect mismatch
    - validate Auth URL settings and `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL`
@@ -293,7 +305,10 @@ In addition to the admin-phase triage above:
 
 7. **Redeem-route or redemptions-route readiness failure before
    Playwright starts**
-   - likely deployment propagation or apps/web SPA route registration
+   - likely deployment propagation, apps/web SPA route registration, or
+     the site → plugin rewrite in `apps/site/next.config.ts` — these are
+     apps/web routes reached through the proxy, so either project's
+     deploy can break them
    - validate `PRODUCTION_SMOKE_BASE_URL` and that
      `/event/<slug>/game/redeem` and `…/redemptions` return
      2xx/3xx via curl
