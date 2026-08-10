@@ -217,42 +217,6 @@ This also fixes the boundary the picker cares about: every phase here
 realizes value only together, at launch. Recorded so the question
 does not get re-litigated from the proxy.
 
-**Independent — data hygiene.** `game_events` carries two rows with
-the Madrona display name, and recent completions have gone to the
-decoy. It is renamed rather than deleted, because it holds real
-entitlement rows a delete would orphan, and a distinct name is enough
-to prevent the failure that matters: verifying against the wrong
-event.
-
-The rename has to hold in **both** directions — in the database built
-from migrations and in the already-migrated production database.
-Fixing only the seed leaves production carrying both names, so the
-production journeys this plan verifies would still be ambiguous;
-fixing only production leaves every rebuilt environment restoring the
-decoy. The mechanism is the implementing phase's call.
-
-**Verified by:**
-`supabase/migrations/20260406130000_add_published_quiz_content.sql`
-seeds the decoy with the Madrona display name, under the table's
-former name — the events and entitlements tables were renamed after
-that migration, so the current names are what a new migration writes
-against.
-
-That insert also settles which identifier selects what, and the two
-are not interchangeable: the row's `id` and its `slug` hold different
-values, the event row is selectable by either, and the entitlement
-rows reference the **id**. So a rename of the event row can key on
-slug, while anything that has to find or preserve the decoy's
-entitlements has to key on the id. An earlier draft of this plan said
-a slug-based rename would match nothing, which was wrong and would
-have steered an implementer off a perfectly good selector.
-
-It gates no implementing phase and may ride in any of them, but it
-**must land no later than the last implementing PR**, because the
-Validation Gate below is only evidence about the right event once the
-rename is live. With phase 3b dropped it *is* the last implementing PR,
-so it carries the close-out.
-
 ## Validation Gate
 
 Each phase carries its own gate. This one is the acceptance walk for
@@ -299,11 +263,20 @@ On production, in a private window, on a phone and a laptop:
   look exactly like this. That is the failure I4 names. The close-out
   still runs an authoring action on the organizer host, and it is the
   step that would catch it.
-- **The event is unambiguous.** Both the production database and a
-  database built from migrations carry one row with the Madrona
-  display name, and the decoy's entitlement rows remain reachable
-  under their own event. This is what makes the journeys above
-  evidence about the right event.
+- **The event under test is identified by slug, not by display name.**
+  Each journey above is walked against `music.madrona.us`, whose
+  host→event mapping names the `madrona` slug, and the codes it mints
+  carry the `MIP` prefix. Both are unambiguous. A second `game_events`
+  row shares the Madrona display name — the seeded demo sample, on the
+  `first-sample` slug with the `AAC` prefix — and that collision does
+  not reach these journeys, because nothing in this platform resolves an
+  event by name. **Verified by:** `name` appears in no lookup across the
+  app, shared, edge-function, and migration trees; the admin event
+  picker renders `Slug: {draft.slug}` beside the heading it draws from
+  `draft.name`
+  ([`apps/site/app/(authenticated)/admin/page.tsx`](/apps/site/app/%28authenticated%29/admin/page.tsx));
+  and redemption authorization takes the slug from the URL rather than
+  any display string.
 - **The canonical alias is unchanged (I1).** Its root still serves
   the demo index and the existing long event paths still work,
   including the quiz end to end. The organizer-host short paths are
@@ -314,55 +287,45 @@ On production, in a private window, on a phone and a laptop:
 
 This walk is post-merge by construction — see the constraint below. It
 is post-merge to every PR that puts the behavior it walks into
-production, which is what makes the data-hygiene rename its last
-prerequisite.
+production, and all of those have landed, so it is runnable now.
 
 ## Status lifecycle and close-out
 
-Phases 1, 2, and 3 have landed. One implementing PR remains — the
-data-hygiene rename — so it is trivially the last, and it carries the
-close-out.
+Phases 1, 2, and 3 have landed, and with the probe runner and the decoy
+rename both out of scope there is no implementing PR left. Everything
+this plan promises is in production; what remains is verifying it.
 
-The **Parallel implementing PRs** exception is not invoked; with one
-implementing PR left there is nothing for it to resolve.
+So the close-out is a single doc-only commit: `Proposed` → `Landed` once
+the Validation Gate above passes, recording the verification evidence.
+That commit deletes the scoping doc. Neither named exception to the
+Plan-to-PR Completion Gate applies — **Parallel implementing PRs** has
+nothing to order, and **Post-release validation** describes an
+implementing PR that merges ahead of its check, which is not the shape
+left here. What remains is the residue of a plan whose implementing work
+finished before its verification, and the gate's default — flip when the
+plan is satisfied — is what covers it.
 
-**This plan's gate is the composed journey above.** It needs everything
-it walks already live: phase 1's admission, phase 3's routing, phase 2's
-redirect entry, and the data-hygiene rename. The first three have
-landed, so the walk becomes runnable when the rename does.
+**Phase 3's `Landed` flip is not resolved by this amendment, and the
+gap is named rather than assumed away.** Phase 3 merged under the
+**Post-release validation** exception, whose close-out is defined as a
+follow-up commit that *records the validation run URL* — durable
+external evidence, explicitly distinguished from anything already in
+git. The probe runner was to produce that URL. With it dropped, a
+manual walk produces the observations but no artifact, so phase 3
+cannot exit the exception on the terms the exception sets.
 
-So the close-out has two branches, decided by whether the walk has
-passed:
+That is a conflict with a canonical rule, and the canonical rule says a
+plan-specific carve-out belongs in the rule rather than in a plan's own
+Contracts section. So this plan does not grant itself one. Phase 3 stays
+at `In progress pending organizer-host routing verification` until
+either a runnable check yielding a run URL exists, or
+[`docs/testing-tiers.md`](/docs/testing-tiers.md)'s gate is amended to
+cover post-release checks that have no automatable artifact. Surfaced by
+review of the phase-3b drop.
 
-- **If the Validation Gate above has passed at any point before the
-  rename's PR merges**, `Proposed` → `Landed` in that PR, recording the
-  verification evidence. That PR deletes the scoping doc. The cutoff is
-  the merge, not the PR's opening: a walk that passes while the PR is in
-  review satisfies the gate just as fully, and treating it otherwise
-  would manufacture a pending state and a follow-up commit for a plan
-  whose validation was complete. Amending the PR to record
-  late-arriving evidence is the normal course.
-- **Otherwise** the plan takes the **Post-release validation**
-  exception per [`docs/testing-tiers.md`](/docs/testing-tiers.md)
-  "Plan-to-Landed Gate For Plans With Post-Release Validation":
-  `Proposed` → `In progress pending organizer-host verification` when
-  that PR merges — that exact label is this plan's stable name for the
-  check — then → `Landed` in a follow-up doc-only commit once the walk
-  passes, recording the evidence. That commit deletes the scoping doc.
-
-The two branches are not a choice the implementer makes freely: the
-first is taken whenever the walk has in fact passed, and reaching for
-the second when it has is the drift the Plan-to-PR Completion Gate
-forbids.
-
-**Phase 3's `Landed` flip rides with the close-out.** It was waiting on
-a run URL from the probe runner that is now dropped, so what discharges
-its post-merge Validation Gate is the same production walk this plan's
-close-out records — performed by hand and written into both docs. Out Of
-Scope explains why a committed runner was not worth building for it.
-
-Each phase plan flips its own Status as its PR merges, per the
-Plan-to-PR Completion Gate; this doc's flips with the last.
+Phases 1 and 2 flipped their own Status in their implementing PRs, per
+the Plan-to-PR Completion Gate. Phase 3 is the exception and it is
+unresolved — see the note above it.
 
 **Named constraint on every routing gate.** Host-conditional behavior
 cannot be exercised on a preview URL, because it keys on a hostname
@@ -469,6 +432,37 @@ has a host to resolve against. **Verified by:**
 directly as anchor hrefs, and both
 `apps/site/app/event/[slug]/page.tsx` and its `feedback/page.tsx`
 sibling call `getEventMasthead` for the slug they render.
+
+### No decoy rename (the shared display name is accepted)
+
+`game_events` carries a second row with the Madrona display name — the
+demo sample seeded on the `first-sample` slug. This plan carried
+renaming it as an independent data item, on the stated rationale that
+two rows answering to one name would make the close-out journeys
+ambiguous about which event they exercised. That rationale does not
+survive contact with the code.
+
+Nothing resolves an event by display name. `id` and `slug` are the
+identifiers, they were never in collision, and every surface that shows
+the name shows the slug beside it — including the admin event picker,
+which was the one place a person chooses between events. The journeys
+this plan verifies reach the event through a host→event mapping keyed on
+slug and produce codes carrying a per-event prefix. There is no step at
+which the display name decides anything.
+
+What is accepted, stated rather than waved past: two event cards in the
+admin picker carry identical `aria-label` values, so a screen-reader
+user hears the same accessible name twice and has to enter the card to
+tell them apart. The visible slug and the card's own readable content
+disambiguate, which keeps this a wrinkle rather than a barrier. If it
+ever matters, the fix is in the label rather than the data — include the
+slug in the `aria-label` — and it is independent of anything here.
+
+The rename would have cost a forward migration plus a production
+`UPDATE`, both cheap. It is dropped not because it is expensive but
+because the defect it was written against does not exist: the plan
+asserted a hazard, the code disagreed, and amending the assertion is
+the honest resolution rather than doing work to satisfy it.
 
 ### No phase 3b (the committed probe runner is dropped)
 
