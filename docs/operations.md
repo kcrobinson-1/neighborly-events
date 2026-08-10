@@ -410,14 +410,19 @@ through the site → plugin proxy rewrites in
 those means the proxy rule fired and apps/web served the SPA document.
 These are `curl -I` checks, so they establish routing only — each of
 these pages gates on client-side auth, and a 200 says nothing about
-whether it renders or signs in. The deployed-surface smoke walks both phases (admin authoring
-+ redemption operator) on the dedicated smoke event.
+whether it renders or signs in. The deployed-surface smoke walks both
+phases (admin authoring + redemption operator) on the dedicated smoke
+event.
 
 Notes:
 
-- apps/web is a Vite SPA, so most attendee and per-event admin behavior runs
-  in the browser and will not produce rich Vercel server logs; apps/site is
-  server-rendered Next.js and does log its own route handling
+- do not go looking for route-handler logs on either project; neither
+  produces them. apps/web is a Vite SPA, so attendee and per-event admin
+  behavior runs in the browser. apps/site is Next.js, but every route it
+  owns is either statically generated at build time (`/`, `/event/:slug`,
+  `/event/:slug/feedback`, which call `generateStaticParams` and no
+  request-time API) or a client component (`/admin`, `/auth/callback`),
+  so there is no request-time server rendering to log
 - Vercel logs are still useful for deployment state, build errors, route
   rewrites, and static asset availability
 - browser console/network errors on an affected device are useful evidence when
