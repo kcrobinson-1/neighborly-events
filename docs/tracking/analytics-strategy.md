@@ -196,9 +196,16 @@ buy. The two answer different questions.
 
 #### What the Hobby plan does not measure
 
-The team is on Vercel's Hobby plan, where **custom events are not
-available**. Pageviews, route breakdowns, referrers, device mix, and
-UTM dimensions all work; `track()` does not.
+The team is on Vercel's Hobby plan with the base Web Analytics tier.
+Two things are gated, and the second was found by reading the live
+dashboard on 2026-08-10 after this shipped — an earlier revision of
+this section wrongly listed UTM dimensions among what works:
+
+- **Custom events are not available.** Pageviews, route breakdowns,
+  referrers, device mix, and hostnames all work; `track()` does not.
+- **UTM parameter breakdowns are not available.** The dashboard's
+  Source / Medium / Campaign / Term / Content tabs are behind Web
+  Analytics Plus.
 
 The concrete cost, stated plainly because a future reader should not
 have to rediscover it: **there is no near-side click counting on the
@@ -221,12 +228,24 @@ Two consequences follow, and both are load-bearing:
   If a destination strips them, clicks to it are unmeasurable and no
   code change on our side recovers that. Zeffy was verified on
   2026-08-10 to preserve them through to the landed donation form.
-- **Inbound and outbound UTM data are different things.** Vercel's own
-  `utmSource` / `utmMedium` / `utmCampaign` breakdowns describe traffic
-  *arriving* at our pages — a QR code or a link that carries UTM
-  parameters into `music.madrona.us`. The tags described above travel
-  the other way and never appear in Vercel's dataset. Reading one as
-  the other overstates what we know.
+- **Inbound and outbound UTM data are different things, and neither is
+  visible to us.** Vercel's `utmSource` / `utmMedium` / `utmCampaign`
+  breakdowns describe traffic *arriving* at our pages — a QR code or a
+  link carrying UTM parameters into `music.madrona.us` — and they are
+  gated behind Web Analytics Plus, so we cannot read them on this tier.
+  The outbound tags described above travel the other way and never
+  enter Vercel's dataset at all. Two separate reasons, one conclusion:
+  **no campaign attribution is readable on our side.** All of it is
+  destination-side.
+
+  The practical consequence is worth stating before someone prints
+  something: **tagging a QR code or a poster URL with `utm_*` buys
+  nothing measurable today.** The parameters ride along and are
+  recorded with the pageview, so an upgrade would surface them
+  retroactively for whatever window the plan retains — but nobody
+  should print signage expecting to read the result this season.
+  Distinguishing traffic sources on this tier means distinct *paths* or
+  the referrer breakdown, both of which are ungated.
 
 #### Beacon routing across the cross-app proxy
 
@@ -274,6 +293,17 @@ and the quiz are two steps of one funnel, and "how many people who
 reached the event page started the quiz" is only answerable if both
 pageviews land in one dataset.
 
+**Confirmed in production on 2026-08-10**, after the merge deploy put
+both projects on the same commit. Loading `music.madrona.us/event/madrona`
+and `music.madrona.us/event/madrona/game` produced, in
+`neighborly-events-site`'s Pages breakdown, `/event/madrona/game` at 3
+visitors and `/event/madrona` at 2 — while `neighborly-scavenger-game-web`'s
+dashboard stayed at 0 visitors and 0 pageviews. The quiz path is
+recorded, by name, in the project that did not serve it. That
+asymmetry is the whole design working: had the isolation props been
+set, those rows would have been split across two dashboards and the
+landing-to-quiz question would not be answerable from either.
+
 Practical consequences:
 
 - **`neighborly-events-site` is the dataset of record** for everything
@@ -308,8 +338,18 @@ included. Supabase delivers organizer sign-in credentials to
 `/auth/callback` in the URL fragment, so both apps pass a `beforeSend`
 hook that drops the fragment before the beacon is sent
 (`shared/analytics/redactAnalyticsUrl.ts`). The query string is
-deliberately kept — stripping it would delete the inbound UTM
-dimensions described above.
+deliberately kept.
+
+Keeping it is worth defending, since the UTM breakdowns that would read
+it are gated on this tier and the query therefore buys nothing today.
+It stays because the asymmetry runs one way: a query string we keep and
+never read costs nothing and can be mined later — by an upgrade, or by
+a REST export — whereas one we strip at the beacon is gone from every
+future analysis, and no redeploy recovers the traffic that already
+happened. That is the same unrecoverability argument that put this
+whole instrumentation in before the first event. Fragments are dropped
+because they carry credentials; query strings are not, so the default
+falls the other way.
 
 No other redaction is applied, because no other route carries sensitive
 material in a URL: route paths contain event slugs only, and check-in
@@ -385,6 +425,8 @@ carries campaign parameters so destination-side reporting can attribute
 clicks the Hobby plan cannot count. See "Vercel Web Analytics" above.
 
 **Demonstrable outcome:** After the first live event runs, a Supabase Studio query returns a complete funnel row — starts, completions, and entitlements — for that event, and the `neighborly-events-site` Web Analytics dashboard returns pageviews for `/event/madrona` and `/event/madrona/game` over the same window. The data exists and is correct. Engineering can verify this immediately after the event closes.
+
+The client-side arm of that outcome was confirmed early, on 2026-08-10, using the verification traffic that followed the deploy: both paths appear in the dashboard's Pages breakdown. What remains for the post-event check is real attendee volume, not whether the mechanism records at all.
 
 ### Phase 2 — Organizer Reporting Surface (Post-First-Event)
 

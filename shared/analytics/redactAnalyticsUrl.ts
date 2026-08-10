@@ -3,11 +3,13 @@
  * apps, via the `<Analytics beforeSend>` hook.
  *
  * The vendor's client script reports `location.href` verbatim — search
- * string *and* fragment — as the pageview's URL. The search string has
- * to survive: inbound `utm_*` parameters are how the QR-code and
- * outbound-link campaigns become breakdown dimensions, and stripping
- * the query would delete the campaign data this instrumentation exists
- * to collect.
+ * string *and* fragment — as the pageview's URL. The search string
+ * survives deliberately. Note that it is not currently *readable*: the
+ * plan's UTM breakdowns are gated, so keeping the query buys nothing
+ * we can query today. It stays anyway, because the asymmetry runs one
+ * way — a query we keep and never read costs nothing and can be mined
+ * later, while one we strip at the beacon is gone from every future
+ * analysis of traffic that already happened.
  *
  * The fragment must not. Supabase delivers organizer sign-in
  * credentials to `/auth/callback` in the URL fragment
