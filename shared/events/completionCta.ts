@@ -49,6 +49,15 @@
  * the demo too, which is intended here and is why the object is
  * named rather than spread.
  *
+ * All three destinations carry `utm_medium=completion` via
+ * `withSource` (`madrona-facts.ts`), which is the only way a click from
+ * this panel is distinguishable from one off a printed flyer in the
+ * association's Zeffy and Mailchimp reporting. The demo fixture inherits
+ * the tag with everything else it shares, so a local walkthrough of the
+ * completion screen writes `completion`-attributed traffic to the real
+ * destinations exactly as the deployed panel does — the usual cost of
+ * the identity sharing, and the reason the fixture is reviewable at all.
+ *
  * All three are absolute external
  * URLs, so they resolve identically from every origin — including the
  * bare Vite dev server, where the fixture is the only entry that
@@ -59,7 +68,7 @@
  * this registry.)
  */
 
-import { madronaFacts } from "./madrona-facts.ts";
+import { madronaFacts, withSource } from "./madrona-facts.ts";
 
 /**
  * One link-out section of the completion CTA block.
@@ -107,14 +116,14 @@ const madronaCompletionCta: CompletionCtaContent = {
     body:
       "Next week's lineup and neighborhood news, straight from the association.",
     buttonLabel: "Join the email list",
-    href: madronaFacts.emailListHref,
+    href: withSource(madronaFacts.emailListHref, "completion"),
     external: true,
   },
   donate: {
     body:
       "These concerts are free because neighbors chip in — 100% of donations go to the association.",
     buttonLabel: "Support the Playfield",
-    href: madronaFacts.donateHref,
+    href: withSource(madronaFacts.donateHref, "completion"),
     external: true,
   },
   /**
@@ -131,7 +140,7 @@ const madronaCompletionCta: CompletionCtaContent = {
     body:
       "These concerts run on volunteers — and so does everything else the association does. We can always use another set of hands.",
     buttonLabel: "Volunteer",
-    href: madronaFacts.volunteerHref,
+    href: withSource(madronaFacts.volunteerHref, "completion"),
     external: true,
   },
 };
