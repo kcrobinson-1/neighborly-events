@@ -31,7 +31,7 @@ import { redactAnalyticsEvent } from "../../../shared/analytics/index.ts";
  * origin. That is deliberate — the landing page and the quiz are two
  * steps of one funnel. The reasoning, the measurements, and the one
  * risk it carries are in
- * [`docs/tracking/analytics-strategy.md`](/docs/tracking/analytics-strategy.md)
+ * [`docs/tracking/analytics-strategy.md`](../../../docs/tracking/analytics-strategy.md)
  * "Beacon routing across the cross-app proxy" — read that before
  * adding `viewEndpoint` / `eventEndpoint` / `scriptSrc` here, because
  * those props would split the funnel across two datasets rather than

@@ -85,7 +85,7 @@ export type MadronaLinkSurface = "masthead" | "landing" | "completion";
  * The Vercel plan this platform runs on has no custom events, so
  * nothing on our side can count a click on the email-list, donate, or
  * volunteer affordances — see
- * [`docs/tracking/analytics-strategy.md`](/docs/tracking/analytics-strategy.md)
+ * [`docs/tracking/analytics-strategy.md`](../../docs/tracking/analytics-strategy.md)
  * "Vercel Web Analytics". These parameters are therefore the only
  * attribution that exists for those three destinations, and they are
  * read in Zeffy's and Mailchimp's reporting rather than in ours. A
