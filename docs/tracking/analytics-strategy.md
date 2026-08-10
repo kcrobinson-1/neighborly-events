@@ -236,20 +236,43 @@ The two apps share one user-facing origin. apps/site is canonical, and
 browser loading the quiz is therefore on apps/site's origin even though
 apps/web served the document.
 
-`@vercel/analytics` resolves its script and beacon endpoints
-**origin-relative** by default (`/_vercel/insights/*`), and apps/web is
-a Vite SPA with no `REACT_APP_VERCEL_OBSERVABILITY_*` build variables to
-override them. So on the canonical origin, quiz pageviews are recorded
-by **apps/site's** Vercel project, not apps/web's.
+The two apps resolve their beacon paths differently, and the difference
+is the whole answer. Measured on the preview deployments of both
+projects on 2026-08-10 rather than reasoned from the package source,
+which resolves differently off-platform:
 
-This is deliberate and is the reason no `viewEndpoint` / `eventEndpoint`
-/ `scriptSrc` override is set, despite Vercel documenting those props
-for exactly this topology. Their documented purpose is to *restore*
-isolation between projects sharing a domain. Isolation is the opposite
-of what this platform wants: the landing page and the quiz are two
-steps of one funnel, and the question "how many people who reached the
-event page started the quiz" is only answerable if both pageviews land
-in one dataset.
+- **apps/site** is built on Vercel as a Next.js app, so Vercel injects
+  `NEXT_PUBLIC_VERCEL_OBSERVABILITY_CLIENT_CONFIG` at build time and
+  the mounted component uses the **project-unique path** it names
+  (observed: `/2fbd3054253333e2/script.js`).
+- **apps/web** is a Vite SPA. The `/react` entrypoint looks for
+  `REACT_APP_VERCEL_OBSERVABILITY_CLIENT_CONFIG`, Vite exposes no
+  `REACT_APP_*` variables and no `process` in the browser, so it falls
+  back to the package's hardcoded **origin-relative default**,
+  `/_vercel/insights/*` (observed on apps/web's own preview).
+
+A local build shows apps/site falling back to the same relative default,
+because the injected variable only exists on Vercel. Do not conclude
+anything about routing from a local build.
+
+Origin-relative is what makes the proxy case work: on the canonical
+origin the quiz document comes from apps/web but the browser's origin is
+apps/site, so apps/web's beacon resolves against **apps/site**. Verified
+on apps/site's preview: `/_vercel/insights/script.js` returns 200 and is
+byte-identical to the project-unique path's script (2495 bytes, same
+content hash), and a POST to `/_vercel/insights/view` returns `200 OK`.
+The served script embeds no project identifier and no hardcoded
+endpoint, so attribution follows whichever host receives the POST.
+
+So on the canonical origin, quiz pageviews are recorded by **apps/site's**
+project, not apps/web's — which is why no `viewEndpoint` /
+`eventEndpoint` / `scriptSrc` override is set, despite Vercel
+documenting those props for exactly this topology. Their documented
+purpose is to *restore* isolation between projects sharing a domain.
+Isolation is the opposite of what this platform wants: the landing page
+and the quiz are two steps of one funnel, and "how many people who
+reached the event page started the quiz" is only answerable if both
+pageviews land in one dataset.
 
 Practical consequences:
 
@@ -258,11 +281,25 @@ Practical consequences:
 - Web Analytics stays enabled on `neighborly-scavenger-game-web`
   anyway: on its own `*.vercel.app` host — used for direct access and
   for verification — the same relative paths resolve to its own
-  project.
-- Enabling Web Analytics on a project does not retroactively serve
-  `/_vercel/insights/*` from deployments built before it was enabled.
-  Both projects need a deploy after enablement before any beacon
-  resolves.
+  project. Verified end to end there: script `200`, view POST `200`,
+  and a client-side route change produces a second pageview, so the
+  SPA's `history.pushState` navigation is tracked and not just the
+  initial load.
+- Enabling Web Analytics on a project does not retroactively serve the
+  beacon paths from deployments built before it was enabled. Both
+  projects need a deploy after enablement before any beacon resolves;
+  before this landed, both origins returned 404 for
+  `/_vercel/insights/script.js` for exactly that reason.
+- **The proxied case depends on Vercel continuing to serve
+  `/_vercel/insights/*` alongside the project-unique path.** It is the
+  package's own hardcoded fallback and both projects serve it today,
+  but Vercel's current docs describe the unique path. If the alias is
+  ever retired, quiz pageviews stop silently — the link keeps working
+  and nothing errors. The mitigation if that happens is to pass
+  `scriptSrc` and `viewEndpoint` on apps/web pointing at apps/site's
+  unique path, accepting that the value is then a deploy-time constant
+  that has to be kept in sync. Worth re-checking whenever the funnel
+  numbers look wrong in a way starts and completions do not.
 
 #### What the beacon does not carry
 

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { redactAnalyticsUrl } from "../../../shared/analytics/index.ts";
+import {
+  redactAnalyticsEvent,
+  redactAnalyticsUrl,
+} from "../../../shared/analytics/index.ts";
 
 describe("redactAnalyticsUrl", () => {
   it("drops the fragment that carries Supabase auth credentials", () => {
@@ -47,5 +50,31 @@ describe("redactAnalyticsUrl", () => {
     // throw out of the beacon path.
     expect(redactAnalyticsUrl("")).toBe("");
     expect(redactAnalyticsUrl("not a url at all")).toBe("not a url at all");
+  });
+});
+
+describe("redactAnalyticsEvent", () => {
+  it("redacts the url and passes every other field through", () => {
+    // Returning the event (not null) is what keeps the pageview; a
+    // beforeSend that dropped events would silently zero the dataset.
+    expect(
+      redactAnalyticsEvent({
+        type: "pageview",
+        url: "https://music.madrona.us/auth/callback#access_token=secret",
+        payload: { referrer: "https://example.test" },
+      }),
+    ).toEqual({
+      type: "pageview",
+      url: "https://music.madrona.us/auth/callback",
+      payload: { referrer: "https://example.test" },
+    });
+  });
+
+  it("does not mutate the event it is handed", () => {
+    const event = { type: "pageview", url: "https://example.test/a#b" };
+
+    redactAnalyticsEvent(event);
+
+    expect(event.url).toBe("https://example.test/a#b");
   });
 });

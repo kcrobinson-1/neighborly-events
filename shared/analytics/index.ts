@@ -7,4 +7,7 @@
  * and `apps/web/src/main.tsx`), which compose these helpers into the
  * vendor's hooks.
  */
-export { redactAnalyticsUrl } from "./redactAnalyticsUrl.ts";
+export {
+  redactAnalyticsEvent,
+  redactAnalyticsUrl,
+} from "./redactAnalyticsUrl.ts";

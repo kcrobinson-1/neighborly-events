@@ -30,3 +30,25 @@ export function redactAnalyticsUrl(url: string): string {
 
   return fragmentStart === -1 ? url : url.slice(0, fragmentStart);
 }
+
+/**
+ * The `beforeSend` hook both apps pass to `<Analytics />`, applying
+ * `redactAnalyticsUrl` to the event's URL and passing everything else
+ * through.
+ *
+ * Structurally typed rather than importing the vendor's
+ * `BeforeSendEvent`, which keeps `shared/` free of a dependency only
+ * the two app-level mount points have.
+ *
+ * A module-scope function, not an inline arrow at each call site: the
+ * vendor re-registers the handler whenever the prop's identity changes,
+ * and one shared stable reference makes that a non-question in both
+ * apps. It also means the two apps cannot drift into redacting
+ * differently, which would matter — they report into one dataset, so a
+ * row has to mean the same thing whichever app produced it.
+ */
+export function redactAnalyticsEvent<Event extends { url: string }>(
+  event: Event,
+): Event {
+  return { ...event, url: redactAnalyticsUrl(event.url) };
+}
