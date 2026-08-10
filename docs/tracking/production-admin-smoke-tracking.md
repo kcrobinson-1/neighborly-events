@@ -169,13 +169,16 @@ Start in GitHub Actions job logs for `Production Deployed-Surface Smoke`.
 1. **Readiness failure before Playwright starts**
    - likely deployment propagation or base URL misconfiguration
    - validate `PRODUCTION_SMOKE_BASE_URL` and deployed route health
-   - the specific misconfiguration to rule out first: the base URL
-     pointed at apps/web rather than the canonical apps/site origin.
-     `/admin` is polled first and does not exist on apps/web, and the
-     poller treats 404 as deployment propagation and retries, so it
-     burns the full timeout before failing as
-     `Timed out waiting for /admin. Last failure: Unexpected status 404` —
-     a 404 in that line means wrong origin, not a slow deploy
+   - one cheap candidate to rule out: the base URL pointed at apps/web
+     rather than the canonical apps/site origin. `/admin` does not exist
+     on apps/web, and the poller treats 404 as deployment propagation
+     and retries, so it burns the full timeout and fails as
+     `Timed out waiting for /admin. Last failure: Unexpected status 404`.
+     That signature does not identify the cause on its own — the helper
+     reports the status without recording which origin answered, so the
+     same line appears when apps/site is still propagating, is down, or
+     has lost `/admin`. Confirm the configured value first because it is
+     the cheapest of those to check, not because the 404 points at it
 2. **Auth redirect or session setup failure**
    - likely Supabase Auth Site URL/redirect mismatch
    - validate Auth URL settings and `PRODUCTION_SMOKE_ADMIN_REDIRECT_URL`
