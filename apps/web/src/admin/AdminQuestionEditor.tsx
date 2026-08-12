@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useMemo, useRef, useState } from "react";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
 import { AdminQuestionFields } from "./AdminQuestionFields";
 import { AdminQuestionList } from "./AdminQuestionList";
@@ -53,6 +53,28 @@ export function AdminQuestionEditor({
 }: AdminQuestionEditorProps) {
   const [editableContent, setEditableContent] = useState(draft.content);
   const [localMessage, setLocalMessage] = useState<string | null>(null);
+  const layoutRef = useRef<HTMLDivElement | null>(null);
+
+  // Selecting a question from the rail swaps the field column in place,
+  // which leaves the viewport wherever the previous question's (long)
+  // form left it — in the stacked mobile layout that can be a full list
+  // above the fields. Move focus into the form (tabIndex -1) so keyboard
+  // users continue into the fields rather than the next rail button,
+  // then bring it into view. Runs only on rail activation, not on other
+  // focus changes (add / duplicate / move already happen inside the
+  // form). `scrollIntoView` is absent in jsdom, hence the optional call.
+  const focusQuestionFields = () => {
+    const form = layoutRef.current?.querySelector<HTMLFormElement>(
+      ".admin-question-form",
+    );
+
+    if (!form) {
+      return;
+    }
+
+    form.focus({ preventScroll: true });
+    form.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  };
   const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<
     string | null
   >(null);
@@ -229,11 +251,14 @@ export function AdminQuestionEditor({
           Add question
         </button>
       </div>
-      <div className="admin-question-layout">
+      <div className="admin-question-layout" ref={layoutRef}>
         <AdminQuestionList
           disabled={disabled}
           focusedQuestionId={focusedQuestionId}
-          onFocusQuestion={onFocusQuestion}
+          onFocusQuestion={(questionId) => {
+            onFocusQuestion(questionId);
+            focusQuestionFields();
+          }}
           onResetDeleteConfirmation={() => setPendingDeleteQuestionId(null)}
           questions={editableContent.questions}
         />

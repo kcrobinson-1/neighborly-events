@@ -58,7 +58,15 @@ export function AdminQuestionFields({
   values,
 }: AdminQuestionFieldsProps) {
   return (
-    <form className="admin-form admin-question-form" onSubmit={onSubmit}>
+    // tabIndex -1 makes the form a programmatic focus target: activating
+    // a question in the rail focuses it so keyboard users Tab into the
+    // fields instead of the next rail button.
+    <form
+      aria-label="Question fields"
+      className="admin-form admin-question-form"
+      onSubmit={onSubmit}
+      tabIndex={-1}
+    >
       <div className="admin-action-row">
         <button
           className="secondary-button"

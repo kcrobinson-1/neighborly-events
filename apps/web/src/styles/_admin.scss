@@ -86,8 +86,7 @@
 .admin-toolbar,
 .admin-action-row,
 .admin-checkbox-row,
-.admin-workspace-heading,
-.admin-option-row {
+.admin-workspace-heading {
   display: flex;
   align-items: flex-start;
   gap: $space-5;
@@ -142,7 +141,7 @@
 
 .admin-question-layout {
   display: grid;
-  grid-template-columns: minmax(180px, 0.35fr) minmax(0, 1fr);
+  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
   gap: $space-6;
 }
 
@@ -150,9 +149,25 @@
   @include stack($space-4);
 }
 
+// In the two-column layout the rail follows the scroll so switching
+// questions never requires scrolling back up the (much taller) field
+// column; the rail scrolls internally if an event outgrows the viewport.
+@media (min-width: 761px) {
+  .admin-question-list {
+    position: sticky;
+    top: $space-6;
+    align-self: start;
+    max-height: calc(100vh - #{$space-6 * 2});
+    overflow-y: auto;
+  }
+}
+
 .admin-question-list-button {
   width: 100%;
+  overflow: hidden;
   text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .admin-question-list-button[aria-pressed="true"] {
@@ -162,6 +177,17 @@
 
 .admin-question-form {
   min-width: 0;
+}
+
+// Programmatic focus target (rail activation). `:focus-visible` keeps
+// the ring for keyboard activation — where it is the only indication of
+// where focus landed — while mouse and touch activation stay ring-free.
+.admin-question-form:focus {
+  outline: none;
+}
+
+.admin-question-form:focus-visible {
+  @include focus-ring;
 }
 
 .admin-option-fieldset {
@@ -192,16 +218,32 @@
   font-weight: $font-weight-semibold;
 }
 
+// Correct-toggle and delete share the top row; the label field gets the
+// full row width below so the answer text stays readable at every
+// viewport (the old inline flex row squeezed the input to nothing
+// inside the two-column question layout).
 .admin-option-row {
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "correct delete"
+    "field field";
+  align-items: start;
+  gap: $space-4;
 }
 
 .admin-option-row .admin-field {
-  flex: 1;
+  grid-area: field;
+  width: 100%;
+}
+
+.admin-option-row > .secondary-button {
+  grid-area: delete;
+  justify-self: end;
 }
 
 .admin-correct-answer {
-  min-width: 96px;
+  grid-area: correct;
   color: var(--muted);
   font-weight: $font-weight-semibold;
 }
@@ -275,42 +317,22 @@
   align-items: center;
 }
 
-@media (max-width: 620px) {
-  .admin-details-grid {
+// The question rail stacks above the fields earlier than the 620px
+// small-screen rules: between 620px and 760px two columns fit, but the
+// field column gets too narrow to edit in.
+@media (max-width: 760px) {
+  .admin-question-layout {
     grid-template-columns: 1fr;
   }
+}
 
-  .admin-question-layout {
+@media (max-width: 620px) {
+  .admin-details-grid {
     grid-template-columns: 1fr;
   }
 
   .admin-toolbar,
   .admin-workspace-heading {
     flex-direction: column;
-  }
-
-  .admin-option-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "correct delete"
-      "field field";
-    align-items: start;
-    gap: $space-4;
-  }
-
-  .admin-correct-answer {
-    grid-area: correct;
-    min-width: 0;
-  }
-
-  .admin-option-row .admin-field {
-    grid-area: field;
-    width: 100%;
-  }
-
-  .admin-option-row > .secondary-button {
-    grid-area: delete;
-    justify-self: end;
   }
 }

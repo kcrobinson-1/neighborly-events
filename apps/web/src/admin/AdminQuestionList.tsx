@@ -27,6 +27,9 @@ export function AdminQuestionList({
             onFocusQuestion(question.id);
             onResetDeleteConfirmation();
           }}
+          // Buttons render single-line with CSS truncation; the title
+          // carries the full prompt for truncated entries.
+          title={question.prompt || undefined}
           type="button"
         >
           Question {index + 1}: {question.prompt || "Untitled question"}
