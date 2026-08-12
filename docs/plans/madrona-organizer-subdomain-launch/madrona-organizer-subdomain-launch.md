@@ -1,6 +1,6 @@
 # Madrona organizer-subdomain launch
 
-**Status:** `In progress pending organizer-host verification`
+**Status:** `Landed`
 
 Task plan with separated phase plan files — phases 1, 2, and 3 — plus
 one independent data item. This doc owns the decomposition, the
@@ -13,9 +13,6 @@ stakeholder decision: the mount-aware route contract that would have
 put the quiz at a short path is dropped, and phase 2 is reduced to its
 redirect-allowlist half. Out Of Scope records both, with what each
 would have bought and why that was not worth its cost.
-
-Scoping doc:
-[`scoping/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md).
 
 ## Context
 
@@ -267,12 +264,15 @@ On production, in a private window, on a phone and a laptop:
   token. Recorded here because it cannot be re-run: the entitlement row
   it consumed was test data and has since been cleared.
 
-  **The authoring leg is outstanding, by decision, and it is the only
-  thing between this plan and `Landed`.** Walking it means signing in on
-  the organizer host and taking an authoring action — saving a draft or
-  publishing one — so that `save-draft` or `publish-draft` is called
-  from that origin. The stakeholder chose to leave the step as written
-  rather than narrow it or walk it now.
+  **Satisfied 2026-08-12, and more completely than the step asked.**
+  Signed in at `music.madrona.us/admin`, opened the Madrona event's
+  workspace, enabled back navigation, saved, and published — so both
+  `save-draft` and `publish-draft` were called from the organizer
+  origin, not just one. The effect was confirmed on the live game.
+  **Verified by:** `game_events` for `madrona` reads
+  `allow_back_navigation = true` with `published_at` and `updated_at`
+  both `2026-08-12 17:28:54Z`, which is the publish writing through to
+  the live projection rather than the editor reporting success.
 
   **I4 is why the distinction is not pedantry.** Redemption is the volunteer path —
   `redeem-entitlement` — not an authoring action, which reaches
@@ -338,10 +338,9 @@ implementing PR:
   follow-up doc-only commit once the Validation Gate passes, recording
   the verification evidence. That commit deletes the scoping doc.
 
-**What the flip waits on is one step:** an authoring action taken on the
-organizer host, per the organizer journey. Everything else in the gate
-is satisfied and recorded above, with the requests made and the
-responses observed.
+Every step of the gate is satisfied and recorded above, with the
+requests made and the responses observed. This commit is that follow-up:
+Status flips to `Landed` and the scoping doc is deleted.
 
 The **Parallel implementing PRs** exception is not invoked; no
 implementing PR remains for it to order.

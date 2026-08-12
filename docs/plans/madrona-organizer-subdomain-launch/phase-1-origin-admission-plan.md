@@ -76,7 +76,7 @@ that the origin is rejected and that nothing mitigates it, and O2
 resolves where the entry belongs — in code rather than in a secret —
 with the rejected alternative recorded. Those are exactly the
 decisions a phase-1 scoping doc would have had to make, and
-duplicating them here would be the scoping-restates-plan trap.
+duplicating them here would be the scoping-restates-plan trap. The scoping doc was deleted at close-out, per its transient convention; its decisions are recoverable with `git log --follow -- docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md`.
 
 An earlier draft invoked the narrow-surface carve-out instead. That
 was the wrong justification: the carve-out is for plans with *no*
