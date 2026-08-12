@@ -42,7 +42,7 @@ safe rewrite shape and records the asset-parity probe behind that
 conclusion; D12 establishes host-conditional config rewrites as the
 mechanism, rather than a proxy or middleware file, because the
 `middleware` convention is deprecated as of Next.js 16. Those are
-exactly the decisions a phase-3 scoping doc would have had to make.
+exactly the decisions a phase-3 scoping doc would have had to make. The scoping doc was deleted at close-out, per its transient convention; its decisions are recoverable with `git log --follow -- docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md`.
 The Reality-check inputs section below is the phase-specific residue —
 claims that can drift between the task's scoping and this phase's
 implementation, plus the two the drafting session resolved by running
@@ -929,8 +929,6 @@ actually goes.
 
 - [`madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/madrona-organizer-subdomain-launch.md)
   — parent task plan; owns C1, C3, I1, I2, I3 and the close-out.
-- [`scoping/madrona-organizer-subdomain-launch.md`](/docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md)
-  — owns this phase's deliberation at D2, D4, and D12.
 - [`phase-1-origin-admission-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-1-origin-admission-plan.md)
   — the sibling phase this one is ordering-independent of. Neither
   surface this phase routes calls an edge function: the landing page

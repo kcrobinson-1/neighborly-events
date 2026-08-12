@@ -47,7 +47,7 @@ redirect entry matches the organizer host; O5 strikes the email ceiling
 from this phase's scope. (D6's Site URL half and O3, which resolved the
 retarget, are superseded by the drop above.) Those are the decisions a
 phase-2 scoping doc would have had to make, and restating them here
-would be the scoping-restates-plan trap. What follows is the durable
+would be the scoping-restates-plan trap. The scoping doc was deleted at close-out, per its transient convention; its decisions are recoverable with `git log --follow -- docs/plans/madrona-organizer-subdomain-launch/scoping/madrona-organizer-subdomain-launch.md`. What follows is the durable
 contract those decisions imply, plus the phase-specific residue under
 Reality-check inputs — claims that can drift between the task's scoping
 and this phase's implementation because they describe a console, not a
