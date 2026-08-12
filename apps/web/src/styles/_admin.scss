@@ -179,11 +179,15 @@
   min-width: 0;
 }
 
-// Programmatic focus target (rail activation), not an interactive
-// control — a focus ring around the whole field column carries no
-// information.
+// Programmatic focus target (rail activation). `:focus-visible` keeps
+// the ring for keyboard activation — where it is the only indication of
+// where focus landed — while mouse and touch activation stay ring-free.
 .admin-question-form:focus {
   outline: none;
+}
+
+.admin-question-form:focus-visible {
+  @include focus-ring;
 }
 
 .admin-option-fieldset {
