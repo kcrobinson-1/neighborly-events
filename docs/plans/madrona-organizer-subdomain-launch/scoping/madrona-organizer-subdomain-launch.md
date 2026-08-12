@@ -303,15 +303,20 @@ shapes live in the task plan and its phase plans, not here.
   into the plan's Risk Register with the condition that resurfaces
   it. Custom SMTP is therefore out of the plan's phase 2, which is
   auth *URL* configuration only.
-- **O6 — lookalike-event cleanup.** Resolved to in scope, as an
-  independent data item. It gates no *implementing* phase and may
-  land in any of them, but the plan makes it a **required close-out
-  boundary**: the `Landed` flip cannot claim a verified organizer
-  host while two rows answer to the same display name, because that
-  is exactly what would make the close-out verification untrustworthy.
-  Not optional — see the plan's "Status lifecycle and close-out." The
-  ordering bound moved when phase 4 was dropped: the item now lands no
-  later than phase 3b's implementing PR.
+- **O6 — lookalike-event cleanup. Superseded: the rename is dropped
+  and nothing here is owed.** The task plan's Out Of Scope, "No decoy
+  rename," owns the reasoning — nothing resolves an event by display
+  name, so the collision this decision was written against does not
+  reach the journeys the close-out walks. Read that entry rather than
+  this one; what follows is the scoping-time position, left standing
+  as the record of what handed over. Resolved at scoping time to in
+  scope, as an independent data item. It gates no *implementing* phase
+  and may land in any of them, but the plan makes it a **required
+  close-out boundary**: the `Landed` flip cannot claim a verified
+  organizer host while two rows answer to the same display name,
+  because that is exactly what would make the close-out verification
+  untrustworthy. Not optional — see the plan's "Status lifecycle and
+  close-out."
 
 ## Plan structure handoff
 

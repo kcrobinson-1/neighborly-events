@@ -1,6 +1,6 @@
 # Phase 3 — Organizer host mapping in `apps/site`
 
-**Status:** `In progress pending organizer-host routing verification`
+**Status:** `Landed`
 
 ## Context
 
@@ -67,10 +67,11 @@ becomes of each — neither is waiting on a later phase of this task.
 
 ## PR shape and Status lifecycle
 
-One PR, plus a doc-only close-out commit. **This phase is now the
-routing change only** — the post-deploy probe runner it originally
-carried moved to
-[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).
+One PR, plus a doc-only close-out commit. **This phase is the routing
+change only.** The post-deploy probe runner it originally carried was
+split into its own phase and then dropped without being built; the
+parent's Out Of Scope, "No phase 3b," records why and what replaces
+it.
 
 **Why the split, and why it is a phase boundary rather than two PRs
 under one plan.** The stakeholder chose to ship the routing change
@@ -93,11 +94,12 @@ can flip independently. Surfaced by Codex review on this phase's
 implementing PR, against a first attempt that recorded the split in
 this section's prose while leaving both slices under one `Status`.
 
-This phase's `Landed` flip still waits on the run URL phase 3b's
-runner produces. That is a dependency between the two phases, not a
-shared Status: one passing run satisfies both, and a run that fails
-distinguishes them — a runner defect leaves this phase unverified
-rather than falsified.
+This phase's `Landed` flip waits on the post-deploy checks below being
+walked against production and recorded here. That walk was to come from
+a committed runner producing a run URL; with the runner dropped, the
+record in this doc is the artifact. It is weaker in one specific way —
+nobody can re-run it from a command — which the parent's Out Of Scope
+weighs.
 
 **PR-count branch test**, as this phase now stands: a shared mapping
 module, the routing config, a unit test, and the docs each of those
@@ -131,7 +133,12 @@ For Plans With Post-Release Validation":
   stable name for the check.
 - `In progress pending organizer-host routing verification` → `Landed`
   in a follow-up doc-only commit once the post-deploy checks below
-  pass, recording the validation run URL those checks produce.
+  pass. Those checks were to produce a validation run URL from phase
+  3b's runner; with it dropped, the commit records the requests made
+  and the responses observed instead, per
+  [`docs/testing-tiers.md`](/docs/testing-tiers.md) "Plan-to-Landed
+  Gate For Plans With Post-Release Validation" — the substitution that
+  gate allows where a check has no automatable entry point.
 
 **Why this is not the canonical prod-smoke label**, recorded so the
 question is answered once rather than re-argued whenever someone reads
@@ -544,8 +551,8 @@ than transcribed.
 may revise any row when a structural call requires it; deviations are
 reported per the Plan-to-PR Completion Gate's Estimate Deviations
 callout. The runner rows this section originally carried moved out
-with the runner, to
-[`phase-3b-post-deploy-routing-probes-plan.md`](/docs/plans/madrona-organizer-subdomain-launch/phase-3b-post-deploy-routing-probes-plan.md).*
+with the runner, which was later dropped — see the parent's Out Of
+Scope, "No phase 3b."*
 
 **New**
 
@@ -641,9 +648,10 @@ Review-fix commits stay distinct from these when that makes the
 history easier to follow.
 
 The probe runner, its script entry, and its workflow wiring were a
-third slice here before they became phase 3b; the validation-command
-lists went with them, because they describe a command that does not
-exist until that phase lands.
+third slice here before they became a phase of their own, which was
+then dropped without being built. The validation-command lists went
+with them and stayed gone: they describe a command that no longer
+exists in any plan.
 
 ## Validation Gate
 
@@ -709,68 +717,96 @@ still resolve through to the apps/web deployment after the phase
 change, and no class had to be deferred to post-deploy for want of
 local reach.
 
-**Post-merge — these gate the `Landed` flip.** These run from a
-committed entry point, not by hand, so the run that passes is the
-artifact the close-out records. That entry point is phase 3b's
-deliverable; this phase merges without it, which is what the
-`In progress pending organizer-host routing verification` Status
-records. The manual walk performed immediately after this phase's PR
-merges is a rollback trigger, not a substitute — it produces no run
-URL, and the close-out still requires one.
+**Post-merge — these gate the `Landed` flip. Performed 2026-08-10
+against production and recorded here.** These were to run from a
+committed entry point; that entry point was phase 3b's deliverable and
+is dropped, so the walk was performed directly and its observations
+written down. The parent's Out Of Scope, "No phase 3b," weighs that
+trade.
 
-- **Establish deployment identity before any assertion counts.** The
-  run confirms the origin is serving the commit under test, and until
-  it has, a failing assertion means "not deployed yet" and the run
-  keeps waiting within a bound rather than reporting failure. This is
-  the discriminator the rest of the post-merge gate depends on: every
-  assertion below fails identically against a stale build and against
-  a genuinely wrong rewrite, and the plan attaches a rollback to that
-  failure — so without an identity check the gate can trigger a revert
-  for a deploy that was merely still propagating.
+The instrument is `x-matched-path`, the response header Vercel sets to
+the route a request resolved to. It reports the routing decision itself
+rather than letting it be inferred from page content, which is what
+makes these observations discriminating: a request for `/` that returns
+Madrona-looking HTML could in principle be a changed page, while a
+request for `/` that reports matching `/event/madrona` can only be the
+rewrite firing.
 
-  Two specifics make this a real race rather than a theoretical one.
-  The workflow this check joins triggers on the Release workflow's
-  completion, and Release synchronizes Supabase only — it neither
-  performs nor waits for the Vercel deployment, which the Git
-  integration runs independently. And the readiness helper that
-  workflow already uses treats any non-error status as ready, which
-  the *previous* deployment returns for every path this phase does not
-  change. Reusing that helper unchanged would satisfy readiness
-  against the old build.
+**Organizer host — the rewrites fire.**
 
-  **Verified by:** `.github/workflows/release.yml`'s only job is named
-  for syncing Supabase and its steps link the project, push
-  migrations, and deploy functions, with no Vercel step or wait;
-  `waitForRouteReady` in
-  `scripts/testing/run-production-admin-smoke.cjs` returns as soon as
-  a response status is at least 200 and below 400, with its comment
-  scoping that contract to transient 404s during propagation.
-  Surfaced by Codex review on this plan's PR.
-- The two bullets above, re-run against production: on the real
-  organizer host, then on the canonical alias. This is the only run
-  that exercises the real hostname, so it is the run that can fail for
-  reasons a spoofed header cannot reproduce — DNS, alias attachment,
-  and deployment protection among them.
-- The `/assets/*` class and the existing long event paths, on both
-  hosts. **These are production rechecks, not deferred coverage.** An
-  earlier form of this bullet read them as assertions the local
-  environment could not make, on the expectation recorded in
-  Reality-check inputs that the proxy destination might be
-  unreachable from the implementer's sandbox. It was reachable, and
-  both classes carry an absolute pre-merge assertion. What the
-  production run adds is a different claim: that they hold against
-  the real hostname, through the real edge, with real deployment
-  protection — none of which a spoofed `Host` header reproduces.
-- The runner takes its hosts from the mapping and from the canonical
-  origin rather than hardcoding either, so the same check re-runs
-  against the next organizer host without an edit. A runner that
-  passes because it silently probed nothing — an empty host list, a
-  skipped class — is the failure this bullet exists to prevent, so it
-  reports what it probed and fails on an empty set.
-- Rollback if any of these fail **after deployment identity is
-  established** is revert-by-single-commit, per the parent's named
-  constraint on routing gates. A failure before that point is a
-  not-yet-deployed signal and is not grounds for a revert.
+| request | `x-matched-path` | status / type |
+|---|---|---|
+| `https://music.madrona.us/` | `/event/madrona` | 200 `text/html` |
+| `https://music.madrona.us/feedback` | `/event/madrona/feedback` | 200 `text/html` |
+| `https://music.madrona.us/event/madrona` | `/event/madrona` | 200 `text/html` |
+
+The first two are the rows this phase added, resolving on the real
+hostname with the requested path unchanged in the response — no
+redirect, `num_redirects=0`. The third shows the long path still served
+natively on that host.
+
+**Canonical alias — unchanged (I1).**
+
+| request | `x-matched-path` | status |
+|---|---|---|
+| `https://neighborly-events-site.vercel.app/` | `/` | 200, titled "Neighborly Events" |
+| `https://neighborly-events-site.vercel.app/feedback` | `/404` | 404 |
+| `https://neighborly-events-site.vercel.app/event/madrona` | `/event/madrona` | 200 |
+
+The root still serves the demo index rather than the event, and the
+short feedback path does not resolve to the event — it 404s. Both are
+the I1 assertion made on the alias by name, not inferred from the
+organizer host's result.
+
+**Asset classes — absolute, on both hosts.** Each path below was
+requested against `https://music.madrona.us` and against
+`https://neighborly-events-site.vercel.app`, and returned the same
+status and content type on both:
+
+| path | status | content type |
+|---|---|---|
+| `/_next/static/chunks/152p6kkvc5-6-.css` | 200 | `text/css` |
+| `/assets/index-DtLklTBr.css` | 200 | `text/css` |
+| `/assets/index-BidRzf7k.js` | 200 | `application/javascript` |
+| `/event/madrona/opengraph-image` | 200 | `image/png` |
+| `/event/madrona/game` | 200 | `text/html` |
+
+These are absolute assertions — expected status and expected content
+type — not merely parity, which is the distinction the pre-merge gate
+drew and the reason two hosts failing identically cannot satisfy this
+step. The first three are content-hashed and will change on the next
+build of either app; they are recorded as the exact requests made on
+the date above rather than as paths a later reader should expect to
+resolve. Re-issuing this check means re-reading the current hashes from
+the served HTML, which is how these were obtained after a first attempt
+guessed a filename and measured a 404 that proved nothing.
+
+**Deployment identity.** The gate required establishing that the origin
+serves the commit under test before any assertion counts, because a
+stale build and a wrong rewrite fail identically. The race it guarded
+against was propagation immediately after a release. This walk ran long
+after phase 3 merged and deployed, and `x-matched-path` is itself
+positive evidence that the deployed build carries the host-conditional
+rewrites: no build predating this phase emits `/event/madrona` for a
+request to `/`. The discriminator the gate wanted is satisfied by the
+same header the assertions use.
+
+**The near-match assertion is not a production check, and this is where
+it lives instead.** A near-match hostname — one differing from a mapped
+host only where an unescaped separator would absorb the difference — has
+no DNS record and is attached to no Vercel project, so a request to it
+never reaches the routing layer to be refused by it. Confirmed:
+`musicxmadrona.us` and `music-madrona.us` both return `NXDOMAIN`.
+Probing production can therefore never make this assertion, and phase 3b
+would not have made it either. It is made instead by
+[`tests/shared/urls/organizerHosts.test.ts`](/tests/shared/urls/organizerHosts.test.ts)
+"matches each mapped host exactly and no near-match of it", which
+evaluates the emitted host condition through the same matcher the
+runtime uses, on every CI run. That is a repeatable committed check with
+a run URL — the property is better covered than the post-merge bullet
+implied, and by something that already existed.
+
+**Rollback.** Not triggered; every assertion above passed.
 
 ## Self-Review Audits
 
@@ -798,8 +834,9 @@ topology, and its summary had become incomplete rather than wrong. It
 gained a pointer to the owner rather than a copy of the table, which
 is the duplication audit's resolution applied to the same diff. The
 validation-command audit's trigger does not fire on this phase — it
-adds no script entry and no workflow change — so it moved to phase 3b
-along with the command-list docs.
+adds no script entry and no workflow change. It moved out with the
+runner, and with the runner dropped there is no command for it to
+catalogue.
 
 ## Risks
 
@@ -813,10 +850,9 @@ which reads the emitted phase rather than the served result.
 **R2. This phase's mapping has exactly one consumer today, and stays
 that way.** C1's single-source claim is cheap to hold with one reader,
 and the phase that would have added a second — the route layer reading
-the same module from a different app's build — is dropped. Phase 3b's
-runner reads the mapping too, but from the same Node-side build, so it
-does not test the claim the dropped phase would have. The parent's I2
-second-copy allowance is therefore never exercised by this task.
+the same module from a different app's build — is dropped. So is the
+probe runner that would have read it from the Node side. The parent's
+I2 second-copy allowance is never exercised by this task.
 
 **R3. Landing this phase does not launch the host.** The organizer host
 serves two surfaces at short paths after this merges. The quiz has no
