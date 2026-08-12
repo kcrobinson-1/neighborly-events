@@ -1,4 +1,4 @@
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import type { DraftEventDetail, DraftEventSummary } from "../lib/adminGameApi";
 import { AdminQuestionFields } from "./AdminQuestionFields";
 import { AdminQuestionList } from "./AdminQuestionList";
@@ -53,6 +53,25 @@ export function AdminQuestionEditor({
 }: AdminQuestionEditorProps) {
   const [editableContent, setEditableContent] = useState(draft.content);
   const [localMessage, setLocalMessage] = useState<string | null>(null);
+  const layoutRef = useRef<HTMLDivElement | null>(null);
+  const hasSettledInitialFocusRef = useRef(false);
+
+  // Switching questions swaps the field column in place, which leaves
+  // the viewport wherever the previous question's (long) form left it —
+  // in the stacked mobile layout that can be a full list above the
+  // fields. Bring the fields back into view on every focus change
+  // except the initial mount. `scrollIntoView` is absent in jsdom,
+  // hence the optional call.
+  useEffect(() => {
+    if (!hasSettledInitialFocusRef.current) {
+      hasSettledInitialFocusRef.current = true;
+      return;
+    }
+
+    layoutRef.current
+      ?.querySelector(".admin-question-form")
+      ?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [focusedQuestionId]);
   const [pendingDeleteQuestionId, setPendingDeleteQuestionId] = useState<
     string | null
   >(null);
@@ -229,7 +248,7 @@ export function AdminQuestionEditor({
           Add question
         </button>
       </div>
-      <div className="admin-question-layout">
+      <div className="admin-question-layout" ref={layoutRef}>
         <AdminQuestionList
           disabled={disabled}
           focusedQuestionId={focusedQuestionId}
