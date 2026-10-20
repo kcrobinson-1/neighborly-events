@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 import { organizerHostRoutes } from "../../shared/urls/organizerHosts.ts";
+import { temporaryHostRedirects } from "../../shared/urls/temporaryHostRedirects.ts";
 
 /**
  * `env` re-exposes the two `NEXT_PUBLIC_*` Supabase variables apps/site
@@ -105,6 +106,19 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY:
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY ?? "",
     NEXT_PUBLIC_SITE_ORIGIN: process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "",
+  },
+  async redirects() {
+    return temporaryHostRedirects.map(({ hostname, destination }) => ({
+      source: "/:path*",
+      destination,
+      permanent: false,
+      has: [
+        {
+          type: "host" as const,
+          value: escapeRegExpLiteral(hostname),
+        },
+      ],
+    }));
   },
   async rewrites() {
     // The object form is what reaches `beforeFiles`. The proxy rows

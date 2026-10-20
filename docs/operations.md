@@ -54,7 +54,11 @@ For this project today, that means:
   deployment, with that deployment's host in the `APPS_WEB_ORIGIN`
   constant; plus the host-conditional organizer-subdomain rewrites
   derived from
-  [`shared/urls/organizerHosts.ts`](/shared/urls/organizerHosts.ts).
+  [`shared/urls/organizerHosts.ts`](/shared/urls/organizerHosts.ts); and any
+  temporary exact-host redirects derived from
+  [`shared/urls/temporaryHostRedirects.ts`](/shared/urls/temporaryHostRedirects.ts).
+  Temporary redirect entries carry a review date but do not expire
+  automatically; remove the entry and deploy to restore normal routing.
   Full route table in
   [`architecture.md` — Vercel routing topology](/docs/architecture.md#vercel-routing-topology)
 - [`apps/web/vercel.json`](/apps/web/vercel.json)

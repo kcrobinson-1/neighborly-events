@@ -1522,6 +1522,15 @@ proxy rewrites from apps/site for the plugin-owned route prefixes.
 by phase before they resolve by order, and this config uses two of
 Next.js' three phases:
 
+- **Temporary host redirects** run before the rewrite table below. They are
+  derived from `shared/urls/temporaryHostRedirects.ts`, use exact host
+  conditions, and remain non-permanent so browsers and search engines do not
+  cache a short-lived campaign destination as canonical. The current
+  `music.madrona.us` rule sends every path to the 2026 winter tree-lights Zeffy
+  donation form because a printed neighborhood newsletter used the wrong QR
+  code. Its `reviewOn` date is an operational reminder, not an automatic
+  expiration.
+
 - **`beforeFiles`** rows are matched *ahead of* the filesystem check,
   so a row here wins against a real route. That is what lets an
   organizer host's `/` serve an event landing even though `/` is a
@@ -1555,6 +1564,7 @@ carry an exact-hostname condition and apply on that host only — see
 
 | # | Host | Path pattern | Destination | Phase | Lifetime |
 | --- | --- | --- | --- | --- | --- |
+| 0 | `music.madrona.us` | Any | 2026 winter tree-lights Zeffy donation form | Redirect (before rewrites) | Temporary; review on 2026-11-17 |
 | 1 | `music.madrona.us` | `/` | `/event/madrona` (apps/site Next.js route) | `beforeFiles` | Permanent (organizer-scoped landing) |
 | 2 | `music.madrona.us` | `/feedback` | `/event/madrona/feedback` (apps/site Next.js route) | `beforeFiles` | Permanent (organizer-scoped feedback page) |
 | 3 | Any | `/event/:slug/game` | apps/web plugin (proxy rewrite from apps/site) | `afterFiles` | Permanent (event-scoped) |
@@ -1576,6 +1586,11 @@ Vercel-generated host via the `APPS_WEB_ORIGIN` constant in
 [`apps/site/next.config.ts`](/apps/site/next.config.ts). The plugin
 deployment is reachable directly at its own `*.vercel.app` host but
 is not advertised as a customer-facing origin.
+
+Rule 0 currently shadows rules 1-2 and every other path only when the request
+host is exactly `music.madrona.us`. Removing its entry from
+`shared/urls/temporaryHostRedirects.ts` restores the permanent routing table
+without changing the organizer-host mapping.
 
 #### Organizer host mapping
 
