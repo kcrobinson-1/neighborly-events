@@ -10,6 +10,7 @@ import {
   organizerHostRoutes,
   organizerHosts,
 } from "../../../shared/urls/organizerHosts.ts";
+import { temporaryHostRedirects } from "../../../shared/urls/temporaryHostRedirects.ts";
 
 /**
  * Assertions on the rewrite set `apps/site/next.config.ts` actually
@@ -44,6 +45,10 @@ type RewriteRow = {
   source: string;
   destination: string;
   has?: Array<{ type: string; key?: string; value?: string }>;
+};
+
+type RedirectRow = RewriteRow & {
+  permanent: boolean;
 };
 
 async function emittedRewrites() {
@@ -91,6 +96,10 @@ function hostConditionMatches(row: RewriteRow, hostname: string): boolean {
  */
 function nearMatchHostname(hostname: string): string {
   return hostname.replace(".", "-");
+}
+
+async function emittedRedirects() {
+  return (await nextConfig.redirects?.()) as RedirectRow[] | undefined;
 }
 
 describe("organizer host mapping", () => {
@@ -214,6 +223,50 @@ describe("organizer host rewrites", () => {
     for (const { hostname, eventSlug } of organizerHosts) {
       expect(source, `${hostname} in next.config.ts`).not.toContain(hostname);
       expect(source, `${eventSlug} in next.config.ts`).not.toContain(eventSlug);
+    }
+  });
+});
+
+describe("temporary host redirects", () => {
+  it("emits each temporary redirect as a non-permanent whole-host rule", async () => {
+    const redirects = await emittedRedirects();
+
+    expect(redirects).toHaveLength(temporaryHostRedirects.length);
+
+    for (const { hostname, destination } of temporaryHostRedirects) {
+      const matching = redirects?.filter(
+        (row) => hostConditionMatches(row, hostname),
+      );
+
+      expect(matching, hostname).toHaveLength(1);
+      expect(matching?.[0]).toMatchObject({
+        source: "/:path*",
+        destination,
+        permanent: false,
+      });
+    }
+  });
+
+  it("matches each temporary redirect host exactly", async () => {
+    const redirects = await emittedRedirects();
+
+    for (const { hostname } of temporaryHostRedirects) {
+      const row = redirects?.find((candidate) =>
+        hostConditionMatches(candidate, hostname),
+      );
+
+      expect(row, hostname).toBeDefined();
+      expect(hostConditionMatches(row!, nearMatchHostname(hostname))).toBe(
+        false,
+      );
+      expect(hostConditionMatches(row!, CANONICAL_HOST)).toBe(false);
+    }
+  });
+
+  it("keeps review dates explicit and parseable", () => {
+    for (const { hostname, reviewOn } of temporaryHostRedirects) {
+      expect(reviewOn, hostname).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(Number.isNaN(Date.parse(`${reviewOn}T00:00:00Z`))).toBe(false);
     }
   });
 });
